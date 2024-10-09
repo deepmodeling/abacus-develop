@@ -1,11 +1,15 @@
 #include "module_io/cube_io.h"
-#include "module_base/global_variable.h"
+// #include "module_base/global_variable.h" // GlobalV reference removed
 
 bool ModuleIO::read_cube(
 #ifdef __MPI
     Parallel_Grid* Pgrid,
 #endif
+    int my_rank,
+    std::string esolver_type,
+    int rank_in_stogroup,
     const int& is,
+    std::ofstream& ofs_running,
     const int& nspin,
     const std::string& fn,
     double* data,
@@ -23,12 +27,12 @@ bool ModuleIO::read_cube(
 	{
 		std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
 		tmp_warning_info += fn;
-		GlobalV::ofs_running << tmp_warning_info << std::endl;
+		ofs_running << tmp_warning_info << std::endl;
 		return false;
 	}
 	else
 	{
-    	GlobalV::ofs_running << " Find the file, try to read charge from file." << std::endl;
+    	ofs_running << " Find the file, try to read charge from file." << std::endl;
 	}
 
 	bool quit=false;
@@ -52,7 +56,7 @@ bool ModuleIO::read_cube(
 	ifs.ignore(150, ')');
 
 	ifs >> ef;
-	GlobalV::ofs_running << " read in fermi energy = " << ef << std::endl;
+	ofs_running << " read in fermi energy = " << ef << std::endl;
 
 	ifs.ignore(150, '\n');
 
@@ -114,7 +118,7 @@ bool ModuleIO::read_cube(
     const int nxy = nx * ny;
     double* zpiece = nullptr;
     double** read_rho = nullptr;
-    if (GlobalV::MY_RANK == 0 || (GlobalV::ESOLVER_TYPE == "sdft" && GlobalV::RANK_IN_STOGROUP == 0))
+    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
     {
         read_rho = new double*[nz];
         for (int iz = 0; iz < nz; iz++)
@@ -147,14 +151,14 @@ bool ModuleIO::read_cube(
 
     for (int iz = 0; iz < nz; iz++)
     {
-        if (GlobalV::MY_RANK == 0 || (GlobalV::ESOLVER_TYPE == "sdft" && GlobalV::RANK_IN_STOGROUP == 0))
+        if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
         {
             zpiece = read_rho[iz];
         }
         Pgrid->zpiece_to_all(zpiece, iz, data);
     } // iz
 
-    if (GlobalV::MY_RANK == 0 || (GlobalV::ESOLVER_TYPE == "sdft" && GlobalV::RANK_IN_STOGROUP == 0))
+    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
     {
         for (int iz = 0; iz < nz; iz++)
         {
@@ -167,7 +171,7 @@ bool ModuleIO::read_cube(
         delete[] zpiece;
     }
 #else
-    GlobalV::ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
+    ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
     if (same)
     {
         for (int i = 0; i < nx; i++)
@@ -187,7 +191,7 @@ bool ModuleIO::read_cube(
     }
 #endif
 
-    if (GlobalV::MY_RANK == 0 || (GlobalV::ESOLVER_TYPE == "sdft" && GlobalV::RANK_IN_STOGROUP == 0))
+    if (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0))
         ifs.close();
     return true;
 }

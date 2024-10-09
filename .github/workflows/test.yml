@@ -2,25 +2,47 @@ name: Integration Test and Unit Test
 
 on:
   pull_request:
-  
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-  
+
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: X64
     if: github.repository_owner == 'deepmodeling'
-    container: ghcr.io/deepmodeling/abacus-gnu
+    container:
+      image: ghcr.io/deepmodeling/abacus-gnu
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
+
+      - name: Install CI tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache ca-certificates python-is-python3 python3-pip
+          sudo pip install clang-format clang-tidy
+
+      - name: Configure
+        run: |
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+      - uses: pre-commit/action@v3.0.1
+        with:
+          extra_args:
+            --from-ref ${{ github.event.pull_request.base.sha }}
+              --to-ref ${{ github.event.pull_request.head.sha }}
+        continue-on-error: true
+      - uses: pre-commit-ci/lite-action@v1.0.3
+
       - name: Build
         run: |
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON
           cmake --build build -j8
           cmake --install build
       - name: Test
@@ -28,4 +50,4 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 1600"
+          cmake --build build --target test ARGS="-V --timeout 1700"

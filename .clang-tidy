@@ -1,5 +1,43 @@
 ---
-Checks: '-*,clang-diagnostic-*,clang-analyzer-*,google-*,llvm-header-guard,cppcoreguidelines-avoid-non-const-global-variables,cppcoreguidelines-init-variables,cppcoreguidelines-pro-type-member-init,fuchsia-multiple-inheritance,misc-non-private-member-variables-in-classes,readability-make-member-function-const,readability-function-size,misc-unused-parameters,readability-non-const-parameter,cppcoreguidelines-macro-usage,modernize-use-nullptr,modernize-deprecated-headers'
-FormatStyle: none
-CheckOptions:
+Checks: '
+    modernize-deprecated-headers,
+    modernize-redundant-void-arg,
+    modernize-use-bool-literals,
+    modernize-use-nullptr,
+    readability-avoid-return-with-void-value,
+    readability-braces-around-statements
+
+    # llvm-header-guard,
+    # bugprone-*,
+    # clang-analyzer-*,
+    # clang-diagnostic-*,
+    # cppcoreguidelines-avoid-non-const-global-variables,
+    # cppcoreguidelines-macro-usage,
+    # cppcoreguidelines-pro-type-member-init,
+    # fuchsia-multiple-inheritance,
+    # google-*,
+    # -google-runtime-references,
+    # misc-*,
+    # modernize-shrink-to-fit,
+    # modernize-use-starts-ends-with,
+    # mpi-*,
+    # performance-*,
+    # -performance-avoid-endl,
+    # readability-*,
+    # -readability-else-after-return,
+    # -readability-magic-numbers,
+    # -readability-isolate-declaration,
+    # -readability-braces-around-statements,
+    # -readability-implicit-bool-conversion,
+    # -google-readability-braces-around-statements,
+    # -misc-unused-parameters,
+    # -modernize-pass-by-value,
+    # -modernize-use-auto,
+    # -google-readability-casting,
+    # -readability-make-member-function-const,
+    # -cppcoreguidelines-avoid-non-const-global-variables,
+    # -readability-function-cognitive-complexity,
+    # -google-build-using-namespace,
+    # -bugprone-narrowing-conversions,
+'
 ...

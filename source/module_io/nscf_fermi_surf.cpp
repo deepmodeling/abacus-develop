@@ -26,7 +26,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 		ofs.close();	
 	}
 
-	for(int ik=0; ik<kv.nkstot; ik++)
+	for(int ik=0; ik<kv.get_nkstot(); ik++)
 	{
 		if ( GlobalV::MY_POOL == Pkpoints.whichpool[ik] )
 		{
@@ -68,7 +68,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 				ofs << std::endl;
 
 				// the last k point
-				if(ik==kv.nkstot-1)
+				if(ik==kv.get_nkstot()-1)
 				{
 					ofs << " END_BANDGRID_3D" << std::endl;
 					ofs << " END_BLOCK_BANDGRID_3D" << std::endl;

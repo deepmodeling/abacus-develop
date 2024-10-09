@@ -39,21 +39,21 @@ namespace hamilt {
     };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-// Partially specialize functor for psi::GpuDevice.
+    // Partially specialize functor for base_device::GpuDevice.
     template <typename FPTYPE>
-    struct meta_pw_op<FPTYPE, psi::DEVICE_GPU> {
-        void operator() (
-                const psi::DEVICE_GPU* dev,
-                const int& ik,
-                const int& pol,
-                const int& npw,
-                const int& npwx,
-                const FPTYPE& tpiba,
-                const FPTYPE* gcar,
-                const FPTYPE* kvec_c,
-                const std::complex<FPTYPE>* in,
-                std::complex<FPTYPE>* out,
-                const bool add = false);
+    struct meta_pw_op<FPTYPE, base_device::DEVICE_GPU>
+    {
+        void operator()(const base_device::DEVICE_GPU* dev,
+                        const int& ik,
+                        const int& pol,
+                        const int& npw,
+                        const int& npwx,
+                        const FPTYPE& tpiba,
+                        const FPTYPE* gcar,
+                        const FPTYPE* kvec_c,
+                        const std::complex<FPTYPE>* in,
+                        std::complex<FPTYPE>* out,
+                        const bool add = false);
     };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

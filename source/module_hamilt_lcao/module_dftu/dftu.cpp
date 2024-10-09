@@ -1,29 +1,25 @@
-//==========================================================
-// Author:Xin Qu
-// DATE : 2019-12-10
-//==========================================================
 #include "dftu.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/memory.h"
+#include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
-#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_elecstate/magnetism.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/magnetism.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
-#include "module_base/scalapack_connector.h"
 
 #include <cmath>
 #include <complex>
+#include <cstdio>
+#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <stdio.h>
-#include <string.h>
+#include <vector>
 
 namespace GlobalC
 {
@@ -41,8 +37,10 @@ DFTU::~DFTU()
 }
 
 void DFTU::init(UnitCell& cell, // unitcell class
-                LCAO_Matrix& lm,
-                const int& nks)
+                const Parallel_Orbitals* pv,
+                const int& nks,
+                const LCAO_Orbitals& orb
+                )
 {
     ModuleBase::TITLE("DFTU", "init");
 
@@ -51,24 +49,16 @@ void DFTU::init(UnitCell& cell, // unitcell class
     exit(0);
 #endif
 
-    this->LM = &lm;
+    this->paraV = pv;
+    
+    ptr_orb_ = &orb;
+    orb_cutoff_ = orb.cutoffs();
 
     // needs reconstructions in future
     // global parameters, need to be removed in future
-    const int npol = GlobalV::NPOL; // number of polarization directions
+    const int npol = PARAM.globalv.npol;     // number of polarization directions
     const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
-    const int nspin = GlobalV::NSPIN; // number of spins
-
-    /*
-    not implemented yet, no need to check for now
-    if(dftu_type==1 && double_counting==1) cal_type = 1;
-    else if(dftu_type==1 && double_counting==2) cal_type = 2;
-    else if(dftu_type==2 && double_counting==1) cal_type = 3;
-    else if(dftu_type==2 && double_counting==2) cal_type = 4;
-    else ModuleBase::WARNING_QUIT("DFT+U", "Wrong parameter");
-
-    if(cal_type!=3)  ModuleBase::WARNING_QUIT("DFT+U", "Not available yet!");
-    */
+    const int nspin = PARAM.inp.nspin;   // number of spins
 
     this->EU = 0.0;
 
@@ -199,10 +189,10 @@ void DFTU::init(UnitCell& cell, // unitcell class
     }
     else
     {
-        if (GlobalV::init_chg == "file")
+        if (PARAM.inp.init_chg == "file")
         {
             std::stringstream sst;
-            sst << GlobalV::global_out_dir << "onsite.dm";
+            sst << PARAM.globalv.global_out_dir << "onsite.dm";
             this->read_occup_m(sst.str());
 #ifdef __MPI
             this->local_occup_bcast();
@@ -238,7 +228,9 @@ void DFTU::cal_energy_correction(const int istep)
         for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
         {
             if (LC == -1)
+            {
                 continue;
+            }
 
             const int iat = GlobalC::ucell.itia2iat(T, I);
             const int L = orbital_corr[T];
@@ -246,7 +238,9 @@ void DFTU::cal_energy_correction(const int istep)
             for (int l = 0; l < NL; l++)
             {
                 if (l != orbital_corr[T])
+                {
                     continue;
+                }
 
                 const int N = GlobalC::ucell.atoms[T].l_nchi[l];
 
@@ -256,9 +250,11 @@ void DFTU::cal_energy_correction(const int istep)
                 for (int n = 0; n < N; n++)
                 {
                     if (n != 0)
+                    {
                         continue;
+                    }
 
-                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -275,27 +271,31 @@ void DFTU::cal_energy_correction(const int istep)
                                 }
                             }
                             if (Yukawa)
+                            {
                                 this->EU += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
                                             * (nm_trace - nm2_trace);
+                            }
                             else
+                            {
                                 this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+                            }
                         }
                     }
-                    else if (GlobalV::NSPIN == 4) // SOC
+                    else if (PARAM.inp.nspin == 4) // SOC
                     {
                         double nm_trace = 0.0;
                         double nm2_trace = 0.0;
 
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < GlobalV::NPOL; ipol0++)
+                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
                                 nm_trace += this->locale[iat][l][n][0](m0_all, m0_all);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
 
@@ -306,37 +306,41 @@ void DFTU::cal_energy_correction(const int istep)
                             }
                         }
                         if (Yukawa)
+                        {
                             this->EU
                                 += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) * (nm_trace - nm2_trace);
+                        }
                         else
+                        {
                             this->EU += 0.5 * this->U[T] * (nm_trace - nm2_trace);
+                        }
                     }
 
                     // calculate the double counting term included in eband
                     for (int m1 = 0; m1 < 2 * l + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
                             const int m1_all = m1 + ipol1 * (2 * l + 1);
                             for (int m2 = 0; m2 < 2 * l + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int m2_all = m2 + ipol2 * (2 * l + 1);
 
-                                    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+                                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                                     {
                                         for (int is = 0; is < 2; is++)
                                         {
                                             double VU = 0.0;
-                                            VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, 0);
+                                            VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
                                             EU_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
-                                    else if (GlobalV::NSPIN == 4) // SOC
+                                    else if (PARAM.inp.nspin == 4) // SOC
                                     {
                                         double VU = 0.0;
-                                        VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, 0);
+                                        VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
                                         EU_dc += VU * this->locale[iat][l][n][0](m1_all, m2_all);
                                     }
                                 }
@@ -344,15 +348,75 @@ void DFTU::cal_energy_correction(const int istep)
                         }
                     }
                 } // end n
-            } // end L
-        } // end I
-    } // end T
+            }     // end L
+        }         // end I
+    }             // end T
 
     // substract the double counting EU_dc included in band energy eband
     this->EU -= EU_dc;
 
     ModuleBase::timer::tick("DFTU", "cal_energy_correction");
     return;
+}
+
+void DFTU::uramping_update()
+{
+    // if uramping < 0.1, use the original U
+    if (this->uramping < 0.01) {
+        return;
+}
+    // loop to change U
+    for (int i = 0; i < this->U0.size(); i++)
+    {
+        if (this->U[i] + this->uramping < this->U0[i])
+        {
+            this->U[i] += this->uramping;
+        }
+        else
+        {
+            this->U[i] = this->U0[i];
+        }
+    }
+}
+
+bool DFTU::u_converged()
+{
+    for (int i = 0; i < this->U0.size(); i++)
+    {
+        if (this->U[i] != this->U0[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+void DFTU::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
+{
+    this->dm_in_dftu_cd = dmr;
+    return;
+}
+
+void DFTU::set_dmr(const elecstate::DensityMatrix<double, double>* dmr)
+{
+    this->dm_in_dftu_d = dmr;
+    return;
+}
+
+const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
+{
+    if (this->dm_in_dftu_d != nullptr)
+    {
+        return this->dm_in_dftu_d->get_DMR_pointer(ispin + 1);
+    }
+    else if (this->dm_in_dftu_cd != nullptr)
+    {
+        return this->dm_in_dftu_cd->get_DMR_pointer(ispin + 1);
+    }
+    else
+    {
+        return nullptr;
+    }
 }
 
 } // namespace ModuleDFTU

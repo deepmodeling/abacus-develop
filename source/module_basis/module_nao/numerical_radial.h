@@ -364,7 +364,7 @@ private:
     ///@}
 
     /// An object that provides spherical Bessel transforms
-    ModuleBase::SphericalBesselTransformer sbt_{nullptr};
+    ModuleBase::SphericalBesselTransformer sbt_;
 
     /**
      * @brief Transforms the r-space values to get k-space values, or vice versa.

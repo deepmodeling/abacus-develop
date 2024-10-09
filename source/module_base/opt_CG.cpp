@@ -1,4 +1,5 @@
 #include "opt_CG.h"
+#include <vector>
 
 namespace ModuleBase
 {
@@ -172,12 +173,12 @@ void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect)
     }
     else
     {
-        double* temp_gradient = new double[this->nx_];
+        std::vector<double> temp_gradient(this->nx_);
         for (int i = 0; i < this->nx_; ++i)
         {
             temp_gradient[i] = this->pgradient_old_[i] + this->alpha_ * pAd[i];
         }
-        this->beta_ = this->inner_product(temp_gradient, temp_gradient, this->nx_) / this->gg_;
+        this->beta_ = this->inner_product(temp_gradient.data(), temp_gradient.data(), this->nx_) / this->gg_;
         Parallel_Reduce::reduce_all(this->beta_);
         for (int i = 0; i < this->nx_; ++i)
         {
@@ -185,7 +186,6 @@ void Opt_CG::stantard_CGdirect(double* pAd, double* rdirect)
             rdirect[i] = -this->pgradient_old_[i] + this->beta_ * this->pdirect_old_[i];
             this->pdirect_old_[i] = rdirect[i];
         }
-        delete[] temp_gradient;
     }
     this->gg_ = this->inner_product(this->pgradient_old_, this->pgradient_old_, this->nx_);
     Parallel_Reduce::reduce_all(this->gg_);

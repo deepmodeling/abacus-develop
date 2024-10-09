@@ -59,7 +59,7 @@ class PotHartree : public PotBase
   public:
     PotHartree(const ModulePW::PW_Basis* rho_basis_in);
 
-    void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff);
+    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff);
 };
 
 } // namespace elecstate

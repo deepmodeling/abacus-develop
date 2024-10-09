@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include<streambuf>
 #ifdef __MPI
 #include "mpi.h"
@@ -30,7 +33,7 @@
 #include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
-
+#undef private
 class AtomSpecTest : public testing::Test
 {
 protected:
@@ -128,7 +131,6 @@ TEST_F(AtomSpecTest, SetIndex)
 #ifdef __MPI
 TEST_F(AtomSpecTest, BcastAtom)
 {
-	GlobalV::test_atom = 1;
 	if(GlobalV::MY_RANK==0)
 	{
 		atom.label = "C";
@@ -189,9 +191,9 @@ TEST_F(AtomSpecTest, BcastAtom2)
 	if(GlobalV::MY_RANK==0)
 	{
 		ifs.open("./support/C.upf");
-		GlobalV::PSEUDORCUT = 15.0;
-		upf.read_pseudo_upf201(ifs);
-		atom.ncpp.set_pseudo(upf);
+		PARAM.input.pseudo_rcut = 15.0;
+		upf.read_pseudo_upf201(ifs, atom.ncpp);
+		upf.complete_default(atom.ncpp);
 		ifs.close();
 		EXPECT_TRUE(atom.ncpp.has_so);
 	}
@@ -218,4 +220,4 @@ int main(int argc, char **argv)
 	return result;
 }
 #endif
-#undef private
+

@@ -4,14 +4,16 @@
 template <typename REAL>
 class Sto_Func
 {
-public:
+  public:
     Sto_Func();
     ~Sto_Func(){};
-    REAL tem; //temperature
-    REAL mu; //chemical potential
-    REAL Emin, Emax;
+    REAL tem; // temperature
+    REAL mu;  // chemical potential
+    REAL* Emin = nullptr;
+    REAL* Emax = nullptr;
+    void set_E_range(REAL* Emin_in, REAL* Emax_in);
 
-public:
+  public:
     REAL root_fd(REAL e);
     REAL fd(REAL e);
     REAL nroot_fd(REAL e);
@@ -22,19 +24,18 @@ public:
     REAL n_root_fdlnfd(REAL e);
     REAL nroot_mfd(REAL e);
 
-public:
+  public:
     REAL t;
     REAL ncos(REAL e);
     REAL nsin(REAL e);
     REAL n_sin(REAL e);
 
-public:
+  public:
     REAL sigma;
     REAL targ_e;
     REAL gauss(REAL e);
     REAL ngauss(REAL e);
     REAL nroot_gauss(REAL e);
-
 };
 
 #endif

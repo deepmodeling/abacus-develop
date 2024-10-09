@@ -17,16 +17,6 @@ void ElecState::set_exx(const double& Eexx)
     }
     return;
 }
-void ElecState::set_exx(const std::complex<double>& Eexx)
-{
-    ModuleBase::TITLE("energy", "set_exx");
-
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        this->f_en.exx = GlobalC::exx_info.info_global.hybrid_alpha * std::real(Eexx);
-    }
-    return;
-}
 #endif //__LCAO
 #endif //__EXX
 

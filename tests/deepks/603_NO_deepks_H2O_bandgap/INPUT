@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 suffix autotest
 calculation scf
 
-ecutwfc 100.000000
+ecutwfc 50.000000
 scf_thr 5.000000e-07
 scf_nmax 35
 pseudo_dir ../../PP_ORB
@@ -20,3 +20,6 @@ deepks_scf 1
 deepks_model model.ptg
 deepks_out_labels 1
 deepks_bandgap 1
+
+mixing_restart 1e-3
+mixing_dmr     1

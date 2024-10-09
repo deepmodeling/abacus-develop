@@ -73,6 +73,7 @@ class HydrogenRadials : public RadialSet
         /// @param ptr_log pointer to the log ofstream
         void build(const int itype = 0,
                    const double charge = 1.0,
+                   const bool with_slater_screening = false,
                    const int nmax = 0,
                    const double rcut = 10.0,
                    const double dr = 0.01,
@@ -107,6 +108,7 @@ class HydrogenRadials : public RadialSet
         /// @param ptr_log pointer to the log ofstream
         /// @return the rmax of present radial function
         double generate_hydrogen_radial_toconv(const double charge,
+                                               const bool with_slater_screening,
                                                const int n,
                                                const int l,
                                                const double conv_thr,
@@ -130,6 +132,7 @@ class HydrogenRadials : public RadialSet
         /// @param ptr_log pointer to the log ofstream
         std::map<std::pair<int, int>, std::pair<std::vector<double>, std::vector<double>>>
         generate_orb(const double charge = 1.0,
+                     const bool with_slater_screening = false,
                      const int nmax = 0,
                      const double dr = 0.01,
                      const double conv_thr = 1e-6,
@@ -152,13 +155,21 @@ class HydrogenRadials : public RadialSet
         /// @param strategy strategy string
         /// @param ptr_log pointer to the log ofstream
         void hydrogen(const double charge = 1.0,
+                      const bool with_slater_screening = false,
                       const int nmax = 0,
                       const double dr = 0.01,
                       const double conv_thr = 1e-6,
                       const int rank = 0,
                       const std::string strategy = "minimal-valence",
                       std::ofstream* ptr_log = nullptr);
-
+        /// @brief return the Slater screening constant for calculating effective nuclear charge
+        /// @note hoping to get a more accurate estimation of hydrogen-like atom radial function, by including many-electron effect in this way
+        /// @details algorithm: https://laney.edu/pinar-alscher/wp-content/uploads/sites/219/2016/04/Slater-rules-revised.pdf
+        /// @param n principal quantum number
+        /// @param l angular momentum quantum number
+        double slater_screening(const std::string symbol,
+                                const int n,
+                                const int l);
     private:
         /// @brief generate hydrogen-like radial functions for a given n, l, in a given range [rmin, rmax]
         /// @param charge charge of the nucleus
@@ -171,6 +182,7 @@ class HydrogenRadials : public RadialSet
         /// @param ptr_log pointer to the log ofstream
         /// @return the radial function stored in std::vector<double>
         std::vector<double> generate_hydrogen_radial_segment(const double charge = 1.0,
+                                                             const bool with_slater_screening = false,
                                                              const int n = 0,
                                                              const int l = 0,
                                                              const double rmin = 0.0,

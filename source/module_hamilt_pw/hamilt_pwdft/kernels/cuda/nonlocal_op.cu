@@ -4,6 +4,7 @@
 
 #include <cuda_runtime.h>
 #include <thrust/complex.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 
@@ -31,7 +32,7 @@ __global__ void nonlocal_pw(
     thrust::complex<FPTYPE> res(0.0, 0.0);
     for (int xx = 0; xx < l3; xx++) {
       res
-        += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk] 
+        += deeq[((spin * deeq_x + iat + ii) * deeq_y + xx) * deeq_z + kk]
         *  becp[jj * nkb + sum + ii * l3 + xx];
     }
     ps[(sum + ii * l3 + kk) * l2 + jj] += res;
@@ -73,22 +74,21 @@ __global__ void nonlocal_pw(
   }
 }
 
-template <typename FPTYPE> 
-void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* dev,
-    const int& l1,
-    const int& l2,
-    const int& l3,
-    int& sum,
-    int& iat,
-    const int& spin,
-    const int& nkb,
-    const int& deeq_x,
-    const int& deeq_y,
-    const int& deeq_z,
-    const FPTYPE* deeq,
-    std::complex<FPTYPE>* ps,
-    const std::complex<FPTYPE>* becp)
+template <typename FPTYPE>
+void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                         const int& l1,
+                                                                         const int& l2,
+                                                                         const int& l3,
+                                                                         int& sum,
+                                                                         int& iat,
+                                                                         const int& spin,
+                                                                         const int& nkb,
+                                                                         const int& deeq_x,
+                                                                         const int& deeq_y,
+                                                                         const int& deeq_z,
+                                                                         const FPTYPE* deeq,
+                                                                         std::complex<FPTYPE>* ps,
+                                                                         const std::complex<FPTYPE>* becp)
 {
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
@@ -98,41 +98,44 @@ void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
     deeq_x, deeq_y, deeq_z, deeq,  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
+
+  cudaCheckOnDebug();
   iat += l1;
   sum += l1 * l3;
 }
 
-template <typename FPTYPE> 
-void hamilt::nonlocal_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU* dev,
-    const int& l1,
-    const int& l2,
-    const int& l3,
-    int& sum,
-    int& iat,
-    const int& nkb,
-    const int& deeq_x,
-    const int& deeq_y,
-    const int& deeq_z,
-    const std::complex<FPTYPE>* deeq_nc,
-    std::complex<FPTYPE>* ps,
-    const std::complex<FPTYPE>* becp)
+template <typename FPTYPE>
+void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                                         const int& l1,
+                                                                         const int& l2,
+                                                                         const int& l3,
+                                                                         int& sum,
+                                                                         int& iat,
+                                                                         const int& nkb,
+                                                                         const int& deeq_x,
+                                                                         const int& deeq_y,
+                                                                         const int& deeq_z,
+                                                                         const std::complex<FPTYPE>* deeq_nc,
+                                                                         std::complex<FPTYPE>* ps,
+                                                                         const std::complex<FPTYPE>* becp)
 {
   // denghui implement 20221109
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   nonlocal_pw<FPTYPE><<<l1 * l2, THREADS_PER_BLOCK>>>(
     l1, l2, l3, // loop size
     sum, iat, nkb,   // control params
-    deeq_x, deeq_y, deeq_z, 
+    deeq_x, deeq_y, deeq_z,
     reinterpret_cast<const thrust::complex<FPTYPE>*>(deeq_nc),  // deeq realArray operator()
     reinterpret_cast<thrust::complex<FPTYPE>*>(ps), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(becp)); // array of data
+
+  cudaCheckOnDebug();
   iat += l1;
   sum += l1 * l3;
   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 }
 
-template struct nonlocal_pw_op<float, psi::DEVICE_GPU>;
-template struct nonlocal_pw_op<double, psi::DEVICE_GPU>;
+template struct nonlocal_pw_op<float, base_device::DEVICE_GPU>;
+template struct nonlocal_pw_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

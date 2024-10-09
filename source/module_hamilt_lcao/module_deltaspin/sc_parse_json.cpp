@@ -34,11 +34,23 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     std::regex element_regex("\"element\": \"([A-Za-z]+)\"");
     std::regex ScDecayGrad_regex("\"ScDecayGrad\": [+]?(\\d+(?:\\.\\d+)?)");
     std::regex index_regex("\"index\": (\\d+)");
-    std::regex lambda_regex("\"lambda\"\\s*:\\s*(?:\\[\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*\\]|([+-]?\\d+(?:\\.\\d+)?))");
-    std::regex target_mag_regex("\"target_mag\"\\s*:\\s*(?:\\[\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*,\\s*([+-]?\\d+(?:\\.\\d+)?)\\s*\\]|([+-]?\\d+(?:\\.\\d+)?))");
-    std::regex target_mag_val_regex("\"target_mag_val\": ([+-]?\\d+(?:\\.\\d+)?)");
-    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([+-]?\\d+(?:\\.\\d+)?)");
-    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([+-]?\\d+(?:\\.\\d+)?)");
+    std::regex lambda_regex("\"lambda\"\\s*:"
+            "\\s*(?:\\["
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*,"
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*,"
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*"
+            "\\]|"
+            "([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?))");
+    std::regex target_mag_regex("\"target_mag\"\\s*:"
+            "\\s*(?:\\["
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*,"
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*,"
+            "\\s*([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)\\s*"
+            "\\]|"
+            "([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?))");
+    std::regex target_mag_val_regex("\"target_mag_val\": ([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)");
+    std::regex target_mag_angle1_regex("\"target_mag_angle1\": ([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)");
+    std::regex target_mag_angle2_regex("\"target_mag_angle2\": ([+-]?\\d+(?:\\.\\d+)?(?:[eE][+-]?\\d+)?)");
     std::regex constrain_regex("\"constrain\"\\s*:\\s*(?:\\[\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)\\s*\\]|(\\d+))");
 
     while (getline(file, line)) {
@@ -191,5 +203,5 @@ void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, i
 #endif
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;

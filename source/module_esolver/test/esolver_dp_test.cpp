@@ -1,21 +1,23 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
 #include "for_test.h"
+
 #define private public
 #define protected public
 #include "../esolver_dp.h"
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
+#undef private
 /************************************************
  *  unit tests of class ESolver_DP
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - ESolver_DP::Init()
- *   - ESolver_DP::Run()
- *   - ESolver_DP::cal_Energy()
- *   - ESolver_DP::cal_Force()
- *   - ESolver_DP::cal_Stress()
- *   - ESolver_DP::postprocess()
+ *   - ESolver_DP::init()
+ *   - ESolver_DP::run()
+ *   - ESolver_DP::cal_energy()
+ *   - ESolver_DP::cal_force()
+ *   - ESolver_DP::cal_stress()
+ *   - ESolver_DP::post_process()
  *   - ESolver_DP::type_map()
  */
 namespace ModuleIO
@@ -39,16 +41,44 @@ class ESolverDPTest : public ::testing::Test
     {
         // Initialize variables before each test
         esolver = new ModuleESolver::ESolver_DP("./support/case_1.pb");
-        esolver->Init(inp, ucell);
+        ucell.iat2it = new int[2];
+        ucell.iat2it[0] = 0;
+        ucell.iat2it[1] = 1;
+        ucell.iat2ia = new int[2];
+        ucell.iat2ia[0] = 0;
+        ucell.iat2ia[1] = 1;
+        ucell.nat = 2;
+        ucell.ntype = 2;
+        ucell.atoms = new Atom[2];
+        ucell.atoms[0].na = 1;
+        ucell.atoms[1].na = 1;
+        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
+        ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
+        ucell.atoms[0].taud[0] = {0.0, 0.0, 0.0};
+        ucell.atoms[1].taud[0] = {0.0, 0.0, 0.0};
+
+        ucell.atom_label = new std::string[2];
+        ucell.atom_label[0] = "Cu";
+        ucell.atom_label[1] = "Al";
+        esolver->before_all_runners(inp, ucell);
     }
 
     void TearDown() override
     {
         // Clean up after each test
+        delete esolver;
+        delete[] ucell.iat2it;
+        delete[] ucell.iat2ia;
+        for (int i = 0; i < 2; ++i)
+        {
+            delete[] ucell.atoms[i].taud;
+        }
+        delete[] ucell.atoms;
+        delete[] ucell.atom_label;
     }
 
     ModuleESolver::ESolver_DP* esolver;
-    Input inp;
+    Input_para inp;
     UnitCell ucell;
 };
 
@@ -73,25 +103,8 @@ TEST_F(ESolverDPTest, InitCase1)
             EXPECT_DOUBLE_EQ(esolver->coord[3 * i + j], 0.0);
         }
     }
-    EXPECT_EQ(esolver->dp_type[0], 1);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-    EXPECT_EQ(esolver->atype[0], 1);
-    EXPECT_EQ(esolver->atype[1], 0);
-}
-
-// Test the Init() funciton case 2
-TEST_F(ESolverDPTest, InitCase2)
-{
-    esolver->dp_type[0] = 0;
-    esolver->dp_type[1] = 0;
-    esolver->dp_file = "./support/case_2.pb";
-    esolver->Init(inp, ucell);
-
-    // Check the initialized variables
-    EXPECT_EQ(esolver->dp_type[0], 0);
-    EXPECT_EQ(esolver->dp_type[1], 0);
     EXPECT_EQ(esolver->atype[0], 0);
-    EXPECT_EQ(esolver->atype[1], 1);
+    EXPECT_EQ(esolver->atype[1], 0);
 }
 
 // Test the Run() funciton WARNING_QUIT
@@ -100,17 +113,17 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->Run(istep, ucell), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(esolver->runner(istep, ucell), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }
 
-// Test the cal_Energy() funciton
+// Test the cal_energy() funciton
 TEST_F(ESolverDPTest, CalEnergy)
 {
     double etot = 0.0;
     esolver->dp_potential = 9.8;
-    etot = esolver->cal_Energy();
+    etot = esolver->cal_energy();
 
     // Check the results
     EXPECT_DOUBLE_EQ(etot, 9.8);
@@ -128,7 +141,7 @@ TEST_F(ESolverDPTest, CalForce)
         }
     }
 
-    esolver->cal_Force(force);
+    esolver->cal_force(force);
 
     // Check the results
     for (int i = 0; i < ucell.nat; ++i)
@@ -152,7 +165,7 @@ TEST_F(ESolverDPTest, CalStress)
         }
     }
 
-    esolver->cal_Stress(stress);
+    esolver->cal_stress(stress);
 
     // Check the results
     for (int i = 0; i < 3; ++i)
@@ -171,7 +184,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->postprocess();
+    esolver->after_all_runners();
     GlobalV::ofs_running.close();
 
     std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "
@@ -182,52 +195,4 @@ TEST_F(ESolverDPTest, Postprocess)
     std::remove("log");
 
     EXPECT_EQ(expected_output, output);
-}
-
-// Test the type_map() funciton when find type_map
-TEST_F(ESolverDPTest, TypeMapCase1)
-{
-    bool find = false;
-    esolver->dp_file = "./support/case_1.pb";
-    GlobalV::ofs_running.open("log");
-    find = esolver->type_map(ucell);
-    GlobalV::ofs_running.close();
-
-    std::string expected_output = "\nDetermine the type map from DP model\nntype read from DP model: 2\n  Cu  Al\n\n";
-    std::ifstream ifs("log");
-    std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    ifs.close();
-    std::remove("log");
-
-    // Check the results
-    EXPECT_TRUE(find);
-    EXPECT_EQ(expected_output, output);
-    EXPECT_EQ(esolver->dp_type[0], 1);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-}
-
-// Test the type_map() funciton when find not type_map
-TEST_F(ESolverDPTest, TypeMapCase2)
-{
-    bool find = false;
-    esolver->dp_type[0] = 0;
-    esolver->dp_type[1] = 0;
-    esolver->dp_file = "./support/case_2.pb";
-    find = esolver->type_map(ucell);
-
-    // Check the results
-    EXPECT_FALSE(find);
-    EXPECT_EQ(esolver->dp_type[0], 0);
-    EXPECT_EQ(esolver->dp_type[1], 0);
-}
-
-// Test the type_map() funciton WARNING_QUIT
-TEST_F(ESolverDPTest, TypeMapWarningQuit)
-{
-    esolver->dp_file = "./support/case_3.pb";
-
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->type_map(ucell), ::testing::ExitedWithCode(0), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("can not find the DP model"));
 }

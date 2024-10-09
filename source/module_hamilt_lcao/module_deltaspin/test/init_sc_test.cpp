@@ -35,13 +35,14 @@ Magnetism::~Magnetism()
  *  - SpinConstrain::init_sc()
  *    - initialize the SpinConstrain class
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
+
 
 template <typename T>
 class SpinConstrainTest : public testing::Test
@@ -53,7 +54,7 @@ class SpinConstrainTest : public testing::Test
     {
         ucell = utp.SetUcellInfo();
     }
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;
@@ -85,8 +86,6 @@ TYPED_TEST(SpinConstrainTest, InitSc)
                      4,
                      kv,
                      KS_SOLVER,
-                     nullptr,
-                     nullptr,
                      nullptr,
                      nullptr,
                      nullptr);

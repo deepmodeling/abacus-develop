@@ -54,12 +54,10 @@ class array_ref final {
     }
 
     constexpr const T& front() const {
-        REQUIRES_OK(!empty(), "Cannot call front() on an empty array_ref.");
         return data_[0];
     }
 
     constexpr const T& back() const {
-        REQUIRES_OK(!empty(), "Cannot call back() on an empty array_ref.");
         return data_[length_ - 1];
     }
 

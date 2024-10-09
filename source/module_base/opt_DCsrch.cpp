@@ -165,10 +165,11 @@ int dcsrch(double& stp,
     double xtrapl = 1.1;
     double xtrapu = 4.0;
 
-    bool brackt;
-    int stage;
-    double finit, ftest, fm, fx, fxm, fy, fym, ginit, gtest, gm, gx, gxm, gy, gym, stx, sty, stmin, stmax, width,
-        width1;
+    bool brackt = false;
+    int stage = 0;
+    double finit = 0.0, ftest = 0.0, fm = 0.0, fx = 0.0, fxm = 0.0, fy = 0.0, fym = 0.0;
+    double ginit = 0.0, gtest = 0.0, gm = 0.0, gx = 0.0, gxm = 0.0, gy = 0.0, gym = 0.0;
+    double stx = 0.0, sty = 0.0, stmin = 0.0, stmax = 0.0, width = 0.0, width1 = 0.0;
 
     extern /* Subroutine */ void dcstep(double&,
                                         double&,

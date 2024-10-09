@@ -1,5 +1,6 @@
 #include "unk_overlap_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 unkOverlap_pw::unkOverlap_pw()
@@ -35,7 +36,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
 	
 	for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
 	{
-		unk_R[wfcpw->getigl2ig(ik_L,igl)] = evc[0](ik_R, iband_R, igl);
+		unk_R[wfcpw->getigl2ig(ik_R,igl)] = evc[0](ik_R, iband_R, igl);
 	}
 
 	
@@ -80,9 +81,10 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
 
     // get the phase value in realspace
-    for (int ig = 0; ig < rhopw->npw; ig++)
+    for (int ig = 0; ig < rhopw->nmaxgr; ig++)
     {
-		if (rhopw->gdirect[ig] == G)
+		ModuleBase::Vector3<double> delta_G = rhopw->gdirect[ig] - G;
+		if (delta_G.norm2() < 1e-10) // rhopw->gdirect[ig] == G
 		{
 			phase[ig] = std::complex<double>(1.0,0.0);
 			break;
@@ -93,13 +95,13 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
 	rhopw->recip2real(phase, phase);
     wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_r, ik_L);
 
-    for (int ir = 0; ir < rhopw->npw; ir++)
+    for (int ir = 0; ir < rhopw->nmaxgr; ir++)
     {
         psi_r[ir] = psi_r[ir] * phase[ir];
     }
 
     // (3) calculate the overlap in ik_L and ik_R
-    wfcpw->real2recip(psi_r, psi_r, ik_L);
+    wfcpw->real2recip(psi_r, psi_r, ik_R);
 
     for (int ig = 0; ig < evc->get_ngk(ik_R); ig++)
     {
@@ -122,7 +124,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     return result;
 }
 
-// if noncollinear = 1 or GlobalV::NSPIN = 4 , you need this routine to calculate overlap unk
+// if noncollinear = 1 or PARAM.inp.nspin = 4 , you need this routine to calculate overlap unk
 std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wfcpw,
                                                   const int ik_L,
                                                   const int ik_R,
@@ -134,12 +136,12 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
 	
 	std::complex<double> result(0.0,0.0);
     const int number_pw = wfcpw->npw;
-    std::complex<double>* unk_L = new std::complex<double>[number_pw * GlobalV::NPOL];
-    std::complex<double>* unk_R = new std::complex<double>[number_pw * GlobalV::NPOL];
-    ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw*GlobalV::NPOL);
-	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw*GlobalV::NPOL);
+    std::complex<double>* unk_L = new std::complex<double>[number_pw * PARAM.globalv.npol];
+    std::complex<double>* unk_R = new std::complex<double>[number_pw * PARAM.globalv.npol];
+    ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw*PARAM.globalv.npol);
+	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw*PARAM.globalv.npol);
 	
-	for(int i = 0; i < GlobalV::NPOL; i++)
+	for(int i = 0; i < PARAM.globalv.npol; i++)
 	{
 		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
 		{
@@ -152,7 +154,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
         }
     }
 
-    for (int iG = 0; iG < number_pw*GlobalV::NPOL; iG++)
+    for (int iG = 0; iG < number_pw*PARAM.globalv.npol; iG++)
 	{
 
 		result = result + conj(unk_L[iG]) * unk_R[iG];
@@ -219,12 +221,14 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
     wfcpw->real2recip(psi_up, psi_up, ik_L);
     wfcpw->real2recip(psi_down, psi_down, ik_L);
 
-    for (int i = 0; i < GlobalV::NPOL; i++)
+    for (int i = 0; i < PARAM.globalv.npol; i++)
     {
 		for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
 		{
-			if( i == 0 ) result = result + conj( psi_up[ig] ) * evc[0](ik_R, iband_R, ig);
-			if( i == 1 ) result = result + conj( psi_down[ig] ) * evc[0](ik_R, iband_R, ig + npwx);
+			if( i == 0 ) { result = result + conj( psi_up[ig] ) * evc[0](ik_R, iband_R, ig);
+}
+			if( i == 1 ) { result = result + conj( psi_down[ig] ) * evc[0](ik_R, iband_R, ig + npwx);
+}
 		}
 	}
 	

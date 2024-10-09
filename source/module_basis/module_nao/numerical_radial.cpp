@@ -11,6 +11,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/math_integral.h"
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_parameter/parameter.h"
 
 using ModuleBase::PI;
 
@@ -131,8 +132,6 @@ void NumericalRadial::build(const int l,
     izeta_ = izeta;
     l_ = l;
 
-    if (init_sbt) sbt_.init();
-
     if (for_r_space)
     {
         nr_ = ngrid;
@@ -172,7 +171,8 @@ void NumericalRadial::to_numerical_orbital_lm(Numerical_Orbital_Lm& orbital_lm, 
 
     orbital_lm.set_orbital_info(symbol_, itype_, l_, izeta_, std::min(nr_, ircut_+1), rab, rgrid_,
             Numerical_Orbital_Lm::Psi_Type::Psi, rvalue_, nk_legacy, lcao_dk,
-            0.001 /* dr_uniform */, GlobalV::out_element_info, true, GlobalV::CAL_FORCE);
+            0.001 /* dr_uniform */, PARAM.inp.out_element_info, true, PARAM.inp.cal_force);
+    delete[] rab;
 }
 
 void NumericalRadial::set_transformer(ModuleBase::SphericalBesselTransformer sbt, int update)
@@ -236,8 +236,7 @@ void NumericalRadial::set_grid(const bool for_r_space, const int ngrid, const do
 #endif
 
         // cubic spline interpolation
-        ModuleBase::CubicSpline cubspl;
-        cubspl.build(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
+        ModuleBase::CubicSpline cubspl(ngrid_tbu, grid_tbu, value_tbu); // not-a-knot boundary condition
 
         double* grid_new = new double[ngrid];
         double* value_new = new double[ngrid];
@@ -359,7 +358,6 @@ void NumericalRadial::radtab(const char op,
     // radtab requires that two NumericalRadial objects have exactly the same (non-null) kgrid_
     assert(nk_ > 0 && nk_ == ket.nk_);
     assert(std::equal(kgrid_, kgrid_ + nk_, ket.kgrid_));
-    assert(sbt_.is_ready());
 #endif
 
     double* rgrid_tab = new double[nr_tab];
@@ -389,11 +387,11 @@ void NumericalRadial::radtab(const char op,
 
     if (use_radrfft)
     {
-        sbt_.radrfft(l, nk_, kmax(), fk, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.radrfft(l, nk_, kmax(), fk, table, pk_ + ket.pk_ + op_pk);
     }
     else
     {
-        sbt_.direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk, deriv);
+        sbt_.direct(l, nk_, kgrid_, fk, nr_tab, rgrid_tab, table, pk_ + ket.pk_ + op_pk);
     }
 
     delete[] fk;
@@ -442,8 +440,6 @@ void NumericalRadial::transform(const bool forward)
     {
         return;
     }
-
-    if (!sbt_.is_ready()) sbt_.init();
 
     if (forward)
     { // r -> k

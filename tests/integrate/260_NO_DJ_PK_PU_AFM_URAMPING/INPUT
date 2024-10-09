@@ -1,0 +1,35 @@
+INPUT_PARAMETERS
+suffix    autotest
+nbands    40
+
+calculation    scf
+ecutwfc    10
+scf_thr    1.0e-4
+scf_nmax    500
+out_chg    0
+
+smearing_method    gaussian
+smearing_sigma    0.01
+
+cal_force     1
+cal_stress    1
+
+mixing_type    broyden
+mixing_beta    0.2
+mixing_restart 5e-3
+mixing_dmr     1
+mixing_ndim    15
+
+ks_solver    genelpa
+basis_type    lcao
+gamma_only    0
+symmetry    0
+nspin    2
+
+#Parameter DFT+U
+dft_plus_u    1
+orbital_corr    2 -1
+hubbard_u    5.0 0.0
+uramping     2.5
+pseudo_dir	../../PP_ORB
+orbital_dir	../../PP_ORB

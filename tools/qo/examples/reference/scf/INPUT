@@ -1,0 +1,9 @@
+INPUT_PARAMETERS
+pseudo_dir /abacus-develop/tests/PP_ORB/
+orbital_dir /abacus-develop/tests/PP_ORB/
+
+ecutwfc 100
+scf_nmax 100
+scf_thr 1e-7
+basis_type lcao
+out_chg 1

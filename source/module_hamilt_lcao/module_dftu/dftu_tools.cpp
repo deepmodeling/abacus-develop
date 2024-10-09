@@ -1,5 +1,6 @@
 #include "dftu.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleDFTU
@@ -8,47 +9,52 @@ namespace ModuleDFTU
 void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
     ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_complex");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
-        if (INPUT.orbital_corr[it] == -1)
+        if (PARAM.inp.orbital_corr[it] == -1) {
             continue;
+}
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             const int iat = GlobalC::ucell.itia2iat(it, ia);
             for (int L = 0; L <= GlobalC::ucell.atoms[it].nwl; L++)
             {
-                if (L != INPUT.orbital_corr[it])
+                if (L != PARAM.inp.orbital_corr[it]) {
                     continue;
+}
 
                 for (int n = 0; n < GlobalC::ucell.atoms[it].l_nchi[L]; n++)
                 {
-                    if (n != 0)
+                    if (n != 0) {
                         continue;
+}
 
                     for (int m1 = 0; m1 < 2 * L + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
-                            const int mu = this->LM->ParaV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
-                            if (mu < 0)
+                            const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
+                            if (mu < 0) {
                                 continue;
+}
 
                             for (int m2 = 0; m2 < 2 * L + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int nu
-                                        = this->LM->ParaV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
-                                    if (nu < 0)
+                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                    if (nu < 0) {
                                         continue;
+}
 
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
                                     double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
-                                    VU[nu * this->LM->ParaV->nrow + mu] = std::complex<double>(val, 0.0);
+                                    VU[nu * this->paraV->nrow + mu] = std::complex<double>(val, 0.0);
                                 } // ipol2
                             } // m2
                         } // ipol1
@@ -64,45 +70,50 @@ void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::com
 void DFTU::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU)
 {
     ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_real");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->LM->ParaV->nloc);
+    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
 
     for (int it = 0; it < GlobalC::ucell.ntype; ++it)
     {
-        if (INPUT.orbital_corr[it] == -1)
+        if (PARAM.inp.orbital_corr[it] == -1) {
             continue;
+}
         for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
         {
             const int iat = GlobalC::ucell.itia2iat(it, ia);
             for (int L = 0; L <= GlobalC::ucell.atoms[it].nwl; L++)
             {
-                if (L != INPUT.orbital_corr[it])
+                if (L != PARAM.inp.orbital_corr[it]) {
                     continue;
+}
 
                 for (int n = 0; n < GlobalC::ucell.atoms[it].l_nchi[L]; n++)
                 {
-                    if (n != 0)
+                    if (n != 0) {
                         continue;
+}
 
                     for (int m1 = 0; m1 < 2 * L + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < GlobalV::NPOL; ipol1++)
+                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
                         {
-                            const int mu = this->LM->ParaV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
-                            if (mu < 0)
+                            const int mu = this->paraV->global2local_row(this->iatlnmipol2iwt[iat][L][n][m1][ipol1]);
+                            if (mu < 0) {
                                 continue;
+}
                             for (int m2 = 0; m2 < 2 * L + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < GlobalV::NPOL; ipol2++)
+                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
                                 {
                                     const int nu
-                                        = this->LM->ParaV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
-                                    if (nu < 0)
+                                        = this->paraV->global2local_col(this->iatlnmipol2iwt[iat][L][n][m2][ipol2]);
+                                    if (nu < 0) {
                                         continue;
+}
 
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
-                                    VU[nu * this->LM->ParaV->nrow + mu]
+                                    VU[nu * this->paraV->nrow + mu]
                                         = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
 
                                 } // ipol2
@@ -145,37 +156,41 @@ double DFTU::get_onebody_eff_pot(const int T,
         {
             if (Yukawa)
             {
-                if (m0 == m1)
+                if (m0 == m1) {
                     VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
                          * (0.5 - this->locale[iat][L][N][spin](m0, m1));
-                else
+                } else {
                     VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) * this->locale[iat][L][N][spin](m0, m1);
+}
             }
             else
             {
-                if (m0 == m1)
+                if (m0 == m1) {
                     VU = (this->U[T]) * (0.5 - this->locale[iat][L][N][spin](m0, m1));
-                else
+                } else {
                     VU = -(this->U[T]) * this->locale[iat][L][N][spin](m0, m1);
+}
             }
         }
         else
         {
             if (Yukawa)
             {
-                if (m0 == m1)
+                if (m0 == m1) {
                     VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
                          * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
-                else
+                } else {
                     VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
                          * this->locale_save[iat][L][N][spin](m0, m1);
+}
             }
             else
             {
-                if (m0 == m1)
+                if (m0 == m1) {
                     VU = (this->U[T]) * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
-                else
+                } else {
                     VU = -(this->U[T]) * this->locale_save[iat][L][N][spin](m0, m1);
+}
             }
         }
 

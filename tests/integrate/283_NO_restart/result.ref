@@ -1,8 +1,8 @@
-etotref -252.0473869598927195
-etotperatomref -63.0118467400
-totalforceref 0.462553
-totalstressref 8.814162
+etotref -249.9393795096429187
+etotperatomref -62.4848448774
+totalforceref 0.905016
+totalstressref 91.914135
 pointgroupref C_1h
 spacegroupref C_1h
-nksibzref 30
-totaltimeref +32.08899
+nksibzref 8
+totaltimeref 6.88

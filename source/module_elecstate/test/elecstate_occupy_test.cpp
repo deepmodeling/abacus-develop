@@ -1,7 +1,9 @@
 #include <string>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/elecstate_getters.h"
 
 /***************************************************************
@@ -15,7 +17,7 @@
  */
 #define private public
 #include "module_elecstate/occupy.h"
-
+#undef private
 class OccupyTest : public ::testing::Test
 {
 protected:
@@ -181,7 +183,7 @@ TEST_F(OccupyTest, DecisionArbitrary)
 
 TEST_F(OccupyTest, IweightsNOSPIN)
 {
-  GlobalV::NSPIN = 1;
+  PARAM.input.nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);
@@ -195,7 +197,7 @@ TEST_F(OccupyTest, IweightsNOSPIN)
 
 TEST_F(OccupyTest, IweightsSPIN)
 {
-  GlobalV::NSPIN = 2;
+  PARAM.input.nspin = 2;
   double ef_up = 0.0;
   double ef_dw = 0.0;
   ModuleBase::matrix wg(2, 1);
@@ -216,7 +218,7 @@ TEST_F(OccupyTest, IweightsSPIN)
 
 TEST_F(OccupyTest, IweightsWarning)
 {
-  GlobalV::NSPIN = 1;
+  PARAM.input.nspin = 1;
   double ef = 0.0;
   ModuleBase::matrix wg(1, 1);
   std::vector<double> wk(1, 2.0);
@@ -296,5 +298,3 @@ TEST_F(OccupyTest, Gweights)
   EXPECT_NEAR(demet, 0.0, 1e-13);
   EXPECT_NEAR(wg(0, 0), 1.0, 1e-13);
 }
-
-#undef private

@@ -184,24 +184,21 @@ void surchem::Leps2(const UnitCell& ucell,
         grad_phi[ir].y *= epsilon[ir];
         grad_phi[ir].z *= epsilon[ir];
     }
-
-    double *lp_real = new double[rho_basis->nrxx];
-    ModuleBase::GlobalFunc::ZEROS(lp_real, rho_basis->nrxx);
+    std::vector<double> lp_real(rho_basis->nrxx,0);
     ModuleBase::GlobalFunc::ZEROS(lp, rho_basis->npw);
 
-    double *grad_grad_phi = new double[rho_basis->nrxx];
+    std::vector<double> grad_grad_phi(rho_basis->nrxx,0);
     complex<double> *grad_grad_phi_G = new complex<double>[rho_basis->npw];
     ModuleBase::Vector3<double> *tmp_vector3 = new ModuleBase::Vector3<double>[rho_basis->nrxx];
 
     // x
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi, rho_basis->nrxx);
     ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_G, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         grad_grad_phi[ir] = grad_phi[ir].x;
     }
-    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
+    rho_basis->real2recip(grad_grad_phi.data(), grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -209,14 +206,14 @@ void surchem::Leps2(const UnitCell& ucell,
     }
 
     // y
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi, rho_basis->nrxx);
+    grad_grad_phi.assign(grad_grad_phi.size(),0.0);
     ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_G, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         grad_grad_phi[ir] = grad_phi[ir].y;
     }
-    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
+    rho_basis->real2recip(grad_grad_phi.data(), grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -224,14 +221,14 @@ void surchem::Leps2(const UnitCell& ucell,
     }
 
     // z
-    ModuleBase::GlobalFunc::ZEROS(grad_grad_phi, rho_basis->nrxx);
+    grad_grad_phi.assign(grad_grad_phi.size(),0.0);
     ModuleBase::GlobalFunc::ZEROS(grad_grad_phi_G, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(tmp_vector3, rho_basis->nrxx);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
         grad_grad_phi[ir] = grad_phi[ir].z;
     }
-    rho_basis->real2recip(grad_grad_phi, grad_grad_phi_G);
+    rho_basis->real2recip(grad_grad_phi.data(), grad_grad_phi_G);
     XC_Functional::grad_rho(grad_grad_phi_G, tmp_vector3, rho_basis, ucell.tpiba);
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -242,13 +239,13 @@ void surchem::Leps2(const UnitCell& ucell,
     //     cout << lp_real << [i] << endl;
     // }
 
-    rho_basis->real2recip(lp_real, lp);
+    rho_basis->real2recip(lp_real.data(), lp);
     // cout<<"lp: "<<endl;
     // test_print(lp, 10);
 
     delete[] grad_phi;
-    delete[] lp_real;
-    delete[] grad_grad_phi;
+    std::vector<double>().swap(lp_real);
+    std::vector<double>().swap(grad_grad_phi);
     delete[] grad_grad_phi_G;
     delete[] tmp_vector3;
 }

@@ -3,12 +3,9 @@
 namespace hamilt {
 
 template <typename FPTYPE>
-struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator() (
-        const psi::DEVICE_CPU* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        const FPTYPE* in)
+struct veff_pw_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
@@ -19,12 +16,11 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
         }
     }
 
-    void operator() (
-        const psi::DEVICE_CPU* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        std::complex<FPTYPE>* out1,
-        const FPTYPE** in)
+    void operator()(const base_device::DEVICE_CPU* dev,
+                    const int& size,
+                    std::complex<FPTYPE>* out,
+                    std::complex<FPTYPE>* out1,
+                    const FPTYPE** in)
     {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -44,8 +40,8 @@ struct veff_pw_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-template struct veff_pw_op<float, psi::DEVICE_CPU>;
-template struct veff_pw_op<double, psi::DEVICE_CPU>;
+template struct veff_pw_op<float, base_device::DEVICE_CPU>;
+template struct veff_pw_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace hamilt
 

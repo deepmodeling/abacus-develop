@@ -4,6 +4,7 @@
 
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
+#include <base/macros/macros.h>
 
 namespace hamilt {
 
@@ -37,18 +38,17 @@ __global__ void meta_pw(
 }
 
 template <typename FPTYPE>
-void meta_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-        const psi::DEVICE_GPU* dev,
-        const int& ik,
-        const int& pol,
-        const int& npw,
-        const int& npwx,
-        const FPTYPE& tpiba,
-        const FPTYPE* gcar,
-        const FPTYPE* kvec_c,
-        const std::complex<FPTYPE>* in,
-        std::complex<FPTYPE>* out,
-        const bool add)
+void meta_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
+                                                             const int& ik,
+                                                             const int& pol,
+                                                             const int& npw,
+                                                             const int& npwx,
+                                                             const FPTYPE& tpiba,
+                                                             const FPTYPE* gcar,
+                                                             const FPTYPE* kvec_c,
+                                                             const std::complex<FPTYPE>* in,
+                                                             std::complex<FPTYPE>* out,
+                                                             const bool add)
 {
     const int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     meta_pw<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -58,9 +58,11 @@ void meta_pw_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         reinterpret_cast<const thrust::complex<FPTYPE> * >(in),
         reinterpret_cast<thrust::complex<FPTYPE> * >(out),
         add);
+
+    cudaCheckOnDebug();
 }
 
-template struct meta_pw_op<float, psi::DEVICE_GPU>;
-template struct meta_pw_op<double, psi::DEVICE_GPU>;
+template struct meta_pw_op<float, base_device::DEVICE_GPU>;
+template struct meta_pw_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

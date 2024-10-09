@@ -2,14 +2,14 @@
 #include "module_base/tool_quit.h"
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
-
+#include "module_parameter/parameter.h"
 namespace ModulePW
 {
-/// 
-/// distribute plane waves to different cores
-/// Known: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
-/// output: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
-/// 
+/**
+ * @brief distribute plane waves to different cores
+ * @param in: G, GT, GGT, fftnx, fftny, nz, poolnproc, poolrank, ggecut
+ * @param out: ig2isz[ig], istot2ixy[is], is2fftixy[is], fftixy2ip[ixy], gg[ig], gcar[ig], gdirect[ig], nst, nstot
+ */
 void PW_Basis::distribute_g()
 {
     ModuleBase::timer::tick(this->classname, "distributeg");
@@ -25,18 +25,22 @@ void PW_Basis::distribute_g()
     {
         ModuleBase::WARNING_QUIT("divide", "No such division type.");
     }
-    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", "Current core has no plane waves! Please reduce the cores.");
+    ModuleBase::CHECK_WARNING_QUIT((this->npw == 0), "pw_distributeg.cpp", PARAM.inp.calculation,
+    "Current core has no plane waves! Please reduce the cores.");
     ModuleBase::timer::tick(this->classname, "distributeg");
     return;
 }
 
-///
-/// (1) We count the total number of planewaves (tot_npw) and sticks (this->nstot) here.
-/// Meanwhile, we record the number of planewaves on (x, y) in st_length2D, and store the smallest z-coordinate of each stick in st_bottom2D,
-/// so that we can scan a much smaller area in step(2).
-/// known: fftnx, fftny, nz, ggecut, GGT
-/// output: tot_npw, this->nstot, st_length2D, st_bottom2D, this->riy, this->liy
-///
+/**
+ * @brief (1) We count the total number of planewaves (tot_npw) and sticks (this->nstot) here.
+ *
+ *  Meanwhile, we record the number of planewaves on (x, y) in st_length2D, and store the smallest z-coordinate of each stick in st_bottom2D,
+ *  so that we can scan a much smaller area in step(2).
+ *
+ * @param in: fftnx, fftny, nz, ggecut, GGT
+ * @param out: tot_npw, this->nstot, st_length2D, st_bottom2D, this->riy, this->liy
+ */
+
 void PW_Basis::count_pw_st(
         int* st_length2D, // the number of planewaves that belong to the stick located on (x, y).
         int* st_bottom2D  // the z-coordinate of the bottom of stick on (x, y).
@@ -48,10 +52,10 @@ void PW_Basis::count_pw_st(
 
     // determine the scaning area along x-direct, if gamma-only && xprime, only positive axis is used.
     int ix_end = int(this->nx / 2) + 1;
-    int ix_start = -ix_end; 
+    int ix_start = -ix_end;
     // determine the scaning area along y-direct, if gamma-only && !xprime, only positive axis is used.
     int iy_end = int(this->ny / 2) + 1;
-    int iy_start = -iy_end; 
+    int iy_start = -iy_end;
 
     int iz_end = int(this->nz / 2) + 1;
     int iz_start = -iz_end;
@@ -59,10 +63,10 @@ void PW_Basis::count_pw_st(
     if (this->full_pw)
     {
         ix_end = int(this->nx / 2);
-        ix_start = ix_end - this->nx + 1; 
+        ix_start = ix_end - this->nx + 1;
 
         iy_end = int(this->ny / 2);
-        iy_start = iy_end - this->ny + 1; 
+        iy_start = iy_end - this->ny + 1;
 
         iz_end = int(this->nz / 2);
         iz_start = iz_end - this->nz + 1;
@@ -131,14 +135,17 @@ void PW_Basis::count_pw_st(
     return;
 }
 
-///
-/// (5) Construct ig2isz, and is2fftixy.
-/// is2fftixy contains the x-coordinate and y-coordinate of sticks on current core.
-/// ig2isz contains the z-coordinate of planewaves on current core.
-/// We will scan all the sticks and find the planewaves on them, then store the information into ig2isz and is2fftixy.
-/// known: this->nstot, st_bottom2D, st_length2D
-/// output: ig2isz, is2fftixy
-/// 
+/**
+ * @brief (5) Construct ig2isz, and is2fftixy.
+ *
+ *  is2fftixy contains the x-coordinate and y-coordinate of sticks on current core.
+ *  ig2isz contains the z-coordinate of planewaves on current core.
+ *  We will scan all the sticks and find the planewaves on them, then store the information into ig2isz and is2fftixy.
+ *
+ * @param in: this->nstot, st_bottom2D, st_length2D
+ * @param out: ig2isz, is2fftixy
+ */
+
 void PW_Basis::get_ig2isz_is2fftixy(
     int* st_bottom2D,     // minimum z of stick, stored in 1d array with this->nstot elements.
     int* st_length2D     // the stick on (x, y) consists of st_length[x*fftny+y] planewaves.
@@ -160,7 +167,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
     delete[] this->ig2isz; this->ig2isz = new int[this->npw]; // map ig to the z coordinate of this planewave.
     ModuleBase::GlobalFunc::ZEROS(this->ig2isz, this->npw);
     delete[] this->is2fftixy; this->is2fftixy = new int[this->nst]; // map is (index of sticks) to ixy (iy + ix * fftny).
-    for (int is = 0; is < this->nst; ++is) 
+    for (int is = 0; is < this->nst; ++is)
     {
         this->is2fftixy[is] = -1;
     }
@@ -193,4 +200,4 @@ void PW_Basis::get_ig2isz_is2fftixy(
 #endif
     return;
 }
-}
+} // namespace ModulePW

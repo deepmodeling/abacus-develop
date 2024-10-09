@@ -1,5 +1,8 @@
 #include "../global_function.h"
 #include "../global_variable.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../vector3.h"
 #include "../blas_connector.h"
 #include "../tool_quit.h"
@@ -10,7 +13,7 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include <time.h>
+#include <ctime>
 
 /************************************************
  *  unit test of functions in global_function
@@ -54,7 +57,7 @@
  *   - print out warning info in running.log file
  * - COPYARRAY
  *   - copy complex or double arrays
- * - IS_COLUMN_MAJOR_KS_SOLVER()
+ * - IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver)
  *   - judge whether the KS_SOLVER is column major
  * - VECTOR_TO_PTR
  *   - get a copy of the ptr of a vector
@@ -228,7 +231,7 @@ TEST_F(GlobalFunctionTest, OutV2)
     ModuleBase::GlobalFunc::OUT(ofs, "tmp_double", tmp_double);
     ModuleBase::GlobalFunc::OUT(ofs, "tmp_string", tmp_string);
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<50;i++)
     {
     	para += "a";
@@ -297,7 +300,8 @@ TEST_F(GlobalFunctionTest, OutV2)
     {
 	tmp_para += "a";
 	length = tmp_para.size()+1;
-	if (length == 32) EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+	if (length == 32) { EXPECT_THAT(str, testing::HasSubstr(tmp_para));
+}
     }
     ifs.close();
 }
@@ -365,7 +369,7 @@ TEST_F(GlobalFunctionTest, ToString)
     EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_double),"5");
     EXPECT_EQ(ModuleBase::GlobalFunc::TO_STRING(tmp_string),"string");
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<100;i++)
     {
     	para += "a";
@@ -427,8 +431,8 @@ TEST_F(GlobalFunctionTest, MakeDir)
 TEST_F(GlobalFunctionTest, OutTime)
 {
     std::string name = "scf";
-    start = time(NULL);
-    end = time(NULL) + 200;
+    start = time(nullptr);
+    end = time(nullptr) + 200;
     ModuleBase::GlobalFunc::OUT_TIME(name, start, end);
     GlobalV::ofs_warning.close();
     ifs.open("warning.log");
@@ -451,7 +455,7 @@ TEST_F(GlobalFunctionTest, AutoSet)
     ModuleBase::GlobalFunc::AUTO_SET("tmp_d", tmp_d);
     ModuleBase::GlobalFunc::AUTO_SET("tmp_string", tmp_string);
     std::string para = "";
-    int length;
+    int length = 0;
     for (int i=0;i<10;i++)
     {
     	para += "a";
@@ -559,8 +563,8 @@ TEST_F(GlobalFunctionTest, ReadValue)
     ofs << "string" << std::endl;
     ofs.close();
     ifs.open("tmp");
-    int tmp_int;
-    double tmp_double;
+    int tmp_int = 0;
+    double tmp_double = 0.0;
     std::string tmp_string;
     // source/module_cell/read_atoms.cpp line 153:154
     ModuleBase::GlobalFunc::READ_VALUE(ifs, tmp_int);
@@ -651,8 +655,8 @@ TEST_F(GlobalFunctionTest, COPYARRAY)
 
 TEST_F(GlobalFunctionTest,IsColumnMajor)
 {
-	GlobalV::KS_SOLVER = "genelpa";
-	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER());
+	PARAM.input.ks_solver = "genelpa";
+	EXPECT_TRUE(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.input.ks_solver));
 }
 
 TEST_F(GlobalFunctionTest,Vector2Ptr)
@@ -685,36 +689,6 @@ TEST_F(GlobalFunctionTest,MemAvailable)
     }
 }
 
-TEST_F(GlobalFunctionTest,TEST_LEVEL)
-{
-    std::string name;
-    bool test_bool=false;
-    name="none";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_wf,0);
-    EXPECT_EQ(GlobalV::test_potential,0);
-    EXPECT_EQ(GlobalV::test_charge,0);
-    name="init_potential";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_wf,1);
-    EXPECT_EQ(GlobalV::test_potential,1);
-    EXPECT_EQ(GlobalV::test_charge,1);
-    name="init_read";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_input,1);
-    EXPECT_EQ(GlobalV::test_winput,1);
-    EXPECT_EQ(GlobalV::test_kpoint,1);
-    EXPECT_EQ(GlobalV::test_atom,1);
-    EXPECT_EQ(GlobalV::test_unitcell,1);
-#ifndef __EPM
-        EXPECT_EQ(GlobalV::test_pseudo_cell,1);
-#else
-        EXPECT_EQ(test_epm_unitcell,1);
-#endif
-    name="pw_init";
-    ModuleBase::GlobalFunc::TEST_LEVEL(name,test_bool);
-    EXPECT_EQ(GlobalV::test_pw,1);
-}
 
 TEST_F(GlobalFunctionTest,BlockHere)
 {

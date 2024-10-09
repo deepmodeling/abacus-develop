@@ -17,6 +17,7 @@ class LCAO_Deepks_Interface
     /// @param[in] etot
     /// @param[in] nks
     /// @param[in] nat
+    /// @param[in] nlocal
     /// @param[in] ekb
     /// @param[in] kvec_d
     /// @param[in] ucell
@@ -27,10 +28,12 @@ class LCAO_Deepks_Interface
     /// @param[in] psid
     /// @param[in] dm_gamma
     /// @param[in] dm_k
+    /// @param[in] deepks_v_delta
     // for Gamma-only
-    void out_deepks_labels(double etot,
-                           int nks,
-                           int nat,
+    void out_deepks_labels(const double& etot,
+                           const int& nks,
+                           const int& nat,
+                           const int& nlocal,
                            const ModuleBase::matrix& ekb,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const UnitCell& ucell,
@@ -38,11 +41,13 @@ class LCAO_Deepks_Interface
                            Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<double>& psid,
-                           const elecstate::DensityMatrix<double, double>* dm);
+                           const elecstate::DensityMatrix<double, double>* dm,
+                           const int& deepks_v_delta);
   // for multi-k
-  void out_deepks_labels(double etot,
-                           int nks,
-                           int nat,
+  void out_deepks_labels(const double& etot,
+                           const int& nks,
+                           const int& nat,
+                           const int& nlocal,
                            const ModuleBase::matrix& ekb,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const UnitCell& ucell,
@@ -50,7 +55,8 @@ class LCAO_Deepks_Interface
                            Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<std::complex<double>>& psi,
-                           const elecstate::DensityMatrix<std::complex<double>, double>* dm);
+                           const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+                           const int& deepks_v_delta);
 
   private:
     std::shared_ptr<LCAO_Deepks> ld;

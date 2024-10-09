@@ -23,15 +23,19 @@ mv OUT.ABACUS/running_scf.log OUT.ABACUS/running_scf_H2.log
 
 rm STRU
 
-E_H2O=`grep GE H2O_scf.output | tail -n 1 | awk '{printf $2}'`
-E_O=`grep GE O_scf.output | tail -n 1 | awk '{printf $2}'`
-E_H1=`grep GE H1_scf.output | tail -n 1 | awk '{printf $2}'`
-E_H2=`grep GE H2_scf.output | tail -n 1 | awk '{printf $2}'`
-result=$(awk 'BEGIN{print "'$E_H2O'" - "'$E_O'" - "'$E_H1'" - "'$E_H2'"}')
+E_H2O=$(grep FINAL_ETOT_IS OUT.ABACUS/running_scf_H2O.log | awk '{printf $2}')
+E_O=$(grep FINAL_ETOT_IS OUT.ABACUS/running_scf_O.log | awk '{printf $2}')
+E_H1=$(grep FINAL_ETOT_IS OUT.ABACUS/running_scf_H1.log | awk '{printf $2}')
+E_H2=$(grep FINAL_ETOT_IS OUT.ABACUS/running_scf_H2.log | awk '{printf $2}')
+result=$(echo "scale=12; ${E_H2O} - ${E_O} - ${E_H1} - ${E_H2}" | bc -l)
 echo $result > result.out
-result_ref=$(cat result.ref)
-difference=$(awk 'BEGIN{print "'$result'" - "'$result_ref'"}')
-difference=$(awk -v a=$difference 'BEGIN{if(a<0) print -1*a; else print a}')
+echo "E_H2O: $E_H2O" >> result.out
+echo "E_O: $E_O" >> result.out
+echo "E_H1: $E_H1" >> result.out
+echo "E_H2: $E_H2" >> result.out
+result_ref=$(cat result.ref | head -1)
+difference=$(echo "scale=12; $result - $result_ref" | bc -l)
+abs_difference=$(echo "scale=12; if ($difference < 0) $difference * -1 else $difference" | bc)
 
 if [[ ! -f H2O_scf.output ]] || 
    [[ ! -f O_scf.output ]] ||
@@ -45,7 +49,7 @@ if [[ ! -f H2O_scf.output ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_O.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_H1.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf_H2.log)" == " Total  Time  :"* ) ]] ||
-   [[ $difference > 0.000001 ]] 
+   [ $(echo "$abs_difference < 0.00001" | bc) -ne 1 ]
 then
 	echo "job is failed!"
 	exit 1

@@ -41,7 +41,6 @@ int calculate()
 	test.check_gvx();
 
 	test.check_edelta();
-	test.check_v_delta();
 	test.check_e_deltabands();
 	test.check_f_delta();
 

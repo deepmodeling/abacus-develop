@@ -11,13 +11,13 @@ static hipblasHandle_t hipblas_handle = nullptr;
 
 void createGpuBlasHandle() {
     if (hipblas_handle == nullptr) {
-        hipblasErrcheckInternal(hipblasCreate(&hipblas_handle));
+        hipblasErrcheck(hipblasCreate(&hipblas_handle));
     }
 }
 
 void destroyGpuBlasHandle() {
     if (hipblas_handle != nullptr) {
-        hipblasErrcheckInternal(hipblasDestroy(hipblas_handle));
+        hipblasErrcheck(hipblasDestroy(hipblas_handle));
         hipblas_handle = nullptr;
     }
 }

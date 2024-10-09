@@ -44,7 +44,7 @@ If the Deep Potential model is employed in Molecule Dynamics calculations, the f
 cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
 ```
 
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
 
 ## Build with LibRI and LibComm
 
@@ -69,6 +69,16 @@ After building and installing, unit tests can be performed with `ctest`.
 
 To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tests with name matched by given pattern.
 
+## Build Performance Tests
+
+To build performance tests for ABACUS, define `ENABLE_GOOGLEBENCH` flag. You can also specify the path to a local installation of [Google Benchmark](https://github.com/google/benchmark.git) by setting `BENCHMARK_DIR` flags. If not found locally, the configuration process will try to download it automatically.
+
+```bash
+cmake -B build -DENABLE_GOOGLEBENCH=1
+```
+
+Google Benchmark requires Google Test to build and run the tests. When setting `ENABLE_GOOGLEBENCH` to ON, `BUILD_TESTING` is automatically enabled. After building and installing, performance tests can be executed with `ctest`.
+
 ## Build with CUDA support
 
 ### Extra prerequisites
@@ -92,6 +102,18 @@ Currently supported math functions:
 
 ```bash
 cmake -B build -DUSE_ABACUS_LIBM=1
+```
+
+## Build with PEXSI support
+
+ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version 2.0.0 is tested to work with ABACUS, please always use the latest version of PEXSI. 
+
+To build ABACUS with PEXSI support, you need to compile PEXSI (and its dependencies) first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. Note that PEXSI requires ParMETIS and SuperLU_DIST.
+
+After compiling PEXSI, you can set `ENABLE_PEXSI` to `ON`. If the libraries are not installed in standard paths, you can set `PEXSI_DIR`, `ParMETIS_DIR` and `SuperLU_DIST_DIR` to the corresponding directories.
+
+```bash
+cmake -B build -DENABLE_PEXSI=ON -DPEXSI_DIR=${path to PEXSI installation directory} -DParMETIS_DIR=${path to ParMETIS installation directory} -DSuperLU_DIST_DIR=${path to SuperLU_DIST installation directory}
 ```
 
 ## Build ABACUS with make
@@ -268,7 +290,7 @@ make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
 
 directly.
 
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md).
+> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
 
 ### Add LibRI Support
 To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use

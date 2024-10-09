@@ -1,128 +1,145 @@
 #ifndef _PARALLEL_2D_H_
 #define _PARALLEL_2D_H_
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 
-#ifdef __MPI
-#include <mpi.h>
-#endif
+#include <cstdint>
+#include <vector>
+
+#include "module_base/blacs_connector.h"
 
 /// @brief  This class packs the basic information of
 /// 2D-block-cyclic parallel distribution of an arbitrary matrix.
 class Parallel_2D
 {
-public:
-    Parallel_2D();
-    ~Parallel_2D();
+  public:
+    Parallel_2D() = default;
+    ~Parallel_2D() = default;
 
-    /// local size (nloc = nrow * ncol)
-    int nrow;
-    int ncol;
-    long nloc;
+    Parallel_2D& operator=(Parallel_2D&& rhs) = default;
 
-    /// block size,
-    /// the default value of nb is 1,
-    /// but can change to larger value from input.
-    int nb = 1;
+    /// number of local rows
+    int get_row_size() const
+    {
+        return nrow;
+    };
 
-    /// the number of processors in each dimension of MPI_Cart structure
-    int dim0;
-    int dim1;
-    /// the coordinate of current processor in each dimension of MPI_Cart structure
-    int coord[2];
+    /// number of local columns
+    int get_col_size() const
+    {
+        return ncol;
+    };
 
-    /// test parameter
-    int testpb;
+    /// number of global rows
+    int get_global_row_size() const;
 
-    /// total number of columns of matrix in this processor
-    int get_col_size()const { return this->ncol; };
+    /// number of global columns
+    int get_global_col_size() const;
 
-    /// total number of rows of matrix in this processor
-    int get_row_size()const { return this->nrow; };
-
-    /// total number of elements of matrix in this processor
-    int get_local_size()const { return this->nloc; };
+    /// number of local matrix elements
+    int64_t get_local_size() const
+    {
+        return nloc;
+    };
 
     /// get the local index of a global index (row)
-    int global2local_row(const int& igr) const
+    int global2local_row(const int igr) const
     {
-        return this->global2local_row_[igr];
+        return global2local_row_[igr];
     }
 
     /// get the local index of a global index (col)
-    int global2local_col(const int& igc) const
+    int global2local_col(const int igc) const
     {
-        return this->global2local_col_[igc];
+        return global2local_col_[igc];
     }
 
     /// get the global index of a local index (row)
-    int local2global_row(const int& ilr) const
+    int local2global_row(const int ilr) const
     {
-        return this->local2global_row_[ilr];
+        return local2global_row_[ilr];
     }
 
     /// get the global index of a local index (col)
-    int local2global_col(const int& ilc) const
+    int local2global_col(const int ilc) const
     {
-        return this->local2global_col_[ilc];
+        return local2global_col_[ilc];
     }
 
-    /// check whether an element is in this processor
-    /// (check whether local-index > 0 )
-    bool in_this_processor(const int& iw1_all, const int& iw2_all) const;
+    /// check whether a global index is in this process
+    bool in_this_processor(const int iw1_all, const int iw2_all) const;
 
-    void set_block_size(const int& nb_in) { this->nb = nb_in; };
-    int get_block_size()const { return this->nb; };
-
-    /// Set the 2D-structure of processors in each dimension.
-    /// dim0 and dim1 will be set as close to sqrt(nproc) as possible.
-    /// For example: nproc = 12,
-    /// if mode==0, d dim0 = 3, dim1 = 4; else, dim0 = 3, dim1 = 3.
-    void set_proc_dim(const int& dsize, bool mode = 0);
+    /// side length of 2d square block
+    int get_block_size() const
+    {
+        return nb;
+    };
 
 #ifdef __MPI
-    int blacs_ctxt;    ///< blacs info
-    int desc[9];    ///<for matrix, nlocal*nlocal    
-    MPI_Comm comm_2D;   ///<communicator for 2D-block
+    /**
+     * @brief Initialize a BLACS grid with the given MPI communicator
+     * and set up the info of a block-cyclic distribution.
+     *
+     */
+    int init(const int mg,
+             const int ng,
+             const int nb, // square block is assumed
+             const MPI_Comm comm,
+             bool mode = false);
 
-    /// create the 'comm_2D' stratege.
-    void mpi_create_cart(const MPI_Comm& diag_world);
+    /**
+     * @brief Set up the info of a block-cyclic distribution using given
+     * BLACS context.
+     *
+     */
+    int set(const int mg,
+            const int ng,
+            const int nb, // square block is assumed
+            const int blacs_ctxt);
 
-    /// set the map from local index to global index,
-    /// and set local sizes (nrow, ncol, nloc) by the way
-    int set_local2global(const int& M_A/**< global row size*/,
-        const int& N_A/**< global col size*/,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning);
+    /// BLACS context
+    int blacs_ctxt = -1;
 
-    ///@brief set the desc[9] of the 2D-block-cyclic distribution
-    void set_desc(const int& gr/**< global row size*/,
-        const int& gc/**< global col size*/,
-        const int& lld/**< leading local dimension*/,
-        bool first_time = true/**< true: call `Cblacs_get`; false: use `this->blacs_ctxt`*/);
-#else
-    void set_serial(const int& M_A/**< global row size*/,
-        const int& N_A/**< global col size*/);
+    /// ScaLAPACK descriptor
+    int desc[9] = {};
+
+    MPI_Comm comm() const;
 #endif
 
-    void set_global2local(const int& M_A,
-        const int& N_A,
-        const bool& div_2d,
-        std::ofstream& ofs_running);
+    void set_serial(const int mg, const int ng);
 
-protected:
+    // FIXME the following variables should be private, but they are
+    // widely used in the code currently. Public visibility is kept
+    // for now, but might be changed in the future.
 
+    /// local size (nloc = nrow * ncol)
+    int nrow = 0;
+    int ncol = 0;
+    int64_t nloc = 0;
+    // NOTE: ScaLAPACK descriptors use int type for the number of rows and columns of
+    // both the global and local matrices, so nrow & ncol have to be int type. Their
+    // product, however, can exceed the range of int type.
+
+    /// block size
+    int nb = 1;
+
+    /// number of processes in each dimension of the MPI Cartesian grid
+    int dim0 = 0;
+    int dim1 = 0;
+
+    /// process coordinate in the BLACS grid
+    int coord[2] = {-1, -1};
+
+  protected:
     /// map from global index to local index
-    int* global2local_row_ = nullptr;
-    int* global2local_col_ = nullptr;
+    std::vector<int> global2local_row_;
+    std::vector<int> global2local_col_;
 
     /// map from local index to global index
-    std::vector<int> local2global_row_;				// Peize Lin change int* to vector 2022.08.03
+    std::vector<int> local2global_row_;
     std::vector<int> local2global_col_;
 
-    /// set the map from local index to global index
-    void init_global2local(const int& M_A/**< global row size*/,
-        const int& N_A/**< global col size*/,
-        std::ofstream& ofs_running);
+#ifdef __MPI
+    void _init_proc_grid(const MPI_Comm comm, const bool mode);
+    void _set_dist_info(const int mg, const int ng, const int nb);
+#endif
 };
 #endif

@@ -8,12 +8,15 @@
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h" // mohan add 2024-06-15
 
 #include <string>
+#include <vector>
 
 //==========================================================
 // CLASS :
@@ -36,22 +39,34 @@ class DFTU
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell, // unitcell class
-              LCAO_Matrix& lm,
-              const int& nks);
+              const Parallel_Orbitals* pv,
+              const int& nks,
+              const LCAO_Orbitals& orb
+              );
 
     // calculate the energy correction
     void cal_energy_correction(const int istep);
     double get_energy(){return EU;}
+    void uramping_update(); // update U by uramping
+    bool u_converged(); // check if U is converged
 
-    double* U; // U (Hubbard parameter U)
-    int* orbital_corr; //
+    std::vector<double> U = {}; // U (Hubbard parameter U)
+    std::vector<double> U0; // U0 (target Hubbard parameter U0)
+    std::vector<int> orbital_corr = {}; //
+    double uramping; // increase U by uramping, default is -1.0
     int omc; // occupation matrix control
     int mixing_dftu; //whether to mix locale
 
-  private:
-    LCAO_Matrix* LM;
     double EU; //+U energy
+  private:
+    const Parallel_Orbitals* paraV = nullptr;
     int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
+
+    // FIXME: the following variable does not have static lifetime;
+    // while the present class is used via a global variable. This has
+    // potential to cause dangling pointer issues.
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
+    std::vector<double> orb_cutoff_;
     
     // transform between iwt index and it, ia, L, N and m index
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>
@@ -62,8 +77,8 @@ class DFTU
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk);
-    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk);
+    void cal_eff_pot_mat_complex(const int ik, std::complex<double>* eff_pot, const std::vector<int>& isk, const std::complex<double>* sk);
+    void cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vector<int>& isk, const double* sk);
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
     void cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<double>* SR, std::complex<double>* HR);
 
@@ -75,22 +90,23 @@ class DFTU
   public:
     // calculate the local occupation number matrix
     void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
-    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta);
+    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
 
-  private:
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
+  private:
     void copy_locale();
     void zero_locale();
     void mix_locale(const double& mixing_beta);
 
+public:
     // local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale; // locale[iat][l][n][spin](m1,m2)
     std::vector<std::vector<std::vector<std::vector<ModuleBase::matrix>>>> locale_save; // locale_save[iat][l][n][spin](m1,m2)
-
+private:
     //=============================================================
     // In dftu_tools.cpp
     // For calculating onsite potential, which is used
@@ -114,15 +130,32 @@ class DFTU
     // Subroutines for folding S and dS matrix
     //=============================================================
 
-    void fold_dSR_gamma(const int dim1, const int dim2, double* dSR_gamma);
+	void fold_dSR_gamma(
+			const UnitCell &ucell,
+			const Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const int dim1, 
+			const int dim2, 
+			double* dSR_gamma);
+
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
-    void folding_matrix_k(const int ik, 
-                        const int dim1, 
-                        const int dim2, 
-                        std::complex<double>* mat_k, 
-                        std::vector<ModuleBase::Vector3<double>> kvec_d);
+
+    void folding_matrix_k(
+        ForceStressArrays &fsr,
+        const Parallel_Orbitals &pv,
+		const int ik, 
+		const int dim1, 
+		const int dim2, 
+		std::complex<double>* mat_k, 
+		const std::vector<ModuleBase::Vector3<double>> &kvec_d);
+
+
     /**
      * @brief new function of folding_S_matrix
      * only for Hamiltonian now, for force and stress will be developed later
@@ -135,23 +168,50 @@ class DFTU
     // For calculating force and stress fomr DFT+U
     //=============================================================
   public:
-    void force_stress(const elecstate::ElecState* pelec,
-                      LCAO_Matrix& lm,
-                      ModuleBase::matrix& force_dftu,
-                      ModuleBase::matrix& stress_dftu,
-                      const K_Vectors& kv);
+
+   void force_stress(const elecstate::ElecState* pelec,
+		   const Parallel_Orbitals& pv,
+		   ForceStressArrays& fsr,
+		   ModuleBase::matrix& force_dftu,
+		   ModuleBase::matrix& stress_dftu,
+		   const K_Vectors& kv);
 
   private:
-    void cal_force_k(const int ik,
-                    const std::complex<double>* rho_VU,
-                    ModuleBase::matrix& force_dftu,
-                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
-    void cal_stress_k(const int ik,
-                      const std::complex<double>* rho_VU,
-                      ModuleBase::matrix& stress_dftu,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d);
-    void cal_force_gamma(const double* rho_VU, ModuleBase::matrix& force_dftu);
-    void cal_stress_gamma(const double* rho_VU, ModuleBase::matrix& stress_dftu);
+
+   void cal_force_k(
+		   ForceStressArrays &fsr,
+		   const Parallel_Orbitals &pv,
+		   const int ik,
+		   const std::complex<double>* rho_VU,
+		   ModuleBase::matrix& force_dftu,
+		   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+
+    void cal_stress_k(
+			ForceStressArrays &fsr,
+			const Parallel_Orbitals &pv,
+			const int ik,
+			const std::complex<double>* rho_VU,
+			ModuleBase::matrix& stress_dftu,
+			const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+
+	void cal_force_gamma(
+			const double* rho_VU, 
+			const Parallel_Orbitals &pv,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			ModuleBase::matrix& force_dftu);
+
+	void cal_stress_gamma(
+			const UnitCell &ucell,
+			const Parallel_Orbitals &pv,
+			Grid_Driver* gd,
+			double* dsloc_x,
+			double* dsloc_y,
+			double* dsloc_z,
+			double* dh_r,
+			const double* rho_VU, 
+			ModuleBase::matrix& stress_dftu);
 
     //=============================================================
     // In dftu_io.cpp
@@ -161,7 +221,7 @@ class DFTU
     void output();
 
   private:
-    void write_occup_m(std::ofstream& ofs);
+    void write_occup_m(std::ofstream& ofs, bool diag=false);
     void read_occup_m(const std::string& fn);
     void local_occup_bcast();
 
@@ -185,11 +245,30 @@ class DFTU
 
     double spherical_Bessel(const int k, const double r, const double lambda);
     double spherical_Hankel(const int k, const double r, const double lambda);
+
+  public:
+    /**
+     * @brief get the density matrix of target spin
+     * nspin = 1 and 4 : ispin should be 0
+     * nspin = 2 : ispin should be 0/1
+    */
+    const hamilt::HContainer<double>* get_dmr(int ispin) const;
+    /**
+     * @brief set the density matrix for DFT+U calculation
+     * if the density matrix is not set or set to nullptr, the DFT+U calculation will not be performed
+    */
+    void set_dmr(const elecstate::DensityMatrix<double, double>* dm_in_dftu_d);
+    void set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd);
+  
+  private:
+    const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 };
+
 } // namespace ModuleDFTU
 
 namespace GlobalC
 {
-extern ModuleDFTU::DFTU dftu;
+	extern ModuleDFTU::DFTU dftu;
 }
 #endif

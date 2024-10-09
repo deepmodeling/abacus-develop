@@ -15,9 +15,9 @@ namespace ModulePW
 {
 
 /**
- * @brief A class which can convert a function of "r" to the corresponding linear 
+ * @brief A class which can convert a function of "r" to the corresponding linear
  * superposition of plane waves (real space to reciprocal space)
- * or convert a linear superposition of plane waves to the function 
+ * or convert a linear superposition of plane waves to the function
  * of "r" (reciprocal to real).
  * @author qianrui, Sunliang on 2021-10-15
  * @details
@@ -25,13 +25,13 @@ namespace ModulePW
  * plane waves: <r|g>=1/sqrt(V) * exp(igr)
  * f(r) = 1/sqrt(V) * \sum_g{c(g)*exp(igr)}
  * c(g) = \int f(r)*exp(-igr) dr
- * USAGE: 
+ * USAGE:
  * ModulePW::PW_Basis pwtest;
  * 0. init mpi for PW_Basis
  * pwtest.inimpi(nproc_in_pool,rank_in_pool,POOL_WORLD);
  * 1. setup FFT grids for PW_Basis
  * pwtest.initgrids(lat0,latvec,gridecut);
- * pwtest.initgrids(lat0,latvec,N1,N2,N3); 
+ * pwtest.initgrids(lat0,latvec,N1,N2,N3);
  * //double lat0: unit length, (unit: bohr)
  * //ModuleBase::Matrix3 latvec: lattice vector, (unit: lat0), e.g. ModuleBase::Matrix3 latvec(1, 1, 0, 0, 2, 0, 0, 0, 2);
  * //double gridecut: cutoff energy to generate FFT grids, (unit: Ry)
@@ -42,13 +42,13 @@ namespace ModulePW
  * //double ggecut: cutoff kinetic energy for planewaves,(unit in Ry) G^2 < ggecut
  * //int dividemthd: method to divide planewaves to different cores
  * 3. Setup transforms from real space to reciprocal space or from reciprocal space to real space.
- * pwtest.setuptransform(); 
+ * pwtest.setuptransform();
  * pwtest.recip2real(rhog,rhor); //rhog to rhor
  * pwtest.real2recip(rhor,rhog); //rhor to rhog
  * 4. Generate the wave vector for planewaves
- * pwtest.collect_local_pw(); 
+ * pwtest.collect_local_pw();
  * //then we can use pwtest.gg, pwtest.gdirect, pwtest.gcar, (unit in lat0^-1 or lat0^-2)
- * 
+ *
  */
 class PW_Basis
 {
@@ -70,7 +70,7 @@ public:
     //Init the grids for FFT
     virtual void initgrids(
         const double lat0_in, //unit length (unit in bohr)
-        const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0) 
+        const ModuleBase::Matrix3 latvec_in, // Unitcell lattice vectors (unit in lat0)
         const double gridecut //unit in Ry, ecut to set up grids
     );
     //Init the grids for FFT
@@ -100,7 +100,7 @@ public:
 #ifdef __MPI
     MPI_Comm pool_world;
 #endif
-    
+
     int *ig2isz=nullptr; // map ig to (is, iz).
     int *istot2ixy=nullptr; // istot2ixy[is]: iy + ix * ny of is^th stick among all sticks.
     int *is2fftixy=nullptr, * d_is2fftixy = nullptr; // is2fftixy[is]: iy + ix * ny of is^th stick among sticks on current proc.
@@ -115,9 +115,9 @@ public:
 
     //real space
     int nrxx=0; //num. of real space grids
-    int *startz=nullptr; //startz[ip]: starting z plane in the ip-th proc. in current POOL_WORLD 
+    int *startz=nullptr; //startz[ip]: starting z plane in the ip-th proc. in current POOL_WORLD
 	int *numz=nullptr; //numz[ip]: num. of z planes in the ip-th proc. in current POOL_WORLD
-    int *numg=nullptr; //numg[ip] :  nst_per[poolrank] * numz[ip] 
+    int *numg=nullptr; //numg[ip] :  nst_per[poolrank] * numz[ip]
     int *numr=nullptr; //numr[ip] :  numz[poolrank] * nst_per[ip]
     int *startg=nullptr;  // startg[ip] = numg[ip-1] + startg[ip-1]
     int *startr=nullptr;  // startr[ip] = numr[ip-1] + startr[ip-1]
@@ -157,7 +157,7 @@ public:
     double *gg_uniq=nullptr; //[ngg] modulus (G^2) of G vectors of igg, each gg of igg is unique.
     //collect gg_uniq
     void collect_uniqgg();
-   
+
 
 public:
   bool gamma_only = false; ///< only half g are used.
@@ -182,7 +182,7 @@ public:
 protected:
     //distribute plane waves to different processors
     //method 1: first consider number of plane waves
-    void distribution_method1(); 
+    void distribution_method1();
     // Distribute sticks to cores in method 1.
     void divide_sticks_1(
         int* st_i,          // x or x + fftnx (if x < 0) of stick.
@@ -194,7 +194,7 @@ protected:
     void distribution_method2();
     // Distribute sticks to cores in method 2.
     void divide_sticks_2();
-   
+
     //Count the total number of planewaves (tot_npw) and sticks (this->nstot) (in distributeg method1 and method2)
     void count_pw_st(
         int* st_length2D, // the number of planewaves that belong to the stick located on (x, y).
@@ -278,9 +278,10 @@ public:
     //get fftixy2is;
     void getfftixy2is(int * fftixy2is) const;
 
-    using resmem_int_op = psi::memory::resize_memory_op<int, psi::DEVICE_GPU>;
-    using delmem_int_op = psi::memory::delete_memory_op<int, psi::DEVICE_GPU>;
-    using syncmem_int_h2d_op = psi::memory::synchronize_memory_op<int, psi::DEVICE_GPU, psi::DEVICE_CPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
+    using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
+    using syncmem_int_h2d_op
+        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
     void set_device(std::string device_);
     void set_precision(std::string precision_);

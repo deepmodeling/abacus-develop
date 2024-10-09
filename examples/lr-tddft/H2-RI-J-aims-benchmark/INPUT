@@ -1,0 +1,39 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                 aims-benchmark-tdhf
+pseudo_dir              /home/fortneu49/LR-TDDFT/abacus-develop/tests/PP_ORB
+orbital_dir                 /home/fortneu49/LR-TDDFT/abacus-develop/tests/PP_ORB
+calculation             scf
+nbands                4
+symmetry               	0
+
+#Parameters (2.Iteration)
+ecutwfc                 50
+scf_thr                     1e-6
+scf_nmax                   100
+
+#Parameters (3.Basis)
+basis_type              lcao 
+gamma_only              1
+nspin 2
+
+#Parameters (4.Smearing)
+smearing_method                gaussian
+smearing_sigma                   0.02
+
+#Parameters (5.Mixing)
+mixing_type             pulay
+mixing_beta             0.4
+mixing_gg0 0.0
+
+
+exx_real_number 1
+lr_nstates 3
+nvirt 3
+xc_kernel hf
+lr_solver lapack
+
+esolver_type lr
+ri_hartree_benchmark aims
+aims_nbasis 5
+read_file_dir aims-files

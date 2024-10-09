@@ -19,9 +19,9 @@ dist
 .idea
 toolchain.tar.gz
 time.json
-
-
-job.err
-
 *.pyc
 __pycache__
+abacus.json
+*.npy
+
+job.err

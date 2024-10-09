@@ -463,7 +463,7 @@ void ORB_gaunt_table::Swap(
 	int& l2, 
 	int & m2)
 {
-	int tmp1, tmp2;
+	int tmp1=0, tmp2=0;
 	if(l1 >= l2) return;
 	else
 	{

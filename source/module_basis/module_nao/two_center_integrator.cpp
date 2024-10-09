@@ -2,6 +2,7 @@
 
 #include "module_base/vector3.h"
 #include "module_base/ylm.h"
+#include "module_base/array_pool.h"
 
 TwoCenterIntegrator::TwoCenterIntegrator():
     is_tabulated_(false),
@@ -51,12 +52,13 @@ void TwoCenterIntegrator::calculate(const int itype1,
     ModuleBase::Vector3<double> uR = (R == 0.0 ? ModuleBase::Vector3<double>(0., 0., 1.) : vR / R);
 
     // generate all necessary real (solid) spherical harmonics
-	std::vector<double> Rl_Y;
-	std::vector<std::vector<double>> grad_Rl_Y;
+    const int lmax = l1 + l2;
+	std::vector<double> Rl_Y((lmax+1) * (lmax+1));
+	ModuleBase::Array_Pool<double> grad_Rl_Y((lmax+1) * (lmax+1), 3);
 
     // R^l * Y is necessary anyway
     ModuleBase::Ylm::rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y);
-    if (grad_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y, grad_Rl_Y);
+    if (grad_out) ModuleBase::Ylm::grad_rl_sph_harm(l1 + l2, vR[0], vR[1], vR[2], Rl_Y.data(), grad_Rl_Y.get_ptr_2D());
 
     double tmp[2] = {0.0, 0.0};
     double* S_by_Rl = tmp;

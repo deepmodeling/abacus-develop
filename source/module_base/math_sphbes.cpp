@@ -1,7 +1,7 @@
 #include "math_sphbes.h"
-#include "timer.h"
 #include "constants.h"
 #include <algorithm>
+#include <iostream>
 
 #include <cassert>
 
@@ -18,11 +18,26 @@ void Sphbes::BESSJY(double x, double xnu, double *rj, double *ry, double *rjp, d
     const double EPS = 1.0e-10;
     const int MAXIT = 10000;
 
-    int i, isign, l, nl;
-    double a, b, br, bi, c, cr, ci, d, del, del1, den, di, dlr, dli, dr, e, f, fact, fact2,
-    fact3, ff, gam, gam1, gam2, gammi, gampl, h, p, pimu, pimu2, q, r, rjl,
-    rjl1, rjmu, rjp1, rjpl, rjtemp, ry1, rymu, rymup, rytemp, sum, sum1,
-    temp, w, x2, xi, xi2;
+    // May need some annotations to each variable
+    int i = 0, isign = 0, l = 0, nl = 0;
+    double a = 0.0;
+    double b = 0.0, br = 0.0, bi = 0.0;
+    double c = 0.0, cr = 0.0, ci = 0.0;
+    double d = 0.0;
+    double del = 0.0, del1 = 0.0;
+    double den = 0.0, di = 0.0, dlr = 0.0, dli = 0.0, dr = 0.0;
+    double e = 0.0, f = 0.0;
+    double fact = 0.0, fact2 = 0.0, fact3 = 0.0;
+    double ff = 0.0;
+    double gam = 0.0, gam1 = 0.0, gam2 = 0.0, gammi = 0.0, gampl = 0.0;
+    double h = 0.0;
+    double p = 0.0, pimu = 0.0, pimu2 = 0.0;
+    double q = 0.0, r = 0.0;
+    double rjl = 0.0, rjl1 = 0.0, rjmu = 0.0, rjp1 = 0.0, rjpl = 0.0, rjtemp = 0.0;
+    double ry1 = 0.0, rymu = 0.0, rymup = 0.0, rytemp = 0.0;
+    double sum = 0.0, sum1 = 0.0;
+    double temp = 0.0, w = 0.0;
+    double x2 = 0.0, xi = 0.0, xi2 = 0.0;
 
     if (x <= 0.0 || xnu < 0.0)
     {
@@ -251,7 +266,7 @@ void Sphbes::BESCHB(double x, double *gam1, double *gam2, double *gampl, double 
 {
     const int NUSE1 = 7;
     const int NUSE2 = 8;
-    double xx;
+    double xx = 0;
     static double c1[] = {   -1.142022680371168e0, 6.5165112670737e-3,
                              3.087090173086e-4, -3.4706269649e-6,
                              6.9437664e-9, 3.67795e-11, -1.356e-13
@@ -301,7 +316,7 @@ double Sphbes::Spherical_Bessel_7(const int n, const double &x)
         if (n!=0) return 0;
         if (n==0) return 1;
     }
-    double order, rj, rjp, ry, ryp;
+    double order = 0.0, rj = 0.0, rjp = 0.0, ry = 0.0, ryp = 0.0;
 
     if (n < 0 || x <= 0.0)
     {
@@ -425,7 +440,6 @@ void Sphbes::Spherical_Bessel
     double *jl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     double x1=0.0;
 
     int i=0;
@@ -598,7 +612,6 @@ void Sphbes::Spherical_Bessel
         }
     }
 
-    ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
     return;
 }
 
@@ -613,7 +626,6 @@ void Sphbes::Spherical_Bessel
 	double *sjp
 )
 {
-	ModuleBase::timer::tick("Sphbes","Spherical_Bessel");
 
 	//calculate jlx first
 	Spherical_Bessel (msh, r, q, l, sj);
@@ -634,7 +646,6 @@ void Sphbes::dSpherical_Bessel_dx
     double *djl		 // jl(1:msh) = j_l(q*r(i)),spherical bessel function
 )
 {
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     if (l < 0 )
     {
 		std::cout << "We temporarily only calculate derivative of l >= 0." << std::endl;
@@ -682,7 +693,6 @@ void Sphbes::dSpherical_Bessel_dx
         }
         delete[] jl;
     }
-    ModuleBase::timer::tick("Sphbes","dSpherical_Bessel_dq");
     return;
 }
 
@@ -694,7 +704,7 @@ double Sphbes::_sphbesj_ascending_recurrence(int l, double x) {
     double j0 = std::sin(x) * invx;
     double j1 = ( j0 - std::cos(x) ) * invx;
 
-    double jl;
+    double jl = 0.0;
     for (int i = 2; i <= l; ++i) {
         jl = (2*i-1) * invx * j1 - j0;
         j0 = j1;
@@ -808,7 +818,7 @@ void Sphbes::dsphbesj(const int n,
     }
 }
 
-void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
+void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros, const bool return_all)
 {
     assert( n > 0 );
     assert( l >= 0 );
@@ -818,10 +828,22 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
     // This property enables us to use bracketing method recursively
     // to find all zeros of j_l from the zeros of j_0.
 
-    // if l is odd , j_0 --> j_1 --> j_3 --> j_5 --> ...
-    // if l is even, j_0 --> j_2 --> j_4 --> j_6 --> ...
+    // If return_all is true, zeros of j_0, j_1, ..., j_l will all be returned
+    // such that zeros[l*n+i] is the i-th zero of j_l. As such, it is required
+    // that the array "zeros" has a size of (l+1)*n.
+    //
+    // If return_all is false, only the zeros of j_l will be returned
+    // and "zeros" is merely required to have a size of n.
+    // Note that in this case the bracketing method can be applied with a stride
+    // of 2 instead of 1:
+    // j_0 --> j_1 --> j_3 --> j_5 --> ... --> j_l  (odd  l)
+    // j_0 --> j_2 --> j_4 --> j_6 --> ... --> j_l  (even l)
 
-    int nz = n + (l+1)/2; // number of effective zeros in buffer
+    // Every recursion step reduces the number of zeros by 1.
+    // If return_all is true, one needs to start with n+l zeros of j_0
+    // to ensure n zeros of j_l; otherwise with a stride of 2 one only
+    // needs to start with n+(l+1)/2 zeros of j_0
+    int nz = n + ( return_all ? l : (l+1)/2 );
     double* buffer = new double[nz];
 
     // zeros of j_0 = sin(x)/x is just n*pi
@@ -831,27 +853,34 @@ void Sphbes::sphbes_zeros(const int l, const int n, double* const zeros)
         buffer[i] = (i+1) * PI;
     }
 
-    int ll = 1;
+    int ll = 0; // active l
     auto jl = [&ll] (double x) { return sphbesj(ll, x); };
-
-    if (l % 2 == 1)
+    int stride = 0;
+    std::function<void()> copy_if_needed;
+    int offset = 0; // keeps track of the position in zeros for next copy (used when return_all == true)
+    if (return_all)
     {
+        copy_if_needed = [&](){ std::copy(buffer, buffer + n, zeros + offset); offset += n; };
+        stride = 1;
+        ll = 1;
+    }
+    else
+    {
+        copy_if_needed = [](){};
+        stride = 2;
+        ll = 2 - l % 2;
+    }
+
+    for (; ll <= l; ll += stride, --nz)
+    {
+        copy_if_needed();
         for (int i = 0; i < nz-1; i++)
         {
             buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
         }
-        --nz;
     }
 
-    for (ll = 2 + l%2; ll <= l; ll += 2, --nz)
-    {
-        for (int i = 0; i < nz-1; i++)
-        {
-            buffer[i] = illinois(jl, buffer[i], buffer[i+1], 1e-15, 50);
-        }
-    }
-
-    std::copy(buffer, buffer + n, zeros);
+    std::copy(buffer, buffer + n, zeros + offset);
     delete[] buffer;
 }
 
@@ -869,7 +898,7 @@ double Sphbes::illinois(std::function<double(double)> func, double x0, double x1
     }
 
     int iter = 0;
-    double x, f;
+    double x = 0.0, f = 0.0;
     while (++iter <= max_iter && std::abs(f1) > tol)
     {
         // regula falsi

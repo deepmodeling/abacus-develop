@@ -2,6 +2,7 @@
 
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
+#include <base/macros/macros.h>
 
 namespace ModulePW {
 
@@ -61,12 +62,11 @@ __global__ void set_real_to_recip_output(
 }
 
 template <typename FPTYPE>
-void set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-    const psi::DEVICE_GPU*  /*dev*/,
-    const int npwk,
-    const int* box_index,
-    const std::complex<FPTYPE>* in,
-    std::complex<FPTYPE>* out)
+void set_3d_fft_box_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
+                                                                    const int npwk,
+                                                                    const int* box_index,
+                                                                    const std::complex<FPTYPE>* in,
+                                                                    std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     set_3d_fft_box<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -74,16 +74,17 @@ void set_3d_fft_box_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+
+    cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
-void set_recip_to_real_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-    const psi::DEVICE_GPU*  /*dev*/,
-    const int nrxx,
-    const bool add,
-    const FPTYPE factor,
-    const std::complex<FPTYPE>* in,
-    std::complex<FPTYPE>* out)
+void set_recip_to_real_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
+                                                                              const int nrxx,
+                                                                              const bool add,
+                                                                              const FPTYPE factor,
+                                                                              const std::complex<FPTYPE>* in,
+                                                                              std::complex<FPTYPE>* out)
 {
     const int block = (nrxx + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     set_recip_to_real_output<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -92,18 +93,19 @@ void set_recip_to_real_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         factor,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+
+    cudaCheckOnDebug();
 }
 
 template <typename FPTYPE>
-void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
-    const psi::DEVICE_GPU*  /*dev*/,
-    const int npwk,
-    const int nxyz,
-    const bool add,
-    const FPTYPE factor,
-    const int* box_index,
-    const std::complex<FPTYPE>* in,
-    std::complex<FPTYPE>* out)
+void set_real_to_recip_output_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* /*dev*/,
+                                                                              const int npwk,
+                                                                              const int nxyz,
+                                                                              const bool add,
+                                                                              const FPTYPE factor,
+                                                                              const int* box_index,
+                                                                              const std::complex<FPTYPE>* in,
+                                                                              std::complex<FPTYPE>* out)
 {
     const int block = (npwk + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     set_real_to_recip_output<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -114,14 +116,15 @@ void set_real_to_recip_output_op<FPTYPE, psi::DEVICE_GPU>::operator()(
         box_index,
         reinterpret_cast<const thrust::complex<FPTYPE>*>(in),
         reinterpret_cast<thrust::complex<FPTYPE>*>(out));
+
+    cudaCheckOnDebug();
 }
 
-template struct set_3d_fft_box_op<float, psi::DEVICE_GPU>;
-template struct set_recip_to_real_output_op<float, psi::DEVICE_GPU>;
-template struct set_real_to_recip_output_op<float, psi::DEVICE_GPU>;
-template struct set_3d_fft_box_op<double, psi::DEVICE_GPU>;
-template struct set_recip_to_real_output_op<double, psi::DEVICE_GPU>;
-template struct set_real_to_recip_output_op<double, psi::DEVICE_GPU>;
+template struct set_3d_fft_box_op<float, base_device::DEVICE_GPU>;
+template struct set_recip_to_real_output_op<float, base_device::DEVICE_GPU>;
+template struct set_real_to_recip_output_op<float, base_device::DEVICE_GPU>;
+template struct set_3d_fft_box_op<double, base_device::DEVICE_GPU>;
+template struct set_recip_to_real_output_op<double, base_device::DEVICE_GPU>;
+template struct set_real_to_recip_output_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace ModulePW
-

@@ -1,6 +1,7 @@
 // I'm mocking FFT here because it is not possible to write
 // unit tests with FFT
 #include <fstream>
+
 namespace ModulePW
 {
     PW_Basis::PW_Basis(){};
@@ -75,7 +76,7 @@ namespace ModulePW
         return x;
     }
 
-    
+
     template <typename FPTYPE, typename Device>
     void PW_Basis_K::real_to_recip(const Device* ctx,
                        const std::complex<FPTYPE>* in,
@@ -103,33 +104,33 @@ namespace ModulePW
         }
     }
 
-    template void PW_Basis_K::real_to_recip<double, psi::DEVICE_CPU>(const psi::DEVICE_CPU* ctx,
-                                                                     const std::complex<double>* in,
-                                                                     std::complex<double>* out,
-                                                                     const int ik,
-                                                                     const bool add,
-                                                                     const double factor) const;
-    template void PW_Basis_K::recip_to_real<double, psi::DEVICE_CPU>(const psi::DEVICE_CPU* ctx,
-                                                                     const std::complex<double>* in,
-                                                                     std::complex<double>* out,
-                                                                     const int ik,
-                                                                     const bool add,
-                                                                     const double factor) const;
-#if __CUDA || __ROCM                                                                     
-    template void PW_Basis_K::real_to_recip<double, psi::DEVICE_GPU>(const psi::DEVICE_GPU* ctx,
-                                                                     const std::complex<double>* in,
-                                                                     std::complex<double>* out,
-                                                                     const int ik,
-                                                                     const bool add,
-                                                                     const double factor) const;
+    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                             const std::complex<double>* in,
+                                                                             std::complex<double>* out,
+                                                                             const int ik,
+                                                                             const bool add,
+                                                                             const double factor) const;
+    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(const base_device::DEVICE_CPU* ctx,
+                                                                             const std::complex<double>* in,
+                                                                             std::complex<double>* out,
+                                                                             const int ik,
+                                                                             const bool add,
+                                                                             const double factor) const;
+#if __CUDA || __ROCM
+    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
+                                                                             const std::complex<double>* in,
+                                                                             std::complex<double>* out,
+                                                                             const int ik,
+                                                                             const bool add,
+                                                                             const double factor) const;
 
-    template void PW_Basis_K::recip_to_real<double, psi::DEVICE_GPU>(const psi::DEVICE_GPU* ctx,
-                                                                     const std::complex<double>* in,
-                                                                     std::complex<double>* out,
-                                                                     const int ik,
-                                                                     const bool add,
-                                                                     const double factor) const;
-#endif 
+    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_GPU>(const base_device::DEVICE_GPU* ctx,
+                                                                             const std::complex<double>* in,
+                                                                             std::complex<double>* out,
+                                                                             const int ik,
+                                                                             const bool add,
+                                                                             const double factor) const;
+#endif
 
     FFT::FFT(){};
     FFT::~FFT(){};
@@ -144,9 +145,13 @@ namespace ModulePW
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description)
+    {
+        std::cout << " " << file <<"  warning : "<< description<<std::endl;
+        exit(1);
+    }
     void WARNING(const std::string &file,const std::string &description) {};
-    
+
     void Matrix3::Identity(){};
 
     IntArray::IntArray(int,int){};
@@ -164,7 +169,6 @@ namespace GlobalV
     int CAL_FORCE = 0;
     int NSPIN;
     int NPOL;
-    double XC_TEMPERATURE;
     bool DOMAG;
     bool DOMAG_Z;
     bool use_paw = false;

@@ -1,4 +1,5 @@
 #include "spin_constrain.h"
+#include "module_base/formatter.h"
 
 #include <cmath>
 
@@ -256,12 +257,15 @@ void SpinConstrain<FPTYPE, Device>::set_target_mag()
                 mag.x = element_data.target_mag_val * std::sin(radian_angle1) * std::cos(radian_angle2);
                 mag.y = element_data.target_mag_val * std::sin(radian_angle1) * std::sin(radian_angle2);
                 mag.z = element_data.target_mag_val * std::cos(radian_angle1);
-                if (std::abs(mag.x) < 1e-14)
+                if (std::abs(mag.x) < 1e-14) {
                     mag.x = 0.0;
-                if (std::abs(mag.y) < 1e-14)
+}
+                if (std::abs(mag.y) < 1e-14) {
                     mag.y = 0.0;
-                if (std::abs(mag.z) < 1e-14)
+}
+                if (std::abs(mag.z) < 1e-14) {
                     mag.z = 0.0;
+}
             }
             this->target_mag_[iat] = mag;
         }
@@ -504,21 +508,17 @@ bool SpinConstrain<FPTYPE, Device>::get_decay_grad_switch()
 }
 
 template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors kv_in,
-                                                          hsolver::HSolver<FPTYPE, Device>* phsol_in,
+void SpinConstrain<FPTYPE, Device>::set_solver_parameters(K_Vectors& kv_in,
                                                           hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                                           psi::Psi<FPTYPE>* psi_in,
                                                           elecstate::ElecState* pelec_in,
-                                                          std::string KS_SOLVER_in,
-                                                          LCAO_Matrix* LM_in)
+                                                          std::string KS_SOLVER_in)
 {
     this->kv_ = kv_in;
-    this->phsol = phsol_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
     this->pelec = pelec_in;
     this->KS_SOLVER = KS_SOLVER_in;
-    this->LM = LM_in;
 }
 
 /// @brief  set ParaV
@@ -541,20 +541,52 @@ void SpinConstrain<FPTYPE, Device>::print_Mi(bool print)
     int nat = this->get_nat();
     if (print)
     {
+        std::cout << "Total Magnetism (uB): " << std::endl;
         for (int iat = 0; iat < nat; ++iat)
         {
             if (this->nspin_ == 2)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].z << ")" << std::endl;
+                std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, Mi_[iat].z);
             }
             else if (this->nspin_ ==4)
             {
-                std::cout << "Total Magnetism on atom: " << iat << " " << std::setprecision(10) << " (" << Mi_[iat].x
-                        << ", " << Mi_[iat].y << ", " << Mi_[iat].z << ")" << std::endl;
+                std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, Mi_[iat].x, Mi_[iat].y, Mi_[iat].z);
             }
         }
     }
 }
 
-template class SpinConstrain<std::complex<double>, psi::DEVICE_CPU>;
-template class SpinConstrain<double, psi::DEVICE_CPU>;
+/// print magnetic force (defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+template <typename FPTYPE, typename Device>
+void SpinConstrain<FPTYPE, Device>::print_Mag_Force()
+{
+    this->check_atomCounts();
+    int nat = this->get_nat();
+    std::cout << "Final optimal lambda (Ry/uB): " << std::endl;
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        if (this->nspin_ == 2)
+        {
+            std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, lambda_[iat].z);
+        }
+        else if (this->nspin_ ==4)
+        {
+            std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, lambda_[iat].x, lambda_[iat].y, lambda_[iat].z);
+        }
+    }
+    std::cout << "Magnetic force (Ry/uB): " << std::endl;
+    for (int iat = 0; iat < nat; ++iat)
+    {
+        if (this->nspin_ == 2)
+        {
+            std::cout << FmtCore::format("ATOM %6d %20.10f\n", iat, -lambda_[iat].z);
+        }
+        else if (this->nspin_ ==4)
+        {
+            std::cout << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, -lambda_[iat].x, -lambda_[iat].y, -lambda_[iat].z);
+        }
+    }
+}
+
+template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
+template class SpinConstrain<double, base_device::DEVICE_CPU>;

@@ -33,12 +33,35 @@ class SphbesRadials : public RadialSet
      * @param[in] rank     MPI rank
      */
     void build(const std::string& file,
+               const double dr = 0.01,
                const int itype = 0,
                std::ofstream* ptr_log = nullptr,
                const int rank = 0
     );
 
-    void set_dr(const double dr) { dr_ = dr; }
+    /**
+     * @brief Builds the class with truncated spherical Bessel functions.
+     *
+     * Instead of reading spherical Bessel coefficients from a file, an
+     * alternative way to build the class is to have each truncated
+     * spherical Bessel function as a NumericalRadial object.
+     *
+     * @param[in] lmax     maximum angular momentum
+     * @param[in] nbes     number of truncated spherical Bessel functions
+     * @param[in] itype    element index in calculation
+     * @param[in] dr       radial grid spacing
+     * @param[in] ptr_log  output file stream for logging
+     * @param[in] rank     MPI rank
+     */
+    void build(const int lmax,
+               const int nbes,
+               const double rcut,
+               const double sigma,
+               const double dr = 0.01,
+               const int itype = 0,
+               std::ofstream* ptr_log = nullptr,
+               const int rank = 0
+    );
 
     /**
      * @name Getters
@@ -66,7 +89,7 @@ class SphbesRadials : public RadialSet
                     const int rank = 0);
 
     /// 
-    void build_radset();
+    void build_radset(const bool normalize = true);
 
     /// Extracts a substring (VALUE) from a string of the form KEYWORD=" VALUE ".
     std::string extract(std::string const& str, std::string const& keyword);

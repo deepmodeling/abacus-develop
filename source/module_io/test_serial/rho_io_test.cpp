@@ -31,6 +31,10 @@ Magnetism::~Magnetism()
     delete[] this->start_magnetization;
 }
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+
 /***************************************************************
  *  unit test of read_rho, write_rho and trilinear_interpolate
  ***************************************************************/
@@ -39,9 +43,6 @@ Magnetism::~Magnetism()
  * - Tested Functions:
  *   - read_rho()
  *     - the function to read_rho from file
- *     - the serial version without MPI
- *   - write_rho()
- *     - the function to write_rho to file
  *     - the serial version without MPI
  *   - trilinear_interpolate()
  *     - the trilinear interpolation method
@@ -56,6 +57,12 @@ class RhoIOTest : public ::testing::Test
     int prenspin = 1;
     double** rho;
     UnitCell* ucell;
+
+    int my_rank = 0;
+    std::string esolver_type = "ksdft";
+    int rank_in_stogroup = 0;
+    std::ofstream ofs_running = std::ofstream("unittest.log");
+
     void SetUp()
     {
         rho = new double*[nspin];
@@ -86,38 +93,10 @@ TEST_F(RhoIOTest, Read)
     double ef;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
-    ModuleIO::read_rho(is, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
+    ModuleIO::read_rho(my_rank, esolver_type, rank_in_stogroup, is, ofs_running, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
     EXPECT_DOUBLE_EQ(ef, 0.461002);
     EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
     EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);
-}
-
-TEST_F(RhoIOTest, Write)
-{
-    int is = 0;
-    std::string fn = "./support/SPIN1_CHG.cube";
-    int nx = 36;
-    int ny = 36;
-    int nz = 36;
-    double ef;
-    UcellTestPrepare utp = UcellTestLib["Si"];
-    ucell = utp.SetUcellInfo();
-    // first read
-    ModuleIO::read_rho(is, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
-    EXPECT_DOUBLE_EQ(ef, 0.461002);
-    EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
-    EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);
-    // then write
-    std::string ssc = "SPIN1_CHG.cube";
-    GlobalV::MY_RANK = 0;
-    GlobalV::out_chg = 1;
-    ModuleIO::write_rho(rho[is], is, nspin, 0, ssc, nx, ny, nz, ef, ucell);
-    std::ifstream ifs;
-    ifs.open("SPIN1_CHG.cube");
-    std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(str, testing::HasSubstr("1 (nspin) 0.461002 (fermi energy, in Ry)"));
-    ifs.close();
-    remove("SPIN1_CHG.cube");
 }
 
 TEST_F(RhoIOTest, TrilinearInterpolate)

@@ -4,15 +4,22 @@
 
 # shellcheck disable=all
 
+# Last Update in 2024-0913
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://pytorch.org/get-started/locally/
-#libtorch_ver="1.12.1" # stable
-#libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
-libtorch_ver="2.0.1" # newest, 
-# 2.0.1 libtorch will lead to lots of warning during build process in intel toolchain
-libtorch_sha256="137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd"
+# libtorch_ver="1.12.1" 
+# libtorch_sha256="82c7be80860f2aa7963f8700004a40af8205e1d721298f2e09b700e766a9d283"
+# libtorch_ver="2.0.1" 
+# libtorch_sha256="137a842d1cf1e9196b419390133a1623ef92f8f84dc7a072f95ada684f394afd"
+libtorch_ver="2.1.2"
+libtorch_sha256="904b764df6106a8a35bef64c4b55b8c1590ad9d071eb276e680cf42abafe79e9"
+
+# user can manually download higher version of libtorch by:
+# wget https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-{libtorch_ver}%2Bcpu.zip
+# 2.4.0 latest, 2.1.2 recommended for lower GLIBC support (lower than 3.4.26)
 
 # shellcheck source=/dev/null
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -29,29 +36,33 @@ cd "${BUILDDIR}"
 case "${with_libtorch}" in
   __INSTALL__)
     echo "==================== Installing libtorch ===================="
-    pkg_install_dir="${INSTALLDIR}/libtorch-${libtorch_ver}"
+    dirname="libtorch-${libtorch_ver}"
+    filename="${dirname}.zip"
+    pkg_install_dir="${INSTALLDIR}/${filename}"
     #pkg_install_dir="${HOME}/lib/libtorch/${libtorch_ver}"
     install_lock_file="${pkg_install_dir}/install_successful"
-    archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}+cpu.zip"
+    archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}%2Bcpu.zip"
 
     if verify_checksums "${install_lock_file}"; then
-      echo "libtorch-${libtorch_ver} is already installed, skipping it."
+      echo "${filename} is already installed, skipping it."
     else
-      if [ -f ${archive_file} ]; then
-        echo "${archive_file} is found"
-      else
-        download_pkg_from_ABACUS_org "${libtorch_sha256}" "${archive_file}"
-      fi
+        if [ -f ${archive_file} ]; then
+            echo "${archive_file} is found"
+        else
+            # download from pytorch.com and checksum
+            url=https://download.pytorch.org/libtorch/cpu/${archive_file}
+            download_pkg_from_url "${libtorch_sha256}" "${filename}" "${url}"
+        fi
+        echo "Installing from scratch into ${pkg_install_dir}"
+        [ -d libtorch ] && rm -rf libtorch
+        [ -d ${pkg_install_dir} ] && rm -rf ${pkg_install_dir}
+        unzip -q $filename # to libtorch
+        mkdir -p "${pkg_install_dir}"
+        mv libtorch/* "${pkg_install_dir}/"
 
-      echo "Installing from scratch into ${pkg_install_dir}"
-      [ -d libtorch ] && rm -rf libtorch
-      [ -d ${pkg_install_dir} ] && rm -rf ${pkg_install_dir}
-      unzip -q ${archive_file}
-      mkdir -p "${pkg_install_dir}"
-      mv libtorch/* "${pkg_install_dir}"
-
-      write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename "${SCRIPT_NAME}")"
+        write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
+    
     LIBTORCH_CXXFLAGS="-I${pkg_install_dir}/include"
     LIBTORCH_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath='${pkg_install_dir}/lib'"
     ;;
@@ -89,12 +100,12 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
-export CPATH="${pkg_install_dir}/include":$CPATH
-export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="${pkg_install_dir}":$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
+export PKG_CONFIG_PATH="${pkg_install_dir}/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="${pkg_install_dir}":\${CMAKE_PREFIX_PATH}
 EOF
   fi
   if [ "$ENABLE_CUDA" = "__TRUE__" ]; then

@@ -1,6 +1,6 @@
 AddTest(
   TARGET container_ops_uts
-  LIBS ${math_libs}
+  LIBS parameter ${math_libs} 
   SOURCES einsum_op_test.cpp linalg_op_test.cpp
 )
 

@@ -1,8 +1,7 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
-
 #define private public
-
+#include "module_parameter/parameter.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -12,9 +11,9 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
+#include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
@@ -26,44 +25,21 @@
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_cg.h"
 #include "module_relax/relax_old/lattice_change_basic.h"
-
+#ifdef __PEXSI
+#include "module_hsolver/module_pexsi/pexsi_solver.h"
+#endif
+#undef private
 bool berryphase::berry_phase_flag = false;
 
-template<>
-int elecstate::ElecStateLCAO<double>::out_wfc_lcao = 0;
-
-template<>
-int elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao = 0;
-
-template<> 
-bool elecstate::ElecStateLCAO<double>::need_psi_grid = 1;
-
-template<>
-bool elecstate::ElecStateLCAO<std::complex<double>>::need_psi_grid = 1;
-//
-template<>
-std::vector<int> hsolver::HSolverLCAO<double>::out_mat_hs = {0, 8};
-template<>
-std::vector<int> hsolver::HSolverLCAO<std::complex<double>>::out_mat_hs = {0, 8};
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_hsR = 0;
-template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_hsR = 0;
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_t = 0;
-template<>
-int hsolver::HSolverLCAO<std::complex<double>>::out_mat_t = 0;
-template<>
-int hsolver::HSolverLCAO<double>::out_mat_dh = 0;
-template<>
-int hsolver::HSolverLCAO <std::complex<double>> ::out_mat_dh = 0;
-int Local_Orbital_Charge::out_dm = 0;
-int Local_Orbital_Charge::out_dm1 = 0;
 double module_tddft::Evolve_elec::td_force_dt;
 bool module_tddft::Evolve_elec::td_vext;
 std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
 bool module_tddft::Evolve_elec::out_dipole;
 bool module_tddft::Evolve_elec::out_efield;
+bool TD_Velocity::out_current;
+bool TD_Velocity::out_current_k;
+bool TD_Velocity::out_vecpot;
+bool TD_Velocity::init_vecpot_file;
 double module_tddft::Evolve_elec::td_print_eij;
 int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
@@ -91,6 +67,7 @@ std::vector<int> elecstate::H_TDDFT_pw::ttype;
 int elecstate::H_TDDFT_pw::tstart;
 int elecstate::H_TDDFT_pw::tend;
 double elecstate::H_TDDFT_pw::dt;
+double elecstate::H_TDDFT_pw::dt_int;
 
 // space domain parameters
 
@@ -100,6 +77,9 @@ double elecstate::H_TDDFT_pw::lcut2;
 
 // time domain parameters
 
+bool TD_Velocity::tddft_velocity;
+bool TD_Velocity::out_mat_R;
+
 // Gauss
 int elecstate::H_TDDFT_pw::gauss_count;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_omega; // time(a.u.)^-1
@@ -107,6 +87,7 @@ std::vector<double> elecstate::H_TDDFT_pw::gauss_phase;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_sigma; // time(a.u.)
 std::vector<double> elecstate::H_TDDFT_pw::gauss_t0;
 std::vector<double> elecstate::H_TDDFT_pw::gauss_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::gauss_ncut;
 
 // trapezoid
 int elecstate::H_TDDFT_pw::trape_count;
@@ -116,6 +97,7 @@ std::vector<double> elecstate::H_TDDFT_pw::trape_t1;
 std::vector<double> elecstate::H_TDDFT_pw::trape_t2;
 std::vector<double> elecstate::H_TDDFT_pw::trape_t3;
 std::vector<double> elecstate::H_TDDFT_pw::trape_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::trape_ncut;
 
 // Trigonometric
 int elecstate::H_TDDFT_pw::trigo_count;
@@ -124,16 +106,13 @@ std::vector<double> elecstate::H_TDDFT_pw::trigo_omega2; // time(a.u.)^-1
 std::vector<double> elecstate::H_TDDFT_pw::trigo_phase1;
 std::vector<double> elecstate::H_TDDFT_pw::trigo_phase2;
 std::vector<double> elecstate::H_TDDFT_pw::trigo_amp; // Ry/bohr
+std::vector<int> elecstate::H_TDDFT_pw::trigo_ncut;
 
 // Heaviside
 int elecstate::H_TDDFT_pw::heavi_count;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_t0;
 std::vector<double> elecstate::H_TDDFT_pw::heavi_amp; // Ry/bohr
 
-template<>
-double Force_Stress_LCAO<double>::force_invalid_threshold_ev = 0.0;
-template<>
-double Force_Stress_LCAO<std::complex<double>>::force_invalid_threshold_ev = 0.0;
 double BFGS_Basic::relax_bfgs_w1 = -1.0;
 double BFGS_Basic::relax_bfgs_w2 = -1.0;
 double Ions_Move_Basic::relax_bfgs_rmax = -1.0;
@@ -201,8 +180,6 @@ wavefunc::~wavefunc()
 }
 UnitCell::UnitCell()
 {
-    if (GlobalV::test_unitcell)
-        ModuleBase::TITLE("unitcell", "Constructor");
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -242,132 +219,87 @@ UnitCell::UnitCell()
 
     set_atom_flag = false;
 }
-UnitCell::~UnitCell()
-{
-}
+UnitCell::~UnitCell() {}
 #ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
+InfoNonlocal::InfoNonlocal() {}
+InfoNonlocal::~InfoNonlocal() {}
+LCAO_Orbitals::LCAO_Orbitals() {}
+LCAO_Orbitals::~LCAO_Orbitals() {}
 #endif
-Magnetism::Magnetism()
-{
-}
-Magnetism::~Magnetism()
-{
-}
-
-void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
-                               const double& mixing_beta_in,
-                               const int& mixing_ndim_in,
-                               const double& mixing_gg0_in,
-                               const bool& mixing_tau_in,
-                               const double& mixing_beta_mag_in)
-{
+Magnetism::Magnetism() {}
+Magnetism::~Magnetism() {}
+void Occupy::decision(const std::string& name,
+                      const std::string& smearing_method,
+                      const double& smearing_sigma) {
     return;
 }
-// void Charge_Mixing::need_auto_set()
-// {
-//     this->autoset = true;
-// }
-void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
-{
-    return;
-}
-// void UnitCell::setup(const std::string&,const int&,const int&,const bool&,const std::string&){return;}
+// void UnitCell::setup(const std::string&,const int&,const int&,const
+// bool&,const std::string&){return;}
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
-                     const std::string& fixed_axes_in)
-{
+                     const std::string& fixed_axes_in) {
     this->latName = latname_in;
     this->ntype = ntype_in;
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
-    if (fixed_axes_in == "None")
-    {
+    if (fixed_axes_in == "None") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "volume")
-    {
+    } else if (fixed_axes_in == "volume") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-        if (!GlobalV::relax_new)
-        {
+        if (!PARAM.input.relax_new) {
             ModuleBase::WARNING_QUIT(
                 "Input",
-                "there are bugs in the old implementation; set relax_new to be 1 for fixed_volume relaxation");
+                "there are bugs in the old implementation; set relax_new to be "
+                "1 for fixed_volume relaxation");
         }
-    }
-    else if (fixed_axes_in == "shape")
-    {
-        if (!GlobalV::relax_new)
-        {
-            ModuleBase::WARNING_QUIT("Input", "set relax_new to be 1 for fixed_shape relaxation");
+    } else if (fixed_axes_in == "shape") {
+        if (!PARAM.input.relax_new) {
+            ModuleBase::WARNING_QUIT(
+                "Input",
+                "set relax_new to be 1 for fixed_shape relaxation");
         }
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "a")
-    {
+    } else if (fixed_axes_in == "a") {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "b")
-    {
+    } else if (fixed_axes_in == "b") {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "c")
-    {
+    } else if (fixed_axes_in == "c") {
         this->lc[0] = 1;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "ab")
-    {
+    } else if (fixed_axes_in == "ab") {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 1;
-    }
-    else if (fixed_axes_in == "ac")
-    {
+    } else if (fixed_axes_in == "ac") {
         this->lc[0] = 0;
         this->lc[1] = 1;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "bc")
-    {
+    } else if (fixed_axes_in == "bc") {
         this->lc[0] = 1;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    }
-    else if (fixed_axes_in == "abc")
-    {
+    } else if (fixed_axes_in == "abc") {
         this->lc[0] = 0;
         this->lc[1] = 0;
         this->lc[2] = 0;
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+    } else {
+        ModuleBase::WARNING_QUIT(
+            "Input",
+            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
     }
     return;
 }
@@ -376,16 +308,16 @@ void UnitCell::setup(const std::string& latname_in,
 //     return;
 // }
 
-namespace MD_func
-{
-void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
-{
+namespace MD_func {
+void current_md_info(const int& my_rank,
+                     const std::string& file_dir,
+                     int& md_step,
+                     double& temperature) {
     return;
 }
 } // namespace MD_func
 
-namespace GlobalC
-{
+namespace GlobalC {
 UnitCell ucell;
 wavefunc wf;
 ModuleSymmetry::Symmetry symm;
@@ -396,6 +328,34 @@ pseudopot_cell_vnl ppcell;
 Charge_Mixing CHR_MIX;
 } // namespace GlobalC
 
-#undef private
+#ifdef __PEXSI
+namespace pexsi {
+int PEXSI_Solver::pexsi_npole = 0;
+bool PEXSI_Solver::pexsi_inertia = 0;
+int PEXSI_Solver::pexsi_nmax = 0;
+// int PEXSI_Solver::pexsi_symbolic = 0;
+bool PEXSI_Solver::pexsi_comm = 0;
+bool PEXSI_Solver::pexsi_storage = 0;
+int PEXSI_Solver::pexsi_ordering = 0;
+int PEXSI_Solver::pexsi_row_ordering = 0;
+int PEXSI_Solver::pexsi_nproc = 0;
+bool PEXSI_Solver::pexsi_symm = 0;
+bool PEXSI_Solver::pexsi_trans = 0;
+int PEXSI_Solver::pexsi_method = 0;
+int PEXSI_Solver::pexsi_nproc_pole = 0;
+// double PEXSI_Solver::pexsi_spin = 2;
+double PEXSI_Solver::pexsi_temp = 0.0;
+double PEXSI_Solver::pexsi_gap = 0.0;
+double PEXSI_Solver::pexsi_delta_e = 0.0;
+double PEXSI_Solver::pexsi_mu_lower = 0.0;
+double PEXSI_Solver::pexsi_mu_upper = 0.0;
+double PEXSI_Solver::pexsi_mu = 0.0;
+double PEXSI_Solver::pexsi_mu_thr = 0.0;
+double PEXSI_Solver::pexsi_mu_expand = 0.0;
+double PEXSI_Solver::pexsi_mu_guard = 0.0;
+double PEXSI_Solver::pexsi_elec_thr = 0.0;
+double PEXSI_Solver::pexsi_zero_thr = 0.0;
+} // namespace pexsi
+#endif
 
 #endif

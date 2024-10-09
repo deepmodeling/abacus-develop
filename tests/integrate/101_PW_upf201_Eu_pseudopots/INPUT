@@ -7,7 +7,7 @@ pseudo_dir          ../../PP_ORB
 symmetry            1
 nbands              10 
 
-ecutwfc             50
+ecutwfc             20
 scf_thr             1.0e-7  // about iteration
 
 basis_type		pw

@@ -1,5 +1,6 @@
 #include "sltk_atom_input.h"
 #include "sltk_grid.h"
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 
 //==========================================================
@@ -75,7 +76,7 @@ Atom_input::Atom_input
 	vec3[1] = ucell.latvec.e32;
 	vec3[2] = ucell.latvec.e33;
 
-	if(GlobalV::test_grid)
+	if(PARAM.inp.test_grid)
 	{
 		ofs_in << " Output lattice vectors now (unit:lat0):" << std::endl;
 		ofs_in << " " << std::setw(5) << "Vec1" 
@@ -173,7 +174,7 @@ Atom_input::Atom_input
 		this->Expand_Grid(ucell, ntype);
 	}
 
-	if(GlobalV::test_grid) ModuleBase::GlobalFunc::OUT(ofs_in, "expand_flag", expand_flag);
+	if(PARAM.inp.test_grid) ModuleBase::GlobalFunc::OUT(ofs_in, "expand_flag", expand_flag);
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :

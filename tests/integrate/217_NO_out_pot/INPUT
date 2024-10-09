@@ -10,7 +10,7 @@ orbital_dir	../../PP_ORB
 out_pot			1
 
 #Parameters (2.Iteration)
-ecutwfc			20
+ecutwfc			5
 scf_thr				1e-6
 scf_nmax			100
 

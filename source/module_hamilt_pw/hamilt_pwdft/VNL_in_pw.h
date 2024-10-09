@@ -11,45 +11,44 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_psi/psi.h"
 #ifdef __LCAO
-#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_basis/module_ao/ORB_gaunt_table.h"
 #endif
 
 //==========================================================
 // Calculate the non-local pseudopotential in reciprocal
 // space using plane wave as basis set.
 //==========================================================
-class pseudopot_cell_vnl: public pseudopot_cell_vl
+class pseudopot_cell_vnl : public pseudopot_cell_vl
 {
 
-public:
-
-	pseudopot_cell_vnl();
+  public:
+    pseudopot_cell_vnl();
     ~pseudopot_cell_vnl();
     void init(const int ntype,
               Structure_Factor* psf_in,
               const ModulePW::PW_Basis_K* wfc_basis = nullptr,
               const bool allocate_vkb = 1);
 
-    double cell_factor; //LiuXh add 20180619
+    double cell_factor; // LiuXh add 20180619
 
-	int nkb; // total number of beta functions considering all atoms
+    int nkb; // total number of beta functions considering all atoms
 
-	int lmaxkb; // max angular momentum for non-local projectors
+    int lmaxkb; // max angular momentum for non-local projectors
 
     void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
     template <typename FPTYPE, typename Device>
-    void getvnl(Device * ctx, const int &ik, std::complex<FPTYPE>* vkb_in)const;
+    void getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const;
 
-    void getvnl(const int &ik, ModuleBase::ComplexMatrix& vkb_in)const;
+    void getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const;
 
-	// void getvnl_alpha(const int &ik);
+    // void getvnl_alpha(const int &ik);
 
-	void init_vnl_alpha(void);
+    void init_vnl_alpha(void);
 
-	void initgradq_vnl(const UnitCell &cell);
+    void initgradq_vnl(const UnitCell& cell);
 
-	void getgradq_vnl(const int ik);
+    void getgradq_vnl(const int ik);
 
     //===============================================================
     // MEMBER VARIABLES :
@@ -66,25 +65,25 @@ public:
 
     int lmaxq;
 
-	ModuleBase::matrix indv;		// indes linking  atomic beta's to beta's in the solid
-	ModuleBase::matrix nhtol;      	// correspondence n <-> angular momentum l
-	ModuleBase::matrix nhtolm;     	// correspondence n <-> combined lm index for (l,m)
-	ModuleBase::matrix nhtoj;		// new added
+    ModuleBase::matrix indv;   // indes linking  atomic beta's to beta's in the solid
+    ModuleBase::matrix nhtol;  // correspondence n <-> angular momentum l
+    ModuleBase::matrix nhtolm; // correspondence n <-> combined lm index for (l,m)
+    ModuleBase::matrix nhtoj;  // new added
 
-	ModuleBase::realArray dvan;		//(:,:,:),  the D functions of the solid
-	ModuleBase::ComplexArray dvan_so;	//(:,:,:),  spin-orbit case,  added by zhengdy-soc
+    ModuleBase::realArray dvan;       //(:,:,:),  the D functions of the solid
+    ModuleBase::ComplexArray dvan_so; //(:,:,:),  spin-orbit case,  added by zhengdy-soc
 
-	ModuleBase::realArray tab;		//(:,:,:), interpolation table for PPs: 4pi/sqrt(V) * \int betar(r)jl(qr)rdr
-	ModuleBase::realArray tab_alpha;
-	ModuleBase::realArray tab_at;	//(:,:,:), interpolation table for atomic wfc
-	ModuleBase::realArray tab_dq;   //4pi/sqrt(V) * \int betar(r)*djl(qr)/d(qr)*r^2 dr
+    ModuleBase::realArray tab; //(:,:,:), interpolation table for PPs: 4pi/sqrt(V) * \int betar(r)jl(qr)rdr
+    ModuleBase::realArray tab_alpha;
+    ModuleBase::realArray tab_at; //(:,:,:), interpolation table for atomic wfc
+    ModuleBase::realArray tab_dq; // 4pi/sqrt(V) * \int betar(r)*djl(qr)/d(qr)*r^2 dr
 
-	ModuleBase::realArray deeq;		//(:,:,:,:), the integral of V_eff and Q_{nm}
-	bool multi_proj = false;
-    float *s_deeq = nullptr;
-    double *d_deeq = nullptr;
-	ModuleBase::ComplexArray deeq_nc;	//(:,:,:,:), the spin-orbit case
-    std::complex<float> *c_deeq_nc = nullptr; // GPU array of deeq_nc
+    ModuleBase::realArray deeq; //(:,:,:,:), the integral of V_eff and Q_{nm}
+    bool multi_proj = false;
+    float* s_deeq = nullptr;
+    double* d_deeq = nullptr;
+    ModuleBase::ComplexArray deeq_nc;          //(:,:,:,:), the spin-orbit case
+    std::complex<float>* c_deeq_nc = nullptr;  // GPU array of deeq_nc
     std::complex<double>* z_deeq_nc = nullptr; // GPU array of deeq_nc
 
     // liuyu add 2023-10-03
@@ -182,11 +181,20 @@ public:
     template <typename FPTYPE>
     std::complex<FPTYPE>* get_deeq_nc_data() const;
 
+    void release_memory();
+
   private:
-    float *s_nhtol = nullptr, *s_nhtolm = nullptr, *s_indv = nullptr, *s_tab = nullptr;
+    bool memory_released = false;
+    float* s_nhtol = nullptr;
+    float* s_nhtolm = nullptr;
+    float* s_indv = nullptr;
+    float* s_tab = nullptr;
     std::complex<float>* c_vkb = nullptr;
 
-    double *d_nhtol = nullptr, *d_nhtolm = nullptr, *d_indv = nullptr, *d_tab = nullptr;
+    double* d_nhtol = nullptr;
+    double* d_nhtolm = nullptr;
+    double* d_indv = nullptr;
+    double* d_tab = nullptr;
     std::complex<double>* z_vkb = nullptr;
 
     const ModulePW::PW_Basis_K* wfcpw = nullptr;

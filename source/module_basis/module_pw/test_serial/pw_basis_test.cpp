@@ -39,6 +39,9 @@
 #define private public
 #include "../pw_basis.h"
 #include "../fft.h"
+#undef private
+#undef protected
+
 class PWBasisTEST: public testing::Test
 {
 public:
@@ -360,5 +363,3 @@ TEST_F(PWBasisTEST,CollectUniqgg)
 	pwb.collect_uniqgg();
 	EXPECT_EQ(pwb.ngg,78);
 }
-#undef private
-#undef protected

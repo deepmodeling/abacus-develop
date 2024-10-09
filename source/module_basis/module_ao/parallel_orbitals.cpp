@@ -1,18 +1,12 @@
 #include "parallel_orbitals.h"
 
-#ifdef __MPI
-extern "C"
-{
 #include "module_base/blacs_connector.h"
 #include "module_base/scalapack_connector.h"
-}
-#endif
+#include "module_base/global_function.h"
 
 Parallel_Orbitals::Parallel_Orbitals()
 {
     loc_sizes = nullptr;
-
-    testpb = 0; // mohan add 2011-03-16
 
     // in multi-k, 2D-block-division variables for FT (R<->k)
     nnr = 1;
@@ -25,6 +19,29 @@ Parallel_Orbitals::~Parallel_Orbitals()
     delete[] loc_sizes;    
     delete[] nlocdim;
     delete[] nlocstart;
+}
+
+int Parallel_Orbitals::get_wfc_global_nbands() const
+{
+#ifdef __MPI
+    return this->desc_wfc[3];
+#else    
+    return this->ncol_bands;
+#endif
+}
+
+int Parallel_Orbitals::get_wfc_global_nbasis() const
+{
+#ifdef __MPI
+    return this->desc_wfc[2];
+#else
+    return this->nrow_bands;
+#endif
+}
+
+int Parallel_Orbitals::get_nbands() const
+{
+    return this->nbands;
 }
 
 void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, const int &nlocal)
@@ -197,7 +214,6 @@ void Parallel_Orbitals::set_desc_wfc_Eij(const int& nbasis, const int& nbands, c
 {
     ModuleBase::TITLE("Parallel_2D", "set_desc_wfc_Eij");
 #ifdef __DEBUG
-    assert(this->comm_2D != MPI_COMM_NULL);
     assert(nbasis > 0 && nbands > 0 && lld > 0);
     assert(this->nb > 0 && this->dim0 > 0 && this->dim1 > 0);
 #endif
@@ -214,7 +230,8 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
 {
     ModuleBase::TITLE("Parallel_Orbitals", "set_nloc_wfc_Eij");
     // for wavefuncton , calculate nbands_loc
-    int end_id;
+    this->nbands = N_A;
+    int end_id = 0;
     int block = N_A / nb;
     if (block * nb < N_A)
     {
@@ -254,6 +271,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     {
         this->ncol_bands = col_b_bands * nb;
     }
+    this->nrow_bands = this->nrow;
     this->nloc_wfc = this->ncol_bands * this->nrow;
 
     this->nloc_Eij = this->ncol_bands * this->ncol_bands;

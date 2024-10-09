@@ -38,8 +38,8 @@ The source code of ABACUS is based on several modules. Under the ABACUS root dir
 
 For those who are interested in the source code, the following figure shows the structure of the source code.
 
-```
-|-- module_base                 A basic module including 
+```text
+|-- module_base                 A basic module including
 |   |                           (1) Mathematical library interface functions: BLAS, LAPACK, Scalapack;
 |   |                           (2) Custom data classes: matrix, vector definitions and related functions;
 |   |                           (3) Parallelization functions: MPI, OpenMP;
@@ -59,7 +59,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- potentials              The module for calculating the potentials, including Hartree, exchange-correlation, local pseudopotential, etc.
 |-- module_esolver              The module defining task-specific driver of corresponding workflow for evaluating energies, forces, etc., including lj, dp, ks, sdft, ofdft, etc.
 |   |                           TDDFT, Orbital-free DFT, etc.
-|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations. 
+|-- module_hamilt_general       The module for defining general Hamiltonian that can be used both in PW and LCAO calculations.
 |   |-- module_ewald            The module for calculating the Ewald summation.
 |   |-- module_surchem          The module for calculating the surface charge correction.
 |   |-- module_vdw              The module for calculating the van der Waals correction.
@@ -77,7 +77,7 @@ For those who are interested in the source code, the following figure shows the 
 |   |-- hamilt_pwdft            The module for defining the Hamiltonian in PW-DFT calculations.
 |   |   |-- operator_pw         The module for defining the operators in PW-DFT calculations.
 |   `-- hamilt_stodft           The module for defining the Hamiltonian in STODFT calculations.
-|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW 
+|-- module_hsolver              The module for solving the Hamiltonian with different diagonalization methods, including CG, Davidson in PW
 |   |                           calculations, and scalapack and genelpa in LCAO calculations.
 |-- module_io                   The module for reading of INPUT files and output properties including band structure, density of states, charge density, etc.
 |-- module_md                   The module for performing molecular dynamics.
@@ -164,6 +164,23 @@ We use `clang-format` as our code formatter. The `.clang-format` file in root di
 For Visual Studio Code developers, the [official extension of C/C++](https://marketplace.visualstudio.com/items?itemName=ms-vscode.cpptools) provided by Microsoft can help you format your codes following the rules. With this extension installed, format your code with `shift+command/alt+f`.
 Configure your VS Code settings as `"C_Cpp.clang_format_style": "file"` (you can look up this option by pasting it into the search box of VS Code settings page), and all this stuff will take into effect. You may also set `"editor.formatOnSave": true` to avoid formatting files everytime manually.
 
+We use <https://pre-commit.ci/> to format the code.
+It is performed after pushing new commits to a PR. You might need to pull the changes before adding new commits.
+
+To use pre-commit locally (**generally not required**):
+Please install the pre-commit tool by running the following command:
+
+```bash
+pip install pre-commit
+pip install clang-tidy clang-format # if you haven't installed them
+```
+
+Then, run the following command to install the pre-commit hooks:
+
+```bash
+pre-commit install
+```
+
 ## Adding a unit test
 
 We use [GoogleTest](https://github.com/google/googletest) as our test framework. Write your test under the corresponding module folder at `abacus-develop/tests`, then append the test to `tests/CMakeLists.txt`. If there are currently no unit tests provided for the module, do as follows. `module_base` provides a simple demonstration.
@@ -201,42 +218,55 @@ To add a unit test:
 
 ## Running unit tests
 
-1. Compiling ABACUS with unit tests.   
+1. Compiling ABACUS with unit tests.
 
     In order to run unit tests, ABACUS needs to be configured with `-D BUILD_TESTING=ON` flag. For example:
+
     ```bash
     cmake -B build -DBUILD_TESTING=ON
-    ``` 
-    then build ABACUS and unit testing with 
+    ```
+
+    then build ABACUS and unit testing with
+
     ```bash
     cmake --build build -j${number of processors}
     ```
+
     It is import to run the folloing command before running unit tests:
+
     ```bash
     cmake --install build
     ```
-    to install mandatory supporting input files for unit tests.  
+
+    to install mandatory supporting input files for unit tests.
     If you modified the unit tests to add new tests or learn how to write unit tests, it is convenient to run
+
     ```bash
     cmake --build build -j${number of processors} --target ${unit test name}
     ```
+
     to build a specific unit test. And please remember to run `cmake --install build` after building the unit test if the unit test requires supporting input files.
 
 2. Running unit tests
 
-    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.  
+    The test cases are located in `build/source/${module_name}/test` directory. Note that there are other directory names for unit tests, for example, `test_parallel` for running parallel unit tests, `test_pw` for running unit tests only used in plane wave basis calculation.
 
     You can run a single test in the specific directory. For example, run
-    ```
+
+    ```bash
     ./cell_unitcell_test
     ```
-    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.  
+
+    under the directory of `build/source/module_cell/test` to run the test `cell_unitcell_test`.
     However, it is more convenient to run unit tests with `ctest` command under the `build` directory. You can check all unit tests by
+
     ```bash
     ctest -N
     ```
-    The results will be shown as  
-    ```
+
+    The results will be shown as
+
+    ```text
     Test project /root/abacus/build
     Test   #1: integrated_test
     Test   #2: Container_UTs
@@ -245,24 +275,74 @@ To add a unit test:
     Test   #5: base_timer
     ...
     ```
+
     Note that the first one is integrated test, which is not a unit test. It is the test
     suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory.
 
-    To run a subset of tests, run the following command 
+    To run a subset of tests, run the following command
+
     ```bash
     ctest -R <test-match-pattern> -V
     ```
-    For example, `ctest -R cell` will perform tests with name matched by `cell`.  
-    You can also run a single test with 
-    ```
+
+    For example, `ctest -R cell` will perform tests with name matched by `cell`.
+    You can also run a single test with
+
+    ```bash
     ctest -R <test-name>
     ```
-    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.  
+
+    For example, `ctest -R cell_unitcell_test_readpp` will   perform test `cell_unitcell_test_readpp`.
     To run all the unit tests, together with the integrated test, run
+
     ```bash
     cmake --build build --target test ARGS="-V --timeout 21600"
     ```
+
     in the `abacus-develop` directory.
+
+## Adding an integrate test
+The integrate test is a test suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory. Before adding a new test, please firstly read `README.md` in `tests/integrate` to understand the structure of the integrate test. To add an integrate test:
+1. Add a new directory under `tests/integrate` for the new test.
+2. Prepare the input files for the new test. 
+    - The input files should be placed in the new directory. Pseudopotential files and orbital files should be placed in `tests/PP_ORB`. You should define the correct `pseudo_dir` and `orb_dir`(if need orbital files) in INPUT with the relative path to the `tests/PP_ORB` directory, and be sure the new test can be run successfully.
+    - The running time of the new test should not exceed 20 seconds. You can try to reduce the time by below methods (on the premise of ensuring the effectiveness of the test):
+        - Reduce the number of atoms in the unit cell (1~2 atoms).
+        - Reduce the number of k-points (`1 1 1` or `2 2 2`).
+        - Reduce ecutwfc (20~50 Ry).
+        - Reduce the number of steps for relax or md job (2~3 steps). 
+        - Reduce the basis set for LCAO calculations (DZP orbital and 6 a.u. cutoff).
+    - For PW calculations, should set `pw_seed 1` in INPUT file to ensure the reproducibility of the test.
+3. Generate the reference results for the new test.
+    - Run the new test with GNU compiler and 4 MPI processes 2 OpenMP threads. The command is `OMP_NUM_THREADS=2 mpirun -np 4 abacus > log.txt`.
+    - Execute tests/integrate/tools/catch_properties.sh script to generate the reference results. At the new test directory, run `bash ../tools/catch_properties.sh result.ref`.
+      A `result.ref` file may be like:
+        ```text
+         etotref -3439.007931317310
+         etotperatomref -3439.0079313173
+         totaltimeref 2.78
+        ``` 
+    - If you want to test the correctness of some output files, you need to do extra below steps:
+        1. add the corresponding comparison method in `catch_properties.sh`. For example, to verify whether the output of the BANDS_1.dat file is correct, you need to add the following code in `catch_properties.sh`:
+            ```bash
+            has_band=$(awk '$1=="out_band" {a=$2} END{print a}' INPUT)  # check if the BAND is outputed
+            if ! test -z "$has_band"  && [  $has_band == 1 ]; then      # if band is outputed, then check if the band is correct
+	            bandref=refBANDS_1.dat                                  # this file should be prepared in new test directory
+	            bandcal=OUT.autotest/BANDS_1.dat                        # this file is generated by each run of test
+                python3 ../tools/CompareFile.py $bandref $bandcal 8     # compare the new band file with the reference file
+	            echo "CompareBand_pass $?" >>$1                         # record the comparison result, $? is the return value of last command
+            fi
+            ```
+            `CompareFile.py` is used to determine if two files are identical. It accepts three arguments: the first two are the files to be compared, and the third specifies the precision     for comparing numerical values. The comparison fails if the difference between any two corresponding numerical values exceeds 1e-{precision} (such as: 1e-8 in previous case).  If the files are identical, the script returns 0; otherwise, it returns 1.
+
+        2. Add the reference file (such as: `refBANDS_1.dat` in previous case) to the new test directory.
+
+        3. Add the reference comparison result to the `result.ref` file. For example, `CompareBand_pass 0` means the comparison of the band file is passed. (This statement should be added before the `totaltimeref` line)
+4. Add a `jd` file in the new test directory, which is one setence to describe the new test.
+5. Add the new test to `tests/integrate/CASES_CPU.txt` file (or `tests/integrate/CASES_GPU.txt` file if it is for GPU verion).
+6. Enter directory tests/integrate and run `bash Autotest.sh -r <the-new-test-name>` to check if the new test can be run successfully.
+
+
 
 ## Debugging the codes
 
@@ -290,6 +370,32 @@ Run ABACUS as usual, and it will automatically detect the buffer overflow proble
 
 [Valgrind](https://valgrind.org/) is another option for performing dynamic analysis.
 
+## Adding a new building component
+
+ABACUS uses CMake as its default building system. To add a new building component:
+
+1. Add an `OPTION` to toggle the component to the `CMakeLists.txt` file under root directory. For example:
+
+    ```cmake
+    OPTION(ENABLE_NEW_COMPONENT "Enable new component" OFF)
+    ```
+
+2. Add the new component. For example:
+
+    ```cmake
+    IF (ENABLE_NEW_COMPONENT)
+      add_subdirectory(module_my_new_feature) # if the feature is implemented in a subdirectory
+      find_package(NewComponent REQUIRED) # if third-party libs are required
+      target_link_libraries(${ABACUS_BIN_NAME} PRIVATE NewComponent) # if the component is linked
+      include_directories(${NewComponent_INCLUDE_DIRS}) # if the component is included
+    endif()
+    ```
+
+3. Add the required third-party libraries to Dockerfiles.
+4. After the changes above are merged, submit another PR to build and test the new component in the CI pipeline.
+    - For integration test and unit test: add `-DENABLE_NEW_COMPONENT=ON` to the building step at `.github/workflows/test.yml`.
+    - For building test: add `-DENABLE_NEW_COMPONENT=ON` as a new configuration at `.github/workflows/build_test_cmake.yml`.
+
 ## Generating code coverage report
 
 This feature requires using GCC compiler. We use `gcov` and `lcov` to generate code coverage report.
@@ -306,7 +412,7 @@ This feature requires using GCC compiler. We use `gcov` and `lcov` to generate c
     cmake --build build --target test ARGS="-V --timeout 21600"
     ```
 
-If configuration fails unfortunately, you can find [required files](https://github.com/baixiaokuang/CMake-codecov/tree/master/cmake) (including three *.cmake and llvm-cov-wrapper), and copy these four files into `/abacus-develop/cmake`. Alternatively, you can define the path with option `-D CMAKE_CURRENT_SOURCE_DIR`.
+    If configuration fails unfortunately, you can find [required files](https://github.com/baixiaokuang/CMake-codecov/tree/master/cmake) (including three *.cmake and llvm-cov-wrapper), and copy these four files into `/abacus-develop/cmake`. Alternatively, you can define the path with option `-D CMAKE_CURRENT_SOURCE_DIR`.
 
 3. Generate HTML report.
 
@@ -340,33 +446,35 @@ To run a subset of unit test, use `ctest -R <test-match-pattern>` to perform tes
     git push origin my-fix-branch
     ```
 
-6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is required to document your PR following [our guidelines](#commit-message-guidelines).
+6. In GitHub, send a pull request (PR) with `deepmodeling/abacus-develop:develop` as the base repository. It is **required** to document your PR following [our guidelines](#commit-message-guidelines).
 
-7. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
+7. If more changes are needed, you can add more commits to your branch and push them to GitHub. Your PR will be updated automatically.
 
-- Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
+8. After your pull request is merged, you can safely delete your branch and sync the changes from the main (upstream) repository:
 
-    ```shell
-    git push origin --delete my-fix-branch
-    ```
+    - Delete the remote branch on GitHub either [through the GitHub web UI](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-branches-in-your-repository/deleting-and-restoring-branches-in-a-pull-request#deleting-a-branch-used-for-a-pull-request) or your local shell as follows:
 
-- Check out the master branch:
+        ```shell
+        git push origin --delete my-fix-branch
+        ```
 
-    ```shell
-    git checkout develop -f
-    ```
+    - Check out the master branch:
 
-- Delete the local branch:
+        ```shell
+        git checkout develop -f
+        ```
 
-    ```shell
-    git branch -D my-fix-branch
-    ```
+    - Delete the local branch:
 
-- Update your master with the latest upstream version:
+        ```shell
+        git branch -D my-fix-branch
+        ```
 
-    ```shell
-    git pull --ff upstream develop
-    ```
+    - Update your master with the latest upstream version:
+
+        ```shell
+        git pull --ff upstream develop
+        ```
 
 ## Commit message guidelines
 

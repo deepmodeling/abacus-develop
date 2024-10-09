@@ -67,8 +67,9 @@ struct cal_sk_op {
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
-struct cal_sk_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator()(const psi::DEVICE_GPU* ctx,
+struct cal_sk_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& ik,
                     const int& ntype,
                     const int& nx,

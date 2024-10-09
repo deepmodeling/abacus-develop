@@ -8,7 +8,7 @@ on:
 jobs:
   test:
     name: Dynamic analysis
-    runs-on: self-hosted
+    runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:

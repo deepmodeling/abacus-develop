@@ -1,5 +1,6 @@
 //======================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE :   2021-11-21
 //======================
 
@@ -27,7 +28,7 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
     ModuleBase::TITLE("ModuleIO", "write_psi_r_1");
     ModuleBase::timer::tick("ModuleIO", "write_psi_r_1");
 
-    const std::string outdir = GlobalV::global_out_dir + folder_name + "/";
+    const std::string outdir = PARAM.globalv.global_out_dir + folder_name + "/";
     ModuleBase::GlobalFunc::MAKE_DIR(outdir);
 #ifdef __MPI
 		std::vector<MPI_Request> mpi_requests;
@@ -35,9 +36,9 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
 		for(int ik=0; ik<wfc_g.get_nk(); ++ik)
 		{
 			wfc_g.fix_k(ik);
-			const int ik_out = (GlobalV::NSPIN!=2)
+			const int ik_out = (PARAM.inp.nspin!=2)
 				? ik + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL]
-				: ik - kv.nks/2*kv.isk[ik] + kv.nkstot/2*kv.isk[ik] + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+				: ik - kv.get_nks()/2*kv.isk[ik] + kv.get_nkstot()/2*kv.isk[ik] + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
 			for(int ib=0; ib<wfc_g.get_nbands(); ++ib)
 			{
 				const std::vector<std::complex<double>> wfc_r = cal_wfc_r(wfcpw, wfc_g, ik, ib);

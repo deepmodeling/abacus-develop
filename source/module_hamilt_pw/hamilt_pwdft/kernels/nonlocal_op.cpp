@@ -2,24 +2,24 @@
 
 namespace hamilt {
 
-template <typename FPTYPE> 
-struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
-  void operator() (
-      const psi::DEVICE_CPU* /*dev*/,
-      const int& l1,
-      const int& l2,
-      const int& l3,
-      int& sum,
-      int& iat,
-      const int& spin,
-      const int& nkb,
-      const int& deeq_x,
-      const int& deeq_y,
-      const int& deeq_z,
-      const FPTYPE* deeq,
-      std::complex<FPTYPE>* ps,
-      const std::complex<FPTYPE>* becp)
-  {
+template <typename FPTYPE>
+struct nonlocal_pw_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* /*dev*/,
+                    const int& l1,
+                    const int& l2,
+                    const int& l3,
+                    int& sum,
+                    int& iat,
+                    const int& spin,
+                    const int& nkb,
+                    const int& deeq_x,
+                    const int& deeq_y,
+                    const int& deeq_z,
+                    const FPTYPE* deeq,
+                    std::complex<FPTYPE>* ps,
+                    const std::complex<FPTYPE>* becp)
+    {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3)
 #endif
@@ -38,20 +38,19 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
     iat += l1;
   }
 
-  void operator() (
-      const psi::DEVICE_CPU* dev,
-      const int& l1,
-      const int& l2,
-      const int& l3,
-      int& sum,
-      int& iat,
-      const int& nkb,
-      const int& deeq_x,
-      const int& deeq_y,
-      const int& deeq_z,
-      const std::complex<FPTYPE>* deeq_nc,
-      std::complex<FPTYPE>* ps,
-      const std::complex<FPTYPE>* becp)
+  void operator()(const base_device::DEVICE_CPU* dev,
+                  const int& l1,
+                  const int& l2,
+                  const int& l3,
+                  int& sum,
+                  int& iat,
+                  const int& nkb,
+                  const int& deeq_x,
+                  const int& deeq_y,
+                  const int& deeq_z,
+                  const std::complex<FPTYPE>* deeq_nc,
+                  std::complex<FPTYPE>* ps,
+                  const std::complex<FPTYPE>* becp)
   {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(3)
@@ -78,7 +77,7 @@ struct nonlocal_pw_op<FPTYPE, psi::DEVICE_CPU> {
   }
 };
 
-template struct nonlocal_pw_op<float, psi::DEVICE_CPU>;
-template struct nonlocal_pw_op<double, psi::DEVICE_CPU>;
+template struct nonlocal_pw_op<float, base_device::DEVICE_CPU>;
+template struct nonlocal_pw_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace hamilt

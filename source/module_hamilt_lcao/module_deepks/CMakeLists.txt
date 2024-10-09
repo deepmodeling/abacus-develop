@@ -1,7 +1,8 @@
 if(ENABLE_DEEPKS)
   list(APPEND objects
       LCAO_deepks.cpp
-      LCAO_deepks_fdelta.cpp
+      deepks_fgamma.cpp
+      deepks_fk.cpp
       LCAO_deepks_odelta.cpp
       LCAO_deepks_io.cpp
       LCAO_deepks_mpi.cpp
@@ -9,7 +10,16 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_psialpha.cpp
       LCAO_deepks_torch.cpp
       LCAO_deepks_vdelta.cpp
+      deepks_hmat.cpp
       LCAO_deepks_interface.cpp
+      orbital_precalc.cpp
+      orbital_precalc_k.cpp
+      cal_gdmx.cpp
+      cal_gdmx_k.cpp
+      cal_gedm.cpp
+      cal_gvx.cpp      
+      cal_descriptor.cpp
+      v_delta_precalc.cpp
   )
 
   add_library(

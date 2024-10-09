@@ -1,0 +1,7 @@
+FeO Anti-Ferromagnetic+LDA
+U-Ramping method to find the ground state
+NSPIN 2
+lcao
+init magnet: up + down
+SG15
+

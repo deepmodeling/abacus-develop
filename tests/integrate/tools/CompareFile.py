@@ -2,13 +2,16 @@
 import os,sys
 
 usage = '''
-python CompareFile.py file1 file2 [accuracy] [-abs 0]
+python CompareFile.py file1 file2 [accuracy] [-abs 0] [-com_type 1]
 
 accuracy    - the accuracy of two float value.
               default value is 8, which means
               pass when the difference of two 
               value is smaller than 1e-8.
 -abs        - if compare the absolute value, default is False              
+-com_type   - 0: assure the relative difference of two float value is smaller than accuracy
+            - 1: assure the absolute difference of two float value is smaller than accuracy
+            - Default is 1
 
 This script is used to compare whether two files are 
 same.
@@ -21,23 +24,35 @@ When the script is finished, then a followed bash command
 '''
 
 def ReadParam():
-    if len(sys.argv) not in [3,4,5,6]:
+    if len(sys.argv) not in [3,4,5,6,7,8]:
         print(usage)
         sys.exit(1)
     file1 = sys.argv[1]
     file2 = sys.argv[2]
     accur = 8
-    absolute = False
-    if len(sys.argv) == 4: 
-        accur = int(sys.argv[3])
-    elif len(sys.argv) == 5 and sys.argv[3] == '-abs':
-        absolute = bool(sys.argv[4])
-    elif len(sys.argv) == 6:
-        accur = int(sys.argv[3])
-        absolute = bool(sys.argv[5])
-
+    useAbsoluteVal = False
+    compareAbsoluteDiff = True
+    argi = 3
+    while argi < len(sys.argv):
+        if sys.argv[argi] == '-abs':
+            argi += 1
+            useAbsoluteVal = bool(int(sys.argv[argi]))
+        elif sys.argv[argi] == '-com_type':
+            argi += 1
+            compareAbsoluteDiff = bool(int(sys.argv[argi]))
+        else:
+            accur = int(sys.argv[argi])
+        argi += 1
     epsilon = 0.1**accur
-    return file1,file2,epsilon,absolute
+    return file1,file2,epsilon,useAbsoluteVal,compareAbsoluteDiff
+
+def is_two_data_diff(data1,data2,epsilon,compareAbsoluteDiff):
+    if compareAbsoluteDiff:
+        if abs(data1-data2) > epsilon: return True
+    else:
+        if abs(data1) < 1e-8 and abs(data2) < 1e-8: return False
+        if abs(data1-data2)/max(abs(data1),abs(data2)) > epsilon: return True
+    return False
 
 def ReadFile(file1,lines):
     if os.path.isfile(file1):
@@ -78,7 +93,7 @@ def ExitError(iline,line1,line2,jnumber=-1):
 
 
 if __name__ == "__main__":
-    file1,file2,epsilon,absolute = ReadParam()
+    file1,file2,epsilon,useAbsoluteVal,compareAbsoluteDiff = ReadParam()
     lines1 = []
     lines2 = []
     ReadFile(file1,lines1)
@@ -95,19 +110,19 @@ if __name__ == "__main__":
                 x1 = IsComplex(sline1[j])
                 x2 = IsComplex(sline2[j])
                 if x1 and x2:
-                    if absolute:
-                        if abs((x1[0]**2+x1[1]**2)**0.5 - (x2[0]**2+x2[1]**2)**0.5) > epsilon: 
+                    if useAbsoluteVal:
+                        if is_two_data_diff((x1[0]**2+x1[1]**2)**0.5, (x2[0]**2+x2[1]**2)**0.5, epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                     else:
-                        if abs(x1[0] - x2[0]) > epsilon: 
+                        if is_two_data_diff(x1[0], x2[0], epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
-                        if abs(x1[1] - x2[1]) > epsilon: 
+                        if is_two_data_diff(x1[1], x2[1], epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                 elif IsFloat(sline1[j]) and IsFloat(sline2[j]):
-                    if absolute:
-                        if abs(abs(float(sline1[j])) - abs(float(sline2[j]))) > epsilon: 
+                    if useAbsoluteVal:
+                        if is_two_data_diff(abs(float(sline1[j])), abs(float(sline2[j])), epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                     else:
-                        if abs(float(sline1[j]) - float(sline2[j])) > epsilon: 
+                        if is_two_data_diff(float(sline1[j]), float(sline2[j]), epsilon, compareAbsoluteDiff):
                             ExitError(i,sline1[j],sline2[j],j)
                 elif sline1[j] != sline2[j]: ExitError(i,sline1[j],sline2[j],j)

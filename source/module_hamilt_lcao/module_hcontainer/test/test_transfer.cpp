@@ -56,18 +56,12 @@ class TransferTest : public ::testing::Test
 #ifdef __MPI
     void init_parav()
     {
+        int nb = 2;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(2/* nb_2d set to be 2*/);
-        paraV->set_proc_dim(dsize, 0);
-        paraV->mpi_create_cart(MPI_COMM_WORLD);
-        paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);
-        int lr = paraV->get_row_size();
-        int lc = paraV->get_col_size();
-        paraV->set_desc(global_row, global_col, lr);
-        paraV->set_global2local(global_row, global_col, true, ofs_running);
+        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -237,7 +231,7 @@ TEST_F(TransferTest, paraToSerial)
     // now assume the HR_serial is empty and do the same test
     Parallel_Orbitals serialV;
     std::ofstream ofs("test.log");
-    serialV.set_global2local(test_size*test_nw, test_size*test_nw, false, ofs);
+    serialV.set_serial(test_size*test_nw, test_size*test_nw);
     serialV.set_atomic_trace(ucell.get_iat2iwt(), test_size, test_size*test_nw);
     hamilt::HContainer<double>* HR_serial2;
     if(my_rank == 0)

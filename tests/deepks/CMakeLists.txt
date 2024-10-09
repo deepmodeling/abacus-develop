@@ -4,7 +4,7 @@ find_program(BASH bash)
 if(ENABLE_ASAN)
     add_test(
         NAME deepks_test_with_asan
-        COMMAND ${BASH} Autotest.sh -a ${ABACUS_BIN_PATH} -n 2 -s true
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 2 -s true
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/deepks
     )
     add_test(
@@ -16,7 +16,7 @@ if(ENABLE_ASAN)
 else()
     add_test(
         NAME deepks_test
-        COMMAND ${BASH} Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/deepks
     )
     # TODO: I will rewrite the unit tests and remove 604 to module_deepks/test/

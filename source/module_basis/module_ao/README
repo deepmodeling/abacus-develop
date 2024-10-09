@@ -24,24 +24,14 @@ ORB_atomic.cpp: information for all of the atomic orbitals
 ORB_atomic.h
 ORB_atomic_lm.cpp: store each atomic orbitals
 ORB_atomic_lm.h
-ORB_control.cpp: control panel to read-in orbitals and generate tables 
-ORB_control.h
 ORB_gaunt_table.cpp: compute Gaunt tables
 ORB_gaunt_table.h
-ORB_gen_tables.cpp: interfaces to give TCIs for given atomic types and distances 
-ORB_gen_tables.h
 ORB_nonlocal.cpp: information for all of the non-local projectors
 ORB_nonlocal.h
 ORB_nonlocal_lm.cpp: store each non-local projector
 ORB_nonlocal_lm.h
 ORB_read.cpp: read-in basis sets/non-local projectors/descriptors
 ORB_read.h
-ORB_table_alpha.cpp: generate Tables for descriptors
-ORB_table_alpha.h
-ORB_table_beta.cpp: generate Tables for non-local projectors
-ORB_table_beta.h
-ORB_table_phi.cpp: generate Tables for basis sets
-ORB_table_phi.h
 --------------------------------------------------------------------
 
 There are some other files in the 'OBJS_BASE' group (mainly math functions), 

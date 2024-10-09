@@ -2,9 +2,8 @@
 #define MEMORY_H
 
 #include <fstream>
-#include <iomanip>
-#include <iostream>
 #include <string>
+
 namespace ModuleBase
 {
 

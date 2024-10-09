@@ -1,0 +1,55 @@
+INPUT_PARAMETERS RUNNING ABACUS-DFT
+
+#Parameters (1.General)
+suffix                  ABACUS  # suffix of OUTPUT DIR
+# ntype                   1   #  number of element
+nspin                   2   #  1/2/4 4 for SOC
+symmetry                0   #  0/1  1 for open, default
+# symmetry_autoclose      1   # if symmetry error: set symmetry to 0
+# symmetry_prec           1e-5  # default
+# device                cpu    # only PW is supported by GPU
+esolver_type            ksdft  # ksdft, ofdft, sdft, tddft, lj, dp
+# dft_functional          pbe  # same as upf file, can be lda/pbe/scan/hf/pbe0/hse
+ks_solver             genelpa  # default for ksdft-lcao
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir             ../../../tests/PP_ORB
+
+#Parameters (2.Iteration)
+calculation             scf # scf relax cell-relax md
+ecutwfc                 60   # Rydberg, with pseudopot, lcao use pw for inner part
+scf_thr                 1e-7  # drho, Rydberg
+scf_nmax                100
+
+#Parameters (3.Basis)
+basis_type              lcao  # lcao or pw
+# kspacing              0.25 # replace KPT
+gamma_only            1  # 0/1, replace KPT
+
+#Parameters (4.Smearing)
+smearing_method         gau    # mp/gau/fd/fixed, mp for metal gau for semicon
+smearing_sigma          0.001  # Rydberg, 0.002 for mp 0.001 for gau
+
+#Parameters (5.Mixing)
+mixing_type             broyden  # pulay/broyden
+# default mixing setting is recommended
+mixing_beta             0.4  # for metal: 0.05-0.4, 0 - 0.1 for difficult
+mixing_beta_mag         0.4
+mixing_gg0              0.0  # only for transition metal
+mixing_gg0_mag          0.0
+
+#Parameters (6.Calculation)
+# init setting
+# init_chg           atomic  # file
+# init_wfc           file
+# calculation setting
+cal_force          1
+cal_stress         1
+out_stru           1  # print STRU in OUT
+out_chg            0  # print CHG or not
+out_bandgap        1  # if bandgap and mul out, chg will out
+out_mul            1  # print Mulliken charge and mag of atom in mulliken.txt
+# out_wfc_lcao       1
+# out_interval       1
+# restart setting
+# restart_save       auto  # false, auto, other
+# restart_load       false

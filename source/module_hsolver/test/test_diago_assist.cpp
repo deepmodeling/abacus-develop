@@ -9,22 +9,22 @@
 class TestDiagoIterAssist : public ::testing::Test
 {
 	public:
-	using dia_f = hsolver::DiagoIterAssistSolver<float, psi::DEVICE_CPU>;
-	using dia_d = hsolver::DiagoIterAssist<std::complex<double>, psi::DEVICE_CPU>;
+      using dia_f = hsolver::DiagoIterAssistSolver<float, base_device::DEVICE_CPU>;
+      using dia_d = hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
-	hamilt::Hamilt<std::complex<double>> hamilt_test_d;
-	hamilt::Hamilt<std::complex<float>> hamilt_test_f;
+      hamilt::Hamilt<std::complex<double>> hamilt_test_d;
+      hamilt::Hamilt<std::complex<float>> hamilt_test_f;
 
-    DIAGOTEST::hamilt.create(4, 4);
+      DIAGOTEST::hamilt.create(4, 4);
 
-	psi::Psi<std::complex<double>> psi_test_cd;
-	psi::Psi<std::complex<float>> psi_test_cf;
-	
-	elecstate::ElecState elecstate_test;
+      psi::Psi<std::complex<double>> psi_test_cd;
+      psi::Psi<std::complex<float>> psi_test_cf;
 
-	std::string method_test = "none";
+      elecstate::ElecState elecstate_test;
 
-	std::ofstream temp_ofs;
+      std::string method_test = "none";
+
+      std::ofstream temp_ofs;
 };
 
 TEST_F(TestDiagoIterAssist, diagH_subspace)

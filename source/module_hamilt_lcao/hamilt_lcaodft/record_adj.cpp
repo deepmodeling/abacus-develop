@@ -1,15 +1,17 @@
 #include "record_adj.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 Record_adj::Record_adj() : iat2ca(nullptr) {}
 Record_adj::~Record_adj(){
-	if(info_modified)
+	if(info_modified) {
 		this->delete_grid();
 }
+}
 
-void Record_adj::delete_grid(void)
+void Record_adj::delete_grid()
 {
 	for(int i=0; i<na_proc; i++)
 	{
@@ -23,7 +25,8 @@ void Record_adj::delete_grid(void)
 	}
 	delete[] info;
 	delete[] na_each;
-	if (iat2ca) delete[] iat2ca;
+	if (iat2ca) { delete[] iat2ca;
+}
 	info_modified=false;
 }
 
@@ -35,7 +38,7 @@ void Record_adj::delete_grid(void)
 // If multi-k, calculate nnr at the same time.
 // be called only once in an ion-step.
 //--------------------------------------------
-void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
+void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vector<double>& orb_cutoff)
 {
 	ModuleBase::TITLE("Record_adj","for_2d");
 	ModuleBase::timer::tick("Record_adj","for_2d");
@@ -63,7 +66,6 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	ModuleBase::GlobalFunc::ZEROS(na_each, na_proc);
 	int iat = 0;
 	
-//	std::cout << " in for_2d" << std::endl;
 
 	for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
 	{
@@ -74,7 +76,8 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 			//GlobalC::GridD.Find_atom( tau1 );
 			GlobalC::GridD.Find_atom(GlobalC::ucell,  tau1 ,T1, I1);
 			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
-            if(!gamma_only) pv.nlocstart[iat] = pv.nnr;
+            if(!gamma_only) { pv.nlocstart[iat] = pv.nnr;
+}
             
             // (2) search among all adjacent atoms.
 			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
@@ -85,15 +88,15 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 				tau2 = GlobalC::GridD.getAdjacentTau(ad);
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * GlobalC::ucell.lat0;
-				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+				double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 				bool is_adj = false;
-                if (distance < rcut) is_adj = true;
+                if (distance < rcut) { is_adj = true;
                 // there is another possibility that i and j are adjacent atoms.
 				// which is that <i|beta> are adjacents while <beta|j> are also
 				// adjacents, these considerations are only considered in k-point
 				// algorithm, 
-                else if (distance >= rcut)
+                } else if (distance >= rcut)
 				{
 					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
 					{
@@ -105,11 +108,11 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						dtau2 = tau0 - tau2;
 						double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -124,18 +127,20 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
                     ++na_each[iat];
                     if (!gamma_only)
                     {
-                        for(int ii=0; ii<atom1->nw * GlobalV::NPOL; ++ii)
+                        for(int ii=0; ii<atom1->nw * PARAM.globalv.npol; ++ii)
                         {
                             // the index of orbitals in this processor
                             const int iw1_all = start1 + ii;
                             const int mu = pv.global2local_row(iw1_all);
-                            if(mu<0)continue;
+                            if(mu<0) {continue;
+}
 
-                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * GlobalV::NPOL; ++jj)
+                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * PARAM.globalv.npol; ++jj)
                             {
                                 const int iw2_all = start2 + jj;
                                 const int nu = pv.global2local_col(iw2_all);
-                                if(nu<0)continue;
+                                if(nu<0) {continue;
+}
                                 
                                 pv.nlocdim[iat]++;
                                 ++(pv.nnr);
@@ -149,7 +154,8 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 	}//end T1
 }
     //xiaohui add "OUT_LEVEL", 2015-09-16
-    if (GlobalV::OUT_LEVEL != "m" && !gamma_only) ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+    if (PARAM.inp.out_level != "m" && !gamma_only) { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "ParaV.nnr", pv.nnr);
+}
 
 	//------------------------------------------------
 	// info will identify each atom in each unitcell.
@@ -204,12 +210,12 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 				tau2 = adjs.adjacent_tau[ad];
 				dtau = tau2 - tau1;
 				double distance = dtau.norm() * GlobalC::ucell.lat0;
-				double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+				double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 
 				bool is_adj = false;
-				if(distance < rcut) is_adj = true;
-				else if(distance >= rcut) 
+				if(distance < rcut) { is_adj = true;
+				} else if(distance >= rcut) 
 				{
 					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
@@ -221,11 +227,11 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 						tau0 = adjs.adjacent_tau[ad0];
 						dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						dtau2 = tau0 - tau2;
 						double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+						double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
 						if( distance1 < rcut1 && distance2 < rcut2 )
 						{
@@ -261,7 +267,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only)
 // This will record the orbitals according to
 // grid division (cut along z direction) 
 //--------------------------------------------
-void Record_adj::for_grid(const Grid_Technique &gt)
+void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("Record_adj","for_grid");
 	ModuleBase::timer::tick("Record_adj","for_grid");
@@ -320,11 +326,12 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 						tau2 = adjs.adjacent_tau[ad];
 						dtau = tau2 - tau1;
 						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 
 						bool is_adj = false;
-						if(distance < rcut) is_adj = true;
+						if(distance < rcut) { is_adj = true;
+}
 						/*
 						else if(distance >= rcut)
 						{
@@ -342,8 +349,8 @@ void Record_adj::for_grid(const Grid_Technique &gt)
                                 double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                                 double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                                double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                                double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                                 if( distance1 < rcut1 && distance2 < rcut2 )
                                 {
@@ -413,7 +420,7 @@ void Record_adj::for_grid(const Grid_Technique &gt)
 						tau2 = adjs.adjacent_tau[ad];
 						dtau = tau2 - tau1;
 						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 						// check the distance
 						if(distance < rcut)
@@ -442,8 +449,8 @@ void Record_adj::for_grid(const Grid_Technique &gt)
                                 double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                                 double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                                double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                                double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                                double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                                 if( distance1 < rcut1 && distance2 < rcut2 )
                                 {

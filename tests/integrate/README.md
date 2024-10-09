@@ -100,7 +100,8 @@ _CR    cell-relax calculation
 _CF    calculate and output force
 _CS    calculate and output stress
 _MD    molecular dynamics
-_TD    TDDFT: time dependent DFT
+_TD    real time TDDFT
+_LR    linear response TDDFT
 
 _OH    output Halmitonian matrix
 _OB    output bands file

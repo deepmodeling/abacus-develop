@@ -1,5 +1,7 @@
 #include "../math_sphbes.h"
 
+#include <cmath>
+#include <cstring> // Dependency for memset initialization
 #include <fstream>
 #include <iostream>
 
@@ -257,6 +259,9 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
     const double dr = rcut / nr;
     double* r = new double[nr + 10];
     double* Y = new double[nr * (l_hi - l_lo + 1) + 10];
+    // save errs to binary file
+    std::ofstream file_o("data/sphj_old_out.bin", std::ios::binary);
+    std::ofstream file_n("data/sphj_new_out.bin", std::ios::binary);
 
     // case 0: x = 0, l = 0
     EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(0, 0), 1.0, 1e-12);
@@ -288,6 +293,8 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
         for (int i = 0; i < nr; ++i)
         {
             EXPECT_NEAR(ModuleBase::Sphbes::sphbesj(l, r[i] * q), Y[l * nr + i], 1e-12);
+            double tmp = std::abs(Y[l * nr + i] - ModuleBase::Sphbes::sphbesj(l, r[i] * q));
+            file_n.write(reinterpret_cast<char*>(&tmp), sizeof(double));
         }
     }
     // test for old Bessel
@@ -296,16 +303,18 @@ TEST_F(Sphbes, SphericalBesselPrecisionGrid)
     for (int l = l_lo; l <= l_hi; ++l)
     {
         ModuleBase::Sphbes::Spherical_Bessel(nr, r, q, l, jl_old);
-        double errs = 0.0;
         for (int i = 0; i < nr; ++i)
         {
-            errs += MAX(jl_old[i] - Y[l * nr + i], Y[l * nr + i] - jl_old[i]);
+            double tmp = std::abs(jl_old[i] - Y[l * nr + i]);
+            file_o.write(reinterpret_cast<char*>(&tmp), sizeof(double));
         }
-        // std::cout << " l = " << l << ", errors: " << std::scientific << errs / nr << std::endl;
     }
+
     delete[] r;
     delete[] Y;
     delete[] jl_old;
+    file_o.close();
+    file_n.close();
 }
 
 TEST_F(Sphbes, SphericalBesselPrecisionNearZero)
@@ -352,15 +361,27 @@ TEST_F(Sphbes, Zeros)
 
     int lmax = 20;
     int nzeros = 500;
-    double* zeros = new double[nzeros];
+    double* zeros = new double[nzeros*(lmax+1)];
     for (int l = 0; l <= lmax; ++l)
     {
-        ModuleBase::Sphbes::sphbes_zeros(l, nzeros, zeros);
+        ModuleBase::Sphbes::sphbes_zeros(l, nzeros, zeros, false);
         for (int i = 0; i < nzeros; ++i)
         {
             EXPECT_LT(std::abs(ModuleBase::Sphbes::sphbesj(l, zeros[i])), 1e-14);
         }
     }
+
+
+    ModuleBase::Sphbes::sphbes_zeros(lmax, nzeros, zeros, true);
+    for (int l = 0; l <= lmax; ++l)
+    {
+        for (int i = 0; i < nzeros; ++i)
+        {
+            EXPECT_LT(std::abs(ModuleBase::Sphbes::sphbesj(l, zeros[l*nzeros+i])), 1e-14);
+        }
+    }
+
+    delete[] zeros;
 }
 
 TEST_F(Sphbes, ZerosOld)
@@ -453,8 +474,9 @@ int main(int argc, char** argv)
 
 TEST_F(Sphbes, SphericalBesselsjp)
 {
-    int iii;
+    int iii = 0;
     double* sjp = new double[msh];
+    std::memset(sjp, 0, msh * sizeof(double));
     ModuleBase::Sphbes::Spherical_Bessel(msh, r, q, l0, jl, sjp);
     EXPECT_NEAR(mean(jl, msh) / 0.2084468748396, 1.0, doublethreshold);
     for (int iii = 0; iii < msh; ++iii)

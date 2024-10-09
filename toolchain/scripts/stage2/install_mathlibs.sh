@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2024-0810
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -22,10 +24,6 @@ case "$MATH_MODE" in
   mkl)
     "${SCRIPTDIR}"/stage2/install_mkl.sh "${with_mkl}"
     load "${BUILDDIR}/setup_mkl"
-    ;;
-  acml)
-    "${SCRIPTDIR}"/stage2/install_acml.sh "${with_acml}"
-    load "${BUILDDIR}/setup_acml"
     ;;
   openblas)
     "${SCRIPTDIR}"/stage2/install_openblas.sh "${with_openblas}"

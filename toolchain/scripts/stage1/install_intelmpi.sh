@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-0918
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -112,12 +114,12 @@ export CP_LIBS="\${CP_LIBS} IF_MPI(${INTELMPI_LIBS}|)"
 EOF
   if [ "${with_intelmpi}" != "__SYSTEM__" ]; then
     cat << EOF >> "${BUILDDIR}/setup_intelmpi"
-export PATH="${pkg_install_dir}/bin":$PATH
 prepend_path PATH "${pkg_install_dir}/bin"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
-export CPATH="${pkg_install_dir}/include":$CPATH
+export PATH="${pkg_install_dir}/bin":\${PATH}
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
   fi
   cat "${BUILDDIR}/setup_intelmpi" >> ${SETUPFILE}

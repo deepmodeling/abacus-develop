@@ -1,6 +1,8 @@
 #include <memory>
 #include <array>
+#include "module_parameter/parameter.h"
 #include "symmetry.h"
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
@@ -16,7 +18,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 {
     const double MAX_EPS = std::max(1e-3, epsilon_input * 1.001);
     const double MULT_EPS = 2.0;
-    if (available == false) return;
+
     ModuleBase::TITLE("Symmetry","init");
 	ModuleBase::timer::tick("Symmetry","analy_sys");
 
@@ -33,22 +35,24 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
 	ofs_running << "\n\n\n\n";
 
-
+    // --------------------------------
+    // 1. copy data and allocate memory
+    // --------------------------------
     // number of total atoms
     this->nat = st.nat;
     // number of atom species
     this->ntype = st.ntype;
     this->na = new int[ntype];
-    this->istart = new int[ntype];
-    this->index = new int [nat + 2];
+    this->istart = new int[ntype];  // start number of atom.
+    this->index = new int [nat + 2];   // index of atoms
     ModuleBase::GlobalFunc::ZEROS(na, ntype);
     ModuleBase::GlobalFunc::ZEROS(istart, ntype);
     ModuleBase::GlobalFunc::ZEROS(index, nat+2);
 
     // atom positions
     // used in checksym.
-	newpos = new double[3*nat];
-    rotpos = new double[3*nat];
+	newpos = new double[3*nat]; // positions of atoms before rotation
+    rotpos = new double[3*nat]; // positions of atoms after rotation
 	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
 
@@ -60,9 +64,6 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 	latvec1.e11 = a1.x; latvec1.e12 = a1.y; latvec1.e13 = a1.z;
 	latvec1.e21 = a2.x; latvec1.e22 = a2.y; latvec1.e23 = a2.z;
 	latvec1.e31 = a3.x; latvec1.e32 = a3.y; latvec1.e33 = a3.z;
-//  std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
-//  std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
-//  std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
 
 	output::printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
 
@@ -88,9 +89,11 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     s2 = a2;
     s3 = a3;
 
+
     auto lattice_to_group = [&, this](int& nrot_out, int& nrotk_out, std::ofstream& ofs_running) -> void {
-        //a: optimized config
-        // find the lattice type accordiing to lattice vectors.
+        // a: the optimized lattice vectors, output
+        // s: the input lattice vectors, input
+        // find the real_brav type accordiing to lattice vectors.
         this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
             this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos);
 
@@ -99,27 +102,101 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS LATTICE NAME", ilattname);
         ModuleBase::GlobalFunc::OUT(ofs_running, "ibrav", real_brav);
         Symm_Other::print1(real_brav, cel_const, ofs_running);
-        //      std::cout << "a1 = " << a1.x << " " << a1.y << " " << a1.z <<std::endl;
-        //      std::cout << "a1 = " << a2.x << " " << a2.y << " " << a2.z <<std::endl;
-        //      std::cout << "a1 = " << a3.x << " " << a3.y << " " << a3.z <<std::endl;
+
         optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
         optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
         optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
-        this->pricell(this->newpos, atoms);         // pengfei Li 2018-05-14 
+        // count the number of primitive cells in the supercell
+        this->pricell(this->newpos, atoms);
 
         test_brav = true; // output the real ibrav and point group
+        
+        // list all possible point group operations 
         this->setgroup(this->symop, this->nop, this->real_brav);
-        this->getgroup(nrot_out, nrotk_out, ofs_running);
+
+        // special case for AFM analysis
+        // which should be loop over all atoms, f.e only loop over spin-up atoms
+        // --------------------------------
+        // AFM analysis Start
+        if (PARAM.inp.nspin > 1) {
+            pricell_loop = this->magmom_same_check(atoms);
+        }
+
+        if (!pricell_loop && PARAM.inp.nspin == 2)
+        {//analyze symmetry for spin-up atoms only
+            std::vector<double> pos_spinup;
+            for (int it = 0;it < ntype;++it)
+            {
+                int na_spinup = 0;
+                for (int ia = 0; ia < atoms[it].na; ++ia) {
+                    if (atoms[it].mag[ia] > -this->epsilon) {
+                        ++na_spinup;
+                    }
+                }
+                this->na[it] = na_spinup;
+                //update newpos
+                for (int ia = 0;ia < atoms[it].na;++ia)
+                {
+                    if (atoms[it].mag[ia] > -this->epsilon)
+                    {
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia)]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 1]);
+                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 2]);
+                    }
+                }
+                // update start to spin-up configuration
+                if (it > 0) {
+                    istart[it] = istart[it - 1] + na[it - 1];
+                }
+                if (na[it] < na[itmin_type])
+                {
+                    this->itmin_type = it;
+                    this->itmin_start = istart[it];
+                }
+            }
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                pos_spinup.data(), this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
+            // recover na and istart
+            for (int it = 0;it < ntype;++it)
+            {
+                this->na[it] = atoms[it].na;
+                if (it > 0) {
+                    istart[it] = istart[it - 1] + na[it - 1];
+                }
+            }
+            // For AFM analysis End
+            //------------------------------------------------------------
+        }
+        else
+        {
+            // get the real symmetry operations according to the input structure
+            // nrot_out: the number of pure point group rotations
+            // nrotk_out: the number of all space group operations
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                this->newpos, this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
+        }
         };
 
-    if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
+    // --------------------------------
+    // 2. analyze the symmetry
+    // --------------------------------
+    // 2.1 skip the symmetry analysis if the symmetry has been analyzed
+    if (PARAM.inp.calculation == "cell-relax" && nrotk > 0)
     {
         std::ofstream no_out;   // to screen the output when trying new epsilon
-        if (this->nrotk > this->max_nrotk)this->max_nrotk = this->nrotk;
+
+        // For the cases where cell-relax cause the number of symmetry operations to increase
+        if (this->nrotk > this->max_nrotk) {
+            this->max_nrotk = this->nrotk;
+        }
+
         int tmp_nrot, tmp_nrotk;
-        lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
-        //some different method to enlarge symmetry_prec
+        lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);  // get the real symmetry operations
+
+        // Actually, the analysis of symmetry has been done now
+        // Following implementation is find the best epsilon to keep the symmetry
+        // some different method to enlarge symmetry_prec
         bool eps_enlarged = false;
         auto eps_mult = [this](double mult) {epsilon *= mult;};
         auto eps_to = [this](double new_eps) {epsilon = new_eps;};
@@ -131,6 +208,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         precs_try.push_back(epsilon);
         nrotks_try.push_back(tmp_nrotk);
         //enlarge epsilon and regenerate pointgroup
+        // Try to find the symmetry operations by increasing epsilon
         while (tmp_nrotk < this->max_nrotk && epsilon < MAX_EPS)
         {
             eps_mult(MULT_EPS);
@@ -144,7 +222,9 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         {
             this->nrotk = tmp_nrotk;
             ofs_running << "Find new symmtry operations during cell-relax." << std::endl;
-            if (this->nrotk > this->max_nrotk)this->max_nrotk = this->nrotk;
+            if (this->nrotk > this->max_nrotk) {
+                this->max_nrotk = this->nrotk;
+            }
         }
         if (eps_enlarged)
         {
@@ -154,15 +234,24 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
                 ofs_running << "Continue cell-relax with a lower symmetry. " << std::endl;
                 // find the smallest epsilon that gives the current number of symmetry operations
                 int valid_index = nrotks_try.size() - 1;
-                while (valid_index > 0 && tmp_nrotk <= nrotks_try[valid_index - 1])--valid_index;
+                while (valid_index > 0
+                       && tmp_nrotk <= nrotks_try[valid_index - 1]) {
+                    --valid_index;
+                }
                 eps_to(precs_try[valid_index]);
-                if (valid_index > 0) ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
-                else eps_enlarged = false;
+                if (valid_index > 0) {
+                    ofs_running << " Enlarging `symmetry_prec` to " << epsilon
+                                << " ..." << std::endl;
+                } else {
+                    eps_enlarged = false;
+                }
                 // regenerate pointgroup after change epsilon (may not give the same result)
                 lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
                 this->nrotk = tmp_nrotk;
+            } else {
+                ofs_running << " Enlarging `symmetry_prec` to " << epsilon
+                            << " ..." << std::endl;
             }
-            else ofs_running << " Enlarging `symmetry_prec` to " << epsilon << " ..." << std::endl;
         }
         if (!eps_enlarged && epsilon > epsilon_input * 1.001)   // not "else" here. "eps_enlarged" can be set to false in the above "if"
         {   // try a smaller symmetry_prec until the number of symmetry operations decreases
@@ -184,24 +273,36 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             // regenerate pointgroup after change epsilon
             lattice_to_group(tmp_nrot, tmp_nrotk, ofs_running);
             this->nrotk = tmp_nrotk;
-            if (valid_index > 0)//epsilon is set smaller
-                ofs_running << " Narrowing `symmetry_prec` from " << eps_current << " to " << epsilon << " ..." << std::endl;
+            if (valid_index > 0) { // epsilon is set smaller
+                ofs_running << " Narrowing `symmetry_prec` from " << eps_current
+                            << " to " << epsilon << " ..." << std::endl;
+            }
         }
-    }
-    else
+    } else {
         lattice_to_group(this->nrot, this->nrotk, ofs_running);
+    }
+    // Symmetry analysis End!
+    //-------------------------------------------
 
     // final number of symmetry operations
 #ifdef __DEBUG
     ofs_running << "symmetry_prec(epsilon) in current ion step: " << this->epsilon << std::endl;
     ofs_running << "number of symmetry operations in current ion step: " << this->nrotk << std::endl;
 #endif
-
-    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+    //----------------------------------
+    // 3. output to running.log
+    //----------------------------------
+    // output the point group
+    bool valid_group = this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
-    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
+    // output the space group
+    valid_group = this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
     ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
-    if (!this->valid_group)
+
+    //-----------------------------
+    // 4. For the case where point group is not complete due to symmetry_prec
+    //-----------------------------
+    if (!valid_group)
     {   // select the operations that have the inverse
         std::vector<int>invmap(this->nrotk, -1);
         this->gmatrix_invmap(this->gmatrix, this->nrotk, invmap.data());
@@ -221,25 +322,34 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         this->nrotk = nrotk_new;
     }
 
-    //convert gmatrix to reciprocal space
+    // convert gmatrix to reciprocal space
     this->gmatrix_convert_int(gmatrix, kgmatrix, nrotk, optlat, lat.G);
     
-// convert the symmetry operations from the basis of optimal symmetric configuration 
-// to the basis of input configuration
+    // convert the symmetry operations from the basis of optimal symmetric configuration 
+    // to the basis of input configuration
     this->gmatrix_convert_int(gmatrix, gmatrix, nrotk, optlat, latvec1);
     this->gtrans_convert(gtrans, gtrans, nrotk, optlat, latvec1);
 
-    this->set_atom_map(atoms);
+    this->set_atom_map(atoms); // find the atom mapping according to the symmetry operations
 
-    if (GlobalV::NSPIN > 1) pricell_loop = this->magmom_same_check(atoms);
-
-    if (GlobalV::CALCULATION == "relax") this->all_mbl = this->is_all_movable(atoms, st);
+    // Do this here for debug
+    if (PARAM.inp.calculation == "relax")
+    {
+        this->all_mbl = this->is_all_movable(atoms, st);
+        if (!this->all_mbl)
+        {
+            std::cout << "WARNING: Symmetry cannot be kept when not all atoms are movable.\n ";
+            std::cout << "Continue with symmetry=0 ... \n";
+            ModuleSymmetry::Symmetry::symm_flag = 0;
+        }
+    }
 
     delete[] newpos;
     delete[] na;
     delete[] rotpos;
     delete[] index;
     delete[] istart;
+    ModuleBase::timer::tick("Symmetry","analy_sys");
     return;
 }
 
@@ -525,6 +635,14 @@ int Symmetry::standard_lat(
 	return type;
 }
 
+//---------------------------------------------------
+// The lattice will be transformed to a 'standard
+// cystallographic setting', the relation between
+// 'origin' and 'transformed' lattice vectors will
+// be givin in matrix form
+// must be called before symmetry analysis
+// only need to called once for each ion step
+//---------------------------------------------------
 void Symmetry::lattice_type(
     ModuleBase::Vector3<double> &v1,
     ModuleBase::Vector3<double> &v2,
@@ -626,9 +744,11 @@ void Symmetry::lattice_type(
 //	GlobalV::ofs_running << " temp_brav=" << temp_brav << std::endl;
 
     bool change_flag=false;
-    for (int i=0;i<6;++i)  
+    for (int i = 0; i < 6; ++i) {
         if(!equal(cel_const[i], pre_const[i])) 
-            {change_flag=true; break;}
+            {change_flag=true; break;
+        }
+    }
 
     if ( real_brav < pre_brav || change_flag )
     {
@@ -671,8 +791,9 @@ void Symmetry::lattice_type(
                             ++at;
                     }
             }       
+            /*
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+            ss << PARAM.globalv.global_out_dir << "STRU_SIMPLE.cif";
 
             std::ofstream ofs( ss.str().c_str() );
             ofs << "Lattice vector  : " << std::endl;
@@ -696,6 +817,7 @@ void Symmetry::lattice_type(
                 }
             }
             ofs.close();
+            */
         }
         // return the optimized lattice in v1, v2, v3
         v1=q1;
@@ -765,9 +887,11 @@ void Symmetry::lattice_type(
 }
 
 
-void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
+void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
+    const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
-    ModuleBase::TITLE("Symmetry","getgroup");
+    ModuleBase::TITLE("Symmetry", "getgroup");
 
 	//--------------------------------------------------------------------------------
     //return all possible space group operators that reproduce a lattice with basis
@@ -789,9 +913,7 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     //std::cout << "nop = " <<nop <<std::endl;
     for (int i = 0; i < nop; ++i)
     {
-    //    std::cout << "symop = " << symop[i].e11 <<" "<< symop[i].e12 <<" "<< symop[i].e13 <<" "<< symop[i].e21 <<" "<< symop[i].e22 <<" "<< symop[i].e23 <<" "<< symop[i].e31 <<" "<< symop[i].e32 <<" "<< symop[i].e33 << std::endl;
-        this->checksym(this->symop[i], this->gtrans[i], this->newpos);
-      //  std::cout << "s_flag =" <<s_flag<<std::endl;
+        bool s_flag = this->checksym(symop[i], gtrans[i], pos, rotpos, index, itmin_type, itmin_start, istart, na);
         if (s_flag == 1)
         {
 			//------------------------------
@@ -869,16 +991,17 @@ void Symmetry::getgroup(int &nrot, int &nrotk, std::ofstream &ofs_running)
     return;
 }
 
-void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double* pos)
+bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
 	//----------------------------------------------
     // checks whether a point group symmetry element 
 	// is a valid symmetry operation on a supercell
 	//----------------------------------------------
     // the start atom index.
-    bool no_diff = 0;
+    bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
-    s_flag = 0;
+    bool s_flag = 0;
 
     for (int it = 0; it < ntype; it++)
     {
@@ -928,26 +1051,14 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         this->atom_ordering_new(rotpos + istart[it] * 3, na[it], index + istart[it]);
     }
 
-	/*
-	GlobalV::ofs_running << " ============================================= " << std::endl;
-	GlobalV::ofs_running << " Matrix S " << std::endl;
-	GlobalV::ofs_running << std::setw(5) << s.e11 << std::setw(5) << s.e12 << std::setw(5) << s.e13 << std::endl;
-	GlobalV::ofs_running << std::setw(5) << s.e21 << std::setw(5) << s.e22 << std::setw(5) << s.e32 << std::endl;
-	GlobalV::ofs_running << std::setw(5) << s.e23 << std::setw(5) << s.e23 << std::setw(5) << s.e33 << std::endl;
-	GlobalV::ofs_running << " pos" << std::endl;
-	print_pos(pos, nat);
-	GlobalV::ofs_running << " rotpos" << std::endl;
-	print_pos(rotpos, nat);
-	*/
-
     ModuleBase::Vector3<double> diff;
 
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
 	//---------------------------------------------------------
-    sptmin.x = rotpos[itmin_start*3];
-    sptmin.y = rotpos[itmin_start*3+1];
-    sptmin.z = rotpos[itmin_start*3+2];
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(rotpos[itmin_start * 3], rotpos[itmin_start * 3 + 1], rotpos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1001,19 +1112,12 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
                         !equal(diff.z,0.0)
                    )
                 {
-                    no_diff = 0;
+                    no_diff = false;
                 }
             }
         }
 			
 
-		/*
-		GlobalV::ofs_running << " no_diff = " << no_diff << std::endl;
-		GlobalV::ofs_running << " CHECK pos " << std::endl;
-		print_pos(pos, nat);
-		GlobalV::ofs_running << " CHECK rotpos " << std::endl;
-		print_pos(rotpos, nat);
-		*/
 		//BLOCK_HERE("check symm");
 
         //the current test is successful
@@ -1044,13 +1148,12 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         gtrans.y = trans.y;
         gtrans.z = trans.z;
     }
-    return;
+    return s_flag;
 }
 
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
-    bool no_diff = 0;
-    s_flag = 0;
+    bool no_diff = false;
     ptrans.clear();
 
     for (int it = 0; it < ntype; it++)
@@ -1085,10 +1188,10 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
-	//---------------------------------------------------------
-    sptmin.x = pos[itmin_start*3];
-    sptmin.y = pos[itmin_start*3+1];
-    sptmin.z = pos[itmin_start*3+2];
+    //---------------------------------------------------------
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(pos[itmin_start * 3], pos[itmin_start * 3 + 1], pos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1132,12 +1235,17 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
                     break;
                 }
             }
-            if(!no_diff) break;
+            if (!no_diff) {
+                break;
+            }
         }
 
         //the current test is successful
-        if (no_diff)    ptrans.push_back(ModuleBase::Vector3<double>
-            (tmp_ptrans[0], tmp_ptrans[1], tmp_ptrans[2]));
+        if (no_diff) {
+            ptrans.push_back(ModuleBase::Vector3<double>(tmp_ptrans[0],
+                                                         tmp_ptrans[1],
+                                                         tmp_ptrans[2]));
+        }
         //restore the original rotated coordinates by subtracting "ptrans"
         for (int it = 0; it < ntype; it++)
         {
@@ -1158,7 +1266,9 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
         this->p3=this->a3;
         this->pbrav=this->real_brav;
         this->ncell=1;
-        for (int i=0;i<6;++i)   this->pcel_const[i]=this->cel_const[i];
+        for (int i = 0; i < 6; ++i) {
+            this->pcel_const[i] = this->cel_const[i];
+        }
         return;
     }
 
@@ -1186,23 +1296,36 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     ModuleBase::Vector3<double> b1, b2, b3;
     int iplane=0, jplane=0, kplane=0;
     //1. kplane for b3
-    while(kplane<ntrans && std::abs(ptrans[kplane].z-ptrans[0].z)<this->epsilon) ++kplane;
-    if(kplane==ntrans) kplane=0;    //a3-direction have no smaller pricell
+    while (kplane < ntrans
+           && std::abs(ptrans[kplane].z - ptrans[0].z) < this->epsilon) {
+        ++kplane;
+    }
+    if (kplane == ntrans) {
+        kplane = 0; // a3-direction have no smaller pricell
+    }
     b3=kplane>0 ? 
         ModuleBase::Vector3<double>(ptrans[kplane].x, ptrans[kplane].y, ptrans[kplane].z) : 
         ModuleBase::Vector3<double>(0, 0, 1);
     //2. jplane for b2 (not collinear with b3)
     jplane=kplane+1;
-    while(jplane<ntrans && (std::abs(ptrans[jplane].y-ptrans[0].y)<this->epsilon
-        || equal((ptrans[jplane]^b3).norm(), 0))) ++jplane;
-    if(jplane==ntrans) jplane=kplane;    //a2-direction have no smaller pricell
+    while (jplane < ntrans
+           && (std::abs(ptrans[jplane].y - ptrans[0].y) < this->epsilon
+               || equal((ptrans[jplane] ^ b3).norm(), 0))) {
+        ++jplane;
+    }
+    if (jplane == ntrans) {
+        jplane = kplane; // a2-direction have no smaller pricell
+    }
     b2=jplane>kplane ? 
         ModuleBase::Vector3<double>(ptrans[jplane].x, ptrans[jplane].y, ptrans[jplane].z) : 
         ModuleBase::Vector3<double>(0, 1, 0);
     //3. iplane for b1 (not coplane with <b2, b3>)
     iplane=jplane+1;
-    while(iplane<ntrans && (std::abs(ptrans[iplane].x-ptrans[0].x)<this->epsilon
-        || equal(ptrans[iplane]*(b2^b3), 0))) ++iplane;
+    while (iplane < ntrans
+           && (std::abs(ptrans[iplane].x - ptrans[0].x) < this->epsilon
+               || equal(ptrans[iplane] * (b2 ^ b3), 0))) {
+        ++iplane;
+    }
     b1=(iplane>jplane && iplane<ntrans)? 
         ModuleBase::Vector3<double>(ptrans[iplane].x, ptrans[iplane].y, ptrans[iplane].z) : 
         ModuleBase::Vector3<double>(1, 0, 0);    //a1-direction have no smaller pricell
@@ -1277,7 +1400,9 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     std::string pbravname;
     ModuleBase::Vector3<double> p01=p1, p02=p2, p03=p3;
     double pcel_pre_const[6];
-    for(int i=0;i<6;++i) pcel_pre_const[i]=pcel_const[i];
+    for (int i = 0; i < 6; ++i) {
+        pcel_pre_const[i] = pcel_const[i];
+    }
     this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr);
 
     this->plat.e11=p1.x;
@@ -1305,22 +1430,29 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     GlobalV::ofs_running<<"optimized primitive cell volume: "<<this->plat.Det()<<std::endl;
     double ncell_double = std::abs(this->optlat.Det()/this->plat.Det());
     this->ncell=floor(ncell_double+0.5);
-    if(this->ncell != ntrans)
-    {
-        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
-        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
-        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+
+    auto reset_pcell = [this]() -> void {
         std::cout << " Now regard the structure as a primitive cell." << std::endl;
         this->ncell = 1;
         this->ptrans = std::vector<ModuleBase::Vector3<double> >(1, ModuleBase::Vector3<double>(0, 0, 0));
         GlobalV::ofs_running << "WARNING: Original cell may have more than one primitive cells, \
         but we have to treat it as a primitive cell. Use a larger `symmetry_prec`to avoid this warning." << std::endl;
+        };
+    if (this->ncell != ntrans)
+    {
+        std::cout << " WARNING: PRICELL: NCELL != NTRANS !" << std::endl;
+        std::cout << " NCELL=" << ncell << ", NTRANS=" << ntrans << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
         return;
     }
     if(std::abs(ncell_double-double(this->ncell)) > this->epsilon*100)
     {
-        std::cout << " ERROR: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
-		ModuleBase::QUIT();
+        std::cout << " WARNING: THE NUMBER OF PRIMITIVE CELL IS NOT AN INTEGER !" << std::endl;
+        std::cout << " NCELL(double)=" << ncell_double << ", NTRANS=" << ncell << std::endl;
+        std::cout << " Suggest solution: Use a larger `symmetry_prec`. " << std::endl;
+        reset_pcell();
+        return;
     }
     GlobalV::ofs_running<<"Original cell was built up by "<<this->ncell<<" primitive cells."<<std::endl;
 
@@ -1338,9 +1470,9 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     n3=floor (nummat.e33 + epsilon);
     if(n1*n2*n3 != this->ncell) 
     {
-        std::cout << " ERROR: Number of cells and number of vectors did not agree.";
+        std::cout << " WARNING: Number of cells and number of vectors did not agree.";
         std::cout<<"Try to change symmetry_prec in INPUT." << std::endl;
-		ModuleBase::QUIT();
+        reset_pcell();
     }
     return;
 }
@@ -1350,7 +1482,6 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
 	// allocate flag for each FFT grid.
@@ -1408,7 +1539,6 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 // ----------------------------------------------------------------------
 // the current way is to cluster the FFT grid points into groups in advance.
@@ -1492,7 +1622,9 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                 {
                     int ipw0=ixyz2ipw[ixyz0];
                     //if a fft-grid is not in pw-sphere, just do not consider it.
-                    if (ipw0==-1) continue;
+                    if (ipw0 == -1) {
+                        continue;
+                    }
                     tmp_gdirect0.z=(k>int(nz/2)+1)?(k-nz):k;
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
@@ -1502,7 +1634,7 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                         rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
-                            if(!GlobalV::GAMMA_ONLY_PW)
+                            if(!PARAM.globalv.gamma_only_pw)
                             {
                                 std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
 		                        ModuleBase::QUIT();
@@ -1586,11 +1718,15 @@ for (int g_index = 0; g_index < group_index; g_index++)
                     cos_arg/=static_cast<double>(ncell);
                     sin_arg/=static_cast<double>(ncell);
                     //deal with double-zero
-                    if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) continue;
+                    if (equal(cos_arg, 0.0) && equal(sin_arg, 0.0)) {
+                        continue;
+                    }
                     std::complex<double> gphase(cos_arg, sin_arg);
                     gphase = phase_gtrans * gphase;
                     //deal with small difference from 1
-                    if(equal(gphase.real(), 1.0) && equal(gphase.imag(), 0))  gphase=std::complex<double>(1.0, 0.0);
+                    if (equal(gphase.real(), 1.0) && equal(gphase.imag(), 0)) {
+                        gphase = std::complex<double>(1.0, 0.0);
+                    }
                     gphase_record[rot_count]=gphase;
                     sum += rhogtot[ipw0]*gphase;
                     //record
@@ -1622,9 +1758,13 @@ for (int g_index = 0; g_index < group_index; g_index++)
 void Symmetry::set_atom_map(const Atom* atoms)
 {
     ModuleBase::TITLE("Symmetry", "set_atom_map");
-    if (this->isym_rotiat_.size() == this->nrotk) return;
+    if (this->isym_rotiat_.size() == this->nrotk) {
+        return;
+    }
     this->isym_rotiat_.resize(this->nrotk);
-    for (int i = 0; i < this->nrotk; ++i)this->isym_rotiat_[i].resize(this->nat, -1);
+    for (int i = 0; i < this->nrotk; ++i) {
+        this->isym_rotiat_[i].resize(this->nat, -1);
+    }
 
     double* pos = this->newpos;
     double* rotpos = this->rotpos;
@@ -1694,7 +1834,9 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
         for (int k = 0; k < nrotk; ++k)
         {
             int l = this->isym_rotiat_[k][j];
-            if (l < 0)continue;
+            if (l < 0) {
+                continue;
+            }
             vtot[l * 3] = vtot[l * 3] + v[jx] * gmatrix[k].e11 + v[jy] * gmatrix[k].e21 + v[jz] * gmatrix[k].e31;
             vtot[l * 3 + 1] = vtot[l * 3 + 1] + v[jx] * gmatrix[k].e12 + v[jy] * gmatrix[k].e22 + v[jz] * gmatrix[k].e32;
             vtot[l * 3 + 2] = vtot[l * 3 + 2] + v[jx] * gmatrix[k].e13 + v[jy] * gmatrix[k].e23 + v[jz] * gmatrix[k].e33;
@@ -1720,8 +1862,10 @@ void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)con
     ModuleBase::matrix invAT = lat.G.to_matrix();
     ModuleBase::matrix tot_sigma(3, 3, true);
     sigma = A * sigma * AT;
-    for (int k = 0; k < nrotk; ++k)
-        tot_sigma += invA * gmatrix[k].to_matrix() * sigma * gmatrix[k].Transpose().to_matrix() * invAT;
+    for (int k = 0; k < nrotk; ++k) {
+        tot_sigma += invA * gmatrix[k].to_matrix() * sigma
+                     * gmatrix[k].Transpose().to_matrix() * invAT;
+    }
     sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
 	return;
 }
@@ -1766,7 +1910,7 @@ void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase:
           vb[i]=va[i]*a*bi;
     }
 }
-void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const
 {
     ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
     ModuleBase::Matrix3 tmp;
@@ -1816,7 +1960,9 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
             tmp_len=(v1+v2).norm();
             fb=true;
         }
-        if(fa || fb) flag=true;
+        if (fa || fb) {
+            flag = true;
+        }
         return;
     };
     while(flag) //iter
@@ -1971,7 +2117,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
 #endif
     auto near_equal = [this](double x, double y) {return fabs(x - y) < 10 * epsilon;};
     ModuleBase::matrix s = s3.to_matrix();
-    for (int i=0;i<3;++i)
+    for (int i = 0; i < 3; ++i) {
         for (int j = 0;j < 3;++j)
         {
             double sij_round = std::round(s(i, j));
@@ -1980,6 +2126,7 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
 #endif
             s(i, j) = sij_round;
         }
+    }
 
     // convert Matrix3 to matrix
     ModuleBase::matrix h=s, b(3, 3, true);
@@ -2003,8 +2150,11 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
         max_min_index(0, imid, imin);
         max_min_index(0, imax, imid);
         max_min_index(0, imid, imin);
-        if(equal(h(0, imin), 0)) imin=imid;
-        else if (equal(h(0, imax), 0)) imax=imid;
+        if (equal(h(0, imin), 0)) {
+            imin = imid;
+        } else if (equal(h(0, imax), 0)) {
+            imax = imid;
+        }
         return;
     };
     auto swap_col = [&h, &b](int c1, int c2)
@@ -2027,36 +2177,69 @@ void Symmetry::hermite_normal_form(const ModuleBase::Matrix3 &s3, ModuleBase::Ma
     {
         max_min_index_row1(imax, imin);
         double f = floor((fabs(h(0, imax) )+ epsilon)/fabs(h(0, imin)));
-        if(h(0, imax)*h(0, imin) < -epsilon) f*=-1;
+        if (h(0, imax) * h(0, imin) < -epsilon) {
+            f *= -1;
+        }
         for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
     }
-    if(equal(h(0, 0), 0))  equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
-    if(h(0, 0) < -epsilon) for(int r=0;r<3;++r) {h(r, 0)*=-1; b(r, 0)*=-1;}
+    if (equal(h(0, 0), 0)) {
+        equal(h(0, 1), 0) ? swap_col(0, 2) : swap_col(0, 1);
+    }
+    if (h(0, 0) < -epsilon) {
+        for (int r = 0; r < 3; ++r) {
+            h(r, 0) *= -1;
+            b(r, 0) *= -1;
+        }
+    }
     //row 2
-    if(equal(h(1, 1), 0))  swap_col(1, 2);
+    if (equal(h(1, 1), 0)) {
+        swap_col(1, 2);
+    }
     while(!equal(h(1, 2), 0))
     {
         imax=1, imin=2;
         max_min_index(1, imax, imin);
         double f = floor((fabs(h(1, imax) )+ epsilon)/fabs(h(1, imin)));
-        if(h(1, imax)*h(1, imin) < -epsilon) f*=-1;
+        if (h(1, imax) * h(1, imin) < -epsilon) {
+            f *= -1;
+        }
         for(int r=0;r<3;++r) {h(r, imax) -= f*h(r, imin); b(r, imax) -= f*b(r, imin); }
-        if(equal(h(1, 1), 0)) swap_col(1, 2); 
+        if (equal(h(1, 1), 0)) {
+            swap_col(1, 2);
+        }
     }
-    if(h(1, 1) < -epsilon) for(int r=0;r<3;++r) {h(r, 1)*=-1; b(r, 1)*=-1;}
+    if (h(1, 1) < -epsilon) {
+        for (int r = 0; r < 3; ++r) {
+            h(r, 1) *= -1;
+            b(r, 1) *= -1;
+        }
+    }
     //row3
-    if(h(2, 2) < -epsilon) for(int r=0;r<3;++r) {h(r, 2)*=-1; b(r, 2)*=-1;}
-    // deal with off-diagonal elements 
-    while(h(1, 0) > h(1, 1) - epsilon) 
-        for(int r=0;r<3;++r) {h(r, 0) -= h(r, 1); b(r, 0) -= b(r, 1); }
-    while(h(1, 0) < -epsilon) 
-        for(int r=0;r<3;++r) {h(r, 0) += h(r, 1); b(r, 0) += b(r, 1); }
+    if (h(2, 2) < -epsilon) {
+        for (int r = 0; r < 3; ++r) {
+            h(r, 2) *= -1;
+            b(r, 2) *= -1;
+        }
+    }
+    // deal with off-diagonal elements
+    while (h(1, 0) > h(1, 1) - epsilon) {
+        for(int r=0;r<3;++r) {h(r, 0) -= h(r, 1); b(r, 0) -= b(r, 1);
+        }
+    }
+    while (h(1, 0) < -epsilon) {
+        for(int r=0;r<3;++r) {h(r, 0) += h(r, 1); b(r, 0) += b(r, 1);
+        }
+    }
     for(int j=0;j<2;++j)
     {
-        while(h(2, j) > h(2, 2) - epsilon)
-            for(int r=0;r<3;++r) {h(r, j) -= h(r, 2); b(r, j) -= b(r, 2); }
-        while(h(2, j) < -epsilon) 
-            for(int r=0;r<3;++r) {h(r, j) += h(r, 2); b(r, j) += b(r, 2); }
+        while (h(2, j) > h(2, 2) - epsilon) {
+            for(int r=0;r<3;++r) {h(r, j) -= h(r, 2); b(r, j) -= b(r, 2);
+            }
+        }
+        while (h(2, j) < -epsilon) {
+            for(int r=0;r<3;++r) {h(r, j) += h(r, 2); b(r, j) += b(r, 2);
+            }
+        }
     }
 
     //convert matrix to Matrix3
@@ -2083,7 +2266,7 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
     bool pricell_loop = true;
     for (int it = 0;it < ntype;++it)
     {
-        if (pricell_loop)
+        if (pricell_loop) {
             for (int ia = 1;ia < atoms[it].na;++ia)
             {
                 if (!equal(atoms[it].m_loc_[ia].x, atoms[it].m_loc_[0].x) ||
@@ -2094,6 +2277,7 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
                     break;
                 }
             }
+        }
     }
     return pricell_loop;
 }

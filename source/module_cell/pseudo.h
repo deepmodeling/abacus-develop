@@ -1,8 +1,8 @@
 #ifndef PSEUDO_H
 #define PSEUDO_H
 
-#include "../module_io/output.h"
-#include "read_pp.h"
+#include "module_base/global_function.h"
+#include "module_io/output.h"
 
 //-----------------------------------------
 // read in pseudopotentials
@@ -22,7 +22,7 @@ class pseudo
     bool tvanp = false;   // .true. if Ultrasoft
     bool nlcc = false;    // Non linear core corrections(bool)
     std::string xc_func;  // Exch-Corr type
-    int zv = 0;           // z valence
+    double zv = 0;           // z valence
     double etotps = 0.0;  // total energy
     double ecutwfc = 0.0; // suggested cut-off for wfc
     double ecutrho = 0.0; // suggested cut-off for rho
@@ -33,26 +33,26 @@ class pseudo
     int nqlc = 0;         // number of angular momenta in Q
     int kkbeta = 0;       // kkbeta, point where the beta are zero
 
-    std::string* els = nullptr; // els[nchi]
-    int* lchi = nullptr;        // lchi[nchi]
-    double* oc = nullptr;       // oc[nchi]
+    std::vector<std::string> els = {}; // els[nchi]
+    std::vector<int> lchi = {};        // lchi[nchi]
+    std::vector<double> oc = {};       // oc[nchi]
 
-    double* jjj = nullptr;  // total angual momentum, jjj[nbeta]
-    double* jchi = nullptr; // jchi(nwfc), added by zhengdy-soc
-    int* nn = nullptr;
+    std::vector<double> jjj = {};  // total angual momentum, jjj[nbeta]
+    std::vector<double> jchi = {}; // jchi(nwfc), added by zhengdy-soc
+    std::vector<int> nn = {};
 
     // Local pseudopotentials
-    double* vloc_at = nullptr; // [mesh], local potential( = pseudopot_upf.vloc )
+    std::vector<double> vloc_at = {}; // [mesh], local potential( = pseudopot_upf.vloc )
 
     // <PP_MESH>
-    double* r = nullptr;   // radial logaritmic mesh, r[0:mesh-1]
-    double* rab = nullptr; // derivative of the radial mesh, rab[0:mesh-1]
+    std::vector<double> r = {};   // radial logaritmic mesh, r[0:mesh-1]
+    std::vector<double> rab = {}; // derivative of the radial mesh, rab[0:mesh-1]
 
     //<PP_NLCC>
-    double* rho_atc = nullptr; // radial core charge density, rho_atc[0:mesh-1]
+    std::vector<double> rho_atc = {}; // radial core charge density, rho_atc[0:mesh-1]
 
     //<PP_RHOATOM>
-    double* rho_at = nullptr; // radial atomic charge density, rho_at[0:mesh-1]
+    std::vector<double> rho_at = {}; // radial atomic charge density, rho_at[0:mesh-1]
 
     // <PP_PSWFC>
     ModuleBase::matrix chi; // radial atomic orbitals, chi(nchi, mesh)
@@ -62,7 +62,7 @@ class pseudo
     double rcut = 0.0; // cut-off radius
 
     // <PP_BETA>
-    int* lll = nullptr; // lll(nbeta), angular momentum of the beta function
+    std::vector<int> lll = {}; // lll(nbeta), angular momentum of the beta function
 
     // <PP_DIJ>
     ModuleBase::matrix dion;  // dion(nbeta,nbeta)
@@ -74,11 +74,6 @@ class pseudo
     // uspp
     ModuleBase::realArray qfuncl; // qfuncl(2*lmax+1,nbeta*(nbeta+1)/2,mesh) Q_{mu,nu}(|r|) function for |r|> r_L
     ModuleBase::matrix qqq;       // qqq(nbeta,nbeta) q_{mu,nu}
-
-    void set_pseudo_h(const Pseudopot_upf& upf);
-    void set_pseudo_atom(const Pseudopot_upf& upf);
-    void set_pseudo_vl(const Pseudopot_upf& upf);
-    void set_pseudo(const Pseudopot_upf& upf);
 
     void print_pseudo_h(std::ofstream& ofs);
     void print_pseudo_atom(std::ofstream& ofs);

@@ -15,8 +15,10 @@ class WF_atomic
 
     WF_atomic();
     ~WF_atomic();
+
     int npwx;
     int npw;
+
     // ModuleBase::IntArray igk;
 #ifdef __CUDA
     double *d_g2kin;

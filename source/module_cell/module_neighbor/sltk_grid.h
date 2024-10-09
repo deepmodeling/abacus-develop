@@ -55,6 +55,8 @@ class Grid
 public:
 
 	// Constructors and destructor
+	// Grid is Global class,so init it with constant number
+	Grid():test_grid(0){};
 	Grid(const int &test_grid_in);
 	virtual ~Grid();
 

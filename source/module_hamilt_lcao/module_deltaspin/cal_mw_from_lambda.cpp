@@ -6,12 +6,15 @@
 #include "spin_constrain.h"
 
 template <>
-void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
+void SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::cal_mw_from_lambda(int i_step)
 {
     ModuleBase::TITLE("SpinConstrain","cal_mw_from_lambda");
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
+
     // diagonalization without update charge
-    this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, this->KS_SOLVER, true);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(this->ParaV, this->KS_SOLVER);
+    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, true);
+
     elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
         = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
     this->pelec->calculate_weights();
@@ -20,6 +23,6 @@ void SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::cal_mw_from_lambda(in
     {
         elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *(this->psi), *(pelec_lcao->get_DM()));
     }
-    this->cal_MW(i_step, this->LM);
+    this->cal_MW(i_step);
     ModuleBase::timer::tick("SpinConstrain", "cal_mw_from_lambda");
 }

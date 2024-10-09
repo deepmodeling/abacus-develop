@@ -1,8 +1,10 @@
 #include "ions_move_sd.h"
 
+#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include<vector>
 
 using namespace Ions_Move_Basic;
 
@@ -38,18 +40,18 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
     assert(grad_saved != 0);
     assert(pos_saved != 0);
 
-    double* pos = new double[dim];
-    double* grad = new double[dim];
-    double* move = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(pos, dim);
-    ModuleBase::GlobalFunc::ZEROS(grad, dim);
-    ModuleBase::GlobalFunc::ZEROS(move, dim);
+    std::vector<double> pos(dim);
+    std::vector<double> grad(dim);
+    std::vector<double> move(dim);
+    ModuleBase::GlobalFunc::ZEROS(pos.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(grad.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(move.data(), dim);
 
     // 1: ediff = 0
     // 0: ediff < 0
     bool judgement = 0;
     setup_etot(etot_in, judgement);
-    setup_gradient(ucell, force, pos, grad);
+    setup_gradient(ucell, force, pos.data(), grad.data());
 
     if (istep == 1 || etot_in <= energy_saved)
     {
@@ -70,7 +72,7 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         }
     }
 
-    Ions_Move_Basic::check_converged(ucell, grad);
+    Ions_Move_Basic::check_converged(ucell, grad.data());
     if (Ions_Move_Basic::converged)
     {
         Ions_Move_Basic::terminate(ucell);
@@ -82,13 +84,9 @@ void Ions_Move_SD::start(UnitCell& ucell, const ModuleBase::matrix& force, const
         {
             move[i] = -grad_saved[i] * trust_radius;
         }
-        move_atoms(ucell, move, pos_saved);
+        move_atoms(ucell, move.data(), pos_saved);
         Ions_Move_Basic::update_iter++;
     }
-
-    delete[] pos;
-    delete[] grad;
-    delete[] move;
 
     return;
 }
@@ -121,7 +119,7 @@ void Ions_Move_SD::cal_tradius_sd(void) const
     {
         ModuleBase::WARNING_QUIT("Ions_Move_SD::cal_tradius_sd", "istep < 1!");
     }
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " SD RADIUS (Bohr)     : " << trust_radius << std::endl;
     }

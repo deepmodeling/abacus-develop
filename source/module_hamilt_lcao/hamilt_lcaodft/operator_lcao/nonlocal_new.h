@@ -1,12 +1,14 @@
 #ifndef NONLOCALNEW_H
 #define NONLOCALNEW_H
-#include <unordered_map>
-
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+
+#include <unordered_map>
+#include <vector>
 
 namespace hamilt
 {
@@ -37,13 +39,13 @@ template <typename TK, typename TR>
 class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    NonlocalNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    NonlocalNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                       hamilt::HContainer<TR>* hR_in,
-                                      std::vector<TK>* hK_in,
                                       const UnitCell* ucell_in,
+                                      const std::vector<double>& orb_cutoff,
                                       Grid_Driver* GridD_in,
-                                      const Parallel_Orbitals* paraV);
+                                      const TwoCenterIntegrator* intor);
     ~NonlocalNew<OperatorLCAO<TK, TR>>();
 
     /**
@@ -57,13 +59,14 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
-    hamilt::HContainer<TR>* HR = nullptr;
+    std::vector<double> orb_cutoff_;
 
     hamilt::HContainer<TR>* HR_fixed = nullptr;
 
-    bool allocated = false;
+    // the following variable is introduced temporarily during LCAO refactoring
+    const TwoCenterIntegrator* intor_ = nullptr;
 
-    TK* HK_pointer = nullptr;
+    bool allocated = false;
 
     bool HR_fixed_done = false;
 
@@ -72,7 +75,7 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_HR(Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the non-local pseudopotential matrix with specific <I,J,R> atom-pairs

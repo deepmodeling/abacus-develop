@@ -11,6 +11,7 @@ add_library(
     atom_spec.cpp
     pseudo.cpp
     read_pp.cpp
+    read_pp_complete.cpp
     read_pp_upf100.cpp
     read_pp_upf201.cpp
     read_pp_blps.cpp
@@ -21,6 +22,8 @@ add_library(
     setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp
+    cell_index.cpp
+    check_atomic_stru.cpp
 )
 
 if(ENABLE_COVERAGE)
@@ -28,6 +31,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
-  add_subdirectory(test_pw)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+    add_subdirectory(test_pw)
+  endif()
 endif()

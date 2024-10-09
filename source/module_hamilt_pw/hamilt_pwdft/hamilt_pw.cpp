@@ -1,5 +1,6 @@
 #include "hamilt_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -30,7 +31,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     const int* isk = pkv->isk.data();
     const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
-    if (GlobalV::T_IN_H)
+    if (PARAM.inp.t_in_h)
     {
         // Operator<double>* ekinetic = new Ekinetic<OperatorLCAO<double>>
         Operator<T, Device>* ekinetic
@@ -44,28 +45,28 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             this->ops->add(ekinetic);
         }
     }
-    if (GlobalV::VL_IN_H)
+    if (PARAM.inp.vl_in_h)
     {
         std::vector<std::string> pot_register_in;
-        if (GlobalV::VION_IN_H)
+        if (PARAM.inp.vion_in_h)
         {
             pot_register_in.push_back("local");
         }
-        if (GlobalV::VH_IN_H)
+        if (PARAM.inp.vh_in_h)
         {
             pot_register_in.push_back("hartree");
         }
         //no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             pot_register_in.push_back("efield");
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             pot_register_in.push_back("gatefield");
         }
@@ -96,7 +97,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
             this->ops->add(meta);
         }
     }
-    if (GlobalV::VNL_IN_H)
+    if (PARAM.inp.vnl_in_h)
     {
         Operator<T, Device>* nonlocal
             = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
@@ -211,7 +212,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     const T one{1, 0};
     const T zero{0, 0};
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef USE_PAW
         for(int m = 0; m < nbands; m ++)
@@ -275,7 +276,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         setmem_complex_op()(this->ctx, ps, 0, this->ppcell->nkb * nbands);
 
         // spsi = psi + sum qq <beta|psi> |beta>
-        if (GlobalV::NONCOLIN)
+        if (PARAM.inp.noncolin)
         {
             // spsi_nc
             std::cout << " noncolinear in uspp is not implemented yet " << std::endl;
@@ -362,17 +363,17 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         delmem_complex_op()(this->ctx, ps);
         delmem_complex_op()(this->ctx, becp);
     }
-
-    ModuleBase::TITLE("HamiltPW", "sPsi");
 }
 
-template class HamiltPW<std::complex<float>, psi::DEVICE_CPU>;
-template class HamiltPW<std::complex<double>, psi::DEVICE_CPU>;
-// template HamiltPW<std::complex<double>, psi::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_CPU> *hamilt);
+template class HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
+// template HamiltPW<std::complex<double>, base_device::DEVICE_CPU>::HamiltPW(const HamiltPW<std::complex<double>,
+// base_device::DEVICE_CPU> *hamilt);
 #if ((defined __CUDA) || (defined __ROCM))
-template class HamiltPW<std::complex<float>, psi::DEVICE_GPU>;
-template class HamiltPW<std::complex<double>, psi::DEVICE_GPU>;
-// template HamiltPW<std::complex<double>, psi::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>, psi::DEVICE_GPU> *hamilt);
+template class HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
+template class HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
+// template HamiltPW<std::complex<double>, base_device::DEVICE_GPU>::HamiltPW(const HamiltPW<std::complex<double>,
+// base_device::DEVICE_GPU> *hamilt);
 #endif
 
 } // namespace hamilt

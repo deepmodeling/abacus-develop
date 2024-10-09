@@ -1,8 +1,8 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
-#include "module_psi/kernels/memory_op.h"
 
 #include <algorithm>
 #include <complex>
@@ -14,20 +14,22 @@
 class TestModuleHsolverMathDngvd : public ::testing::Test
 {
   protected:
-    using resize_memory_op_Z = psi::memory::resize_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using delete_memory_op_Z = psi::memory::delete_memory_op<std::complex<double>, psi::DEVICE_GPU>;
-    using resize_memory_op_D = psi::memory::resize_memory_op<double, psi::DEVICE_GPU>;
-    using delete_memory_op_D = psi::memory::delete_memory_op<double, psi::DEVICE_GPU>;
+    using resize_memory_op_Z = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using delete_memory_op_Z = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using resize_memory_op_D = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
+    using delete_memory_op_D = base_device::memory::delete_memory_op<double, base_device::DEVICE_GPU>;
     // from CPU to GPU
-    using synchronize_memory_op_C2G_Z
-        = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using synchronize_memory_op_C2G_D = psi::memory::synchronize_memory_op<double, psi::DEVICE_GPU, psi::DEVICE_CPU>;
-    using synchronize_memory_op_G2C_Z
-        = psi::memory::synchronize_memory_op<std::complex<double>, psi::DEVICE_CPU, psi::DEVICE_GPU>;
-    using synchronize_memory_op_G2C_D = psi::memory::synchronize_memory_op<double, psi::DEVICE_CPU, psi::DEVICE_GPU>;
+    using synchronize_memory_op_C2G_Z = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op_C2G_D
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+    using synchronize_memory_op_G2C_Z = base_device::memory::
+        synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
+    using synchronize_memory_op_G2C_D
+        = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, base_device::DEVICE_GPU>;
 
-    const psi::DEVICE_CPU* cpu_ctx = {};
-    const psi::DEVICE_GPU* gpu_ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    const base_device::DEVICE_GPU* gpu_ctx = {};
 
     // prepare A & B in CPU
     std::vector<std::complex<double>> matrix_A = {
@@ -143,7 +145,11 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
 
     // run
     hsolver::createGpuBlasHandle();
-    hsolver::matrixTranspose_op<std::complex<double>, psi::DEVICE_GPU>()(gpu_ctx, 2, 3, device_transpose, device_transpose);
+    hsolver::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+                                                                                 2,
+                                                                                 3,
+                                                                                 device_transpose,
+                                                                                 device_transpose);
     hsolver::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU

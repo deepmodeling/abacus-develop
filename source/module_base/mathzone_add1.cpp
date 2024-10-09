@@ -187,9 +187,9 @@ double Mathzone_Add1::Uni_RadialF
 	const double& newr
 )
 {
-  	double h1, h2, h3, f1, f2, f3, f4;
-  	double g1, g2, x1, x2, y1, y2, f;
-  	double result;
+  	double h1 = 0.0, h2 = 0.0, h3 = 0.0, f1 = 0.0, f2 = 0.0, f3 = 0.0, f4 = 0.0;
+  	double g1 = 0.0, g2 = 0.0, x1 = 0.0, x2 = 0.0, y1 = 0.0, y2 = 0.0, f = 0.0;
+  	double result = 0.0;
 	double rmax = (msh-1) * dr;
 
   	if (newr < 0.0)
@@ -366,8 +366,8 @@ void Mathzone_Add1::Uni_Deriv_Phi
 	//fftw_destroy_plan(p2);
 #endif
 
-	bool is_re;
-	double fac;
+	bool is_re = true;
+	double fac = 0.0;
 	if (nd % 4 == 0) 
 	{
 		is_re = true; 

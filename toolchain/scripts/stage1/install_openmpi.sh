@@ -3,12 +3,16 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2024-0912
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-openmpi_ver="4.1.5"
-openmpi_sha256="c018b127619d2a2a30c1931f316fc8a245926d0f5b4ebed4711f9695e7f70925"
-openmpi_pkg="openmpi-${openmpi_ver}.tar.gz"
+#openmpi_ver="5.0.5"
+#openmpi_sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
+openmpi_ver="4.1.6"
+openmpi_sha256="f740994485516deb63b5311af122c265179f5328a0d857a567b85db00b11e415"
+openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -31,17 +35,18 @@ case "${with_openmpi}" in
     pkg_install_dir="${INSTALLDIR}/openmpi-${openmpi_ver}"
     #pkg_install_dir="${HOME}/apps/openmpi/${openmpi_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
+    url="https://download.open-mpi.org/release/open-mpi/v${openmpi_ver:0:3}/${openmpi_pkg}"
     if verify_checksums "${install_lock_file}"; then
       echo "openmpi-${openmpi_ver} is already installed, skipping it."
     else
       if [ -f ${openmpi_pkg} ]; then
         echo "${openmpi_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${openmpi_sha256}" "${openmpi_pkg}"
+        download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d openmpi-${openmpi_ver} ] && rm -rf openmpi-${openmpi_ver}
-      tar -xzf ${openmpi_pkg}
+      tar -xjf ${openmpi_pkg}
       cd openmpi-${openmpi_ver}
       if [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
         # can have issue with older glibc libraries, in which case
@@ -56,17 +61,19 @@ case "${with_openmpi}" in
           CFLAGS="${CFLAGS} -fgnu89-inline"
         fi
       fi
-      if [ $(command -v srun) ]; then
-        echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
-        EXTRA_CONFIGURE_FLAGS="--with-pmi"
-      else
-        EXTRA_CONFIGURE_FLAGS=""
-      fi
-      # We still require MPI-1.0-compatability for PTSCOTCH
+    # OpenMPI 5.0 only supports PMIx
+    # PMI support is required for Slurm, but not for other schedulers
+    # default not use
+    # for OpenMPI 4.1 with pmi slurm, we can open this setting manually
+    #   if [ $(command -v srun) ]; then
+    #     echo "Slurm installation found. OpenMPI will be configured with --with-pmi."
+    #     EXTRA_CONFIGURE_FLAGS="--with-pmi"
+    #   else
+    #     EXTRA_CONFIGURE_FLAGS=""
+    #   fi
       ./configure CFLAGS="${CFLAGS}" \
         --prefix=${pkg_install_dir} \
         --libdir="${pkg_install_dir}/lib" \
-        --enable-mpi1-compatibility \
         ${EXTRA_CONFIGURE_FLAGS} \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -164,13 +171,13 @@ export CP_LIBS="\${CP_LIBS} IF_MPI(${OPENMPI_LIBS}|)"
 EOF
   if [ "${with_openmpi}" != "__SYSTEM__" ]; then
     cat << EOF >> "${BUILDDIR}/setup_openmpi"
-export PATH="${pkg_install_dir}/bin":$PATH
 prepend_path PATH "${pkg_install_dir}/bin"
-export LD_LIBRARY_PATH="${pkg_install_dir}/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="${pkg_install_dir}/lib":$LD_RUN_PATH
-export LIBRARY_PATH="${pkg_install_dir}/lib":$LIBRARY_PATH
-export CPATH="${pkg_install_dir}/include":$CPATH
-export MANPATH="${pkg_install_dir}/share/man":$MANPATH
+export PATH="${pkg_install_dir}/bin":\${PATH}
+export LD_LIBRARY_PATH="${pkg_install_dir}/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="${pkg_install_dir}/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="${pkg_install_dir}/lib":\${LIBRARY_PATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
+export MANPATH="${pkg_install_dir}/share/man":\${MANPATH}
 EOF
   fi
   cat "${BUILDDIR}/setup_openmpi" >> ${SETUPFILE}

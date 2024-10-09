@@ -1,3 +1,7 @@
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/inverse_matrix.h"
 #include "module_base/lapack_connector.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -10,8 +14,6 @@
 #include "mpi.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include <complex>
-
-#include "gtest/gtest.h"
 #include <random>
 
 #include <ATen/core/tensor_map.h>
@@ -53,8 +55,10 @@ void lapackEigen(int& npw, std::vector<double>& hm, double* e, bool outtime = fa
     double* work2 = new double[lwork];
     dsyev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, &info);
     end = clock();
-    if (info) std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
-    if (outtime) std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+    if (info) { std::cout << "ERROR: Lapack solver, info=" << info << std::endl;
+}
+    if (outtime) { std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+}
     delete[] work2;
 }
 
@@ -84,7 +88,8 @@ public:
         // calculate eigenvalues by LAPACK;
         double* e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix_d;
-        if (mypnum == 0)  lapackEigen(npw, ev, e_lapack, false);
+        if (mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
+}
         // initial guess of psi by perturbing lapack psi
         ModuleBase::matrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -141,12 +146,11 @@ public:
         /**************************************************************/
         //  New interface of cg method
         /**************************************************************/
-        // this->pdiagh = new DiagoCG<double, Device>(precondition.data());
         // warp the subspace_func into a lambda function
         auto subspace_func = [ha](const ct::Tensor& psi_in, ct::Tensor& psi_out) { /*do nothing*/ };
         hsolver::DiagoCG<double> cg(
-            GlobalV::BASIS_TYPE,
-            GlobalV::CALCULATION,
+            PARAM.input.basis_type,
+            PARAM.input.calculation,
             hsolver::DiagoIterAssist<double>::need_subspace,
             subspace_func,
             hsolver::DiagoIterAssist<double>::PW_DIAG_THR,
@@ -315,7 +319,8 @@ int main(int argc, char** argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) delete listeners.Release(listeners.default_result_printer());
+    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
+}
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

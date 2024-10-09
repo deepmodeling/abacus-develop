@@ -1,11 +1,12 @@
-#ifndef HCONTAINER_H
-#define HCONTAINER_H
-
-#include <vector>
-#include <set>
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_MODULE_HCONTAINER_HCONTAINER_H
 
 #include "atom_pair.h"
+#include "module_base/vector3.h"
 #include "module_cell/unitcell.h"
+
+#include <set>
+#include <vector>
 
 namespace hamilt
 {
@@ -17,7 +18,7 @@ namespace hamilt
  *   <Psi_{mu_I,0}|H|Psi_{nu_J,R}>
  * ----------------------------------------
  * template T can be double or complex<double>
- * 
+ *
  * examples for using this class:
  * 1. initialize a HContainer
  *    a. use unitcell to initialize atom_pairs
@@ -81,7 +82,7 @@ namespace hamilt
  *     ```
  *       // HR is a const HContainer object, which has been initialized
  *       int rx, ry, rz;
- *       // call size_R_loop() to get number of different R indexes, 
+ *       // call size_R_loop() to get number of different R indexes,
  *       // be careful, it will cost some time to loop all atom-pairs to gather R indexes
  *       int size_for_loop_R = HR.size_R_loop();
  *       for (int iR = 0; iR < size_for_loop_R ; iR++)
@@ -115,8 +116,8 @@ namespace hamilt
  *           // loop R-index
  *           for (int iR = 0; iR < atom_ij.size_R(); iR++)
  *           {
- *               const int* r_index = atom_ij.get_R_index(iR);
- *               auto tmp_matrix = atom_ij.get_HR_values(r_index[0], r_index[1], r_index[2]);              
+ *               const ModuleBase::Vector3<int> r_index = atom_ij.get_R_index(iR);
+ *               auto tmp_matrix = atom_ij.get_HR_values(r_index.x, r_index.y, r_index.z);
  *               // do something with tmp_matrix
  *               ...
  *           }
@@ -126,7 +127,7 @@ namespace hamilt
  *     ```
  *       ...
  *       HR.fix_gamma();
- *       // HR is a const HContainer object, which has been initialized and fixed to gamma       
+ *       // HR is a const HContainer object, which has been initialized and fixed to gamma
  *       // loop atom-pairs directly without R index
  *       for (int i = 0; i < HR.size_atom_pairs(); i++)
  *       {
@@ -136,8 +137,8 @@ namespace hamilt
  *           ...
  *       }
  *     ```
- * 
-*/
+ *
+ */
 template <typename T>
 class HContainer
 {
@@ -149,7 +150,7 @@ class HContainer
      * @brief copy constructor
      * when data_array is not nullptr, new HContainer will be wrapper for data_array
      * data of HR_in will not be copied, please call add() after this constructor to copy data.
-    */
+     */
     HContainer(const HContainer<T>& HR_in, T* data_array = nullptr);
 
     // move constructor
@@ -166,28 +167,38 @@ class HContainer
      * pass a data pointer to HContainer, which means HContainer is a wrapper
      * it will not allocate memory for atom_pairs
      * this case will forbit inserting empty atom_pair
-    */
-    HContainer(
-      const Parallel_Orbitals* paraV, 
-      T* data_pointer = nullptr, 
-      const std::vector<int>* ijr_info = nullptr);
+     */
+    HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
+
+    /**
+* @brief set parallel orbital pointer to check parallel information
+*/
+    void set_paraV(const Parallel_Orbitals* paraV_in)
+    {
+        this->paraV = paraV_in;
+        for (auto& ap : atom_pairs) ap.set_paraV(paraV_in);
+    };
+    /**
+ * @brief get parallel orbital pointer to check parallel information
+ * @return const Parallel_Orbitals* , if return is nullptr, it means HContainer is not in parallel mode
+ */
+    const Parallel_Orbitals* get_paraV() const { return this->paraV; };
 
     /**
      * @brief allocate memory for all <IJR> matrix
-     * if data_array is not nullptr, 
+     * if data_array is not nullptr,
      *     use memory after data_array for each BaseMatrix;
-     *     if BaseMatrix has memory allocated before, it will be freed first. 
+     *     if BaseMatrix has memory allocated before, it will be freed first.
      * if data_array is nullptr, allocate memory for each BaseMatrix
      * @param data_array pointer of data array
      * @param if_zero if true, set all values to zero
-    */
+     */
     void allocate(T* data_array = nullptr, bool if_zero = false);
 
     /**
      * @brief set values of all <IJR> matrix to zero
-    */
+     */
     void set_zero();
-
 
     /**
      * @brief a AtomPair object can be inserted into HContainer, two steps:
@@ -216,9 +227,19 @@ class HContainer
      * This interface can be used to find BaseMatrix in AtomPair,
      * if found, return pointer will be the exist one,
      * if not found, return pointer will be nullptr.
-    */
+     */
     BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz);
     const BaseMatrix<T>* find_matrix(int i, int j, int rx, int ry, int rz) const;
+    BaseMatrix<T>* find_matrix(int i, int j, const ModuleBase::Vector3<int>& R_index);
+    const BaseMatrix<T>* find_matrix(int i, int j, const ModuleBase::Vector3<int>& R_index) const;
+
+    /**
+     * @brief find the offset of BaseMatrix with atom index atom_i and atom_j and R index (rx, ry, rz)
+     * if found, return this->find_matrix(i, j, rx, ry, rz)->get_pointer() - this->get_wrapper();
+     * if not found, return -1
+     */
+    int find_matrix_offset(int i, int j, int rx, int ry, int rz) const;
+    int find_matrix_offset(int i, int j, const ModuleBase::Vector3<int>& R_index) const;
 
     /**
      * @brief return a reference of AtomPair with index of atom I and J in atom_pairs
@@ -249,11 +270,11 @@ class HContainer
      * @param nu index of orbital nu
      * @return T&
      */
-    //T& operator()(int atom_i, int atom_j, int rx_in, int ry_in, int rz_in, int mu, int nu) const;
+    // T& operator()(int atom_i, int atom_j, int rx_in, int ry_in, int rz_in, int mu, int nu) const;
 
     /**
      * @brief add another HContainer to this HContainer
-    */
+     */
     void add(const HContainer<T>& other);
 
     // save atom-pair pointers into this->tmp_atom_pairs for selected R index
@@ -286,7 +307,8 @@ class HContainer
      *   6. insert_pair() can be safely used, but the R index will be ignored
      *   7. find_matrix() can be safely used, but the R index will be ignored
      *   8. operator() can be used, but the R index will be ignored
-     *   9. get_atom_pair(), find_atom_pair() can be used, be careful that AtomPair::get_HR_values() is dangerous in this mode.
+     *   9. get_atom_pair(), find_atom_pair() can be used, be careful that AtomPair::get_HR_values() is dangerous in
+     * this mode.
      */
     void fix_gamma();
 
@@ -336,55 +358,66 @@ class HContainer
 
     /**
      * @brief get current_R
-    */
+     */
     int get_current_R() const;
 
     /**
      * @brief judge if gamma_only
-    */
+     */
     bool is_gamma_only() const;
 
     /**
      * @brief get total memory bites of HContainer
-    */
+     */
     size_t get_memory_size() const;
 
     /**
-     * @brief calculate total size of data in HContainer, 
+     * @brief calculate total size of data in HContainer,
      * named nnr inherited from history
      * all AtomPairs and BaseMatrixs are counted
-    */
-    size_t get_nnr() const;
+     */
+    size_t get_nnr() const
+    {
+        size_t sum = 0;
+        for (int iap = 0; iap < this->atom_pairs.size(); ++iap)
+        {
+            sum += this->atom_pairs[iap].get_R_size() * this->atom_pairs[iap].get_size();
+        }
+        return sum;
+    }
 
     /**
      * @brief get infomation of IJR pairs in HContainer
      * the return vector format is {size_I, I1, size_J, J1, size_R, R1x, R1y, R1z, ..., J2, ...}
-    */
+     */
     std::vector<int> get_ijr_info() const;
 
     /**
      * @brief use infomation of IJ pairs to expand HContainer
      * the input vector format is {size_IJ_pairs, I1, J1, size_R, R1x, R1y, R1z, ..., I2, J2, ...}
-     * HContainer has not been allocated after this function, 
+     * HContainer has not been allocated after this function,
      * user should call allocate(...) to allocate memory.
-    */
+     */
     void insert_ijrs(const std::vector<int>* ijrs);
 
     /**
      * @brief return the wrapper_pointer
-    */
-    T* get_wrapper() const;
+     */
+    T* get_wrapper() const
+    {
+        return this->wrapper_pointer;
+    }
 
     /**
      * @brief synchronization of atom-pairs for read-in HContainer
      * new <IJR> pair from read-in HContainer will be inserted into this->atom-pairs
-    */
-    void shape_synchron( const HContainer<T>& other);
+     */
+    void shape_synchron(const HContainer<T>& other);
 
     /**
      * @brief get sparse_ap
      * @return std::vector<std::vector<int>>&
-    */
+     */
     const std::vector<std::vector<int>>& get_sparse_ap() const
     {
         return sparse_ap;
@@ -393,10 +426,19 @@ class HContainer
     /**
      * @brief get sparse_ap_index
      * @return std::vector<std::vector<int>>&
-    */
+     */
     const std::vector<std::vector<int>>& get_sparse_ap_index() const
     {
         return sparse_ap_index;
+    }
+
+    /**
+     * @brief get number of basis in each H matrix
+     * @return int
+     */
+    int get_nbasis() const
+    {
+        return paraV->get_global_row_size();
     }
 
   private:
@@ -412,7 +454,7 @@ class HContainer
      */
     mutable std::vector<const AtomPair<T>*> tmp_atom_pairs;
     // it contains 3 index of cell, size of R_index is three times of values.
-    mutable std::vector<int> tmp_R_index;
+    mutable std::vector<ModuleBase::Vector3<int>> tmp_R_index;
     // current index of R in tmp_atom_pairs, -1 means not initialized
     mutable int current_R = -1;
     /**
@@ -424,21 +466,22 @@ class HContainer
      * @return int index of R in tmp_R_index
      */
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
 
     bool gamma_only = false;
 
     /**
      * @brief if wrapper_pointer is not nullptr, this HContainer is a wrapper
-     * there is only one case that "wrapper_pointer == nullptr": 
+     * there is only one case that "wrapper_pointer == nullptr":
      *     HContainer is constructed by allocated AtomPairs by insert_pair()
      * in other cases, wrapper_pointer is not nullptr and is memory pool of AtomPairs
-    */
+     */
     T* wrapper_pointer = nullptr;
     bool allocated = false;
 
     /**
      * @brief pointer of Parallel_Orbitals, which is used to get atom-pair information
-    */
+     */
     const Parallel_Orbitals* paraV = nullptr;
 
     // int multiple = 1;

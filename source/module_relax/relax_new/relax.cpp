@@ -1,5 +1,6 @@
 #include "relax.h"
 
+#include "module_parameter/parameter.h"
 #include <cmath>
 
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -23,8 +24,8 @@ void Relax::init_relax(const int nat_in)
     etot = 0;
     etot_p = 0;
 
-    force_thr_eva = GlobalV::FORCE_THR * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
-    fac_force  = GlobalV::relax_scale_force * 0.1;
+    force_thr_eva = PARAM.inp.force_thr  * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; //convert to eV/A
+    fac_force  = PARAM.inp.relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
     //allocate some data structures
@@ -45,7 +46,8 @@ void Relax::init_relax(const int nat_in)
 
     //set if we are allowing lattice vectors to move
     if_cell_moves = false;
-    if(GlobalV::CALCULATION == "cell-relax") if_cell_moves = true;
+    if(PARAM.inp.calculation == "cell-relax") { if_cell_moves = true;
+}
 }
 
 bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in)
@@ -53,10 +55,12 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
     ModuleBase::TITLE("Relax","relax_step");
 
     etot = etot_in * ModuleBase::Ry_to_eV; //convert to eV
-    if( istep == 0 ) etot_p = etot;
+    if( istep == 0 ) { etot_p = etot;
+}
 
     bool relax_done = this->setup_gradient(force, stress);
-    if(relax_done) return relax_done;
+    if(relax_done) { return relax_done;
+}
 
     this->calculate_gamma();
 
@@ -84,7 +88,8 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     ModuleBase::TITLE("Relax","setup_gradient");
 
     //if not relax, then return converged
-    if( !( GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" ) ) return true;
+    if( !( PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" ) ) { return true;
+}
 
     //indicating whether force & stress are converged
     bool force_converged = true;
@@ -107,25 +112,29 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
-                if( std::abs(force_eva(iat,0)) > max_grad) max_grad = std::abs(force_eva(iat,0));
+                if( std::abs(force_eva(iat,0)) > max_grad) { max_grad = std::abs(force_eva(iat,0));
+}
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
-                if( std::abs(force_eva(iat,1)) > max_grad) max_grad = std::abs(force_eva(iat,1));
+                if( std::abs(force_eva(iat,1)) > max_grad) { max_grad = std::abs(force_eva(iat,1));
+}
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
-                if( std::abs(force_eva(iat,2)) > max_grad) max_grad = std::abs(force_eva(iat,2));
+                if( std::abs(force_eva(iat,2)) > max_grad) { max_grad = std::abs(force_eva(iat,2));
+}
 			}
 			++iat;
 		}
 	}
     assert(iat==nat);
 
-    if(max_grad > force_thr_eva) force_converged = false;
-	if(GlobalV::OUT_LEVEL=="ie")
+    if(max_grad > force_thr_eva) { force_converged = false;
+}
+	if(PARAM.inp.out_level=="ie")
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
@@ -140,7 +149,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         grad_cell.zero_out();
         ModuleBase::matrix stress_ev = stress * (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
 
-        if(INPUT.fixed_axes == "shape")
+        if(PARAM.inp.fixed_axes == "shape")
         {
             double pressure = (stress_ev(0,0) + stress_ev(1,1) + stress_ev(2,2)) / 3.0;
             stress_ev.zero_out();
@@ -148,14 +157,14 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             stress_ev(1,1) = pressure;
             stress_ev(2,2) = pressure;
         }
-        else if(INPUT.fixed_axes == "volume")
+        else if(PARAM.inp.fixed_axes == "volume")
         {
             double pressure = (stress_ev(0,0) + stress_ev(1,1) + stress_ev(2,2)) / 3.0;
             stress_ev(0,0) -= pressure;
             stress_ev(1,1) -= pressure;
             stress_ev(2,2) -= pressure;
         }
-        else if (INPUT.fixed_axes != "None")
+        else if (PARAM.inp.fixed_axes != "None")
         {
             //Note stress is given in the directions of lattice vectors
             //So we need to first convert to Cartesian and then apply the constraint
@@ -201,20 +210,21 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             for (int j = 0; j < 3; j++)
             {
                 double grad = grad_cell(i,j) / (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
-                if ( largest_grad < std::abs(grad) ) largest_grad = std::abs(grad);
+                if ( largest_grad < std::abs(grad) ) { largest_grad = std::abs(grad);
+}
             }
         }
 
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         largest_grad = largest_grad * unit_transform;
 
-        if (largest_grad > GlobalV::STRESS_THR)
+        if (largest_grad > PARAM.inp.stress_thr)
         {
             force_converged = false;
         }
 
         GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad << std::endl;
-        GlobalV::ofs_running << "\n Threshold is = " << GlobalV::STRESS_THR << std::endl;
+        GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << std::endl;
     }
 
 	if(force_converged)
@@ -339,7 +349,8 @@ void Relax::perform_line_search()
 void Relax::new_direction()
 {
     ModuleBase::TITLE("Relax","new_direction");
-    if(cg_step != 0) step_size += 0.2 * step_size * (dmovel - 1.0);
+    if(cg_step != 0) { step_size += 0.2 * step_size * (dmovel - 1.0);
+}
 
     //set GAMMA to zero if line minimization was not sufficient
     if(5.0*std::abs(gr_sr)*gamma>std::abs(gr_gr))
@@ -411,7 +422,8 @@ void Relax::new_direction()
     //prepare for line search
     bool restart = true;
     double x=0, y=etot;
-    double xnew, yd;
+    //TODO: add a certain threshold for the progress.
+    double xnew, yd = 1e-8;
 
     this->ls.line_search(restart, x, y, f, xnew, yd);
 
@@ -429,7 +441,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
     // I'm keeping this only because we have to
     // be compatible with old code
     GlobalC::ucell.ionic_position_updated = true;
-    if(if_cell_moves) GlobalC::ucell.cell_parameter_updated = true;
+    if(if_cell_moves) { GlobalC::ucell.cell_parameter_updated = true;
+}
 
     // Depending on whether this is a first step along CG new direction
     // or a line search step, the treatment is slightly different
@@ -489,7 +502,8 @@ void Relax::move_cell_ions(const bool is_new_dir)
         // different from when the current CG step starts;
         // as a result, we need to save latvec at the beginning of
         // each CG step
-        if(is_new_dir) latvec_save = GlobalC::ucell.latvec;
+        if(is_new_dir) { latvec_save = GlobalC::ucell.latvec;
+}
 
         ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
 
@@ -508,12 +522,12 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
         GlobalC::ucell.latvec += move_cell * (step_size * fac * fac_stress);
 
-        if(INPUT.fixed_axes == "volume")
+        if(PARAM.inp.fixed_axes == "volume")
         {
             double omega_new = std::abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
             GlobalC::ucell.latvec *= pow(GlobalC::ucell.omega / omega_new, 1.0/3.0);
         }
-        if(INPUT.fixed_ibrav)
+        if(PARAM.inp.fixed_ibrav)
         {
             GlobalC::ucell.remake_cell();
         }
@@ -558,8 +572,9 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0)
+    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0) {
         GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
+}
 
 	GlobalC::ucell.update_pos_taud(move_ion);
 

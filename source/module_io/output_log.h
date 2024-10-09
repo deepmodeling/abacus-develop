@@ -16,11 +16,37 @@ namespace ModuleIO
 /// @param ofs_running the output stream
 void output_convergence_after_scf(bool& convergence, double& energy, std::ofstream& ofs_running = GlobalV::ofs_running);
 
+/// @brief output after relaxation
+/// @param conv_ion if is convergence for ions
+/// @param conv_elec if is convergence for electrons
+/// @param ofs_running the output stream
+void output_after_relax(bool conv_ion, bool conv_elec, std::ofstream& ofs_running = GlobalV::ofs_running);
+
 /// @brief output the fermi energy
 /// @param convergence if is convergence
 /// @param efermi
 /// @param ofs_running the output stream
 void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running = GlobalV::ofs_running);
+
+/// @brief calculate and output the vacuum level
+/// We first determine the vacuum direction, then get the vacuum position based on the minimum of charge density,
+/// finally output the vacuum level, i.e., the electrostatic potential at the vacuum position.
+///
+/// @param ucell the unitcell
+/// @param rho charge density
+/// @param v_elecstat electrostatic potential
+/// @param ofs_running the output stream
+void output_vacuum_level(const UnitCell* ucell,
+                         const double* const* rho,
+                         const double* v_elecstat,
+                         const int& nx,
+                         const int& ny,
+                         const int& nz,
+                         const int& nxyz,
+                         const int& nrxx,
+                         const int& nplane,
+                         const int& startz_current,
+                         std::ofstream& ofs_running = GlobalV::ofs_running);
 
 /// @brief output atomic forces
 /// @param ofs the output stream

@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include<streambuf>
 #ifdef __MPI
 #include "mpi.h"
@@ -25,7 +28,7 @@
 #include "module_cell/read_pp.h"
 #include "module_cell/pseudo.h"
 #include "module_cell/atom_pseudo.h"
-
+#undef private
 class AtomPseudoTest : public testing::Test
 {
 protected:
@@ -41,21 +44,21 @@ TEST_F(AtomPseudoTest, SetDSo)
 #endif
 	std::ifstream ifs;
 	ifs.open("./support/C.upf");
-	GlobalV::PSEUDORCUT = 15.0;
-	upf->read_pseudo_upf201(ifs);
-	atom_pseudo->set_pseudo(*upf);
+	PARAM.input.pseudo_rcut = 15.0;
+	upf->read_pseudo_upf201(ifs, *atom_pseudo);
+	upf->complete_default(*atom_pseudo);
 	ifs.close();
 	EXPECT_EQ(atom_pseudo->nh,14);
 	EXPECT_TRUE(atom_pseudo->has_so);
 	ModuleBase::ComplexMatrix d_so_in(atom_pseudo->nh*2,atom_pseudo->nh*2);
 	int nproj = 6;
 	int nproj_soc = 4;
-	bool has_so = 1;
-	GlobalV::NSPIN = 4;
+	bool has_so = true;
+	PARAM.input.nspin = 4;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
-	GlobalV::LSPINORB = 1;
+	PARAM.input.lspinorb = true;
 	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
@@ -71,9 +74,9 @@ TEST_F(AtomPseudoTest, BcastAtomPseudo)
 	{
 		std::ifstream ifs;
 		ifs.open("./support/C.upf");
-		GlobalV::PSEUDORCUT = 15.0;
-		upf->read_pseudo_upf201(ifs);
-		atom_pseudo->set_pseudo(*upf);
+		PARAM.input.pseudo_rcut = 15.0;
+		upf->read_pseudo_upf201(ifs, *atom_pseudo);
+		upf->complete_default(*atom_pseudo);;
 		ifs.close();
 	}
 	atom_pseudo->bcast_atom_pseudo();
@@ -99,4 +102,3 @@ int main(int argc, char **argv)
 	return result;
 }
 #endif
-#undef private

@@ -3,11 +3,11 @@
 
 namespace ModulePW
 {
-/// 
-/// distribute real-space grids to different processors
-/// Known: nx, ny, nz, poolnproc, poolrank
-/// output: nrxx, startz, numz
-/// 
+/**
+ * @brief distribute real-space grids to different processors
+ * @param in: nx, ny, nz, poolnproc, poolrank
+ * @param out: nrxx, startz, numz
+ */
 void PW_Basis::distribute_r()
 {
     delete[] this->numz; this->numz = new int[this->poolnproc];
@@ -23,7 +23,7 @@ void PW_Basis::distribute_r()
         this->numz[ip] = npz;
         if(ip < modz)   this->numz[ip]++;
         if(ip < this->poolnproc - 1)   this->startz[ip+1] = this->startz[ip] + numz[ip];
-        if(ip == this->poolrank) 
+        if(ip == this->poolrank)
         {
             this->nplane = numz[ip];
             this->startz_current = startz[ip];

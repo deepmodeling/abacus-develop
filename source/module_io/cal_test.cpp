@@ -4,53 +4,63 @@
 #include "module_base/memory.h"
 #include "cal_test.h"
 
-double Cal_Test::mporter;
+double Cal_Test::mporter=0.0;
 
 // about charge density
-double Cal_Test::mrho;
-double Cal_Test::mrho_save;
-double Cal_Test::mrho_core;
+double Cal_Test::mrho=0.0;
+double Cal_Test::mrho_save=0.0;
+double Cal_Test::mrho_core=0.0;
 
 // about pulay mixing.
-double Cal_Test::mRrho;
-double Cal_Test::mdRrho;
-double Cal_Test::mdrho;
-double Cal_Test::mrho_save2;
+double Cal_Test::mRrho=0.0;
+double Cal_Test::mdRrho=0.0;
+double Cal_Test::mdrho=0.0;
+double Cal_Test::mrho_save2=0.0;
 
 // about potential on FFT grid.
-double Cal_Test::mvltot;
-double Cal_Test::mvr;
-double Cal_Test::mvrs;
-double Cal_Test::mvrs1;
-double Cal_Test::mvnew;
+double Cal_Test::mvltot=0.0;
+double Cal_Test::mvr=0.0;
+double Cal_Test::mvrs=0.0;
+double Cal_Test::mvrs1=0.0;
+double Cal_Test::mvnew=0.0;
 
 // about charge in g space.
-double Cal_Test::mrhog;
-double Cal_Test::mrhog_save;
-double Cal_Test::mrhog_core;
+double Cal_Test::mrhog=0.0;
+double Cal_Test::mrhog_save=0.0;
+double Cal_Test::mrhog_core=0.0;
 
 // others
-double Cal_Test::mhs;
-double Cal_Test::mwf;
-double Cal_Test::mnonzero;
-double Cal_Test::mspar_hsrho;
+double Cal_Test::mhs=0.0;
+double Cal_Test::mwf=0.0;
+double Cal_Test::mnonzero=0.0;
+double Cal_Test::mspar_hsrho=0.0;
 // plane waves
-double Cal_Test::mgvec;
-double Cal_Test::mig2fftw;
-double Cal_Test::mig2fftc;
-double Cal_Test::mgg;
-double Cal_Test::mig123;
-double Cal_Test::mstrucFac;
-double Cal_Test::meigts123;
+double Cal_Test::mgvec=0.0;
+double Cal_Test::mig2fftw=0.0;
+double Cal_Test::mig2fftc=0.0;
+double Cal_Test::mgg=0.0;
+double Cal_Test::mig123=0.0;
+double Cal_Test::mstrucFac=0.0;
+double Cal_Test::meigts123=0.0;
 
-double Cal_Test::mtot;
+double Cal_Test::mtot=0.0;
 
-void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_Basis_K* wfcpw, const std::string chr_mixing_mode, const int chr_mixing_ndim)
+void Cal_Test::test_memory(
+		const ModulePW::PW_Basis* rhopw, 
+		const ModulePW::PW_Basis_K* wfcpw, 
+		const std::string chr_mixing_mode, 
+		const int chr_mixing_ndim)
 {
 	ModuleBase::TITLE("Cal_Test","test_memory");
 
 	const int ngmw = Cal_Test::cal_np(wfcpw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
 	const int ngmc = Cal_Test::cal_np(rhopw->ggecut, rhopw->nx, rhopw->ny, rhopw->nz);
+
+//  const int ecut_wfc = INPUT.ecutwfc;
+//  const int ecut_chg = INPUT.ecutrho;
+
+//	const int ngmw = Cal_Test::cal_np(ecut_wfc, rhopw->nx, rhopw->ny, rhopw->nz);
+//	const int ngmc = Cal_Test::cal_np(ecut_chg, rhopw->nx, rhopw->ny, rhopw->nz);
 
 	std::cout << " number of atoms = " << GlobalC::ucell.nat << std::endl;
 	std::cout << " plane wave number for wave functions = " << ngmw << std::endl;
@@ -90,7 +100,6 @@ void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_B
 // mohan comment out 2021-02-11
 //	mspar_hsrho = Memory::calculate_mem( Hnnz*3, "double");
 	
-
 	mgvec = ModuleBase::Memory::calculate_mem( ngmc * 3 * 2, "double" );
 	mig2fftw = ModuleBase::Memory::calculate_mem( ngmw , "int");  
 	mig2fftc = ModuleBase::Memory::calculate_mem( ngmc , "int");  
@@ -99,40 +108,51 @@ void Cal_Test::test_memory(const ModulePW::PW_Basis* rhopw, const ModulePW::PW_B
 	mstrucFac = ModuleBase::Memory::calculate_mem( GlobalC::ucell.ntype*ngmc, "cdouble");
 	meigts123 = ModuleBase::Memory::calculate_mem( GlobalC::ucell.nat * (2*rhopw->nx+1+2*rhopw->ny+1+2*rhopw->nz+1), "cdouble");
 
-//	std::cout << " Memory for "
-
-
 	//(3) Memory for H,S matrix.
 	std::cout << " NLOCAL = " << GlobalV::NLOCAL << std::endl;
-	std::cout << " NBANdS = " << GlobalV::NBANDS << std::endl;
+	std::cout << " NBANDS = " << GlobalV::NBANDS << std::endl;
 
-//	std::cout << " Memory for H,S matrix ( " 
-//		<< GlobalV::NLOCAL << ", "
-//		<< GlobalV::NLOCAL << ") = "
-//		<< mhs << " MB" << std::endl;
+	std::cout << " Memory for H,S matrix ( " 
+		<< GlobalV::NLOCAL << ", "
+		<< GlobalV::NLOCAL << ") = "
+		<< mhs << " MB" << std::endl;
 	
 	//(4) Memory for wave functions.
-//	std::cout << " Memory for wave functions ( " 
-//		<< GlobalV::NLOCAL << ", "
-//		<< GlobalV::NBANDS << ") = "
-//		<< mwf << " MB" << std::endl;
+	std::cout << " Memory for wave functions ( " 
+		<< GlobalV::NLOCAL << ", "
+		<< GlobalV::NBANDS << ") = "
+		<< mwf << " MB" << std::endl;
 
 	print_mem(1);
-	print_mem(8);
-	print_mem(16);
+//	print_mem(8);
+//	print_mem(16);
 
-	if(GlobalC::ucell.nat > 200)
-	{
-		print_mem(32);
-		print_mem(64);
-	}
+//	if(GlobalC::ucell.nat > 200)
+//	{
+//		print_mem(32);
+//		print_mem(64);
+//	}
 
 	return;
 }
 
+//! compute the number of plane waves
 int Cal_Test::cal_np(const double &ggcut, const int &n1, const int &n2, const int &n3)
 {
-	int ibox[3];
+
+/*
+    std::cout << "ggcut=" << ggcut << std::endl;
+    std::cout << "n1=" << n1 << std::endl;
+    std::cout << "n2=" << n2 << std::endl;
+    std::cout << "n3=" << n3 << std::endl;
+*/
+
+    assert(n1>=0);
+    assert(n2>=0);
+    assert(n3>=0);
+
+	int ibox[3]={0};
+
 	// set the center at origin point.
 	ibox[0] = int(n1 / 2.0) + 1;
 	ibox[1] = int(n2 / 2.0) + 1;
@@ -202,5 +222,7 @@ void Cal_Test::print_mem(const int &nproc)
 	std::cout << " MEMORY FOR eigts1,2,3   : " << std::setw(15) << meigts123/nproc << " MB" << std::endl;
 	std::cout << " TOTAL MEMORY            : " << std::setw(15) << mtot/nproc << " MB" << std::endl;
 	
-	std::cout << " MEMORY FOR nonzero      : " << std::setw(15) << (double)GlobalV::NLOCAL*(GlobalV::NLOCAL+1)/1028/1028/2.0/nproc << " MB" << std::endl; //mohan for tmp 
+	std::cout << " MEMORY FOR nonzero      : " << std::setw(15) 
+     << (double)GlobalV::NLOCAL*(GlobalV::NLOCAL+1)/1028/1028/2.0/nproc 
+     << " MB" << std::endl; 
 }

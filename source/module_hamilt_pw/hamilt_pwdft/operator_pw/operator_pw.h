@@ -3,7 +3,7 @@
 #include"module_hamilt_general/operator.h"
 
 namespace hamilt {
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class OperatorPW : public Operator<T, Device>
 {
     public:

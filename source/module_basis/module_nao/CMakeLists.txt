@@ -14,6 +14,7 @@ if(ENABLE_LCAO)
     two_center_table.cpp
     two_center_integrator.cpp
     two_center_bundle.cpp
+    projgen.cpp
   )
 
   if(ENABLE_COVERAGE)
@@ -21,6 +22,8 @@ if(ENABLE_LCAO)
   endif()
 
   if(BUILD_TESTING)
-    add_subdirectory(test)
+    if(ENABLE_MPI)
+      add_subdirectory(test)
+    endif()
   endif()
 endif()

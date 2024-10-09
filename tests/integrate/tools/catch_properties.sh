@@ -21,52 +21,70 @@ sum_file(){
 #echo $answer
 #exit 0
 
+get_input_key_value(){
+	key=$1
+	inputf=$2
+	value=$(awk -v key=$key '{if($1==key) a=$2} END {print a}' $inputf)
+	echo $value
+}
+
 file=$1
 #echo $1
 calculation=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
 running_path=`echo "OUT.autotest/running_$calculation"".log"`
 natom=`grep -En '(^|[[:space:]])TOTAL ATOM NUMBER($|[[:space:]])' $running_path | tail -1 | awk '{print $6}'`
-has_force=`grep -En '(^|[[:space:]])cal_force($|[[:space:]])' INPUT | awk '{print $2}'`
-has_stress=`grep -En '(^|[[:space:]])cal_stress($|[[:space:]])' INPUT | awk '{print $2}'`
-has_dftu=`grep -En '(^|[[:space:]])dft_plus_u($|[[:space:]])' INPUT | awk '{print $2}'`
-has_band=`grep -En '(^|[[:space:]])out_band($|[[:space:]])' INPUT | awk '{print $2}'`
-has_dos=`grep -En '(^|[[:space:]])out_dos($|[[:space:]])' INPUT | awk '{print $2}'`
-has_cond=`grep -En '(^|[[:space:]])cal_cond($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs=`grep -En '(^|[[:space:]])out_mat_hs($|[[:space:]])' INPUT | awk '{print $2}'`
-has_hs2=`grep -En '(^|[[:space:]])out_mat_hs2($|[[:space:]])' INPUT | awk '{print $2}'`
-has_xc=`grep -En '(^|[[:space:]])out_mat_xc($|[[:space:]])' INPUT | awk '{print $2}'`
-has_r=`grep -En '(^|[[:space:]])out_mat_r($|[[:space:]])' INPUT | awk '{print $2}'`
-deepks_out_labels=`grep deepks_out_labels INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-deepks_bandgap=`grep deepks_bandgap INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_lowf=`grep out_wfc_lcao INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_app_flag=`grep out_app_flag INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_wfc_r=`grep out_wfc_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_wfc_pw=`grep out_wfc_pw INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm=`grep "out_dm " INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_mul=`grep out_mul INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-gamma_only=`grep gamma_only INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-imp_sol=`grep imp_sol INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-run_rpa=`grep rpa INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_pot=`grep out_pot INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_dm1=`grep out_dm1 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-get_s=`grep calculation INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_pband=`grep out_proj_band INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-toW90=`grep towannier90 INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_r=`grep out_mat_r INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_t=`grep out_mat_t INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_mat_dh=`grep out_mat_dh INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-has_scan=`grep dft_functional INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
-out_chg=`grep out_chg INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+has_force=$(get_input_key_value "cal_force" "INPUT")
+has_stress=$(get_input_key_value "cal_stress" "INPUT")
+has_dftu=$(get_input_key_value "dft_plus_u" "INPUT")
+has_band=$(get_input_key_value "out_band" "INPUT")
+has_dos=$(get_input_key_value "out_dos" "INPUT")
+has_cond=$(get_input_key_value "cal_cond" "INPUT")
+has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
+has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
+has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
+has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
+has_r=$(get_input_key_value "out_mat_r" "INPUT")
+deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
+deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
+deepks_bandgap=$(get_input_key_value "deepks_bandgap" "INPUT")
+deepks_v_delta=$(get_input_key_value "deepks_v_delta" "INPUT")
+has_lowf=$(get_input_key_value "out_wfc_lcao" "INPUT")
+out_app_flag=$(get_input_key_value "out_app_flag" "INPUT")
+has_wfc_r=$(get_input_key_value "out_wfc_r" "INPUT")
+has_wfc_pw=$(get_input_key_value "out_wfc_pw" "INPUT")
+out_dm=$(get_input_key_value "out_dm" "INPUT")
+out_mul=$(get_input_key_value "out_mul" "INPUT")
+gamma_only=$(get_input_key_value "gamma_only" "INPUT")
+imp_sol=$(get_input_key_value "imp_sol" "INPUT")
+run_rpa=$(get_input_key_value "rpa" "INPUT")
+out_pot=$(get_input_key_value "out_pot" "INPUT")
+out_dm1=$(get_input_key_value "out_dm1" "INPUT")
+get_s=$(get_input_key_value "calculation" "INPUT")
+out_pband=$(get_input_key_value "out_proj_band" "INPUT")
+toW90=$(get_input_key_value "towannier90" "INPUT")
+has_mat_r=$(get_input_key_value "out_mat_r" "INPUT")
+has_mat_t=$(get_input_key_value "out_mat_t" "INPUT") 
+has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
+has_scan=$(get_input_key_value "dft_functional" "INPUT")
+out_chg=$(get_input_key_value "out_chg" "INPUT") 
+esolver_type=$(get_input_key_value "esolver_type" "INPUT")
 #echo $running_path
-base=`grep -En '(^|[[:space:]])basis_type($|[[:space:]])' INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
-symmetry=`grep -w "symmetry" INPUT | awk '{print $2}' | sed s/[[:space:]]//g`
+symmetry=$(get_input_key_value "symmetry" "INPUT")
+out_current=$(get_input_key_value "out_current" "INPUT")
 test -e $1 && rm $1
 #--------------------------------------------
-# if NOT non-self-consistent calculations
+# if NOT non-self-consistent calculations or linear response
 #--------------------------------------------
+is_lr=0
+if [ ! -z $esolver_type ] && ([ $esolver_type == "lr" ] || [ $esolver_type == "ks-lr" ]); then
+	is_lr=1
+fi
+
 if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
-&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]; then
+&& [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
+&& [ $is_lr == 0 ]; then
 	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
 	etot=$(grep "ETOT_" "$running_path" | tail -1 | awk '{print $2}')
 	etotperatom=`awk 'BEGIN {x='$etot';y='$natom';printf "%.10f\n",x/y}'`
@@ -118,7 +136,7 @@ fi
 if ! test -z "$has_cond"  && [  $has_cond == 1 ]; then
 	onref=refOnsager.txt
 	oncal=Onsager.txt
-	python3 ../tools/CompareFile.py $onref $oncal 2
+	python3 ../tools/CompareFile.py $onref $oncal 3 -com_type 0
     echo "CompareH_Failed $?" >>$1
 	rm -f je-je.txt Chebycoef
 fi
@@ -150,7 +168,7 @@ fi
 #echo $get_s
 if ! test -z "$get_s"  && [  $get_s == "get_S" ]; then
 	sref=refSR.csr
-	scal=SR.csr
+	scal=OUT.autotest/SR.csr
 	python3 ../tools/CompareFile.py $sref $scal 8
 	echo "CompareS_pass $?" >>$1
 fi
@@ -215,14 +233,37 @@ fi
 
 if ! test -z "$has_xc"  && [  $has_xc == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-                xcref=k-0-Vxc.ref
-                xccal=OUT.autotest/k-0-Vxc
-        else
-                xcref=k-1-Vxc.ref
-                xccal=OUT.autotest/k-1-Vxc
-        fi
-        python3 ../tools/CompareFile.py $xcref $xccal 4
-    echo "CompareXC_pass $?" >>$1
+			xcref=k-0-Vxc.ref
+			xccal=OUT.autotest/k-0-Vxc
+	else
+			xcref=k-1-Vxc.ref
+			xccal=OUT.autotest/k-1-Vxc
+	fi
+	oeref=vxc_out.ref
+	oecal=OUT.autotest/vxc_out.dat
+	python3 ../tools/CompareFile.py $xcref $xccal 4
+	echo "CompareVXC_pass $?" >>$1
+	python3 ../tools/CompareFile.py $oeref $oecal 5
+    echo "CompareOrbXC_pass $?" >>$1
+fi
+
+if ! test -z "$has_eband_separate"  && [  $has_eband_separate == 1 ]; then
+	ekref=kinetic_out.ref
+	ekcal=OUT.autotest/kinetic_out.dat
+	python3 ../tools/CompareFile.py $ekref $ekcal 4
+	echo "CompareOrbKinetic_pass $?" >>$1
+	vlref=vpp_local_out.ref
+	vlcal=OUT.autotest/vpp_local_out.dat
+	python3 ../tools/CompareFile.py $vlref $vlcal 4
+	echo "CompareOrbVL_pass $?" >>$1
+	vnlref=vpp_nonlocal_out.ref
+	vnlcal=OUT.autotest/vpp_nonlocal_out.dat
+	python3 ../tools/CompareFile.py $vnlref $vnlcal 4
+	echo "CompareOrbVNL_pass $?" >>$1
+	vhref=vhartree_out.ref
+	vhcal=OUT.autotest/vhartree_out.dat
+	python3 ../tools/CompareFile.py $vhref $vhcal 4
+	echo "CompareOrbVHartree_pass $?" >>$1
 fi
 
 #echo $has_hs2
@@ -309,13 +350,13 @@ fi
 # echo "$has_lowf" ## test out_wfc_lcao > 0
 if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 	if ! test -z "$gamma_only"  && [ $gamma_only == 1 ]; then
-		wfc_cal=OUT.autotest/LOWF_GAMMA_S1.txt
-		wfc_ref=LOWF_GAMMA_S1.txt.ref	
+		wfc_cal=OUT.autotest/WFC_NAO_GAMMA1.txt
+		wfc_ref=WFC_NAO_GAMMA1.txt.ref	
 	else
 		if ! test -z "$out_app_flag"  && [ $out_app_flag == 0 ]; then
-			wfc_name=10_LOWF_K_1
+			wfc_name=WFC_NAO_K1_ION3
 		else
-			wfc_name=LOWF_K_2
+			wfc_name=WFC_NAO_K2
 		fi
 		awk 'BEGIN {flag=999}
     	{
@@ -338,29 +379,14 @@ if ! test -z "$has_lowf"  && [ $has_lowf == 1 ]; then
 fi
 
 if ! test -z "$out_dm"  && [ $out_dm == 1 ]; then
-      dmfile=`ls OUT.autotest/ | grep "^SPIN1_DM"`
+      dmfile=OUT.autotest/SPIN1_DM
+	  dmref=SPIN1_DM.ref
       if test -z "$dmfile"; then
               echo "Can't find DM files"
               exit 1
       else
-              for dm in $dmfile;
-              do
-                      if ! test -f OUT.autotest/$dm; then
-                              echo "Irregular DM file found"
-                              exit 1
-                      else
-                            total_dm=$(awk 'BEGIN {sum=0.0;startline=999}
-							{
-								if(NR==7){startline=$1+14;}
-								else if(NR>=startline) 
-								{
-									for(i=1;i<=NF;i++){sum+=sqrt($i*$i)}
-								}
-							}
-							END {printf"%.6f",sum}' OUT.autotest/$dm)
-                            echo "$dm $total_dm" >>$1
-                      fi
-              done
+			python3 ../tools/CompareFile.py $dmref $dmfile 5
+            echo "DM_different $?" >>$1
       fi
 fi
 
@@ -439,10 +465,22 @@ if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 fi
 
 if ! test -z "$deepks_out_labels" && [ $deepks_out_labels == 1 ]; then
-	sed '/n_des/d' descriptor.dat > des_tmp.txt
+	sed '/n_des/d' OUT.autotest/deepks_desc.dat > des_tmp.txt
 	total_des=`sum_file des_tmp.txt 5`
 	rm des_tmp.txt
 	echo "totaldes $total_des" >>$1
+	if ! test -z "$deepks_scf" && [ $deepks_scf == 1 ]; then
+		deepks_e_dm=`python3 get_dm_eig.py`
+	    echo "deepks_e_dm $deepks_e_dm" >>$1
+	fi
+	if ! test -z "$has_force" && [ $has_force == 1 ]; then
+	    deepks_f_label=`python3 get_grad_vx.py`
+		echo "deepks_f_label $deepks_f_label" >>$1
+	fi
+	if ! test -z "$has_stress" && [ $has_stress == 1 ]; then
+	    deepks_s_label=`python3 get_grad_vepsl.py`
+		echo "deepks_s_label $deepks_s_label" >>$1
+	fi
 fi
 
 if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
@@ -452,6 +490,26 @@ if ! test -z "$deepks_bandgap" && [ $deepks_bandgap == 1 ]; then
 	echo "oprec $oprec" >> $1
 fi
 
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
+	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	totalvdp=`python3 get_sum_numpy.py OUT.autotest/deepks_vdpre.npy `
+	echo "totalvdp $totalvdp" >> $1
+fi
+
+if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
+	totalh=`python3 get_sum_numpy.py OUT.autotest/deepks_htot.npy `
+	echo "totalh $totalh" >>$1
+	totalvdelta=`python3 get_v_delta.py`
+	echo "totalvdelta $totalvdelta" >>$1
+	total_psialpha=`python3 get_sum_numpy.py OUT.autotest/deepks_psialpha.npy `
+	echo "total_psialpha $total_psialpha" >> $1
+	total_gevdm=`python3 get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
+	echo "total_gevdm $total_gevdm" >> $1
+fi
+
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
 	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
@@ -459,6 +517,22 @@ if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1
+fi
+
+if ! test -z "$out_current" && [ $out_current ]; then
+	current1ref=refcurrent_total.dat
+	current1cal=OUT.autotest/current_total.dat
+	python3 ../tools/CompareFile.py $current1ref $current1cal 10
+	echo "CompareCurrent_pass $?" >>$1
+fi
+
+if [ $is_lr == 1 ]; then
+	lr_path=OUT.autotest/running_lr.log
+	lrns=$(get_input_key_value "lr_nstates" "INPUT")
+	lrns1=`echo "$lrns + 1" |bc`
+	grep -A$lrns1 "Excitation Energy" $lr_path | tail -$lrns | awk '{print $2}' > lr_eig.txt
+	lreig_tot=`sum_file lr_eig.txt`
+	echo "totexcitationenergyref $lreig_tot" >>$1
 fi
 
 #echo $total_band

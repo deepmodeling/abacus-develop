@@ -10,6 +10,12 @@ LIBS = -lm -lpthread
 OPTS = -std=c++14 -pedantic -m64 ${INCLUDES}
 HONG = -D__LCAO
 HONG += -D__ELPA
+
+# An FFT-based spherical Bessel transform algorithm has become
+# the default since v3.3.4. Comment out the following line to use
+# the original Simpson-based spherical Bessel transform.
+HONG += -DUSE_NEW_TWO_CENTER
+
 ifeq ($(OPENMP), ON)
     ELPA_NAME = elpa_openmp
 else
@@ -45,7 +51,8 @@ ifeq ($(DEBUG), ON)
     endif
     OPTS += -O0 -fsanitize=address -fno-omit-frame-pointer -Wall -g #It can check segmental defaults
 else
-    HONG += -Ofast -march=native -DNDEBUG
+    # FIXME -Ofast is not compatible with the new two-center integration algorithm
+    HONG += -O3 -march=native -DNDEBUG
 endif
 
 ifeq ($(INTEL), ON)
@@ -155,18 +162,25 @@ ifdef DeePMD_DIR
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_c -Wl,-rpath=${DeeP_LIB_DIR}
     else
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
-    endif
 
-    #==========================
-    # TensorFlow package
-    #==========================
-    ifndef TensorFlow_DIR
-        TensorFlow_DIR = ${DeePMD_DIR}
+        #==========================
+        # TensorFlow package
+        #==========================
+        ifndef TensorFlow_DIR
+            TensorFlow_DIR = ${DeePMD_DIR}
+        endif
+        TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
+        LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
+        TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
+        INCLUDES += -I${TensorFlow_INCLUDE_DIR}
     endif
-    TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
-    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
-    TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
-    INCLUDES += -I${TensorFlow_INCLUDE_DIR}
+endif
+
+ifdef PEXSI_DIR
+    OBJS_ABACUS += ${OBJS_HSOLVER_PEXSI}
+    INCLUDES += -I${PEXSI_DIR}/include -I${PARMETIS_DIR}/include -I${DSUPERLU_DIR}/include
+    LIBS += -L${PEXSI_DIR}/lib -lpexsi -L${DSUPERLU_DIR}/lib -lsuperlu_dist -L${PARMETIS_DIR}/lib -lparmetis -lmetis
+    HONG += -D__PEXSI
 endif
 
 include Makefile.Objects

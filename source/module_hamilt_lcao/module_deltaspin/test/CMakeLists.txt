@@ -3,7 +3,7 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET deltaspin_parse_json_test
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES parse_json_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
@@ -11,14 +11,14 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_basic_func_test
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES basic_test.cpp
     ../basic_funcs.cpp
 )
 
 AddTest(
   TARGET deltaspin_spin_constrain_test
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES spin_constrain_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
@@ -28,7 +28,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_template_helpers
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES template_helpers_test.cpp
     ../spin_constrain.cpp
     ../template_helpers.cpp
@@ -36,7 +36,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_cal_h_lambda
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES cal_h_lambda_test.cpp
     ../spin_constrain.cpp
     ../cal_h_lambda.cpp
@@ -46,7 +46,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_bcast_scdata
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES bcast_scdata_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
@@ -62,7 +62,7 @@ add_test(NAME deltaspin_bcast_scdata_para
 
 AddTest(
   TARGET deltaspin_init_sc
-  LIBS ${math_libs} base device cell_info
+  LIBS parameter ${math_libs} base device cell_info 
   SOURCES init_sc_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
@@ -74,7 +74,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_cal_mw_helper
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES cal_mw_helper_test.cpp
     ../spin_constrain.cpp
     ../cal_mw_helper.cpp
@@ -84,7 +84,7 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_lambda_loop_helper
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES lambda_loop_helper_test.cpp
     ../spin_constrain.cpp
     ../lambda_loop_helper.cpp

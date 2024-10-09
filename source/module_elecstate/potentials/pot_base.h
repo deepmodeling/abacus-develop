@@ -21,18 +21,12 @@ namespace elecstate
 class PotBase
 {
   public:
-    PotBase(){};
-    virtual ~PotBase(){};
+    PotBase(){}
+    virtual ~PotBase(){}
 
-    virtual void cal_v_eff(const Charge* chg, const UnitCell* ucell, ModuleBase::matrix& v_eff)
-    {
-        return;
-    }
+    virtual void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff){}
 
-    virtual void cal_fixed_v(double* vl_pseudo)
-    {
-        return;
-    }
+    virtual void cal_fixed_v(double* vl_pseudo){}
 
     bool fixed_mode = 0;
     bool dynamic_mode = 0;

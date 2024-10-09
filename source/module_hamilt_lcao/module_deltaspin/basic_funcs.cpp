@@ -1,6 +1,7 @@
 #include "basic_funcs.h"
 
 #include <iostream>
+#include "module_base/formatter.h"
 
 double maxval_abs_2d(const std::vector<ModuleBase::Vector3<double>>& array)
 {
@@ -140,13 +141,7 @@ void print_2d(std::string info, const std::vector<ModuleBase::Vector3<double>> &
     for (const auto &row : array)
     {
         iat += 1;
-        if (nspin == 2)
-        {
-            ofs << "ATOM " << std::left << std::setw(4) << iat << std::setprecision(10) << row.z << std::endl;
-        }
-        else if (nspin == 4)
-        {
-            ofs << "ATOM " << std::left << std::setw(4) << iat << std::setprecision(10) << row.x << " " << row.y << " " << row.z << std::endl;
-        }
+        if (nspin == 2) ofs << FmtCore::format("ATOM %6d %20.10f\n", iat, row.z);
+        else if (nspin == 4) ofs << FmtCore::format("ATOM %6d %20.10f %20.10f %20.10f\n", iat, row.x, row.y, row.z);
     }
 }

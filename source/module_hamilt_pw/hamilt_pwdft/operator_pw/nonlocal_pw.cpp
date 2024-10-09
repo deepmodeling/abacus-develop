@@ -1,10 +1,10 @@
 #include "nonlocal_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -18,7 +18,7 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
                                                const ModulePW::PW_Basis_K* wfc_basis)
 {
     this->classname = "Nonlocal";
-    this->cal_type = pw_nonlocal;
+    this->cal_type = calculation_type::pw_nonlocal;
     this->wfcpw = wfc_basis;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
@@ -217,7 +217,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const int ngk_ik)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
-    if(!GlobalV::use_paw)
+    if(!PARAM.inp.use_paw)
     {
         this->npw = ngk_ik;
         this->max_npw = nbasis / npol;
@@ -308,7 +308,7 @@ template<typename T_in, typename Device_in>
 hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in, Device_in>> *nonlocal)
 {
     this->classname = "Nonlocal";
-    this->cal_type = pw_nonlocal;
+    this->cal_type = calculation_type::pw_nonlocal;
     this->ik = nonlocal->get_ik();
     this->isk = nonlocal->get_isk();
     this->ppcell = nonlocal->get_ppcell();
@@ -322,14 +322,18 @@ hamilt::Nonlocal<OperatorPW<T, Device>>::Nonlocal(const Nonlocal<OperatorPW<T_in
     }
 }
 
-template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *nonlocal);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Nonlocal<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *nonlocal);
-// template Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Nonlocal(const Nonlocal<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *nonlocal);
+template class Nonlocal<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *nonlocal); template
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *nonlocal); template
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Nonlocal(const
+// Nonlocal<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *nonlocal);
 #endif
 } // namespace hamilt

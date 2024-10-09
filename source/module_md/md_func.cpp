@@ -8,9 +8,11 @@ namespace MD_func
 
 double gaussrand()
 {
-    static double V1, V2, S;
+    static double v1=0.0;
+    static double v2=0.0;
+    static double S=0.0;
     static int phase = 0;
-    double X;
+    double xx=0.0;
 
     if (phase == 0)
     {
@@ -19,21 +21,21 @@ double gaussrand()
             double U1 = static_cast<double>(std::rand()) / RAND_MAX;
             double U2 = static_cast<double>(std::rand()) / RAND_MAX;
 
-            V1 = 2.0 * U1 - 1.0;
-            V2 = 2.0 * U2 - 1.0;
-            S = V1 * V1 + V2 * V2;
+            v1 = 2.0 * U1 - 1.0;
+            v2 = 2.0 * U2 - 1.0;
+            S = v1 * v1 + v2 * v2;
         } while (S >= 1 || S == 0);
 
-        X = V1 * sqrt(-2.0 * log(S) / S);
+        xx = v1 * sqrt(-2.0 * log(S) / S);
     }
     else
     {
-        X = V2 * sqrt(-2.0 * log(S) / S);
+        xx = v2 * sqrt(-2.0 * log(S) / S);
     }
 
     phase = 1 - phase;
 
-    return X;
+    return xx;
 }
 
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass)
@@ -69,6 +71,8 @@ void compute_stress(const UnitCell& unit_in,
             }
         }
     }
+
+    return;
 }
 
 void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
@@ -80,15 +84,45 @@ void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
         {
             vel[iat] = unit_in.atoms[it].vel[ia];
             if (unit_in.atoms[it].mbl[ia].x == 0)
+            {
                 vel[iat].x = 0;
+            }
             if (unit_in.atoms[it].mbl[ia].y == 0)
+            {
                 vel[iat].y = 0;
+            }
             if (unit_in.atoms[it].mbl[ia].z == 0)
+            {
                 vel[iat].z = 0;
+            }
             ++iat;
         }
     }
     assert(iat == unit_in.nat);
+
+    return;
+}
+
+void rescale_vel(const int& natom,
+                 const double& temperature,
+                 const double* allmass,
+                 const int& frozen_freedom,
+                 ModuleBase::Vector3<double>* vel)
+{
+    double factor = 0.0;
+    if (3 * natom == frozen_freedom || temperature == 0)
+    {
+        factor = 0;
+    }
+    else
+    {
+        factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
+    }
+
+    for (int i = 0; i < natom; i++)
+    {
+        vel[i] = vel[i] * sqrt(factor);
+    }
 }
 
 void rand_vel(const int& natom,
@@ -137,25 +171,14 @@ void rand_vel(const int& natom,
             }
         }
 
-        double factor;
-        if (3 * natom == frozen_freedom || temperature == 0)
-        {
-            factor = 0;
-        }
-        else
-        {
-            factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
-        }
-
-        for (int i = 0; i < natom; i++)
-        {
-            vel[i] = vel[i] * sqrt(factor);
-        }
+        // rescale the velocity to the target temperature
+        rescale_vel(natom, temperature, allmass, frozen_freedom, vel);
     }
 
 #ifdef __MPI
     MPI_Bcast(vel, natom * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
     return;
 }
 
@@ -172,12 +195,18 @@ void init_vel(const UnitCell& unit_in,
     ModuleBase::Vector3<int> frozen;
     get_mass_mbl(unit_in, allmass, frozen, ionmbl);
     frozen_freedom = frozen.x + frozen.y + frozen.z;
-    if (frozen.x == 0)
-        ++frozen_freedom;
-    if (frozen.y == 0)
-        ++frozen_freedom;
-    if (frozen.z == 0)
-        ++frozen_freedom;
+	if (frozen.x == 0)
+	{
+		++frozen_freedom;
+	}
+	if (frozen.y == 0)
+	{
+		++frozen_freedom;
+	}
+	if (frozen.z == 0)
+	{
+		++frozen_freedom;
+	}
 
     if (unit_in.init_vel)
     {
@@ -196,16 +225,14 @@ void init_vel(const UnitCell& unit_in,
                       << std::endl;
             temperature = t_current;
         }
-        else if (std::fabs(temperature - t_current) > 1e-8)
+        else
         {
             std::cout << " INITIAL TEMPERATURE IN INPUT  = " << temperature * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
             std::cout << " READING TEMPERATURE FROM STRU = " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
-            std::cout << " INCONSISTENCE, PLEASE CHECK" << std::endl;
-            std::cout << " ------------------------------------- DONE -----------------------------------------"
-                      << std::endl;
-            exit(0);
+            std::cout << " RESCALE VEL TO INITIAL TEMPERATURE" << std::endl;
+            rescale_vel(unit_in.nat, temperature, allmass, frozen_freedom, vel);
         }
     }
     else
@@ -228,16 +255,16 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->Run(istep, unit_in);
+    p_esolver->runner(istep, unit_in);
 
-    potential = p_esolver->cal_Energy();
+    potential = p_esolver->cal_energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_Force(force_temp);
+    p_esolver->cal_force(force_temp);
 
     if (cal_stress)
     {
-        p_esolver->cal_Stress(virial);
+        p_esolver->cal_stress(virial);
     }
 
     /// convert Rydberg to Hartree
@@ -254,17 +281,24 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     }
 
     ModuleBase::timer::tick("MD_func", "force_virial");
+
+    return;
 }
+
 
 void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const ModuleBase::matrix& stress)
 {
-    double stress_scalar = 0.0, virial_scalar = 0.0;
+    double stress_scalar = 0.0;
+    double virial_scalar = 0.0;
+
     for (int i = 0; i < 3; i++)
     {
         stress_scalar += stress(i, i) / 3;
         virial_scalar += virial(i, i) / 3;
     }
+
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+
     ofs << "Virtual Pressure is " << stress_scalar * unit_transform << " kbar " << std::endl;
     ofs << "Virial Term is " << virial_scalar * unit_transform << " kbar " << std::endl;
     ofs << "Kinetic Term is " << (stress_scalar - virial_scalar) * unit_transform << " kbar " << std::endl;
@@ -278,18 +312,22 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
             << std::setw(15) << stress(i, 2) * unit_transform << std::endl;
     }
     ofs << std::setiosflags(std::ios::left);
+
+    return;
 }
 
 void dump_info(const int& step,
                const std::string& global_out_dir,
                const UnitCell& unit_in,
-               const MD_para& mdp,
+               const Parameter& param_in,
                const ModuleBase::matrix& virial,
                const ModuleBase::Vector3<double>* force,
                const ModuleBase::Vector3<double>* vel)
 {
-    if (mdp.my_rank)
+    if (param_in.globalv.myrank)
+    {
         return;
+    }
 
     std::stringstream file;
     file << global_out_dir << "MD_dump";
@@ -318,7 +356,7 @@ void dump_info(const int& step,
     ofs << "  " << unit_in.latvec.e21 << "  " << unit_in.latvec.e22 << "  " << unit_in.latvec.e23 << std::endl;
     ofs << "  " << unit_in.latvec.e31 << "  " << unit_in.latvec.e32 << "  " << unit_in.latvec.e33 << std::endl;
 
-    if (mdp.cal_stress && mdp.dump_virial)
+    if (param_in.inp.cal_stress && param_in.mdp.dump_virial)
     {
         ofs << "VIRIAL (kbar)" << std::endl;
         for (int i = 0; i < 3; ++i)
@@ -329,11 +367,11 @@ void dump_info(const int& step,
     }
 
     ofs << "INDEX    LABEL    POSITION (Angstrom)";
-    if (mdp.dump_force)
+    if (param_in.mdp.dump_force)
     {
         ofs << "    FORCE (eV/Angstrom)";
     }
-    if (mdp.dump_vel)
+    if (param_in.mdp.dump_vel)
     {
         ofs << "    VELOCITY (Angstrom/fs)";
     }
@@ -347,13 +385,13 @@ void dump_info(const int& step,
             ofs << "  " << index << "  " << unit_in.atom_label[it] << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
                 << "  " << unit_in.atoms[it].tau[ia].y * unit_pos << "  " << unit_in.atoms[it].tau[ia].z * unit_pos;
 
-            if (mdp.dump_force)
+            if (param_in.mdp.dump_force)
             {
                 ofs << "  " << force[index].x * unit_force << "  " << force[index].y * unit_force << "  "
                     << force[index].z * unit_force;
             }
 
-            if (mdp.dump_vel)
+            if (param_in.mdp.dump_vel)
             {
                 ofs << "  " << vel[index].x * unit_vel << "  " << vel[index].y * unit_vel << "  "
                     << vel[index].z * unit_vel;
@@ -366,6 +404,8 @@ void dump_info(const int& step,
     ofs << std::endl;
     ofs << std::endl;
     ofs.close();
+
+    return;
 }
 
 void get_mass_mbl(const UnitCell& unit_in,
@@ -381,20 +421,26 @@ void get_mass_mbl(const UnitCell& unit_in,
         {
             allmass[ion] = unit_in.atoms[it].mass / ModuleBase::AU_to_MASS;
             ionmbl[ion] = unit_in.atoms[it].mbl[i];
-            if (ionmbl[ion].x == 0)
+            if (ionmbl[ion].x == 0) {
                 ++frozen.x;
-            if (ionmbl[ion].y == 0)
+}
+            if (ionmbl[ion].y == 0) {
                 ++frozen.y;
-            if (ionmbl[ion].z == 0)
+}
+            if (ionmbl[ion].z == 0) {
                 ++frozen.z;
+}
 
             ion++;
         }
     }
+
+    return;
 }
 
 double target_temp(const int& istep, const int& nstep, const double& tfirst, const double& tlast)
 {
+    assert(nstep>0);
     double delta = static_cast<double>(istep) / nstep;
     return tfirst + delta * (tlast - tfirst);
 }
@@ -407,7 +453,7 @@ double current_temp(double& kinetic,
 {
     if (3 * natom == frozen_freedom)
     {
-        return 0;
+        return 0.0;
     }
     else
     {
@@ -433,7 +479,10 @@ void temp_vector(const int& natom,
             }
         }
     }
+
+    return;
 }
+
 
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
 {
@@ -458,7 +507,7 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)
@@ -470,6 +519,8 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
     MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
+
+    return;
 }
 
 } // namespace MD_func

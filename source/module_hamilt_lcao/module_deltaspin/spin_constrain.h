@@ -11,12 +11,12 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_hsolver/hsolver.h"
+#include "module_hsolver/hsolver_lcao.h"
 
 struct ScAtomData;
 
-template<typename FPTYPE, typename Device = psi::DEVICE_CPU>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class SpinConstrain
 {
 public:
@@ -35,20 +35,18 @@ public:
                int NPOL,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
-               K_Vectors kv_in,
+               K_Vectors& kv_in,
                std::string KS_SOLVER_in,
-               LCAO_Matrix* LM_in,
-               hsolver::HSolver<FPTYPE, Device>* phsol_in,
                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                psi::Psi<FPTYPE>* psi_in,
                elecstate::ElecState* pelec_in);
 
   /// calculate h_lambda operator for spin-constrained DFT
-  void cal_h_lambda(std::complex<double>* h_lambda, const std::vector<std::complex<double>>& Sloc2, bool column_major, int isk);
+  void cal_h_lambda(std::complex<double>* h_lambda, const std::complex<double>* Sloc2, bool column_major, int isk);
 
-  void cal_MW(const int& step, LCAO_Matrix* LM, bool print = false);
+  void cal_MW(const int& step, bool print = false);
 
-  ModuleBase::matrix cal_MW_k(LCAO_Matrix* LM, const std::vector<std::vector<std::complex<double>>>& dm);
+  ModuleBase::matrix cal_MW_k(const std::vector<std::vector<std::complex<double>>>& dm);
 
   void cal_mw_from_lambda(int i_step);
 
@@ -61,7 +59,7 @@ public:
   void run_lambda_loop(int outer_step);
 
   /// lambda loop helper functions
-  bool check_rms_stop(int outer_step, int i_step, double rms_error);
+  bool check_rms_stop(int outer_step, int i_step, double rms_error, double duration, double total_duration);
 
   /// apply restriction
   void check_restriction(const std::vector<ModuleBase::Vector3<double>>& search, double& alpha_trial);
@@ -87,6 +85,9 @@ public:
   /// print mi
   void print_Mi(bool print = false);
 
+  /// print magnetic force, defined as \frac{\delta{L}}/{\delta{Mi}} = -lambda[iat])
+  void print_Mag_Force();
+
   /// collect_mw from matrix multiplication result
   void collect_MW(ModuleBase::matrix& MecMulP, const ModuleBase::ComplexMatrix& mud, int nw, int isk);
 
@@ -95,11 +96,9 @@ public:
      * important outter class pointers used in spin-constrained DFT
     */
     Parallel_Orbitals *ParaV = nullptr;
-    hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
     psi::Psi<FPTYPE>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
-    LCAO_Matrix* LM = nullptr;
     std::string KS_SOLVER;
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;
@@ -201,13 +200,11 @@ public:
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
-    void set_solver_parameters(K_Vectors kv_in,
-                               hsolver::HSolver<FPTYPE, Device>* phsol_in,
+    void set_solver_parameters(K_Vectors& kv_in,
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,
                                elecstate::ElecState* pelec_in,
-                               std::string KS_SOLVER_in,
-                               LCAO_Matrix* LM_in);
+                               std::string KS_SOLVER_in);
     /// bcast sc data read from json file
     void bcast_ScData(std::string sc_file, int nat, int ntype);
 

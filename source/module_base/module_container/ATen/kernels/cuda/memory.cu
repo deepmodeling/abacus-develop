@@ -51,17 +51,18 @@ void resize_memory<T, Device>::operator()(
     if (arr != nullptr) {
         delete_memory<T, container::DEVICE_GPU>()(arr);
     }
-    cudaMalloc((void **)&arr, sizeof(T) * size);
+    cudaErrcheck(cudaMalloc((void **)&arr, sizeof(T) * size));
 }
 
 template <typename T, typename Device>
 void set_memory<T, Device>::operator()(
     T* arr,
-    const T& var, 
-    const size_t& size) 
+    const T& var,
+    const size_t& size)
 {
     const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
     do_set_memory<<<block, THREADS_PER_BLOCK>>>(arr, var, size);
+    cudaCheckOnDebug();
 }
 
 template <typename T>
@@ -71,7 +72,7 @@ struct synchronize_memory<T, DEVICE_CPU, DEVICE_GPU> {
         const T *arr_in,
         const size_t& size)
     {
-        cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToHost);
+        cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyDeviceToHost));
     }
 };
 
@@ -82,7 +83,7 @@ struct synchronize_memory<T, DEVICE_GPU, DEVICE_CPU> {
         const T *arr_in,
         const size_t& size)
     {
-        cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice);
+        cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice));
     }
 };
 
@@ -93,7 +94,7 @@ struct synchronize_memory<T, DEVICE_GPU, DEVICE_GPU> {
         const T *arr_in,
         const size_t& size)
     {
-        cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice);
+        cudaErrcheck(cudaMemcpy(arr_out, arr_in, sizeof(T) * size, cudaMemcpyHostToDevice));
     }
 };
 
@@ -107,6 +108,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_GPU> {
     {
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr_in, size);
+        cudaCheckOnDebug();
     }
 };
 
@@ -119,11 +121,12 @@ struct cast_memory<T_out, T_in, container::DEVICE_GPU, container::DEVICE_CPU> {
         const size_t& size)
     {
         T_in * arr = nullptr;
-        cudaMalloc((void **)&arr, sizeof(T_in) * size);
-        cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice);
+        cudaErrcheck(cudaMalloc((void **)&arr, sizeof(T_in) * size));
+        cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyHostToDevice));
         const int block = static_cast<int>((size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK);
         do_cast_memory<<<block, THREADS_PER_BLOCK>>>(arr_out, arr, size);
-        cudaFree(arr);
+        cudaCheckOnDebug();
+        cudaErrcheck(cudaFree(arr));
     }
 };
 
@@ -136,7 +139,7 @@ struct cast_memory<T_out, T_in, container::DEVICE_CPU, container::DEVICE_GPU> {
         const size_t& size)
     {
         auto * arr = (T_in*) malloc(sizeof(T_in) * size);
-        cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyDeviceToHost);
+        cudaErrcheck(cudaMemcpy(arr, arr_in, sizeof(T_in) * size, cudaMemcpyDeviceToHost));
         for (int ii = 0; ii < size; ii++) {
             arr_out[ii] = static_cast<T_out>(arr[ii]);
         }
@@ -148,7 +151,7 @@ template <typename T, typename Device>
 void delete_memory<T, Device>::operator() (
     T* arr)
 {
-    cudaFree(arr);
+    cudaErrcheck(cudaFree(arr));
 }
 
 template struct resize_memory<int, container::DEVICE_GPU>;

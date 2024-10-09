@@ -26,6 +26,7 @@ void EXPECT_COMPLEX_DOUBLE_EQ(const std::complex<double>& a,const std::complex<d
 
 #define private public
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
+#undef private
 class FcoefTest : public testing::Test
 {
 protected:
@@ -144,4 +145,3 @@ TEST_F(SocTest, SetFcoef)
                   soc.set_fcoef(0, 0, 0, 0, 0, 0, 0.5, 0.5, 0, 0, 0);
                   EXPECT_COMPLEX_DOUBLE_EQ(soc.fcoef(0, 0, 0, 0, 0), std::complex<double>(1.0, 0.0));
 }
-#undef private

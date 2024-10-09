@@ -362,16 +362,20 @@ TEST_F(TestPsi, band_first)
 #if __UT_USE_CUDA || __UT_USE_ROCM
 TEST_F(TestPsi, Range)
 {
-    psi::Psi<std::complex<double>, psi::DEVICE_GPU>* psi_object3_gpu1 = new psi::Psi<std::complex<double>, psi::DEVICE_GPU>(*psi_object31);
+    psi::Psi<std::complex<double>, base_device::DEVICE_GPU>* psi_object3_gpu1
+        = new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(*psi_object31);
     delete psi_object3_gpu1;
 
-    psi::Psi<double, psi::DEVICE_GPU>* psi_object3_gpu2 = new psi::Psi<double, psi::DEVICE_GPU>(*psi_object32);
+    psi::Psi<double, base_device::DEVICE_GPU>* psi_object3_gpu2
+        = new psi::Psi<double, base_device::DEVICE_GPU>(*psi_object32);
     delete psi_object3_gpu2;
 
-    psi::Psi<std::complex<float>, psi::DEVICE_GPU>* psi_object3_gpu3 = new psi::Psi<std::complex<float>, psi::DEVICE_GPU>(*psi_object33);
+    psi::Psi<std::complex<float>, base_device::DEVICE_GPU>* psi_object3_gpu3
+        = new psi::Psi<std::complex<float>, base_device::DEVICE_GPU>(*psi_object33);
     delete psi_object3_gpu3;
 
-    psi::Psi<float, psi::DEVICE_GPU>* psi_object3_gpu4 = new psi::Psi<float, psi::DEVICE_GPU>(*psi_object34);
+    psi::Psi<float, base_device::DEVICE_GPU>* psi_object3_gpu4
+        = new psi::Psi<float, base_device::DEVICE_GPU>(*psi_object34);
     delete psi_object3_gpu4;
 }
 #endif // __UT_USE_CUDA || __UT_USE_ROCM

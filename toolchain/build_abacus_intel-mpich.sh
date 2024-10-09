@@ -12,8 +12,8 @@
 # module load mkl compiler
 # source path/to/vars.sh
 
-TOOL=$(pwd)
 ABACUS_DIR=..
+TOOL=$(pwd)
 INSTALL_DIR=$TOOL/install
 source $INSTALL_DIR/setup
 cd $ABACUS_DIR
@@ -23,10 +23,11 @@ BUILD_DIR=build_abacus_intel-mpich
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2023.05.001/cpu
+ELPA=$INSTALL_DIR/elpa-2024.03.001/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
-# LIBTORCH=$INSTALL_DIR/libtorch-2.0.1/share/cmake/Torch
+RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
+# LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # LIBRI=$INSTALL_DIR/LibRI-0.1.1
 # LIBCOMM=$INSTALL_DIR/LibComm-0.1.0
@@ -43,14 +44,17 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DENABLE_LIBXC=ON \
         -DUSE_OPENMP=ON \
         -DUSE_ELPA=ON \
-        # -DENABLE_DEEPKS=1 \
-        # -DTorch_DIR=$LIBTORCH \
-        # -Dlibnpy_INCLUDE_DIR=$LIBNPY \
-        # -DENABLE_LIBRI=ON \
-        # -DLIBRI_DIR=$LIBRI \
-        # -DLIBCOMM_DIR=$LIBCOMM \
-	    # -DDeePMD_DIR=$DEEPMD \
-	    # -DTensorFlow_DIR=$DEEPMD \
+        -DENABLE_RAPIDJSON=ON \
+        -DRapdidJSON_DIR=$RAPIDJSON \
+#       -DENABLE_DEEPKS=1 \
+#       -DTorch_DIR=$LIBTORCH \
+#       -Dlibnpy_INCLUDE_DIR=$LIBNPY \
+#       -DENABLE_LIBRI=ON \
+#       -DLIBRI_DIR=$LIBRI \
+#       -DLIBCOMM_DIR=$LIBCOMM \
+#       -DDeePMD_DIR=$DEEPMD \
+#       -DTensorFlow_DIR=$DEEPMD \
+
 
 # if one want's to include deepmd, your gcc version should be >= 11.3.0
 
@@ -59,6 +63,16 @@ cmake --install $BUILD_DIR 2>/dev/null
 
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
+#!/bin/bash
 source $INSTALL_DIR/setup
-export PATH="${PREFIX}/bin":${PATH}
+export PATH="${PREFIX}/bin":\${PATH}
+EOF
+
+# generate information
+cat << EOF
+========================== usage =========================
+Done!
+To use the installed ABACUS version
+You need to source $(pwd)/abacus_env.sh first !
+"""
 EOF

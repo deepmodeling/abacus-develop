@@ -1,5 +1,6 @@
 #include "to_wannier90_lcao_in_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
@@ -42,20 +43,17 @@ void toWannier90_LCAO_IN_PW::calculate(
 
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
-    #ifdef __MPI
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
-        sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints));
+    this->psi_init_ = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
+#ifdef __MPI
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
     #else
-    this->psi_init_ = new psi_initializer_nao<std::complex<double>, psi::DEVICE_CPU>(
-        sf_ptr, wfcpw_ptr, &(GlobalC::ucell));
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), 1, nullptr);
     #endif
-    this->psi_init_->set_orbital_files(GlobalC::ucell.orbital_fn);
-    this->psi_init_->initialize_only_once();
-    this->psi_init_->cal_ovlp_flzjlq();
+    this->psi_init_->tabulate();
     this->psi_init_->allocate(true);
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -116,17 +114,16 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
 {
     // init
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>> *unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, num_bands, npwx*GlobalV::NPOL, kv.ngk.data());
+    psi::Psi<std::complex<double>> *unk_inLcao = new psi::Psi<std::complex<double>>(num_kpts, num_bands, npwx*PARAM.globalv.npol, kv.ngk.data());
     unk_inLcao->zero_out();
 
     // Orbital projection to plane wave
-    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-    //Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, table_local);
+    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {
         int npw = kv.ngk[ik];
-        ModuleBase::ComplexMatrix orbital_in_G(GlobalV::NLOCAL, npwx*GlobalV::NPOL);
+        ModuleBase::ComplexMatrix orbital_in_G(GlobalV::NLOCAL, npwx*PARAM.globalv.npol);
         // Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
         //produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
         nao_G_expansion(ik, wfcpw, orbital_in_G);
@@ -134,7 +131,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
         ModuleBase::ComplexMatrix lcao_wfc_global;
         get_lcao_wfc_global_ik(ik, psi_in, lcao_wfc_global);
 
-        if (GlobalV::NSPIN != 4)
+        if (PARAM.inp.nspin != 4)
         {
             for (int ib = 0; ib < num_bands; ib++)
             {
@@ -166,7 +163,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
         {
             for (int ib = 0; ib < num_bands; ib++)
             {
-                // for (int ig = 0; ig < npwx*GlobalV::NPOL; ig++)
+                // for (int ig = 0; ig < npwx*PARAM.globalv.npol; ig++)
                 // {
                 //     for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
                 //     {
@@ -218,14 +215,17 @@ void toWannier90_LCAO_IN_PW::nao_G_expansion(
 )
 {
     int npwx = wfcpw->npwk_max;
-    psi::Psi<std::complex<double>>* psig = this->psi_init_->cal_psig(ik);
+    this->psi_init_->proj_ao_onkG(ik);
+    std::weak_ptr<psi::Psi<std::complex<double>>> psig = this->psi_init_->share_psig();
+    if(psig.expired()) { ModuleBase::WARNING_QUIT("toWannier90_LCAO_IN_PW::nao_G_expansion", "psig is expired");
+}
     int nbands = GlobalV::NLOCAL;
-    int nbasis = npwx*GlobalV::NPOL;
+    int nbasis = npwx*PARAM.globalv.npol;
     for (int ib = 0; ib < nbands; ib++)
     {
         for (int ig = 0; ig < nbasis; ig++)
         {
-            psi(ib, ig) = psig[0](ik, ib, ig);
+            psi(ib, ig) = psig.lock().get()[0](ik, ib, ig);
         }
     }
 }
@@ -243,7 +243,8 @@ void toWannier90_LCAO_IN_PW::get_lcao_wfc_global_ik(
     int global_row_index = 0;
     for (int ib = 0; ib < GlobalV::NBANDS; ib++)
     {
-        if (exclude_bands.count(ib)) continue;
+        if (exclude_bands.count(ib)) { continue;
+}
         count_b++;
 
         int ic = this->ParaV->global2local_col(ib);

@@ -2,18 +2,21 @@
 
 #include "module_base/global_file.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // use chr.
+#include "module_io/cif_io.h"
+#include "module_io/json_output/output_info.h"
+#include "module_io/output_log.h"
 #include "module_io/print_info.h"
+#include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
-
-template<typename FPTYPE, typename Device>
-void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolver)
+#include "module_parameter/parameter.h"
+void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
 
-    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
-        if (!GlobalV::relax_new)
+        if (!PARAM.inp.relax_new)
         {
             rl_old.init_relax(GlobalC::ucell.nat);
         }
@@ -28,24 +31,30 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
     int stress_step = 1;
     bool stop = false;
 
-    while (istep <= GlobalV::RELAX_NMAX && !stop)
+    while (istep <= PARAM.inp.relax_nmax && !stop)
     {
-        time_t estart = time(NULL);
+        time_t estart = time(nullptr);
 
-        if (GlobalV::OUT_LEVEL == "ie"
-            && (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax" || GlobalV::CALCULATION == "scf"
-                || GlobalV::CALCULATION == "nscf"))
+        if (PARAM.inp.out_level == "ie"
+            && (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" || PARAM.inp.calculation == "scf"
+                || PARAM.inp.calculation == "nscf")
+            && (PARAM.inp.esolver_type != "lr"))
         {
             Print_Info::print_screen(stress_step, force_step, istep);
         }
 
+#ifdef __RAPIDJSON
+        Json::init_output_array_obj();
+#endif //__RAPIDJSON
+
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->Run(istep - 1, GlobalC::ucell);
+        p_esolver->runner(istep - 1, GlobalC::ucell);
 
-        time_t eend = time(NULL);
-        time_t fstart = time(NULL);
-
-        if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+        time_t eend = time(nullptr);
+        time_t fstart = time(nullptr);
+        ModuleBase::matrix force;
+        ModuleBase::matrix stress;
+        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
         {
             // I'm considering putting force and stress
             // as part of ucell and use ucell to pass information
@@ -53,24 +62,22 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
             // but I'll use force and stress explicitly here for now
 
             // calculate the total energy
-            this->etot = p_esolver->cal_Energy();
+            this->etot = p_esolver->cal_energy();
 
             // calculate and gather all parts of total ionic forces
-            ModuleBase::matrix force;
-            if (GlobalV::CAL_FORCE)
+            if (PARAM.inp.cal_force)
             {
-                p_esolver->cal_Force(force);
+                p_esolver->cal_force(force);
             }
             // calculate and gather all parts of stress
-            ModuleBase::matrix stress;
-            if (GlobalV::CAL_STRESS)
+            if (PARAM.inp.cal_stress)
             {
-                p_esolver->cal_Stress(stress);
+                p_esolver->cal_stress(stress);
             }
 
-            if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+            if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
             {
-                if (GlobalV::relax_new)
+                if (PARAM.inp.relax_new)
                 {
                     stop = rl.relax_step(force, stress, this->etot);
                 }
@@ -85,55 +92,73 @@ void Relax_Driver<FPTYPE, Device>::relax_driver(ModuleESolver::ESolver *p_esolve
                                              stress_step); // pengfei Li 2018-05-14
                 }
                 // print structure
+                // changelog 20240509
+                // because I move out the dependence on GlobalV from UnitCell::print_stru_file
+                // so its parameter is calculated here
+                bool need_orb = PARAM.inp.basis_type == "pw";
+                need_orb = need_orb && PARAM.inp.psi_initializer;
+                need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3) == "nao";
+                need_orb = need_orb || PARAM.inp.basis_type == "lcao";
+                need_orb = need_orb || PARAM.inp.basis_type == "lcao_in_pw";
                 std::stringstream ss, ss1;
-                ss << GlobalV::global_out_dir << "STRU_ION_D";
-                GlobalC::ucell.print_stru_file(ss.str(), 2, 0);
+                ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
+                GlobalC::ucell.print_stru_file(ss.str(),
+                                               PARAM.inp.nspin,
+                                               true,
+                                               PARAM.inp.calculation == "md",
+                                               PARAM.inp.out_mul,
+                                               need_orb,
+                                               PARAM.globalv.deepks_setorb,
+                                               GlobalV::MY_RANK);
 
                 if (Ions_Move_Basic::out_stru)
                 {
-                    ss1 << GlobalV::global_out_dir << "STRU_ION";
+                    ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
                     ss1 << istep << "_D";
-                    GlobalC::ucell.print_stru_file(ss1.str(), 2, 0);
-
-                    GlobalC::ucell.print_cell_cif("STRU_NOW.cif");
+                    GlobalC::ucell.print_stru_file(ss1.str(),
+                                                   PARAM.inp.nspin,
+                                                   true,
+                                                   PARAM.inp.calculation == "md",
+                                                   PARAM.inp.out_mul,
+                                                   need_orb,
+                                                   PARAM.globalv.deepks_setorb,
+                                                   GlobalV::MY_RANK);
+                    ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
+                                               GlobalC::ucell,
+                                               "# Generated by ABACUS ModuleIO::CifParser",
+                                               "data_?");
                 }
 
-                ModuleESolver::ESolver_KS<FPTYPE, Device>* p_esolver_ks = dynamic_cast<ModuleESolver::ESolver_KS<FPTYPE, Device>*>(p_esolver);
-                if (p_esolver_ks && stop && p_esolver_ks->maxniter == p_esolver_ks->niter && !(p_esolver_ks->conv_elec))
-                {
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    std::cout << " Relaxation is converged, but the SCF is unconverged! The results are unreliable. " << std::endl;
-                    std::cout << " It is suggested to increase the maximum SCF step and/or perform the relaxation again." << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running << "\n Relaxation is converged, but the SCF is unconverged! The results are unreliable.. " << std::endl;
-                    GlobalV::ofs_running << "\n It is suggested to increase the maximum SCF step and/or perform the relaxation again. " << std::endl;
-                    GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                    GlobalV::ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-                }
+                ModuleIO::output_after_relax(stop, p_esolver->get_conv_elec(), GlobalV::ofs_running);
             }
+
+#ifdef __RAPIDJSON
+            // add the energy to outout
+            Json::add_output_energy(p_esolver->cal_energy() * ModuleBase::Ry_to_eV);
+#endif
         }
-        time_t fend = time(NULL);
+#ifdef __RAPIDJSON
+        // add Json of cell coo stress force
+        double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
+        double fac = ModuleBase::Ry_to_eV / 0.529177;
+        Json::add_output_cell_coo_stress_force(&GlobalC::ucell, force, fac, stress, unit_transform);
+#endif //__RAPIDJSON
+
+        if (stop == false)
+        {
+            stop = ModuleIO::read_exit_file(GlobalV::MY_RANK, "EXIT", GlobalV::ofs_running);
+        }
+
+        time_t fend = time(nullptr);
 
         ++istep;
     }
 
-    if (GlobalV::OUT_LEVEL == "i")
+    if (PARAM.inp.out_level == "i")
     {
         std::cout << " ION DYNAMICS FINISHED :)" << std::endl;
-    }
-
-    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
-    {
-        ModuleBase::Global_File::delete_tmp_files();
     }
 
     ModuleBase::timer::tick("Ions", "opt_ions");
     return;
 }
-
-template class Relax_Driver<float, psi::DEVICE_CPU>;
-template class Relax_Driver<double, psi::DEVICE_CPU>;

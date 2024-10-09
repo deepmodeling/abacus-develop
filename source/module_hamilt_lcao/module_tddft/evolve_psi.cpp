@@ -1,17 +1,17 @@
 #include "evolve_psi.h"
 
-#include <complex>
-
 #include "bandenergy.h"
 #include "middle_hamilt.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "norm_psi.h"
 #include "propagator.h"
 #include "upsi.h"
+
+#include <complex>
 
 namespace module_tddft
 {
@@ -28,7 +28,7 @@ void evolve_psi(const int nband,
                 int propagator)
 {
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(NULL);
+    time_t time_start = time(nullptr);
     GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
@@ -67,7 +67,7 @@ void evolve_psi(const int nband,
     /// @brief compute U_operator
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
-    Propagator prop(propagator, pv);
+    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -98,7 +98,7 @@ void evolve_psi(const int nband,
 
 #endif
 
-    time_t time_end = time(NULL);
+    time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
     return;

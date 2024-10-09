@@ -1,12 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_esolver/esolver_lj.h"
-#include "setcell.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define private public
 #define protected public
+#include "module_esolver/esolver_lj.h"
 #include "module_md/msst.h"
-
+#include "setcell.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -39,22 +40,25 @@ class MSST_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(param_in.input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(param_in.inp, ucell);
 
-        mdrun = new MSST(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun = new MSST(param_in, ucell);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
     {
         delete mdrun;
+        delete p_esolver;
     }
 };
 
@@ -178,7 +182,7 @@ TEST_F(MSST_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::global_out_dir);
+    mdrun->write_restart(PARAM.sys.global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -201,7 +205,7 @@ TEST_F(MSST_test, write_restart)
 
 TEST_F(MSST_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     MSST* msst = dynamic_cast<MSST*>(mdrun);

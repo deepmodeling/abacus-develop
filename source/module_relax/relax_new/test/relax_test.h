@@ -29,10 +29,16 @@ void UnitCell::update_pos_taud(double* posd_in)
     assert(iat == this->nat);
 }
 
-void UnitCell::print_stru_file(const std::string &fn, const int &type, const int &level)const {};
-void UnitCell::print_tau(void)const{};
+void UnitCell::print_stru_file(const std::string& fn, 
+                               const int& nspin,
+                               const bool& direct,
+                               const bool& vel,
+                               const bool& magmom,
+                               const bool& orb,
+                               const bool& dpks_desc,
+                               const int& iproc) const {};
+void UnitCell::print_tau()const{};
 void UnitCell::setup_cell_after_vc(std::ofstream &log){};
-void UnitCell::print_cell_cif(const std::string& fn) const{};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
@@ -49,5 +55,3 @@ void ModuleSymmetry::Symmetry::symmetrize_vec3_nat(double* v)const {};
 Structure_Factor::Structure_Factor() {};
 Structure_Factor::~Structure_Factor(){};
 void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis){};
-
-extern Input INPUT;

@@ -9,6 +9,7 @@
 #include "LRI_CV_Tools.h"
 #include "Inverse_Matrix.h"
 #include "../module_base/mathzone.h"
+#include "../module_hamilt_pw/hamilt_pwdft/global.h"
 
 template<typename Tdata>
 RI::Tensor<Tdata>
@@ -54,8 +55,10 @@ template<typename T, std::size_t N>
 bool LRI_CV_Tools::exist(const std::array<T,N> &dV)
 {
 	for(size_t i=0; i<3; ++i)
+	{
 		if(!dV[i].empty())
 			return true;
+	}
 	return false;
 }
 
@@ -242,19 +245,18 @@ LRI_CV_Tools::change_order(std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> 
 
 template<typename Tcell>
 std::array<Tcell,3>
-LRI_CV_Tools::cal_latvec_range(const double &rcut_times)
+LRI_CV_Tools::cal_latvec_range(const double &rcut_times, const std::vector<double>& orb_cutoff)
 {
 	double Rcut_max = 0;
 	for(int T=0; T<GlobalC::ucell.ntype; ++T)
-		Rcut_max = std::max(Rcut_max, GlobalC::ORB.Phi[T].getRcut());
+		Rcut_max = std::max(Rcut_max, orb_cutoff[T]);
 	const ModuleBase::Vector3<double> proj = ModuleBase::Mathzone::latvec_projection(
 		std::array<ModuleBase::Vector3<double>,3>{GlobalC::ucell.a1, GlobalC::ucell.a2, GlobalC::ucell.a3});
 	const ModuleBase::Vector3<double> latvec_times = Rcut_max * rcut_times / (proj * GlobalC::ucell.lat0);
-	const ModuleBase::Vector3<Tcell> latvec_times_ceil = 
-		{std::ceil(latvec_times.x),
-		 std::ceil(latvec_times.y),
-		 std::ceil(latvec_times.z)};
-	const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
+    const ModuleBase::Vector3<Tcell> latvec_times_ceil = {static_cast<Tcell>(std::ceil(latvec_times.x)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.y)),
+                                                          static_cast<Tcell>(std::ceil(latvec_times.z))};
+    const ModuleBase::Vector3<Tcell> period = 2 * latvec_times_ceil + ModuleBase::Vector3<Tcell>{1,1,1};
 	return std::array<Tcell,3>{period.x, period.y, period.z};
 }
 
@@ -308,9 +310,50 @@ LRI_CV_Tools::get_dCVws(
 				const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
 				dCVws[it0][it1][R_delta][ix] = dCVs_B.second;
 			}
-		}		
+		}
 	}
 	return dCVws;
 }
 
+
+// dMRs[ipos0][ipos1] = \nabla_{ipos0} M R_{ipos1}
+template<typename TA, typename TC, typename Tdata>
+std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
+LRI_CV_Tools::cal_dMRs(
+	const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs)
+{
+	auto get_R_delta = [&](const TA &iat0, const std::pair<TA,TC> &A1) -> std::array<Tdata,3>
+	{
+		const TA iat1 = A1.first;
+		const TC &cell1 = A1.second;
+		const int it0 = GlobalC::ucell.iat2it[iat0];
+		const int ia0 = GlobalC::ucell.iat2ia[iat0];
+		const int it1 = GlobalC::ucell.iat2it[iat1];
+		const int ia1 = GlobalC::ucell.iat2ia[iat1];
+		const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
+		const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+		const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
+		return std::array<Tdata,3>{R_delta.x, R_delta.y, R_delta.z};
+	};
+	constexpr int Npos = 3;
+	std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,Npos>,Npos> dMRs;
+	for(int ipos0=0; ipos0<Npos; ++ipos0)
+	{
+		for(int ipos1=0; ipos1<Npos; ++ipos1)
+		{
+			for(const auto &dMs_A : dMs[ipos0])
+			{
+				const TA iat0 = dMs_A.first;
+				for(const auto &dMs_B : dMs_A.second)
+				{
+					const std::pair<TA,TC> A1 = dMs_B.first;
+					const RI::Tensor<Tdata> &dM = dMs_B.second;
+					const std::array<Tdata,3> R_delta = get_R_delta(iat0, A1);
+					dMRs[ipos0][ipos1][iat0][A1] = dM * R_delta[ipos1];
+				}
+			}
+		}
+	}
+	return dMRs;
+}
 #endif

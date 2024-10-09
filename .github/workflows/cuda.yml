@@ -2,90 +2,42 @@ name: CUDA Test
 
 on:
   workflow_dispatch:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  start-runner:
-    name: Start self-hosted EC2 runner
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
-      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-      - name: Start EC2 runner
-        id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: start
-          github-token: ${{ secrets.PAT }}
-          ec2-image-id: ami-04cd9fec4a7a39019
-          ec2-instance-type: g4dn.xlarge
-          subnet-id: subnet-72d3e53e
-          security-group-id: sg-06b0c93122c08aeab
-
   test:
-    name: Do the job on the runner
-    needs: start-runner # required to start the main job when the runner is ready
-    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    name: Test on CUDA Build
+    runs-on: nvidia
+    if: github.repository_owner == 'deepmodeling'
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
+      volumes:
+        - /tmp/ccache:/github/home/.ccache
       options: --gpus all
+      
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Build cuSolver
+        with:
+          submodules: recursive
+
+      - name: Install Ccache
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache
+
+      - name: Build
         run: |
           nvidia-smi
-          cmake -B build -DUSE_CUSOLVER_LCAO=ON
+          cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
-          cmake -B build -DBUILD_TESTING=ON
-          cmake --build build -j4 --target hsolver_diago
-      - name: Test e2e
+
+      - name: Test
         run: |
-          export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/cuda/lib64
           cd tests/integrate
-          echo "ks_solver cusolver" >> ./270_NO_MD_2O/INPUT
-          ./Autotest.sh -r 270_NO_MD_2O
-      - name: Test UT
-        run: |
-          cd source/src_pdiag/test/
-          cp ../../../build/source/src_pdiag/test/hsolver_diago .
-          ./hsolver_diago
-          bash diago_parallel_test.sh
-      - name: Test performance
-        run: |
-          cd examples/performance
-          ls -d P1*lcao* > allcase
-          sed -i '/ks_solver/d' P1*lcao*/INPUT
-          sed -i '$a ks_solver cusolver' P1*lcao*/INPUT
-          bash run.sh
-          cat sumall.dat
-
-
-  stop-runner:
-    name: Stop self-hosted EC2 runner
-    needs:
-      - start-runner # required to get output from the start-runner job
-      - test # required to wait when the main job is done
-    runs-on: ubuntu-latest
-    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-2
-      - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: stop
-          github-token: ${{ secrets.PAT }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          bash Autotest.sh -n 2 -f CASES_GPU.txt

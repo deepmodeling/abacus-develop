@@ -1,0 +1,58 @@
+name: Doxygen Documentation Deployment
+
+on:
+  push:
+    # trigger the workflow whenever the "develop" branch has a push event
+    branches: ["doxygen", "develop"]
+    # FIXME The above "doxygen" branch is for PR review.
+    # It shall be removed once this workflow PR is merged.
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment and DO cancel in-progress runs
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    if: github.repository_owner == 'deepmodeling'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Install Doxygen
+        run: sudo apt-get install doxygen graphviz -y
+        shell: bash
+
+      - name: Generate Doxygen Documentation
+        working-directory: ./doxygen
+        run: |
+          # download a better-looking style sheet
+          wget https://raw.githubusercontent.com/jothepro/doxygen-awesome-css/main/doxygen-awesome.css
+          doxygen
+        shell: bash
+        
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+        
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './doxygen/html'
+          
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+

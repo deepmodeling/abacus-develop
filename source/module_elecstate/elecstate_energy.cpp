@@ -4,6 +4,7 @@
 #include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -20,7 +21,7 @@ void ElecState::cal_bandgap()
         return;
     }
     int nbands = GlobalV::NBANDS;
-    int nks = this->klist->nks;
+    int nks = this->klist->get_nks();
     double homo = this->ekb(0, 0);
     double lumo = this->ekb(0, nbands - 1);
     for (int ib = 0; ib < nbands; ib++)
@@ -51,7 +52,7 @@ void ElecState::cal_bandgap_updw()
         return;
     }
     int nbands = GlobalV::NBANDS;
-    int nks = this->klist->nks;
+    int nks = this->klist->get_nks();
     double homo_up = this->ekb(0, 0);
     double lumo_up = this->ekb(0, nbands - 1);
     double homo_dw = this->ekb(0, 0);
@@ -104,7 +105,7 @@ double ElecState::cal_delta_eband() const
     const double* v_ofk = nullptr;
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -115,7 +116,7 @@ double ElecState::cal_delta_eband() const
         {
             deband_aux -= this->charge->rho[0][ir] * v_xc(0,ir);
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
@@ -125,7 +126,7 @@ double ElecState::cal_delta_eband() const
     }
 #endif
 
-    if(!GlobalV::use_paw)
+    if(!PARAM.inp.use_paw)
     {
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
@@ -141,7 +142,7 @@ double ElecState::cal_delta_eband() const
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             v_eff = this->pot->get_effective_v(1);
             v_ofk = this->pot->get_effective_vofk(1);
@@ -154,7 +155,7 @@ double ElecState::cal_delta_eband() const
                 }
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             for (int is = 1; is < 4; is++)
             {
@@ -195,6 +196,7 @@ double ElecState::cal_delta_escf() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
+
     if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
     {
         v_ofk = this->pot->get_effective_vofk(0);
@@ -209,7 +211,7 @@ double ElecState::cal_delta_escf() const
         }
     }
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         v_eff = this->pot->get_effective_v(1);
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
@@ -225,7 +227,7 @@ double ElecState::cal_delta_escf() const
             }
         }
     }
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -240,6 +242,8 @@ double ElecState::cal_delta_escf() const
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(descf);
 #endif
+
+    assert(this->charge->rhopw->nxyz > 0);
 
     descf *= this->omega / this->charge->rhopw->nxyz;
     return descf;
@@ -261,41 +265,60 @@ void ElecState::cal_converged()
 /**
  * @brief calculate energies
  *
- * @param type: 1 means harris energy; 2 means etot
+ * @param type: 1 means Harris-Foulkes functinoal; 
+ * @param type: 2 means Kohn-Sham functional;
  */
 void ElecState::cal_energies(const int type)
 {
+    //! Hartree energy
     this->f_en.hartree_energy = get_hartree_energy();
+
+    //! energy from E-field
     this->f_en.efield = get_etot_efield();
+
+    //! energy from gate-field
     this->f_en.gatefield = get_etot_gatefield();
-    if (GlobalV::imp_sol)
+
+    //! energy from implicit solvation model 
+    if (PARAM.inp.imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
     }
+
+    //! spin constrained energy
 #ifdef __LCAO
-    if (GlobalV::sc_mag_switch)
+    if (PARAM.inp.sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
     }
-    if (GlobalV::dft_plus_u)
+
+     // energy from DFT+U
+    if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }
 #endif
+
 #ifdef __DEEPKS
-    if (GlobalV::deepks_scf)
+    // energy from deepks
+    if (PARAM.inp.deepks_scf)
     {
         this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }
 #endif
-    if (type == 1) // harris
+
+    if (type == 1) // Harris-Foulkes functional
     {
         this->f_en.calculate_harris();
     }
-    else // etot
+    else if (type == 2)// Kohn-Sham functional
     {
         this->f_en.calculate_etot();
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("cal_energies", "The form of total energy functional is unknown!");
     }
 }
 

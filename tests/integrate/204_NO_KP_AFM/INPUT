@@ -8,7 +8,7 @@ orbital_dir	../../PP_ORB
 gamma_only      0
 
 #Parameters (2.Iteration)
-ecutwfc			50
+ecutwfc			20
 scf_thr				1e-5
 scf_nmax			100
 

@@ -358,12 +358,13 @@ void HTransSerial<T>::cal_ap_indexes(int irank, std::vector<int>* ap_indexes)
                 // loop of R
                 for (int k = 0; k < atom_pair.get_R_size(); k++)
                 {
+                    const ModuleBase::Vector3<int> r_index = atom_pair.get_R_index(k);
                     // rx
-                    *data++ = atom_pair.get_R_index(k)[0];
+                    *data++ = r_index.x;
                     // ry
-                    *data++ = atom_pair.get_R_index(k)[1];
+                    *data++ = r_index.y;
                     // rz
-                    *data++ = atom_pair.get_R_index(k)[2];
+                    *data++ = r_index.z;
                 }
             }
         }

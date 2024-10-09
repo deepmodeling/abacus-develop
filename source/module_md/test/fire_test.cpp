@@ -1,12 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_esolver/esolver_lj.h"
-#include "setcell.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define private public
 #define protected public
+#include "module_esolver/esolver_lj.h"
 #include "module_md/fire.h"
-
+#include "setcell.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -39,28 +40,31 @@ class FIREtest : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(param_in.input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(param_in.inp, ucell);
 
-        mdrun = new FIRE(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun = new FIRE(param_in, ucell);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
     {
         delete mdrun;
+        delete p_esolver;
     }
 };
 
 TEST_F(FIREtest, Setup)
 {
-    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
+    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 2), 1.5039983732220751e-06, doublethreshold);
@@ -139,7 +143,7 @@ TEST_F(FIREtest, WriteRestart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::global_out_dir);
+    mdrun->write_restart(PARAM.sys.global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -160,7 +164,7 @@ TEST_F(FIREtest, WriteRestart)
 
 TEST_F(FIREtest, Restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     FIRE* fire = dynamic_cast<FIRE*>(mdrun);
@@ -168,7 +172,7 @@ TEST_F(FIREtest, Restart)
     EXPECT_EQ(fire->alpha, 0.1);
     EXPECT_EQ(fire->negative_count, 0);
     EXPECT_EQ(fire->dt_max, -1);
-    EXPECT_EQ(mdrun->mdp.md_dt, 41.3414);
+    EXPECT_EQ(fire->md_dt, 41.3414);
 }
 
 TEST_F(FIREtest, PrintMD)

@@ -104,48 +104,6 @@ void DONE(std::ofstream &ofs, const std::string &description, const bool only_ra
     return;
 }
 
-//==========================================================
-// GLOBAL FUNCTION :
-// NAME : TEST_LEVEL
-// control the test_level
-//==========================================================
-void TEST_LEVEL(const std::string &name, bool disable=true)
-{
-    if (disable) return;
-
-    if (name == "none")
-    {
-        GlobalV::test_wf = 0;
-        GlobalV::test_potential = 0;
-        GlobalV::test_charge = 0;
-    }
-    else if (name == "init_potential")
-    {
-        GlobalV::test_wf = 1;
-        GlobalV::test_potential = 1;
-        GlobalV::test_charge = 1;
-    }
-    else if (name == "init_read")
-    {
-        GlobalV::test_input = 1;
-        GlobalV::test_winput = 1;
-        GlobalV::test_kpoint = 1;
-        GlobalV::test_atom = 1;
-        GlobalV::test_unitcell = 1;
-#ifndef __EPM
-        GlobalV::test_pseudo_cell = 1;
-#else
-        test_epm_unitcell = 1;
-#endif
-    }
-    else if (name == "pw_init")
-    {
-        GlobalV::test_pw = 1;
-    }
-
-    return;
-}
-
 bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart, const bool ifwarn)
 {
     std::string SearchName;

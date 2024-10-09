@@ -6,7 +6,6 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <valarray>
 #include <vector>
@@ -33,13 +32,13 @@ void WARNING(const std::string &file, const std::string &description);
  * @brief Close .log files and exit
  *
  */
-void QUIT(void);
+[[noreturn]] void QUIT(void);
 
 /**
  * @brief Close .log files and exit
  *
  */
-void QUIT(int ret);
+[[noreturn]] void QUIT(int ret);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -47,7 +46,7 @@ void QUIT(int ret);
  * @param file The file where warning happens
  * @param description The warning information
  */
-void WARNING_QUIT(const std::string &file, const std::string &description);
+[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
@@ -55,7 +54,7 @@ void WARNING_QUIT(const std::string &file, const std::string &description);
  * @param file The file where warning happens
  * @param description The warning information
  */
-void WARNING_QUIT(const std::string &file, const std::string &description, int ret);
+[[noreturn]] void WARNING_QUIT(const std::string& file, const std::string& description, int ret);
 
 /**
  * @brief Check, if true, WARNING_QUIT
@@ -63,7 +62,7 @@ void WARNING_QUIT(const std::string &file, const std::string &description, int r
  * @param file The file where warning happens
  * @param description The warning information
  */
-void CHECK_WARNING_QUIT(const bool error, const std::string &file,const std::string &description);
+void CHECK_WARNING_QUIT(const bool error, const std::string &file,const std::string &calculation,const std::string &description);
 
 } // namespace ModuleBase
 

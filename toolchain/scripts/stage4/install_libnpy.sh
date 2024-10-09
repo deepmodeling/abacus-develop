@@ -6,6 +6,8 @@
 # Only problem is the installation from github.com
 # Libnpy is under active development, you can check the latest version in github yourself
 
+# Last Update in 2023-1124
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -39,14 +41,15 @@ case "$with_libnpy" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "===> Notice: This version Libnpy is downloaded in GitHub Release, which will always be out-of-date version <==="
-            echo "wget --quiet $url -O $filename"
-            if ! wget --quiet $url -O $filename; then
-            report_error "failed to download $url"
-            recommend_offline_installation $filename $url
-            fi
-        # checksum
-        checksum "$filename" "$libnpy_sha256"
+            echo "===> Notice: This version of Libnpy is downloaded in GitHub Release, which will always be out-of-date version <==="
+            download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
+            # echo "wget $url -O $filename"
+            # if ! wget $url -O $filename; then
+            # report_error "failed to download $url"
+            # recommend_offline_installation $filename $url
+            # fi
+            # # checksum
+            # checksum "$filename" "$libnpy_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
@@ -77,7 +80,7 @@ if [ "$with_libnpy" != "__DONTUSE__" ]; then
     if [ "$with_libnpy" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include":${CPATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi

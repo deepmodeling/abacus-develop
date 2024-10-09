@@ -3,6 +3,8 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2023-0901
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
@@ -50,12 +52,14 @@ case "$with_scalapack" in
       if ("${FC}" --version | grep -q 'GNU'); then
         flags=$(allowed_gfortran_flags "-fallow-argument-mismatch")
       fi
+      # modified by @YuugataShinonome for GCC 14
       FFLAGS=$flags cmake -DCMAKE_FIND_ROOT_PATH="$ROOTDIR" \
         -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
         -DCMAKE_INSTALL_LIBDIR="lib" \
+        -DCMAKE_VERBOSE_MAKEFILE=ON \
         -DBUILD_SHARED_LIBS=YES \
         -DCMAKE_BUILD_TYPE=Release .. \
-        -DBUILD_TESTING=NO \
+        -DCMAKE_C_FLAGS:STRING="$CFLAGS -Wno-implicit-function-declaration" \
         -DSCALAPACK_BUILD_TESTS=NO \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -89,11 +93,11 @@ prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="$pkg_install_dir/lib":$LD_RUN_PATH
-export LIBRARY_PATH="$pkg_install_dir/lib":$LIBRARY_PATH
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="$pkg_install_dir":$CMAKE_PREFIX_PATH
+export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 export SCALAPACK_ROOT="${pkg_install_dir}"
 EOF
     cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE

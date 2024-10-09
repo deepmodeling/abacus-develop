@@ -1,4 +1,7 @@
 if (ENABLE_LIBRI)
+
+  add_subdirectory(module_exx_symmetry)
+  
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
@@ -16,7 +19,7 @@ if (ENABLE_LIBRI)
         exx_abfs-construct_orbs.cpp
         exx_abfs-io.cpp
         exx_abfs-jle.cpp
-        exx_abfs-pca.cpp
+        ABFs_Construct-PCA.cpp
         exx_opt_orb-print.cpp
         exx_opt_orb.cpp
     )
@@ -28,7 +31,9 @@ if (ENABLE_LIBRI)
   )
   
   if(BUILD_TESTING)
-    add_subdirectory(test)
+    if(ENABLE_MPI)
+      add_subdirectory(test)
+    endif()
   endif()
 
   if(ENABLE_COVERAGE)

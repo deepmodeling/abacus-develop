@@ -1,0 +1,47 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix          H2_absoprion
+calculation     md
+esolver_type    tddft
+pseudo_dir      ../../../tests/PP_ORB
+orbital_dir     ../../../tests/PP_ORB
+
+#Parameters (2.Iteration)
+ecutwfc         60
+scf_thr         1e-6
+scf_nmax        100
+
+#Parameters (3.Basis)
+basis_type      lcao
+gamma_only      0
+
+#Parameters (4.Smearing)
+smearing_method     gauss
+
+#Parameters (5.MD Parameters)
+md_type         nve
+md_nstep        1000
+md_dt           0.005
+md_tfirst       0
+
+#Parameters (6.Efield Parameters)
+td_vext         1
+td_stype        1
+
+td_tstart 		1
+td_tend			1000
+td_lcut1		0.01
+td_lcut2		0.99
+
+td_vext_dire    3 3
+td_ttype        0 0
+td_gauss_freq		3.66 1.22
+td_gauss_phase		0.0 0.0
+td_gauss_sigma		0.2 0.2
+td_gauss_t0		300 300
+td_gauss_amp		0.01 0.01
+
+#Parameters (7.Output)
+out_chg         1
+out_efield      1
+out_dipole      1

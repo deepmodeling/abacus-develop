@@ -6,26 +6,38 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 
-namespace hsolver {
+namespace hsolver
+{
 
-template<typename T, typename Device = psi::DEVICE_CPU>
-class HSolverPW: public HSolver<T, Device>
+template <typename T, typename Device = base_device::DEVICE_CPU>
+class HSolverPW
 {
   private:
-    // Note GetTypeReal<T>::type will 
-    // return T if T is real type(float, double), 
+    // Note GetTypeReal<T>::type will
+    // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
-  public:
-    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in, wavefunc* pwf_in);
 
-    /*void init(
-        const Basis* pbas
-        //const Input &in,
-    ) override;
-    void update(//Input &in
-    ) override;*/
-    
+  public:
+    HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
+              wavefunc* pwf_in,
+              const std::string calculation_type_in,
+              const std::string basis_type_in,
+              const std::string method_in,
+              const bool use_paw_in,
+              const bool use_uspp_in,
+              const int nspin_in,
+              const int scf_iter_in,
+              const int diag_iter_max_in,
+              const double diag_thr_in,
+              const bool need_subspace_in,
+              const bool initialed_psi_in)
+        : wfc_basis(wfc_basis_in), pwf(pwf_in),
+          calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in), 
+          use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in),
+          scf_iter(scf_iter_in), diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in),
+          need_subspace(need_subspace_in), initialed_psi(initialed_psi_in)  {};
+
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
     /// @param psi reference to psi
@@ -35,48 +47,57 @@ class HSolverPW: public HSolver<T, Device>
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                elecstate::ElecState* pes,
-               const std::string method_in,
-               const bool skip_charge) override;
-    /// @brief solve function for lcao_in_pw
-    /// @param pHamilt interface to hamilt
-    /// @param psi reference to psi
-    /// @param pes interface to elecstate
-    /// @param transform transformation matrix between lcao and pw
-    /// @param skip_charge 
-    void solve(hamilt::Hamilt<T, Device>* pHamilt,
-               psi::Psi<T, Device>& psi,
-               elecstate::ElecState* pes,
-               psi::Psi<T, Device>& transform,
-               const bool skip_charge) override;
-    virtual Real cal_hsolerror() override;
-    virtual Real set_diagethr(const int istep, const int iter, const Real drho) override;
-    virtual Real reset_diagethr(std::ofstream& ofs_running, const Real hsover_error, const Real drho) override;
+               double* out_eigenvalues,
+               const std::vector<bool>& is_occupied_in,
+               const int rank_in_pool_in,
+               const int nproc_in_pool_in,
+               const bool skip_charge);
+
   protected:
-    void initDiagh(const psi::Psi<T, Device>& psi_in);
-    void endDiagh();
-    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm, psi::Psi<T, Device>& psi, Real* eigenvalue);
+    // diago caller
+    void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
+                         psi::Psi<T, Device>& psi,
+                         std::vector<Real>& pre_condition,
+                         Real* eigenvalue);
 
-    void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt,
-                    psi::Psi<T, Device>& psi,
-                    const int ik);
-
-    ModulePW::PW_Basis_K* wfc_basis = nullptr;
-    wavefunc* pwf = nullptr;
+    // psi initializer && change k point in psi
+    void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik);
 
     // calculate the precondition array for diagonalization in PW base
-    void update_precondition(std::vector<Real> &h_diag, const int ik, const int npw);
+    void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw);
 
-    std::vector<Real> precondition;
+    void output_iterInfo();
 
-    bool initialed_psi = false;
+    ModulePW::PW_Basis_K* wfc_basis;
+    wavefunc* pwf; // only for diago_PAO_in_pw_k2 func
 
-    hamilt::Hamilt<T, Device>* hamilt_ = nullptr;
+    const std::string calculation_type;
+    const std::string basis_type;
+    const std::string method;
+    const bool use_paw;
+    const bool use_uspp;
+    const int nspin;
 
-    Device * ctx = {};
-    using resmem_var_op = psi::memory::resize_memory_op<Real, psi::DEVICE_CPU>;
-    using delmem_var_op = psi::memory::delete_memory_op<Real, psi::DEVICE_CPU>;
-    using castmem_2d_2h_op = psi::memory::cast_memory_op<double, Real, psi::DEVICE_CPU, psi::DEVICE_CPU>;
-    
+    const int scf_iter; // Start from 1
+    const int diag_iter_max; // max iter times for diagonalization
+    const double diag_thr; // threshold for diagonalization
+
+    const bool need_subspace; // for cg or dav_subspace
+    const bool initialed_psi; 
+
+  private:
+    Device* ctx = {};
+
+    int rank_in_pool = 0;
+    int nproc_in_pool = 1;
+
+#ifdef USE_PAW
+    void paw_func_in_kloop(const int ik);
+
+    void call_paw_cell_set_currentk(const int ik);
+
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+#endif
 };
 
 } // namespace hsolver

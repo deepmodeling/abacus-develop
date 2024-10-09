@@ -2,9 +2,18 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_cell/klist.h"
+#undef private
+K_Vectors::K_Vectors()
+{
+}
 
+K_Vectors::~K_Vectors()
+{
+}
 /************************************************
  *  unit test of DensityMatrix constructor
  ***********************************************/
@@ -80,18 +89,12 @@ class DMTest : public testing::Test
 #ifdef __MPI
     void init_parav()
     {
+        int nb = 2;
         int global_row = test_size * test_nw;
         int global_col = test_size * test_nw;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(2 /* nb_2d set to be 2*/);
-        paraV->set_proc_dim(dsize, 0);
-        paraV->mpi_create_cart(MPI_COMM_WORLD);
-        paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);
-        int lr = paraV->get_row_size();
-        int lc = paraV->get_col_size();
-        paraV->set_desc(global_row, global_col, lr);
-        paraV->set_global2local(global_row, global_col, true, ofs_running);
+        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
@@ -109,7 +112,7 @@ TEST_F(DMTest, DMInit1)
     int nspin = 1;
     int nks = 2; // since nspin = 1
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
@@ -117,7 +120,7 @@ TEST_F(DMTest, DMInit1)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // initialize this->_DMR
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0,0);
     DM.init_DMR(&gd, &ucell);
     // compare
     EXPECT_EQ(DM.get_DMR_pointer(1)->size_atom_pairs(), test_size * test_size);
@@ -136,7 +139,7 @@ TEST_F(DMTest, DMInit2)
     int nspin = 1;
     int nks = 2; // since nspin = 1
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     // construct DM
@@ -144,7 +147,7 @@ TEST_F(DMTest, DMInit2)
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
     // initialize Record_adj using Grid_Driver
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0,0);
     Record_adj ra;
     ra.na_each = new int[ucell.nat];
     ra.info = new int**[ucell.nat];
@@ -200,13 +203,13 @@ TEST_F(DMTest, DMInit3)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct a DM
     elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     // construct another DM
@@ -230,12 +233,12 @@ TEST_F(DMTest, DMInit4)
     int nspin = 2;
     int nks = 4; // since nspin = 2
     kv = new K_Vectors;
-    kv->nks = nks;
+    kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct a new HContainer
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     hamilt::HContainer<std::complex<double>>* tmp_DMR;
     tmp_DMR = new hamilt::HContainer<std::complex<double>>(paraV);
     // set up a HContainer
@@ -274,6 +277,39 @@ TEST_F(DMTest, DMInit4)
     EXPECT_EQ(DM.get_DMR_pointer(2)->get_atom_pair(2, 2).get_col_size(), paraV->get_col_size(2));
     //
     delete kv;
+}
+
+// test for save_DMR
+TEST_F(DMTest, saveDMR)
+{
+    // initalize a kvectors
+    K_Vectors* kv = nullptr;
+    int nspin = 2;
+    int nks = 4; // since nspin = 2
+    kv = new K_Vectors;
+    kv->set_nks(nks);
+    kv->kvec_d.resize(nks);
+    kv->kvec_d[1].x = 0.5;
+    kv->kvec_d[3].x = 0.5;
+    // construct a DM
+    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    Grid_Driver gd(0, 0);
+    DM.init_DMR(&gd, &ucell);
+    // construct another DM
+    elecstate::DensityMatrix<std::complex<double>, double> DM_test(kv, paraV, nspin);
+    DM_test.init_DMR(*DM.get_DMR_pointer(1));
+    DM_test.save_DMR();
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM.get_DMR_pointer(1)->get_nnr());
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    // add a new AtomPair, act as a relaxation
+    hamilt::AtomPair<double> tmp_ap(9, 9, 1, 0, 0, paraV);
+    DM_test.get_DMR_pointer(1)->insert_pair(tmp_ap);
+    DM_test.get_DMR_pointer(1)->allocate();
+    // update DMR_save
+    DM_test.save_DMR();
+    EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM_test._DMR_save[0].size());
+    // delete 
+    delete kv;   
 }
 
 int main(int argc, char** argv)

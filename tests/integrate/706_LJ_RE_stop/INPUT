@@ -1,0 +1,19 @@
+INPUT_PARAMETERS
+#Parameters (General)
+suffix              autotest
+calculation         relax
+pseudo_dir          ../../PP_ORB
+
+#Parameters (esolver)
+esolver_type        lj
+lj_rule             1
+lj_rcut             8.5  8  8.4
+lj_epsilon          0.01  0.02
+lj_sigma            3.4  3.5
+
+#Parameters (relax)
+relax_new           1
+relax_nmax          5
+force_thr_ev        0.01
+cal_force           1
+cal_stress          1

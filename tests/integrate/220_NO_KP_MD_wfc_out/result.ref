@@ -1,6 +1,6 @@
-etotref -196.6188092213663
-etotperatomref -98.3094046107
-totalforceref 1.091624
-totalstressref 1415.578788
+etotref -196.6232944871745
+etotperatomref -98.3116472436
+totalforceref 0.975500
+totalstressref 1500.928040
 Compare_wfc_lcao_pass 0
-totaltimeref 38.45
+totaltimeref 5.81

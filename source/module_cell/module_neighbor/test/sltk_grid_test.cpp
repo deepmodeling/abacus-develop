@@ -1,10 +1,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 #define private public
 #include "../sltk_grid.h"
 #include "prepare_unitcell.h"
-
+#undef private
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -45,7 +48,7 @@ Magnetism::~Magnetism()
 
 void SetGlobalV()
 {
-    GlobalV::test_grid = 0;
+    PARAM.input.test_grid = 0;
 }
 
 class SltkGridTest : public testing::Test
@@ -77,9 +80,9 @@ TEST_F(SltkGridTest, Init)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 2;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid(GlobalV::test_grid);
+    Grid LatGrid(PARAM.input.test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
     EXPECT_TRUE(LatGrid.init_cell_flag);
     EXPECT_EQ(LatGrid.getCellX(), 11);
@@ -97,10 +100,10 @@ TEST_F(SltkGridTest, InitSmall)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 2;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     radius = 0.5;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid(GlobalV::test_grid);
+    Grid LatGrid(PARAM.input.test_grid);
     LatGrid.setMemberVariables(ofs, Atom_inp);
     EXPECT_EQ(LatGrid.natom, Atom_inp.getAmount());
     EXPECT_EQ(LatGrid.natom, 128);
@@ -166,13 +169,11 @@ TEST_F(SltkGridTest, InitNoExpand)
     ofs.open("test.out");
     ucell->check_dtau();
     test_atom_in = 2;
-    GlobalV::test_grid = 1;
+    PARAM.input.test_grid = 1;
     double radius = 1e-1000;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
-    Grid LatGrid(GlobalV::test_grid);
+    Grid LatGrid(PARAM.input.test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
     ofs.close();
 }
 */
-
-#undef private

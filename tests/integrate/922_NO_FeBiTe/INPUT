@@ -1,0 +1,12 @@
+INPUT_PARAMETERS
+suffix              autotest
+calculation         scf
+ks_solver           genelpa
+gamma_only          1
+cal_stress          1
+cal_force           1
+stru_file           STRU
+basis_type          lcao
+dft_functional      pbe
+ecutwfc			    10
+scf_nmax            10

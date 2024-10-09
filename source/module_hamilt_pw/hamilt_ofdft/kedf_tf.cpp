@@ -1,5 +1,6 @@
 #include "./kedf_tf.h"
 
+#include "module_parameter/parameter.h"
 #include <iostream>
 
 #include "module_base/parallel_reduce.h"
@@ -21,7 +22,7 @@ void KEDF_TF::set_para(int nx, double dV, double tf_weight)
 double KEDF_TF::get_energy(const double* const* prho)
 {
     double energy = 0.; // in Ry
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < this->nx_; ++ir)
         {
@@ -29,9 +30,9 @@ double KEDF_TF::get_energy(const double* const* prho)
         }
         energy *= this->dV_ * this->c_tf_;
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < this->nx_; ++ir)
             {
@@ -72,16 +73,16 @@ double KEDF_TF::get_energy_density(const double* const* prho, int is, int ir)
 void KEDF_TF::tf_potential(const double* const* prho, ModuleBase::matrix& rpotential)
 {
     ModuleBase::timer::tick("KEDF_TF", "tf_potential");
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < this->nx_; ++ir)
         {
             rpotential(0, ir) += 5.0 / 3.0 * this->c_tf_ * std::pow(prho[0][ir], 2. / 3.) * this->tf_weight_;
         }
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < this->nx_; ++ir)
             {

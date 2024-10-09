@@ -34,6 +34,7 @@ public:
 	~LRI_CV();
 
 	void set_orbitals(
+        const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
@@ -59,6 +60,7 @@ public:
 	size_t get_index_abfs_size(const size_t &iat){return this->index_abfs[iat].count_size; }
 
 private:
+    std::vector<double> orb_cutoff_;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_ccp;

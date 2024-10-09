@@ -2,7 +2,8 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
-#include "module_psi/kernels/device.h"
+
+#include "module_base/module_device/device.h"
 
 
 namespace hamilt {
@@ -15,12 +16,12 @@ Ekinetic<OperatorPW<T, Device>>::Ekinetic(
     const int gk2_col)
 {
   this->classname = "Ekinetic";
-  this->cal_type = pw_ekinetic;
+  this->cal_type = calculation_type::pw_ekinetic;
   this->tpiba2 = tpiba2_in;
   this->gk2 = gk2_in;
   this->gk2_row = gk2_row;
   this->gk2_col = gk2_col;
-  this->device = psi::device::get_device_type<Device>(this->ctx);
+  this->device = base_device::get_device_type<Device>(this->ctx);
   if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
       ModuleBase::WARNING_QUIT("EkineticPW", "Constuctor of Operator::EkineticPW is failed, please check your code!");
   }
@@ -61,26 +62,30 @@ template<typename T, typename Device>
 template<typename T_in, typename Device_in>
 hamilt::Ekinetic<OperatorPW<T, Device>>::Ekinetic(const Ekinetic<OperatorPW<T_in, Device_in>> *ekinetic) {
     this->classname = "Ekinetic";
-    this->cal_type = pw_ekinetic;
+    this->cal_type = calculation_type::pw_ekinetic;
     this->ik = ekinetic->get_ik();
     this->tpiba2 = ekinetic->get_tpiba2();
     this->gk2 = ekinetic->get_gk2();
     this->gk2_row = ekinetic->get_gk2_row();
     this->gk2_col = ekinetic->get_gk2_col();
-    this->device = psi::device::get_device_type<Device>(this->ctx);
+    this->device = base_device::get_device_type<Device>(this->ctx);
     if( this->tpiba2 < 1e-10 || this->gk2 == nullptr) {
         ModuleBase::WARNING_QUIT("EkineticPW", "Copy Constuctor of Operator::EkineticPW is failed, please check your code!");
     }
 }
 
-template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_CPU>>;
-template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>;
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, base_device::DEVICE_CPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *ekinetic);
 #if ((defined __CUDA) || (defined __ROCM))
-template class Ekinetic<OperatorPW<std::complex<float>, psi::DEVICE_GPU>>;
-template class Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>;
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_CPU>> *ekinetic);
-// template Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>>::Ekinetic(const Ekinetic<OperatorPW<std::complex<double>, psi::DEVICE_GPU>> *ekinetic);
+template class Ekinetic<OperatorPW<std::complex<float>, base_device::DEVICE_GPU>>;
+template class Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>;
+// template Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *ekinetic); template
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_CPU>> *ekinetic); template
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>>::Ekinetic(const
+// Ekinetic<OperatorPW<std::complex<double>, base_device::DEVICE_GPU>> *ekinetic);
 #endif
 } // namespace hamilt

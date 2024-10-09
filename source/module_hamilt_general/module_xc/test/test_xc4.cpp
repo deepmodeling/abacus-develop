@@ -1,5 +1,6 @@
 #include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
 #include "../exx_info.h"
 
 /************************************************
@@ -11,16 +12,15 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
 {
     std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
+    bool CAL_STRESS = false;
     int CAL_FORCE = 0;
     int NSPIN = 1;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC
@@ -28,7 +28,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_SCAN : public testing::Test
+class XCTest_SCAN : public XCTest
 {
     protected:
         std::vector<double> e_,v1_,v2_,v3_;
@@ -49,7 +49,7 @@ class XCTest_SCAN : public testing::Test
                 v2_.push_back(v2);
                 v3_.push_back(v3);
             }
-        }                       
+        }
 };
 
 TEST_F(XCTest_SCAN, set_xc_type)

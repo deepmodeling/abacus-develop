@@ -1,31 +1,31 @@
 #include "ekinetic_new.h"
 
-#include "module_basis/module_ao/ORB_gen_tables.h"
+#include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "module_base/timer.h"
-#include "module_base/tool_title.h"
 
 // Constructor
 template <typename TK, typename TR>
 hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
-    LCAO_Matrix* LM_in,
+    HS_Matrix_K<TK>* hsk_in,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
     hamilt::HContainer<TR>* hR_in,
-    std::vector<TK>* hK_in,
     const UnitCell* ucell_in,
+    const std::vector<double>& orb_cutoff,
     Grid_Driver* GridD_in,
-    const Parallel_Orbitals* paraV)
-    : hamilt::OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+    const TwoCenterIntegrator* intor)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
 {
-    this->cal_type = lcao_fixed;
+    this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
+    assert(this->hsk != nullptr);
 #endif
     // initialize HR to allocate sparse Ekinetic matrix memory
-    this->initialize_HR(GridD_in, paraV);
+    this->initialize_HR(GridD_in);
 }
 
 // destructor
@@ -40,11 +40,13 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::~EkineticNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD,
-                                                                      const Parallel_Orbitals* paraV)
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
 {
     ModuleBase::TITLE("EkineticNew", "initialize_HR");
     ModuleBase::timer::tick("EkineticNew", "initialize_HR");
+
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
@@ -65,12 +67,11 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
                 is_adj[ad1] = true;
             }
@@ -83,7 +84,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Drive
             const int I2 = adjs.natom[ad];
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
-            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
+            hamilt::AtomPair<TR> tmp(iat1, iat2, R_index, paraV);
             this->hR->insert_pair(tmp);
         }
     }
@@ -97,7 +98,7 @@ template <typename TK, typename TR>
 void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("EkineticNew", "calculate_HR");
-    if(this->HR_fixed==nullptr || this->HR_fixed->size_atom_pairs()<=0)
+    if (this->HR_fixed == nullptr || this->HR_fixed->size_atom_pairs() <= 0)
     {
         ModuleBase::WARNING_QUIT("hamilt::EkineticNew::calculate_HR", "HR_fixed is nullptr or empty");
     }
@@ -121,7 +122,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad];
             ModuleBase::Vector3<double> dtau = this->ucell->cal_dtau(iat1, iat2, R_index2);
 
-            hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2.x, R_index2.y, R_index2.z);
+            hamilt::BaseMatrix<TR>* tmp = this->HR_fixed->find_matrix(iat1, iat2, R_index2);
             if (tmp != nullptr)
             {
                 this->cal_HR_IJR(iat1, iat2, paraV, dtau, tmp->get_pointer());
@@ -144,8 +145,6 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
                                                                    const ModuleBase::Vector3<double>& dtau,
                                                                    TR* data_pointer)
 {
-    const ORB_gen_tables& uot = ORB_gen_tables::get_const_instance();
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
@@ -167,15 +166,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
     const int* iw2l2 = atom2.iw2l;
     const int* iw2n2 = atom2.iw2n;
     const int* iw2m2 = atom2.iw2m;
-#ifndef USE_NEW_TWO_CENTER
-    // ---------------------------------------------
-    // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
-    // in principle, only dtau is needed in this function
-    // snap_psipsi should be refactored to use dtau directly
-    // ---------------------------------------------
-    const ModuleBase::Vector3<double>& tau1 = this->ucell->get_tau(iat1);
-    const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
-#endif
+
     // ---------------------------------------------
     // calculate the Ekinetic matrix for each pair of orbitals
     // ---------------------------------------------
@@ -189,40 +180,22 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& ia
         const int L1 = iw2l1[iw1];
         const int N1 = iw2n1[iw1];
         const int m1 = iw2m1[iw1];
-#ifdef USE_NEW_TWO_CENTER
-        int M1 = (m1 % 2 == 0) ? -m1/2 : (m1+1)/2;
-#endif
+
+        // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
+        int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
+
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const int iw2 = col_indexes[iw2l] / npol;
             const int L2 = iw2l2[iw2];
             const int N2 = iw2n2[iw2];
             const int m2 = iw2m2[iw2];
-#ifdef USE_NEW_TWO_CENTER
-            //=================================================================
-            //          new two-center integral (temporary)
-            //=================================================================
+
             // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
-            int M2 = (m2 % 2 == 0) ? -m2/2 : (m2+1)/2;
-            uot.two_center_bundle->kinetic_orb->calculate(T1, L1, N1, M1,
-                    T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
-#else
-            uot.snap_psipsi(orb, // orbitals
-                            olm,
-                            0,
-                            'T', // olm, job of derivation, dtype of Operator
-                            tau1,
-                            T1,
-                            L1,
-                            m1,
-                            N1, // info of atom1
-                            tau2,
-                            T2,
-                            L2,
-                            m2,
-                            N2 // info of atom2
-            );
-#endif
+            int M2 = (m2 % 2 == 0) ? -m2 / 2 : (m2 + 1) / 2;
+
+            intor_->calculate(T1, L1, N1, M1, T2, L2, N2, M2, dtau * this->ucell->lat0, olm);
+
             for (int ipol = 0; ipol < npol; ipol++)
             {
                 data_pointer[ipol * step_trace] += olm[0];
@@ -257,7 +230,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             this->HR_fixed->set_zero();
             this->allocated = true;
         }
-        if(this->next_sub_op != nullptr)
+        if (this->next_sub_op != nullptr)
         {
             // pass pointer of HR_fixed to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->HR_fixed);
@@ -267,7 +240,7 @@ void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->HR_fixed_done = true;
     }
     // last node of sub-chain, add HR_fixed into HR
-    if(this->next_sub_op == nullptr)
+    if (this->next_sub_op == nullptr)
     {
         this->hR->add(*(this->HR_fixed));
     }

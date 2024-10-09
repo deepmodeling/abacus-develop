@@ -1,6 +1,7 @@
-#include "gtest/gtest.h"
 #include "../ekinetic_new.h"
 #include "../nonlocal_new.h"
+
+#include "gtest/gtest.h"
 #include <chrono>
 
 //---------------------------------------
@@ -66,11 +67,11 @@ class TNLTest : public ::testing::Test
         ucell.atoms[0].ncpp.non_zero_count_soc[1] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[2] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[3] = 5;
-        ucell.atoms[0].ncpp.index1_soc[0] = new int[5];
-        ucell.atoms[0].ncpp.index2_soc[0] = new int[5];
-        ucell.atoms[0].ncpp.index1_soc[3] = new int[5];
-        ucell.atoms[0].ncpp.index2_soc[3] = new int[5];
-        for(int i = 0; i < 5; ++i)
+        ucell.atoms[0].ncpp.index1_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index1_soc[3] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[3] = std::vector<int>(5, 0);
+        for (int i = 0; i < 5; ++i)
         {
             ucell.atoms[0].ncpp.d_real(i, i) = 1.0;
             ucell.atoms[0].ncpp.d_so(0, i, i) = std::complex<double>(2.0, 0.0);
@@ -94,42 +95,33 @@ class TNLTest : public ::testing::Test
         delete[] ucell.atoms[0].iw2l;
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
-        delete[] ucell.atoms[0].ncpp.index1_soc[0];
-        delete[] ucell.atoms[0].ncpp.index2_soc[0];
-        delete[] ucell.atoms[0].ncpp.index1_soc[3];
-        delete[] ucell.atoms[0].ncpp.index2_soc[3];
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
         delete[] ucell.infoNL.Beta;
-
     }
 
 #ifdef __MPI
     void init_parav()
     {
+        int nb = 20;
         int global_row = test_size * test_nw * 2;
         int global_col = test_size * test_nw * 2;
         std::ofstream ofs_running;
         paraV = new Parallel_Orbitals();
-        paraV->set_block_size(20/* nb_2d set to be 2*/);
-        paraV->set_proc_dim(dsize, 0);
-        paraV->mpi_create_cart(MPI_COMM_WORLD);
-        paraV->set_local2global(global_row, global_col, ofs_running, ofs_running);
-        int lr = paraV->get_row_size();
-        int lc = paraV->get_col_size();
-        paraV->set_desc(global_row, global_col, lr);
-        paraV->set_global2local(global_row, global_col, true, ofs_running);
+        paraV->init(global_row, global_col, nb, MPI_COMM_WORLD);
         paraV->set_atomic_trace(ucell.get_iat2iwt(), test_size, global_row);
     }
 #else
     void init_parav()
-    {}
+    {
+    }
 #endif
 
     UnitCell ucell;
     hamilt::HContainer<std::complex<double>>* HR;
-    Parallel_Orbitals *paraV;
+    Parallel_Orbitals* paraV;
+    TwoCenterIntegrator intor_;
 
     int dsize;
     int my_rank = 0;
@@ -140,36 +132,37 @@ TEST_F(TNLTest, testTVNLcd2cd)
     int npol = ucell.get_npol();
     std::vector<ModuleBase::Vector3<double>> kvec_d_in(2, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
-    std::vector<std::complex<double>> hk(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0));
-    Grid_Driver gd(0,0,0);
+    hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
+    hsk.set_zero_hk();
+    Grid_Driver gd(0, 0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    hamilt::Operator<std::complex<double>> *op = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
-        nullptr, 
-        kvec_d_in, 
-        HR, 
-        &hk, 
-        &ucell, 
-        &gd,
-        paraV
-    );
-    hamilt::Operator<std::complex<double>> *op1 = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
-        nullptr, 
-        kvec_d_in, 
-        HR, 
-        &hk, 
-        &ucell, 
-        &gd,
-        paraV
-    );
+    hamilt::Operator<std::complex<double>>* op
+        = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
+                                                                                                    kvec_d_in,
+                                                                                                    HR,
+                                                                                                    &ucell,
+                                                                                                    {1.0},
+                                                                                                    &gd,
+                                                                                                    &intor_);
+    hamilt::Operator<std::complex<double>>* op1
+        = new hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
+                                                                                                    kvec_d_in,
+                                                                                                    HR,
+                                                                                                    &ucell,
+                                                                                                    {1.0},
+                                                                                                    &gd,
+                                                                                                    &intor_);
     // merge two Operators to a chain
     op->add(op1);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time0 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time0
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     start_time = std::chrono::high_resolution_clock::now();
     // calculate HR and folding HK for gamma point
     op->init(0);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time1 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::chrono::duration<double> elapsed_time1
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
 
     // check the value of HR
     double result_ref = test_size * 10;
@@ -183,11 +176,11 @@ TEST_F(TNLTest, testTVNLcd2cd)
         int i = 0;
         for (int mu = 0; mu < indexes1.size(); ++mu)
         {
-            for(int nu = 0; nu < indexes2.size(); ++nu)
+            for (int nu = 0; nu < indexes2.size(); ++nu)
             {
-                if(mu % npol == nu % npol)
+                if (mu % npol == nu % npol)
                 {
-                    EXPECT_EQ(tmp.get_pointer(0)[i].real(), 2.0);
+                    EXPECT_EQ(tmp.get_pointer(0)[i].real(), 1.0);
                     EXPECT_EQ(tmp.get_pointer(0)[i].imag(), 0.0);
                     EXPECT_EQ(tmp.get_pointer(1)[i].real(), result_ref);
                     EXPECT_EQ(tmp.get_pointer(1)[i].imag(), 0.0);
@@ -204,13 +197,14 @@ TEST_F(TNLTest, testTVNLcd2cd)
         }
     }
     // check the value of HK of gamma point
-    result_ref += 2.0;
+    auto* hk = hsk.get_hk();
+    result_ref += 1.0;
     int i = 0;
-    for ( int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
     {
-        for ( int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
         {
-            if (irow%npol == icol%npol)
+            if (irow % npol == icol % npol)
             {
                 EXPECT_NEAR(hk[i].real(), result_ref, 1e-10);
                 EXPECT_NEAR(hk[i].imag(), 0.0, 1e-10);
@@ -225,21 +219,24 @@ TEST_F(TNLTest, testTVNLcd2cd)
     }
     // calculate HK for k point
     start_time = std::chrono::high_resolution_clock::now();
-    hk.assign(paraV->get_row_size() * paraV->get_col_size(), std::complex<double>(0.0, 0.0) );
+    hsk.set_zero_hk();
     op->init(1);
     end_time = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed_time2 = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
-    std::cout << "Test terms:   " <<std::setw(15)<< "constructor" <<std::setw(15)<< "init(HR+HK)" <<std::setw(15)<< "2nd-init(HK)" << std::endl;
-    std::cout << "Elapsed time: " <<std::setw(15)<< elapsed_time0.count()<<std::setw(15)<<elapsed_time1.count()<<std::setw(15)<<elapsed_time2.count() << " seconds." << std::endl;
+    std::chrono::duration<double> elapsed_time2
+        = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "Test terms:   " << std::setw(15) << "constructor" << std::setw(15) << "init(HR+HK)" << std::setw(15)
+              << "2nd-init(HK)" << std::endl;
+    std::cout << "Elapsed time: " << std::setw(15) << elapsed_time0.count() << std::setw(15) << elapsed_time1.count()
+              << std::setw(15) << elapsed_time2.count() << " seconds." << std::endl;
     // check the value of HK
-    double result_ref1 = -1.6180339887498931 + test_size * 10;
-    double result_ref2 = -1.1755705045849467;
+    double result_ref1 = -1.6180339887498931 / 2 + test_size * 10;
+    double result_ref2 = -1.1755705045849467 / 2;
     i = 0;
-    for ( int irow = 0; irow < paraV->get_row_size(); ++irow)
+    for (int irow = 0; irow < paraV->get_row_size(); ++irow)
     {
-        for ( int icol = 0; icol < paraV->get_col_size(); ++icol)
+        for (int icol = 0; icol < paraV->get_col_size(); ++icol)
         {
-            if (irow%npol == icol%npol)
+            if (irow % npol == icol % npol)
             {
                 EXPECT_NEAR(hk[i].real(), result_ref1, 1e-10);
                 EXPECT_NEAR(hk[i].imag(), result_ref2, 1e-10);

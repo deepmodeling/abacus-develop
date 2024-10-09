@@ -1,82 +1,143 @@
-#ifndef CUBIC_SPLINE_INTERPOLATOR_H_
-#define CUBIC_SPLINE_INTERPOLATOR_H_
+#ifndef CUBIC_SPLINE_INTERPOLATION_H_
+#define CUBIC_SPLINE_INTERPOLATION_H_
 
-#include "lapack_connector.h"
+#include <vector>
+#include <cstddef>
 
 namespace ModuleBase
 {
 
-/*!
- * @brief A class that performs cubic spline interplations.
+/**
+ * @brief Cubic spline interplation.
  *
- * This class interpolates a given set of data points (x[i],y[i]) (i=0,...,n-1)
- * by piecewise cubic polynomials with continuous first and second derivatives
- * at x[i].
+ * Interpolating a set of data points (x[i], y[i]) (i=0,...,n-1) by piecewise
+ * cubic polynomials
  *
- * There are two ways to use this class. The first way treats the class as an
- * interpolant object, and the second way uses the static member functions.
+ *      p_i(x) = c0[i] + c1[i]*(x-x[i]) + c2[i]*(x-x[i])^2 + c3[i]*(x-x[i])^3
  *
- * Usage-1: interpolant object
+ * with continuous first and second derivatives. (p_i(x) is defined on the
+ * interval [x[i], x[i+1]])
  *
- *      CubicSpline cubspl;
+ * There are two ways to use this class. The first way treats class objects as
+ * interpolants; the second way uses static member functions.
  *
- *      // build the interpolant
- *      // n is the number of data points (x[i],y[i]) (i=0,...,n-1)
- *      // by default "not-a-knot" boundary condition is used at both ends
- *      cubspl.build(n, x, y);
+ * Usage-1: object as interpolant
  *
- *      // alternatively one can specify the first or second derivatives at the ends
- *      cubspl.build(n, x, y, CubicSpline::BoundaryCondition::second_deriv,
- *                      CubicSpline::BoundaryCondition::second_deriv, 1.0, -2.0);
+ *      //---------------------------------------------------------------------
+ *      //                          basic usage
+ *      //---------------------------------------------------------------------
+ *      // build the interpolant object
+ *      // n is the number of data points (x[i], y[i]) (i=0,...,n-1)
+ *      CubicSpline cubspl(n, x, y);
  *
- *      // not-a-knot, first_deriv & second_deriv can be independently applied to
- *      // each end; two ends do not necessarily have the same type of condition
- *      cubspl.build(n, x, y, CubicSpline::BoundaryCondition::first_deriv,
- *                      CubicSpline::BoundaryCondition::not-a-knot, 1.0);
+ *      // evaluates the interpolant at multiple places (x_interp)
+ *      // n_interp is the number of places to evaluate the interpolant
+ *      cubspl.eval(n_interp, x_interp, y_interp); // values are returned in y_interp
  *
- *      // periodic boundary condition needs to be specified at both ends
- *      // and y[0] must equal y[n-1] in this case
- *      cubspl.build(n, x, y, CubicSpline::BoundaryCondition::periodic,
- *                            CubicSpline::BoundaryCondition::periodic );
- *
- *      // calculate the values of interpolant at x_interp[i]
- *      cubspl.eval(n_interp, x_interp, y_interp);
- *
- *      // calculate the values & derivatives of interpolant at x_interp[i]
+ *      // evaluates both the values and first derivatives at x_interp
  *      cubspl.eval(n_interp, x_interp, y_interp, dy_interp);
+ *
+ *      // evaluates the second derivative only
+ *      cubspl.eval(n_interp, x_interp, nullptr, nullptr, d2y_interp);
+ *
+ *      //---------------------------------------------------------------------
+ *      //                      evenly spaced knots
+ *      //---------------------------------------------------------------------
+ *      // Interpolants with evenly spaced knots can be built by a different
+ *      // constructor, which allows faster evaluation due to quicker index lookup.
+ *
+ *      // build an interpolant with evenly spaced knots x[i] = x0 + i*dx
+ *      CubicSpline cubspl(n, x0, dx, y);
+ *
+ *      //---------------------------------------------------------------------
+ *      //                      boundary conditions
+ *      //---------------------------------------------------------------------
+ *      // By default "not-a-knot" boundary condition is applied to both ends.
+ *      // Other supported boundary conditions include first/second derivatives
+ *      // and periodic boundary condition.
+ *
+ *      // build an interpolant with f''(start) = 1.0 and f'(end) = 3.0
+ *      CubicSpline cubspl(n, x, y,
+ *                         {CubicSpline::BoundaryType::second_deriv, 1.0},
+ *                         {CubicSpline::BoundaryType::first_deriv, 3.0});
+ *
+ *      // build an interpolant with periodic boundary condition
+ *      CubicSpline cubspl(n, x, y, // y[0] must equal y[n-1]
+ *                         {CubicSpline::BoundaryType::periodic},
+ *                         {CubicSpline::BoundaryType::periodic});
+ *
+ *      //---------------------------------------------------------------------
+ *      //                      multiple interpolants
+ *      //---------------------------------------------------------------------
+ *      // Once an object is constructed, more interpolants that share the same
+ *      // knots can be added.
+ *      // Such interpolants can be evaluated simultaneously at a single place.
+ *
+ *      // build an object with 5 interpolants
+ *      CubicSpline cubspl5(n, x, y);
+ *      cubspl5.reserve(5); // reduce memory reallocations & data copies
+ *      cubspl5.add(y2);
+ *      cubspl5.add(y3, {CubicSpline::BoundaryType::first_deriv, 1.0}, {});
+ *      cubspl5.add(y4, {}, {CubicSpline::BoundaryType::second_deriv, 2.0});
+ *      cubspl5.add(y5);
+ *
+ *      // alternative, one may start with an empty object with knots only:
+ *      // CubicSpline cubspl5(n, x);
+ *      // cubspl5.reserve(5);
+ *      // cubspl5.add(y);
+ *      // cubspl5.add(y2);
+ *      // ...
+ *
+ *      // evaluates the five interpolants simultaneously at a single place
+ *      cubspl5.multi_eval(x_interp, y_interp)
+ *
+ *      // evaluate the first and third interpolants at a single place
+ *      std::vector<int> ind = {0, 2};
+ *      cubspl5.multi_eval(ind.size(), ind.data(), x_interp, y_interp)
+ *
+ *      // evaluate the last interpolant (i_spline == 4) at multiple places
+ *      cubspl5.eval(n_interp, x_interp, y_interp, nullptr, nullptr, 4)
+ *
  *
  * Usage-2: static member functions
  *
- *      // gets the first-derivatives (s) at knots
- *      // may build with various boundary conditions as above
- *      CubicSpline::build(n, x, y, s);
+ *      // step-1: computes the first-derivatives at knots
+ *      // boundary conditions defaulted to "not-a-knot"
+ *      CubicSpline::build(n, x, y, {}, {}, dy);
  *
- *      // evaluates the interpolant with knots, values & derivatives
- *      CubicSpline::eval(n, x, y, s, n_interp, x_interp, y_interp, dy_interp);
+ *      // Various boundary conditions and evenly spaced knots are supported
+ *      // in the same way as the interpolant object.
  *
- *                                                                                 */
+ *      // step-2: computes the interpolated values & derivatives
+ *      CubicSpline::eval(n, x, y, dy, n_interp, x_interp, y_interp, dy_interp);
+ *
+ *      // Simultaneous evaluation of multiple interpolants are not supported
+ *      // for static functions.
+ *
+ */
 class CubicSpline
-{
-  public:
-    CubicSpline(){};
-    CubicSpline(CubicSpline const&);
-    CubicSpline& operator=(CubicSpline const&);
+{    
+    //*****************************************************************
+    //                      boundary condition
+    //*****************************************************************
 
-    ~CubicSpline() { cleanup(); }
+public:
 
-    /*!
-     * @brief Boundary conditions of cubic spline interpolations.
+    /**
+     * @brief Types of cubic spline boundary conditions.
      *
-     * Available boundary conditions include:
-     * - not_a_knot:   the first two pieces at the start or the last two at the end
-     *                 are the same polynomial, i.e., x[1] or x[n-2] is not a "knot";
-     * - first_deriv:  User-defined first derivative;
-     * - second_deriv: User-defined second derivative;
-     * - periodic:     The first and second derivatives at two ends are continuous.
-     *                 This condition requires that y[0] = y[n-1] and it must be
-     *                 applied to both ends.
-     *                                                                             */
-    enum class BoundaryCondition
+     * Supported types include:
+     * - not_a_knot     The first or last two pieces are the same polynomial,
+     *                  i.e., x[1] or x[n-2] is not a "knot". This does not
+     *                  rely on any prior knowledge of the original function
+     *                  and is the default option.
+     * - first_deriv    user-defined first derivative
+     * - second_deriv   user-defined second derivative
+     * - periodic       the first and second derivatives at two ends are continuous.
+     *                  This condition requires that y[0] = y[n-1] and it must be
+     *                  applied to both ends
+     */
+    enum class BoundaryType
     {
         not_a_knot,
         first_deriv,
@@ -84,189 +145,467 @@ class CubicSpline
         periodic
     };
 
-    /*!
-     * @brief Builds the interpolant.
+
+    /**
+     * @brief Boundary condition for cubic spline interpolation.
      *
-     * By calling this function, the class object computes and stores the first-order
-     * derivatives at knots by from given data points and boundary conditions, which
-     * makes the object an interpolant.
-     *                                                                              */
-    void build(const int n,           //!< [in] number of data points
-               const double* const x, //!< [in] x coordiates of data points, must be strictly increasing
-               const double* const y, //!< [in] y coordiates of data points
-               BoundaryCondition bc_start = BoundaryCondition::not_a_knot, //!< [in] boundary condition at start
-               BoundaryCondition bc_end = BoundaryCondition::not_a_knot,   //!< [in] boundary condition at end
-               const double deriv_start = 0.0, //!< [in] first or second derivative at the start,
-                                               //!<      used if bc_start is first_deriv or second_deriv
-               const double deriv_end = 0.0    //!< [in] first or second derivative at the end,
-                                               //!<      used if bc_end is first_deriv or second_deriv
+     * An object of this struct represents an actual boundary condition at one end,
+     * which contains a type and possibly a value (first/second_deriv only).
+     *
+     */
+    struct BoundaryCondition
+    {
+        // for not_a_knot and periodic
+        BoundaryCondition(BoundaryType type = BoundaryType::not_a_knot);
+
+        // for first/second_deriv
+        BoundaryCondition(BoundaryType type, double val);
+
+        BoundaryType type;
+        double val = 0.0;
+    };
+
+
+    //*****************************************************************
+    //                      interpolant object
+    //*****************************************************************
+
+public:
+
+    CubicSpline()                   = delete;
+    CubicSpline(CubicSpline const&) = default;
+    CubicSpline(CubicSpline &&)     = default;
+
+    CubicSpline& operator=(CubicSpline const&)  = default;
+    CubicSpline& operator=(CubicSpline &&)      = default;
+
+    ~CubicSpline() = default; 
+
+
+    /**
+     * @brief Builds an interpolant object.
+     *
+     * Constructing a cubic spline interpolant from a set of data points
+     * (x[i], y[i]) (i=0,1,...,n-1) and boundary conditions.
+     *
+     * @param[in]   n               number of data points
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     * @param[in]   y               y coordinates of data points
+     * @param[in]   bc_start        boundary condition at start
+     * @param[in]   bc_end          boundary condition at end
+     *
+     */
+    CubicSpline(
+        int n,
+        const double* x,
+        const double* y,
+        const BoundaryCondition& bc_start = {},
+        const BoundaryCondition& bc_end = {}
     );
 
-    /*!
-     * @brief Evaluates the interpolant.
+
+    /**
+     * @brief Builds an interpolant object with evenly-spaced knots.
      *
-     * This function evaluates the interpolant at x_interp[i].
-     * On finish, interpolated values are placed in y_interp,
-     * and the derivatives at x_interp[i] are placed in dy_interp.
+     * Constructing a cubic spline interpolant from a set of data points
+     * (x0+i*dx, y[i]) (i=0,1,...,n-1) and boundary conditions.
      *
-     * If y_interp or dy_interp is nullptr, the corresponding values are
-     * not calculated. They must not be nullptr at the same time.
+     * @param[in]   n               number of data points
+     * @param[in]   x0              x coordinate of the first data point (first knot)
+     * @param[in]   dx              spacing between knots (must be positive)
+     * @param[in]   y               y coordinates of data points
+     * @param[in]   bc_start        boundary condition at start
+     * @param[in]   bc_end          boundary condition at end
      *
-     * @note the interpolant must be built before calling this function.
-     *                                                                              */
-    void eval(const int n,                      //!< [in]  number of points to evaluate the interpolant
-              const double* const x_interp,     //!< [in]  places where the interpolant is evaluated;
-                                                //!<       must be within [x_[0], x_[n-1]]
-              double* const y_interp,           //!< [out] interpolated values
-              double* const dy_interp = nullptr //!< [out] derivatives at x_interp
+     */
+    CubicSpline(
+        int n,
+        double x0,
+        double dx,
+        const double* y,
+        const BoundaryCondition& bc_start = {},
+        const BoundaryCondition& bc_end = {}
     );
 
-    /// knots of the interpolant
-    const double* x() const { return x_; }
 
-    /// values at knots
-    const double* y() const { return y_; }
+    /**
+     * @brief Builds an empty object with specified knots only.
+     *
+     * An object of this class can hold multiple interpolants with the same knots.
+     * This constructor allows the user to initialize the object with knots only,
+     * so that interpolants can be added later.
+     * 
+     * @param[in]   n               number of knots
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     *
+     */
+    CubicSpline(int n, const double* x);
 
-    /// first-order derivatives at knots
-    const double* s() const { return s_; }
+    /**
+     * @brief Builds an empty object with specified knots only.
+     *
+     * An object of this class can hold multiple interpolants with the same knots.
+     * This constructor allows the user to initialize the object with knots only,
+     * so that interpolants can be added later.
+     *
+     * @param[in]   n               number of knots
+     * @param[in]   x0              x coordinate of the first data point (first knot)
+     * @param[in]   dx              spacing between knots (must be positive)
+     *
+     */
+    CubicSpline(int n, double x0, double dx);
 
-    static void build(const int n,           //!< [in] number of data points
-                      const double* const x, //!< [in] x coordiates of data points, must be strictly increasing
-                      const double* const y, //!< [in] y coordiates of data points
-                      double* const s,       //!< [out] first-order derivatives at knots
-                      BoundaryCondition bc_start = BoundaryCondition::not_a_knot, //!< [in] boundary condition at start
-                      BoundaryCondition bc_end = BoundaryCondition::not_a_knot,   //!< [in] boundary condition at end
-                      const double deriv_start = 0.0, //!< [in] first or second derivative at the start,
-                                                      //!<      used if bc_start is first_deriv or second_deriv
-                      const double deriv_end = 0.0    //!< [in] first or second derivative at the end,
-                                                      //!<      used if bc_end is first_deriv or second_deriv
+    /**
+     * @brief Adds an interpolant that shares the same knots.
+     *
+     * An object of this class can hold multiple interpolants with the same knots.
+     * Once constructed, more interpolants sharing the same knots can be added by
+     * this function. Multiple interpolants can be evaluated simultaneously at a
+     * single place by multi_eval.
+     *
+     * @param[in]   y               y coordinates of data points
+     * @param[in]   bc_start        boundary condition at start
+     * @param[in]   bc_end          boundary condition at end
+     *
+     */
+    void add(
+        const double* y,
+        const BoundaryCondition& bc_start = {},
+        const BoundaryCondition& bc_end = {}
     );
 
-    static void eval(const int n,                      //!< [in]  number of knots
-                     const double* const x,            //!< [in]  knots of the interpolant
-                     const double* const y,            //!< [in]  values at knots
-                     const double* const s,            //!< [in]  first-order derivatives at knots
-                     const int n_interp,               //!< [in]  number of points to evaluate the interpolant
-                     const double* const x_interp,     //!< [in]  places where the interpolant is evaluated;
-                                                       //!<       must be within [x_[0], x_[n-1]]
-                     double* const y_interp,           //!< [out] interpolated values
-                     double* const dy_interp = nullptr //!< [out] derivatives at x_interp
-    );
 
-  private:
-    //! number of data points
+    /**
+     * @brief Evaluates a single interpolant at multiple places.
+     *
+     * @param[in]   n_interp        number of places to evaluate the interpolant
+     * @param[in]   x_interp        places where an interpolant is evaluated
+     *                              (must be within the range of knots)
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
+     * @param[in]   i_spline        index of the interpolant to evaluate
+     *
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
+     *
+     */
+    void eval(
+        int n_interp,
+        const double* x_interp,
+        double* y_interp,
+        double* dy_interp = nullptr,
+        double* d2y_interp = nullptr,
+        int i_spline = 0
+    ) const;
+
+
+    /**
+     * @brief Evaluates multiple interpolants at a single place.
+     *
+     * @param[in]   n_spline        number of interpolants to evaluate
+     * @param[in]   i_spline        indices of interpolants to evaluate
+     * @param[in]   x_interp        place where interpolants are evaluated
+     *                              (must be within the range of knots)
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
+     *
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
+     *
+     */
+    void multi_eval(
+        int n_spline,
+        const int* i_spline,
+        double x_interp,
+        double* y_interp,
+        double* dy_interp = nullptr,
+        double* d2y_interp = nullptr
+    ) const;
+
+
+    /**
+     * @brief Evaluates all interpolants at a single place.
+     *
+     * @param[in]   x_interp        place where interpolants are evaluated
+     *                              (must be within the range of knots)
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
+     *
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
+     *
+     */
+    void multi_eval(
+        double x_interp,
+        double* y_interp,
+        double* dy_interp = nullptr,
+        double* d2y_interp = nullptr
+    ) const;
+
+
+    /**
+     * @brief Reserves memory for holding more interpolants.
+     *
+     * By default this class does not reserve memory for multiple interpolants.
+     * Without reservation, whenever a new interpolant is added, memory has to
+     * be reallocated and old data copied, which could waste a lot of time if
+     * there's a large number of interpolants to add.
+     *
+     * This function help avoid repetitive memory reallocations and data copies
+     * by a one-shot reservation.
+     *
+     * @param[in]   n_spline        expected total number of interpolants
+     *
+     */
+    void reserve(int n_spline) { y_.reserve(n_spline * n_ * 2); }
+
+
+    /// heap memory usage in bytes
+    size_t heap_usage() const { return (x_.capacity() + y_.capacity()) * sizeof(double); }
+
+    /// first knot
+    double xmin() const { return xmin_; }
+
+    /// last knot
+    double xmax() const { return xmax_; }
+
+    /// number of interpolants held by this object
+    int n_spline() const { return n_spline_; }
+
+
+private:
+
+    /// number of cubic spline interpolants
+    int n_spline_ = 0;
+
+    /// number of knots
     int n_ = 0;
 
-    //! knots (x coordinates of data points)
-    double* x_ = nullptr;
+    /// first knot
+    double xmin_ = 0.0;
 
-    //! values at knots
-    double* y_ = nullptr;
+    /// last knot
+    double xmax_ = 0.0;
 
-    //! first-order derivatives at knots
-    double* s_ = nullptr;
+    /// spacing between knots (only used for evenly-spaced knots)
+    double dx_ = 0.0;
 
-    //! A flag that tells whether the knots are evenly spaced.
-    bool is_uniform_ = false;
+    /// knots of the spline polynomial (remains empty for evenly-spaced knots)
+    std::vector<double> x_;
 
-    //! Numerical threshold for determining whether the knots are evenly spaced.
-    /*!
-     *  The knots are considered uniform (evenly spaced) if for every i from 0 to n-2
+    /// values and first derivatives at knots
+    std::vector<double> y_;
+
+
+    //*****************************************************************
+    //                      static functions
+    //*****************************************************************
+
+public:
+
+    /**
+     * @brief Computes the first derivatives at knots for cubic spline
+     * interpolation.
      *
-     *          abs( (x[i+1]-x[i]) - (x[n-1]-x[0])/(n-1) ) < uniform_thr_
-     *                                                                              */
-    double uniform_thr_ = 1e-15;
-
-    /// Checks whether the input arguments are valid for building a cubic spline.
-    static void check_build(const int n,
-                            const double* const x,
-                            const double* const y,
-                            BoundaryCondition bc_start,
-                            BoundaryCondition bc_end);
-
-    /// Checks whether the input arguments are valid for evaluating a cubic spline.
-    static void check_interp(const int n,
-                             const double* const x,
-                             const double* const y,
-                             const double* const s,
-                             const int n_interp,
-                             const double* const x_interp,
-                             double* const y_interp,
-                             double* const dy_interp);
-
-    //! Solves a cyclic tridiagonal linear system.
-    /*!
-     *  This function solves a cyclic tridiagonal linear system A*x=b where b
-     *  is a vector and A is given by
+     * @param[in]   n               number of data points
+     * @param[in]   x               x coordinates of data points
+     *                              ("knots", must be strictly increasing)
+     * @param[in]   y               y coordinates of data points
+     * @param[in]   bc_start        boundary condition at start
+     * @param[in]   bc_end          boundary condition at end
+     * @param[out]  dy              first derivatives at knots
      *
-     *      D[0]   U[0]                           L[n-1]
-     *      L[0]   D[1]   U[1]
-     *             L[1]   D[2]   U[2]
-     *                    ...    ...      ...
-     *                          L[n-3]   D[n-2]   U[n-2]
-     *      U[n-1]                       L[n-2]   D[n-1]
-     *
-     *  On finish, b is overwritten by the solution.
-     *
-     *  Sherman-Morrison formula is used to convert the problem into a tridiagonal
-     *  linear system, after which the problem can be solved by dgtsv efficiently.
-     *
-     *  @note D, L, U are all modified in this function, so use with care!
-     *                                                                              */
-    static void solve_cyctri(const int n,     //!< [in] size of the linear system
-                             double* const D, //!< [in] main diagonal
-                             double* const U, //!< [in] superdiagonal
-                             double* const L, //!< [in] subdiagonal
-                             double* const b  //!< [in,out] right hand side of the linear system;
-                                              //!< will be overwritten by the solution on finish.
+     */
+    static void build(
+        int n,
+        const double* x,
+        const double* y,
+        const BoundaryCondition& bc_start,
+        const BoundaryCondition& bc_end,
+        double* dy
     );
 
-    //! Wipes off the interpolant (if any) and deallocates memories.
-    void cleanup();
 
-    /// Evaluates a cubic polynomial and its derivative.
-    template <bool EvalY, bool EvalDy>
-    static void _poly_eval(double w, double c0, double c1, double c2, double c3, double* y, double* dy)
-    {
-        if (EvalY)
-        {
-            *y = ((c3 * w + c2) * w + c1) * w + c0;
-        }
-
-        if (EvalDy)
-        {
-            *dy = (3.0 * c3 * w + 2.0 * c2) * w + c1;
-        }
-    }
-
-    /*!
-     * @brief Generates a function that returns the index of the left knot of the
-     *        spline polynomial to be evaluated.
+    /**
+     * @brief Computes the first derivatives at evenly-spaced knots for
+     * cubic spline interpolation.
      *
-     * This function takes the knots of the interpolant and returns a function that
-     * takes a value x_interp and returns the index of the left knot of the spline
-     * polynomial. If "is_uniform" is not 0/1, this function will checks whether
-     * the knots are evenly spaced. The returned function makes use of "is_uniform"
-     * to speed up the search.
-     *                                                                              */
-    static std::function<int(double)> _gen_search(const int n, const double* const x, int is_uniform = -1);
-
-    /*!
-     * @brief Evaluates a cubic spline with given knots, values and derivatives.
-     *                                                                              */
-    static void _eval(const double* const x,            //!< [in]  knots of the interpolant
-                      const double* const y,            //!< [in]  values at knots
-                      const double* const s,            //!< [in]  first-order derivatives at knots
-                      const int n_interp,               //!< [in]  number of points to evaluate the interpolant
-                      const double* const x_interp,     //!< [in]  places where the interpolant is evaluated;
-                                                        //!<       must be within [x_[0], x_[n-1]]
-                      double* const y_interp,           //!< [out] interpolated values
-                      double* const dy_interp,          //!< [out] derivatives at x_interp
-                      std::function<int(double)> search //!< [in]  a function that returns the index of the left
-                                                        //         knot of the spline polynomial to be evaluated
+     * @param[in]   n               number of data points
+     * @param[in]   dx              spacing between knots (must be positive)
+     * @param[in]   y               y coordinates of data points
+     * @param[in]   bc_start        boundary condition at start
+     * @param[in]   bc_end          boundary condition at end
+     * @param[out]  dy              first derivatives at knots
+     *
+     */
+    static void build(
+        int n,
+        double dx,
+        const double* y,
+        const BoundaryCondition& bc_start,
+        const BoundaryCondition& bc_end,
+        double* dy
     );
+
+
+    /**
+     * @brief Evaluates a cubic spline polynomial at multiple places.
+     *
+     * @param[in]   n               number of knots
+     * @param[in]   x               knots (must be strictly increasing)
+     * @param[in]   y               values at knots
+     * @param[in]   dy              first derivatives at knots
+     * @param[in]   n_interp        number of places to evaluate the interpolant
+     * @param[in]   x_interp        places where the interpolant is evaluated
+     *                              (must be within the range of knots)
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
+     *
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
+     *
+     */
+    static void eval(
+        int n,
+        const double* x,
+        const double* y,
+        const double* dy,
+        int n_interp,
+        const double* x_interp,
+        double* y_interp,
+        double* dy_interp = nullptr,
+        double* d2y_interp = nullptr
+    );
+
+
+    /**
+     * @brief Evaluates a cubic spline polynomial with evenly spaced knots.
+     *
+     * @param[in]   n               number of knots
+     * @param[in]   x0              first knot
+     * @param[in]   dx              spacing between knots
+     * @param[in]   y               values at knots
+     * @param[in]   dy              first derivatives at knots
+     * @param[in]   n_interp        number of places to evaluate the interpolant
+     * @param[in]   x_interp        places where the interpolant is evaluated
+     *                              (must be within the range of knots)
+     * @param[out]  y_interp        values at x_interp
+     * @param[out]  dy_interp       first derivatives at x_interp
+     * @param[out]  d2y_interp      second derivatives at x_interp
+     *
+     * @note pass nullptr to any of the output would suppress the corresponding calculation
+     *
+     */
+    static void eval(
+        int n,
+        double x0,
+        double dx,
+        const double* y,
+        const double* dy,
+        int n_interp,
+        const double* x_interp,
+        double* y_interp,
+        double* dy_interp = nullptr,
+        double* d2y_interp = nullptr
+    );
+
+
+private:
+
+    /// Computational routine for building cubic spline interpolant
+    static void _build(
+        int n,
+        const double* dx,
+        const double* y,
+        const BoundaryCondition& bc_start,
+        const BoundaryCondition& bc_end,
+        double* dy
+    );
+
+
+    /**
+     * @brief Segment index lookup.
+     *
+     * Given a strictly increasing array x and a target within the range of
+     * x, this function returns an index i such that x[i] <= target < x[i+1]
+     * if target != x[n-1], or n-2 if t == x[n-1].
+     *
+     */
+    static inline int _index(int n, const double* x, double target);
+
+
+    /// Segment index lookup (evenly spaced knots).
+    static inline int _index(int n, double x0, double dx, double target);
+
+
+    /// Evaluates a batch of cubic polynomials.
+    static inline void _cubic(
+        int n,
+        const double* w,
+        const double* c0,
+        const double* c1,
+        const double* c2,
+        const double* c3,
+        double* y,
+        double* dy,
+        double* d2y
+    );
+
+
+    /// Asserts that the input arguments are valid for constructing a cubic spline.
+    static void _validate_build(
+        int n,
+        const double* dx,
+        const double* y,
+        const BoundaryCondition& bc_start,
+        const BoundaryCondition& bc_end
+    );
+
+
+    /// Asserts that the input arguments are valid for interpolating a cubic spline.
+    static void _validate_eval(
+        int n,
+        const double (&u)[2],
+        const double* x,
+        const double* y,
+        const double* dy,
+        int n_interp,
+        const double* x_interp
+    );
+
+
+    /**
+     * @brief Solves a cyclic tridiagonal linear system.
+     *
+     * A cyclic tridiagonal linear system A*x=b where b is a vector and
+     *
+     *        --                                             --   
+     *        |  d[0]   u[0]                           l[n-1] |
+     *        |  l[0]   d[1]   u[1]                           |
+     *   A =  |         l[1]   d[2]   u[2]                    |
+     *        |                ...    ...      ...            |
+     *        |                      l[n-3]   d[n-2]   u[n-2] |
+     *        |  u[n-1]                       l[n-2]   d[n-1] |
+     *        --                                             --
+     *
+     * is transformed to a tridiagonal linear system by the Sherman-Morrison
+     * formula, and then solved by dgtsv.
+     *
+     * @param[in]       n       size of the linear system
+     * @param[in]       d       main diagonal
+     * @param[in]       u       superdiagonal
+     * @param[in]       l       subdiagonal
+     * @param[in,out]   b       right hand side of the linear system; will be
+     *                          overwritten by the solution on finish.
+     *
+     * @note d, l, u are all overwritten in this function.
+     *
+     */
+    static void _solve_cyctri(int n, double* d, double* u, double* l, double* b);
 };
 
-}; // namespace ModuleBase
+} // namespace ModuleBase
 
 #endif

@@ -8,7 +8,7 @@ using namespace pybind11::literals;
 template <typename... Args>
 using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
-PYBIND11_MODULE(_core, m)
+void bind_numerical_radial(py::module& m)
 {
     // Create the submodule for NumericalRadial
     py::module m_numerical_radial = m.def_submodule("NumericalRadial");

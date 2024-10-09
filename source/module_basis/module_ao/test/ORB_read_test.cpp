@@ -76,7 +76,6 @@ void LcaoOrbitalsTest::SetUp() {
     orbital_file_.push_back("./lcao_H2O/H_gga_8au_60Ry_2s1p.orb");
     orbital_file_.push_back("./lcao_H2O/O_gga_7au_60Ry_2s2p1d.orb");
 
-    // below we mimic ORB_control::read_orb_first
     ecutwfc_ = 123.0;
     dk_ = 0.01;
     dR_ = 0.01;
@@ -94,7 +93,6 @@ void LcaoOrbitalsTest::lcao_read() {
     lcao_.bcast_files(ntype_, GlobalV::MY_RANK);
 #endif
 
-    // see ORB_control::read_orb_first
     lcao_.ecutwfc = ecutwfc_;
     lcao_.dk = dk_;
     lcao_.dR = dR_;

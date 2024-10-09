@@ -1,5 +1,5 @@
 #include "VL_in_pw.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/math_integral.h"
 #include "module_base/timer.h"
@@ -19,7 +19,7 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 
 void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis)
 {
-	if(GlobalV::use_paw) return;
+	if(PARAM.inp.use_paw) return;
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
 	// This routine computes the fourier coefficient of the local
@@ -47,9 +47,9 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		{
 			this->vloc_of_g(
 					atom->ncpp.msh, // after cutoff 
-					atom->ncpp.rab,
-		          	atom->ncpp.r, 
-					atom->ncpp.vloc_at, // local potential in real space radial form.  
+					atom->ncpp.rab.data(),
+		          	atom->ncpp.r.data(), 
+					atom->ncpp.vloc_at.data(), // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
 					rho_basis);
@@ -77,8 +77,8 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 
 void pseudopot_cell_vl::allocate(const int ngg)
 {
-	if(GlobalV::use_paw) return;
-	if(GlobalV::test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
+	if(PARAM.inp.test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
+	if(PARAM.inp.use_paw) return;
 	this->vloc.create(GlobalC::ucell.ntype, ngg);
 
 	delete[] numeric;
@@ -253,13 +253,13 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 {
 	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
-	bool check_vl = GlobalV::out_element_info;
+	bool check_vl = PARAM.inp.out_element_info;
 	if(check_vl)
 	{
 		for(int it=0; it<GlobalC::ucell.ntype; it++)
 		{
 			std::stringstream ss ;
-			ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
+			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
 			std::ofstream ofs_vg( ss.str().c_str() );
 			for(int ig=0;ig<rho_basis->ngg;ig++)
 			{

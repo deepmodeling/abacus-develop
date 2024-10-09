@@ -3,15 +3,15 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 
-nbands			8
+nbands			24
 symmetry		1
-pseudo_dir	../../PP_ORB
-orbital_dir	../../PP_ORB
+pseudo_dir	    ../../PP_ORB
+orbital_dir	    ../../PP_ORB
 gamma_only      1
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
+scf_thr				1e-6
 scf_nmax			100
 
 nspin           2

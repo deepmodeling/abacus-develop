@@ -69,6 +69,20 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_logo = 'abacus-logo.svg'
 
+
+# Changes for compatibility with Read the Docs
+import os
+
+# Define the canonical URL if you are using a custom domain on Read the Docs
+html_baseurl = os.environ.get("READTHEDOCS_CANONICAL_URL", "")
+
+# Tell Jinja2 templates the build is running on Read the Docs
+if os.environ.get("READTHEDOCS", "") == "True":
+    if "html_context" not in globals():
+        html_context = {}
+    html_context["READTHEDOCS"] = True
+
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
@@ -76,7 +90,7 @@ html_static_path = ['_static']
 
 latex_engine = 'xelatex'
 mathjax_path = 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-mml-chtml.min.js'
-#deepmodeling_current_site = 'Tutorials'
+# deepmodeling_current_site = 'Tutorials'
 latex_elements = {
     'extraclassoptions':'openany,oneside'
 }

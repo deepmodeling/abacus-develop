@@ -9,6 +9,7 @@ void Exx_Opt_Orb::print_matrix(
 	const std::vector<std::vector<RI::Tensor<double>>> &matrix_S,
 	const RI::Tensor<double> &matrix_V,
 	const size_t TA, const size_t IA, const size_t TB, const size_t IB,
+    const std::vector<double>& orb_cutoff,
 	const ModuleBase::Element_Basis_Index::Range &range_jles, 
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_jles) const
 {
@@ -64,9 +65,9 @@ void Exx_Opt_Orb::print_matrix(
 		ofs << Exx_Abfs::Jle::Ecut_exx << " ecutwfc_jlq" << std::endl;//mohan modify 2009-09-08
 
 		if(TA==TB)
-			ofs << GlobalC::ORB.Phi[TA].getRcut() << " rcut_Jlq" << std::endl;
+			ofs << orb_cutoff[TA] << " rcut_Jlq" << std::endl;
 		else
-			ofs << GlobalC::ORB.Phi[TA].getRcut() << " " << GlobalC::ORB.Phi[TB].getRcut() << " rcut_Jlq" << std::endl;
+			ofs << orb_cutoff[TA] << " " << orb_cutoff[TB] << " rcut_Jlq" << std::endl;
 
 		// mohan add 'smooth' and 'smearing_sigma' 2009-08-28
 		ofs << 0 << " smooth" << std::endl;
@@ -76,7 +77,7 @@ void Exx_Opt_Orb::print_matrix(
 
 		ofs << Exx_Abfs::Jle::Lmax << " lmax" << std::endl;
 
-		ofs << kv.nkstot << " nks" << std::endl;
+		ofs << kv.get_nkstot() << " nks" << std::endl;
 		assert( matrix_V.shape[0] == matrix_V.shape[1] );
 		ofs	<< matrix_V.shape[0] << " nbands" << std::endl;
 		
@@ -90,15 +91,15 @@ void Exx_Opt_Orb::print_matrix(
 		const size_t nwfc = (TA==TB && IA==IB) ? cal_sum_M(TA) : cal_sum_M(TA)+cal_sum_M(TB);
 		ofs	<< nwfc << " nwfc" << std::endl;
 		
-		const size_t ecut_numberA = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * GlobalC::ORB.Phi[TA].getRcut() / ModuleBase::PI ); // Rydberg Unit
-		const size_t ecut_numberB = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * GlobalC::ORB.Phi[TB].getRcut() / ModuleBase::PI ); // Rydberg Unit
+		const size_t ecut_numberA = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TA] / ModuleBase::PI ); // Rydberg Unit
+		const size_t ecut_numberB = static_cast<size_t>( sqrt( Exx_Abfs::Jle::Ecut_exx ) * orb_cutoff[TB] / ModuleBase::PI ); // Rydberg Unit
 		if(TA==TB)
 			ofs	<< ecut_numberA << " ne" << std::endl;
 		else
 			ofs	<< ecut_numberA << " " << ecut_numberB << " ne" << std::endl;
 		
 		ofs << "<WEIGHT_OF_KPOINTS>" << std::endl;
-		for( int ik=0; ik!=kv.nkstot; ++ik )		
+		for( int ik=0; ik!=kv.get_nkstot(); ++ik )		
 		{
 			ofs << kv.kvec_c[ik].x << " " << kv.kvec_c[ik].y << " " << kv.kvec_c[ik].z;
 			ofs << " " << kv.wk[ik] * 0.5 << std::endl;

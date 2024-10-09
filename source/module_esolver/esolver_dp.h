@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void Init(Input& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell
@@ -44,7 +44,7 @@ class ESolver_DP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void Run(const int istep, UnitCell& cell) override;
+    void runner(const int istep, UnitCell& cell) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -52,38 +52,36 @@ class ESolver_DP : public ESolver
      * @param etot the computed energy
      * @return total energy without ion kinetic energy
      */
-    double cal_Energy() override;
+    double cal_energy() override;
 
     /**
      * @brief get the computed atomic forces
      *
      * @param force the computed atomic forces
      */
-    void cal_Force(ModuleBase::matrix& force) override;
+    void cal_force(ModuleBase::matrix& force) override;
 
     /**
      * @brief get the computed lattice virials
      *
      * @param stress the computed lattice virials
      */
-    void cal_Stress(ModuleBase::matrix& stress) override;
+    void cal_stress(ModuleBase::matrix& stress) override;
 
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
-    void postprocess() override;
+    void after_all_runners() override;
 
   private:
     /**
      * @brief determine the type map of DP model
      *
      * @param ucell unitcell information
-     * @return true if find keyword "type_map" in DP model
-     * @return false if not find keyword "type_map" in DP model
      */
-    bool type_map(const UnitCell& ucell);
+    void type_map(const UnitCell& ucell);
 
     /**
      * @brief DeePMD related variables for ESolver_DP class
@@ -102,20 +100,24 @@ class ESolver_DP : public ESolver
 #endif
 
     /**
-     * @brief Variables for storing simulation data in ESolver_DP class
+     * Variables for storing simulation data in ESolver_DP class
      *
      * These variables are used in the ESolver_DP class to store simulation data such as atomic positions, types, and
      * the potential energy and forces.
+     *
      */
-    std::string dp_file;          ///< the directory of DP model file
-    std::vector<int> dp_type;     ///< convert atom type to dp type if find type_map
-    std::vector<double> cell;     ///< the lattice vectors
-    std::vector<int> atype;       ///< the atom type corresponding to DP model
-    std::vector<double> coord;    ///< the atomic positions
-    double dp_potential;          ///< the computed potential energy
-    ModuleBase::matrix dp_force;  ///< the computed atomic forces
-    ModuleBase::matrix dp_virial; ///< the computed lattice virials
-    UnitCell* ucell_;             ///< pointer to the unitcell information
+
+    std::string dp_file;             ///< directory of DP model file
+    std::vector<double> cell = {};   ///< lattice vectors
+    std::vector<int> atype = {};     ///< atom type corresponding to DP model
+    std::vector<double> coord = {};  ///< atomic positions
+    std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
+    std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
+    double rescaling = 1.0;          ///< rescaling factor for DP model
+    double dp_potential = 0.0;       ///< computed potential energy
+    ModuleBase::matrix dp_force;     ///< computed atomic forces
+    ModuleBase::matrix dp_virial;    ///< computed lattice virials
+    UnitCell* ucell_;                ///< pointer to the unit cell object
 };
 
 } // namespace ModuleESolver

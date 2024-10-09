@@ -3,16 +3,14 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
+# Last Update in 2024-0811
+
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 # From https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
-elpa_ver="2023.05.001"
-elpa_sha256="ec64be5d6522810d601a3b8e6a31720e3c3eb4af33a434d8a64570d76e6462b6"
-#elpa_ver="2021.11.002"
-#elpa_sha256="576f1caeed7883b81396640fda0f504183866cf6cbd4bc71d1383ba2208f1f97"
-#elpa_ver="2022.11.001"
-#elpa_sha256="35e397d7c0af95bb43bc7bef7fff29425c1da400fa0cd86ae8d3bd2ff2f9d999"
+elpa_ver="2024.05.001"
+elpa_sha256="9caf41a3e600e2f6f4ce1931bd54185179dade9c171556d0c9b41bbc6940f2f6"
 
 
 source "${SCRIPT_DIR}"/common_vars.sh
@@ -54,20 +52,22 @@ case "$with_elpa" in
         # extra LDFLAGS needed
         cray_ldflags="-dynamic"
       fi
-      enable_openmp="no"
+      # enable_openmp="no"
     fi
 
     if verify_checksums "${install_lock_file}"; then
       echo "elpa-${elpa_ver} is already installed, skipping it."
     else
       require_env MATH_LIBS
-      if [ -f elpa-${elpa_ver}.tar.gz ]; then
-        echo "elpa-${elpa_ver}.tar.gz is found"
+      elpa_pkg="elpa-${elpa_ver}.tar.gz"
+      url=f"https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
+      if [ -f ${elpa_pkg} ]; then
+        echo "${elpa_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${elpa_sha256}" "elpa-${elpa_ver}.tar.gz"
+        download_pkg_from_url "${elpa_sha256}" "${elpa_pkg}" "${url}"
       fi
       [ -d elpa-${elpa_ver} ] && rm -rf elpa-${elpa_ver}
-      tar -xzf elpa-${elpa_ver}.tar.gz
+      tar -xzf ${elpa_pkg}
 
       # elpa expect FC to be an mpi fortran compiler that is happy
       # with long lines, and that a bunch of libs can be found
@@ -78,7 +78,7 @@ case "$with_elpa" in
       AVX512_flags=""
       FMA_flag=""
       SSE4_flag=""
-      config_flags="--disable-avx --disable-avx2 --disable-avx512 --disable-sse --disable-sse-assembly"
+      config_flags="--disable-avx-kernels --disable-avx2-kernels --disable-avx512-kernels --disable-sse-kernels --disable-sse-assembly-kernels"
       if [ "${TARGET_CPU}" = "native" ]; then
         if [ -f /proc/cpuinfo ] && [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
           has_AVX=$(grep '\bavx\b' /proc/cpuinfo 1> /dev/null && echo 'yes' || echo 'no')
@@ -93,7 +93,7 @@ case "$with_elpa" in
           grep '\bavx512cd\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512cd"
           grep '\bavx512bw\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512bw"
           grep '\bavx512vl\b' /proc/cpuinfo 1> /dev/null && AVX512_flags+=" -mavx512vl"
-          config_flags="--enable-avx=${has_AVX} --enable-avx2=${has_AVX2} --enable-avx512=${has_AVX512}"
+          config_flags="--enable-avx-kernels=${has_AVX} --enable-avx2-kernels=${has_AVX2} --enable-avx512-kernels=${has_AVX512}"
         fi
       fi
       for TARGET in "cpu" "nvidia"; do
@@ -191,13 +191,13 @@ prepend_path LD_RUN_PATH "$pkg_install_dir/lib"
 prepend_path LIBRARY_PATH "$pkg_install_dir/lib"
 prepend_path PKG_CONFIG_PATH "$pkg_install_dir/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "$pkg_install_dir"
-export PATH="$pkg_install_dir/bin":$PATH
-export LD_LIBRARY_PATH="$pkg_install_dir/lib":$LD_LIBRARY_PATH
-export LD_RUN_PATH="$pkg_install_dir/lib":$LD_RUN_PATH
-export LIBRARY_PATH="$pkg_install_dir/lib":$LIBRARY_PATH
-export CPATH="$pkg_install_dir/include":$CPATH
-export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":$PKG_CONFIG_PATH
-export CMAKE_PREFIX_PATH="$pkg_install_dir":$CMAKE_PREFIX_PATH
+export PATH="$pkg_install_dir/bin":\${PATH}
+export LD_LIBRARY_PATH="$pkg_install_dir/lib":\${LD_LIBRARY_PATH}
+export LD_RUN_PATH="$pkg_install_dir/lib":\${LD_RUN_PATH}
+export LIBRARY_PATH="$pkg_install_dir/lib":\${LIBRARY_PATH}
+export CPATH="$pkg_install_dir/include":\${CPATH}
+export PKG_CONFIG_PATH="$pkg_install_dir/lib/pkgconfig":\${PKG_CONFIG_PATH}
+export CMAKE_PREFIX_PATH="$pkg_install_dir":\${CMAKE_PREFIX_PATH}
 export ELPA_ROOT="$pkg_install_dir"
 EOF
   fi

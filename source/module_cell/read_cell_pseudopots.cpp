@@ -1,56 +1,57 @@
-#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
-
 #include "module_base/parallel_common.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "unitcell.h"
+#include "read_pp.h"
+
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &log)
+void UnitCell::read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log)
 {
-	ModuleBase::TITLE("UnitCell","read_cell_pseudopots");
-	// setup reading log for pseudopot_upf
-	std::stringstream ss;
-	ss << GlobalV::global_out_dir << "atom_pseudo.log";
-	
-	// Read in the atomic pseudo potentials
-	std::string pp_address;
-	for (int i = 0;i < ntype;i++)
-	{
-		Pseudopot_upf upf;
-        upf.coulomb_potential=this->atoms[i].coulomb_potential;
-	
-		// mohan update 2010-09-12	
-		int error = 0;
-		int error_ap = 0;
-		
-		if(GlobalV::MY_RANK==0)
-		{
-			pp_address = pp_dir + this->pseudo_fn[i];
-			error = upf.init_pseudo_reader( pp_address, this->pseudo_type[i] ); //xiaohui add 2013-06-23
+    ModuleBase::TITLE("UnitCell", "read_cell_pseudopots");
+    // setup reading log for pseudopot_upf
+    std::stringstream ss;
+    ss << PARAM.globalv.global_out_dir << "atom_pseudo.log";
 
-			if(error==0) // mohan add 2021-04-16
-			{
-				if(this->atoms[i].flag_empty_element)	// Peize Lin add for bsse 2021.04.07
-				{
-					upf.set_empty_element();			
-				}
-                upf.set_upf_q(); // liuyu add 2023-09-21
+    // Read in the atomic pseudo potentials
+    std::string pp_address;
+    for (int i = 0; i < ntype; i++)
+    {
+        Pseudopot_upf upf;
+        upf.coulomb_potential = this->atoms[i].coulomb_potential;
+
+        // mohan update 2010-09-12
+        int error = 0;
+        int error_ap = 0;
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            pp_address = pp_dir + this->pseudo_fn[i];
+            error = upf.init_pseudo_reader(pp_address, this->pseudo_type[i], this->atoms[i].ncpp); // xiaohui add 2013-06-23
+
+            if (error == 0) // mohan add 2021-04-16
+            {
+                if (this->atoms[i].flag_empty_element) // Peize Lin add for bsse 2021.04.07
+                {
+                    upf.set_empty_element(this->atoms[i].ncpp);
+                }
+                upf.set_upf_q(this->atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                error_ap = upf.average_p(GlobalV::soc_lambda); // added by zhengdy 2020-10-20
+                error_ap = upf.average_p(PARAM.inp.soc_lambda, this->atoms[i].ncpp); // added by zhengdy 2020-10-20
             }
             this->atoms[i].coulomb_potential = upf.coulomb_potential;
         }
 
 #ifdef __MPI
-		Parallel_Common::bcast_int(error);
-		Parallel_Common::bcast_int(error_ap);
+        Parallel_Common::bcast_int(error);
+        Parallel_Common::bcast_int(error_ap);
         Parallel_Common::bcast_bool(atoms[i].coulomb_potential);
 #endif
 
-		if(error_ap) 
-		{
+        if (error_ap)
+        {
             ModuleBase::WARNING_QUIT("UnitCell::read_cell_pseudopots", "error when average the pseudopotential.");
         }
 
@@ -80,8 +81,7 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
 
         if (GlobalV::MY_RANK == 0)
         {
-            atoms[i].ncpp.set_pseudo(upf);
-
+		    upf.complete_default(this->atoms[i].ncpp);
             log << "\n Read in pseudopotential file is " << pseudo_fn[i] << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "pseudopotential type", atoms[i].ncpp.pp_type);
             ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
@@ -96,22 +96,22 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
                 ModuleBase::GlobalFunc::OUT(log, "L of projector", atoms[i].ncpp.lll[ib]);
             }
             //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
-            if (GlobalV::DFT_FUNCTIONAL != "default")
+            if (PARAM.inp.dft_functional != "default")
             {
-                std::string xc_func1 = GlobalV::DFT_FUNCTIONAL;
+                std::string xc_func1 = PARAM.inp.dft_functional;
                 transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
                 if (xc_func1 != atoms[i].ncpp.xc_func)
                 {
-                    std::cout << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    std::cout << " dft_functional readin is: " << PARAM.inp.dft_functional << std::endl;
                     std::cout << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func << std::endl;
                     std::cout << " Please make sure this is what you need" << std::endl;
-                    GlobalV::ofs_warning << " dft_functional readin is: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    GlobalV::ofs_warning << " dft_functional readin is: " << PARAM.inp.dft_functional << std::endl;
                     GlobalV::ofs_warning << " dft_functional in pseudopot file is: " << atoms[i].ncpp.xc_func
                                          << std::endl;
                     GlobalV::ofs_warning << " Please make sure this is what you need" << std::endl;
 
                     atoms[i].ncpp.xc_func = xc_func1;
-                    log << " XC functional updated to : " << GlobalV::DFT_FUNCTIONAL << std::endl;
+                    log << " XC functional updated to : " << PARAM.inp.dft_functional << std::endl;
                     ModuleBase::GlobalFunc::OUT(log, "exchange-correlation functional", atoms[i].ncpp.xc_func);
                 }
             }
@@ -120,18 +120,19 @@ void UnitCell::read_cell_pseudopots(const std::string &pp_dir, std::ofstream &lo
     return;
 }
 
-
-void UnitCell::print_unitcell_pseudo(const std::string &fn)
+void UnitCell::print_unitcell_pseudo(const std::string& fn)
 {
-	if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","print_unitcell_pseudo");
-	std::ofstream ofs( fn.c_str() );
+    if (PARAM.inp.test_pseudo_cell) {
+        ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
+}
+    std::ofstream ofs(fn.c_str());
 
-	this->print_cell(ofs);
-	for (int i = 0;i < ntype;i++)
-	{
-		atoms[i].print_Atom(ofs);
-	}
+    this->print_cell(ofs);
+    for (int i = 0; i < ntype; i++)
+    {
+        atoms[i].print_Atom(ofs);
+    }
 
-	ofs.close();
-	return;
+    ofs.close();
+    return;
 }

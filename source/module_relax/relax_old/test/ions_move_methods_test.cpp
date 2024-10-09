@@ -1,8 +1,9 @@
 #include "for_test.h"
-#define private public
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
 #include "module_relax/relax_old/ions_move_methods.h"
+#undef private
 /************************************************
  *  unit tests of class Ions_Move_Methods
  ***********************************************/
@@ -39,19 +40,19 @@ class IonsMoveMethodsTest : public ::testing::Test
 // Test the allocate() function
 TEST_F(IonsMoveMethodsTest, Allocate)
 {
-    GlobalV::RELAX_METHOD = "bfgs";
+    Ions_Move_Basic::relax_method = "bfgs";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    GlobalV::RELAX_METHOD = "sd";
+    Ions_Move_Basic::relax_method = "sd";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    GlobalV::RELAX_METHOD = "cg";
+    Ions_Move_Basic::relax_method = "cg";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 
-    GlobalV::RELAX_METHOD = "cg_bfgs";
+    Ions_Move_Basic::relax_method = "cg_bfgs";
     imm.allocate(natom);
     EXPECT_EQ(Ions_Move_Basic::dim, 6);
 }
@@ -59,14 +60,14 @@ TEST_F(IonsMoveMethodsTest, Allocate)
 // Test the allocate() function warning quit
 TEST_F(IonsMoveMethodsTest, AllocateWarningQuit)
 {
-    GlobalV::RELAX_METHOD = "none";
+    Ions_Move_Basic::relax_method = "none";
     GlobalV::ofs_warning.open("log");
     imm.allocate(natom);
     GlobalV::ofs_warning.close();
 
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(output, testing::HasSubstr("the parameter GlobalV::RELAX_METHOD is not correct."));
+    EXPECT_THAT(output, testing::HasSubstr("the parameter Ions_Move_Basic::relax_method is not correct."));
     ifs.close();
     std::remove("log");
 }
@@ -80,22 +81,22 @@ TEST_F(IonsMoveMethodsTest, CalMovement)
     const double etot = 0.0;
     UnitCell ucell;
 
-    GlobalV::RELAX_METHOD = "bfgs";
+    Ions_Move_Basic::relax_method = "bfgs";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    GlobalV::RELAX_METHOD = "sd";
+    Ions_Move_Basic::relax_method = "sd";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    GlobalV::RELAX_METHOD = "cg";
+    Ions_Move_Basic::relax_method = "cg";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
 
-    GlobalV::RELAX_METHOD = "cg_bfgs";
+    Ions_Move_Basic::relax_method = "cg_bfgs";
     imm.allocate(natom);
     imm.cal_movement(istep, force_step, f, etot, ucell);
     EXPECT_EQ(Ions_Move_Basic::istep, force_step);
@@ -109,7 +110,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
     const ModuleBase::matrix f(3, 3);
     const double etot = 0.0;
     UnitCell ucell;
-    GlobalV::RELAX_METHOD = "none";
+    Ions_Move_Basic::relax_method = "none";
     imm.allocate(natom);
 
     GlobalV::ofs_warning.open("log");
@@ -118,7 +119,7 @@ TEST_F(IonsMoveMethodsTest, CalMovementWarningQuit)
 
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
-    EXPECT_THAT(output, testing::HasSubstr("the parameter GlobalV::RELAX_METHOD is not correct."));
+    EXPECT_THAT(output, testing::HasSubstr("the parameter Ions_Move_Basic::relax_method is not correct."));
     ifs.close();
     std::remove("log");
 }

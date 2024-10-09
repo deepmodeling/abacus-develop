@@ -1,5 +1,6 @@
-#include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
+#include "../xc_functional.h"
 #include "../exx_info.h"
 
 /************************************************
@@ -12,7 +13,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
@@ -21,7 +22,6 @@ namespace GlobalV
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 1;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC
@@ -29,7 +29,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_HSE : public testing::Test
+class XCTest_HSE : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -47,7 +47,7 @@ TEST_F(XCTest_HSE, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),4);
 }
 
-class XCTest_SCAN0 : public testing::Test
+class XCTest_SCAN0 : public XCTest
 {
     protected:
         void SetUp()
@@ -62,13 +62,12 @@ TEST_F(XCTest_SCAN0, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),5);
 }
 
-class XCTest_KSDT : public testing::Test
+class XCTest_KSDT : public XCTest
 {
     protected:
         void SetUp()
         {
             XC_Functional::set_xc_type("XC_LDA_XC_KSDT");
-            GlobalV::XC_TEMPERATURE = 0.5;
         }
 };
 
@@ -77,7 +76,7 @@ TEST_F(XCTest_KSDT, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),1);
 }
 
-class XCTest_KT2 : public testing::Test
+class XCTest_KT2 : public XCTest
 {
     protected:
         void SetUp()
@@ -91,7 +90,7 @@ TEST_F(XCTest_KT2, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),2);
 }
 
-class XCTest_R2SCAN : public testing::Test
+class XCTest_R2SCAN : public XCTest
 {
     protected:
         void SetUp()
@@ -105,7 +104,7 @@ TEST_F(XCTest_R2SCAN, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),3);
 }
 
-class XCTest_LB07 : public testing::Test
+class XCTest_LB07 : public XCTest
 {
     protected:
         void SetUp()
@@ -119,7 +118,7 @@ TEST_F(XCTest_LB07, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),4);
 }
 
-class XCTest_BMK : public testing::Test
+class XCTest_BMK : public XCTest
 {
     protected:
         void SetUp()
@@ -133,7 +132,7 @@ TEST_F(XCTest_BMK, set_xc_type)
     EXPECT_EQ(XC_Functional::get_func_type(),5);
 }
 
-class XCTest_HF : public testing::Test
+class XCTest_HF : public XCTest
 {
     protected:
         void SetUp()

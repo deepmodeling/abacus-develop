@@ -3,9 +3,12 @@
 
 #define private public
 #define protected public
+#include "module_parameter/parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "prepare_unitcell.h"
+#undef protected
+#undef private
 
 // mock functions for UnitCell
 #ifdef __LCAO
@@ -43,8 +46,8 @@ double get_ucell_omega()
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
-    GlobalV::NSPIN = 1;
-    GlobalV::test_charge = 0;
+    PARAM.input.nspin = 1;
+    PARAM.input.test_charge = 0;
     GlobalV::nelec = 8;
 }
 } // namespace elecstate
@@ -59,12 +62,12 @@ void Set_GlobalV_Default()
  *     - this is a trivial test
  *   - Allocate: Charge::set_rhopw(), Charge::allocate(), Charge::destroy()
  *     - allocate rho, rhog, rho_save, rhog_save, kin_r, kin_r_save
- *     - using rhopw and GlobalV::NSPIN
+ *     - using rhopw and PARAM.input.nspin
  *   - SumRho: Charge::sum_rho()
  *     - calculate \sum_{is}^nspin \sum_{ir}^nrxx rho[is][ir]
  *   - RenormalizeRho: Charge::renormalize_rho()
  *     - renormalize rho so as to ensure the sum of rho equals to total number of electrons
- *   - CheckNe: Charge::check_ne()
+ *   - CheckNe: Charge::cal_rho2ne()
  *     - check the total number of electrons summed from rho[is]
  *   - SaveRhoBeforeSumBand: Charge::save_rho_before_sum_band()
  *     - meaning as the function name
@@ -118,14 +121,14 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->npw, 3143);
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
-    GlobalV::test_charge = 2;
+    PARAM.input.test_charge = 2;
     elecstate::tmp_xc_func_type = 3;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
     // test if Charge::allocate() be called twice
-    EXPECT_NO_THROW(charge->allocate(GlobalV::NSPIN));
+    EXPECT_NO_THROW(charge->allocate(PARAM.input.nspin));
     EXPECT_TRUE(charge->allocate_rho);
 }
 
@@ -133,9 +136,9 @@ TEST_F(ChargeTest, SumRho)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -151,9 +154,9 @@ TEST_F(ChargeTest, RenormalizeRho)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -171,9 +174,9 @@ TEST_F(ChargeTest, CheckNe)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -185,16 +188,16 @@ TEST_F(ChargeTest, CheckNe)
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
-    EXPECT_NEAR(charge->check_ne(charge->rho[0]), 8.0, 1e-10);
+    EXPECT_NEAR(charge->cal_rho2ne(charge->rho[0]), 8.0, 1e-10);
 }
 
 TEST_F(ChargeTest, SaveRhoBeforeSumBand)
 {
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
-    charge->allocate(GlobalV::NSPIN);
+    charge->allocate(PARAM.input.nspin);
     EXPECT_TRUE(charge->allocate_rho);
-    int nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin = (PARAM.input.nspin == 2) ? 2 : 1;
     for (int is = 0; is < nspin; is++)
     {
         for (int ir = 0; ir < rhopw->nrxx; ir++)
@@ -207,17 +210,15 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
-    EXPECT_NEAR(charge->check_ne(charge->rho_save[0]), 8.0, 1e-10);
+    EXPECT_NEAR(charge->cal_rho2ne(charge->rho_save[0]), 8.0, 1e-10);
 }
 
 TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
     elecstate::tmp_xc_func_type = 1;
-    GlobalV::test_charge = 2;
+    PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);
 }
 
-#undef protected
-#undef private

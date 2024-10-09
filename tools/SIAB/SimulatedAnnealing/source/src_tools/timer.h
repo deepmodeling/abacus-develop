@@ -8,7 +8,6 @@
 #include <ctime>
 #include <string>
 #include <fstream>
-#include <sstream>
 #include <iostream>
 #include <iomanip>
 using namespace std;
@@ -35,14 +34,14 @@ class timer
 //==========================================================
 	static void tick(const string &class_name_in,const string &name_in);
 
-	static void start(void);
-	static void finish(void);
+	static void start();
+	static void finish();
 
-	static void enable(void);
-	static void disable(void);
+	static void enable();
+	static void disable();
 
-	static void print_all(void);
-	static long double print_until_now(void);
+	static void print_all();
+	static long double print_until_now();
 	static double print(const string &name_in);
 
 	private:
@@ -72,7 +71,7 @@ class timer
 // MEMBER FUNCTIONS :
 // NAME : cpu_time(calculate time)
 //==========================================================
-	static double cpu_time(void);
+	static double cpu_time();
 	static bool delete_flag;
 
 };

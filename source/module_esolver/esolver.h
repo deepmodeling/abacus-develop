@@ -3,14 +3,12 @@
 
 #include "module_base/matrix.h"
 #include "module_cell/unitcell.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleESolver
 {
 class ESolver
 {
-    // protected:
-    //     ModuleBase::matrix lattice_v;
   public:
     ESolver()
     {
@@ -21,33 +19,49 @@ class ESolver
     {
     }
 
-    // virtual void Init(Input_EnSolver &inp, matrix &lattice_v)=0
-    virtual void Init(Input& inp, UnitCell& cell) = 0;
+    //! initialize the energy solver by using input parameters and cell modules
+    virtual void before_all_runners(const Input_para& inp, UnitCell& cell) = 0;
 
-    // They shoud be add after atom class is refactored
-    // virtual void UpdateLatAtom(ModuleBase::matrix &lat_in, Atom &atom_in);
-    // virtual void UpdateLat(ModuleBase::matrix &lat_in);
-    // virtual void UpdateAtom(Atom &atom_in);
+    //! run energy solver
+    virtual void runner(const int istep, UnitCell& cell) = 0;
 
-    virtual void Run(int istep, UnitCell& cell) = 0;
+    //! perform post processing calculations
+    virtual void after_all_runners(){};
 
-    // Deal with exx and other calculation than scf/md/relax:
-    //  such as nscf, get_wf and get_pchg
-    virtual void othercalculation(const int istep){};
+    //! deal with exx and other calculation than scf/md/relax/cell-relax:
+    //! such as nscf, get_wf and get_pchg
+    virtual void others(const int istep){};
 
-    virtual double cal_Energy() = 0;
-    virtual void cal_Force(ModuleBase::matrix& force) = 0;
-    virtual void cal_Stress(ModuleBase::matrix& stress) = 0;
-    virtual void postprocess(){};
+    //! calculate total energy of a given system
+    virtual double cal_energy() = 0;
+
+    //! calcualte forces for the atoms in the given cell
+    virtual void cal_force(ModuleBase::matrix& force) = 0;
+
+    //! calcualte stress of given cell
+    virtual void cal_stress(ModuleBase::matrix& stress) = 0;
+
 
     // Print current classname.
     void printname();
 
     // temporarily
     // get iterstep used in current scf
-    virtual int getniter()
+    virtual int get_niter()
     {
         return 0;
+    }
+
+    // get maxniter used in current scf
+    virtual int get_maxniter()
+    {
+        return 0;
+    }
+
+    // get conv_elec used in current scf
+    virtual bool get_conv_elec()
+    {
+        return true;
     }
     std::string classname;
 };
@@ -55,7 +69,7 @@ class ESolver
 /**
  * @brief A subrutine called in init_esolver()
  *        This function returns type of ESolver
- *        Based on GlobalV::BASIS_TYPE and GlobalV::ESOLVER_TYPE
+ *        Based on PARAM.inp.basis_type and PARAM.inp.esolver_type
  * 
  * @return [out] std::string The type of ESolver
  */
@@ -68,11 +82,11 @@ std::string determine_type();
  * the corresponding ESolver child class. It supports various ESolver types including ksdft_pw,
  * ksdft_lcao, ksdft_lcao_tddft, sdft_pw, ofdft, lj_pot, and dp_pot.
  *
- * @param [in, out] p_esolver A pointer to an ESolver object that will be initialized.
+ * @return [out] A pointer to an ESolver object that will be initialized.
  */
-void init_esolver(ESolver*& p_esolver);
+ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
-void clean_esolver(ESolver*& pesolver);
+void clean_esolver(ESolver*& pesolver, const bool lcao_cblacs_exit = false);
 
 } // namespace ModuleESolver
 

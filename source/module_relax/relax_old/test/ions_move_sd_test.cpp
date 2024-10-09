@@ -1,9 +1,11 @@
 #include "for_test.h"
-#define private public
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_sd.h"
+#undef private
 /************************************************
  *  unit tests of class Ions_Move_SD
  ***********************************************/
@@ -24,6 +26,7 @@ class IonsMoveSDTest : public ::testing::Test
         Ions_Move_Basic::dim = 6;
         Ions_Move_Basic::update_iter = 5;
         im_sd.allocate();
+        PARAM.input.force_thr = 0.001;
     }
 
     void TearDown() override
@@ -149,7 +152,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase1)
 {
     // setup data
     Ions_Move_Basic::istep = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.out_level = "ie";
 
     // call function
     testing::internal::CaptureStdout();
@@ -168,7 +171,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase2)
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = -1.0;
-    GlobalV::OUT_LEVEL = "m";
+    PARAM.input.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd();
@@ -183,7 +186,7 @@ TEST_F(IonsMoveSDTest, CalTradiusSdCase3)
     // setup data
     Ions_Move_Basic::istep = 2;
     Ions_Move_Basic::ediff = 1.0;
-    GlobalV::OUT_LEVEL = "m";
+    PARAM.input.out_level = "m";
 
     // call function
     im_sd.cal_tradius_sd();

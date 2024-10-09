@@ -1,12 +1,12 @@
 #ifndef SCALAPACK_CONNECTOR_H
 #define SCALAPACK_CONNECTOR_H
 
+#ifdef __MPI
+
 #include <complex>
 
 extern "C"
 {
-	void blacs_gridinit_( int *ictxt, const char *order, const int *nprow, const int *npcol );
-	void blacs_gridinfo_( const int *ictxt, int *nprow, int *npcol, int *myprow, int *mypcol );
 	int numroc_( const int *n, const int *nb, const int *iproc, const int *srcproc, const int *nprocs );
 	void descinit_( 
 		int *desc, 
@@ -17,12 +17,12 @@ extern "C"
 //	void pzpotrf_(char *uplo, int *n, double _Complex *a, int *ia, int *ja, int *desca, int *info);
 	void pzpotrf_(char *uplo, int *n, std::complex<double> *a, int *ia, int *ja, int *desca, int *info);
 
-	void pdtran_(int *m , int *n ,
-		double *alpha , double *a , int *ia , int *ja , int *desca ,
-		double *beta ,  double *c , int *ic , int *jc , int *descc );
+    void pdtran_(const int* m, const int* n,
+        const double* alpha, const double* a, const int* ia, const int* ja, const  int* desca,
+        const double* beta, double* c, const int* ic, const int* jc, const int* descc);
 
 	void pztranu_(const int *m,const int*n,
-		const std::complex<double> *alpha , std::complex<double> *a , const int *ia , const int *ja ,const int *desca ,
+        const std::complex<double>* alpha, const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
 		const std::complex<double> *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
 
 	void pzgemv_(
@@ -99,13 +99,71 @@ extern "C"
                 		const std::complex<double> *beta,
 		const std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
-  void pztranc_(
+    void pztranc_(
 		const int *M, const int *N,
 		const std::complex<double> *alpha,
 		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
 		const std::complex<double> *beta,
 		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
+	
+    void pdgemr2d_(const int *M, const int *N,
+	    double *A, const int *IA, const int *JA, const int *DESCA, 
+		double *B, const int *IB, const int *JB, const int *DESCB,
+		const int *ICTXT);			   
+		
+    void pzgemr2d_(const int *M, const int *N,
+	    std::complex<double> *A, const int *IA, const int *JA, const int *DESCA, 
+		std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
+		const int *ICTXT);
+
+	// Scalapack wrappers to copy 2D blocks of data
+	// more info: 
+	// https://netlib.org/scalapack/explore-html/da/db5/pigemr_8c.html
+	// https://netlib.org/scalapack/explore-html/dd/dcd/pdgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d5/dd4/pzgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d5/deb/psgemr_8c.html
+	// https://netlib.org/scalapack/explore-html/d4/dad/pcgemr_8c.html
+	void Cpigemr2d (int m, int n, int *ptrmyblock, int ia, int ja, int *ma, int *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpdgemr2d (int m, int n, double *ptrmyblock, int ia, int ja, int *ma, double *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpzgemr2d (int m, int n, std::complex<double> *ptrmyblock, int ia, int ja, int *ma, std::complex<double> *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpsgemr2d (int m, int n, float *ptrmyblock, int ia, int ja, int *ma, float *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
+	void Cpcgemr2d (int m, int n, std::complex<float> *ptrmyblock, int ia, int ja, int *ma, std::complex<float> *ptrmynewblock, int ib, int jb, int *mb, int globcontext);
 }
+
+	template <typename T>
+	struct block2d_data_type
+	{
+		constexpr static bool value = std::is_same<T, double>::value || std::is_same<T, std::complex<double>>::value || std::is_same<T, float>::value || std::is_same<T, std::complex<float>>::value || std::is_same<T, int>::value;
+	};
+
+
+	/**
+	 * Copies a 2D block of data from matrix A to matrix B using the Scalapack library.
+	 * This function supports different data types: double, std::complex<double>, float, std::complex<float>, and int.
+	 *
+	 * @tparam T The data type of the matrices A and B.
+	 * @param M The number of rows of matrix A.
+	 * @param N The number of columns of matrix A.
+	 * @param A Pointer to the source matrix A.
+	 * @param IA The starting row index of the block in matrix A.
+	 * @param JA The starting column index of the block in matrix A.
+	 * @param DESCA Descriptor array for matrix A.
+	 * @param B Pointer to the destination matrix B.
+	 * @param IB The starting row index of the block in matrix B.
+	 * @param JB The starting column index of the block in matrix B.
+	 * @param DESCB Descriptor array for matrix B.
+	 * @param ICTXT The context identifier.
+	 */
+	template <typename T>
+	typename std::enable_if<block2d_data_type<T>::value,void>::type Cpxgemr2d(int M, int N, T *A, int IA, int JA, int *DESCA, T *B, int IB, int JB, int *DESCB, int ICTXT)
+	{
+		if (std::is_same<T,double>::value) Cpdgemr2d(M, N, reinterpret_cast<double*>(A),IA, JA, DESCA,reinterpret_cast<double*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,std::complex<double>>::value) Cpzgemr2d(M, N, reinterpret_cast<std::complex<double>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<double>*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,float>::value) Cpsgemr2d(M, N, reinterpret_cast<float*>(A),IA, JA, DESCA,reinterpret_cast<float*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,std::complex<float>>::value) Cpcgemr2d(M, N, reinterpret_cast<std::complex<float>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<float>*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,int>::value) Cpigemr2d(M, N, reinterpret_cast<int*>(A),IA, JA, DESCA,reinterpret_cast<int*>(B),IB,JB, DESCB,ICTXT);
+	};
+	
 
 class ScalapackConnector
 {
@@ -122,7 +180,21 @@ public:
 		pzgeadd_(&transa, &m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
 	}
 
-	static inline
+    static inline
+        void gemm(
+            const char transa, const char transb,
+            const int M, const int N, const int K,
+            const double alpha,
+            const double* A, const int IA, const int JA, const int* DESCA,
+            const double* B, const int IB, const int JB, const int* DESCB,
+            const double beta,
+            double* C, const int IC, const int JC, const int* DESCC)
+    {
+        pdgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA,
+            B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
+    }
+
+    static inline
 	void gemm(
 		const char transa, const char transb,
 		const int M, const int N, const int K,
@@ -136,7 +208,7 @@ public:
 			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
 	}
 
-	static inline
+    static inline
 	void getrf(
 		const int M, const int N, 
 		std::complex<double> *A, const int IA, const int JA, const int *DESCA,
@@ -164,76 +236,6 @@ public:
 	}
 };
 
-/*
-class ScalapackConnector
-{
-public:
-	static void transpose_desc( int desc_T[9], const int desc[9] )
-	{
-		desc_T[0] = desc[0];
-		desc_T[1] = desc[1];
-		desc_T[2] = desc[3];	desc_T[3] = desc[2];
-		desc_T[4] = desc[5];	desc_T[5] = desc[4];
-		desc_T[6] = desc[6];	desc_T[7] = desc[7];
-		desc_T[8] = desc[8];
-	}
-
-	static void blacs_gridinit( int &ictxt, const char order, const int nprow, const int npcol )
-	{
-		blacs_gridinit_(&ictxt, &order, &nprow, &npcol);
-	}
-	
-	static void blacs_gridinfo( const int &ictxt, int &nprow, int &npcol, int &myprow, int &mypcol )
-	{
-		blacs_gridinfo_( &ictxt, &nprow, &npcol, &myprow, &mypcol );
-	}
-	
-	static int numroc( const int n, const int nb, const int iproc, const int srcproc, const int nprocs )
-	{
-		return numroc_(&n, &nb, &iproc, &srcproc, &nprocs);
-	}
-	
-	static void descinit( 
-		int *desc, 
-		const int m, const int n, const int mb, const int nb, const int irsrc, const int icsrc, 
-		const int ictxt, const int lld, int &info )
-	{
-		descinit_(desc, &m, &n, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
-//		descinit_(desc, &n, &m, &nb, &mb, &irsrc, &icsrc, &ictxt, &lld, &info);
-	}
-	
-	// C = a * A.? * B.? + b * C
-	static void pgemm(
-		const char transa, const char transb,
-		const int M, const int N, const int K,
-		const double alpha,
-		const double *A, const int IA, const int JA, const int *DESCA,
-		const double *B, const int IB, const int JB, const int *DESCB,
-		const double beta,
-		double *C, const int IC, const int JC, const int *DESCC)
-	{
-//		int DESCA_T[9], DESCB_T[9], DESCC_T[9];
-//		transpose_desc( DESCA_T, DESCA );
-//		transpose_desc( DESCB_T, DESCB );
-//		transpose_desc( DESCC_T, DESCC );
-//		pdgemm_(
-//			&transb, &transa,
-//			&N, &M, &K,
-//			&alpha,
-//			B, &JB, &IB, DESCB_T,
-//			A, &JA, &IA, DESCA_T,
-//			&beta,
-//			C, &JC, &IC, DESCC_T);
-		pdgemm_(
-			&transa, &transb,
-			&M, &N, &K,
-			&alpha,
-			A, &JA, &IA, DESCA,
-			B, &JB, &IB, DESCB,
-			&beta,
-			C, &JC, &IC, DESCC);
-	}
-};
-*/
+#endif // __MPI
 
 #endif

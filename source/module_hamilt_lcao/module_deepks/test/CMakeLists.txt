@@ -10,7 +10,7 @@ endif()
 get_target_property(ABACUS_LINK_LIBRARIES ${ABACUS_BIN_NAME} LINK_LIBRARIES)
 target_link_libraries(
     test_deepks
-    base cell symmetry md surchem xc_
+    base cell symmetry md surchem xc_ 
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu deltaspin hcontainer
@@ -31,7 +31,7 @@ if(USE_ELPA)
       genelpa
   )
 endif()
-if(USE_CUSOLVER_LCAO)
+if(USE_CUDA)
   target_link_libraries(diag_cusolver)
 endif()
 

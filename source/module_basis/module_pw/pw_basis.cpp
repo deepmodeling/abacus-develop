@@ -146,9 +146,10 @@ void PW_Basis::collect_uniqgg()
     if(this->npw <= 0) return;
     this->ig_gge0 = -1;
     delete[] this->ig2igg; this->ig2igg = new int [this->npw];
-    int *sortindex = new int [this->npw];
-    double *tmpgg = new double [this->npw];
-    double *tmpgg2 = new double [this->npw];
+//add by A.s 202406
+    int *sortindex = new int [this->npw];//Reconstruct the mapping of the plane wave index ig according to the energy size of the plane waves
+    double *tmpgg = new double [this->npw];//Ranking the plane waves by energy size while ensuring that the same energy is preserved for each wave to correspond
+    double *tmpgg2 = new double [this->npw];//ranking the plane waves by energy size and removing the duplicates
     ModuleBase::Vector3<double> f;
     for(int ig = 0 ; ig < this-> npw ; ++ig)
     {
@@ -175,8 +176,8 @@ void PW_Basis::collect_uniqgg()
     int igg = 0;
     this->ig2igg[sortindex[0]] = 0;
     tmpgg2[0] = tmpgg[0];
-    double avg_gg = tmpgg2[igg];
-    int avg_n = 1;
+    double avg_gg = tmpgg2[igg];//For waves with similar energy,take the average
+    int avg_n = 1;//The number of waves required to take the average
     for (int ig = 1; ig < this->npw; ++ig)
     {
         if (std::abs(tmpgg[ig] - tmpgg2[igg]) > 1.0e-8)

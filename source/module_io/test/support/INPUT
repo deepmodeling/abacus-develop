@@ -18,8 +18,9 @@ nspin                          1 #1: single spin; 2: up and down spin; 4: noncol
 kspacing                       0 #unit in 1/bohr, should be > 0, default is 0 which means read KPT file
 min_dist_coef                  0.2 #factor related to the allowed minimum distance between two atoms
 nbands                         8 #number of bands
-nbands_sto                     256 #number of stochastic bands
 nbands_istate                  5 #number of bands around Fermi level for get_pchg calulation
+bands_to_print                 # specify the bands to be calculated in get_wf and get_pchg calculation
+if_separate_k                  false #specify whether to write the partial charge densities for all k-points to individual files or merge them
 symmetry                       1 #the control of symmetry
 init_vel                       False #read velocity from STRU or not
 symmetry_prec                  1e-06 #accuracy for symmetry
@@ -54,12 +55,12 @@ scf_thr_type                   2 #type of the criterion of scf_thr, 1: reci drho
 init_wfc                       atomic #start wave functions are from 'atomic', 'atomic+random', 'random' or 'file'
 init_chg                       atomic #start charge is from 'atomic' or file
 chg_extrap                     atomic #atomic; first-order; second-order; dm:coefficients of SIA
-out_chg                        FALSE #>0 output charge density for selected electron steps
+out_chg                        0 #>0 output charge density for selected electron steps
 out_pot                        2 #output realspace potential
 out_wfc_pw                     0 #output wave functions
 out_wfc_r                      0 #output wave functions in realspace
 out_dos                        0 #output energy and dos
-out_band                       false #output energy and band structure
+out_band                       0 #output energy and band structure
 out_proj_band                  FaLse #output projected band structure
 restart_save                   f #print to disk every step for restart
 restart_load                   F #restart from disk
@@ -71,7 +72,7 @@ cell_factor                    1.2 #used in the construction of the pseudopotent
 pw_seed                        1 #random seed for initializing wave functions
 
 #Parameters (3.Stochastic DFT)
-method_sto                     3 #1: slow and save memory, 2: fast and waste memory
+method_sto                     2 #1: slow and save memory, 2: fast and waste memory
 npart_sto                      1 #Reduce memory when calculating Stochastic DOS
 nbands_sto                     256 #number of stochstic orbitals
 nche_sto                       100 #Chebyshev expansion orders
@@ -120,7 +121,7 @@ deepks_out_labels              0 #>0 compute descriptor for deepks
 deepks_scf                     0 #>0 add V_delta to Hamiltonian
 deepks_bandgap                 0 #>0 for bandgap label
 deepks_out_unittest            0 #if set 1, prints intermediate quantities that shall be used for making unit test
-deepks_model                    #file dir of traced pytorch model: 'model.ptg
+deepks_model                   None #file dir of traced pytorch model: 'model.ptg
 
 #Parameters (5.LCAO)
 basis_type                     lcao #PW; LCAO in pw; LCAO
@@ -188,15 +189,20 @@ md_seed                        -1 #random seed for MD
 md_prec_level                  2 #precision level for vc-md
 ref_cell_factor                1.2 #construct a reference cell bigger than the initial cell
 md_restart                     0 #whether restart
+lj_rule                        2 #combination rules used to construct the parameter matrix for LJ potential
+lj_eshift                      0 #whether to use energy shift for LJ potential
 lj_rcut                        8.5 #cutoff radius of LJ potential
 lj_epsilon                     0.01032 #the value of epsilon for LJ potential
 lj_sigma                       3.405 #the value of sigma for LJ potential
 pot_file                       graph.pb #the filename of potential files for CMD such as DP
+dp_rescaling                   1.0 #rescaling factor for dp potential
+dp_fparam                      1.0 1.1 #the frame parameter for dp potential
+dp_aparam                      1.0 1.2 #the atomic parameter for dp potential
 msst_direction                 2 #the direction of shock wave
 msst_vel                       0 #the velocity of shock wave
 msst_vis                       0 #artificial viscosity
 msst_tscale                    0.01 #reduction in initial temperature
-msst_qmass                     -1 #mass of thermostat
+msst_qmass                     1 #mass of thermostat
 md_tfreq                       0 #oscillation frequency, used to determine qmass of NHC
 md_damp                        1 #damping parameter (time units) used to add force in Langevin method
 md_nraise                      1 #parameters used when md_type=nvt
@@ -233,7 +239,6 @@ block_height                   0.1 #height of the block
 #Parameters (12.Test)
 out_alllog                     F #output information for each processor, when parallel
 nurse                          0 #for coders
-colour                         0 #for coders, make their live colourful
 t_in_h                         1 #calculate the kinetic energy or not
 vl_in_h                        1 #calculate the local potential or not
 vnl_in_h                       1 #calculate the nonlocal potential or not
@@ -280,7 +285,6 @@ exx_c_grad_threshold           0 #
 exx_v_grad_threshold           0 #
 exx_cauchy_force_threshold     0 #
 exx_cauchy_stress_threshold    0 #
-exx_ccp_threshold              1e-08 #
 exx_ccp_rmesh_times            default #
 exx_distribute_type            htime #htime or kmeans1 or kmeans2
 exx_opt_orb_lmax               0 #
@@ -325,7 +329,7 @@ td_edm                         0 # 0: new edm method   1: old edm method
 out_dipole                   0 #output dipole or not
 out_efield                     0 #output efield or not
 ocp                            0 #change occupation or not
-ocp_set                        none #set occupation
+ocp_set                        2*1 #set occupation
 
 #Parameters (17.berry_wannier)
 berry_phase                    0 #calculate berry phase or not

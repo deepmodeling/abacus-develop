@@ -9,7 +9,7 @@ out_stru            1
 out_level           ie
 pseudo_rcut         10.0
 pseudo_mesh         1
-ecutwfc             30
+ecutwfc             20
 basis_type          pw
 ks_solver           cg
 smearing_method     gaussian
@@ -19,7 +19,6 @@ mixing_beta         0.7
 scf_thr             1e-08
 cal_force           1
 cal_stress          1
-out_stru            1
 chg_extrap          second-order #atomic; first-order; second-order; dm:coefficients of SIA
 pseudo_dir	    ../../../tests/PP_ORB
 

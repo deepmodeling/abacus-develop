@@ -103,9 +103,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
     }
 
     int info;
-    int myid;
     int naroc[2];
-    MPI_Comm_rank(pv->comm_2D, &myid);
 
     double* Eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(Eii, nband);
@@ -113,10 +111,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
     {
         for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
         {
-            const int coord[2] = {iprow, ipcol};
-            int src_rank;
-            info = MPI_Cart_rank(pv->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            if (iprow == pv->coord[0] && ipcol == pv->coord[1])
             {
                 naroc[0] = pv->nrow;
                 naroc[1] = pv->ncol;
@@ -139,7 +134,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
             }
         } // loop ipcol
     }     // loop iprow
-    info = MPI_Allreduce(Eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm_2D);
+    info = MPI_Allreduce(Eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
 
     delete[] tmp1;
     delete[] Eij;

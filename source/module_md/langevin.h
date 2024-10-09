@@ -14,15 +14,21 @@
 class Langevin : public MD_base
 {
   public:
-    Langevin(MD_para& MD_para_in, UnitCell& unit_in);
+    Langevin(const Parameter& param_in, UnitCell& unit_in);
+
     ~Langevin();
 
   private:
     void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+
     void first_half(std::ofstream& ofs);
+
     void second_half();
+
     void print_md(std::ofstream& ofs, const bool& cal_stress);
+
     void write_restart(const std::string& global_out_dir);
+
     void restart(const std::string& global_readin_dir);
 
     /**
@@ -32,6 +38,7 @@ class Langevin : public MD_base
     void post_force();
 
     ModuleBase::Vector3<double>* total_force; ///< total force = true force + Langevin fictitious_force
+    double md_damp;                           ///< damping factor
 };
 
 #endif

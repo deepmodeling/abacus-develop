@@ -22,14 +22,13 @@ template<typename TK, typename TR>
 class OperatorScLambda<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OperatorScLambda<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    OperatorScLambda<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                     hamilt::HContainer<TR>* hR_in,
-                                    std::vector<TK>* hK_in,
                                     const std::vector<int>& isk_in)
-        : isk(isk_in), OperatorLCAO<TK, TR>(LM_in, kvec_d_in, hR_in, hK_in)
+        : isk(isk_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
-        this->cal_type = lcao_sc_lambda;
+        this->cal_type = calculation_type::lcao_sc_lambda;
     }
 
     virtual void contributeHR() override;

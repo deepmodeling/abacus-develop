@@ -1,18 +1,17 @@
 #include "propagator.h"
 
-#include <complex>
-#include <iostream>
-
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
+
+#include <complex>
+#include <iostream>
 
 namespace module_tddft
 {
 Propagator::~Propagator()
 {
 }
-
 #ifdef __MPI
 
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
@@ -98,11 +97,11 @@ void Propagator::compute_propagator_cn2(const int nlocal,
 
     // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (2) compute Numerator & Denominator by GEADD
-    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * INPUT.mdp.md_dt
-    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * INPUT.mdp.md_dt
+    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
+    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
     std::complex<double> alpha = {1.0, 0.0};
-    std::complex<double> beta1 = {0.0, -0.25 * INPUT.mdp.md_dt};
-    std::complex<double> beta2 = {0.0, 0.25 * INPUT.mdp.md_dt};
+    std::complex<double> beta1 = {0.0, -0.25 * this->dt};
+    std::complex<double> beta2 = {0.0, 0.25 * this->dt};
 
     ScalapackConnector::geadd('N',
                               nlocal,
@@ -242,10 +241,12 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -313,31 +314,28 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     // set rank0
     int info;
-    int myid;
-    MPI_Comm_rank(this->ParaV->comm_2D, &myid);
     int naroc[2]; // maximum number of row or column
 
     for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < this->ParaV->dim1; ++ipcol)
         {
-            const int coord[2] = {iprow, ipcol};
-            int src_rank;
-            info = MPI_Cart_rank(this->ParaV->comm_2D, coord, &src_rank);
-            if (myid == src_rank)
+            if (iprow == ParaV->coord[0] && ipcol == ParaV->coord[1])
             {
                 naroc[0] = this->ParaV->nrow;
                 naroc[1] = this->ParaV->ncol;
                 for (int j = 0; j < naroc[1]; ++j)
                 {
                     int igcol = globalIndex(j, this->ParaV->nb, this->ParaV->dim1, ipcol);
-                    if (igcol >= nlocal)
+                    if (igcol >= nlocal) {
                         continue;
+}
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, this->ParaV->nb, this->ParaV->dim0, iprow);
-                        if (igrow >= nlocal)
+                        if (igrow >= nlocal) {
                             continue;
+}
                         if (igcol == igrow)
                         {
                             rank0[j * naroc[0] + i] = {1.0, 0.0};
@@ -352,7 +350,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
         } // loop ipcol
     }     // loop iprow
 
-    std::complex<double> beta = {0.0, -0.5 * INPUT.mdp.md_dt / tag}; // for ETRS tag=2 , for taylor tag=1
+    std::complex<double> beta = {0.0, -0.5 * this->dt / tag}; // for ETRS tag=2 , for taylor tag=1
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // invert Stmp
@@ -558,22 +556,25 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8)
+                if (std::abs(aa) < 1e-8) {
                     aa = 0.0;
-                if (std::abs(bb) < 1e-8)
+}
+                if (std::abs(bb) < 1e-8) {
                     bb = 0.0;
+}
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
     }
-
+    delete[] A_matrix;
     delete[] rank0;
     delete[] rank2;
     delete[] rank3;
     delete[] rank4;
     delete[] tmp1;
     delete[] tmp2;
+    delete[] Sinv;
     delete[] ipiv;
 }
 
@@ -584,24 +585,22 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                                          std::complex<double>* U_operator,
                                          const int print_matrix) const
 {
-    std::complex<double>* U1 = new std::complex<double>[this->ParaV->nloc];
-    std::complex<double>* U2 = new std::complex<double>[this->ParaV->nloc];
-    ModuleBase::GlobalFunc::ZEROS(U1, this->ParaV->nloc);
-    ModuleBase::GlobalFunc::ZEROS(U2, this->ParaV->nloc);
+    std::vector<std::complex<double>> U1(this->ParaV->nloc);
+    std::vector<std::complex<double>> U2(this->ParaV->nloc);
     int tag = 2;
-    compute_propagator_taylor(nlocal, Stmp, Htmp, U1, print_matrix, tag);
-    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2, print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, Htmp, U1.data(), print_matrix, tag);
+    compute_propagator_taylor(nlocal, Stmp, H_laststep, U2.data(), print_matrix, tag);
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
                              nlocal,
                              nlocal,
                              1.0,
-                             U1,
+                             U1.data(),
                              1,
                              1,
                              this->ParaV->desc,
-                             U2,
+                             U2.data(),
                              1,
                              1,
                              this->ParaV->desc,

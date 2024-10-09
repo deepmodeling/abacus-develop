@@ -7,7 +7,7 @@
 #ifndef VDWD3_PARAMETERS_H
 #define VDWD3_PARAMETERS_H
 
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "vdw_parameters.h"
 
 namespace vdw
@@ -21,7 +21,7 @@ class Vdwd3Parameters : public VdwParameters
 
     ~Vdwd3Parameters() = default;
 
-    void initial_parameters(const Input &input);
+    void initial_parameters(const Input_para &input);
 
     inline const std::string &version() const { return version_; }
 

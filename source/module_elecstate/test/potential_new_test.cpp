@@ -1,9 +1,10 @@
+#include "gtest/gtest.h"
 #include <vector>
 
-#include "gtest/gtest.h"
-
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/potential_new.h"
+#undef private
 // mock functions
 Structure_Factor::Structure_Factor()
 {
@@ -53,9 +54,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
 
 void Set_GlobalV_Default()
 {
-    GlobalV::NSPIN = 1;
-    GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
+    PARAM.input.nspin = 1;
+    PARAM.sys.device_flag = "cpu";
+    PARAM.input.precision = "double";
 }
 } // namespace elecstate
 
@@ -116,22 +117,30 @@ class PotentialNewTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (rhopw != nullptr)
+        if (rhopw != nullptr) {
             delete rhopw;
-        if (rhodpw != nullptr)
+}
+        if (rhodpw != nullptr) {
             delete rhodpw;
-        if (ucell != nullptr)
+}
+        if (ucell != nullptr) {
             delete ucell;
-        if (vloc != nullptr)
+}
+        if (vloc != nullptr) {
             delete vloc;
-        if (structure_factors != nullptr)
+}
+        if (structure_factors != nullptr) {
             delete structure_factors;
-        if (etxc != nullptr)
+}
+        if (etxc != nullptr) {
             delete etxc;
-        if (vtxc != nullptr)
+}
+        if (vtxc != nullptr) {
             delete vtxc;
-        if (pot != nullptr)
+}
+        if (pot != nullptr) {
             delete pot;
+}
     }
 };
 
@@ -142,19 +151,19 @@ TEST_F(PotentialNewTest, ConstructorCPUDouble)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
     rhopw->nrxx = 100;
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -174,9 +183,9 @@ TEST_F(PotentialNewTest, ConstructorXC3)
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
-    EXPECT_EQ(pot->vofk_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->vofk_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->vofk_effective.nc, 100);
 }
 
@@ -184,12 +193,12 @@ TEST_F(PotentialNewTest, ConstructorGPUDouble)
 {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
-    GlobalV::device_flag = "gpu";
+    PARAM.sys.device_flag = "gpu";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -197,13 +206,13 @@ TEST_F(PotentialNewTest, ConstructorGPUSingle)
 {
     // this is just a trivial call to the GPU code
     rhopw->nrxx = 100;
-    GlobalV::device_flag = "gpu";
-    GlobalV::precision_flag = "single";
+    PARAM.sys.device_flag = "gpu";
+    PARAM.input.precision = "single";
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
     EXPECT_TRUE(pot->dynamic_mode);
     EXPECT_EQ(pot->v_effective_fixed.size(), 100);
-    EXPECT_EQ(pot->v_effective.nr, GlobalV::NSPIN);
+    EXPECT_EQ(pot->v_effective.nr, PARAM.input.nspin);
     EXPECT_EQ(pot->v_effective.nc, 100);
 }
 
@@ -376,7 +385,7 @@ TEST_F(PotentialNewTest, GetVnew)
     Charge* chg = new Charge;
     ModuleBase::matrix vnew;
     pot->get_vnew(chg, vnew);
-    EXPECT_EQ(vnew.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vnew.nr, PARAM.input.nspin);
     EXPECT_EQ(vnew.nc, 100);
     delete chg;
 }
@@ -389,9 +398,9 @@ TEST_F(PotentialNewTest, GetEffectiveVmatrix)
     //
     ModuleBase::matrix v_eff_tmp = pot->get_effective_v();
     const ModuleBase::matrix v_eff_tmp_const = pot->get_effective_v();
-    EXPECT_EQ(v_eff_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(v_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp.nc, 100);
-    EXPECT_EQ(v_eff_tmp_const.nr, GlobalV::NSPIN);
+    EXPECT_EQ(v_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(v_eff_tmp_const.nc, 100);
     for (int ir = 0; ir < v_eff_tmp.nr; ir++)
     {
@@ -440,9 +449,9 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
     //
     ModuleBase::matrix vofk_eff_tmp = pot->get_effective_vofk();
     const ModuleBase::matrix vofk_eff_tmp_const = pot->get_effective_vofk();
-    EXPECT_EQ(vofk_eff_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_eff_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp.nc, 100);
-    EXPECT_EQ(vofk_eff_tmp_const.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_eff_tmp_const.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_eff_tmp_const.nc, 100);
     for (int ir = 0; ir < vofk_eff_tmp.nr; ir++)
     {
@@ -508,9 +517,9 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
     //
     ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix veff_smooth_const_tmp = pot->get_veff_smooth();
-    EXPECT_EQ(veff_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(veff_smooth_tmp.nc, 100);
-    EXPECT_EQ(veff_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(veff_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(veff_smooth_const_tmp.nc, 100);
     for (int ir = 0; ir < veff_smooth_tmp.nr; ir++)
     {
@@ -530,9 +539,9 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
     //
     ModuleBase::matrix vofk_smooth_tmp = pot->get_veff_smooth();
     const ModuleBase::matrix vofk_smooth_const_tmp = pot->get_veff_smooth();
-    EXPECT_EQ(vofk_smooth_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_smooth_tmp.nc, 100);
-    EXPECT_EQ(vofk_smooth_const_tmp.nr, GlobalV::NSPIN);
+    EXPECT_EQ(vofk_smooth_const_tmp.nr, PARAM.input.nspin);
     EXPECT_EQ(vofk_smooth_const_tmp.nc, 100);
     for (int ir = 0; ir < vofk_smooth_tmp.nr; ir++)
     {
@@ -546,7 +555,7 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
 
 TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
@@ -590,7 +599,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 
 TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 {
-    GlobalV::double_grid = true;
+     PARAM.sys.double_grid = true;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
     rhopw->initparameters(false, 4);
@@ -611,7 +620,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 
 TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 {
-    GlobalV::double_grid = false;
+     PARAM.sys.double_grid = false;
     elecstate::tmp_xc_func_type = 3;
     // Init pw_basis
     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
@@ -642,5 +651,3 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
     }
 
 }
-
-#undef private

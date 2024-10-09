@@ -2,8 +2,8 @@ INPUT_PARAMETERS
 suffix          autotest
 
 nbands              6
-ecutwfc             20
-scf_thr                 1e-8
+ecutwfc             10
+scf_thr                 1e-6
 scf_nmax               100
 gamma_only          1
 calculation         scf

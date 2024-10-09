@@ -78,3 +78,12 @@ Sometimes we want to do variable-cell relaxation with some of the cell degrees o
 - ISIF = 5 : calculation = "cell-relax", fixed_axes = "volume", fixed_atoms = True
 - ISIF = 6 : calculation = "cell-relax", fixed_atoms = True
 - ISIF = 7 : calculation = "cell-realx", fixed_axes = "shape", fixed_atoms = True
+
+### Stop Geometry Optimization Manually
+
+It is usually difficult to converge when calculating large systems, but people do not want to give up this calculation result.
+Providing a file named `EXIT`:
+```
+stop_ion    true
+```
+ABACUS will end normally and produce a complete file.

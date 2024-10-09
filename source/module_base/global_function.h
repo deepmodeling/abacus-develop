@@ -1,32 +1,30 @@
-#ifndef GLOBAL_FUNCTION_H
-#define GLOBAL_FUNCTION_H
-
-#include <vector>
-#include <valarray>
-#include <string>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
-
-#include <complex>
-#include <cassert>
-
-#include "tool_title.h" // mohan add 2021-05-05
-#include "tool_quit.h" // mohan add 2021-05-07
-#include "tool_check.h" // mohan add 2021-05-08
-#include "global_variable.h"
-#include "global_function-func_each_2.h"		// Peize Lin add 2016-09-07
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_BASE_GLOBAL_FUNCTION_H
 
 #include "blas_connector.h"
+#include "global_function-func_each_2.h" // Peize Lin add 2016-09-07
+#include "global_variable.h"
+#include "tool_check.h" // mohan add 2021-05-08
+#include "tool_quit.h"  // mohan add 2021-05-07
+#include "tool_title.h" // mohan add 2021-05-05
+
+#include <cassert>
+#include <complex>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <valarray>
+#include <vector>
 
 namespace ModuleBase
 {
 namespace GlobalFunc
 {
 
-void NOTE(const std::string &words);
-void NEW_PART(const std::string &words);
+void NOTE(const std::string& words);
+void NEW_PART(const std::string& words);
 
 //==========================================================
 // GLOBAL FUNCTION :
@@ -34,68 +32,64 @@ void NEW_PART(const std::string &words);
 // NAME : OUT( output date into file "ofs")
 // NAME : OUTP( output parameters )
 //==========================================================
-void OUT(std::ofstream &ofs,const std::string &name);
+void OUT(std::ofstream& ofs, const std::string& name);
 
 template <class T>
-void OUT(std::ofstream &ofs,const std::string &name,const T &a)
+void OUT(std::ofstream& ofs, const std::string& name, const T& a)
 {
-	std::stringstream name2;
-	name2 << name ;
-    ofs<< " " << std::setw(40) << name2.str() << " = " << a <<std::endl;
-//	ofs << " " << name << a << std::endl;
+    std::stringstream name2;
+    name2 << name;
+    ofs << " " << std::setw(40) << name2.str() << " = " << a << std::endl;
+    //	ofs << " " << name << a << std::endl;
     return;
 }
 
 template <class T>
-void OUT(std::ofstream &ofs,const std::string &name,const T &x, const T&y)
+void OUT(std::ofstream& ofs, const std::string& name, const T& x, const T& y)
 {
-    ofs<< " " << std::setw(40) <<name << " = [ " << x << ", " << y <<" ]" << std::endl;
-//	ofs << " " << name << a << std::endl;
+    ofs << " " << std::setw(40) << name << " = [ " << x << ", " << y << " ]" << std::endl;
+    //	ofs << " " << name << a << std::endl;
     return;
 }
 
 template <class T>
-void OUT(std::ofstream &ofs,const std::string &name,const T &x, const T &y, const T &z)
+void OUT(std::ofstream& ofs, const std::string& name, const T& x, const T& y, const T& z)
 {
-    ofs<< " " << std::setw(40) <<name << " = [ " << x << ", " << y << ", " << z <<" ]" << std::endl;
+    ofs << " " << std::setw(40) << name << " = [ " << x << ", " << y << ", " << z << " ]" << std::endl;
     return;
 }
-
-
-
 
 // output parameters and explanations
 template <class T>
-void OUTP(std::ofstream &ofs, const std::string &name, const T &a, const std::string &explanation="")
+void OUTP(std::ofstream& ofs, const std::string& name, const T& a, const std::string& explanation = "")
 {
-	ofs << std::setw(30) << name << " " << a << " #" << explanation << std::endl;
+    ofs << std::setw(30) << name << " " << a << " #" << explanation << std::endl;
 }
 
 template <class T>
-void OUT(const std::string &name,const T &a)
+void OUT(const std::string& name, const T& a)
 {
     std::cout << " " << std::setw(40) << name << " = " << a << std::endl;
-//	std::cout << " " << name << a << std::endl;
+    //	std::cout << " " << name << a << std::endl;
     return;
 }
 
-
-void OUT_TIME(const std::string &name, time_t &start, time_t &end);
+void OUT_TIME(const std::string& name, time_t& start, time_t& end);
 
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : MAKE_DIR( make dir ,using system function)
 //==========================================================
-void MAKE_DIR( const std::string &file );
+void MAKE_DIR(const std::string& file);
 
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : AUTO_SET( auto_set variables )
 //==========================================================
 template <class T>
-void AUTO_SET(const std::string &name,const T &a)
+void AUTO_SET(const std::string& name, const T& a)
 {
-    GlobalV::ofs_warning <<" AUTO_SET "<<name<<" to "<<a << std::endl;
+    GlobalV::ofs_warning << " AUTO_SET " << name << " to " << a << std::endl;
     return;
 }
 
@@ -104,29 +98,29 @@ void AUTO_SET(const std::string &name,const T &a)
 // NAME : DONE( ouput information(time) on screen and log)
 // 		  we can regard it as a milestone.
 //==========================================================
-void DONE(std::ofstream &ofs,const std::string &description, bool only_rank0 = false);
+void DONE(std::ofstream& ofs, const std::string& description, bool only_rank0 = false);
 
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : ZEROS
 // set elements of u as zero which u is 1_d std::complex array
 //==========================================================
-template<class T, class TI>
-inline void ZEROS(std::complex<T> *u,const TI n)		// Peize Lin change int to TI at 2020.03.03
+template <class T, class TI>
+inline void ZEROS(std::complex<T>* u, const TI n) // Peize Lin change int to TI at 2020.03.03
 {
-    assert(n>=0);
-    for (TI i=0;i<n;i++)
+    assert(n >= 0);
+    for (TI i = 0; i < n; i++)
     {
-        u[i] = std::complex<T>(0.0,0.0);
+        u[i] = std::complex<T>(0.0, 0.0);
     }
     return;
 }
 
-template<class T, class TI>
-inline void ZEROS(T *u,const TI n)		// Peize Lin change int to TI at 2020.03.03
+template <class T, class TI>
+inline void ZEROS(T* u, const TI n) // Peize Lin change int to TI at 2020.03.03
 {
-    assert(n>=0);
-    for (TI i=0;i<n;i++)
+    assert(n >= 0);
+    for (TI i = 0; i < n; i++)
     {
         u[i] = 0;
     }
@@ -137,14 +131,13 @@ inline void ZEROS(T *u,const TI n)		// Peize Lin change int to TI at 2020.03.03
 // NAME : TEST_LEVEL
 // control the test_level
 //==========================================================
-void TEST_LEVEL(const std::string &name, bool disable);
-
+void TEST_LEVEL(const std::string& name, bool disable);
 
 //==========================================================
 // GLOBAL FUNCTION :
 //==========================================================
 template <class T>
-static void READ_VALUE(std::ifstream &ifs, T &v)
+static void READ_VALUE(std::ifstream& ifs, T& v)
 {
     ifs >> v;
     std::string line;
@@ -152,38 +145,47 @@ static void READ_VALUE(std::ifstream &ifs, T &v)
     return;
 }
 
-bool SCAN_BEGIN(std::ifstream &ifs, const std::string &TargetName, const bool restart=1, const bool ifwarn=true);
+bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart = true, const bool ifwarn = true);
 // ifwarn: whether to call GlobalV::ofs_warning when the TargetName is not found, used to avoid invalid warning.
 // Mohan warning : the last term can't be written as const bool &restart,
 // I don't know why.
 
-void SCAN_END(std::ifstream &ifs, const std::string &TargetName, const bool ifwarn=true);
+void SCAN_END(std::ifstream& ifs, const std::string& TargetName, const bool ifwarn = true);
 // ifwarn: whether to call GlobalV::ofs_warning when the TargetName is not found, used to avoid invalid warning.
 
-template<class T>
-static inline void DCOPY( const T &a, T &b, const int &dim)
+template <class T>
+static inline void DCOPY(const T& a, T& b, const int& dim)
 {
-    for (int i=0; i<dim; ++i) b[i] = a[i];
+    for (int i = 0; i < dim; ++i) {
+        b[i] = a[i];
+    }
 }
 
-template<typename T>
+template <typename T>
+inline void DCOPY(const T* a, T* b, const int& dim) {
+    for (int i = 0; i < dim; ++i) {
+        b[i] = a[i];
+    }
+}
+
+template <typename T>
 inline void COPYARRAY(const T* a, T* b, const long dim);
 
-template<>
+template <>
 inline void COPYARRAY(const std::complex<double>* a, std::complex<double>* b, const long dim)
 {
     const int one = 1;
     zcopy_(&dim, a, &one, b, &one);
 }
 
-template<>
+template <>
 inline void COPYARRAY(const double* a, double* b, const long dim)
 {
     const int one = 1;
     dcopy_(&dim, a, &one, b, &one);
 }
 
-void BLOCK_HERE( const std::string &description );
+void BLOCK_HERE(const std::string& description);
 
 //==========================================================
 // GLOBAL FUNCTION :
@@ -191,24 +193,24 @@ void BLOCK_HERE( const std::string &description );
 // change std::vector to pointer
 // Peize Lin add 2016-02-25
 //==========================================================
-template<class T>
-static inline T * VECTOR_TO_PTR( std::vector<T> & v )
+template <class T>
+static inline T* VECTOR_TO_PTR(std::vector<T>& v)
 {
     return &(v[0]);
 }
-template<class T>
-static inline T * VECTOR_TO_PTR( std::valarray<T> & v )
+template <class T>
+static inline T* VECTOR_TO_PTR(std::valarray<T>& v)
 {
     return &(v[0]);
 }
 
-template<class T>
-static inline const T * VECTOR_TO_PTR( const std::vector<T> & v )
+template <class T>
+static inline const T* VECTOR_TO_PTR(const std::vector<T>& v)
 {
     return &(v[0]);
 }
-template<class T>
-static inline const T * VECTOR_TO_PTR( const std::valarray<T> & v )
+template <class T>
+static inline const T* VECTOR_TO_PTR(const std::valarray<T>& v)
 {
     return &(v[0]);
 }
@@ -220,12 +222,12 @@ static inline const T * VECTOR_TO_PTR( const std::valarray<T> & v )
 // example: 233 -> "233"
 // Peize Lin add 2016-07-18
 //==========================================================
-template< typename T >
-std::string TO_STRING ( const T &n )
+template <typename T>
+std::string TO_STRING(const T& n)
 {
-	std::stringstream newstr;
-	newstr<<n;
-	return newstr.str();
+    std::stringstream newstr;
+    newstr << n;
+    return newstr.str();
 }
 
 //==========================================================
@@ -236,36 +238,44 @@ std::string TO_STRING ( const T &n )
 // example: map_exist(ms,i,j,k) -> try to find ms[i][j][k]
 // Peize Lin add 2018-07-16
 //==========================================================
-template< typename T_map, typename T_key1  >
-inline void* MAP_EXIST( T_map &ms, const T_key1 &key1 )
+template <typename T_map, typename T_key1>
+inline void* MAP_EXIST(T_map& ms, const T_key1& key1)
 {
-	auto ms1 = ms.find(key1);
-	if( ms1 == ms.end() )	return nullptr;
-	return static_cast<void*>(&ms1->second);
+    auto ms1 = ms.find(key1);
+    if (ms1 == ms.end()) {
+        return nullptr;
+    }
+    return static_cast<void*>(&ms1->second);
 }
 
-template< typename T_map, typename T_key1, typename... T_key_tail >
-inline void* MAP_EXIST( T_map &ms, const T_key1 &key1, const T_key_tail&... key_tail )
+template <typename T_map, typename T_key1, typename... T_key_tail>
+inline void* MAP_EXIST(T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
-	auto ms1 = ms.find(key1);
-	if( ms1 == ms.end() )	return nullptr;
-	return MAP_EXIST( ms1->second, key_tail... );
+    auto ms1 = ms.find(key1);
+    if (ms1 == ms.end()) {
+        return nullptr;
+    }
+    return MAP_EXIST(ms1->second, key_tail...);
 }
 
-template< typename T_map, typename T_key1  >
-inline const void* MAP_EXIST( const T_map &ms, const T_key1 &key1 )
+template <typename T_map, typename T_key1>
+inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1)
 {
-	auto ms1 = ms.find(key1);
-	if( ms1 == ms.end() )	return nullptr;
-	return static_cast<const void*>(&ms1->second);
+    auto ms1 = ms.find(key1);
+    if (ms1 == ms.end()) {
+        return nullptr;
+    }
+    return static_cast<const void*>(&ms1->second);
 }
 
-template< typename T_map, typename T_key1, typename... T_key_tail >
-inline const void* MAP_EXIST( const T_map &ms, const T_key1 &key1, const T_key_tail&... key_tail )
+template <typename T_map, typename T_key1, typename... T_key_tail>
+inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
-	auto ms1 = ms.find(key1);
-	if( ms1 == ms.end() )	return nullptr;
-	return MAP_EXIST( ms1->second, key_tail... );
+    auto ms1 = ms.find(key1);
+    if (ms1 == ms.end()) {
+        return nullptr;
+    }
+    return MAP_EXIST(ms1->second, key_tail...);
 }
 
 //==========================================================
@@ -276,7 +286,6 @@ inline const void* MAP_EXIST( const T_map &ms, const T_key1 &key1, const T_key_t
 // Peize Lin add 2019-12-21
 //==========================================================
 size_t MemAvailable();
-
 
 //==========================================================
 // GLOBAL FUNCTION :
@@ -295,16 +304,17 @@ size_t MemAvailable();
 template <typename T_element>
 static inline void DELETE_MUL_PTR(T_element* v)
 {
-	delete[] v;
-	v = nullptr;
+    delete[] v;
+    v = nullptr;
 }
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void DELETE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-	for(T_N_first i=0; i<N_first; ++i)
-		DELETE_MUL_PTR(v[i],N_tail...);
-	delete[] v;
-	v = nullptr;
+    for (T_N_first i = 0; i < N_first; ++i) {
+        DELETE_MUL_PTR(v[i], N_tail...);
+    }
+    delete[] v;
+    v = nullptr;
 }
 
 //==========================================================
@@ -324,36 +334,34 @@ static inline void DELETE_MUL_PTR(T_element* v, const T_N_first N_first, const T
 template <typename T_element>
 static inline void FREE_MUL_PTR(T_element* v)
 {
-	free(v);
-	v = nullptr;
+    free(v);
+    v = nullptr;
 }
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void FREE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-	for(T_N_first i=0; i<N_first; ++i)
-		FREE_MUL_PTR(v[i],N_tail...);
-	free(v);
-	v = nullptr;
+    for (T_N_first i = 0; i < N_first; ++i) {
+        FREE_MUL_PTR(v[i], N_tail...);
+    }
+    free(v);
+    v = nullptr;
 }
 
 template <typename T>
-T ddot_real(
-        const int & dim,
-        const std::complex<T>* psi_L,
-        const std::complex<T>* psi_R,
-        const bool reduce = true) ;
+T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>* psi_R, const bool reduce = true);
 
 //==========================================================
 // GLOBAL FUNCTION :
 // NAME : IS_COLUMN_MAJOR_KS_SOLVER
 // check ks_solver requires column major or not
 //==========================================================
-static inline bool IS_COLUMN_MAJOR_KS_SOLVER()
+static inline bool IS_COLUMN_MAJOR_KS_SOLVER(std::string ks_solver)
 {
-    return GlobalV::KS_SOLVER=="genelpa" || GlobalV::KS_SOLVER=="scalapack_gvx" || GlobalV::KS_SOLVER=="cusolver" || GlobalV::KS_SOLVER=="cg_in_lcao";
+    return ks_solver == "genelpa" || ks_solver == "elpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
+           || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi" || ks_solver == "lapack";
 }
 
-}//namespace GlobalFunc
-}//namespace ModuleBase
+} // namespace GlobalFunc
+} // namespace ModuleBase
 
 #endif

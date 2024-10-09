@@ -25,19 +25,19 @@ int __semi_fact(const int n)
 }
 
 template <typename FPTYPE>
-struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
-    void operator()(
-            const psi::DEVICE_CPU *ctx,
-            const int &ng,
-            const int &lmax,
-            const FPTYPE &SQRT2,
-            const FPTYPE &PI,
-            const FPTYPE &PI_HALF,
-            const FPTYPE &FOUR_PI,
-            const FPTYPE &SQRT_INVERSE_FOUR_PI,
-            const FPTYPE *g,
-            FPTYPE * p,
-            FPTYPE * ylm)
+struct cal_ylm_real_op<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& ng,
+                    const int& lmax,
+                    const FPTYPE& SQRT2,
+                    const FPTYPE& PI,
+                    const FPTYPE& PI_HALF,
+                    const FPTYPE& FOUR_PI,
+                    const FPTYPE& SQRT_INVERSE_FOUR_PI,
+                    const FPTYPE* g,
+                    FPTYPE* p,
+                    FPTYPE* ylm)
     {
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -123,8 +123,8 @@ struct cal_ylm_real_op<FPTYPE, psi::DEVICE_CPU> {
     }
 };
 
-template struct cal_ylm_real_op<float, psi::DEVICE_CPU>;
-template struct cal_ylm_real_op<double, psi::DEVICE_CPU>;
+template struct cal_ylm_real_op<float, base_device::DEVICE_CPU>;
+template struct cal_ylm_real_op<double, base_device::DEVICE_CPU>;
 
 }  // namespace ModuleBase
 

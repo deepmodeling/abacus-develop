@@ -37,21 +37,26 @@ void ModuleIO::write_dipole(const double* rho_save,
 
 #ifndef __MPI
     double dipole_elec_x = 0.0, dipole_elec_y = 0.0, dipole_elec_z = 0.0;
+    double lat_factor_x = GlobalC::ucell.lat0 * 0.529177 / rhopw->nx;
+    double lat_factor_y = GlobalC::ucell.lat0 * 0.529177 / rhopw->ny;
+    double lat_factor_z = GlobalC::ucell.lat0 * 0.529177 / rhopw->nz;
+
     for (int k = 0; k < rhopw->nz; k++)
     {
         for (int j = 0; j < rhopw->ny; j++)
         {
             for (int i = 0; i < rhopw->nx; i++)
             {
-                dipole_elec_x += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * i
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nx;
-                dipole_elec_y += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * j
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->ny;
-                dipole_elec_z += rho_save[i * rhopw->ny * rhopw->nz + j * rhopw->nz + k] * k
-                                 * GlobalC::ucell.lat0 * 0.529177 / rhopw->nz;
+                int index = i * rhopw->ny * rhopw->nz + j * rhopw->nz + k;
+                double rho_val = rho_save[index];
+
+                dipole_elec_x += rho_val * i * lat_factor_x;
+                dipole_elec_y += rho_val * j * lat_factor_y;
+                dipole_elec_z += rho_val * k * lat_factor_z;
             }
         }
     }
+
     dipole_elec_x *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
     dipole_elec_y *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
     dipole_elec_z *= GlobalC::ucell.omega / static_cast<double>(rhopw->nxyz);
@@ -86,9 +91,9 @@ void ModuleIO::write_dipole(const double* rho_save,
         dipole_elec[i] *= GlobalC::ucell.lat0 / bmod[i] * GlobalC::ucell.omega / rhopw->nxyz;
     }
 
-    std::cout << std::setprecision(8) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
-    std::cout << std::setprecision(8) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_x: " << dipole_elec[0] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_y: " << dipole_elec[1] << std::endl;
+    std::cout << std::setprecision(15) << "dipole_elec_z: " << dipole_elec[2] << std::endl;
 
     ofs << std::setprecision(8) << istep << " " << dipole_elec[0] << " " << dipole_elec[1] << " " << dipole_elec[2]
         << std::endl;
@@ -103,7 +108,6 @@ void ModuleIO::write_dipole(const double* rho_save,
             double sum = 0;
             for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
             {
-
                 sum += GlobalC::ucell.atoms[it].taud[ia][i];
             }
             dipole_ion[i] += sum * GlobalC::ucell.atoms[it].ncpp.zv;
@@ -138,7 +142,7 @@ void ModuleIO::write_dipole(const double* rho_save,
     return;
 }
 
-double ModuleIO::prepare(const UnitCell &cell, int &dir)
+double ModuleIO::prepare(const UnitCell& cell, int& dir)
 {
     double bvec[3] = {0.0};
     double bmod = 0.0;

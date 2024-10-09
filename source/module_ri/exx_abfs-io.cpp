@@ -1,5 +1,6 @@
 #include <fstream>
 #include <stdexcept>
+#include "module_parameter/parameter.h"
 
 #include "exx_abfs-io.h"
 #include "exx_abfs-jle.h"
@@ -247,7 +248,7 @@ std::vector<std::vector<Numerical_Orbital_Lm>> Exx_Abfs::IO::construct_abfs_T(
 				dk,
 				dr_uniform,
 				false,
-				true, GlobalV::CAL_FORCE);		
+				true, PARAM.inp.cal_force);		
 		}
 	}
 	

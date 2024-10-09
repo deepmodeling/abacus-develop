@@ -1,5 +1,6 @@
 #include "ions_move_bfgs.h"
 
+#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -22,8 +23,9 @@ Ions_Move_BFGS::~Ions_Move_BFGS(){};
 void Ions_Move_BFGS::allocate()
 {
     ModuleBase::TITLE("Ions_Move_BFGS", "init");
-    if (init_done)
+    if (init_done) {
         return;
+}
     this->allocate_basic();
 
     // initialize data members
@@ -40,9 +42,19 @@ void Ions_Move_BFGS::start(UnitCell& ucell, const ModuleBase::matrix& force, con
     // istep must be set eariler.
 
     // use force to setup gradient.
-    Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
+    // Only the first step needs to generate the pos from ucell.
+    // In the following steps, the pos is updated by BFGS methods.
+    if (first_step)
+    {
+        Ions_Move_Basic::setup_gradient(ucell, force, this->pos, this->grad);
+        first_step = false;
+    }
+    else{
+        std::vector<double> pos_tmp(3 * ucell.nat);
+        Ions_Move_Basic::setup_gradient(ucell, force, pos_tmp.data(), this->grad);
+    }
     // use energy_in and istep to setup etot and etot_old.
-    Ions_Move_Basic::setup_etot(energy_in, 0);
+    Ions_Move_Basic::setup_etot(energy_in, false);
     // use gradient and etot and etot_old to check
     // if the result is converged.
     Ions_Move_Basic::check_converged(ucell, this->grad);
@@ -97,7 +109,7 @@ void Ions_Move_BFGS::restart_bfgs(const double& lat0)
         }
         trust_radius_old = sqrt(trust_radius_old);
 
-        if (GlobalV::test_relax_method)
+        if (PARAM.inp.test_relax_method)
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "trust_radius_old (bohr)", trust_radius_old);
         }
@@ -212,7 +224,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
             // get optimized trust radius
             trust_radius = -0.5 * dE0s * trust_radius_old / den;
 
-            if (GlobalV::test_relax_method)
+            if (PARAM.inp.test_relax_method)
             {
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dE0s", dE0s);
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "den", den);
@@ -281,7 +293,7 @@ void Ions_Move_BFGS::bfgs_routine(const double& lat0)
         this->new_step(lat0);
     }
 
-    if (GlobalV::OUT_LEVEL == "ie")
+    if (PARAM.inp.out_level == "ie")
     {
         std::cout << " BFGS TRUST (Bohr)    : " << trust_radius << std::endl;
     }

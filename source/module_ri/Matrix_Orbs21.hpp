@@ -174,10 +174,6 @@ std::map<size_t, std::map<size_t, std::map<size_t, std::map<size_t, std::vector<
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_A2,
 	const ModuleBase::Element_Basis_Index::IndexLNM &index_B) const
 {
-//std::ofstream ofs(exx_lcao.test_dir.process+"time_"+ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK),std::ofstream::app);
-//timeval t_start;
-//gettimeofday( &t_start, NULL);
-
 	ModuleBase::TITLE("Matrix_Orbs21","cal_overlap_matrix");
 
 	std::map<size_t,std::map<size_t,std::map<size_t,std::map<size_t,std::vector<RI::Tensor<Tdata>>>>>> matrixes;

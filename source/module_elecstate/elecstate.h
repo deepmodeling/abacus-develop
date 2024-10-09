@@ -1,5 +1,6 @@
 #ifndef ELECSTATE_H
 #define ELECSTATE_H
+#include "module_parameter/parameter.h"
 
 #include "fp_energy.h"
 #include "module_cell/klist.h"
@@ -21,7 +22,7 @@ class ElecState
         this->charge = charge_in;
         this->charge->set_rhopw(rhopw_in);
         this->bigpw = bigpw_in;
-        this->eferm.two_efermi = GlobalV::TWO_EFERMI;
+        this->eferm.two_efermi = PARAM.globalv.two_fermi;
     }
     virtual ~ElecState()
     {
@@ -66,8 +67,14 @@ class ElecState
 
     // calculate wg from ekb
     virtual void calculate_weights();
+
     // use occupied weights from INPUT and skip calculate_weights
-    void fixed_weights(const std::vector<double>& ocp_kb);
+    // mohan updated on 2024-06-08
+	void fixed_weights(
+			const std::vector<double>& ocp_kb,
+			const int &nbands,
+			const double &nelec);
+
     // if nupdown is not 0(TWO_EFERMI case), 
     // nelec_spin will be fixed and weights will be constrained 
     void init_nelec_spin();
@@ -75,9 +82,6 @@ class ElecState
     //for NSPIN=2, it will record number of spin up and number of spin down
     //for NSPIN=4, it will record total number, magnetization for x, y, z direction  
     std::vector<double> nelec_spin;
-
-    //calculate nbands and 
-    void cal_nbands();
 
     virtual void print_psi(const psi::Psi<double>& psi_in, const int istep = -1)
     {
@@ -88,7 +92,18 @@ class ElecState
         return;
     }
 
-    void init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac);
+    /**
+     * @brief Init rho_core, init rho, renormalize rho, init pot
+     * 
+     * @param istep i-th step
+     * @param strucfac structure factor
+     * @param symm symmetry
+     * @param wfcpw PW basis for wave function if needed
+     */
+    void init_scf(const int istep,
+                  const ModuleBase::ComplexMatrix& strucfac,
+                  ModuleSymmetry::Symmetry& symm,
+                  const void* wfcpw = nullptr);
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
@@ -152,6 +167,7 @@ class ElecState
     void print_etot(const bool converged,
                     const int& iter,
                     const double& scf_thr,
+                    const double& scf_thr_kin,
                     const double& duration,
                     const int printe,
                     const double& pw_diag_thr = 0,
@@ -169,6 +185,14 @@ class ElecState
 
     bool skip_weights = false;
 };
+
+// This is an independent function under the elecstate namespace and does not depend on any class.
+void set_is_occupied(std::vector<bool>& is_occupied,
+                     elecstate::ElecState* pes,
+                     const int i_scf,
+                     const int nk,
+                     const int nband,
+                     const bool diago_full_acc);
 
 } // namespace elecstate
 #endif

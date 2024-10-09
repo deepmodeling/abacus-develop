@@ -1,10 +1,12 @@
-#ifndef OVERLAPNEW_H
-#define OVERLAPNEW_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_OPERATOR_LCAO_OVERLAP_NEW_H
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include <vector>
 
 namespace hamilt
 {
@@ -35,15 +37,14 @@ template <typename TK, typename TR>
 class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
-    OverlapNew<OperatorLCAO<TK, TR>>(LCAO_Matrix* LM_in,
+    OverlapNew<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      hamilt::HContainer<TR>* hR_in,
-                                     std::vector<TK>* hK_in,
                                      hamilt::HContainer<TR>* SR_in,
-                                     std::vector<TK>* SK_pointer_in,
                                      const UnitCell* ucell_in,
+                                     const std::vector<double>& orb_cutoff,
                                      Grid_Driver* GridD_in,
-                                     const Parallel_Orbitals* paraV);
+                                     const TwoCenterIntegrator* intor);
 
     virtual void contributeHR() override;
 
@@ -54,9 +55,11 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
+    std::vector<double> orb_cutoff_;
+
     hamilt::HContainer<TR>* SR = nullptr;
 
-    std::vector<TK>* SK_pointer = nullptr;
+    const TwoCenterIntegrator* intor_ = nullptr;
 
     bool SR_fixed_done = false;
 
@@ -65,7 +68,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the overlap matrix with specific <I,J,R> atom-pairs
      * the size of SR will be fixed after initialization
      */
-    void initialize_SR(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_SR(Grid_Driver* GridD_in);
 
     /**
      * @brief calculate the overlap matrix with specific <I,J,R> atom-pairs
@@ -85,7 +88,7 @@ class OverlapNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // if k vector is not changed, then do nothing and return
     // default of kvec_d_old is (-10,-10,-10), which is not a valid k vector
-    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10,-10,-10);
+    ModuleBase::Vector3<double> kvec_d_old = ModuleBase::Vector3<double>(-10, -10, -10);
 };
 
 } // namespace hamilt

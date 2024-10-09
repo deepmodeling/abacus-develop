@@ -9,7 +9,10 @@ add_library(
     overlap_new.cpp
     ekinetic_new.cpp
     nonlocal_new.cpp
+    td_ekinetic_lcao.cpp
+    td_nonlocal_lcao.cpp
     sc_lambda_lcao.cpp
+    dftu_lcao.cpp
 )
 
 if(ENABLE_COVERAGE)
@@ -17,5 +20,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 IF (BUILD_TESTING)
-  add_subdirectory(test)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+  endif()
 endif()

@@ -25,7 +25,8 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
                          const int nev,
                          const int narows,
                          const int nacols,
-                         const int* desc)
+                         const int* desc,
+                         const bool reuse_handle_0)
 {
     this->isReal = isReal;
     this->comm = comm;
@@ -62,6 +63,14 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     elpa_init(20210430);
 
     handle_id = ++total_handle;
+
+    //delete the old elpa_handle and reuse the handle_id=0
+    if(reuse_handle_0 && total_handle>0)
+    {
+        NEW_ELPA_HANDLE_POOL.erase(0);
+        handle_id = 0;
+    }
+
     elpa_t handle;
 
     handle = elpa_allocate(&error);

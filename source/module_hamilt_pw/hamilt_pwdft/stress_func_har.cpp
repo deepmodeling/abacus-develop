@@ -1,5 +1,6 @@
 #include "stress_func.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -12,12 +13,14 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 
 	std::complex<FPTYPE> *aux = new std::complex<FPTYPE>[rho_basis->nmaxgr];
 
+	const int nspin_rho = (PARAM.inp.nspin == 2) ? 2 : 1;
+
 	//  Hartree potential VH(r) from n(r)
     /*
         blocking rho_basis->nrxx for data locality.
 
         By blocking aux with block size 1024,
-        we can keep the blocked aux in L1 cache when iterating GlobalV::NSPIN loop
+        we can keep the blocked aux in L1 cache when iterating PARAM.inp.nspin loop
         performance will be better when number of atom is quite huge
     */
     const int block_ir = 1024;
@@ -35,7 +38,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 				aux[ir] = std::complex<FPTYPE>( chr->rho[0][ir], 0.0 );
 			}
 		}
-		for (int is = 1; is < GlobalV::NSPIN; is++)
+		for (int is = 1; is < nspin_rho; is++)
 		{
 			for (int ir = irb; ir < ir_end; ++ir)
 			{ // accumulate aux
@@ -60,7 +63,8 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	for (int ig = 0 ; ig < rho_basis->npw ; ++ig)
 	{
 		const FPTYPE g2 = rho_basis->gg[ig];
-		if(g2 < 1e-8) continue;
+		if(g2 < 1e-8) { continue;
+}
 		//const FPTYPE fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::sf.gg [ig]);
 		//ehart += ( conj( Porter[j] ) * Porter[j] ).real() * fac;
 		//vh_g[ig] = fac * Porter[j];
@@ -98,7 +102,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
     //        Parallel_Reduce::reduce_pool( ehart );
 //        ehart *= 0.5 * GlobalC::ucell.omega;
         //psic(:)=(0.0,0.0)
-	if(is_pw&&INPUT.gamma_only)
+	if(is_pw&&PARAM.globalv.gamma_only_pw)
 	{
 		for(int l=0;l<3;l++)
 		{
@@ -121,8 +125,9 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	
 	for(int l=0;l<3;l++)
 	{
-		if(is_pw) sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
-		else sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		if(is_pw) { sigma(l,l) -= elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+		} else { sigma(l,l) += elecstate::H_Hartree_pw::hartree_energy /GlobalC::ucell.omega;
+}
 		for(int m=0;m<l;m++)
 		{
 			sigma(m,l)=sigma(l,m);
@@ -142,7 +147,7 @@ void Stress_Func<FPTYPE, Device>::stress_har(ModuleBase::matrix& sigma, ModulePW
 	return;
 }
 
-template class Stress_Func<double, psi::DEVICE_CPU>;
+template class Stress_Func<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class Stress_Func<double, psi::DEVICE_GPU>;
+template class Stress_Func<double, base_device::DEVICE_GPU>;
 #endif

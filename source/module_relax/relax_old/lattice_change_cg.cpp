@@ -85,6 +85,7 @@ void Lattice_Change_CG::start(UnitCell &ucell, const ModuleBase::matrix &stress_
     double *cg_gradn = new double[dim];
     double *move = new double[dim];
     double *cg_grad = new double[dim];
+
     double best_x = 0.0;
     double fmin = 0.0;
 

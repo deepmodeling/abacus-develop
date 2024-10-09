@@ -74,6 +74,17 @@ public:
 
     void Dngvd_double(int N, int M, double *A, double *B, double *W, double *V);
     void Dngvd_complex(int N, int M, std::complex<double> *A, std::complex<double> *B, double *W, std::complex<double> *V);
+    
+    void Dngvd(int N, int M, double *A, double *B, double *W, double *V)
+    {
+        return Dngvd_double(N, M, A, B, W, V);
+    };
+
+    void Dngvd(int N, int M, std::complex<double> *A, std::complex<double> *B, double *W, std::complex<double> *V)
+    {
+        return Dngvd_complex(N, M, A, B, W, V);
+    };
+
 };
 
 #endif

@@ -35,7 +35,7 @@
  *  - SpinConstrain::get_iwt()
  *     get the index of orbital with spin component from (itype, iat, orbital_index)
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 
@@ -43,7 +43,7 @@ template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<T, psi::DEVICE_CPU>& sc = SpinConstrain<T, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<T, base_device::DEVICE_CPU>& sc = SpinConstrain<T, base_device::DEVICE_CPU>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;
@@ -308,12 +308,15 @@ TYPED_TEST(SpinConstrainTest, SetTargetMagType1)
             double mag_y = sc_data.target_mag_val * std::sin(sc_data.target_mag_angle1 * M_PI / 180)
                            * std::sin(sc_data.target_mag_angle2 * M_PI / 180);
             double mag_z = sc_data.target_mag_val * std::cos(sc_data.target_mag_angle1 * M_PI / 180);
-            if (std::abs(mag_x) < 1e-14)
+            if (std::abs(mag_x) < 1e-14) {
                 mag_x = 0.0;
-            if (std::abs(mag_y) < 1e-14)
+}
+            if (std::abs(mag_y) < 1e-14) {
                 mag_y = 0.0;
-            if (std::abs(mag_z) < 1e-14)
+}
+            if (std::abs(mag_z) < 1e-14) {
                 mag_z = 0.0;
+}
             EXPECT_DOUBLE_EQ(mag_x, target_mag[iat].x);
             EXPECT_DOUBLE_EQ(mag_y, target_mag[iat].y);
             EXPECT_DOUBLE_EQ(mag_z, target_mag[iat].z);
@@ -349,7 +352,7 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
     int nsc_min = 2;
     double alpha_trial = 0.01;
     double sccut = 3.0;
-    bool decay_grad_switch = 1;
+    bool decay_grad_switch = true;
     this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, decay_grad_switch);
     EXPECT_DOUBLE_EQ(this->sc.get_sc_thr(), sc_thr);
     EXPECT_EQ(this->sc.get_nsc(), nsc);
@@ -363,14 +366,12 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 {
     K_Vectors kv;
     this->sc.set_nspin(4);
-    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, nullptr, "genelpa", nullptr);
+    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, "genelpa");
     EXPECT_EQ(this->sc.get_nspin(), 4);
-    EXPECT_EQ(this->sc.phsol, nullptr);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);
     EXPECT_EQ(this->sc.psi, nullptr);
     EXPECT_EQ(this->sc.pelec, nullptr);
     EXPECT_EQ(this->sc.KS_SOLVER, "genelpa");
-    EXPECT_EQ(this->sc.LM, nullptr);
 }
 
 TYPED_TEST(SpinConstrainTest, SetParaV)
@@ -386,7 +387,7 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     int nrow = 4;
     int ncol = 4;
     std::ofstream ofs("test.log");
-    paraV.set_global2local(nrow, ncol, false, ofs);
+    paraV.set_serial(nrow, ncol);
     this->sc.set_ParaV(&paraV);
     EXPECT_EQ(this->sc.ParaV->nloc, nrow * ncol);
     remove("test.log");
@@ -398,10 +399,12 @@ TYPED_TEST(SpinConstrainTest, PrintMi)
     testing::internal::CaptureStdout();
     this->sc.print_Mi(true);
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0, 0, 0)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000         0.0000000000         0.0000000000"));
     this->sc.set_nspin(2);
      testing::internal::CaptureStdout();
     this->sc.print_Mi(true);
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism on atom: 0  (0)"));
+    EXPECT_THAT(output, testing::HasSubstr("Total Magnetism (uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0         0.0000000000"));
 }

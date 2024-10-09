@@ -2,10 +2,12 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define protected public
 #include "module_elecstate/elecstate_pw.h"
-
+#undef protected
 // mock functions for testing
 namespace elecstate
 {
@@ -80,41 +82,47 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
 }
 template <>
-void pseudopot_cell_vnl::radial_fft_q<float, psi::DEVICE_CPU>(psi::DEVICE_CPU* ctx,
-                                                              const int ng,
-                                                              const int ih,
-                                                              const int jh,
-                                                              const int itype,
-                                                              const float* qnorm,
-                                                              const float* ylm,
-                                                              std::complex<float>* qg) const
+void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU* ctx,
+                                                                      const int ng,
+                                                                      const int ih,
+                                                                      const int jh,
+                                                                      const int itype,
+                                                                      const float* qnorm,
+                                                                      const float* ylm,
+                                                                      std::complex<float>* qg) const
 {
 }
 template <>
-void pseudopot_cell_vnl::radial_fft_q<double, psi::DEVICE_CPU>(psi::DEVICE_CPU* ctx,
-                                                               const int ng,
-                                                               const int ih,
-                                                               const int jh,
-                                                               const int itype,
-                                                               const double* qnorm,
-                                                               const double* ylm,
-                                                               std::complex<double>* qg) const
+void pseudopot_cell_vnl::radial_fft_q<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU* ctx,
+                                                                       const int ng,
+                                                                       const int ih,
+                                                                       const int jh,
+                                                                       const int itype,
+                                                                       const double* qnorm,
+                                                                       const double* ylm,
+                                                                       std::complex<double>* qg) const
 {
 }
 template <>
 std::complex<float>* pseudopot_cell_vnl::get_vkb_data<float>() const
 {
+    return nullptr;
 }
 template <>
 std::complex<double>* pseudopot_cell_vnl::get_vkb_data<double>() const
 {
+    return nullptr;
 }
 template <>
-void pseudopot_cell_vnl::getvnl<float, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<float>*) const
+void pseudopot_cell_vnl::getvnl<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                int const&,
+                                                                std::complex<float>*) const
 {
 }
 template <>
-void pseudopot_cell_vnl::getvnl<double, psi::DEVICE_CPU>(psi::DEVICE_CPU*, int const&, std::complex<double>*) const
+void pseudopot_cell_vnl::getvnl<double, base_device::DEVICE_CPU>(base_device::DEVICE_CPU*,
+                                                                 int const&,
+                                                                 std::complex<double>*) const
 {
 }
 Soc::~Soc()
@@ -123,19 +131,25 @@ Soc::~Soc()
 Fcoef::~Fcoef()
 {
 }
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
+
 void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 {
 }
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&, ModuleBase::ComplexMatrix const&, const int&, const int&)
+void Charge::init_rho(elecstate::efermi&,
+                      ModuleBase::ComplexMatrix const&,
+                      ModuleSymmetry::Symmetry& symm,
+                      const void*,
+                      const void*)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
@@ -144,23 +158,26 @@ void Charge::set_rhopw(ModulePW::PW_Basis*)
 void Charge::renormalize_rho()
 {
 }
+void Charge::check_rho()
+{
+}
 
 void Set_GlobalV_Default()
 {
-    GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
-    GlobalV::DOMAG = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.sys.device_flag = "cpu";
+    PARAM.input.precision = "double";
+    PARAM.sys.domag = false;
+    PARAM.sys.domag_z = false;
     // Base class dependent
-    GlobalV::NSPIN = 1;
+    PARAM.input.nspin = 1;
     GlobalV::nelec = 10.0;
     GlobalV::nupdown = 0.0;
-    GlobalV::TWO_EFERMI = false;
+    PARAM.sys.two_fermi = false;
     GlobalV::NBANDS = 6;
     GlobalV::NLOCAL = 6;
-    GlobalV::ESOLVER_TYPE = "ksdft";
-    GlobalV::LSPINORB = false;
-    GlobalV::BASIS_TYPE = "pw";
+    PARAM.input.esolver_type = "ksdft";
+    PARAM.input.lspinorb = false;
+    PARAM.input.basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;
     GlobalV::use_uspp = false;
@@ -184,8 +201,8 @@ void Set_GlobalV_Default()
 class ElecStatePWTest : public ::testing::Test
 {
   protected:
-    elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>* elecstate_pw_d = nullptr;
-    elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>* elecstate_pw_s = nullptr;
+    elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>* elecstate_pw_d = nullptr;
+    elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>* elecstate_pw_s = nullptr;
     ModulePW::PW_Basis_K* wfcpw = nullptr;
     Charge* chg = nullptr;
     K_Vectors* klist = nullptr;
@@ -200,7 +217,7 @@ class ElecStatePWTest : public ::testing::Test
         wfcpw = new ModulePW::PW_Basis_K;
         chg = new Charge;
         klist = new K_Vectors;
-        klist->nks = 5;
+        klist->set_nks(5);
         ucell = new UnitCell;
         ppcell = new pseudopot_cell_vnl;
         rhodpw = new ModulePW::PW_Basis;
@@ -230,14 +247,14 @@ class ElecStatePWTest : public ::testing::Test
 
 TEST_F(ElecStatePWTest, ConstructorDouble)
 {
-    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw,
-                                                                                       chg,
-                                                                                       klist,
-                                                                                       ucell,
-                                                                                       ppcell,
-                                                                                       rhodpw,
-                                                                                       rhopw,
-                                                                                       bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                               chg,
+                                                                                               klist,
+                                                                                               ucell,
+                                                                                               ppcell,
+                                                                                               rhodpw,
+                                                                                               rhopw,
+                                                                                               bigpw);
     EXPECT_EQ(elecstate_pw_d->classname, "ElecStatePW");
     EXPECT_EQ(elecstate_pw_d->charge, chg);
     EXPECT_EQ(elecstate_pw_d->klist, klist);
@@ -246,14 +263,14 @@ TEST_F(ElecStatePWTest, ConstructorDouble)
 
 TEST_F(ElecStatePWTest, ConstructorSingle)
 {
-    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw,
-                                                                                      chg,
-                                                                                      klist,
-                                                                                      ucell,
-                                                                                      ppcell,
-                                                                                      rhodpw,
-                                                                                      rhopw,
-                                                                                      bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                              chg,
+                                                                                              klist,
+                                                                                              ucell,
+                                                                                              ppcell,
+                                                                                              rhodpw,
+                                                                                              rhopw,
+                                                                                              bigpw);
     EXPECT_EQ(elecstate_pw_s->classname, "ElecStatePW");
     EXPECT_EQ(elecstate_pw_s->charge, chg);
     EXPECT_EQ(elecstate_pw_s->klist, klist);
@@ -264,14 +281,14 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
     elecstate::tmp_xc_func_type = 3;
     chg->nrxx = 1000;
-    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw,
-                                                                                       chg,
-                                                                                       klist,
-                                                                                       ucell,
-                                                                                       ppcell,
-                                                                                       rhodpw,
-                                                                                       rhopw,
-                                                                                       bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                               chg,
+                                                                                               klist,
+                                                                                               ucell,
+                                                                                               ppcell,
+                                                                                               rhodpw,
+                                                                                               rhopw,
+                                                                                               bigpw);
     elecstate_pw_d->init_rho_data();
     EXPECT_EQ(elecstate_pw_d->init_rho, true);
     EXPECT_EQ(elecstate_pw_d->rho, chg->rho);
@@ -280,18 +297,18 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     elecstate::tmp_xc_func_type = 3;
-    chg->nspin = GlobalV::NSPIN;
+    chg->nspin = PARAM.input.nspin;
     chg->nrxx = 1000;
-    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw,
-                                                                                      chg,
-                                                                                      klist,
-                                                                                      ucell,
-                                                                                      ppcell,
-                                                                                      rhodpw,
-                                                                                      rhopw,
-                                                                                      bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                              chg,
+                                                                                              klist,
+                                                                                              ucell,
+                                                                                              ppcell,
+                                                                                              rhodpw,
+                                                                                              rhopw,
+                                                                                              bigpw);
     elecstate_pw_s->init_rho_data();
     EXPECT_EQ(elecstate_pw_s->init_rho, true);
     EXPECT_NE(elecstate_pw_s->rho, nullptr);
@@ -301,28 +318,28 @@ TEST_F(ElecStatePWTest, InitRhoDataSingle)
 TEST_F(ElecStatePWTest, ParallelKDouble)
 {
     //this is a trivial call due to removing of __MPI
-    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, psi::DEVICE_CPU>(wfcpw,
-                                                                                       chg,
-                                                                                       klist,
-                                                                                       ucell,
-                                                                                       ppcell,
-                                                                                       rhodpw,
-                                                                                       rhopw,
-                                                                                       bigpw);
+    elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                               chg,
+                                                                                               klist,
+                                                                                               ucell,
+                                                                                               ppcell,
+                                                                                               rhodpw,
+                                                                                               rhopw,
+                                                                                               bigpw);
     EXPECT_NO_THROW(elecstate_pw_d->parallelK());
 }
 
 TEST_F(ElecStatePWTest, ParallelKSingle)
 {
     //this is a trivial call due to removing of __MPI
-    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, psi::DEVICE_CPU>(wfcpw,
-                                                                                      chg,
-                                                                                      klist,
-                                                                                      ucell,
-                                                                                      ppcell,
-                                                                                      rhodpw,
-                                                                                      rhopw,
-                                                                                      bigpw);
+    elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
+                                                                                              chg,
+                                                                                              klist,
+                                                                                              ucell,
+                                                                                              ppcell,
+                                                                                              rhodpw,
+                                                                                              rhopw,
+                                                                                              bigpw);
     EXPECT_NO_THROW(elecstate_pw_s->parallelK());
 }
 

@@ -9,9 +9,6 @@ Currently jghan has added some code.
 </p>
 
 <p align="center">
-    <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/image.yml">
-        <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/image.yml/badge.svg">
-    </a>
     <a href="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml">
         <img src="https://github.com/deepmodeling/abacus-develop/actions/workflows/test.yml/badge.svg">
     </a>

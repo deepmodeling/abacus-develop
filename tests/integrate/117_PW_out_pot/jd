@@ -1,1 +1,1 @@
-test out_pot in PW KSDFT. symmetry = on.
+test out_pot in PW KSDFT. symmetry = on.; test init_chg=auto, and no chg file (will use atomic chg). 

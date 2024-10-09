@@ -2,13 +2,13 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
 {
 }
-
 /************************************************
  *  unit test of the functions in lambda_loop_helper.cpp
  ***********************************************/
@@ -24,8 +24,8 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<std::complex<double>, psi::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, PrintTermination)
@@ -40,10 +40,15 @@ TEST_F(SpinConstrainTest, PrintTermination)
     sc.set_sc_lambda(sc_lambda.data(), 1);
     testing::internal::CaptureStdout();
     sc.print_termination();
+    sc.print_Mag_Force();
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Inner optimization for lambda ends."));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   0 0 0"));
-    EXPECT_THAT(output, testing::HasSubstr("ATOM 1   1 2 3"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         0.0000000000         0.0000000000         0.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("Final optimal lambda (Ry/uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      1         1.0000000000         2.0000000000         3.0000000000"));
+    EXPECT_THAT(output, testing::HasSubstr("Magnetic force (Ry/uB):"));
+    EXPECT_THAT(output, testing::HasSubstr("ATOM      0        -1.0000000000        -2.0000000000        -3.0000000000"));
 }
 
 TEST_F(SpinConstrainTest, CheckRmsStop)
@@ -54,12 +59,14 @@ TEST_F(SpinConstrainTest, CheckRmsStop)
     double alpha_trial = 0.01;
     double sccut = 3.0;
     bool decay_grad_switch = 1;
+    double duration = 10;
+    double total_duration = 10;
     this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, decay_grad_switch);
     testing::internal::CaptureStdout();
-    EXPECT_FALSE(sc.check_rms_stop(0, 0, 1e-5));
-    EXPECT_FALSE(sc.check_rms_stop(0, 11, 1e-5));
-    EXPECT_TRUE(sc.check_rms_stop(0, 12, 1e-7));
-    EXPECT_TRUE(sc.check_rms_stop(0, 99, 1e-5));
+    EXPECT_FALSE(sc.check_rms_stop(0, 0, 1e-5, duration, total_duration));
+    EXPECT_FALSE(sc.check_rms_stop(0, 11, 1e-5, duration, total_duration));
+    EXPECT_TRUE(sc.check_rms_stop(0, 12, 1e-7, duration, total_duration));
+    EXPECT_TRUE(sc.check_rms_stop(0, 99, 1e-5, duration, total_duration));
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 1           RMS = 1e-05"));
     EXPECT_THAT(output, testing::HasSubstr("Step (Outer -- Inner) =  0 -- 12          RMS = 1e-05"));

@@ -1,6 +1,8 @@
 #include "cuda_runtime.h"
 #include "module_base/kernels/math_op.h"
 
+#include <base/macros/macros.h>
+
 namespace ModuleBase {
 
 #define THREADS_PER_BLOCK 256
@@ -121,18 +123,17 @@ __global__ void cal_ylm_real(
 }
 
 template <typename FPTYPE>
-void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU *ctx,
-    const int &ng,
-    const int &lmax,
-    const FPTYPE &SQRT2,
-    const FPTYPE &PI,
-    const FPTYPE &PI_HALF,
-    const FPTYPE &FOUR_PI,
-    const FPTYPE &SQRT_INVERSE_FOUR_PI,
-    const FPTYPE *g,
-    FPTYPE * p,
-    FPTYPE * ylm)
+void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                                  const int& ng,
+                                                                  const int& lmax,
+                                                                  const FPTYPE& SQRT2,
+                                                                  const FPTYPE& PI,
+                                                                  const FPTYPE& PI_HALF,
+                                                                  const FPTYPE& FOUR_PI,
+                                                                  const FPTYPE& SQRT_INVERSE_FOUR_PI,
+                                                                  const FPTYPE* g,
+                                                                  FPTYPE* p,
+                                                                  FPTYPE* ylm)
 {
     int block = (ng + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     cal_ylm_real<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -146,10 +147,11 @@ void cal_ylm_real_op<FPTYPE, psi::DEVICE_GPU>::operator() (
         g,
         p,
         ylm);
+
+    cudaCheckOnDebug();
 }
 
-template struct cal_ylm_real_op<float, psi::DEVICE_GPU>;
-template struct cal_ylm_real_op<double, psi::DEVICE_GPU>;
+template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;
+template struct cal_ylm_real_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace ModuleBase
-

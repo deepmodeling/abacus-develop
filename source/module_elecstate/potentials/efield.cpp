@@ -1,5 +1,6 @@
 #include "efield.h"
 
+#include "module_parameter/parameter.h"
 #include "gatefield.h"
 #include "module_base/constants.h"
 #include "module_base/global_variable.h"
@@ -62,13 +63,13 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
     double elec_dipole = 0;
     double induced_dipole = 0;
 
-    if (GlobalV::DIP_COR_FLAG)
+    if (PARAM.inp.dip_cor_flag)
     {
         ion_dipole = cal_ion_dipole(cell, bmod);
         elec_dipole = cal_elec_dipole(cell, rho_basis, nspin, rho, bmod);
         tot_dipole = ion_dipole - elec_dipole;
 
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             induced_dipole = cal_induced_dipole(cell, rho_basis, solvent, bmod);
             tot_dipole += induced_dipole;
@@ -89,12 +90,12 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
     const double vamp = ModuleBase::e2 * (efield_amp - tot_dipole) * length;
 
     GlobalV::ofs_running << "\n\n Adding external electric field: " << std::endl;
-    if (GlobalV::DIP_COR_FLAG)
+    if (PARAM.inp.dip_cor_flag)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Computed dipole along efield_dir", efield_dir);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Elec. dipole (Ry a.u.)", elec_dipole);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Ion dipole (Ry a.u.)", ion_dipole);
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Induced dipole (Ry a.u.)", induced_dipole);
         }
@@ -151,7 +152,7 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
         ion_dipole += sum * cell.atoms[it].ncpp.zv;
     }
 
-    if (GlobalV::GATE_FLAG && GlobalV::DIP_COR_FLAG)
+    if (PARAM.inp.gate_flag && PARAM.inp.dip_cor_flag)
     {
         double ion_charge = 0;
         for (int it = 0; it < cell.ntype; ++it)
@@ -253,7 +254,7 @@ double Efield::saw_function(const double &a, const double &b, const double &x)
 
 void Efield::compute_force(const UnitCell &cell, ModuleBase::matrix &fdip)
 {
-    if (GlobalV::DIP_COR_FLAG)
+    if (PARAM.inp.dip_cor_flag)
     {
         int iat = 0;
         for (int it = 0; it < cell.ntype; ++it)

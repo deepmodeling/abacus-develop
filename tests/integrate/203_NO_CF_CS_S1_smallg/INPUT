@@ -7,7 +7,7 @@ nbands			6
 symmetry		1
 
 #Parameters (2.Iteration)
-ecutwfc			100
+ecutwfc			20
 scf_thr				1e-9
 scf_nmax			100
 

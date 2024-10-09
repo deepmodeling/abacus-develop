@@ -1,0 +1,23 @@
+ATOMIC_SPECIES
+As 1   As_dojo.upf upf201
+Ga 1   Ga_dojo.upf upf201
+
+LATTICE_CONSTANT
+1  // add lattice constant, 10.58 ang
+
+LATTICE_VECTORS
+5.33 5.33  0.0
+0.0  5.33 5.33
+5.33  0.0  5.33
+ATOMIC_POSITIONS
+Direct //Cartesian or Direct coordinate.
+
+As
+0
+1
+0.300000          0.3300000          0.27000000     0 0 0
+
+Ga              //Element Label
+0
+1              //number of atom
+0.00000          0.00000          0.000000     0 0 0

@@ -11,7 +11,7 @@
 namespace hamilt
 {
 
-template<typename T, typename Device = psi::DEVICE_CPU>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class Hamilt
 {
   public:
@@ -21,10 +21,17 @@ class Hamilt
     virtual void updateHk(const int ik){return;}
 
     /// refresh status of Hamiltonian, for example, refresh H(R) and S(R) in LCAO case
-    virtual void refresh(){return;}
+    virtual void refresh(void){return;}
 
     /// core function: for solving eigenvalues of Hamiltonian with iterative method
-    virtual void hPsi(const T* psi_in, T* hpsi, const size_t size) const{return;}
+	virtual void hPsi(
+			const T* psi_in, 
+			T* hpsi, 
+			const size_t size) const
+	{
+		return;
+	}
+
     virtual void sPsi(const T* psi_in, // psi
                       T* spsi,         // spsi
                       const int nrow,  // dimension of spsi: nbands * nrow
@@ -35,9 +42,16 @@ class Hamilt
         syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
     }
 
-    /// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
-    virtual void matrix(MatrixBlock<std::complex<double>> &hk_in, MatrixBlock<std::complex<double>> &sk_in){return;}
-    virtual void matrix(MatrixBlock<double> &hk_in, MatrixBlock<double> &sk_in){return;}
+	/// core function: return H(k) and S(k) matrixs for direct solving eigenvalues.
+	virtual void matrix(
+			MatrixBlock<std::complex<double>> &hk_in, 
+			MatrixBlock<std::complex<double>> &sk_in){return;}
+
+	virtual void matrix(
+			MatrixBlock<double> &hk_in, 
+			MatrixBlock<double> &sk_in){return;}
+
+    virtual std::vector<T> matrix() { return std::vector<T>(); }
 
     std::string classname = "none";
 
@@ -45,9 +59,11 @@ class Hamilt
 
     /// first node operator, add operations from each operators
     Operator<T, Device>* ops = nullptr;
+
 protected:
+
     Device* ctx = {};
-    using syncmem_op = psi::memory::synchronize_memory_op<T, Device, Device>;
+    using syncmem_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
 };
 
 } // namespace hamilt

@@ -1,3 +1,5 @@
+#include <vector>
+
 /**
  * @file fp_energy.h
  * @brief This file contains all energies about first-principle calculations
@@ -12,8 +14,9 @@ namespace elecstate
  */
 struct fenergy
 {
-    double etot = 0.0;     ///< the total free energy
-    double etot_old = 0.0; ///< old total free energy
+    double etot = 0.0;       ///< the total free energy
+    double etot_old = 0.0;   ///< old total free energy
+    double etot_delta = 0.0; // the difference of total energy between two steps = etot - etot_old
 
     double eband = 0.0;          ///< the band energy
     double deband = 0.0;         ///< correction for variational energy
@@ -41,8 +44,8 @@ struct fenergy
 
     double escon = 0.0; ///< spin constraint energy
 
-    double ekinetic = 0.0;      /// kinetic energy, used in OFDFT
-    double eion_elec = 0.0;     /// ion-electron interaction energy, used in OFDFT
+    double ekinetic = 0.0;  /// kinetic energy, used in OFDFT
+    double eion_elec = 0.0; /// ion-electron interaction energy, used in OFDFT
 
     double calculate_etot();
     double calculate_harris();
@@ -62,6 +65,7 @@ struct efermi
     bool two_efermi = false; ///<
     double& get_ef(const int& is);
     double get_efval(const int& is) const;
+    std::vector<double> get_all_ef() const;
 };
 
 } // namespace elecstate

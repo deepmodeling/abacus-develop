@@ -30,10 +30,13 @@ jobs:
             build_args: "-DENABLE_LCAO=OFF"
             name: "Build without LCAO"
           - tag: gnu
-            build_args: "-DUSE_ELPA=0"
+            build_args: "-DUSE_ELPA=0 "
             name: "Build without ELPA"
           - tag: gnu
             build_args: "-DENABLE_MPI=0"
+            name: "Build without MPI"
+          - tag: gnu
+            build_args: "-DENABLE_MPI=0 -DENABLE_LCAO=0"
             name: "Build without LCAO and MPI"
 
     name: ${{ matrix.name }}

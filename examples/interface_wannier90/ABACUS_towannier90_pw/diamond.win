@@ -1,7 +1,7 @@
 num_wann        =  4 
 num_iter        = 20
 
-wannier_plot=.true.
+wannier_plot=.false.
 wannier_plot_supercell = 3
 wvfn_formatted = .true.
 

@@ -1,34 +1,35 @@
 list(APPEND objects
-    input.cpp
     input_conv.cpp
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
+    cif_io.cpp
     write_dos_pw.cpp
     nscf_band.cpp
     write_istate_info.cpp
     numerical_basis.cpp
+    numerical_basis_jyjy.cpp
     numerical_descriptor.cpp
     output.cpp
     print_info.cpp
     read_cube.cpp
     read_rho.cpp
-    read_rhog.cpp
+    rhog_io.cpp
+    read_exit_file.cpp
     read_wfc_pw.cpp
+    read_wfc_to_rho.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
-    write_input.cpp
     write_cube.cpp
-    write_rho.cpp
-    write_potential.cpp
+    write_elecstat_pot.cpp
     write_dipole.cpp
+    td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
-    output_rho.cpp
-    output_potential.cpp
-    output_radial.cpp
-    parameter_pool.cpp
+    para_json.cpp
+    parse_args.cpp
+    orb_io.cpp
 )
 
 list(APPEND objects_advanced
@@ -48,32 +49,53 @@ if(ENABLE_LCAO)
       write_orb_info.cpp
       write_proj_band_lcao.cpp
       nscf_fermi_surf.cpp
-      istate_charge.cpp
-      istate_envelope.cpp
-      read_dm.cpp
+      get_pchg_lcao.cpp
+      get_wf_lcao.cpp
       read_wfc_nao.cpp
+      read_wfc_lcao.cpp
       write_wfc_nao.cpp
-      write_dm.cpp
+      io_dmk.cpp
+      write_dmr.cpp
       dos_nao.cpp
-      output_dm.cpp
-      output_dm1.cpp
       sparse_matrix.cpp
       file_reader.cpp
       csr_reader.cpp
-      to_qo.cpp
-      to_qo_tools.cpp
+      to_qo_kernel.cpp
+      to_qo_mpi.cpp
+      to_qo_structures.cpp
+      output_sk.cpp
+      output_dmk.cpp
+      output_mulliken.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
-      mulliken_charge.cpp
       write_HS_R.cpp
       write_HS_sparse.cpp
       single_R_io.cpp
-      write_dm_sparse.cpp
       cal_r_overlap_R.cpp
       output_mat_sparse.cpp
   )
 endif()
+
+add_library(
+    io_input
+    OBJECT
+    read_input_item_system.cpp
+    read_input_item_elec_stru.cpp
+    read_input_item_relax.cpp
+    read_input_item_md.cpp
+    read_input_item_ofdft.cpp
+    read_input_item_sdft.cpp
+    read_input_item_tddft.cpp
+    read_input_item_deepks.cpp
+    read_input_item_model.cpp
+    read_input_item_postprocess.cpp  
+    read_input_item_exx_dftu.cpp
+    read_input_item_other.cpp   
+    read_input_item_output.cpp  
+    read_input.cpp
+    read_set_globalv.cpp
+)
 
 add_library(
     io_basic
@@ -92,6 +114,14 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(test)
-  add_subdirectory(test_serial)
+  if(ENABLE_MPI)
+    add_subdirectory(test)
+    add_subdirectory(test_serial)
+  endif()
+endif()
+
+if(ENABLE_RAPIDJSON)
+  if(ENABLE_MPI)
+    add_subdirectory(json_output)
+  endif()
 endif()

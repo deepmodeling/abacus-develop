@@ -11,7 +11,7 @@ gamma_only      0
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-8
+scf_thr				1e-5
 scf_nmax			50
 
 #Parameters (3.Basis)
@@ -26,5 +26,16 @@ mixing_type		broyden
 mixing_beta		0.7
 
 out_mat_xc  1
+out_eband_terms 1
 ks_solver       scalapack_gvx
 
+dft_functional hse
+exx_real_number                         1
+exx_pca_threshold                       1E-2
+exx_c_threshold                         1E-2
+exx_v_threshold                         1
+exx_dm_threshold                        1E-2
+exx_cauchy_threshold            1E-3
+exx_ccp_rmesh_times                     1
+exx_separate_loop                       1
+exx_hybrid_step                         1

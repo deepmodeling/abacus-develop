@@ -24,9 +24,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
-  add_subdirectory(relax_new/test)
-endif()
-
-if(BUILD_TESTING)
-  add_subdirectory(relax_old/test)
+  if(ENABLE_MPI)
+    add_subdirectory(relax_new/test)
+    add_subdirectory(relax_old/test)
+  endif() 
 endif()

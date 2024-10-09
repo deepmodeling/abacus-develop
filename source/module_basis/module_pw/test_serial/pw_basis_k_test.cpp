@@ -28,6 +28,9 @@
 #include "../pw_basis_k.h"
 #include "../pw_basis.h"
 #include "../fft.h"
+#undef private
+#undef protected
+
 class PWBasisKTEST: public testing::Test
 {
 public:
@@ -188,5 +191,4 @@ TEST_F(PWBasisKTEST, CollectLocalPW)
 	EXPECT_EQ(basis_k.npwk_max,2721);
 }
 
-#undef private
-#undef protected
+

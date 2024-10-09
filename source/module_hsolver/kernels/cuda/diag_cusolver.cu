@@ -40,7 +40,7 @@ void Diag_Cusolver_gvd::finalize(){
 Diag_Cusolver_gvd::~Diag_Cusolver_gvd(){
     finalize();
     if (cusolverH) {checkCudaErrors( cusolverDnDestroy(cusolverH) );    cusolverH = NULL;}
-    checkCudaErrors( cudaDeviceReset() );
+    //checkCudaErrors( cudaDeviceReset() );
 }
 
 

@@ -11,7 +11,7 @@
 namespace vdw
 {
 
-void Vdwd3Parameters::initial_parameters(const Input &input)
+void Vdwd3Parameters::initial_parameters(const Input_para &input)
 {
     mxc_.resize(max_elem_, 1);
     r0ab_.resize(max_elem_, std::vector<double>(max_elem_, 0.0));

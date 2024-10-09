@@ -7,7 +7,7 @@
 #define RI_2D_COMM_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/klist.h"
 
 #include <RI/global/Tensor.h>
@@ -18,6 +18,7 @@
 #include <map>
 #include <set>
 #include <deque>
+#include <RI/ri/Cell_Nearest.h>
 
 namespace RI_2D_Comm
 {
@@ -30,11 +31,11 @@ namespace RI_2D_Comm
 //public:
 	template<typename Tdata, typename Tmatrix>
 	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-	split_m2D_ktoR(const K_Vectors &kv, const std::vector<const Tmatrix*> &mks_2D, const Parallel_Orbitals &pv);
+        split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin, const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
-	get_2D_judge(const Parallel_Orbitals &pv);
+        get_2D_judge(const Parallel_2D& pv);
 
     template<typename Tdata, typename TK>
     extern void add_Hexx(
@@ -43,7 +44,17 @@ namespace RI_2D_Comm
         const double alpha,
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
-        std::vector<TK>& Hloc);
+        TK* hk);
+
+    template<typename Tdata, typename TR>
+    extern void add_HexxR(
+        const int current_spin,
+        const double alpha,
+        const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
+        const Parallel_Orbitals& pv,
+        const int npol,
+        hamilt::HContainer<TR>& HlocR,
+        const RI::Cell_Nearest<int, int, 3, double, 3>* const cell_nearest = nullptr);
 
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(

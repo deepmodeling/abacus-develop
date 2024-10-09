@@ -1,8 +1,10 @@
 #include "bfgs_basic.h"
 
+#include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include<vector>
 using namespace Ions_Move_Basic;
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0; // default is 0.01
@@ -66,10 +68,10 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
     //  ModuleBase::TITLE("Ions_Move_BFGS","update_inverse_hessian");
     assert(dim > 0);
 
-    double *s = new double[dim];
-    double *y = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(s, dim);
-    ModuleBase::GlobalFunc::ZEROS(y, dim);
+    std::vector<double> s(dim);
+    std::vector<double> y(dim);
+    ModuleBase::GlobalFunc::ZEROS(s.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(y.data(), dim);
 
     for (int i = 0; i < dim; i++)
     {
@@ -94,12 +96,12 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         return;
     }
 
-    double *Hs = new double[dim];
-    double *Hy = new double[dim];
-    double *yH = new double[dim];
-    ModuleBase::GlobalFunc::ZEROS(Hs, dim);
-    ModuleBase::GlobalFunc::ZEROS(Hy, dim);
-    ModuleBase::GlobalFunc::ZEROS(yH, dim);
+    std::vector<double> Hs(dim);
+    std::vector<double> Hy(dim);
+    std::vector<double> yH(dim);
+    ModuleBase::GlobalFunc::ZEROS(Hs.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(Hy.data(), dim);
+    ModuleBase::GlobalFunc::ZEROS(yH.data(), dim);
 
     for (int i = 0; i < dim; i++)
     {
@@ -127,11 +129,6 @@ void BFGS_Basic::update_inverse_hessian(const double &lat0)
         }
     }
 
-    delete[] s;
-    delete[] y;
-    delete[] Hs;
-    delete[] Hy;
-    delete[] yH;
     return;
 }
 
@@ -148,7 +145,7 @@ void BFGS_Basic::check_wolfe_conditions(void)
     // enlarge trst radius is not good.
     bool wolfe2 = std::abs(dot) > -this->relax_bfgs_w2 * dot_p;
 
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "etot - etot_p", etot - etot_p);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "relax_bfgs_w1 * dot_p", relax_bfgs_w1 * dot_p);
@@ -357,7 +354,7 @@ void BFGS_Basic::compute_trust_radius(void)
         trust_radius = std::min(trust_radius, norm_move);
     }
 
-    if (GlobalV::test_relax_method)
+    if (PARAM.inp.test_relax_method)
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "wolfe_flag", wolfe_flag);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "trust_radius_old", trust_radius_old);

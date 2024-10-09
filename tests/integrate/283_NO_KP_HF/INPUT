@@ -27,14 +27,14 @@ mixing_type		broyden
 #Parameters (7.Hybrid)
 dft_functional				hf
 exx_real_number				1
-exx_pca_threshold			1E-4
-exx_c_threshold 			1E-4
+exx_pca_threshold			1E-3
+exx_c_threshold 			1E-3
 exx_v_threshold 			1
-exx_dm_threshold 			1E-4
-exx_cauchy_threshold		1E-6
-exx_ccp_rmesh_times			3
+exx_dm_threshold 			1E-3
+exx_cauchy_threshold		1E-4
+exx_ccp_rmesh_times			2
 exx_separate_loop			1
-exx_hybrid_step				3
+exx_hybrid_step				2
 
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB

@@ -39,11 +39,12 @@ class BaseMatrix
     void set_zero();
 
     /**
-     * @brief save an array to the matrix
+     * @brief add an array to the matrix
      *
-     * @param array array to be saved
+     * @param array array to be added
      */
     void add_array(T* array);
+
     /**
      * @brief add a single element to the matrix
      *
@@ -52,6 +53,7 @@ class BaseMatrix
      * @param value value to be added
      */
     void add_element(int mu, int nu, const T& value);
+
     // for inside matrix
     /**
      * @brief get value from a whole matrix
@@ -61,6 +63,7 @@ class BaseMatrix
      * @return T&
      */
     T& get_value(const size_t& i_row, const size_t& j_col) const;
+
     /**
      * @brief get pointer of value from a submatrix
      */

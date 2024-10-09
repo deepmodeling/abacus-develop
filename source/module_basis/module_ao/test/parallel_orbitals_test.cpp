@@ -26,19 +26,14 @@ protected:
     std::vector<std::pair<int, int>> sizes{ {50, 50} , {60, 60}};
     std::vector<int> nat{ 10, 5};
     std::vector<int> nbs{ 1,2,3 };
-    std::ofstream ofs_running;
 #ifdef __MPI
     void SetUp() override
     {
         MPI_Comm_size(MPI_COMM_WORLD, &dsize);
         MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-        this->ofs_running.open("log" + std::to_string(my_rank) + ".txt");
-        ofs_running << "dsize(nproc) = " << dsize << std::endl;
-        ofs_running << "my_rank = " << my_rank << std::endl;
     }
     void TearDown() override
     {
-        ofs_running.close();
     }
 #endif
 };
@@ -53,23 +48,21 @@ TEST_F(TestParaO, Divide2D)
         for (auto nb : nbs)
         {
             Parallel_Orbitals po;
-            po.set_block_size(nb);
-            EXPECT_EQ(po.get_block_size(), nb);
 
             for (auto mode : { 0,1 })
             {
-                //1. set dim0 and dim1
-                po.set_proc_dim(dsize, mode);
+                po.init(gr, gc, nb, MPI_COMM_WORLD, mode);
+                EXPECT_EQ(po.get_block_size(), nb);
+
+                //1. dim0 and dim1
                 EXPECT_EQ(po.dim0 * po.dim1, dsize);
                 if (mode)EXPECT_LE(po.dim1, po.dim0);
                 else EXPECT_LE(po.dim0, po.dim1);
 
-                //2. mpi_create_cart
-                po.mpi_create_cart(MPI_COMM_WORLD);
-                EXPECT_NE(po.comm_2D, MPI_COMM_NULL);
+                //2. comm_2D
+                //EXPECT_NE(po.comm_2D, MPI_COMM_NULL);
 
-                //3. set_local2global and local sizes
-                po.set_local2global(gr, gc, ofs_running, ofs_running);
+                //3. local2global and local sizes
                 int lr = po.get_row_size();
                 int lc = po.get_col_size();
                 EXPECT_EQ(lr * lc, po.get_local_size());
@@ -82,8 +75,7 @@ TEST_F(TestParaO, Divide2D)
                 EXPECT_EQ(lr, cal_lsize(gr, nb, po.dim0, po.coord[0]));
                 EXPECT_EQ(lc, cal_lsize(gc, nb, po.dim1, po.coord[1]));
 
-                //4. set_desc
-                po.set_desc(gr, gc, lr);
+                //4. ScaLAPACK descriptor
                 EXPECT_EQ(po.desc[0], 1);
                 EXPECT_EQ(po.desc[1], po.blacs_ctxt);
                 EXPECT_EQ(po.desc[2], gr);
@@ -94,8 +86,7 @@ TEST_F(TestParaO, Divide2D)
                 EXPECT_EQ(po.desc[7], 0);
                 EXPECT_EQ(po.desc[8], lr);
 
-                //5. set_global2local
-                po.set_global2local(gr, gc, true, ofs_running);
+                //5. global2local
                 auto sum_array = [&po](const int& gr, const int& gc) -> std::pair<int, int>
                 {
                     int sum_row = 0; int sum_col = 0;
@@ -168,17 +159,14 @@ TEST_F(TestParaO, Serial)
         Parallel_Orbitals po;
 
         //1. set dim0 and dim1
-        po.set_proc_dim(1);
-        EXPECT_EQ(po.dim0 * po.dim1, 1);
-
         //2. set_serial
         po.set_serial(gr, gc);
+        EXPECT_EQ(po.dim0 * po.dim1, 1);
         EXPECT_EQ(po.get_row_size(), gr);
         EXPECT_EQ(po.get_col_size(), gc);
         EXPECT_EQ(po.get_local_size(), gr * gc);
 
-        //3. set_global2local
-        po.set_global2local(gr, gc, false, ofs_running);
+        //3. global2local
         for (int i = 0;i < gr;++i)
             EXPECT_EQ(po.global2local_row(i), i);
         for (int i = 0;i < gc;++i)

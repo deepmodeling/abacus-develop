@@ -12,7 +12,7 @@
 class Nose_Hoover : public MD_base
 {
   public:
-    Nose_Hoover(MD_para& MD_para_in, UnitCell& unit_in);
+    Nose_Hoover(const Parameter& param_in, UnitCell& unit_in);
     ~Nose_Hoover();
 
   private:
@@ -94,6 +94,10 @@ class Nose_Hoover : public MD_base
     double* v_peta;       ///< velocity of thermostats coupled with barostat
     double* g_peta;       ///< acceleration of thermostats coupled with barostat
     double mtk_term;      ///< mtk correction
+    double md_tfreq;      ///< Oscillation frequency, used to determine qmass of thermostats coupled with particles
+    double md_pfirst;     ///< Initial pressure
+    double md_plast;      ///< Final pressure
+    double md_pfreq;      ///< Oscillation frequency, used to determine qmass of thermostats coupled with barostat
 };
 
 #endif

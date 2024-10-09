@@ -1,11 +1,13 @@
 #include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
-#include <mpi.h>
-
+#define private public
+#define protected public
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/propagator.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "tddft_test.h"
+
+#include <module_base/scalapack_connector.h>
+#include <mpi.h>
 
 /************************************************
  *  unit test of functions in propagator.h
@@ -34,16 +36,14 @@ TEST(PropagatorTest, testPropagatorTaylor)
     pv->dim0 = 1;
     pv->dim1 = 1;
     pv->nb = 1;
+    pv->blacs_ctxt = 0;
+    pv->coord[0] = pv->coord[1] = 0;
 
     int dim[2];
-    int period[2] = {1, 1};
-    int reorder = 0;
     dim[0] = nprow;
     dim[1] = npcol;
 
-    MPI_Cart_create(MPI_COMM_WORLD, 2, dim, period, reorder, &pv->comm_2D);
-
-    INPUT.mdp.md_dt = 4;
+    PARAM.input.mdp.md_dt = 4 * ModuleBase::AU_to_FS;
 
     // Initialize input matrices
     int info;
@@ -76,7 +76,7 @@ TEST(PropagatorTest, testPropagatorTaylor)
 
     // Call the function
     int propagator = 1;
-    module_tddft::Propagator prop(propagator, pv);
+    module_tddft::Propagator prop(propagator, pv, PARAM.mdp.md_dt);
     prop.compute_propagator(nlocal, Stmp, Htmp, nullptr, U_operator, print_matrix);
 
     // Check the results

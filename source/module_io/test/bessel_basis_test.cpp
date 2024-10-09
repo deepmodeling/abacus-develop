@@ -389,7 +389,7 @@ void output::printM3(std::ofstream &ofs, const std::string &description, const M
  *     - return (cubic spline) interpolated element value of Faln 4d-matrix
  */
 
-#define private public
+
 class TestBesselBasis : public ::testing::Test {
 protected:
     UnitCell ucell;
@@ -484,9 +484,9 @@ TEST_F(TestBesselBasis, PolynomialInterpolation2Test) {
         i_Lmax, d_dr, d_dk
     );
     double d_yExpected = vvv_d_TableOne[0][0][i_position]*d_x1*d_x2*d_x3/6.0+
-                         vvv_d_TableOne[0][0][i_position]*d_x0*d_x2*d_x3/2.0-
-                         vvv_d_TableOne[0][0][i_position]*d_x1*d_x0*d_x3/2.0+
-                         vvv_d_TableOne[0][0][i_position]*d_x1*d_x2*d_x0/6.0;
+                         vvv_d_TableOne[0][0][i_position+1]*d_x0*d_x2*d_x3/2.0-
+                         vvv_d_TableOne[0][0][i_position+2]*d_x1*d_x0*d_x3/2.0+
+                         vvv_d_TableOne[0][0][i_position+3]*d_x1*d_x2*d_x0/6.0;
     double d_yTested = besselBasis.Polynomial_Interpolation2(0, 0, d_Gnorm);
     EXPECT_NEAR(d_yExpected, d_yTested, 0.01);
 }
@@ -552,10 +552,9 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
         "./support/BesselBasis_UnitTest_C4_AtomType0.html", i_Ntype, i_Lmax, 1, i_Nq, vvv_d_TableOne
     );
     double d_yExpected = vvvv_d_Faln[0][0][0][i_position]*d_x1*d_x2*d_x3/6.0+
-                         vvvv_d_Faln[0][0][0][i_position]*d_x0*d_x2*d_x3/2.0-
-                         vvvv_d_Faln[0][0][0][i_position]*d_x1*d_x0*d_x3/2.0+
-                         vvvv_d_Faln[0][0][0][i_position]*d_x1*d_x2*d_x0/6.0;
+                         vvvv_d_Faln[0][0][0][i_position+1]*d_x0*d_x2*d_x3/2.0-
+                         vvvv_d_Faln[0][0][0][i_position+2]*d_x1*d_x0*d_x3/2.0+
+                         vvvv_d_Faln[0][0][0][i_position+3]*d_x1*d_x2*d_x0/6.0;
     double d_yTested = besselBasis.Polynomial_Interpolation(0, 0, 0, d_Gnorm);
     EXPECT_NEAR(d_yExpected, d_yTested, 0.01);
 }
-#undef private

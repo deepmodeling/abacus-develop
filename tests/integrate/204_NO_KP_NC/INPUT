@@ -10,7 +10,7 @@ gamma_only      0
 
 #Parameters (2.Iteration)
 ecutwfc			20
-scf_thr				1e-6
+scf_thr				1e-5
 scf_nmax			100
 
 noncolin	1
@@ -19,7 +19,12 @@ basis_type		lcao
 
 #Parameters (4.Smearing)
 smearing_method		gauss
-smearing_sigma			0.002
+smearing_sigma			0.02
 
 #Parameters (5.Mixing)
+mixing_type      broyden
+mixing_beta      0.7
+mixing_ndim      15
+mixing_gg0       1.0
 
+cal_force 1

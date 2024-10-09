@@ -1,0 +1,31 @@
+INPUT_PARAMETERS
+#Parameters	(General)
+suffix	            autotest
+pseudo_dir	../../PP_ORB
+
+calculation         scf
+
+gamma_only          0
+symmetry            0
+
+#out_wfc_pw          2
+init_chg           wfc
+init_wfc           file
+
+smearing_method            gaussian
+smearing_sigma               0.001
+
+ecutwfc             20
+scf_thr                 1e-6
+scf_nmax               2
+
+#noncolin           1
+lspinorb            1
+
+basis_type          pw
+ks_solver           dav
+pw_diag_thr         0.00001
+
+mixing_type         broyden
+mixing_beta         0.4
+mixing_gg0          1.5

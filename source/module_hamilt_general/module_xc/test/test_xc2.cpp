@@ -1,7 +1,7 @@
-#include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
+#include "../xc_functional.h"
 #include "../exx_info.h"
-
 /************************************************
 *  unit test of functionals
 ***********************************************/
@@ -11,16 +11,15 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
 {
     std::string BASIS_TYPE = "";
-    bool CAL_STRESS = 0;
+    bool CAL_STRESS = false;
     int CAL_FORCE = 0;
     int NSPIN = 2;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC
@@ -28,7 +27,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_PBE_SPN : public testing::Test
+class XCTest_PBE_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -80,7 +79,7 @@ TEST_F(XCTest_PBE_SPN, set_xc_type)
     }
 }
 
-class XCTest_BP_SPN : public testing::Test
+class XCTest_BP_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -132,7 +131,7 @@ TEST_F(XCTest_BP_SPN, set_xc_type)
     }
 }
 
-class XCTest_revPBE_SPN : public testing::Test
+class XCTest_revPBE_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -184,7 +183,7 @@ TEST_F(XCTest_revPBE_SPN, set_xc_type)
     }
 }
 
-class XCTest_PZ_SPN : public testing::Test
+class XCTest_PZ_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -202,7 +201,7 @@ class XCTest_PZ_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }          
+            }
         }
 };
 
@@ -221,7 +220,7 @@ TEST_F(XCTest_PZ_SPN, set_xc_type)
     }
 }
 
-class XCTest_SLATER1_SPN : public testing::Test
+class XCTest_SLATER1_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -238,7 +237,7 @@ class XCTest_SLATER1_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }          
+            }
         }
 };
 
@@ -256,7 +255,7 @@ TEST_F(XCTest_SLATER1_SPN, set_xc_type)
     }
 }
 
-class XCTest_SLATER_RXC_SPN : public testing::Test
+class XCTest_SLATER_RXC_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -273,7 +272,7 @@ class XCTest_SLATER_RXC_SPN : public testing::Test
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);
-            }           
+            }
         }
 };
 
@@ -291,7 +290,7 @@ TEST_F(XCTest_SLATER_RXC_SPN, set_xc_type)
     }
 }
 
-class XCTest_P86_SPN : public testing::Test
+class XCTest_P86_SPN : public XCTest
 {
     protected:
         std::vector<double> e_gga, v1_gga, v2_gga, v3_gga;
@@ -310,7 +309,7 @@ class XCTest_P86_SPN : public testing::Test
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);
                 v3_gga.push_back(v3);
-            }         
+            }
         }
 };
 
@@ -330,7 +329,7 @@ TEST_F(XCTest_P86_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBE0_SPN : public testing::Test
+class XCTest_PBE0_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -382,7 +381,7 @@ TEST_F(XCTest_PBE0_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBEsol_SPN : public testing::Test
+class XCTest_PBEsol_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -434,7 +433,7 @@ TEST_F(XCTest_PBEsol_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBE_SPN_LibXC : public testing::Test
+class XCTest_PBE_SPN_LibXC : public XCTest
 {
     protected:
         std::vector<double> e_gga, v1_gga, v2_gga;
@@ -479,7 +478,7 @@ TEST_F(XCTest_PBE_SPN_LibXC, set_xc_type)
     }
 }
 
-class XCTest_PZ_SPN_LibXC : public testing::Test
+class XCTest_PZ_SPN_LibXC : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;

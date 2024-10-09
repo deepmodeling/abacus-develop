@@ -7,7 +7,7 @@ orbital_dir	../../PP_ORB
 nbands			8
 calculation     relax
 #Parameters (Accuracy)
-ecutwfc			20
+ecutwfc			10
 scf_nmax			20
 
 basis_type		lcao

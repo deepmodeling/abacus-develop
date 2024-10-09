@@ -5,6 +5,8 @@
 #include <thrust/complex.h>
 #include <cuda_runtime.h>
 
+#include <base/macros/macros.h>
+
 #define THREADS_PER_BLOCK 256
 
 namespace hamilt {
@@ -69,32 +71,31 @@ __global__ void cal_sk(
 }
 
 template <typename FPTYPE>
-void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
-    const psi::DEVICE_GPU *ctx,
-    const int &ik,
-    const int &ntype,
-    const int &nx,
-    const int &ny,
-    const int &nz,
-    const int& rho_nx,
-    const int& rho_ny,
-    const int& rho_nz,
-    const int &npw,
-    const int &npwx,
-    const int &fftny,
-    const int &eigts1_nc,
-    const int &eigts2_nc,
-    const int &eigts3_nc,
-    const int * atom_na,
-    const int * igl2isz,
-    const int * is2fftixy,
-    const FPTYPE &TWO_PI,
-    const FPTYPE *kvec_c,
-    const FPTYPE *atom_tau,
-    std::complex<FPTYPE> *eigts1,
-    std::complex<FPTYPE> *eigts2,
-    std::complex<FPTYPE> *eigts3,
-    std::complex<FPTYPE> *sk)
+void cal_sk_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
+                                                            const int& ik,
+                                                            const int& ntype,
+                                                            const int& nx,
+                                                            const int& ny,
+                                                            const int& nz,
+                                                            const int& rho_nx,
+                                                            const int& rho_ny,
+                                                            const int& rho_nz,
+                                                            const int& npw,
+                                                            const int& npwx,
+                                                            const int& fftny,
+                                                            const int& eigts1_nc,
+                                                            const int& eigts2_nc,
+                                                            const int& eigts3_nc,
+                                                            const int* atom_na,
+                                                            const int* igl2isz,
+                                                            const int* is2fftixy,
+                                                            const FPTYPE& TWO_PI,
+                                                            const FPTYPE* kvec_c,
+                                                            const FPTYPE* atom_tau,
+                                                            std::complex<FPTYPE>* eigts1,
+                                                            std::complex<FPTYPE>* eigts2,
+                                                            std::complex<FPTYPE>* eigts3,
+                                                            std::complex<FPTYPE>* sk)
 {
     int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     cal_sk<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
@@ -112,9 +113,11 @@ void cal_sk_op<FPTYPE, psi::DEVICE_GPU>::operator() (
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts2),
          reinterpret_cast<thrust::complex<FPTYPE>*>(eigts3),
          reinterpret_cast<thrust::complex<FPTYPE>*>(sk));
+
+    cudaCheckOnDebug();
 }
 
-template struct cal_sk_op<float, psi::DEVICE_GPU>;
-template struct cal_sk_op<double, psi::DEVICE_GPU>;
+template struct cal_sk_op<float, base_device::DEVICE_GPU>;
+template struct cal_sk_op<double, base_device::DEVICE_GPU>;
 
 }  // namespace hamilt

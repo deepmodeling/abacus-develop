@@ -52,21 +52,17 @@ struct veff_pw_op {
 };
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-// Partially specialize functor for psi::GpuDevice.
+// Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
-struct veff_pw_op<FPTYPE, psi::DEVICE_GPU> {
-    void operator() (
-        const psi::DEVICE_GPU* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        const FPTYPE* in);
-    
-    void operator() (
-        const psi::DEVICE_GPU* dev,
-        const int& size,
-        std::complex<FPTYPE>* out,
-        std::complex<FPTYPE>* out1,
-        const FPTYPE** in);
+struct veff_pw_op<FPTYPE, base_device::DEVICE_GPU>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, const int& size, std::complex<FPTYPE>* out, const FPTYPE* in);
+
+    void operator()(const base_device::DEVICE_GPU* dev,
+                    const int& size,
+                    std::complex<FPTYPE>* out,
+                    std::complex<FPTYPE>* out1,
+                    const FPTYPE** in);
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hamilt

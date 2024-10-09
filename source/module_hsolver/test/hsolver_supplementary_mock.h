@@ -1,3 +1,4 @@
+#pragma once
 #include "module_elecstate/elecstate.h"
 
 namespace elecstate
@@ -10,7 +11,9 @@ const double* ElecState::getRho(int spin) const
     return &(this->charge->rho[spin][0]);
 }
 
-void ElecState::fixed_weights(const std::vector<double>& ocp_kb)
+void ElecState::fixed_weights(const std::vector<double>& ocp_kb,
+			const int &nbands,
+			const double &nelec)
 {
     return;
 }
@@ -40,7 +43,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry&, const void*)
 {
     return;
 }
@@ -50,11 +53,6 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         int nk_in,
                         ModulePW::PW_Basis* rhopw_in,
                         const ModulePW::PW_Basis_Big* bigpw_in)
-{
-    return;
-}
-
-void ElecState::cal_nbands()
 {
     return;
 }
@@ -89,6 +87,7 @@ void Stochastic_WF::init(K_Vectors* p_kv, const int npwx_in)
     this->nks = nks_in;*/
 }
 
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors(){}
 K_Vectors::~K_Vectors(){}
 wavefunc::wavefunc()

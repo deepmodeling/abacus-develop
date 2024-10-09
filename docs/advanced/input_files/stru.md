@@ -250,8 +250,8 @@ information that comes below.
   - `m` or NO key word: three numbers, which take value in 0 or 1, control how the atom move in geometry relaxation calculations. In example below, the numbers `0 0 0` following the coordinates of the first atom means this atom are *not allowed* to move in all three directions, and the numbers `1 1 1` following the coordinates of the second atom means this atom *can* move in all three directions.
   - `v` or `vel` or `velocity`: set the three components of initial velocity of atoms in geometry relaxation calculations(e. g. `v 1.0 1.0 1.0`).
   - `mag` or `magmom` : set the start magnetization for each atom. In colinear case only one number should be given. In non-colinear case one have two choice:either set one number for the norm of magnetization here and specify two polar angle later(e. g. see below), or set three number for the xyz commponent of magnetization here (e. g. `mag 0.0 0.0 1.0`). Note that if this parameter is set, the initial magnetic moment setting in the second line will be overrided.
-    - `angle1`: in non-colinear case, specify the angle between c-axis and real spin, in angle measure instead of radian measure
-    - `angle2`: in non-colinear case, specify angle between a-axis and real spin in projection in ab-plane , in angle measure instead of radian measure
+    - `angle1`: in non-colinear case, specify the angle between z-axis and real spin, in angle measure instead of radian measure
+    - `angle2`: in non-colinear case, specify angle between x-axis and real spin in projection in xy-plane , in angle measure instead of radian measure
 
       e.g.:
 

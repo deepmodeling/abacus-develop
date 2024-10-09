@@ -29,4 +29,4 @@ NUMERICAL_ORBITAL
 ./8_O_gga_100Ry_7au_2s2p1d.orb
 
 NUMERICAL_DESCRIPTOR
-./jle.orb
+../Model_ProjOrb/5au_100Ry_jle.orb

@@ -4,9 +4,9 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_getters.h"
-
+#include "module_parameter/parameter.h"
 #ifdef __MPI
-void Charge::init_chgmpi(const int& nbz, const int& bz)
+void Charge::init_chgmpi()
 {
     if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
     {
@@ -97,10 +97,11 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //==================================
         // Reduce all the rho in each cpu
         //==================================
-        if (GlobalV::ESOLVER_TYPE == "sdft") // qinarui add it temporarily.
+        if (PARAM.inp.esolver_type == "sdft") { // qinarui add it temporarily.
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-        else
+        } else {
             MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+}
 
         //=====================================
         // Change the order of rho in each cpu
@@ -123,11 +124,12 @@ void Charge::reduce_diff_pools(double* array_rho) const
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::KPAR <= 1)
+    if (GlobalV::KPAR <= 1) {
         return;
+}
     ModuleBase::timer::tick("Charge", "rho_mpi");
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         reduce_diff_pools(this->rho[is]);
         if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)

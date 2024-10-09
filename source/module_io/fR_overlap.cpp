@@ -16,6 +16,7 @@ template <typename T>
 void FR_overlap<T>::set_parameters(
     fr_ptr fr_in, 
     const UnitCell* ucell_in, 
+    const LCAO_Orbitals* ptr_orb, 
     Grid_Driver* GridD_in, 
     const Parallel_Orbitals* paraV,
     int radial_grid_num,
@@ -24,6 +25,7 @@ void FR_overlap<T>::set_parameters(
 {
     this->fr = fr_in;
     this->ucell = ucell_in;
+    this->ptr_orb_ = ptr_orb;
     this->FR_container = new hamilt::HContainer<T>(paraV);
     this->radial_grid_num = radial_grid_num;
     this->Leb_grid = new ModuleBase::Lebedev_laikov_grid(degree);
@@ -90,12 +92,11 @@ void FR_overlap<T>::initialize_FR(Grid_Driver* GridD, const Parallel_Orbitals* p
             }
             const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index).norm() * this->ucell->lat0
-                >= orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                >= ptr_orb_->Phi[T1].getRcut() + ptr_orb_->Phi[T2].getRcut())
             {
                 continue;
             }
@@ -126,8 +127,8 @@ void FR_overlap<T>::calculate_FR()
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
         {
-            const int* R_index = tmp.get_R_index(iR);
-            ModuleBase::Vector3<int> R_vector(R_index[0], R_index[1], R_index[2]);
+            const ModuleBase::Vector3<int> R_index = tmp.get_R_index(iR);
+            ModuleBase::Vector3<int> R_vector(R_index);
             auto dtau = ucell->cal_dtau(iat1, iat2, R_vector) * ucell->lat0;
             T* data_pointer = tmp.get_pointer(iR);
             this->cal_FR_IJR(iat1, iat2, paraV, dtau, data_pointer);
@@ -152,9 +153,8 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
 
     ModuleBase::Vector3<double> tau_1 = this->ucell->get_tau(iat1) * this->ucell->lat0;
 
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-    double Rcut1 = orb.Phi[T1].getRcut();
-    double Rcut2 = orb.Phi[T2].getRcut();
+    double Rcut1 = ptr_orb_->Phi[T1].getRcut();
+    double Rcut2 = ptr_orb_->Phi[T2].getRcut();
 
     // npol is the number of polarizations,
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
@@ -232,7 +232,8 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
                 tmp_r_unit = tmp_r_coor / tmp_r_coor_norm;
             }
 
-            if (tmp_r_coor_norm > Rcut2) continue;
+            if (tmp_r_coor_norm > Rcut2) { continue;
+}
 
             std::map<std::pair<int, int>, double> psi_value2 = psi_inter(T2, LN_pair2, tmp_r_coor_norm);
 
@@ -301,8 +302,6 @@ void FR_overlap<T>::cal_FR_IJR(const int& iat1, const int& iat2, const Parallel_
 template <typename T>
 std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int &T1, const std::set<std::pair<int, int>> &LN_pair1, const double &r_norm)
 {
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
-
     std::map<std::pair<int, int>, double> psi_value;
 
     for (auto i : LN_pair1)
@@ -310,9 +309,9 @@ std::map<std::pair<int, int>, double> FR_overlap<T>::psi_inter(const int &T1, co
         int L1 = i.first;
         int N1 = i.second;
 
-        const double *psi_r1 = orb.Phi[T1].PhiLN(L1, N1).getPsi();
-        int mesh_r1 = orb.Phi[T1].PhiLN(L1, N1).getNr();
-        double dr1 = orb.Phi[T1].PhiLN(L1, N1).getRab(0);
+        const double *psi_r1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getPsi();
+        int mesh_r1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getNr();
+        double dr1 = ptr_orb_->Phi[T1].PhiLN(L1, N1).getRab(0);
 
         psi_value[i] = Polynomial_Interpolation(psi_r1, mesh_r1, dr1, r_norm);
     }

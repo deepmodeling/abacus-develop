@@ -1,10 +1,12 @@
 #include "bessel_basis.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/parallel_common.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <vector>
 
 Bessel_Basis::Bessel_Basis()
 {
@@ -98,9 +100,9 @@ double Bessel_Basis::Polynomial_Interpolation2
 	const double x3 = 3.0 - x0;
 	const double y=
 		this->TableOne(l, ie, iq) * x1 * x2 * x3 / 6.0 +
-        this->TableOne(l, ie, iq) * x0 * x2 * x3 / 2.0 -
-        this->TableOne(l, ie, iq) * x1 * x0 * x3 / 2.0 +
-        this->TableOne(l, ie, iq) * x1 * x2 * x0 / 6.0 ;
+        this->TableOne(l, ie, iq+1) * x0 * x2 * x3 / 2.0 -
+        this->TableOne(l, ie, iq+2) * x1 * x0 * x3 / 2.0 +
+        this->TableOne(l, ie, iq+3) * x1 * x2 * x0 / 6.0 ;
 	return y;
 }
 
@@ -116,9 +118,9 @@ double Bessel_Basis::Polynomial_Interpolation(
 	const double x3 = 3.0 - x0;
 	const double y=
 		this->Faln(it, l, ic, iq) * x1 * x2 * x3 / 6.0 +
-        this->Faln(it, l, ic, iq) * x0 * x2 * x3 / 2.0 -
-        this->Faln(it, l, ic, iq) * x1 * x0 * x3 / 2.0 +
-        this->Faln(it, l, ic, iq) * x1 * x2 * x0 / 6.0 ;
+        this->Faln(it, l, ic, iq+1) * x0 * x2 * x3 / 2.0 -
+        this->Faln(it, l, ic, iq+2) * x1 * x0 * x3 / 2.0 +
+        this->Faln(it, l, ic, iq+3) * x1 * x2 * x0 / 6.0 ;
 	return y;
 }
 
@@ -194,13 +196,20 @@ void Bessel_Basis::init_TableOne(
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "dr",dr);
 
 	// allocate rmesh and Jlk and eigenvalue of Jlq
-	double *r = new double[rmesh];
-	double *rab = new double[rmesh];
-	double *jle = new double[rmesh];
-	double *jlk = new double[rmesh];
-	double *g = new double[rmesh]; // smooth function
-	double *function = new double[rmesh];
-	double *en = new double[ecut_number];
+	// double *r = new double[rmesh];
+	// double *rab = new double[rmesh];
+	// double *jle = new double[rmesh];
+	// double *jlk = new double[rmesh];
+	// double *g = new double[rmesh]; // smooth function
+	// double *function = new double[rmesh];
+	// double *en = new double[ecut_number];
+    std::vector<double> r(rmesh);
+    std::vector<double> rab(rmesh);
+    std::vector<double> jle(rmesh);
+    std::vector<double> jlk(rmesh);
+    std::vector<double> g(rmesh);
+    std::vector<double> function(rmesh);
+    std::vector<double> en(ecut_number);
 
 	for(int ir=0; ir<rmesh; ir++)
 	{
@@ -215,7 +224,7 @@ void Bessel_Basis::init_TableOne(
 	//caoyu add 2021-3-10
 	//=========output .orb format=============
 	std::stringstream ss;
-	ss << GlobalV::global_out_dir << "jle.orb";
+	ss << PARAM.globalv.global_out_dir << "jle.orb";
 	std::ofstream ofs(ss.str().c_str());
 	ofs << "---------------------------------------------------------------------------"<< std::endl;
 	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "Energy Cutoff(Ry)" << ecut << std::endl;
@@ -250,12 +259,12 @@ void Bessel_Basis::init_TableOne(
 	// init eigenvalue of Jl
 	for(int l=0; l<lmax+1; l++)
 	{
-		ModuleBase::GlobalFunc::ZEROS(en, ecut_number);
-		ModuleBase::GlobalFunc::ZEROS(jle, rmesh);
-		ModuleBase::GlobalFunc::ZEROS(jlk, rmesh);
+		ModuleBase::GlobalFunc::ZEROS(en.data(), ecut_number);
+		ModuleBase::GlobalFunc::ZEROS(jle.data(), rmesh);
+		ModuleBase::GlobalFunc::ZEROS(jlk.data(), rmesh);
 
 		// calculate eigenvalue for l
-		ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, l, tolerence, en, rcut);
+		ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, l, tolerence, en.data(), rcut);
 //		for (int ie=0; ie<ecut_number; ie++)
 //		{
 //			std::cout << "\n en[" << ie << "]=" << en[ie];
@@ -265,7 +274,7 @@ void Bessel_Basis::init_TableOne(
 		for (int ie=0; ie<ecut_number; ie++)
 		{
 			// calculate J_{l}( en[ir]*r)
-			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, en[ie], l, jle);
+			ModuleBase::Sphbes::Spherical_Bessel(rmesh, r.data(), en[ie], l, jle.data());
 
 			//caoyu add 2021-3-10
 			//=========output .orb format=============
@@ -286,7 +295,7 @@ void Bessel_Basis::init_TableOne(
 
 			//====== output ========
 //			std::stringstream ss;
-//			ss << GlobalV::global_out_dir << l << "." << ie << ".txt";
+//			ss << PARAM.globalv.global_out_dir << l << "." << ie << ".txt";
 //			std::ofstream ofs(ss.str().c_str());
 
 //			for(int ir=0; ir<rmesh; ir++) ofs << r[ir] << " " << jle[ir] << " " << jle[ir]*g[ir] << std::endl;
@@ -306,7 +315,8 @@ void Bessel_Basis::init_TableOne(
 			for(int ik=0; ik<kmesh; ik++)
 			{
 				// calculate J_{l}( ik*dk*r )
-				ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, ik*dk, l, jlk);
+				// ModuleBase::Sphbes::Spherical_Bessel(rmesh, r, ik*dk, l, jlk);
+				ModuleBase::Sphbes::Spherical_Bessel(rmesh, r.data(), ik*dk, l, jlk.data());
 
 				// calculate the function will be integrated
 				for(int ir=0; ir<rmesh; ir++)
@@ -315,7 +325,7 @@ void Bessel_Basis::init_TableOne(
 				}
 
 				// make table value
-				ModuleBase::Integral::Simpson_Integral(rmesh, function, rab, this->TableOne(l, ie, ik) );
+				ModuleBase::Integral::Simpson_Integral(rmesh, function.data(), rab.data(), this->TableOne(l, ie, ik) );
 			}
 
 		}// end ie
@@ -326,13 +336,13 @@ void Bessel_Basis::init_TableOne(
 		ofs.close();	//caoyu add 2020-3-10
 	}
 
-	delete[] en;
-	delete[] jle;
-	delete[] jlk;
-	delete[] rab;
-	delete[] g;
-	delete[] r;
-	delete[] function;
+	// delete[] en;
+	// delete[] jle;
+	// delete[] jlk;
+	// delete[] rab;
+	// delete[] g;
+	// delete[] r;
+	// delete[] function;
 	ModuleBase::timer::tick("Spillage","TableONe");
 	return;
 }
@@ -407,7 +417,7 @@ void Bessel_Basis::readin_C4(
 							std::string title1, title2, title3;
 							inc4 >> title1 >> title2 >> title3;
 
-							int tmp_type, tmp_l, tmp_n;
+							int tmp_type=0, tmp_l=0, tmp_n=0;
 							inc4 >> tmp_type >> tmp_l >> tmp_n;
 							//std::cout << "\n Find T=" << tmp_type << " L=" << tmp_l << " N=" << tmp_n;
 
@@ -424,7 +434,7 @@ void Bessel_Basis::readin_C4(
 							}
 							else
 							{
-								double no_use_c4;
+								double no_use_c4 = 0.0;
 								for(int ie=0; ie<ecut_number; ie++)
 								{
 									inc4 >> no_use_c4;

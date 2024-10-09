@@ -1,31 +1,34 @@
 #ifndef MD_BASE_H
 #define MD_BASE_H
 
-#include "md_para.h"
 #include "module_esolver/esolver.h"
+#include "module_parameter/parameter.h"
 
 /**
  * @brief base class of md
  *
  * This class implements the velocity-Verlet method.
- * The system is assumed to be isolated in the sense that it cannot exchange energy or particles with its environment,
- * so that the energy of the system does not change with time.
+ * The system is assumed to be isolated in the sense that it cannot exchange
+ * energy or particles with its environment, so that the energy of the system
+ * does not change with time.
  */
 class MD_base
 {
   public:
-    MD_base(MD_para& MD_para_in, UnitCell& unit_in);
+    MD_base(const Parameter& param_in, UnitCell& unit_in);
     virtual ~MD_base();
 
     /**
-     * @brief init before running md, calculate energy, force, and stress of the initial configuration.
+     * @brief init before running md, calculate energy, force, and stress of the
+     * initial configuration.
      * @param p_esolver the energy solver used in md
      * @param global_readin_dir directory of files for reading
      */
     virtual void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
 
     /**
-     * @brief the first half of equation of motion, update velocities and positions
+     * @brief the first half of equation of motion, update velocities and
+     * positions
      * @param ofs determine the output files
      */
     virtual void first_half(std::ofstream& ofs);
@@ -83,9 +86,15 @@ class MD_base
     double kinetic;                     ///< kinetic energy
 
   protected:
-    MD_para& mdp;    ///< input parameters used in md
+    const MD_para& mdp; ///< input parameters used in md
     UnitCell& ucell; ///< unitcell information
     double energy_;  ///< total energy of the system
+
+    bool cal_stress;  ///< whether calculate stress
+    int my_rank;      ///< MPI rank of the processor
+    double md_dt;     ///< Time increment (hbar/E_hartree)
+    double md_tfirst; ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
+    double md_tlast;  ///< Target temperature
 };
 
 #endif // MD_BASE_H

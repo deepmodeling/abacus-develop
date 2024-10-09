@@ -1,13 +1,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_esolver/esolver_lj.h"
-#include "setcell.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define private public
 #define protected public
+#include "module_esolver/esolver_lj.h"
 #include "module_md/verlet.h"
-
+#include "setcell.h"
 #define doublethreshold 1e-12
+
 
 /************************************************
  *  unit test of functions in verlet.h
@@ -39,17 +41,19 @@ class Verlet_test : public testing::Test
   protected:
     MD_base* mdrun;
     UnitCell ucell;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
 
     void SetUp()
     {
         Setcell::setupcell(ucell);
-        Setcell::parameters();
+        Setcell::parameters(param_in.input);
 
-        ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->Init(INPUT, ucell);
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(param_in.inp, ucell);
 
-        mdrun = new Verlet(INPUT.mdp, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun = new Verlet(param_in, ucell);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -60,7 +64,7 @@ class Verlet_test : public testing::Test
 
 TEST_F(Verlet_test, setup)
 {
-    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
+    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 2), 1.5039983732220751e-06, doublethreshold);
@@ -106,7 +110,7 @@ TEST_F(Verlet_test, first_half)
 TEST_F(Verlet_test, NVE)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nve";
+    param_in.input.mdp.md_type = "nve";
     mdrun->second_half();
     ;
 
@@ -140,8 +144,8 @@ TEST_F(Verlet_test, NVE)
 TEST_F(Verlet_test, Anderson)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "anderson";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "anderson";
     mdrun->second_half();
     ;
 
@@ -175,8 +179,8 @@ TEST_F(Verlet_test, Anderson)
 TEST_F(Verlet_test, Berendsen)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "berendsen";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "berendsen";
     mdrun->second_half();
     ;
 
@@ -210,8 +214,8 @@ TEST_F(Verlet_test, Berendsen)
 TEST_F(Verlet_test, rescaling)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "rescaling";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "rescaling";
     mdrun->second_half();
     ;
 
@@ -245,8 +249,8 @@ TEST_F(Verlet_test, rescaling)
 TEST_F(Verlet_test, rescale_v)
 {
     mdrun->first_half(GlobalV::ofs_running);
-    mdrun->mdp.md_type = "nvt";
-    mdrun->mdp.md_thermostat = "rescale_v";
+    param_in.input.mdp.md_type = "nvt";
+    param_in.input.mdp.md_thermostat = "rescale_v";
     mdrun->second_half();
     ;
 
@@ -281,7 +285,7 @@ TEST_F(Verlet_test, write_restart)
 {
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::global_out_dir);
+    mdrun->write_restart(PARAM.sys.global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -292,7 +296,7 @@ TEST_F(Verlet_test, write_restart)
 
 TEST_F(Verlet_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     EXPECT_EQ(mdrun->step_rst_, 3);

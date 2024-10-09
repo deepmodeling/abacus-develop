@@ -1,10 +1,15 @@
 #include "for_test.h"
+#include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "gtest/gtest.h"
 #define private public
 #define protected public
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include "module_relax/relax_old/ions_move_basic.h"
 #include "module_relax/relax_old/ions_move_bfgs.h"
+#undef private
+#undef protected
 /************************************************
  *  unit tests of class Ions_Move_BFGS
  ***********************************************/
@@ -121,7 +126,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase1)
 {
     // Initilize data
     bfgs.init_done = false;
-    GlobalV::test_relax_method = 1;
+    PARAM.input.test_relax_method = 1;
     double lat0 = 1.0;
     bfgs.allocate();
     bfgs.save_flag = true;
@@ -161,7 +166,7 @@ TEST_F(IonsMoveBFGSTest, RestartBfgsCase2)
     // Initilize data
     bfgs.init_done = false;
     bfgs.allocate();
-    GlobalV::test_relax_method = 1;
+    PARAM.input.test_relax_method = 1;
     double lat0 = 1.0;
     for (int i = 0; i < Ions_Move_Basic::dim; ++i)
     {
@@ -198,8 +203,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -264,8 +269,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineCase2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    GlobalV::test_relax_method = 0;
-    GlobalV::OUT_LEVEL = "none";
+    PARAM.input.test_relax_method = 0;
+    PARAM.input.out_level = "none";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -383,8 +388,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit1)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = true;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;
@@ -410,8 +415,8 @@ TEST_F(IonsMoveBFGSTest, BfgsRoutineWarningQuit2)
     bfgs.init_done = false;
     bfgs.allocate();
     bfgs.tr_min_hit = false;
-    GlobalV::test_relax_method = 1;
-    GlobalV::OUT_LEVEL = "ie";
+    PARAM.input.test_relax_method = 1;
+    PARAM.input.out_level = "ie";
     double lat0 = 1.0;
     Ions_Move_Basic::etot = 1.0;
     Ions_Move_Basic::etot_p = 0.9;

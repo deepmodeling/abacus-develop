@@ -2,6 +2,8 @@
 #include"gtest/gtest.h"
 
 #include<math.h>
+#include <fstream>
+#include <iostream>
 
 #include "module_base/constants.h"
 
@@ -328,17 +330,21 @@ TEST_F(SimpsonIntegralITF, UniformGridOdd)
     const int ngrid_max = 10000;
     double *f = new double[ngrid_max];
     int ind = 0;
-    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+    double ref_val = std::atan(end) - std::atan(start);
+    std::ofstream file_o("data/itf_uni_out.bin", std::ios::binary);
+    for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         const double dx = (end - start) / (ngrid - 1);
         for (int i = 0; i < ngrid; ++i) {
             double x = start + i * dx;
             f[i] = 1.0 / (1.0 + x * x);
         }
-        
         double tol = (end-start) * std::pow(dx, 4) * 24 / 180;
         EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ref_val) / std::abs(ref_val);
+        file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     delete[] f;
+    file_o.close();
 }
 
 TEST_F(SimpsonIntegralITF, SinGridOdd)
@@ -348,8 +354,9 @@ TEST_F(SimpsonIntegralITF, SinGridOdd)
     double *xv = new double[ngrid_max];
     double *h = new double[ngrid_max];
     double *f = new double[ngrid_max];
-
-    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+    std::ofstream file_o("data/itf_sin_out.bin", std::ios::binary);
+    double ref_val = std::atan(end) - std::atan(start);
+    for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         sinspace(start, end, ngrid, xv, h);
         for (int i = 0; i < ngrid; ++i) {
             f[i] = 1.0 / (1.0 + xv[i] * xv[i]);
@@ -359,11 +366,14 @@ TEST_F(SimpsonIntegralITF, SinGridOdd)
         double dx = h[ngrid / 2];
         double tol = (end-start) * std::pow(dx, 4);
         EXPECT_NEAR(std::atan(end) - std::atan(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ref_val) / std::abs(ref_val);
+        file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     
     delete[] xv;
     delete[] h;
     delete[] f;
+    file_o.close();
 }
 
 class SimpsonIntegralExp : public testing::Test{
@@ -375,19 +385,21 @@ TEST_F(SimpsonIntegralExp, UniformGridOdd)
     double start = 0.0, end = 1.0;
     const int ngrid_max = 10000;
     double *f = new double[ngrid_max];
-    double *errs = new double[ngrid_max];
-
-    for (int ngrid = 3; ngrid <= ngrid_max; ngrid += 2) {
+    std::ofstream file_o("data/exp_uni_out.bin", std::ios::binary);
+    double ref_val = std::exp(end) - std::exp(start);
+    for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         const double dx = (end - start) / (ngrid - 1);
         for (int i = 0; i < ngrid; ++i) {
             double x = start + i * dx;
             f[i] = std::exp(x);
         }
-        
         double tol = (end-start) * std::exp(1) * std::pow(dx, 4) / 180;
         EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, dx), std::max(tol, doublethreshold));
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, dx) - ref_val) / std::abs(ref_val);
+        file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     delete[] f;
+    file_o.close();
 }
 
 TEST_F(SimpsonIntegralExp, SinGridOdd)
@@ -397,7 +409,8 @@ TEST_F(SimpsonIntegralExp, SinGridOdd)
     double *xv = new double[ngrid_max];
     double *h = new double[ngrid_max];
     double *f = new double[ngrid_max];
-
+    std::ofstream file_o("data/exp_sin_out.bin", std::ios::binary);
+    double ref_val = std::exp(end) - std::exp(start);
    // skip ngrid = 3 since the errors exceeds the threshold
     for (int ngrid = 5; ngrid <= ngrid_max; ngrid += 2) {
         sinspace(start, end, ngrid, xv, h);
@@ -408,9 +421,12 @@ TEST_F(SimpsonIntegralExp, SinGridOdd)
         double dx = h[ngrid / 2];
         double tol = (end-start) * std::pow(dx, 4);
         EXPECT_NEAR(std::exp(end) - std::exp(start), ModuleBase::Integral::simpson(ngrid, f, h), std::max(tol, doublethreshold));
+        double err = std::abs(ModuleBase::Integral::simpson(ngrid, f, h) - ref_val) / std::abs(ref_val);
+        file_o.write(reinterpret_cast<char*>(&err), sizeof(double));
     }
     
     delete[] xv;
     delete[] h;
     delete[] f;
+    file_o.close();
 }

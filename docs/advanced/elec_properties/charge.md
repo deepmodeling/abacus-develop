@@ -10,7 +10,7 @@ After finishing the calculation, the information of the charge density is stroed
 The SPIN${spin}_CHG.cube file looks like:
 
 ```
-Cubefile created from ABACUS SCF calculation
+STEP: 0  Cubefile created from ABACUS. Inner loop is z, followed by y and x
 2 (nspin) 0.914047 (fermi energy, in Ry)
 2 0.0 0.0 0.0 
 27 0.222222 0 0
@@ -31,7 +31,7 @@ Cubefile created from ABACUS SCF calculation
  ...
 ```
 
-The first line is a brief description.\
+The first line contains the current ion step.\
 The second line contains NSPIN and Fermi energy.\
 The following 4 lines are the informations of lattice, in order:\
 &emsp;total number of atoms, the coordinate of original point.\

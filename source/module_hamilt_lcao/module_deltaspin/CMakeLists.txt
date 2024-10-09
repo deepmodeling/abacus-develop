@@ -24,7 +24,9 @@ if(ENABLE_LCAO)
   endif()
 
   if(BUILD_TESTING)
+    if(ENABLE_MPI)
       add_subdirectory(test)
+    endif()
   endif()
 endif()
 

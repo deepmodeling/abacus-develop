@@ -62,10 +62,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // hartree contribution
-    stress_har(sigmahar, this->rhopw, 1, pelec->charge);
+    stress_har(sigmahar, this->rhopw, true, pelec->charge);
 
     // ewald contribution
-    stress_ewa(sigmaewa, this->rhopw, 1);
+    stress_ewa(sigmaewa, this->rhopw, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
@@ -75,10 +75,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(sigmaloc, this->rhopw, p_sf, 1, pelec->charge);
+    stress_loc(sigmaloc, this->rhopw, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, p_sf, 1, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, p_sf, true, pelec->charge);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);
@@ -101,19 +101,19 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     bool ry = false;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
-    if (GlobalV::TEST_STRESS)
+    if (PARAM.inp.test_stress)
     {
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
         GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("XC    STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
     }
     ModuleBase::timer::tick("OF_Stress_PW", "cal_stress");
     return;
@@ -121,7 +121,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
 void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
 {
-    auto vdw_solver = vdw::make_vdw(ucell, INPUT);
+    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
     if (vdw_solver != nullptr)
     {
         sigma = vdw_solver->get_stress().to_matrix();

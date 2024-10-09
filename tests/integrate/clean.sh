@@ -19,12 +19,6 @@ for directory in `ls | grep $module`; do
 	result_file="$directory/result.out"
 	#test -e "$result_file" && echo $result_file
 	test -e "$result_file" && rm $result_file
-	
-	#--------------------------------------------
-	# delete time.json (if it exists)
-	#--------------------------------------------
-	time_json_file="$directory/time.json"
-	test -e "$time_json_file" && rm $time_json_file
 
 	#--------------------------------------------
 	# delete OUT.autotest (if it exists) 
@@ -39,18 +33,6 @@ for directory in `ls | grep $module`; do
 	time_json="$directory/time.json"
 	#test -e "$time_json" && echo $time_json
 	test -e "$time_json" && rm $time_json
-
-	#--------------------------------------------
-	# delete descriptor.dat (if it exists) 
-	#--------------------------------------------
-	descriptor="$directory/descriptor.dat"
-	test -e "$descriptor" && rm -rf $descriptor
-
-	#--------------------------------------------
-	# delete H_V_delta.dat (if it exists) 
-	#--------------------------------------------
-	H_V_delta="$directory/H_V_delta.dat"
-	test -e "$H_V_delta" && rm -rf $H_V_delta
 
 	#--------------------------------------------
 	# delete projected_DM.dat (if it exists) 

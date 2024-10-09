@@ -307,11 +307,11 @@ TEST_F(HContainerTest, size_atom_pairs)
     EXPECT_EQ(HR->get_atom_pair(0).get_atom_j(), 1);
     EXPECT_EQ(HR->get_atom_pair(0).get_row_size(), 2);
     EXPECT_EQ(HR->get_atom_pair(0).get_col_size(), 2);
-    int* R_ptr = HR->get_atom_pair(0).get_R_index();
-    EXPECT_EQ(R_ptr[0], 1);
-    EXPECT_EQ(R_ptr[1], 0);
-    EXPECT_EQ(R_ptr[2], 0);
-    EXPECT_EQ(HR->get_atom_pair(0).get_R_index(5), nullptr);
+    const ModuleBase::Vector3<int> R_ptr = HR->get_atom_pair(0).get_R_index();
+    EXPECT_EQ(R_ptr.x, 1);
+    EXPECT_EQ(R_ptr.y, 0);
+    EXPECT_EQ(R_ptr.z, 0);
+    EXPECT_EQ(HR->get_atom_pair(0).get_R_index(5), ModuleBase::Vector3<int>(-1, -1, -1));
     // check if data is correct
     double* data_ptr = HR->get_atom_pair(0).get_pointer();
     EXPECT_EQ(data_ptr[0], 1);
@@ -572,7 +572,7 @@ TEST_F(HContainerTest, atompair_funcs)
     // get_matrix_value will use global2local_row and global2local_col in Parallel_Orbitals
     // so we need to set them
     std::ofstream ofs("test_hcontainer.log");
-    PO.set_global2local(4, 4, false, ofs);
+    PO.set_serial(4, 4);
     // joint 4 2*2 BaseMatrix to whole 4*4 matrix
     // lambda function for check data
     auto checkdata = [&](hamilt::AtomPair<double>& ap_in) {

@@ -15,6 +15,11 @@ class Driver
 
   private:
     /**
+     * @brief Print the start information.
+     *
+     */
+    void print_start_info();
+    /**
      * @brief Reading the parameters and split the MPI world.
      * This function read the parameter in "INPUT", "STRU" etc,
      * and split the MPI world into different groups.
@@ -24,7 +29,7 @@ class Driver
     /**
      * @brief An interface function.
      * This function calls "this->driver_run()" to do calculation,
-	 * and log the time and  memory consumed during calculation.
+     * and log the time and  memory consumed during calculation.
      */
     void atomic_world();
 

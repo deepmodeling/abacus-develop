@@ -1,0 +1,6 @@
+This test for:
+*Fe-bcc
+*nspin 2
+*upf100 ultrasoft pseudopotential
+*mixing_type broyden
+*mixing_beta 0.4

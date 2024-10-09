@@ -2,7 +2,7 @@
 
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/input.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 
 namespace elecstate
@@ -25,7 +25,7 @@ int get_xc_func_type()
 
 std::string get_input_vdw_method()
 {
-    return INPUT.vdw_method;
+    return PARAM.inp.vdw_method;
 }
 
 double get_ucell_tot_magnetization()
@@ -55,7 +55,7 @@ double get_ucell_tot_magnetization_nc_z()
 
 std::string get_ks_solver_type()
 {
-    return GlobalV::KS_SOLVER;
+    return PARAM.inp.ks_solver;
 }
 
 } // namespace elecstate

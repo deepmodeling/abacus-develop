@@ -1,36 +1,39 @@
 #include "fp_energy.h"
+
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
+#include "module_base/tool_quit.h"
+
 #include <iomanip>
 #include <iostream>
 
-#include "module_base/tool_quit.h"
 namespace elecstate
 {
 
 /// @brief calculate etot
 double fenergy::calculate_etot()
 {
-    if(GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
-        etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield
-               + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+        etot = eband + deband + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield + gatefield + evdw
+               + esol_el + esol_cav + edftu + edeepks_scf;
     }
     else
     {
-        etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield + gatefield
-               + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+        etot = eband + deband + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
+               + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         double ecore = GlobalC::paw_cell.calculate_ecore();
         double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot += ( ecore + epawdc );
+        etot += (ecore + epawdc);
     }
 #endif
     return etot;
@@ -39,22 +42,22 @@ double fenergy::calculate_etot()
 /// @brief calculate etot_harris
 double fenergy::calculate_harris()
 {
-    if(GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         etot_harris = eband + deband_harris + etxc + ewald_energy - hartree_energy + demet + descf + exx + efield
-                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
+                      + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf;
     }
     else
     {
-        etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx + efield
-                  + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
+        etot_harris = eband + deband_harris + (etxc - etxcc) + ewald_energy + hartree_energy + demet + descf + exx
+                      + efield + gatefield + evdw + esol_el + esol_cav + edftu + edeepks_scf + escon;
     }
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if (PARAM.inp.use_paw)
     {
         double ecore = GlobalC::paw_cell.calculate_ecore();
         double epawdc = GlobalC::paw_cell.get_epawdc();
-        etot_harris += ( ecore + epawdc );
+        etot_harris += (ecore + epawdc);
     }
 #endif
     return etot_harris;
@@ -64,7 +67,8 @@ double fenergy::calculate_harris()
 void fenergy::clear_all()
 {
     etot = etot_old = eband = deband = etxc = etxcc = vtxc = ewald_energy = hartree_energy = demet = descf = exx
-        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon = 0.0;
+        = efield = gatefield = evdw = etot_harris = deband_harris = esol_el = esol_cav = edftu = edeepks_scf = escon
+        = 0.0;
 }
 
 /// @brief print all energies
@@ -137,6 +141,20 @@ double efermi::get_efval(const int& is) const
     {
         ModuleBase::WARNING_QUIT("energy", "Please check NSPIN when TWO_EFERMI is true");
         __builtin_unreachable();
+    }
+}
+
+/// @brief get all fermi energies for all spins
+/// @return all fermi energies for all spins
+std::vector<double> efermi::get_all_ef() const
+{
+    if (two_efermi)
+    {
+        return {ef_up, ef_dw};
+    }
+    else
+    {
+        return {ef, ef}; // For NSPIN=1, ef_up=ef_dw=ef
     }
 }
 

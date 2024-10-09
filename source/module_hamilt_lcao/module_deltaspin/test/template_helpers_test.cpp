@@ -15,7 +15,7 @@
  *    but they are not used in the code.
  *    So, we just test if they can be called without error.
  */
-
+#include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
 }
@@ -26,17 +26,18 @@ K_Vectors::~K_Vectors()
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<double, psi::DEVICE_CPU>& sc = SpinConstrain<double, psi::DEVICE_CPU>::getScInstance();
+    SpinConstrain<double, base_device::DEVICE_CPU>& sc
+        = SpinConstrain<double, base_device::DEVICE_CPU>::getScInstance();
 };
 
 TEST_F(SpinConstrainTest, TemplatHelpers)
 {
     // this is a trivial test as the double version is not used
     std::vector<std::complex<double>> Sloc2;
-    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2, true, 0));
+    EXPECT_NO_THROW(sc.cal_h_lambda(nullptr, Sloc2.data(), true, 0));
     EXPECT_NO_THROW(sc.cal_mw_from_lambda(0));
-    EXPECT_NO_THROW(sc.cal_MW_k(nullptr, std::vector<std::vector<std::complex<double>>>(0)));
-    EXPECT_NO_THROW(sc.cal_MW(0, nullptr, false));
+    EXPECT_NO_THROW(sc.cal_MW_k(std::vector<std::vector<std::complex<double>>>(0)));
+    EXPECT_NO_THROW(sc.cal_MW(0,false));
     ModuleBase::matrix orbMulP;
     EXPECT_NO_THROW(sc.convert(orbMulP));
     EXPECT_NO_THROW(sc.run_lambda_loop(0));
@@ -45,7 +46,7 @@ TEST_F(SpinConstrainTest, TemplatHelpers)
     ModuleBase::ComplexMatrix mud;
     ModuleBase::matrix MecMulP;
     EXPECT_NO_THROW(sc.collect_MW(MecMulP, mud, 0, 0));
-    EXPECT_FALSE(sc.check_rms_stop(0, 0, 0.0));
+    EXPECT_FALSE(sc.check_rms_stop(0, 0, 0.0, 0.0, 0.0));
     EXPECT_NO_THROW(sc.print_termination());
     EXPECT_NO_THROW(sc.print_header());
     std::vector<ModuleBase::Vector3<double>> new_spin, old_spin, new_delta_lambda, old_delta_lambda;

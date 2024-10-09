@@ -1,7 +1,10 @@
-#include "../global_file.h"
-#include "../global_variable.h"
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
+#include "../global_file.h"
+#include "../global_variable.h"
 #include <fstream>
 #include <unistd.h>
 
@@ -59,14 +62,14 @@ TEST_F(GlobalFile,mkdirout)
         remove(cc.c_str());
         std::string aa = "OUT.Si/warning.log";
         remove(aa.c_str());
-        rmdir(GlobalV::global_stru_dir.c_str());
-        rmdir(GlobalV::global_matrix_dir.c_str());
-        rmdir(GlobalV::global_out_dir.c_str());
+        rmdir(PARAM.sys.global_stru_dir.c_str());
+        rmdir(PARAM.sys.global_matrix_dir.c_str());
+        rmdir(PARAM.sys.global_out_dir.c_str());
 }
 
 TEST_F(GlobalFile,mkdiratom)
 {
-        GlobalV::global_out_dir = "./";
+        PARAM.sys.global_out_dir = "./";
         ModuleBase::Global_File::make_dir_atom("Si");
         int a = access("./Si/",0);
         EXPECT_EQ(a , 0);
@@ -113,7 +116,7 @@ TEST_F(GlobalFile,closealllog)
 		std::string header = "running_";
 		std::string tailCpuRank0 = "_cpu0.log";
 		std::string tail = ".log";
-		std::string f1 = header + GlobalV::CALCULATION + tailCpuRank0;
+		std::string f1 = header + PARAM.input.calculation + tailCpuRank0;
 		
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -125,7 +128,7 @@ TEST_F(GlobalFile,closealllog)
 		}
 		GlobalV::ofs_running.open(f1.c_str());
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,true);
+		ModuleBase::Global_File::close_all_log(0,true,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -141,7 +144,7 @@ TEST_F(GlobalFile,closealllog)
 		/* Test out_alllog == false case */
 		GlobalV::ofs_running.open("running.log");
 		GlobalV::ofs_warning.open("warning.log");
-		ModuleBase::Global_File::close_all_log(0,false);
+		ModuleBase::Global_File::close_all_log(0,false,PARAM.input.calculation);
 		EXPECT_FALSE(GlobalV::ofs_running.is_open());
 		if (GlobalV::ofs_running.is_open())
 		{
@@ -154,26 +157,4 @@ TEST_F(GlobalFile,closealllog)
 		}
 		remove("running.log");
 		remove("warning.log");
-}
-
-TEST_F(GlobalFile, DeleteTmpFiles)
-{
-
-    std::string tmp_chg_1 = GlobalV::global_out_dir + "NOW_SPIN1_CHG.cube";
-    std::string tmp_chg_2 = GlobalV::global_out_dir + "OLD1_SPIN1_CHG.cube";
-    std::string tmp_chg_3 = GlobalV::global_out_dir + "OLD2_SPIN1_CHG.cube";
-    std::ofstream ofs1(tmp_chg_1.c_str());
-    std::ofstream ofs2(tmp_chg_2.c_str());
-    std::ofstream ofs3(tmp_chg_3.c_str());
-    ofs1.close();
-    ofs2.close();
-    ofs3.close();
-    EXPECT_TRUE(access(tmp_chg_1.c_str(), 0) == 0);
-    EXPECT_TRUE(access(tmp_chg_2.c_str(), 0) == 0);
-    EXPECT_TRUE(access(tmp_chg_3.c_str(), 0) == 0);
-
-    ModuleBase::Global_File::delete_tmp_files();
-    EXPECT_TRUE(access(tmp_chg_1.c_str(), 0) == -1);
-    EXPECT_TRUE(access(tmp_chg_2.c_str(), 0) == -1);
-    EXPECT_TRUE(access(tmp_chg_3.c_str(), 0) == -1);
 }

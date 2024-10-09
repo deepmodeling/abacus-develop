@@ -1,22 +1,15 @@
 #include "grid_meshcell.h"
+
+#include "module_parameter/parameter.h"
+#include "module_base/memory.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 Grid_MeshCell::Grid_MeshCell()
 {
-	allocate_pos = false;
-	bx = by = bz = bxyz = 1;
 }
 
 Grid_MeshCell::~Grid_MeshCell()
 {
-	if(allocate_pos)
-	{
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			delete[] meshcell_pos[ib];
-		}
-		delete[] meshcell_pos;
-	}
 }
 
 void Grid_MeshCell::set_grid_dim(
@@ -51,14 +44,21 @@ void Grid_MeshCell::set_grid_dim(
     this->nbzp = nbzp_in;
 
 
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"real space grid",ncx,ncy,ncz); // real space uniform grid
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"big cell numbers in grid",nbx,nby,nbz); // reduced by BIG_CELL
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"meshcell numbers in big cell",bx,by,bz); // is small integer, typical number 2*2*2
+	//xiaohui add 'PARAM.inp.out_level' line, 2015-09-16
+	if(PARAM.inp.out_level != "m") 
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"real space grid",ncx,ncy,ncz); // real space uniform grid
+	}
 
-	//std::cout << " bx=" << bx << " by=" << by << " bz=" << bz << std::endl;
-	//std::cout << " nbx=" << nbx << " nby=" << nby << " nbz=" << nbz << std::endl; 
-	//std::cout << " ncx=" << ncx << " ncy=" << ncy << " ncz=" << ncz << std::endl;
+	if(PARAM.inp.out_level != "m") 
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"big cell numbers in grid",nbx,nby,nbz); // reduced by BIG_CELL
+	}
+
+	if(PARAM.inp.out_level != "m") 
+	{
+		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"meshcell numbers in big cell",bx,by,bz); // is small integer, typical number 2*2*2
+	}
 
     return;
 }
@@ -66,7 +66,7 @@ void Grid_MeshCell::set_grid_dim(
 
 
 // (1)
-void Grid_MeshCell::init_latvec(void)
+void Grid_MeshCell::init_latvec(const UnitCell &ucell)
 {
 	ModuleBase::TITLE("Grid_MeshCell","init_latvec");
 	// initialize the mesh cell vectors.
@@ -75,17 +75,20 @@ void Grid_MeshCell::init_latvec(void)
 	assert(ncz>0);
 
 	//size of each room (same shape with unitcell)
-	this->meshcell_vec1[0]= GlobalC::ucell.a1.x / (double)ncx * GlobalC::ucell.lat0;
-	this->meshcell_vec1[1]= GlobalC::ucell.a1.y / (double)ncx * GlobalC::ucell.lat0;
-	this->meshcell_vec1[2]= GlobalC::ucell.a1.z / (double)ncx * GlobalC::ucell.lat0;
+	this->meshcell_vec1=std::vector<double>(3,0.0);
+	this->meshcell_vec1[0]=ucell.a1.x / (double)ncx * ucell.lat0;
+	this->meshcell_vec1[1]=ucell.a1.y / (double)ncx * ucell.lat0;
+	this->meshcell_vec1[2]=ucell.a1.z / (double)ncx * ucell.lat0;
 
-	this->meshcell_vec2[0]= GlobalC::ucell.a2.x / (double)ncy * GlobalC::ucell.lat0;
-	this->meshcell_vec2[1]= GlobalC::ucell.a2.y / (double)ncy * GlobalC::ucell.lat0;
-	this->meshcell_vec2[2]= GlobalC::ucell.a2.z / (double)ncy * GlobalC::ucell.lat0;
+	this->meshcell_vec2=std::vector<double>(3,0.0);
+	this->meshcell_vec2[0]=ucell.a2.x / (double)ncy * ucell.lat0;
+	this->meshcell_vec2[1]=ucell.a2.y / (double)ncy * ucell.lat0;
+	this->meshcell_vec2[2]=ucell.a2.z / (double)ncy * ucell.lat0;
 
-	this->meshcell_vec3[0]= GlobalC::ucell.a3.x / (double)ncz * GlobalC::ucell.lat0;
-	this->meshcell_vec3[1]= GlobalC::ucell.a3.y / (double)ncz * GlobalC::ucell.lat0;
-	this->meshcell_vec3[2]= GlobalC::ucell.a3.z / (double)ncz * GlobalC::ucell.lat0;
+	this->meshcell_vec3=std::vector<double>(3,0.0);
+	this->meshcell_vec3[0]=ucell.a3.x / (double)ncz * ucell.lat0;
+	this->meshcell_vec3[1]=ucell.a3.y / (double)ncz * ucell.lat0;
+	this->meshcell_vec3[2]=ucell.a3.z / (double)ncz * ucell.lat0;
 
 	this->meshcell_latvec0.e11 = this->meshcell_vec1[0];
 	this->meshcell_latvec0.e12 = this->meshcell_vec1[1];
@@ -109,7 +112,7 @@ void Grid_MeshCell::init_latvec(void)
 	// (x,y,z) * meshcell_latvec0^(-1) = (i,j,k)
 	this->meshcell_GT = this->meshcell_latvec0.Inverse();
 
-	if(GlobalV::test_gridt)
+	if(PARAM.inp.test_gridt)
 	{
 		GlobalV::ofs_running << " the VECTORS of MESHCELL are (Bohr): " << std::endl;
 		GlobalV::ofs_running << " vec1( " 
@@ -141,14 +144,8 @@ void Grid_MeshCell::init_meshcell_pos(void)
 	assert(bz>0);
 	assert(bxyz>0);
 
-	if(!allocate_pos)
-	{
-		meshcell_pos = new double*[bxyz];
-		for(int ib=0; ib<bxyz; ib++)
-		{
-			meshcell_pos[ib] = new double[3];
-		}
-	}
+	meshcell_pos = std::vector<std::vector<double>>(bxyz,std::vector<double>(3,0.0));
+	ModuleBase::Memory::record("meshcell_pos", sizeof(double) * bxyz*3);
 
 	int index=0;
 	for(int i=0; i<bx; i++)
@@ -157,83 +154,15 @@ void Grid_MeshCell::init_meshcell_pos(void)
 		{
 			for(int k=0; k<bz; k++)
 			{
-//				std::cout << std::setw(5) << i << std::setw(5) << j << std::setw(5) << k;
 				for(int p=0; p<3; p++)
 				{
 					meshcell_pos[index][p] = i*meshcell_vec1[p] + j*meshcell_vec2[p] + k*meshcell_vec3[p];
-					//std::cout << std::setw(15) << meshcell_pos[index][p]; 
 				}
-//				std::cout << std::endl;
 				++index;
 			}
 		}
 	}
-	allocate_pos = true;
-
 	return;
 }
 
-void Grid_MeshCell::cal_extended_cell(const int &dxe, const int &dye, const int &dze)
-{
-	ModuleBase::TITLE("Grid_MeshK","cal_extended_cell");
 
-	//--------------------------------------
-	// max and min unitcell in expaned grid.
-	//--------------------------------------
-	this->maxu1 = dxe / this->nbx + 1;
-	this->maxu2 = dye / this->nby + 1;
-	this->maxu3 = dze / this->nbz + 1;
-
-	this->minu1 = (-dxe+1) / this->nbx - 1; 
-	this->minu2 = (-dye+1) / this->nby - 1; 
-	this->minu3 = (-dze+1) / this->nbz - 1; 
-
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
-
-	//--------------------------------------
-	// number of unitcell in each direction.
-	//--------------------------------------
-	this->nu1 = maxu1 - minu1 + 1;
-	this->nu2 = maxu2 - minu2 + 1;
-	this->nu3 = maxu3 - minu3 + 1;
-	this->nutot = nu1 * nu2 * nu3;
-
-	if(GlobalV::test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
-	//xiaohui add 'GlobalV::OUT_LEVEL' line, 2015-09-16
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
-
-//	std::cout << " nu1 = " << nu1 << " nu2 = " << nu2 << " nu3 = " << nu3 << std::endl;
-//	std::cout << " nutot = " << nutot << std::endl;
-
-	delete[] ucell_index2x;
-	delete[] ucell_index2y;
-	delete[] ucell_index2z;
-	this->ucell_index2x = new int[nutot];
-	this->ucell_index2y = new int[nutot];
-	this->ucell_index2z = new int[nutot];
-	ModuleBase::GlobalFunc::ZEROS(ucell_index2x, nutot);
-	ModuleBase::GlobalFunc::ZEROS(ucell_index2y, nutot);
-	ModuleBase::GlobalFunc::ZEROS(ucell_index2z, nutot);
-
-	this->nutot = nu1 * nu2 * nu3;
-
-	for(int i=minu1; i<=maxu1; i++)
-	{
-		for(int j=minu2; j<=maxu2; j++)
-		{
-			for(int k=minu3; k<=maxu3; k++)
-			{
-				const int cell = cal_Rindex(i,j,k);	
-				assert(cell<nutot);
-
-				this->ucell_index2x[cell] = i-minu1;
-				this->ucell_index2y[cell] = j-minu2;
-				this->ucell_index2z[cell] = k-minu3;
-
-			}
-		}
-	}
-
-	return;
-}

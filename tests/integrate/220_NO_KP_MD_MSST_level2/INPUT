@@ -8,8 +8,9 @@ nbands              8
 calculation         md
 
 #Parameters (Accuracy)
-ecutwfc             20
+ecutwfc             10
 scf_nmax            20
+scf_thr             1e-7
 
 basis_type          lcao
 ks_solver           scalapack_gvx

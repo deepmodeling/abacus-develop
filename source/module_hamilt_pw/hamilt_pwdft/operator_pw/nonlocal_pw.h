@@ -15,7 +15,7 @@ namespace hamilt {
 #define NONLOCALTEMPLATE_H
 
 template<class T> class Nonlocal : public T {};
-// template<typename Real, typename Device = psi::DEVICE_CPU>
+// template<typename Real, typename Device = base_device::DEVICE_CPU>
 // class Nonlocal : public OperatorPW<T, Device> {};
 
 #endif
@@ -80,17 +80,17 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     mutable T *vkb = nullptr;
     mutable T *becp = nullptr;
     Device* ctx = {};
-    psi::DEVICE_CPU* cpu_ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
     Real * deeq = nullptr;
     T * deeq_nc = nullptr;
     // using nonlocal_op = nonlocal_pw_op<Real, Device>;
     using gemv_op = hsolver::gemv_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;
     using nonlocal_op = nonlocal_pw_op<Real, Device>;
-    using setmem_complex_op = psi::memory::set_memory_op<T, Device>;
-    using resmem_complex_op = psi::memory::resize_memory_op<T, Device>;
-    using delmem_complex_op = psi::memory::delete_memory_op<T, Device>;
-    using syncmem_complex_h2d_op = psi::memory::synchronize_memory_op<T, Device, psi::DEVICE_CPU>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 
     T one{1, 0};
     T zero{0, 0};

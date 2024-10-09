@@ -1,6 +1,7 @@
-#include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "../xc_functional.h"
 #include "../exx_info.h"
+#include "xctest.h"
 
 /************************************************
 *  unit test of functionals
@@ -11,7 +12,7 @@
 
 namespace ModuleBase
 {
-    void WARNING_QUIT(const std::string &file,const std::string &description) {return ;}
+    void WARNING_QUIT(const std::string &file,const std::string &description) {exit(1);}
 }
 
 namespace GlobalV
@@ -20,7 +21,6 @@ namespace GlobalV
     bool CAL_STRESS = 0;
     int CAL_FORCE = 0;
     int NSPIN = 1;
-    double XC_TEMPERATURE;
 }
 
 namespace GlobalC
@@ -28,7 +28,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_PBE : public testing::Test
+class XCTest_PBE : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -73,7 +73,7 @@ TEST_F(XCTest_PBE, set_xc_type)
     }
 }
 
-class XCTest_PBEsol : public testing::Test
+class XCTest_PBEsol : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -95,7 +95,7 @@ class XCTest_PBEsol : public testing::Test
                 e_gga.push_back(e);
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);
-            }                                           
+            }
         }
 };
 
@@ -118,7 +118,7 @@ TEST_F(XCTest_PBEsol, set_xc_type)
     }
 }
 
-class XCTest_BP : public testing::Test
+class XCTest_BP : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -162,7 +162,7 @@ TEST_F(XCTest_BP, set_xc_type)
     }
 }
 
-class XCTest_revPBE : public testing::Test
+class XCTest_revPBE : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -207,7 +207,7 @@ TEST_F(XCTest_revPBE, set_xc_type)
     }
 }
 
-class XCTest_WC : public testing::Test
+class XCTest_WC : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -252,7 +252,7 @@ TEST_F(XCTest_WC, set_xc_type)
     }
 }
 
-class XCTest_BLYP : public testing::Test
+class XCTest_BLYP : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -297,7 +297,7 @@ TEST_F(XCTest_BLYP, set_xc_type)
     }
 }
 
-class XCTest_PW91 : public testing::Test
+class XCTest_PW91 : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -342,7 +342,7 @@ TEST_F(XCTest_PW91, set_xc_type)
     }
 }
 
-class XCTest_OLYP : public testing::Test
+class XCTest_OLYP : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -388,7 +388,7 @@ TEST_F(XCTest_OLYP, set_xc_type)
 }
 
 
-class XCTest_HCTH : public testing::Test
+class XCTest_HCTH : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -433,7 +433,7 @@ TEST_F(XCTest_HCTH, set_xc_type)
     }
 }
 
-class XCTest_PWLDA : public testing::Test
+class XCTest_PWLDA : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -466,7 +466,7 @@ TEST_F(XCTest_PWLDA, set_xc_type)
     }
 }
 
-class XCTest_PZ : public testing::Test
+class XCTest_PZ : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -499,7 +499,7 @@ TEST_F(XCTest_PZ, set_xc_type)
     }
 }
 
-class XCTest_SLATER1 : public testing::Test
+class XCTest_SLATER1 : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -530,7 +530,7 @@ TEST_F(XCTest_SLATER1, set_xc_type)
     }
 }
 
-class XCTest_SLATER_RXC : public testing::Test
+class XCTest_SLATER_RXC : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -561,7 +561,7 @@ TEST_F(XCTest_SLATER_RXC, set_xc_type)
     }
 }
 
-class XCTest_PW : public testing::Test
+class XCTest_PW : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -593,7 +593,7 @@ TEST_F(XCTest_PW, set_xc_type)
 }
 
 
-class XCTest_LYP : public testing::Test
+class XCTest_LYP : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -624,7 +624,7 @@ TEST_F(XCTest_LYP, set_xc_type)
     }
 }
 
-class XCTest_VWN : public testing::Test
+class XCTest_VWN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -655,7 +655,7 @@ TEST_F(XCTest_VWN, set_xc_type)
     }
 }
 
-class XCTest_WIGNER : public testing::Test
+class XCTest_WIGNER : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -686,7 +686,7 @@ TEST_F(XCTest_WIGNER, set_xc_type)
     }
 }
 
-class XCTest_HL : public testing::Test
+class XCTest_HL : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -717,7 +717,7 @@ TEST_F(XCTest_HL, set_xc_type)
     }
 }
 
-class XCTest_GL : public testing::Test
+class XCTest_GL : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -748,7 +748,7 @@ TEST_F(XCTest_GL, set_xc_type)
     }
 }
 
-class XCTest_OPTX : public testing::Test
+class XCTest_OPTX : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -784,7 +784,7 @@ TEST_F(XCTest_OPTX, set_xc_type)
     }
 }
 
-class XCTest_WCX : public testing::Test
+class XCTest_WCX : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -820,7 +820,7 @@ TEST_F(XCTest_WCX, set_xc_type)
     }
 }
 
-class XCTest_PBE0 : public testing::Test
+class XCTest_PBE0 : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;
@@ -866,7 +866,7 @@ TEST_F(XCTest_PBE0, set_xc_type)
     }
 }
 
-class XCTest_PBE_LibXC : public testing::Test
+class XCTest_PBE_LibXC : public XCTest
 {
     protected:
         std::vector<double> e_lda, v_lda;

@@ -10,6 +10,7 @@ description="A minimal two_center_integral package (with pybind11)"
 readme = "README.md"
 authors = [
   { name = "Jie Li", email = "lij@aisi.ac.cn" },
+  { name = "Chenxu Bai", email = "chenxu.bai@stu.pku.edu.cn" },
 ]
 requires-python = ">=3.7"
 classifiers = [
@@ -24,11 +25,13 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["contourpy","cycler","exceptiongroup","fonttools","importlib-metadata","importlib-resources","iniconfig","kiwisolver","matplotlib","mpmath","numpy","packaging","pillow","platformdirs","pluggy","pyparsing","pytest","python-dateutil","six","stylize","sympy","tomli","yapf","zipp", "scipy", "plotly"]
 
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.verbose = true
+logging.level = "INFO"
 
 
 [tool.pytest.ini_options]

@@ -11,22 +11,17 @@
  *   - ModuleIO::output_single_R
  *     - output single R data
  */
-Parallel_2D::Parallel_2D(){}
-Parallel_2D::~Parallel_2D(){}
 Parallel_Orbitals::Parallel_Orbitals()
 {
-    global2local_row_ = nullptr;
 }
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] global2local_row_;
 }
 
-void Parallel_2D::set_global2local(const int& M_A, const int& N_A,
-    const bool& div_2d, std::ofstream& ofs_running)
+void Parallel_2D::set_serial(const int M_A, const int N_A)
 {
-    this->global2local_row_ = new int[M_A];
+    this->global2local_row_.resize(M_A);
     this->global2local_row_[0] = 0;
     this->global2local_row_[1] = 1;
     this->global2local_row_[2] = -1;
@@ -47,7 +42,7 @@ TEST(ModuleIOTest, OutputSingleR)
     const bool binary = false;
     Parallel_Orbitals pv;
     GlobalV::NLOCAL = 5;
-    pv.set_global2local(GlobalV::NLOCAL, GlobalV::NLOCAL, false, ofs);
+    pv.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},

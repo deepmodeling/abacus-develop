@@ -50,26 +50,23 @@ OBJS_CELL=pseudo.o\
 atom_spec.o\
 atom_pseudo.o\
 read_pp.o\
+read_pp_complete.o\
 read_pp_upf100.o\
 read_pp_upf201.o\
 read_pp_vwr.o\
 read_pp_blps.o\
 unitcell.o\
+check_atomic_stru.o\
 read_atoms.o\
 read_cell_pseudopots.o\
 setup_nonlocal.o
 
-OBJS_ORB=ORB_control.o\
-ORB_read.o\
+OBJS_ORB=ORB_read.o\
 ORB_atomic.o\
 ORB_atomic_lm.o\
 ORB_nonlocal.o\
 ORB_nonlocal_lm.o\
 ORB_gaunt_table.o\
-ORB_table_beta.o\
-ORB_table_phi.o\
-ORB_table_alpha.o\
-ORB_gen_tables.o\
 
 OBJS_NEIGHBOR=sltk_adjacent_set.o\
 sltk_atom_arrange.o\
