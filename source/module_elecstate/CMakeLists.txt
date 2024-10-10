@@ -7,6 +7,7 @@ list(APPEND objects
     elecstate_print.cpp
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
+    elecstate_pw_cal_tau.cpp
     potentials/gatefield.cpp
     potentials/efield.cpp
     potentials/H_Hartree_pw.cpp
@@ -31,6 +32,7 @@ if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
       elecstate_lcao_tddft.cpp
+      elecstate_lcao_cal_tau.cpp
       potentials/H_TDDFT_pw.cpp
       module_dm/density_matrix.cpp
       module_dm/cal_dm_psi.cpp

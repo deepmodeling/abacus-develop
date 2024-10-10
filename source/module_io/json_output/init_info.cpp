@@ -1,5 +1,6 @@
 #include "init_info.h"
 
+#include "module_parameter/parameter.h"
 #include "../para_json.h"
 #include "abacusjson.h"
 
@@ -21,10 +22,10 @@ void gen_init(UnitCell* ucell)
 
     int numAtoms = ucell->nat;
     AbacusJson::add_json({"init", "natom"}, numAtoms, false);
-    AbacusJson::add_json({"init", "nband"}, GlobalV::NBANDS, false);
+    AbacusJson::add_json({"init", "nband"}, PARAM.inp.nbands, false);
 
     // Json::AbacusJson::add_Json(numAtoms,false,"init", "natom");
-    // Json::AbacusJson::add_Json(GlobalV::NBANDS,false,"init", "nband");
+    // Json::AbacusJson::add_Json(PARAM.inp.nbands,false,"init", "nband");
 
     int ntype = ucell->ntype, nelec_total = 0;
     for (int it = 0; it < ntype; it++)

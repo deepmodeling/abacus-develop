@@ -5,9 +5,11 @@
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
 #include "module_io/rhog_io.h"
 #include "module_io/cif_io.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 
 namespace ModuleESolver
 {
@@ -15,11 +17,11 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     // pw_rho = new ModuleBase::PW_Basis();
-    pw_rho = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
+    pw_rho = new ModulePW::PW_Basis_Big(PARAM.inp.device, PARAM.inp.precision);
 
     if ( PARAM.globalv.double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
+        pw_rhod = new ModulePW::PW_Basis_Big(PARAM.inp.device, PARAM.inp.precision);
     }
     else
     {
@@ -260,6 +262,32 @@ void ESolver_FP::after_scf(const int istep)
                 this->pelec->charge,
                 &(GlobalC::ucell),
                 this->pelec->pot->get_fixed_v());
+        }
+
+        // 5) write ELF
+        if (PARAM.inp.out_elf[0] > 0)
+        {
+            this->pelec->charge->cal_elf = true;
+            Symmetry_rho srho;
+            for (int is = 0; is < PARAM.inp.nspin; is++)
+            {
+                srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
+            }
+
+            std::string out_dir =PARAM.globalv.global_out_dir;
+            ModuleIO::write_elf(
+#ifdef __MPI
+                this->pw_big->bz,
+                this->pw_big->nbz,
+#endif
+                out_dir,
+                istep,
+                PARAM.inp.nspin,
+                this->pelec->charge->rho,
+                this->pelec->charge->kin_r,
+                this->pw_rhod,
+                &(GlobalC::ucell),
+                PARAM.inp.out_elf[1]);
         }
     }
 }

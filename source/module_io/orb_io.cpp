@@ -128,12 +128,13 @@ void ModuleIO::write_abacus_orb(std::ofstream& ofs,
                                 const int rank)
 {
     const std::vector<std::string> spec = {"S", "P", "D", "F", "G", "H", "I", "J", "K"};
-    if (!ofs.good())
-    {
-        ModuleBase::WARNING_QUIT("AtomicRadials::write_abacus_orb", "Couldn't open orbital file.");
-    }
+
     if (rank == 0)
     {
+        if (!ofs.is_open())
+        {
+            ModuleBase::WARNING_QUIT("AtomicRadials::write_abacus_orb", "Couldn't open orbital file.");
+        }
         const int lmax = nzeta.size() - 1;
 
         for (int i = 0; i < 75; ++i)

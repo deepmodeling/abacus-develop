@@ -251,7 +251,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 14) set occupations
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 
     // 15) if kpar is not divisible by nks, print a warning
@@ -419,7 +419,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,
@@ -446,14 +446,14 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                               GlobalC::Pkpoints,
                               GlobalC::ucell,
                               this->pelec->eferm,
-                              GlobalV::NBANDS,
+                              PARAM.inp.nbands,
                               this->p_hamilt);
     }
 
     if (PARAM.inp.out_mat_xc)
     {
         ModuleIO::write_Vxc<TK, TR>(PARAM.inp.nspin,
-                                    GlobalV::NLOCAL,
+                                    PARAM.globalv.nlocal,
                                     GlobalV::DRANK,
                                     &this->pv,
                                     *this->psi,
@@ -480,7 +480,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
     if (PARAM.inp.out_eband_terms)
     {
         ModuleIO::write_eband_terms<TK, TR>(PARAM.inp.nspin,
-                                            GlobalV::NLOCAL,
+                                            PARAM.globalv.nlocal,
                                             GlobalV::DRANK,
                                             &this->pv,
                                             *this->psi,
@@ -843,7 +843,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -854,7 +854,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                        GlobalV::DRANK);
                     ModuleIO::save_mat(istep,
                                        s_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -1106,11 +1106,16 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
-
-    // 1) call after_scf() of ESolver_KS
+    // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
+    if (PARAM.inp.out_elf[0] > 0)
+    {
+        this->pelec->cal_tau(*(this->psi));
+    }
+    
+    // 2) call after_scf() of ESolver_KS
     ESolver_KS<TK>::after_scf(istep);
 
-    // 2) write density matrix for sparse matrix
+    // 3) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),
                         this->pv,
                         PARAM.inp.out_dm1,
@@ -1118,7 +1123,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                         PARAM.inp.out_app_flag,
                         istep);
 
-    // 3) write density matrix
+    // 4) write density matrix
     if (PARAM.inp.out_dm)
     {
         std::vector<double> efermis(PARAM.inp.nspin == 2 ? 2 : 1);
@@ -1135,7 +1140,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     }
 
 #ifdef __EXX
-    // 4) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
+    // 5) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
     if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.out_chg[0]
         && istep % PARAM.inp.out_interval == 0) // Peize Lin add if 2022.11.14
     {
@@ -1159,7 +1164,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     LDI.out_deepks_labels(this->pelec->f_en.etot,
                           this->pelec->klist->get_nks(),
                           GlobalC::ucell.nat,
-                          GlobalV::NLOCAL,
+                          PARAM.globalv.nlocal,
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
@@ -1283,7 +1288,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             ekinetic->init(ik);
             ModuleIO::save_mat(0,
                                hsk.get_hk(),
-                               GlobalV::NLOCAL,
+                               PARAM.globalv.nlocal,
                                false,
                                PARAM.inp.out_mat_tk[1],
                                1,

@@ -33,9 +33,9 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
         FILE *g1 = fopen(ssh.str().c_str(),"wb");
         FILE *g2 = fopen(sss.str().c_str(),"wb");
 
-        fwrite(&GlobalV::NLOCAL,sizeof(int),1,g1);
+        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g1);
         fwrite(&Hnnz,sizeof(int),1,g1);
-        fwrite(&GlobalV::NLOCAL,sizeof(int),1,g2);
+        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g2);
         fwrite(&Hnnz,sizeof(int),1,g2);
 
         fclose(g1);
@@ -48,10 +48,10 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
         std::ofstream g1(ssh.str().c_str());
         std::ofstream g2(sss.str().c_str());
 
-        g1 << GlobalV::NLOCAL << " " << Hnnz << std::endl;
-        g2 << GlobalV::NLOCAL << " " << Hnnz << std::endl;
+        g1 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
+        g2 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
 
-        for(int i=0; i<GlobalV::NLOCAL+1; ++i)
+        for(int i=0; i<PARAM.globalv.nlocal+1; ++i)
         {
             g1 << colptr_H[i] << " ";
             g2 << colptr_H[i] << " ";

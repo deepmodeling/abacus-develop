@@ -6,12 +6,17 @@ add_library(
     xc_functional_gradcorr.cpp
     xc_functional_wrapper_xc.cpp
     xc_functional_wrapper_gcxc.cpp
-    xc_functional_wrapper_tauxc.cpp
     xc_funct_exch_lda.cpp
     xc_funct_corr_lda.cpp
     xc_funct_exch_gga.cpp
     xc_funct_corr_gga.cpp
     xc_funct_hcth.cpp
+    xc_functional_libxc.cpp
+    xc_functional_libxc_tools.cpp
+    xc_functional_libxc_vxc.cpp
+    xc_functional_libxc_wrapper_xc.cpp
+    xc_functional_libxc_wrapper_gcxc.cpp
+    xc_functional_libxc_wrapper_tauxc.cpp
 )
 
 if(ENABLE_COVERAGE)

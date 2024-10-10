@@ -115,7 +115,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_parakpts = new Parallel_Kpoints();
             #endif
             // mock
-            GlobalV::NBANDS = 1;
+            PARAM.input.nbands = 1;
             PARAM.input.nspin = 1;
             PARAM.input.orbital_dir = "./support/";
             PARAM.input.pseudo_dir = "./support/";

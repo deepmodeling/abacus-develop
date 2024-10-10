@@ -27,3 +27,5 @@ efield_flag         1
 dip_cor_flag        0
 cal_force           1
 cal_stress          1
+
+pw_seed 1

@@ -27,3 +27,5 @@ mixing_gg0             1.0
 
 cal_force              1
 cal_stress             1
+
+pw_seed 1

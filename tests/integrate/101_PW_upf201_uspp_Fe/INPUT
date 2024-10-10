@@ -35,3 +35,5 @@ cal_force              1
 cal_stress             1
 
 kpar                   3
+
+pw_seed 1

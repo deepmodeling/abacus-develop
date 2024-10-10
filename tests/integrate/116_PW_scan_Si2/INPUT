@@ -28,3 +28,5 @@ cal_force 1
 cal_stress 1
 
 mixing_tau 1
+
+pw_seed 1

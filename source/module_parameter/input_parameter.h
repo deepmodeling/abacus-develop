@@ -47,7 +47,7 @@ struct Input_para
     bool diago_full_acc = false;        ///< all the empty states are diagonalized
     std::string init_wfc = "atomic";    ///< "file","atomic","random"
     bool psi_initializer = false;       ///< whether use psi_initializer to initialize wavefunctions
-    int pw_seed = 1;                    ///< random seed for initializing wave functions qianrui 2021-8-12
+    int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
@@ -68,7 +68,7 @@ struct Input_para
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
-    std::string device = "cpu";
+    std::string device = "auto";
     std::string precision = "double";
 
     // ==============   #Parameters (2.Electronic structure) ===========================
@@ -356,6 +356,7 @@ struct Input_para
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
     std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated in the get_pchg
     bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
@@ -560,27 +561,27 @@ struct Input_para
     double pexsi_zero_thr = 1e-10;
 
     // ==============   #Parameters (20.Test) ====================
-    bool out_alllog = false;      ///< output all logs.
-    int nurse = 0;                ///< used for debug.
-    bool t_in_h = true;           ///< calculate the T or not.
-    bool vl_in_h = true;          ///< calculate the vloc or not.
-    bool vnl_in_h = true;         ///< calculate the vnl or not.
-    bool vh_in_h = true;          ///< calculate the hartree potential or not
-    bool vion_in_h = true;        ///< calculate the local ionic potential or not
-                                  ///< //only relevant when vl_in_h = 1
-    bool test_force = false;      ///< test the force.
-    bool test_stress = false;     ///< test the stress.
-    bool test_skip_ewald = false; ///< variables for test only
-    bool test_atom_input = false; ///< variables for test_atom_input only
-    bool test_symmetry = false;   ///< variables for test_lattice only
-    int test_wf = 0;         ///< variables for test_wf only
-    int test_grid = false;  ///< variables for test_grid only
-    bool test_charge = false; ///< variables for test_vloc only
-    bool test_energy = false; ///< variables for test_energy only
-    bool test_gridt = false;  ///< variables for test_gridt only
-    bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
-    int test_pp = 0;          ///< variables for test_pp only
-    bool test_relax_method = false; ///< variables for test_relax_method only
-    int test_deconstructor = false; ///< variables for test_deconstructor only
+    bool out_alllog = false;         ///< output all logs.
+    int nurse = 0;                   ///< used for debug.
+    bool t_in_h = true;              ///< calculate the T or not.
+    bool vl_in_h = true;             ///< calculate the vloc or not.
+    bool vnl_in_h = true;            ///< calculate the vnl or not.
+    bool vh_in_h = true;             ///< calculate the hartree potential or not
+    bool vion_in_h = true;           ///< calculate the local ionic potential or not
+                                     ///< //only relevant when vl_in_h = 1
+    bool test_force = false;         ///< test the force.
+    bool test_stress = false;        ///< test the stress.
+    bool test_skip_ewald = false;    ///< variables for test only
+    int  test_atom_input = false;    ///< variables for test_atom_input only
+    int  test_symmetry = false;      ///< variables for test_lattice only
+    int  test_wf = 0;                ///< variables for test_wf only
+    int  test_grid = false;          ///< variables for test_grid only
+    int  test_charge = false;        ///< variables for test_vloc only
+    int  test_energy = false;        ///< variables for test_energy only
+    int  test_gridt = false;         ///< variables for test_gridt only
+    int  test_pseudo_cell = false;   ///< variables for test_pseudo_cell only
+    int  test_pp = 0;                ///< variables for test_pp only
+    int  test_relax_method = false;  ///< variables for test_relax_method only
+    int  test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif

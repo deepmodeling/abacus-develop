@@ -134,7 +134,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->nelec_ = new double[PARAM.inp.nspin];
     if (PARAM.inp.nspin == 1)
     {
-        this->nelec_[0] = GlobalV::nelec;
+        this->nelec_[0] = PARAM.inp.nelec;
     }
     else if (PARAM.inp.nspin == 2)
     {
@@ -509,7 +509,13 @@ bool ESolver_OF::check_exit()
  */
 void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
 {
-    // 1) call after_scf() of ESolver_FP
+    // 1) calculate the kinetic energy density
+    if (PARAM.inp.out_elf[0] > 0)
+    {
+        this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
+    }
+
+    // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(istep);
 }
 
