@@ -624,7 +624,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
 
         // 12.5) rdmft, add by jghan 2024-04-08/2024-10-09
-        // if ( GlobalV::ab_initio_type == "rdmft" )
+        // if ( PARAM.inp.ab_initio_type == "rdmft" )
         if ( 1 ) /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         {
             if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )

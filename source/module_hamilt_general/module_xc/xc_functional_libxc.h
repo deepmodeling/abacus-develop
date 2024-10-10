@@ -11,6 +11,10 @@
 #include <tuple>
 #include <vector>
 
+#include <map> // added by jghan, 2024-10-10
+#include <utility>
+
+
 	class Charge;
 
 namespace XC_Functional_Libxc

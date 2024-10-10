@@ -20,6 +20,8 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/unitcell.h"
 
+#include <map> // added by jghan, 2024-10-10
+
 class XC_Functional
 {
 	public:

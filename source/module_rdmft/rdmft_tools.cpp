@@ -11,7 +11,6 @@
 #include "module_psi/psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 
 #include <iostream>
@@ -209,11 +208,14 @@ template class Veff_rdmft<std::complex<double>, std::complex<double>>;
 // initialize_HR()
 template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
-                                        Grid_Driver* GridD,
-                                        const Parallel_Orbitals* paraV)
+                                        Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
+
+    this->nspin = PARAM.inp.nspin;
+    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
+    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
@@ -234,14 +236,13 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
-                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2.x, R_index2.y, R_index2.z, paraV);
+                hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);
             }
         }
@@ -250,7 +251,6 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
     this->hR->allocate(nullptr, true);
 
     ModuleBase::timer::tick("Veff", "initialize_HR");
-
 }
 
 
@@ -261,18 +261,18 @@ void Veff_rdmft<TK, TR>::contributeHR()
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-    this->GK->reset_spin(GlobalV::CURRENT_SPIN);
+    this->GK->reset_spin(this->current_spin);
 
     double* vr_eff_rdmft = nullptr;
 
     // calculate v_hartree(r) or v_local(r) or v_xc(r)
     if( potential_ == "hartree" )
     {   
-        ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
+        ModuleBase::matrix v_matrix_hartree(this->nspin, charge_->nrxx);
         elecstate::PotHartree potH(rho_basis_);
-        potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
+        potH.cal_v_eff(charge_, ucell, v_matrix_hartree);
 
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<this->nspin; ++is)
         {
             // use pointer to attach v(r) for current spin
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
@@ -301,12 +301,12 @@ void Veff_rdmft<TK, TR>::contributeHR()
 
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
-        ModuleBase::matrix v_matrix_XC(GlobalV::NSPIN, charge_->nrxx);
+        ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
         elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
-        potXC.cal_v_eff(charge_, ucell_, v_matrix_XC);
+        potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
 
         // if need meta-GGA, go to study veff_lcao.cpp and modify the code
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<this->nspin; ++is)
         {
             // use pointer to attach v(r) for current spin
             vr_eff_rdmft = &v_matrix_XC(is, 0);
@@ -322,7 +322,10 @@ void Veff_rdmft<TK, TR>::contributeHR()
     }
 
     // get HR for 2D-block parallel format
-    this->GK->transfer_pvpR(this->hR);
+    // this->GK->transfer_pvpR(this->hR);
+    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
+
+    if(this->nspin == 2) { this->current_spin = 1 - this->current_spin; }
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
@@ -336,18 +339,18 @@ void Veff_rdmft<double, double>::contributeHR()
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-    // this->GK->reset_spin(GlobalV::CURRENT_SPIN);
+    // this->GK->reset_spin(this->current_spin);
 
     double* vr_eff_rdmft = nullptr;
 
     // calculate v_hartree(r) or V_local(r) or v_xc(r)
     if( potential_ == "hartree" )
     {   
-        ModuleBase::matrix v_matrix_hartree(GlobalV::NSPIN, charge_->nrxx);
+        ModuleBase::matrix v_matrix_hartree(this->nspin, charge_->nrxx);
         elecstate::PotHartree potH(rho_basis_);
-        potH.cal_v_eff(charge_, ucell_, v_matrix_hartree);
+        potH.cal_v_eff(charge_, ucell, v_matrix_hartree);
 
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<this->nspin; ++is)
         {
             // use pointer to attach v(r) for current spin
             vr_eff_rdmft = &v_matrix_hartree(is, 0);
@@ -372,7 +375,7 @@ void Veff_rdmft<double, double>::contributeHR()
         // because in gamma_only, cal_gint would not set hRGint zero first
         // so must use cal_vlocal(), and in rdmft_test.h, calculate V_hartree->contributeHR() first
 
-        this->GG->cal_vlocal(&inout, this->LM, false);  // cal_gint ???
+        this->GG->cal_vlocal(&inout, false);  // cal_gint ???
     }
     else if( potential_ == "xc" )
     {
@@ -380,11 +383,11 @@ void Veff_rdmft<double, double>::contributeHR()
 
         ModuleBase::matrix vofk = *vloc_;
         vofk.zero_out();
-        ModuleBase::matrix v_matrix_XC(GlobalV::NSPIN, charge_->nrxx);
+        ModuleBase::matrix v_matrix_XC(this->nspin, charge_->nrxx);
         elecstate::PotXC potXC(rho_basis_, etxc, vtxc, &vofk);
-        potXC.cal_v_eff(charge_, ucell_, v_matrix_XC);
+        potXC.cal_v_eff(charge_, ucell, v_matrix_XC);
         
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<this->nspin; ++is)
         {
             // use pointer to attach v(r) for current spin
             vr_eff_rdmft = &v_matrix_XC(is, 0);
@@ -400,9 +403,11 @@ void Veff_rdmft<double, double>::contributeHR()
     }
 
     // get HR for 2D-block parallel format
-    this->GG->transfer_pvpR(this->hR);
+    this->GG->transfer_pvpR(this->hR,this->ucell);
 
     this->new_e_iteration = false;
+
+    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
 
     return;
 }

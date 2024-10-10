@@ -11,7 +11,6 @@
 #include "module_psi/psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_matrix.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_cell/module_symmetry/symmetry.h"
 // #include "module_hamilt_general/module_xc/xc_functional.h"
@@ -81,7 +80,7 @@ RDMFT<TK, TR>::~RDMFT()
 
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
-                                    K_Vectors& kv_in, elecstate::ElecState& pelec_in, std::string XC_func_rdmft_in, double alpha_power_in)
+                                    K_Vectors& kv_in, elecstate::ElecState& pelec_in, LCAO_Orbitals& orb_in, TwoCenterBundle& two_center_bundle_in, std::string XC_func_rdmft_in, double alpha_power_in)
 {
     GG = &GG_in;
     GK = &GK_in;
@@ -90,6 +89,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     kv = &kv_in;
     charge = pelec_in.charge;
     pelec = &pelec_in;
+    orb = &orb_in;
+    two_center_bundle = &two_center_bundle_in;
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
@@ -97,6 +98,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // else nk_total = kv->nks;
 
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+    nspin = PARAM.inp.nspin;
 
     // XC_func_rdmft = "power"; // just for test 
     // alpha_power = 0.525;
@@ -104,7 +106,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // XC_func_rdmft = "hf";
     // std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
     // std::cout << "\n\n\n******\nXC-functional in GlobalC::atom: " << GlobalC::ucell.atoms[0].ncpp.xc_func << "\n******\n\n\n" << std::endl;
-    // if( GlobalV::DFT_FUNCTIONAL == "default" ) XC_func_rdmft = "default";
+    // if( XC_func_rdmft == "default" ) XC_func_rdmft = "default";
 
     // create desc[] and something about MPI to Eij(nbands*nbands)
     std::ofstream ofs_running;
@@ -138,15 +140,21 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
 
     // 
-    HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_exx_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_local.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    // HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    // HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    // HK_exx_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    // HK_dft_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    //
+    hsk_TV = new hamilt::HS_Matrix_K<TK>(ParaV, true);
+    hsk_hartree = new hamilt::HS_Matrix_K<TK>(ParaV, true);
+    hsk_dft_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
+    hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
-    HK_dft_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
+    HK_local.resize( ParaV->get_row_size()*ParaV->get_col_size() );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
+
 
     Eij_TV.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
     Eij_hartree.resize( para_Eij.get_row_size()*para_Eij.get_col_size() );
@@ -190,7 +198,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         }
     }
 
-    if( GlobalV::GAMMA_ONLY_LOCAL )
+    if( PARAM.inp.gamma_only )
     {
         HR_TV->fix_gamma();
         HR_hartree->fix_gamma();
@@ -203,15 +211,15 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, LCAO_Matrix& LM_in, ModulePW::PW_Basis& rho_basis_in,
-                                ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in, Local_Orbital_Charge& loc_in)
+void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis_in,
+                                ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in)
 {
     ucell = &ucell_in;
-    LM = &LM_in;
+    // LM = &LM_in;
     rho_basis = &rho_basis_in;
     vloc = &vloc_in;
     sf = &sf_in;
-    loc = &loc_in;
+    // loc = &loc_in;
 
 
     HR_TV->set_zero();
@@ -257,7 +265,7 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
     this->update_charge();
 
     // "default" = "pbe"
-    // if(  (GlobalV::DFT_FUNCTIONAL != "hf" && GlobalV::DFT_FUNCTIONAL != "muller" && GlobalV::DFT_FUNCTIONAL != "power") || this->cal_E_type != 1 )
+    // if(  (XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power") || this->cal_E_type != 1 )
     if( this->cal_E_type != 1 )
     {
         // the second cal_E_type need the complete pot to get effctive_V to calEband and so on.
@@ -274,32 +282,32 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::update_charge()
 {
-    if( GlobalV::GAMMA_ONLY_LOCAL )
+    if( PARAM.inp.gamma_only )
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, GlobalV::NSPIN);
+        elecstate::DensityMatrix<TK, double> DM_gamma_only(ParaV, nspin);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM_gamma_only);
         DM_gamma_only.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM_gamma_only.cal_DMR();
 
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
         GG->transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
-        //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
-        Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);
+        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho);
         GG->cal_gint(&inout);
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
-            }
-            Gint_inout inout1(loc->DM, charge->kin_r, Gint_Tools::job_type::tau);
-            GG->cal_gint(&inout1);
+            // for (int is = 0; is < nspin; is++)
+            // {
+            //     ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
+            // }
+            // Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau);
+            // GG->cal_gint(&inout1);
+            this->pelec->cal_tau(wfc);
         }
 
         charge->renormalize_rho();
@@ -307,29 +315,29 @@ void RDMFT<TK, TR>::update_charge()
     else
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM(kv, ParaV, GlobalV::NSPIN);
+        elecstate::DensityMatrix<TK, double> DM(kv, ParaV, nspin);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM.cal_DMR();
 
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(charge->rho[is], charge->nrxx);
         }
 
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
-        //double** invaild_ptr = nullptr;   // use invaild_ptr replace loc.DM_R in the future
-        Gint_inout inout(loc->DM_R, charge->rho, Gint_Tools::job_type::rho);  // what is Local_Orbital_Charge& loc_in? ///////////////
+        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho);
         GK->cal_gint(&inout);
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            for (int is = 0; is < GlobalV::NSPIN; is++)
-            {
-                ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
-            }
-            Gint_inout inout1(loc->DM_R, charge->kin_r, Gint_Tools::job_type::tau);
-            GK->cal_gint(&inout1);
+            // for (int is = 0; is < nspin; is++)
+            // {
+            //     ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
+            // }
+            // Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau);
+            // GK->cal_gint(&inout1);
+            this->pelec->cal_tau(wfc);
         }
 
         charge->renormalize_rho();
@@ -339,7 +347,7 @@ void RDMFT<TK, TR>::update_charge()
     // this->pelec->calculate_weights();
     // this->pelec->calEBand();
     Symmetry_rho srho;
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < nspin; is++)
     {
         srho.begin(is, *(this->charge), rho_basis, GlobalC::Pgrid, GlobalC::ucell.symm);
     }
@@ -349,7 +357,7 @@ void RDMFT<TK, TR>::update_charge()
     // if(GlobalV::VL_IN_H)
     // {
     //     // update Gint_K
-    //     if (!GlobalV::GAMMA_ONLY_LOCAL)
+    //     if (!PARAM.inp.gamma_only)
     //     {
     //         this->UHM.GK.renew();
     //     }
@@ -422,37 +430,38 @@ void RDMFT<TK, TR>::cal_V_TV()
     HR_TV->set_zero();
     
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(
-        LM,
+        hsk_TV,
         kv->kvec_d,
         HR_TV,
-        &HK_TV,
         &GlobalC::ucell,
+        orb->cutoffs(),
         &GlobalC::GridD,
-        ParaV
+        two_center_bundle->kinetic_orb.get()
     );
 
     V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(
-        LM,
+        hsk_TV,
         kv->kvec_d,
         HR_TV,
-        &HK_TV,
         &GlobalC::ucell,
+        orb->cutoffs(),
         &GlobalC::GridD,
-        ParaV
+        two_center_bundle->overlap_orb_beta.get()
     );
 
-    if( GlobalV::GAMMA_ONLY_LOCAL )
+    if( PARAM.inp.gamma_only )
     {
         V_local = new rdmft::Veff_rdmft<TK,TR>(
             GG,
-            LM,
+            hsk_TV,
             kv->kvec_d,
-            charge,
+            this->pelec->pot,
             HR_TV,
-            &HK_TV,     
             &GlobalC::ucell,
+            orb->cutoffs(),
             &GlobalC::GridD,
-            ParaV,
+
+            charge,
             rho_basis,
             vloc,
             sf,
@@ -463,14 +472,15 @@ void RDMFT<TK, TR>::cal_V_TV()
     {
         V_local = new rdmft::Veff_rdmft<TK,TR>(
             GK,
-            LM,
+            hsk_TV,
             kv->kvec_d,
-            charge,
+            this->pelec->pot,
             HR_TV,
-            &HK_TV,
             &GlobalC::ucell,
+            orb->cutoffs(),
             &GlobalC::GridD,
-            ParaV,
+
+            charge,
             rho_basis,
             vloc,
             sf,
@@ -491,18 +501,19 @@ void RDMFT<TK, TR>::cal_V_hartree()
 {
     HR_hartree->set_zero();
 
-    if( GlobalV::GAMMA_ONLY_LOCAL )
+    if( PARAM.inp.gamma_only )
     {
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GG,
-            LM,
+            hsk_hartree,
             kv->kvec_d,
-            charge,
+            this->pelec->pot,
             HR_hartree,
-            &HK_hartree,
             &GlobalC::ucell,
+            orb->cutoffs(),
             &GlobalC::GridD,
-            ParaV,
+
+            charge,
             rho_basis,
             vloc,
             sf,
@@ -514,14 +525,15 @@ void RDMFT<TK, TR>::cal_V_hartree()
         // this can be optimized, use potHartree.update_from_charge()
         V_hartree = new rdmft::Veff_rdmft<TK,TR>(
             GK,
-            LM,
+            hsk_hartree,
             kv->kvec_d,
-            charge,
+            this->pelec->pot,
             HR_hartree,
-            &HK_hartree,
             &GlobalC::ucell,
+            orb->cutoffs(),
             &GlobalC::GridD,
-            ParaV,
+
+            charge,
             rho_basis,
             vloc,
             sf,
@@ -543,6 +555,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::cal_V_XC()
 {
+    HR_dft_XC->set_zero();
     HR_exx_XC->set_zero();
 
     std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
@@ -555,7 +568,7 @@ void RDMFT<TK, TR>::cal_V_XC()
 
     DM_XC_pass = DM_XC;
 
-    // elecstate::DensityMatrix<TK, double> DM_test(kv, ParaV, GlobalV::NSPIN);
+    // elecstate::DensityMatrix<TK, double> DM_test(kv, ParaV, nspin);
     // elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
     // DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
     // DM_test.cal_DMR();
@@ -578,21 +591,22 @@ void RDMFT<TK, TR>::cal_V_XC()
     // }
     // std::cout << "\nsum of DM_XC - DM in ABACUS: " << DM_XC_minus_DMtest << std::endl;
 
-    if( GlobalV::DFT_FUNCTIONAL != "hf" && GlobalV::DFT_FUNCTIONAL != "muller" && GlobalV::DFT_FUNCTIONAL != "power" )
+    if( XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power" )
     {
-        if( GlobalV::GAMMA_ONLY_LOCAL )
+        if( PARAM.inp.gamma_only )
         {
             // this can be optimized, use potXC.update_from_charge()
             V_dft_XC = new rdmft::Veff_rdmft<TK,TR>(
                 GG,
-                LM,
+                hsk_dft_XC,
                 kv->kvec_d,
-                charge,
+                this->pelec->pot,
                 HR_dft_XC,
-                &HK_dft_XC,
                 &GlobalC::ucell,
+                orb->cutoffs(),
                 &GlobalC::GridD,
-                ParaV,
+
+                charge,
                 rho_basis,
                 vloc,
                 sf,
@@ -600,21 +614,22 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &etxc,
                 &vtxc
             );
-            V_dft_XC->contributeHR();
+            // V_dft_XC->contributeHR();
         }
         else
         {   
             // this can be optimized, use potXC.update_from_charge()
             V_dft_XC = new rdmft::Veff_rdmft<TK,TR>(
                 GK,
-                LM,
+                hsk_dft_XC,
                 kv->kvec_d,
-                charge,
+                this->pelec->pot,
                 HR_dft_XC,
-                &HK_dft_XC,
                 &GlobalC::ucell,
+                orb->cutoffs(),
                 &GlobalC::GridD,
-                ParaV,
+
+                charge,
                 rho_basis,
                 vloc,
                 sf,
@@ -622,8 +637,9 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &etxc,
                 &vtxc
             );
-            V_dft_XC->contributeHR();
-        } 
+            // V_dft_XC->contributeHR();
+        }
+        V_dft_XC->contributeHR();
     }
     
     if(GlobalC::exx_info.info_global.cal_exx)
@@ -632,7 +648,7 @@ void RDMFT<TK, TR>::cal_V_XC()
         {
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> Ds_XC_d = 
-                RI_2D_Comm::split_m2D_ktoR<double>(*kv, DM_XC_pointer, *ParaV);
+                RI_2D_Comm::split_m2D_ktoR<double>(*kv, DM_XC_pointer, *ParaV, nspin);
 
             // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             // Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
@@ -642,9 +658,8 @@ void RDMFT<TK, TR>::cal_V_XC()
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
             V_exx_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
-                LM,
+                hsk_exx_XC,
                 HR_exx_XC,
-                &HK_exx_XC,
                 *kv,
                 &Vxc_fromRI_d->Hexxs
             );
@@ -653,7 +668,7 @@ void RDMFT<TK, TR>::cal_V_XC()
         {
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> Ds_XC_c = 
-                RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV);
+                RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV, nspin);
 
             // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             // Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
@@ -663,14 +678,14 @@ void RDMFT<TK, TR>::cal_V_XC()
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
             V_exx_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
-                LM,
+                hsk_exx_XC,
                 HR_exx_XC,
-                &HK_exx_XC,
                 *kv,
                 nullptr,
                 &Vxc_fromRI_c->Hexxs
             );
         }
+        V_exx_XC->contributeHR();
     }
 }
 
@@ -688,13 +703,17 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
     //calculate Hwfc, wfcHwfc for each potential
     for(int ik=0; ik<nk_total; ++ik)
     {
+        hsk_TV->set_zero_hk();
+        hsk_hartree->set_zero_hk();
+        set_zero_vector(HK_XC);
+
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_local->contributeHk(ik);
         V_hartree->contributeHk(ik);
 
         // get H(k) * wfc
-        HkPsi( ParaV, HK_TV[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
-        HkPsi( ParaV, HK_hartree[0], wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0));
+        HkPsi( ParaV, hsk_TV->get_hk()[0], wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0));
+        HkPsi( ParaV, hsk_hartree->get_hk()[0], wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0));
 
         // get wfc * H(k)_wfc
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij_TV, &(wfcHwfc_TV(ik, 0)) );
@@ -702,22 +721,26 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
 
         if(GlobalC::exx_info.info_global.cal_exx)
         {
+            // set_zero_vector(HK_exx_XC);
+            hsk_exx_XC->set_zero_hk();
+
             V_exx_XC->contributeHk(ik);
-            HkPsi( ParaV, HK_exx_XC[0], wfc(ik, 0, 0), H_wfc_exx_XC(ik, 0, 0));
+            HkPsi( ParaV, hsk_exx_XC->get_hk()[0], wfc(ik, 0, 0), H_wfc_exx_XC(ik, 0, 0));
             psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_exx_XC(ik, 0, 0), Eij_exx_XC, &(wfcHwfc_exx_XC(ik, 0)) );
             
-            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += HK_exx_XC[iloc];
-            set_zero_vector(HK_exx_XC);
+            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_exx_XC->get_hk()[iloc];
         }
 
-        if( GlobalV::DFT_FUNCTIONAL != "hf" && GlobalV::DFT_FUNCTIONAL != "muller" && GlobalV::DFT_FUNCTIONAL != "power" )
+        if( XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power" )
         {
+            // set_zero_vector(HK_dft_XC);
+            hsk_dft_XC->set_zero_hk();
+
             V_dft_XC->contributeHk(ik);
-            HkPsi( ParaV, HK_dft_XC[0], wfc(ik, 0, 0), H_wfc_dft_XC(ik, 0, 0));
+            HkPsi( ParaV, hsk_dft_XC->get_hk()[0], wfc(ik, 0, 0), H_wfc_dft_XC(ik, 0, 0));
             psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_dft_XC(ik, 0, 0), Eij_exx_XC, &(wfcHwfc_dft_XC(ik, 0)) );
             
-            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += HK_dft_XC[iloc];
-            set_zero_vector(HK_dft_XC);
+            for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_dft_XC->get_hk()[iloc];
         }
         // elseif()
 
@@ -739,9 +762,9 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         // psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)) );
         
         // let H(k)=0 to storing next one, H(k+1)
-        set_zero_vector(HK_TV);
-        set_zero_vector(HK_hartree);
-        set_zero_vector(HK_XC);
+        // set_zero_vector(HK_TV);
+        // set_zero_vector(HK_hartree);
+
     }
 
     // std::cout << "\n\nsum of XC_minus_XC: " << XC_minus_XC << "\n\n" << std::endl;
@@ -864,7 +887,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     }
     else
     {
-        std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << GlobalV::DFT_FUNCTIONAL << std::endl;
+        std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 
         std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
                     << E_RDMFT[0] << "\nE_hartree_RDMFT: " << E_RDMFT[1] << "\nEex_PBE_RDMFT:   " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald

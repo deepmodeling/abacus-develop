@@ -18,7 +18,11 @@ std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
-std::map<xc_func_type, double> scaling_factor_xc = { {XC_GGA_X_ITYH, 1.0} }; // added by jghan, 2024-10-10
+
+// added by jghan, 2024-10-10
+// std::map<xc_func_type, double> scaling_factor_xc = { {XC_GGA_X_ITYH, 1.0} };
+// std::map<xc_func_type, double> scaling_factor_xc;
+// scaling_factor_xc[XC_GGA_X_B88] = 1.0;
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {

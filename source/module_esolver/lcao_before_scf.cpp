@@ -355,7 +355,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     if( 1 )
     {
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
-        rdmft_solver.update_ion(GlobalC::ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);   // add by jghan, 2024-03-16/2024-10-08
+        rdmft_solver.update_ion(GlobalC::ucell, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac);   // add by jghan, 2024-03-16/2024-10-08
     }
 
     return;
