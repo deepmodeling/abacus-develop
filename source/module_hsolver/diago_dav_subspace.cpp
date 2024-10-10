@@ -124,7 +124,8 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
     // compute h*psi_in_iter
     // NOTE: bands after the first n_band should yield zero
-    hpsi_func(this->psi_in_iter, this->hphi, this->nbase_x, this->dim, 0, this->nbase_x - 1);
+    // hphi[:, 0:nbase_x] = H * psi_in_iter[:, 0:nbase_x]
+    hpsi_func(this->psi_in_iter, this->hphi, this->dim, this->nbase_x);
 
     // at this stage, notconv = n_band and nbase = 0
     // note that nbase of cal_elem is an inout parameter: nbase := nbase + notconv
@@ -421,7 +422,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     }
 
     // update hpsi[:, nbase:nbase+notconv]
-    hpsi_func(psi_iter, &hphi[nbase * this->dim], this->nbase_x, this->dim, nbase, nbase + notconv - 1);
+    // hpsi[:, nbase:nbase+notconv] = H * psi_iter[:, nbase:nbase+notconv]
+    hpsi_func(psi_iter + nbase * dim, hphi + nbase * this->dim, this->dim, notconv);
 
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_grad");
     return;
@@ -886,7 +888,8 @@ void Diago_DavSubspace<T, Device>::diagH_subspace(T* psi_pointer, // [in] & [out
 
     {
         // do hPsi for all bands
-        hpsi_func(psi_pointer, hphi, n_band, dmax, 0, nstart - 1);
+        // hphi[:, 0:nstart] = H * psi_pointer[:, 0:nstart]
+        hpsi_func(psi_pointer, hphi, dmax, nstart);
 
         gemm_op<T, Device>()(ctx,
                              'C',

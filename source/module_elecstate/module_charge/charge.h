@@ -138,6 +138,7 @@ class Charge
     int ngmc; // number of g vectors in this processor
     int nspin; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
+    bool cal_elf = false; // whether to calculate electron localization function (ELF)
   private:
 
     void destroy();    // free arrays  liuyu 2023-03-12

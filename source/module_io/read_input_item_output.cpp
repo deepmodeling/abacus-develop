@@ -492,5 +492,25 @@ void ReadInput::item_output()
         read_sync_bool(input.if_separate_k);
         this->add_item(item);
     }
+    {
+        Input_Item item("out_elf");
+        item.annotation = "> 0 output electron localization function (ELF) for selected electron steps"
+                          ", second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_elf(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) { return std::stoi(s); });
+            // assign non-negative values to para.input.out_elf
+            std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+            }
+        };
+        sync_intvec(input.out_elf, 2, 0);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO

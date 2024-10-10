@@ -34,7 +34,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
     if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->rho_data);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
@@ -53,7 +53,7 @@ void ElecStatePW<T, Device>::init_rho_data()
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
@@ -64,7 +64,7 @@ void ElecStatePW<T, Device>::init_rho_data()
     }
     else {
         this->rho = reinterpret_cast<Real **>(this->charge->rho);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }

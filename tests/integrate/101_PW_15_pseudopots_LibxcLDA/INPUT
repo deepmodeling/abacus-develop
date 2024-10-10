@@ -28,3 +28,5 @@ dft_functional XC_LDA_X+XC_LDA_C_PZ
 
 cal_force 1
 cal_stress 1
+
+pw_seed 1

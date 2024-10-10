@@ -47,8 +47,9 @@ double KEDF_LKT::get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rh
     Parallel_Reduce::reduce_all(this->lkt_energy);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
 
     return energy;
@@ -79,11 +80,44 @@ double KEDF_LKT::get_energy_density(const double* const* prho, int is, int ir, M
     energy_den = this->c_tf_ * pow(prho[is][ir], 5. / 3.) / std::cosh(as[ir]);
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
 
     return energy_den;
+}
+
+void KEDF_LKT::tau_lkt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_lkt)
+{
+    double* as = new double[pw_rho->nrxx]; // a*s
+    double** nabla_rho = new double*[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        nabla_rho[i] = new double[pw_rho->nrxx];
+    }
+
+    if (PARAM.inp.nspin == 1)
+    {
+        this->nabla(prho[0], pw_rho, nabla_rho);
+        this->get_as(prho[0], nabla_rho, pw_rho->nrxx, as);
+
+        for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+        {
+            double coshas = std::cosh(as[ir]);
+            rtau_lkt[ir] += std::pow(prho[0][ir], 5. / 3.) / coshas * this->c_tf_;
+        }
+    }
+    else if (PARAM.inp.nspin == 2)
+    {
+        // Waiting for update
+    }
+
+    delete[] as;
+    for (int i = 0; i < 3; ++i) {
+        delete[] nabla_rho[i];
+}
+    delete[] nabla_rho;
 }
 
 /**
@@ -153,8 +187,9 @@ void KEDF_LKT::lkt_potential(const double* const* prho, ModulePW::PW_Basis* pw_r
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
     delete[] nabla_term;
 
@@ -227,8 +262,9 @@ void KEDF_LKT::get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho)
     }
 
     delete[] as;
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i) {
         delete[] nabla_rho[i];
+}
     delete[] nabla_rho;
     delete[] nabla_term;
 }

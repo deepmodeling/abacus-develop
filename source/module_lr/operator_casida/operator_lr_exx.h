@@ -44,8 +44,8 @@ namespace LR
             this->is_first_node = false;
 
             // reduce psi_ks for later use
-            this->psi_ks_full.resize(this->kv.get_nks(), this->psi_ks->get_nbands(), this->naos);
-            LR_Util::gather_2d_to_full(*this->pc, this->psi_ks->get_pointer(), this->psi_ks_full.get_pointer(), false, this->naos, this->psi_ks->get_nbands());
+            this->psi_ks_full.resize(this->kv.get_nks(), nocc + nvirt, this->naos);
+            LR_Util::gather_2d_to_full(*this->pc, this->psi_ks->get_pointer(), this->psi_ks_full.get_pointer(), false, this->naos, nocc + nvirt);
 
             // get cells in BvK supercell
             const TC period = RI_Util::get_Born_vonKarmen_period(kv_in);
@@ -66,7 +66,7 @@ namespace LR
         const int& naos;
         const int& nocc;
         const int& nvirt;
-        const double& alpha;
+        const double alpha = 1.0;   //(allow non-ref constant)
         const bool cal_dm_trans = false;
         const bool tdm_sym = false; ///< whether transition density matrix is symmetric
         const K_Vectors& kv;

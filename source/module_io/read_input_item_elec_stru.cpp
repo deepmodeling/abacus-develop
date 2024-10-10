@@ -69,6 +69,7 @@ void ReadInput::item_elec_stru()
                 "lapack",
                 "scalapack_gvx",
                 "cusolver",
+                "cusolvermp",
                 "pexsi",
                 "cg_in_lcao",
             };

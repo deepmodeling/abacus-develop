@@ -32,3 +32,5 @@ init_vel         1
 
 msst_qmass       1
 msst_vel         10
+
+pw_seed 1

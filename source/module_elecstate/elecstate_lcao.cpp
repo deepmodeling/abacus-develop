@@ -67,12 +67,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-        }
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_k->cal_gint(&inout1);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();
@@ -124,12 +119,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-        }
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_gamma->cal_gint(&inout1);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();

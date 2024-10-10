@@ -44,6 +44,17 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 			}
 		}
 	}
+
+	for (int T = 0;  T < orbs.size() ; T++)
+	{
+		for (int L=orbs[T].size()-1; L >= 0  ; L--)
+		{
+			if (orbs[T][L].size()>0)
+				break;
+			else
+				orbs[T].resize(L);
+		}
+	}
 	return orbs;
 }
 

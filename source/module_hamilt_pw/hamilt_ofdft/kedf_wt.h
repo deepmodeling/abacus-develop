@@ -1,7 +1,7 @@
 #ifndef KEDF_WT_H
 #define KEDF_WT_H
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -40,6 +40,7 @@ class KEDF_WT
 
     double get_energy(const double* const* prho, ModulePW::PW_Basis* pw_rho);
     double get_energy_density(const double* const* prho, int is, int ir, ModulePW::PW_Basis* pw_rho);
+    void tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_wt);
     void wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential);
     void get_stress(const double* const* prho, ModulePW::PW_Basis* pw_rho, double vw_weight);
     double wt_energy = 0.;
