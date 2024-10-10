@@ -60,6 +60,8 @@ add_library(
     ${LIBM_SRC}
 )
 
+add_library(blas_connector.cpp)
+
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)
