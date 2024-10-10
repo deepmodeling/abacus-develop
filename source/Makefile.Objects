@@ -121,6 +121,7 @@ OBJS_MAIN=main.o\
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
+    blas_connector.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\

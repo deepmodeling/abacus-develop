@@ -11,6 +11,7 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
+    blas_connector.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp
@@ -59,8 +60,6 @@ add_library(
     module_mixing/broyden_mixing.cpp
     ${LIBM_SRC}
 )
-
-add_library(blas_connector.cpp)
 
 add_subdirectory(module_container)
 
