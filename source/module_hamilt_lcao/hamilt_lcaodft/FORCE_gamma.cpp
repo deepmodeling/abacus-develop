@@ -158,13 +158,13 @@ void Force_LCAO<double>::finish_ftable(ForceStressArrays& fsr)
 //{
 //    std::cout << "\n PRINT " << name << std::endl;
 //    std::cout << std::setprecision(6) << std::endl;
-//    for (int i = 0; i < GlobalV::NLOCAL; i++)
+//    for (int i = 0; i < PARAM.globalv.nlocal; i++)
 //    {
-//        for (int j = 0; j < GlobalV::NLOCAL; j++)
+//        for (int j = 0; j < PARAM.globalv.nlocal; j++)
 //        {
-//            if (std::abs(mm[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+//            if (std::abs(mm[i * PARAM.globalv.nlocal + j]) > 1.0e-5)
 //            {
-//                std::cout << std::setw(12) << mm[i * GlobalV::NLOCAL + j];
+//                std::cout << std::setw(12) << mm[i * PARAM.globalv.nlocal + j];
 //            }
 //            else
 //            {
@@ -271,7 +271,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            LCAO_deepks_io::print_dm(dm_gamma[0], GlobalV::NLOCAL, this->ParaV->nrow);
+            LCAO_deepks_io::print_dm(dm_gamma[0], PARAM.globalv.nlocal, this->ParaV->nrow);
 
             GlobalC::ld.check_projected_dm();
 

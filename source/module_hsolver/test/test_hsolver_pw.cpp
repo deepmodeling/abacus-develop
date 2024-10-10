@@ -43,7 +43,7 @@ class TestHSolverPW : public ::testing::Test {
                                                                            "pw",
                                                                            "cg",
                                                                            false,
-                                                                           GlobalV::use_uspp,
+                                                                           PARAM.sys.use_uspp,
                                                                            PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
@@ -58,7 +58,7 @@ class TestHSolverPW : public ::testing::Test {
                                                                             "pw",
                                                                             "cg",
                                                                             false,
-                                                                            GlobalV::use_uspp,
+                                                                            PARAM.sys.use_uspp,
                                                                             PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
@@ -87,7 +87,7 @@ TEST_F(TestHSolverPW, solve) {
     this->ekb_f.resize(2);
     psi_test_cf.resize(1, 2, 3);
     psi_test_cd.resize(1, 2, 3);
-    GlobalV::nelec = 1.0;
+    PARAM.input.nelec = 1.0;
 
     // check solve()
     EXPECT_EQ(this->hs_f.initialed_psi, false);
@@ -247,7 +247,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
             psi_value_f += std::complex<float>(1.0, 0.0);
         }
     }
-    GlobalV::nelec = 1.0;
+    PARAM.input.nelec = 1.0;
 
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;

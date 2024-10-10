@@ -242,7 +242,7 @@ void Charge::renormalize_rho()
     const double sr = this->sum_rho();
     GlobalV::ofs_warning << std::setprecision(15);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "charge before normalized", sr);
-    const double normalize_factor = GlobalV::nelec / sr;
+    const double normalize_factor = PARAM.inp.nelec / sr;
 
     for (int is = 0; is < nspin; is++)
     {
@@ -299,10 +299,10 @@ void Charge::atomic_rho(const int spin_number_need,
             ne_tot += ne[is];
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", GlobalV::nelec);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
         for (int is = 0; is < spin_number_need; ++is) {
             for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
+                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
 }
 }
         
@@ -683,10 +683,10 @@ void Charge::atomic_rho(const int spin_number_need,
             ne_tot += ne[is];
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", GlobalV::nelec);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
         for (int is = 0; is < spin_number_need; ++is) {
             for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * GlobalV::nelec;
+                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
 }
 }
     }
@@ -733,7 +733,7 @@ void Charge::check_rho()
     {
         double ne = 0.0;
         ne = this->cal_rho2ne(rho[0]);
-        if (std::abs(ne - GlobalV::nelec) > 1.0e-6)
+        if (std::abs(ne - PARAM.inp.nelec) > 1.0e-6)
         {
             ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }
@@ -755,7 +755,7 @@ void Charge::check_rho()
             ModuleBase::WARNING_QUIT("Charge", "Number of spin-up electrons set in starting magnetization exceeds all available.");
         }
         // for total charge
-        if (std::abs(ne_up + ne_dn - GlobalV::nelec) > 1.0e-6)
+        if (std::abs(ne_up + ne_dn - PARAM.inp.nelec) > 1.0e-6)
         {
             ModuleBase::WARNING("Charge", "Charge is not equal to the number of electrons!");
         }

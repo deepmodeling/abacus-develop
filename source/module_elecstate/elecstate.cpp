@@ -61,9 +61,8 @@ void ElecState::init_nelec_spin()
     this->nelec_spin.resize(PARAM.inp.nspin);
     if (PARAM.inp.nspin == 2)
     {
-        // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
-        this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
-        this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
+        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
+        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
 }
 
@@ -108,7 +107,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              this->ekb,
                              this->eferm.ef,
                              this->wg,
@@ -154,7 +153,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              this->ekb,
@@ -249,8 +248,8 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // initialize ekb and wg
-    this->ekb.create(nk_in, GlobalV::NBANDS);
-    this->wg.create(nk_in, GlobalV::NBANDS);
+    this->ekb.create(nk_in, PARAM.inp.nbands);
+    this->wg.create(nk_in, PARAM.inp.nbands);
 }
 
 void set_is_occupied(std::vector<bool>& is_occupied,

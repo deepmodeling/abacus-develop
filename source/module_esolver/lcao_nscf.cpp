@@ -62,7 +62,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
