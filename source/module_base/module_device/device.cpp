@@ -148,13 +148,12 @@ int set_device_by_rank(const MPI_Comm mpi_comm) {
 #endif
 
 std::string get_device_flag(const std::string &device,
-                            const std::string &ks_solver,
                             const std::string &basis_type) {
 if (device == "cpu") {
   return "cpu"; // no extra checks required
 }
 std::string error_message;
-if (device != "" and device != "gpu")
+if (device != "auto" and device != "gpu")
 {
   error_message += "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!";
   ModuleBase::WARNING_QUIT("device", error_message);

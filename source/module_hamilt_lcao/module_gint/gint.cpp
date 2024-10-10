@@ -43,7 +43,7 @@ void Gint::cal_gint(Gint_inout* inout) {
     }
     if (this->gridt->max_atom > 0) {
 #ifdef __CUDA
-        if (PARAM.globalv.device_flag == "gpu"
+        if (PARAM.inp.device == "gpu"
             && (inout->job == Gint_Tools::job_type::vlocal
                 || inout->job == Gint_Tools::job_type::rho
                 || inout->job == Gint_Tools::job_type::force)) {

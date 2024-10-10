@@ -20,7 +20,7 @@ void Force_LCAO<double>::cal_ftvnl_dphi(
     ModuleBase::TITLE("Force_LCAO","cal_ftvnl_dphi");
     ModuleBase::timer::tick("Force_LCAO","cal_ftvnl_dphi");
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
     const int nspin = PARAM.inp.nspin;
 
     for(int i=0; i<nlocal; i++)

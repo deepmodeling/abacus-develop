@@ -261,7 +261,7 @@ namespace ModuleESolver
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
-            ModuleIO::write_Vxc(PARAM.inp.nspin, GlobalV::NLOCAL,
+            ModuleIO::write_Vxc(PARAM.inp.nspin, PARAM.globalv.nlocal,
                 GlobalV::DRANK, *this->kspw_psi, GlobalC::ucell, this->sf,
                 *this->pw_wfc, *this->pw_rho, *this->pw_rhod,
                 GlobalC::ppcell.vloc, *this->pelec->charge, this->kv, this->pelec->wg

@@ -96,7 +96,7 @@ namespace LR
                     };
                 auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
                                const int nrow, const int npw,  const int nbands){
-                    // sPsi determines S=I or not by GlobalV::use_uspp inside
+                    // sPsi determines S=I or not by PARAM.globalv.use_uspp inside
                     pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
                 };
 

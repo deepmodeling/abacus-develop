@@ -62,7 +62,7 @@ TEST_F(DosPWTest,Dos1)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	GlobalV::NBANDS = dosp.nbands;
+	PARAM.input.nbands = dosp.nbands;
 	ModuleIO::write_dos_pw(dosp.ekb,
 			dosp.wg,
 			*kv,
@@ -112,7 +112,7 @@ TEST_F(DosPWTest,Dos2)
 		kv->isk[ik] = dosp.isk[ik];
 		kv->wk[ik] = dosp.wk[ik];
 	}
-	GlobalV::NBANDS = dosp.nbands;
+	PARAM.input.nbands = dosp.nbands;
 	ModuleIO::write_dos_pw(dosp.ekb,
 			dosp.wg,
 			*kv,

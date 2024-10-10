@@ -181,13 +181,7 @@ void Input_Conv::Convert()
     }
 
 
-    GlobalV::NBANDS = PARAM.inp.nbands;
-
-    GlobalV::device_flag = base_device::information::get_device_flag(PARAM.inp.device,
-                                                                     PARAM.inp.ks_solver,
-                                                                     PARAM.inp.basis_type);
-
-    if (GlobalV::device_flag == "gpu" && PARAM.inp.basis_type == "pw")
+    if (PARAM.inp.device  == "gpu" && PARAM.inp.basis_type == "pw")
     {
         GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
     }
@@ -203,7 +197,7 @@ void Input_Conv::Convert()
     {
         GlobalV::KPAR = PARAM.inp.kpar;
     }
-    if (GlobalV::device_flag == "cpu" and PARAM.inp.precision == "single")
+    if (PARAM.inp.device  == "cpu" and PARAM.inp.precision == "single")
     {
 // cpu single precision is not supported while float_fftw lib is not available
 #ifndef __ENABLE_FLOAT_FFTW
@@ -277,11 +271,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // Yu Liu add 2022-09-13
     //----------------------------------------------------------
-    GlobalV::nelec = PARAM.inp.nelec;
-    if (PARAM.globalv.two_fermi)
-    {
-        GlobalV::nupdown = PARAM.inp.nupdown;
-    }
     elecstate::Gatefield::zgate = PARAM.inp.zgate;
     elecstate::Gatefield::relax = PARAM.inp.relax;
     elecstate::Gatefield::block = PARAM.inp.block;
@@ -457,7 +446,6 @@ void Input_Conv::Convert()
     //----------------------------------------------------------
     // wavefunction / charge / potential / (2/4)
     //----------------------------------------------------------
-    GlobalV::nelec = PARAM.inp.nelec;
 
 #ifdef __LCAO
 

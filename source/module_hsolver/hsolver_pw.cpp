@@ -519,7 +519,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                const int nvec      // Number of vectors(bands)
                             ){
             ModuleBase::timer::tick("David", "spsi_func");
-            // sPsi determines S=I or not by GlobalV::use_uspp inside
+            // sPsi determines S=I or not by  PARAM.globalv.use_uspp inside
             // sPsi(psi, spsi, nrow, npw, nbands)
             hm->sPsi(psi_in, spsi_out, ld_spsi, ld_psi, nvec);
             ModuleBase::timer::tick("David", "spsi_func");
