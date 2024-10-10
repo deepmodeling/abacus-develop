@@ -18,7 +18,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
         const double tpiba,
-        const Charge* const chr)
+        const Charge* const chr,
+        const std::map<xc_func_type, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_libxc");
@@ -109,14 +110,24 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                 break;
         }
 
-        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn, rho, exc);
+        // added by jghan, 2024-10-10
+        double factor = 1.0;
+        if( scaling_factor == nullptr ) ;
+        else
+        {
+            auto pair_factor = scaling_factor->find(func);
+            if( pair_factor != scaling_factor->end() ) factor = pair_factor->second;
+        }
+
+        // time factor is added by jghan, 2024-10-10
+        etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn, rho, exc) * factor;
         const std::pair<double,ModuleBase::matrix> vtxc_v = XC_Functional_Libxc::convert_vtxc_v(
             func, nspin, nrxx,
             sgn, rho, gdr,
             vrho, vsigma,
             tpiba, chr);
-        vtxc += std::get<0>(vtxc_v);
-        v += std::get<1>(vtxc_v);
+        vtxc += std::get<0>(vtxc_v) * factor;
+        v += std::get<1>(vtxc_v) * factor;
     } // end for( xc_func_type &func : funcs )
 
     if(4==PARAM.inp.nspin)
