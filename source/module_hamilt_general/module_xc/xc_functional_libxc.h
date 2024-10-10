@@ -68,6 +68,7 @@ namespace XC_Functional_Libxc
 	// calculating grho
 	extern std::vector<std::vector<ModuleBase::Vector3<double>>> cal_gdr(
 		const int nspin,
+		const std::size_t nrxx,
 		const std::vector<double> &rho,
 		const double tpiba,
 		const Charge* const chr);
@@ -95,7 +96,7 @@ namespace XC_Functional_Libxc
 		std::vector<double> exc);
 
 	// converting vtxc and v from vrho and vsigma (libxc=>abacus)
-	extern double convert_vtxc_v(
+	extern std::pair<double,ModuleBase::matrix> convert_vtxc_v(
 		const xc_func_type &func,
 		const int nspin,
 		const std::size_t nrxx,
@@ -105,8 +106,7 @@ namespace XC_Functional_Libxc
 		const std::vector<double> &vrho,
 		const std::vector<double> &vsigma,
 		const double tpiba,
-		const Charge* const chr,
-		ModuleBase::matrix &v);
+		const Charge* const chr);
 
 	// dh for gga v
 	extern std::vector<std::vector<double>> cal_dh(
