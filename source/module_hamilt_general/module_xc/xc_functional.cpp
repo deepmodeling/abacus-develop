@@ -231,6 +231,8 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         // scaling_factor_xc.push_back(-1.0);
         // scaling_factor_xc.push_back(1.0);
         // scaling_factor_xc.push_back(1.0);
+        
+        //
         scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
         scaling_factor_xc[XC_GGA_C_LYPR] = -1.0;
         scaling_factor_xc[XC_GGA_X_B88] = 1.0;
