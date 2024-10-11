@@ -8,7 +8,7 @@ namespace ModuleIO
 
 void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 {
-	ModuleBase::TITLE("Print_Info","setup_parameters");
+    ModuleBase::TITLE("ModuleIO", "setup_parameters");
 
     if(PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="relax" || PARAM.inp.calculation=="cell-relax" || PARAM.inp.calculation=="nscf"
 	        || PARAM.inp.calculation=="get_pchg" || PARAM.inp.calculation=="get_wf" || PARAM.inp.calculation=="md")

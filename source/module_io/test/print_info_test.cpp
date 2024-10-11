@@ -60,11 +60,6 @@ protected:
 	}
 };
 
-TEST_F(PrintInfoTest, Constructor)
-{
-	EXPECT_NO_THROW(Print_Info pinfo);
-}
-
 TEST_F(PrintInfoTest, SetupParameters)
 {
 	UcellTestPrepare utp = UcellTestLib["Si"];
