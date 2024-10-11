@@ -129,7 +129,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                "data_?");
                 }
 
-                ModuleIO::output_after_relax(stop, p_esolver->get_conv_elec(), GlobalV::ofs_running);
+                ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
             }
 
 #ifdef __RAPIDJSON

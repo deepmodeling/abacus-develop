@@ -21,9 +21,9 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
     }
 }
 
-void output_after_relax(bool conv_ion, bool conv_elec, std::ofstream& ofs_running)
+void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running)
 {
-    if (conv_ion && !conv_elec)
+    if (conv_ion && !conv_esolver)
     {
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;

@@ -58,11 +58,8 @@ class ESolver
         return 0;
     }
 
-    // get conv_elec used in current scf
-    virtual bool get_conv_elec()
-    {
-        return true;
-    }
+    bool conv_esolver = true; // whether esolver is converged
+
     std::string classname;
 };
 

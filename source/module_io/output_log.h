@@ -18,9 +18,9 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
 
 /// @brief output after relaxation
 /// @param conv_ion if is convergence for ions
-/// @param conv_elec if is convergence for electrons
+/// @param conv_esolver if is convergence for electrons
 /// @param ofs_running the output stream
-void output_after_relax(bool conv_ion, bool conv_elec, std::ofstream& ofs_running = GlobalV::ofs_running);
+void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running = GlobalV::ofs_running);
 
 /// @brief output the fermi energy
 /// @param convergence if is convergence

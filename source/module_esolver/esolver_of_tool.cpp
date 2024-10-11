@@ -431,7 +431,7 @@ void ESolver_OF::print_info()
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
     if (PARAM.inp.printe > 0
-        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_elec || this->iter_ == PARAM.inp.scf_nmax))
+        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_esolver || this->iter_ == PARAM.inp.scf_nmax))
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);

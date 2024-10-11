@@ -455,7 +455,7 @@ void ESolver_OF::update_rho()
  */
 bool ESolver_OF::check_exit()
 {
-    this->conv_elec = false;
+    this->conv_esolver = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
@@ -476,12 +476,12 @@ bool ESolver_OF::check_exit()
         energyConv = true;
     }
 
-    this->conv_elec = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
-                      || (this->of_conv_ == "both" && potConv && energyConv);
+    this->conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
+                         || (this->of_conv_ == "both" && potConv && energyConv);
 
     this->print_info();
 
-    if (this->conv_elec || this->iter_ >= this->max_iter_)
+    if (this->conv_esolver || this->iter_ >= this->max_iter_)
     {
         return true;
     }

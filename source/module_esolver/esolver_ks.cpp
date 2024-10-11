@@ -419,7 +419,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     bool firstscf = true;
-    this->conv_elec = false;
+    this->conv_esolver = false;
     this->niter = this->maxniter;
 
     // 4) SCF iterations
@@ -496,9 +496,9 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                                           PARAM.inp.esolver_type,
                                                           diag_ethr,
                                                           PARAM.inp.nelec);
-                
+
                 // The error of HSolver is larger than drho,
-                // so a more precise HSolver should be excuconv_elected.
+                // so a more precise HSolver should be executed.
                 if (hsolver_error > drho)
                 {
                     diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running,
@@ -540,11 +540,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             }
 #endif
 
-            this->conv_elec = (drho < this->scf_thr && not_restart_step && is_U_converged);
+            this->conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
 
             // If drho < hsolver_error in the first iter or drho < scf_thr, we
             // do not change rho.
-            if (drho < hsolver_error || this->conv_elec)
+            if (drho < hsolver_error || this->conv_esolver)
             {
                 if (drho < hsolver_error)
                 {
@@ -577,13 +577,13 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
 #ifdef __MPI
         MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
-        MPI_Bcast(&this->conv_elec, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+        MPI_Bcast(&this->conv_esolver, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
         MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
 
         // 9) update potential
         // Hamilt should be used after it is constructed.
-        // this->phamilt->update(conv_elec);
+        // this->phamilt->update(conv_esolver);
         this->update_pot(istep, iter);
 
         // 10) finish scf iterations
@@ -617,7 +617,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
 
         // 13) check convergence
-        if (this->conv_elec)
+        if (this->conv_esolver)
         {
             this->niter = iter;
             break;
@@ -632,7 +632,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
 #ifdef __RAPIDJSON
     // 14) add Json of efermi energy converge
-    Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_elec);
+    Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
 #endif //__RAPIDJSON
 
     // 15) after scf
@@ -666,9 +666,9 @@ void ESolver_KS<T, Device>::iter_finish(int& iter)
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
 
     // add a energy threshold for SCF convergence
-    if (this->conv_elec == 0) // only check when density is not converged
+    if (this->conv_esolver == 0) // only check when density is not converged
     {
-        this->conv_elec
+        this->conv_esolver
             = (iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
     }
 }
@@ -725,7 +725,7 @@ void ESolver_KS<T, Device>::print_iter(const int iter,
                                        const double duration,
                                        const double ethr)
 {
-    this->pelec->print_etot(this->conv_elec, iter, drho, dkin, duration, PARAM.inp.printe, ethr);
+    this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, ethr);
 }
 
 //------------------------------------------------------------------------------
