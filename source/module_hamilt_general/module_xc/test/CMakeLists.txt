@@ -69,6 +69,7 @@ AddTest(
     ../../../module_base/matrix.cpp
     ../../../module_base/memory.cpp
     ../../../module_base/timer.cpp
+    ../../../module_base/blas_connector.cpp
     ../../../module_base/libm/branred.cpp
     ../../../module_base/libm/sincos.cpp
 )
