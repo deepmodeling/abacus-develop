@@ -183,8 +183,8 @@ class PexsiPrepare
 
     void set_env()
     {
-        GlobalV::NLOCAL = nlocal;
-        GlobalV::NBANDS = nbands;
+        PARAM.sys.nlocal = nlocal;
+        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
         PARAM.input.nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
@@ -298,7 +298,7 @@ class PexsiPrepare
             return false;
         }
 
-        f_dm >> GlobalV::nelec >> mu;
+        f_dm >> PARAM.input.nelec >> mu;
 
         dm.resize(nread * nread);
         // T* edm = new T[nglobal*nglobal];

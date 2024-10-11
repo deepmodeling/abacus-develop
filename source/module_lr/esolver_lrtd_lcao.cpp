@@ -90,12 +90,12 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     if (nspin == 2) { std::cout << "** Assuming the spin-up and spin-down states are degenerate. **" << std::endl;
 }
     this->nstates = input.lr_nstates;
-    this->nbasis = GlobalV::NLOCAL;
+    this->nbasis = PARAM.globalv.nlocal;
     // calculate the number of occupied and unoccupied states
     // which determines the basis size of the excited states
     this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
     this->nocc = std::max(1, std::min(input.nocc, this->nocc_max));
-    this->nvirt = GlobalV::NBANDS - this->nocc_max;   //nbands-nocc
+    this->nvirt = PARAM.inp.nbands - this->nocc_max;   //nbands-nocc
     if (input.nvirt > this->nvirt) {
         GlobalV::ofs_warning << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt << std::endl;
     } else if (input.nvirt > 0) { this->nvirt = input.nvirt;
@@ -166,7 +166,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             this->eig_ks = std::move(ks_sol.pelec->ekb);
         };
 #ifdef __MPI
-    if (this->nbands == GlobalV::NBANDS) { move_gs(); }
+    if (this->nbands == PARAM.inp.nbands) { move_gs(); }
     else    // copy the part of ground state info according to paraC_
     {
         this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());

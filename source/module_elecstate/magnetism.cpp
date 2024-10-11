@@ -42,8 +42,8 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
 		//if TWO_EFERMI, no need to update
 		if(!PARAM.globalv.two_fermi)
 		{
-			nelec_spin[0] = (GlobalV::nelec + this->tot_magnetization) / 2;
-			nelec_spin[1] = (GlobalV::nelec - this->tot_magnetization) / 2;
+			nelec_spin[0] = (PARAM.inp.nelec + this->tot_magnetization) / 2;
+			nelec_spin[1] = (PARAM.inp.nelec - this->tot_magnetization) / 2;
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin up", nelec_spin[0]);
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin down", nelec_spin[1]);
 		}

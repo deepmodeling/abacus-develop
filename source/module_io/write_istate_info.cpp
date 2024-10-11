@@ -41,7 +41,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                           << std::setw(25) << "Kpoint = " << ik_global
                           << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
                           << " " << kv.kvec_d[ik].z << ")" << std::endl;
-                    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                     {
                         ofsi2.precision(16);
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
@@ -67,7 +67,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                           << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
                           << " " << kv.kvec_d[ik].z << ")" << std::endl;
 
-                    for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                     {
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)
                               << ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(25) << wg(ik, ib)

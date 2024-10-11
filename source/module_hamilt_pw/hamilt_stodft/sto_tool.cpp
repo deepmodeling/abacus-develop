@@ -26,12 +26,12 @@ void check_che(const int& nche_in,
     int ntest0 = 5;
     *stohchi.Emax = try_emax;
     *stohchi.Emin = try_emin;
-    // if (GlobalV::NBANDS > 0)
+    // if (PARAM.inp.nbands > 0)
     // {
     //     double tmpemin = 1e10;
     //     for (int ik = 0; ik < nk; ++ik)
     //     {
-    //         tmpemin = std::min(tmpemin, this->pelec->ekb(ik, GlobalV::NBANDS - 1));
+    //         tmpemin = std::min(tmpemin, this->pelec->ekb(ik, PARAM.inp.nbands - 1));
     //     }
     //     stohchi.Emin = tmpemin;
     // }
@@ -60,7 +60,7 @@ void check_che(const int& nche_in,
                     pchi[ig] = std::complex<double>(rr * cos(arg), rr * sin(arg));
                 }
             }
-            else if (GlobalV::NBANDS > 0)
+            else if (PARAM.inp.nbands > 0)
             {
                 pchi = &p_stowf->chiortho[0](ik, i, 0);
             }

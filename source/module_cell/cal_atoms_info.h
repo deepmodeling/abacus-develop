@@ -24,10 +24,10 @@ class CalAtomsInfo
             {
                 for (int ia = 0; ia < atoms[it].na; ++ia)
                 {
-                    GlobalV::nupdown += atoms[it].mag[ia];
+                    para.input.nupdown  += atoms[it].mag[ia];
                 }
             }
-            GlobalV::ofs_running << " The readin total magnetization is " << GlobalV::nupdown << std::endl;
+            GlobalV::ofs_running << " The readin total magnetization is " << para.inp.nupdown  << std::endl;
         }
 
         if (!para.inp.use_paw)
@@ -37,38 +37,37 @@ class CalAtomsInfo
             {
                 if (atoms[it].ncpp.tvanp)
                 {
-                    GlobalV::use_uspp = true;
+                    para.sys.use_uspp = true;
                 }
             }
     
             // calculate the total number of local basis
-            GlobalV::NLOCAL = 0;
+            para.sys.nlocal = 0;
             for (int it = 0; it < ntype; ++it)
             {
                 const int nlocal_it = atoms[it].nw * atoms[it].na;
                 if (para.inp.nspin != 4)
                 {
-                    GlobalV::NLOCAL += nlocal_it;
+                    para.sys.nlocal += nlocal_it;
                 }
                 else
                 {
-                    GlobalV::NLOCAL += nlocal_it * 2; // zhengdy-soc
+                    para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
                 }
             }
         }
 
         // calculate the total number of electrons
-        cal_nelec(atoms, ntype, GlobalV::nelec);
+        cal_nelec(atoms, ntype, para.input.nelec);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
         if (para.inp.nspin == 2)
         {
-            nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
-            nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
+            nelec_spin[0] = (para.inp.nelec + para.inp.nupdown ) / 2.0;
+            nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
         }
-        cal_nbands(GlobalV::nelec, GlobalV::NLOCAL, nelec_spin, GlobalV::NBANDS);
-
+        cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
         return;
     }
 };

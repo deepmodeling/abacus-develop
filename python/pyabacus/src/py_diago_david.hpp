@@ -132,7 +132,6 @@ public:
             const std::complex<double> *psi_in, 
             std::complex<double> *spsi_out, 
             const int nrow, 
-            const int npw, 
             const int nbands
         ) {
             syncmem_op()(this->ctx, this->ctx, spsi_out, psi_in, static_cast<size_t>(nbands * nrow));

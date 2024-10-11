@@ -228,7 +228,7 @@ void Occupy::gweights(const int nks,
         if (is != -1 && is != isk[ik])
             continue;
 
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             //================================
             // Calculate the gaussian weights

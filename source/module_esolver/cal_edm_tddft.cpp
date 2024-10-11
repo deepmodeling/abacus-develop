@@ -42,7 +42,7 @@ namespace ModuleESolver
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 {
     // mohan add 2024-03-27
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
 
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)

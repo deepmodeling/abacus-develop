@@ -1,5 +1,6 @@
 #include "nscf_fermi_surf.h"
 #include "module_base/global_function.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
@@ -16,7 +17,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 #ifdef __MPI
 
 	int start = 1;
-	int end = GlobalV::NBANDS;
+	int end = PARAM.inp.nbands;
 
 	std::ofstream ofs;
 	if(GlobalV::MY_RANK==0)
