@@ -3,7 +3,7 @@ install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET base_blas_connector
   LIBS parameter  ${math_libs}
-  SOURCES blas_connector_test.cpp
+  SOURCES blas_connector_test.cpp ../blas_connector.cpp
 )
 AddTest(
   TARGET base_atom_in
