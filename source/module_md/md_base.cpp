@@ -60,7 +60,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
         restart(global_readin_dir);
     }
 
-    Print_Info::print_screen(0, 0, step_ + step_rst_);
+    ModuleIO::print_screen(0, 0, step_ + step_rst_);
 
     MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
     MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);

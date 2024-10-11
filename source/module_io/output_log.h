@@ -66,6 +66,13 @@ void print_force(std::ofstream& ofs_running,
 /// @param ry true if the unit of force is a.u.
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry);
 
+/// @brief write head for scf iteration
+/// @param ofs_running output stream
+/// @param istep the ion step
+/// @param iter the scf iteration step
+/// @param basisname basis set name
+void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname);
+
 } // namespace ModuleIO
 
 #endif

@@ -7,11 +7,12 @@
 #include <chrono>
 #endif
 #include "module_base/timer.h"
+#include "module_cell/cal_atoms_info.h"
 #include "module_io/json_output/init_info.h"
+#include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
-#include "module_cell/cal_atoms_info.h"
 
 #include <iostream>
 //--------------Temporary----------------
@@ -221,7 +222,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 7) print information
-    Print_Info::setup_parameters(ucell, this->kv);
+    ModuleIO::setup_parameters(ucell, this->kv);
 
     //! 8) new plane wave basis, fft grids, etc.
 #ifdef __MPI
@@ -429,7 +430,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
         // 5) write head
-        this->write_head(GlobalV::ofs_running, istep, iter);
+        ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
 
 #ifdef __MPI
         auto iterstart = MPI_Wtime();
@@ -688,33 +689,6 @@ void ESolver_KS<T, Device>::after_scf(const int istep)
 }
 
 //------------------------------------------------------------------------------
-//! the 8th function of ESolver_KS: print_head
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_head()
-{
-    std::cout << " " << std::setw(7) << "ITER";
-
-    if (PARAM.inp.nspin == 2)
-    {
-        std::cout << std::setw(10) << "TMAG";
-        std::cout << std::setw(10) << "AMAG";
-    }
-
-    std::cout << std::setw(15) << "ETOT(eV)";
-    std::cout << std::setw(15) << "EDIFF(eV)";
-    std::cout << std::setw(11) << "DRHO";
-
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-    {
-        std::cout << std::setw(11) << "DKIN";
-    }
-
-    std::cout << std::setw(11) << "TIME(s)" << std::endl;
-}
-
-//------------------------------------------------------------------------------
 //! the 8th function of ESolver_KS: print_iter
 //! mohan add 2024-05-12
 //------------------------------------------------------------------------------
@@ -726,17 +700,6 @@ void ESolver_KS<T, Device>::print_iter(const int iter,
                                        const double ethr)
 {
     this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, ethr);
-}
-
-//------------------------------------------------------------------------------
-//! the 9th function of ESolver_KS: write_head
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::write_head(std::ofstream& ofs_running, const int istep, const int iter)
-{
-    ofs_running << "\n " << this->basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
-                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 
 //------------------------------------------------------------------------------

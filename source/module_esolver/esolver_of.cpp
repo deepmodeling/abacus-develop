@@ -92,7 +92,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     // print information
     // mohan add 2021-01-30
-    Print_Info::setup_parameters(ucell, kv);
+    ModuleIO::setup_parameters(ucell, kv);
 
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves

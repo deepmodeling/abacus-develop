@@ -304,4 +304,10 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
     return;
 }
 
+void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname)
+{
+    ofs_running << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
+}
+
 }// namespace ModuleIO

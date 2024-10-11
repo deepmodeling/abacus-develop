@@ -40,7 +40,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 || PARAM.inp.calculation == "nscf")
             && (PARAM.inp.esolver_type != "lr"))
         {
-            Print_Info::print_screen(stress_step, force_step, istep);
+            ModuleIO::print_screen(stress_step, force_step, istep);
         }
 
 #ifdef __RAPIDJSON
