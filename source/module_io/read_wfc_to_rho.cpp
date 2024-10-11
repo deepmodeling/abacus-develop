@@ -19,7 +19,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     const int kpar = GlobalV::KPAR;
     const int my_pool = GlobalV::MY_POOL;
     const int my_rank = GlobalV::MY_RANK;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
     const int nspin = PARAM.inp.nspin;
 
     const int ng_npol = pw_wfc->npwk_max * PARAM.globalv.npol;

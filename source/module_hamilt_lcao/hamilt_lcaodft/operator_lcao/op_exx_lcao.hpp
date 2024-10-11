@@ -104,12 +104,12 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         const std::string file_name_exx = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxd);
+            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
             if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxd, this->hR); }
         }
         else
         {
-            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxc);
+            ModuleIO::read_Hexxs_csr(file_name_exx, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
             if (this->add_hexx_type == Add_Hexx_Type::R) { reallocate_hcontainer(*Hexxc, this->hR); }
         }
         this->use_cell_nearest = false;
@@ -180,10 +180,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 // read in Hexx(R)
                 const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
                 if (GlobalC::exx_info.info_ri.real_number) {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxd);
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
                 }
                 else {
-                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, GlobalV::NLOCAL, *Hexxc);
+                    ModuleIO::read_Hexxs_csr(restart_HR_path, GlobalC::ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxc);
                 }
             }
 

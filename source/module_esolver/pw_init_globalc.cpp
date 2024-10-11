@@ -90,7 +90,7 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(const Input_para& inp,
                                   &(this->sf));
 
     this->kspw_psi
-        = PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single"
+        = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
               ? new psi::Psi<T, Device>(this->psi[0])
               : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 

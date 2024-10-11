@@ -51,12 +51,12 @@ XC_Functional_Libxc::convert_rho_amag_nspin4(
 std::vector<std::vector<ModuleBase::Vector3<double>>>
 XC_Functional_Libxc::cal_gdr(
 	const int nspin,
+	const std::size_t nrxx,
 	const std::vector<double> &rho,
 	const double tpiba,
 	const Charge* const chr)
 {
 	std::vector<std::vector<ModuleBase::Vector3<double>>> gdr(nspin);
-	const std::size_t nrxx = rho.size();
 	for( int is=0; is!=nspin; ++is )
 	{
 		std::vector<double> rhor(nrxx);

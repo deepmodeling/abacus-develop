@@ -42,7 +42,7 @@ void Force_LCAO<std::complex<double>>::cal_fedm(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO", "cal_fedm");
 
     const int nspin = PARAM.inp.nspin;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
 
     // construct a DensityMatrix object
     elecstate::DensityMatrix<std::complex<double>, double> edm(kv, &pv, nspin);

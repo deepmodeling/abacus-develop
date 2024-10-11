@@ -1,5 +1,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/global_function.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "cal_test.h"
@@ -94,9 +97,9 @@ void Cal_Test::test_memory(
 	mrhog_save = ModuleBase::Memory::calculate_mem( ngmc, "cdouble");
 	mrhog_core = ModuleBase::Memory::calculate_mem( ngmc, "cdouble"); 
 	
-	mhs = ModuleBase::Memory::calculate_mem( GlobalV::NLOCAL*GlobalV::NLOCAL, "double" );
-	mwf = ModuleBase::Memory::calculate_mem( GlobalV::NLOCAL*GlobalV::NBANDS, "double" );
-	mnonzero = ModuleBase::Memory::calculate_mem( GlobalV::NLOCAL*(GlobalV::NLOCAL+1)/2, "bool");
+	mhs = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*PARAM.globalv.nlocal, "double" );
+	mwf = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*PARAM.inp.nbands, "double" );
+	mnonzero = ModuleBase::Memory::calculate_mem( PARAM.globalv.nlocal*(PARAM.globalv.nlocal+1)/2, "bool");
 // mohan comment out 2021-02-11
 //	mspar_hsrho = Memory::calculate_mem( Hnnz*3, "double");
 	
@@ -109,18 +112,18 @@ void Cal_Test::test_memory(
 	meigts123 = ModuleBase::Memory::calculate_mem( GlobalC::ucell.nat * (2*rhopw->nx+1+2*rhopw->ny+1+2*rhopw->nz+1), "cdouble");
 
 	//(3) Memory for H,S matrix.
-	std::cout << " NLOCAL = " << GlobalV::NLOCAL << std::endl;
-	std::cout << " NBANDS = " << GlobalV::NBANDS << std::endl;
+	std::cout << " NLOCAL = " << PARAM.globalv.nlocal << std::endl;
+	std::cout << " NBANDS = " << PARAM.inp.nbands << std::endl;
 
 	std::cout << " Memory for H,S matrix ( " 
-		<< GlobalV::NLOCAL << ", "
-		<< GlobalV::NLOCAL << ") = "
+		<< PARAM.globalv.nlocal << ", "
+		<< PARAM.globalv.nlocal << ") = "
 		<< mhs << " MB" << std::endl;
 	
 	//(4) Memory for wave functions.
 	std::cout << " Memory for wave functions ( " 
-		<< GlobalV::NLOCAL << ", "
-		<< GlobalV::NBANDS << ") = "
+		<< PARAM.globalv.nlocal << ", "
+		<< PARAM.inp.nbands << ") = "
 		<< mwf << " MB" << std::endl;
 
 	print_mem(1);
@@ -223,6 +226,6 @@ void Cal_Test::print_mem(const int &nproc)
 	std::cout << " TOTAL MEMORY            : " << std::setw(15) << mtot/nproc << " MB" << std::endl;
 	
 	std::cout << " MEMORY FOR nonzero      : " << std::setw(15) 
-     << (double)GlobalV::NLOCAL*(GlobalV::NLOCAL+1)/1028/1028/2.0/nproc 
+     << (double)PARAM.globalv.nlocal*(PARAM.globalv.nlocal+1)/1028/1028/2.0/nproc 
      << " MB" << std::endl; 
 }

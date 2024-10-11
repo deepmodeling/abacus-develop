@@ -216,8 +216,8 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //    RA.for_2d(pv, GlobalV::GAMMA_ONLY_LOCAL, GlobalC::ORB.cutoffs());
 //
 //    double* test;
-//    test = new double[GlobalV::NLOCAL * GlobalV::NLOCAL];
-//    ModuleBase::GlobalFunc::ZEROS(test, GlobalV::NLOCAL * GlobalV::NLOCAL);
+//    test = new double[PARAM.globalv.nlocal * PARAM.globalv.nlocal];
+//    ModuleBase::GlobalFunc::ZEROS(test, PARAM.globalv.nlocal * PARAM.globalv.nlocal);
 //
 //    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
 //    {
@@ -240,7 +240,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //                    {
 //                        const int iw2_all = start2 + kk;
 //                        assert(irr < pv.nnr);
-//                        test[iw1_all * GlobalV::NLOCAL + iw2_all] += mmm[irr];
+//                        test[iw1_all * PARAM.globalv.nlocal + iw2_all] += mmm[irr];
 //                        ++irr;
 //                    }
 //                }
@@ -251,13 +251,13 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //
 //    std::cout << "\n " << name << std::endl;
 //    std::cout << std::setprecision(4);
-//    for (int i = 0; i < GlobalV::NLOCAL; i++)
+//    for (int i = 0; i < PARAM.globalv.nlocal; i++)
 //    {
-//        for (int j = 0; j < GlobalV::NLOCAL; j++)
+//        for (int j = 0; j < PARAM.globalv.nlocal; j++)
 //        {
-//            if (std::abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+//            if (std::abs(test[i * PARAM.globalv.nlocal + j]) > 1.0e-5)
 //            {
-//                std::cout << std::setw(12) << test[i * GlobalV::NLOCAL + j];
+//                std::cout << std::setw(12) << test[i * PARAM.globalv.nlocal + j];
 //            }
 //            else
 //            {

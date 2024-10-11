@@ -55,15 +55,15 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     if (PARAM.inp.calculation == "nscf" && this->mem_saver == 1)
     {
         // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(1, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
+        psi_out = new psi::Psi<std::complex<double>>(1, PARAM.inp.nbands, npwx * PARAM.globalv.npol, ngk);
         if (PARAM.inp.basis_type == "lcao_in_pw")
         {
-            wanf2[0].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
-            const size_t memory_cost = GlobalV::NLOCAL * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
+            wanf2[0].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
+            const size_t memory_cost = PARAM.globalv.nlocal * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
-        const size_t memory_cost = GlobalV::NBANDS * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
+        const size_t memory_cost = PARAM.inp.nbands * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
@@ -79,10 +79,10 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
 
             for (int ik = 0; ik < nks2; ik++)
             {
-                this->wanf2[ik].create(GlobalV::NLOCAL, npwx * PARAM.globalv.npol);
+                this->wanf2[ik].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
             }
 
-            const size_t memory_cost = nks2 * GlobalV::NLOCAL * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
+            const size_t memory_cost = nks2 * PARAM.globalv.nlocal * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
             std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
@@ -90,8 +90,8 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     else
     {
         // initial psi rather than evc
-        psi_out = new psi::Psi<std::complex<double>>(nks2, GlobalV::NBANDS, npwx * PARAM.globalv.npol, ngk);
-        const size_t memory_cost = nks2 * GlobalV::NBANDS * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
+        psi_out = new psi::Psi<std::complex<double>>(nks2, PARAM.inp.nbands, npwx * PARAM.globalv.npol, ngk);
+        const size_t memory_cost = nks2 * PARAM.inp.nbands * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
         std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
@@ -117,7 +117,7 @@ void wavefunc::wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basi
         this->irindex = new int[wfc_basis->fftnxy];
         wfc_basis->getfftixy2is(this->irindex);
 #if defined(__CUDA) || defined(__ROCM)
-        if (PARAM.globalv.device_flag == "gpu")
+        if (PARAM.inp.device == "gpu")
         {
             wfc_basis->get_ig2ixyz_k();
         }
@@ -131,11 +131,11 @@ int wavefunc::get_starting_nw() const
 {
     if (init_wfc == "file")
     {
-        return GlobalV::NBANDS;
+        return PARAM.inp.nbands;
     }
     else if (init_wfc.substr(0, 6) == "atomic")
     {
-        if (GlobalC::ucell.natomwfc >= GlobalV::NBANDS)
+        if (GlobalC::ucell.natomwfc >= PARAM.inp.nbands)
         {
             if (PARAM.inp.test_wf)
             {
@@ -147,11 +147,11 @@ int wavefunc::get_starting_nw() const
             if (PARAM.inp.test_wf)
             {
                 GlobalV::ofs_running << " Start wave functions are atomic + "
-                                     << GlobalV::NBANDS - GlobalC::ucell.natomwfc << " random wave functions."
+                                     << PARAM.inp.nbands - GlobalC::ucell.natomwfc << " random wave functions."
                                      << std::endl;
             }
         }
-        return std::max(GlobalC::ucell.natomwfc, GlobalV::NBANDS);
+        return std::max(GlobalC::ucell.natomwfc, PARAM.inp.nbands);
     }
     else if (init_wfc == "random")
     {
@@ -159,7 +159,7 @@ int wavefunc::get_starting_nw() const
         {
             GlobalV::ofs_running << " Start wave functions are all random." << std::endl;
         }
-        return GlobalV::NBANDS;
+        return PARAM.inp.nbands;
     }
     else
     {
@@ -728,7 +728,7 @@ void wavefunc::init_after_vc(const int nks)
 
     assert(this->npwx > 0);
     assert(nks > 0);
-    assert(GlobalV::NBANDS > 0);
+    assert(PARAM.inp.nbands > 0);
 
     const int nks2 = nks;
     const int nbasis = this->npwx * PARAM.globalv.npol;
@@ -742,7 +742,7 @@ void wavefunc::init_after_vc(const int nks)
         this->wanf2 = new ModuleBase::ComplexMatrix[nks2];
         for (int ik = 0; ik < nks2; ik++)
         {
-            this->wanf2[ik].create(GlobalV::NLOCAL, nbasis);
+            this->wanf2[ik].create(PARAM.globalv.nlocal, nbasis);
         }
     }
 

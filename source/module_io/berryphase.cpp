@@ -24,14 +24,14 @@ berryphase::~berryphase()
 
 void berryphase::get_occupation_bands()
 {
-    double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
+    double occupied_bands = static_cast<double>(PARAM.inp.nelec / ModuleBase::DEGSPIN);
     if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
     {
         occupied_bands = std::floor(occupied_bands) + 1.0;
     }
 
     occ_nbands = (int)occupied_bands;
-    if (occ_nbands > GlobalV::NBANDS)
+    if (occ_nbands > PARAM.inp.nbands)
     {
         ModuleBase::WARNING_QUIT("berryphase::get_occupation_bands",
                                  "not enough bands for berryphase, increase band numbers.");

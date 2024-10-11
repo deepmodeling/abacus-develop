@@ -91,7 +91,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC;
-		if (orbinfo) { std::cout << std::setw(12) << GlobalV::NLOCAL; }
+		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
 		std::cout << std::endl;
 

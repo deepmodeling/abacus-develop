@@ -46,8 +46,10 @@ void lapackEigen(int &npw, std::vector<std::complex<float>> &hm, float * e, bool
 	char tmp_c1 = 'V', tmp_c2 = 'U';
 	cheev_(&tmp_c1, &tmp_c2, &npw, tmp.data(), &npw, e, work2, &lwork, rwork, &info);
 	end = clock();
-	if(info) std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
-	if (outtime) std::cout<<"Lapack Run time: "<<(float)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
+	if(info) { std::cout << "ERROR: Lapack solver, info=" << info <<std::endl;
+}
+	if (outtime) { std::cout<<"Lapack Run time: "<<(float)(end - start) / CLOCKS_PER_SEC<<" S"<<std::endl;
+}
 
 	delete [] rwork;
 	delete [] work2;
@@ -74,7 +76,8 @@ public:
 		//calculate eigenvalues by LAPACK;
 		float* e_lapack = new float[npw];
 		float* ev;
-		if(mypnum == 0) lapackEigen(npw, DIAGOTEST::hmatrix_f, e_lapack,DETAILINFO);
+		if(mypnum == 0) { lapackEigen(npw, DIAGOTEST::hmatrix_f, e_lapack,DETAILINFO);
+}
 
 		//do Diago_David::diag()
 		float* en = new float[npw];		
@@ -111,13 +114,13 @@ public:
 					const int ld_psi, const int nvec)
                     {
                         auto psi_iter_wrapper = psi::Psi<std::complex<float>>(psi_in, 1, nvec, ld_psi, nullptr);
-                        psi::Range bands_range(1, 0, 0, nvec-1);
+                        psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<std::complex<float>>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         phm->ops->hPsi(info);
                     };
-		auto spsi_func = [phm](const std::complex<float>* psi_in, std::complex<float>* spsi_out,const int nrow, const int npw,  const int nbands){
-			phm->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+		auto spsi_func = [phm](const std::complex<float>* psi_in, std::complex<float>* spsi_out,const int ld_psi, const int nbands){
+			phm->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
 		};
 		dav.diag(hpsi_func,spsi_func, ld_psi, phi.get_pointer(), en, eps, maxiter);
 
@@ -131,7 +134,8 @@ public:
 
 		if(mypnum == 0)
 		{
-			if (DETAILINFO) std::cout<<"diag Run time: "<< use_time << std::endl;
+			if (DETAILINFO) { std::cout<<"diag Run time: "<< use_time << std::endl;
+}
 			for(int i=0;i<nband;i++)
 			{
 				EXPECT_NEAR(en[i],e_lapack[i],CONVTHRESHOLD);
@@ -148,8 +152,9 @@ class DiagoDavTest : public ::testing::TestWithParam<DiagoDavPrepare> {};
 TEST_P(DiagoDavTest,RandomHamilt)
 {
 	DiagoDavPrepare ddp = GetParam();
-	if (DETAILINFO&&ddp.mypnum==0) std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
+	if (DETAILINFO&&ddp.mypnum==0) { std::cout << "npw=" << ddp.npw << ", nband=" << ddp.nband << ", sparsity=" 
 			  << ddp.sparsity << ", eps=" << ddp.eps << std::endl;
+}
 
     HPsi<std::complex<float>> hpsi(ddp.nband, ddp.npw, ddp.sparsity);
 	DIAGOTEST::hmatrix_f = hpsi.hamilt();
@@ -236,7 +241,8 @@ int main(int argc, char **argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) delete listeners.Release(listeners.default_result_printer());
+    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
+}
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

@@ -17,11 +17,7 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
                         const UnitCell& ucell,
                         double* rho)
 {
-#ifdef __MPI
-    const int dev_id = base_device::information::set_device_by_rank();
-#else
-    const int dev_id = 0;
-#endif
+    checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
@@ -80,7 +76,7 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
 
-            checkCuda(cudaSetDevice(dev_id));
+            checkCuda(cudaSetDevice(gridt.dev_id));
             // get stream id
             const int sid = omp_get_thread_num();
 
