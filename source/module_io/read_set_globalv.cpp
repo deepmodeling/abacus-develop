@@ -21,31 +21,33 @@ void ReadInput::set_globalv(Parameter& para)
         /// get the global output directory
         para.sys.global_matrix_dir = para.globalv.global_out_dir + "matrix/";
         para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
-        
+
         /// get the global readin directory
-        if (para.inp.read_file_dir == "auto")
-        {
-            para.sys.global_readin_dir = para.globalv.global_out_dir;
-        }
-        else
-        {
-            para.sys.global_readin_dir = para.inp.read_file_dir + '/';
-        }
+        // if (para.inp.read_file_dir == "auto")
+        // {
+        //     para.sys.global_readin_dir = para.globalv.global_out_dir;
+        // }
+        // else
+        // {
+        //     para.sys.global_readin_dir = para.inp.read_file_dir + '/';
+        // }
+        para.sys.global_readin_dir = para.inp.read_file_dir + '/';
         para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
 
         /// get the stru file for md restart case
         if (para.inp.calculation == "md" && para.mdp.md_restart)
         {
             int istep = current_md_step(para.sys.global_readin_dir);
+            para.sys.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
 
-            if (para.inp.read_file_dir == "auto")
-            {
-                para.sys.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
-            }
-            else
-            {
-                para.sys.global_in_stru = para.inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
-            }
+            // if (para.inp.read_file_dir == "auto")
+            // {
+            //     para.sys.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
+            // }
+            // else
+            // {
+            //     para.sys.global_in_stru = para.inp.read_file_dir + "STRU_MD_" + std::to_string(istep);
+            // }
         }
         else
         {
