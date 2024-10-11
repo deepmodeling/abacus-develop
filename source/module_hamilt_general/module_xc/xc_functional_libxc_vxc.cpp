@@ -19,7 +19,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const double &omega, // volume of cell
         const double tpiba,
         const Charge* const chr,
-        const std::map<xc_func_type, double>* scaling_factor)
+        const std::map<int, double>* scaling_factor)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::tick("XC_Functional_Libxc","v_xc_libxc");
@@ -115,7 +115,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         if( scaling_factor == nullptr ) ;
         else
         {
-            auto pair_factor = scaling_factor->find(func);
+            auto pair_factor = scaling_factor->find(func.info->number);
             if( pair_factor != scaling_factor->end() ) factor = pair_factor->second;
         }
 

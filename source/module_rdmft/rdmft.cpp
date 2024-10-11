@@ -111,24 +111,36 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // create desc[] and something about MPI to Eij(nbands*nbands)
     std::ofstream ofs_running;
     std::ofstream ofs_warning;
-    para_Eij.set_block_size(GlobalV::NB2D);
-    para_Eij.set_proc_dim(GlobalV::DSIZE);
-    para_Eij.comm_2D = ParaV->comm_2D;
-    para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
-    para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
-    para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
+    // para_Eij.set_block_size(GlobalV::NB2D);
+    // para_Eij.set_proc_dim(GlobalV::DSIZE);
+    // para_Eij.comm_2D = ParaV->comm_2D;
+    // para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
+    // para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
+    // para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
+    para_Eij.set(nbands_total, nbands_total, PARAM.inp.nb2d, ParaV->blacs_ctxt);
+
+    // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
+    // int try_nb = para_Eij.init(GlobalV::NBANDS, GlobalV::NBANDS, PARAM.inp.nb2d, DIAG_WORLD); // DIAG_WORLD is wrong
+    // try_nb += para_Eij.set_nloc_wfc_Eij(GlobalV::NBANDS, ofs_running, ofs_warning);
+    // if (try_nb != 0)
+    // {
+    //     para_Eij.set(GlobalV::NBANDS, GlobalV::NBANDS, 1, para_Eij.blacs_ctxt);
+    //     try_nb = para_Eij.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
+    // }
+    // para_Eij.set_desc_wfc_Eij(GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.nrow);
+
 
     // 
-    occ_number.create(nk_total, GlobalV::NBANDS);
-    wg.create(nk_total, GlobalV::NBANDS);
-    wk_fun_occNum.create(nk_total, GlobalV::NBANDS);
-    occNum_wfcHamiltWfc.create(nk_total, GlobalV::NBANDS);
-    Etotal_n_k.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_TV.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_hartree.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_XC.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_exx_XC.create(nk_total, GlobalV::NBANDS);
-    wfcHwfc_dft_XC.create(nk_total, GlobalV::NBANDS);
+    occ_number.create(nk_total, nbands_total);
+    wg.create(nk_total, nbands_total);
+    wk_fun_occNum.create(nk_total, nbands_total);
+    occNum_wfcHamiltWfc.create(nk_total, nbands_total);
+    Etotal_n_k.create(nk_total, nbands_total);
+    wfcHwfc_TV.create(nk_total, nbands_total);
+    wfcHwfc_hartree.create(nk_total, nbands_total);
+    wfcHwfc_XC.create(nk_total, nbands_total);
+    wfcHwfc_exx_XC.create(nk_total, nbands_total);
+    wfcHwfc_dft_XC.create(nk_total, nbands_total);
 
     // 
     wfc.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);   // test ParaV->nrow
@@ -189,12 +201,12 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         if (GlobalC::exx_info.info_ri.real_number)
         {
             Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
-            Vxc_fromRI_d->init(MPI_COMM_WORLD, *kv);
+            Vxc_fromRI_d->init(MPI_COMM_WORLD, *kv, *orb);
         }
         else
         {
             Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
-            Vxc_fromRI_c->init(MPI_COMM_WORLD, *kv);
+            Vxc_fromRI_c->init(MPI_COMM_WORLD, *kv, *orb);
         }
     }
 
@@ -349,7 +361,7 @@ void RDMFT<TK, TR>::update_charge()
     Symmetry_rho srho;
     for (int is = 0; is < nspin; is++)
     {
-        srho.begin(is, *(this->charge), rho_basis, GlobalC::Pgrid, GlobalC::ucell.symm);
+        srho.begin(is, *(this->charge), rho_basis, GlobalC::ucell.symm);
     }
     /*********** what's this? When we use PBE-functional, this can't be deleted *************/
 

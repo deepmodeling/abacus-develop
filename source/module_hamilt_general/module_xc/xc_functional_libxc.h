@@ -43,7 +43,7 @@ namespace XC_Functional_Libxc
 		const double &omega, // volume of cell
 		const double tpiba,
 		const Charge* const chr, // charge density
-		const std::map<xc_func_type, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
+		const std::map<int, double>* scaling_factor = nullptr); // added by jghan, 2024-10-10
 
 	// for mGGA functional
 	extern std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> v_xc_meta(

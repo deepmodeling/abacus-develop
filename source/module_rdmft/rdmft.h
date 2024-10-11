@@ -84,6 +84,7 @@ class RDMFT
     /****** these parameters are passed in from outside, don't need delete ******/
     Parallel_Orbitals* ParaV = nullptr;
     Parallel_2D para_Eij;
+    // Parallel_Orbitals para_Eij;
     
     // GK and GG are used for multi-k grid integration and gamma only algorithms respectively
     Gint_k* GK = nullptr;
@@ -105,6 +106,7 @@ class RDMFT
 
     int nk_total = 0;
     int nspin = 1;
+    int nbands_total = PARAM.inp.nbands;
     std::string XC_func_rdmft;
     double alpha_power = 0.656; // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 

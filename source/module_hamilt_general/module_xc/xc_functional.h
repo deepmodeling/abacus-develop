@@ -85,7 +85,8 @@ class XC_Functional
 	// added by jghan, 2024-07-07
 	// as a scaling factor for different xc-functionals
 	// static std::vector<double> scaling_factor_xc;
-	static std::map<xc_func_type, double> scaling_factor_xc;
+	// static std::map<xc_func_type, double> scaling_factor_xc;
+	static std::map<int, double> scaling_factor_xc;
 
 	public:
 	static std::vector<int> get_func_id() { return func_id; }

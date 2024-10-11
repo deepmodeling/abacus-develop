@@ -266,8 +266,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     {
         // rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec),
         //                         GlobalV::DFT_FUNCTIONAL, GlobalV::rdmft_power_alpha);
-        rdmft_solver.init( this->GG, this->GK, &(this->pv), ucell, this->kv, *(this->pelec),
-                                this->orb_, PARAM.inp.dft_functional, 1.0);
+        rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
+                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, 1.0);
 
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
