@@ -18,14 +18,7 @@ std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
-
-
-// #include <xc.h>
-// added by jghan, 2024-10-10
-// std::map<xc_func_type, double> scaling_factor_xc = { {XC_GGA_X_ITYH, 1.0} };
-// std::map<xc_func_type, double> scaling_factor_xc;
-// scaling_factor_xc[XC_GGA_X_B88] = 1.0;
-std::map<int, double> scaling_factor_xc = { {XC_GGA_X_ITYH, 1.0} };
+std::map<int, double> scaling_factor_xc = { {XC_GGA_X_ITYH, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
@@ -233,13 +226,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
         func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
 
-        // according to the order of adding functionals above
-        // scaling_factor_xc.push_back(-1.0);
-        // scaling_factor_xc.push_back(-1.0);
-        // scaling_factor_xc.push_back(1.0);
-        // scaling_factor_xc.push_back(1.0);
-
-        //
+        // the scaling factor of CWP22-functionals
         scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
         scaling_factor_xc[XC_GGA_C_LYPR] = -1.0;
         scaling_factor_xc[XC_GGA_X_B88] = 1.0;
