@@ -638,7 +638,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
                 std::cout << "\n\n\n******\nget the initial values of wfc and occ_numbers successfully\n******\n\n\n" << std::endl;
 
-                break;
+                // break;
             }
         }
 

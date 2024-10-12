@@ -98,6 +98,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // else nk_total = kv->nks;
 
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+    nbands_total = PARAM.inp.nbands;
     nspin = PARAM.inp.nspin;
 
     // XC_func_rdmft = "power"; // just for test 
@@ -108,26 +109,24 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // std::cout << "\n\n\n******\nXC-functional in GlobalC::atom: " << GlobalC::ucell.atoms[0].ncpp.xc_func << "\n******\n\n\n" << std::endl;
     // if( XC_func_rdmft == "default" ) XC_func_rdmft = "default";
 
-    // create desc[] and something about MPI to Eij(nbands*nbands)
-    std::ofstream ofs_running;
-    std::ofstream ofs_warning;
+    std::cout << "\n\n\n******\nnbands_total: " << nbands_total << "\nnb2d:     " << 
+                PARAM.inp.nb2d << "\nblacs_ctxt:   " << ParaV->blacs_ctxt << "\n******\n\n\n" << std::endl;
+
+    // // create desc[] and something about MPI to Eij(nbands*nbands)
+    // std::ofstream ofs_running;
+    // std::ofstream ofs_warning;
     // para_Eij.set_block_size(GlobalV::NB2D);
     // para_Eij.set_proc_dim(GlobalV::DSIZE);
     // para_Eij.comm_2D = ParaV->comm_2D;
     // para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
     // para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
     // para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
-    para_Eij.set(nbands_total, nbands_total, PARAM.inp.nb2d, ParaV->blacs_ctxt);
+    para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
+    // para_Eij.init(nbands_total, nbands_total, PARAM.inp.nb2d, MPI_COMM_WORLD);
 
     // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
-    // int try_nb = para_Eij.init(GlobalV::NBANDS, GlobalV::NBANDS, PARAM.inp.nb2d, DIAG_WORLD); // DIAG_WORLD is wrong
-    // try_nb += para_Eij.set_nloc_wfc_Eij(GlobalV::NBANDS, ofs_running, ofs_warning);
-    // if (try_nb != 0)
-    // {
-    //     para_Eij.set(GlobalV::NBANDS, GlobalV::NBANDS, 1, para_Eij.blacs_ctxt);
-    //     try_nb = para_Eij.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
-    // }
-    // para_Eij.set_desc_wfc_Eij(GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.nrow);
+
+    std::cout << "\n\n\n******\n" << 0.001 << "\n******\n\n\n" << std::endl;
 
 
     // 
@@ -196,6 +195,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     HR_dft_XC->set_zero();
     // HR_local->set_zero();
 
+    std::cout << "\n\n\n******\n" << 0.1 << "\n******\n\n\n" << std::endl;
+
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         if (GlobalC::exx_info.info_ri.real_number)
@@ -218,6 +219,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         HR_exx_XC->fix_gamma();
         HR_dft_XC->fix_gamma();
     }
+
+    std::cout << "\n\n\n******\n" << 0.2 << "\n******\n\n\n" << std::endl;
 
 }
 
