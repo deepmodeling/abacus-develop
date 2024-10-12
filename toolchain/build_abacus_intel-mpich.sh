@@ -23,7 +23,7 @@ BUILD_DIR=build_abacus_intel-mpich
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2024.03.001/cpu
+ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
