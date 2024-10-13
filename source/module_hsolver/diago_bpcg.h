@@ -56,9 +56,9 @@ class DiagoBPCG
     void init_iter(const psi::Psi<T, Device> &psi_in);
 
     /**
-     * @brief Diagonalize the Hamiltonian using the CG method.
+     * @brief Diagonalize the Hamiltonian using the BPCG method.
      *
-     * This function is an override function for the CG method. It is called by the HsolverPW::solve() function.
+     * This function is called by the HsolverPW::solve() function.
      *
      * @param phm_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].

@@ -40,7 +40,7 @@ class DiagoCG final
 
     // virtual void init(){};
     // refactor hpsi_info
-    // this is the override function diag() for CG method
+    // this is the diag() function for CG method
     void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
 
   private:
