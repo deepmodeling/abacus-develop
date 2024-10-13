@@ -42,7 +42,7 @@ namespace elecstate
                     }
 #endif
                     // loop over k-points
-                    if (PARAM.inp.nspin != 4)
+                    if (PARAM.inp.nspin != 4) {
                         for (int ik = 0; ik < this->_nk; ++ik)
                         {
                             // cal k_phase
@@ -70,9 +70,11 @@ namespace elecstate
                                 tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
                             }
                         }
+}
                     // treat DMR as pauli matrix when NSPIN=4
-                    if (PARAM.inp.nspin == 4)
+                    if (PARAM.inp.nspin == 4) {
                         throw std::runtime_error("complex DM(R) with NSPIN=4 is not implemented yet");
+}
                 }
             }
         }
