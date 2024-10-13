@@ -131,7 +131,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 template <typename TK>
 void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
 {
-    this->DM = new DensityMatrix<TK, double>(kv, paraV, nspin);
+    const int nspin_dm = std::map<int, int>({ {1, 1}, {2, 2}, {4, 1} })[nspin];
+    this->DM = new DensityMatrix<TK, double>(paraV, nspin_dm, kv->kvec_d, kv->get_nks() / nspin_dm);
 }
 
 template <>

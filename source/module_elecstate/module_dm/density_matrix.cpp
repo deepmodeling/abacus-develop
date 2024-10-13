@@ -24,62 +24,24 @@ DensityMatrix<TK, TR>::~DensityMatrix()
     }
 }
 
-// constructor for multi-k
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const K_Vectors* kv_in, const Parallel_Orbitals* paraV_in, const int nspin)
+DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk)
+    : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nks((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-MK");
-    this->_kv = kv_in;
-    this->_paraV = paraV_in;
-    // set this->_nspin
-    if (nspin == 1 || nspin == 4)
-    {
-        this->_nspin = 1;
-    }
-    else if (nspin == 2)
-    {
-        this->_nspin = 2;
-#ifdef __DEBUG
-        assert(kv_in->get_nks() % 2 == 0);
-#endif
-    }
-    else
-    {
-        throw std::string("nspin must be 1, 2 or 4");
-    }
-    // set this->_nks, which is real number of k-points
-    this->_nks = kv_in->get_nks() / this->_nspin;
-    // allocate memory for _DMK
-    this->_DMK.resize(this->_kv->get_nks());
-    for (int ik = 0; ik < this->_kv->get_nks(); ik++)
+    const int nks = _nks * _nspin;
+    this->_DMK.resize(nks);
+    for (int ik = 0; ik < nks; ik++)
     {
         this->_DMK[ik].resize(this->_paraV->get_row_size() * this->_paraV->get_col_size());
     }
     ModuleBase::Memory::record("DensityMatrix::DMK", this->_DMK.size() * this->_DMK[0].size() * sizeof(TK));
 }
 
-// constructor for Gamma-Only
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin)
+DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nks(1)
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-GO");
-    this->_paraV = paraV_in;
-    // set this->_nspin
-    if (nspin == 1 || nspin == 4)
-    {
-        this->_nspin = 1;
-    }
-    else if (nspin == 2)
-    {
-        this->_nspin = 2;
-    }
-    else
-    {
-        throw std::string("nspin must be 1, 2 or 4");
-    }
-    // set this->_nks, which is real number of k-points
-    this->_nks = 1;
-    // allocate memory for _DMK
     this->_DMK.resize(_nspin);
     for (int ik = 0; ik < this->_nspin; ik++)
     {
@@ -328,10 +290,9 @@ template <typename TK, typename TR>
 int DensityMatrix<TK, TR>::get_DMK_nks() const
 {
 #ifdef __DEBUG
-    assert(this->_DMK.size() != 0);
-    assert(this->_kv != nullptr);
+    assert(this->_DMK.size() == _nks * _nspin);
 #endif
-    return this->_kv->get_nks();
+    return _nks * _nspin;
 }
 
 template <typename TK, typename TR>
@@ -440,7 +401,7 @@ void DensityMatrix<TK, TR>::cal_DMR_test()
                     // cal k_phase
                     // if TK==std::complex<double>, kphase is e^{ikR}
                     const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                    const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
                     std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -515,7 +476,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
                         const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                        const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                        const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                         double sinp, cosp;
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -561,7 +522,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
                         const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                        const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                        const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                         double sinp, cosp;
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -678,7 +639,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik)
                     // cal k_phase
                     // if TK==std::complex<double>, kphase is e^{ikR}
                     const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                    const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                    const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
                     ModuleBase::libm::sincos(arg, &sinp, &cosp);
                     std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -855,9 +816,9 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
         // quit the program or not.
         bool quit = false;
 
-        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].x, quit);
-        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].y, quit);
-        ModuleBase::CHECK_DOUBLE(ifs, this->_kv->kvec_d[ik].z, quit);
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kvec_d[ik].x, quit);
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kvec_d[ik].y, quit);
+        ModuleBase::CHECK_DOUBLE(ifs, this->_kvec_d[ik].z, quit);
         ModuleBase::CHECK_INT(ifs, this->_paraV->nrow);
         ModuleBase::CHECK_INT(ifs, this->_paraV->ncol);
     } // If file exist, read in data.
@@ -890,7 +851,7 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
     {
         ModuleBase::WARNING("elecstate::write_dmk", "Can't create DENSITY MATRIX File!");
     }
-    ofs << this->_kv->kvec_d[ik].x << " " << this->_kv->kvec_d[ik].y << " " << this->_kv->kvec_d[ik].z << std::endl;
+    ofs << this->_kvec_d[ik].x << " " << this->_kvec_d[ik].y << " " << this->_kvec_d[ik].z << std::endl;
     ofs << "\n  " << this->_paraV->nrow << " " << this->_paraV->ncol << std::endl;
 
     ofs << std::setprecision(3);
@@ -927,7 +888,7 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     {
         ModuleBase::WARNING("elecstate::write_dmk", "Can't create DENSITY MATRIX File!");
     }
-    ofs << this->_kv->kvec_d[ik].x << " " << this->_kv->kvec_d[ik].y << " " << this->_kv->kvec_d[ik].z << std::endl;
+    ofs << this->_kvec_d[ik].x << " " << this->_kvec_d[ik].y << " " << this->_kvec_d[ik].z << std::endl;
     ofs << "\n  " << this->_paraV->nrow << " " << this->_paraV->ncol << std::endl;
 
     ofs << std::setprecision(3);

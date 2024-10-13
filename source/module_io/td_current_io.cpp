@@ -64,7 +64,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
                 const ModuleBase::Vector3<double> dR(r_index.x, r_index.y, r_index.z);
-                const double arg = (DM_real.get_kv_pointer()->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                const double arg = (DM_real.get_kvec_d()[ik] * dR) * ModuleBase::TWO_PI;
                 double sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -156,8 +156,9 @@ void ModuleIO::write_current(const int istep,
     // construct a DensityMatrix object
     // Since the function cal_dm_psi do not suport DMR in complex type, I replace it with two DMR in double type. Should
     // be refactored in the future.
-    elecstate::DensityMatrix<std::complex<double>, double> DM_real(&kv, pv, PARAM.inp.nspin);
-    elecstate::DensityMatrix<std::complex<double>, double> DM_imag(&kv, pv, PARAM.inp.nspin);
+    const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[PARAM.inp.nspin];
+    elecstate::DensityMatrix<std::complex<double>, double> DM_real(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+    elecstate::DensityMatrix<std::complex<double>, double> DM_imag(pv, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
     // calculate DMK
     elecstate::cal_dm_psi(DM_real.get_paraV_pointer(), pelec->wg, psi[0], DM_real);
 

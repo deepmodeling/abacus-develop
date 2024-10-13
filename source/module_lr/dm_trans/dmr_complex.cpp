@@ -48,7 +48,7 @@ namespace elecstate
                             // cal k_phase
                             // if TK==std::complex<double>, kphase is e^{ikR}
                             const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                            const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                            const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                             double sinp, cosp;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             std::complex<double> kphase = std::complex<double>(cosp, sinp);
