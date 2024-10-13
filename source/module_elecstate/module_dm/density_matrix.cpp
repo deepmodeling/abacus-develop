@@ -26,10 +26,10 @@ DensityMatrix<TK, TR>::~DensityMatrix()
 
 template <typename TK, typename TR>
 DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk)
-    : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nks((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
+    : _paraV(paraV_in), _nspin(nspin), _kvec_d(kvec_d), _nk((nk > 0 && nk <= _kvec_d.size()) ? nk : _kvec_d.size())
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-MK");
-    const int nks = _nks * _nspin;
+    const int nks = _nk * _nspin;
     this->_DMK.resize(nks);
     for (int ik = 0; ik < nks; ik++)
     {
@@ -39,7 +39,7 @@ DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const in
 }
 
 template <typename TK, typename TR>
-DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nks(1)
+DensityMatrix<TK, TR>::DensityMatrix(const Parallel_Orbitals* paraV_in, const int nspin) :_paraV(paraV_in), _nspin(nspin), _kvec_d({ ModuleBase::Vector3<double>(0,0,0) }), _nk(1)
 {
     ModuleBase::TITLE("DensityMatrix", "DensityMatrix-GO");
     this->_DMK.resize(_nspin);
@@ -236,7 +236,7 @@ template <typename TK, typename TR>
 TK* DensityMatrix<TK, TR>::get_DMK_pointer(const int ik) const
 {
 #ifdef __DEBUG
-    assert(ik < this->_nks * this->_nspin);
+    assert(ik < this->_nk * this->_nspin);
 #endif
     return const_cast<TK*>(this->_DMK[ik].data());
 }
@@ -246,7 +246,7 @@ template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::set_DMK_pointer(const int ik, TK* DMK_in)
 {
 #ifdef __DEBUG
-    assert(ik < this->_nks * this->_nspin);
+    assert(ik < this->_nk * this->_nspin);
 #endif
     this->_DMK[ik].assign(DMK_in, DMK_in + this->_paraV->nrow * this->_paraV->ncol);
 }
@@ -257,17 +257,17 @@ void DensityMatrix<TK, TR>::set_DMK(const int ispin, const int ik, const int i, 
 {
 #ifdef __DEBUG
     assert(ispin > 0 && ispin <= this->_nspin);
-    assert(ik >= 0 && ik < this->_nks);
+    assert(ik >= 0 && ik < this->_nk);
 #endif
     // consider transpose col=>row
-    this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->nrow + j] = value;
+    this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->nrow + j] = value;
 }
 
 // set _DMK element
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::set_DMK_zero()
 {
-    for (int ik = 0; ik < _nspin * _nks; ik++)
+    for (int ik = 0; ik < _nspin * _nk; ik++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->_DMK[ik].data(),
                                       this->_paraV->get_row_size() * this->_paraV->get_col_size());
@@ -282,7 +282,7 @@ TK DensityMatrix<TK, TR>::get_DMK(const int ispin, const int ik, const int i, co
     assert(ispin > 0 && ispin <= this->_nspin);
 #endif
     // consider transpose col=>row
-    return this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->nrow + j];
+    return this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->nrow + j];
 }
 
 // get _DMK nks, nrow, ncol
@@ -290,9 +290,9 @@ template <typename TK, typename TR>
 int DensityMatrix<TK, TR>::get_DMK_nks() const
 {
 #ifdef __DEBUG
-    assert(this->_DMK.size() == _nks * _nspin);
+    assert(this->_DMK.size() == _nk * _nspin);
 #endif
-    return _nks * _nspin;
+    return _nk * _nspin;
 }
 
 template <typename TK, typename TR>
@@ -364,7 +364,7 @@ void DensityMatrix<TK, TR>::cal_DMR_test()
 {
     for (int is = 1; is <= this->_nspin; ++is)
     {
-        int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+        int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
         hamilt::HContainer<TR>* tmp_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
@@ -396,7 +396,7 @@ void DensityMatrix<TK, TR>::cal_DMR_test()
 #endif
                 std::complex<TR> tmp_res;
                 // loop over k-points
-                for (int ik = 0; ik < this->_nks; ++ik)
+                for (int ik = 0; ik < this->_nk; ++ik)
                 {
                     // cal k_phase
                     // if TK==std::complex<double>, kphase is e^{ikR}
@@ -438,7 +438,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
     int ld_hk2 = 2 * ld_hk;
     for (int is = 1; is <= this->_nspin; ++is)
     {
-        int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+        int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
@@ -471,7 +471,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                 // loop over k-points
                 if (PARAM.inp.nspin != 4)
                 {
-                    for (int ik = 0; ik < this->_nks; ++ik)
+                    for (int ik = 0; ik < this->_nk; ++ik)
                     {
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
@@ -517,7 +517,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR()
                     std::vector<std::complex<double>> tmp_DMR(this->_paraV->get_col_size()
                                                                   * this->_paraV->get_row_size(),
                                                               std::complex<double>(0.0, 0.0));
-                    for (int ik = 0; ik < this->_nks; ++ik)
+                    for (int ik = 0; ik < this->_nk; ++ik)
                     {
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
@@ -603,7 +603,7 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik)
     int ld_hk2 = 2 * ld_hk;
     for (int is = 1; is <= this->_nspin; ++is)
     {
-        int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+        int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
@@ -693,14 +693,14 @@ void DensityMatrix<double, double>::cal_DMR()
     int ld_hk = this->_paraV->nrow;
     for (int is = 1; is <= this->_nspin; ++is)
     {
-        int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+        int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
         hamilt::HContainer<double>* tmp_DMR = this->_DMR[is - 1];
         // set zero since this function is called in every scf step
         tmp_DMR->set_zero();
 
 #ifdef __DEBUG
         // assert(tmp_DMR->is_gamma_only() == true);
-        assert(this->_nks == 1);
+        assert(this->_nk == 1);
 #endif
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -828,7 +828,7 @@ void DensityMatrix<TK, TR>::read_DMK(const std::string directory, const int ispi
     {
         for (int j = 0; j < this->_paraV->ncol; ++j)
         {
-            ifs >> this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
+            ifs >> this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
     ifs.close();
@@ -865,7 +865,7 @@ void DensityMatrix<double, double>::write_DMK(const std::string directory, const
             {
                 ofs << "\n";
             }
-            ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j];
+            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j];
         }
     }
 
@@ -902,7 +902,7 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
             {
                 ofs << "\n";
             }
-            ofs << " " << this->_DMK[ik + this->_nks * (ispin - 1)][i * this->_paraV->ncol + j].real();
+            ofs << " " << this->_DMK[ik + this->_nk * (ispin - 1)][i * this->_paraV->ncol + j].real();
         }
     }
 

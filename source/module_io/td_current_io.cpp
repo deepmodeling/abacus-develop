@@ -28,7 +28,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
     int ld_hk = DM_real.get_paraV_pointer()->nrow;
     int ld_hk2 = 2 * ld_hk;
     // tmp for is
-    int ik_begin = DM_real.get_DMK_nks() / nspin * (is - 1); // jump this->_nks for spin_down if nspin==2
+    int ik_begin = DM_real.get_DMK_nks() / nspin * (is - 1); // jump nk for spin_down if nspin==2
 
     hamilt::HContainer<double>* tmp_DMR_real = DM_real.get_DMR_vector()[is - 1];
     hamilt::HContainer<double>* tmp_DMR_imag = DM_imag.get_DMR_vector()[is - 1];

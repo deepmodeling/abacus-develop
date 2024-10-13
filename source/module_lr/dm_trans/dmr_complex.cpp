@@ -11,7 +11,7 @@ namespace elecstate
         ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
         for (int is = 1; is <= this->_nspin; ++is)
         {
-            int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+            int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
             hamilt::HContainer<std::complex<double>>* tmp_DMR = this->_DMR[is - 1];
             // set zero since this function is called in every scf step
             tmp_DMR->set_zero();
@@ -43,7 +43,7 @@ namespace elecstate
 #endif
                     // loop over k-points
                     if (PARAM.inp.nspin != 4)
-                        for (int ik = 0; ik < this->_nks; ++ik)
+                        for (int ik = 0; ik < this->_nk; ++ik)
                         {
                             // cal k_phase
                             // if TK==std::complex<double>, kphase is e^{ikR}

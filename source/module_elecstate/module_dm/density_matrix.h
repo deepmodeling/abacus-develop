@@ -243,8 +243,8 @@ class DensityMatrix
 
     /**
      * @brief density matrix in k space, which is a vector[ik]
-     * DMK should be a [_nspin][_nks][i][j] matrix,
-     * whose size is _nspin * _nks * _paraV->get_nrow() * _paraV->get_ncol()
+     * DMK should be a [_nspin][_nk][i][j] matrix,
+     * whose size is _nspin * _nk * _paraV->get_nrow() * _paraV->get_ncol()
      */
     // std::vector<ModuleBase::ComplexMatrix> _DMK;
     std::vector<std::vector<TK>> _DMK;
@@ -268,10 +268,10 @@ class DensityMatrix
 
     /**
      * @brief real number of k-points
-     * _nks is not equal to _kv->get_nks() when spin-polarization is considered
-     * _nks = kv->_nks / nspin
+     * _nk is not equal to _kv->get_nks() when spin-polarization is considered
+     * _nk = kv->get_nks() / nspin when nspin=2
      */
-    int _nks = 0;   // comment by lunasea: I want to rename it as nk
+    int _nk = 0;
 
 
 };
