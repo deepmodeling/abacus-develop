@@ -8,7 +8,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoDavid : public DiagH<T, Device>
+class DiagoDavid
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -25,7 +25,7 @@ class DiagoDavid : public DiagH<T, Device>
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
-    virtual ~DiagoDavid() override;
+     ~DiagoDavid();
 
 
     // declare type of matrix-blockvector functions.
