@@ -351,7 +351,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     this->p_hamilt->non_first_scf = istep;
 
     // update in ion-step
-    // if( GlobalV::dm_obj_type == "rdmft" )
+    // if( PARAM.inp.ab_initio_type == "rdmft" )
     if( 1 )
     {
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp

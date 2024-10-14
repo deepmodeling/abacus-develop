@@ -109,8 +109,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // std::cout << "\n\n\n******\nXC-functional in GlobalC::atom: " << GlobalC::ucell.atoms[0].ncpp.xc_func << "\n******\n\n\n" << std::endl;
     // if( XC_func_rdmft == "default" ) XC_func_rdmft = "default";
 
-    std::cout << "\n\n\n******\nnbands_total: " << nbands_total << "\nnb2d:     " << 
-                PARAM.inp.nb2d << "\nblacs_ctxt:   " << ParaV->blacs_ctxt << "\n******\n\n\n" << std::endl;
+    // std::cout << "\n\n\n******\nnbands_total: " << nbands_total << "\nnb2d:     " << 
+    //             ParaV->nb << "\nblacs_ctxt:   " << ParaV->blacs_ctxt << "\n******\n\n\n" << std::endl;
 
     // // create desc[] and something about MPI to Eij(nbands*nbands)
     // std::ofstream ofs_running;
@@ -125,9 +125,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // para_Eij.init(nbands_total, nbands_total, PARAM.inp.nb2d, MPI_COMM_WORLD);
 
     // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
-
-    std::cout << "\n\n\n******\n" << 0.001 << "\n******\n\n\n" << std::endl;
-
 
     // 
     occ_number.create(nk_total, nbands_total);
@@ -195,8 +192,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     HR_dft_XC->set_zero();
     // HR_local->set_zero();
 
-    std::cout << "\n\n\n******\n" << 0.1 << "\n******\n\n\n" << std::endl;
-
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         if (GlobalC::exx_info.info_ri.real_number)
@@ -219,8 +214,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         HR_exx_XC->fix_gamma();
         HR_dft_XC->fix_gamma();
     }
-
-    std::cout << "\n\n\n******\n" << 0.2 << "\n******\n\n\n" << std::endl;
 
 }
 
@@ -905,7 +898,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 
         std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
-                    << E_RDMFT[0] << "\nE_hartree_RDMFT: " << E_RDMFT[1] << "\nEex_PBE_RDMFT:   " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
+                    << E_RDMFT[0] << "\nE_hartree_RDMFT: " << E_RDMFT[1] << "\nExc_" << XC_func_rdmft << "_RDMFT:   " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
                     << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\nExc_dft:         " << E_xc_KS 
                     << "\nE_exx_KS:         " << E_exx_KS <<"\n******\n\n" << std::endl;
 
@@ -927,6 +920,7 @@ double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     // this->cal_Hk_Hpsi();
     this->cal_E_gradient();
     this->cal_Energy(this->cal_E_type);
+    // this->cal_Energy(2);
 
     E_gradient_occNum = (occNum_wfcHamiltWfc);
     

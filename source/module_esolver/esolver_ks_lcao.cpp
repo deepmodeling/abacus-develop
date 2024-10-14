@@ -261,8 +261,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     }
 
 
-    std::cout << "\n\n\n******\n" << 1.0 << "\n******\n\n\n" << std::endl;
-
     // add by jghan for rdmft calculation
     // if( PARAM.inp.ab_initio_type == "rdmft" )
     if( 1 )
@@ -275,8 +273,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
     }
-
-    std::cout << "\n\n\n******\n" << 1.1 << "\n******\n\n\n" << std::endl;
 
     // 15) if kpar is not divisible by nks, print a warning
     if (GlobalV::KPAR_LCAO > 1)

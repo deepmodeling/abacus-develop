@@ -627,7 +627,8 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         // if ( PARAM.inp.ab_initio_type == "rdmft" )
         if ( 1 ) /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         {
-            if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
+            // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
+            if ( 1 )
             {
                 ModuleBase::matrix occ_number_ks(this->pelec->wg);
                 for(int ik=0; ik < occ_number_ks.nr; ++ik)
@@ -637,6 +638,13 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 this->update_elec_rdmft(occ_number_ks, *(this->psi));
 
                 std::cout << "\n\n\n******\nget the initial values of wfc and occ_numbers successfully\n******\n\n\n" << std::endl;
+
+                //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
+                ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                E_gradient_wfc.zero_out();
+
+                double Etotal_RDMFT = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
 
                 // break;
             }
