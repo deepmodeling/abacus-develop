@@ -136,7 +136,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
-        Print_Info::setup_parameters(ucell, this->kv);
+        ModuleIO::setup_parameters(ucell, this->kv);
     }
     else
     {
@@ -817,7 +817,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
     // 1) print Hamiltonian and Overlap matrix
-    if (this->conv_elec || iter == PARAM.inp.scf_nmax)
+    if (this->conv_esolver || iter == PARAM.inp.scf_nmax)
     {
         if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta))
         {
@@ -875,7 +875,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     }
 
     // 2) print wavefunctions
-    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (this->conv_elec || iter == PARAM.inp.scf_nmax)
+    if (elecstate::ElecStateLCAO<TK>::out_wfc_lcao && (this->conv_esolver || iter == PARAM.inp.scf_nmax)
         && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<TK>::out_wfc_lcao,
@@ -887,7 +887,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
                                 istep);
     }
 
-    if (!this->conv_elec)
+    if (!this->conv_esolver)
     {
         if (PARAM.inp.nspin == 4)
         {
@@ -977,7 +977,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         }
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx && this->conv_elec)
+    if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
     {
         // Kerker mixing does not work for the density matrix.
         // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
@@ -989,7 +989,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         }
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->conv_elec = this->exd->exx_after_converge(
+            this->conv_esolver = this->exd->exx_after_converge(
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
@@ -1000,7 +1000,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         }
         else
         {
-            this->conv_elec = this->exc->exx_after_converge(
+            this->conv_esolver = this->exc->exx_after_converge(
                 *this->p_hamilt,
                 *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                 this->kv,
@@ -1080,7 +1080,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
-    if (PARAM.inp.dft_plus_u && this->conv_elec)
+    if (PARAM.inp.dft_plus_u && this->conv_esolver)
     {
         GlobalC::dftu.initialed_locale = true;
     }

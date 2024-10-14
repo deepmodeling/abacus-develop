@@ -18,7 +18,7 @@ jobs:
           apt update && apt install -y lcov
       - name: Building
         run: |
-          cmake -B build -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DBUILD_TESTING=ON -DENABLE_COVERAGE=ON
+          cmake -B build -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON
           cmake --build build -j`nproc`
           cmake --install build
       - name: Testing
