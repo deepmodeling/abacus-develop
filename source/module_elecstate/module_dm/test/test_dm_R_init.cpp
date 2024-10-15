@@ -118,7 +118,7 @@ TEST_F(DMTest, DMInit1)
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize this->_DMR
     Grid_Driver gd(0,0);
     DM.init_DMR(&gd, &ucell);
@@ -145,7 +145,7 @@ TEST_F(DMTest, DMInit2)
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize Record_adj using Grid_Driver
     Grid_Driver gd(0,0);
     Record_adj ra;

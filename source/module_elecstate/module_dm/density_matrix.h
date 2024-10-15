@@ -49,9 +49,9 @@ class DensityMatrix
      *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
      * @param kvec_d direct coordinates of kpoints
      * @param nk number of k-points, not always equal to K_Vectors::get_nks()/nspin_dm.
-     * if remains default or large than kvec_d.size(), it will be set to kvec_d.size()
+     *               it will be set to kvec_d.size() if the value is invalid
      */
-    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk = -1);
+    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
