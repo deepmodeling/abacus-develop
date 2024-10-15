@@ -18,12 +18,12 @@ AddTest(
 AddTest(
   TARGET base_tool_quit
   LIBS parameter 
-  SOURCES tool_quit_test.cpp ../blas_connector.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp  
+  SOURCES tool_quit_test.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp  
 )
 AddTest(
   TARGET base_tool_check
   LIBS parameter 
-  SOURCES tool_check_test.cpp ../blas_connector.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
+  SOURCES tool_check_test.cpp ../tool_check.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
   TARGET base_memory
@@ -42,7 +42,7 @@ AddTest(
 AddTest(
   TARGET base_matrix3
   LIBS parameter  ${math_libs}
-  SOURCES matrix3_test.cpp ../blas_connector.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
 )
 AddTest(
   TARGET base_intarray
@@ -62,7 +62,7 @@ AddTest(
 AddTest(
   TARGET base_complexarray
   LIBS parameter 
-  SOURCES complexarray_test.cpp ../blas_connector.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  SOURCES complexarray_test.cpp ../complexarray.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_complexmatrix
@@ -72,12 +72,12 @@ AddTest(
 AddTest(
   TARGET base_integral
   LIBS parameter 
-  SOURCES math_integral_test.cpp ../blas_connector.cpp ../math_integral.cpp
+  SOURCES math_integral_test.cpp ../math_integral.cpp
 )
 AddTest(
   TARGET base_sph_bessel_recursive
   LIBS parameter 
-  SOURCES sph_bessel_recursive_test.cpp ../blas_connector.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp
+  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp
 )
 AddTest(
   TARGET base_ylmreal
@@ -89,12 +89,12 @@ AddTest(
 AddTest(
   TARGET base_math_sphbes
   LIBS parameter 
-  SOURCES math_sphbes_test.cpp ../blas_connector.cpp ../math_sphbes.cpp ../timer.cpp
+  SOURCES math_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_mathzone
   LIBS parameter  ${math_libs}
-  SOURCES mathzone_test.cpp ../blas_connector.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
 )
 AddTest(
   TARGET base_mathzone_add1
@@ -104,7 +104,7 @@ AddTest(
 AddTest(
   TARGET base_math_polyint
   LIBS parameter 
-  SOURCES math_polyint_test.cpp ../blas_connector.cpp ../math_polyint.cpp ../realarray.cpp ../timer.cpp
+  SOURCES math_polyint_test.cpp ../math_polyint.cpp ../realarray.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_gram_schmidt_orth
@@ -124,12 +124,12 @@ AddTest(
 AddTest(
   TARGET base_mymath
   LIBS parameter 
-  SOURCES mymath_test.cpp ../blas_connector.cpp ../mymath.cpp ../timer.cpp
+  SOURCES mymath_test.cpp ../mymath.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_container
   LIBS parameter 
-  SOURCES container_operator_test.cpp ../blas_connector.cpp ../container_operator.h
+  SOURCES container_operator_test.cpp ../container_operator.h
 )
 
 AddTest(
@@ -159,37 +159,37 @@ AddTest(
 AddTest(
   TARGET base_ylm
   LIBS parameter 
-  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp ../blas_connector.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
+  SOURCES ylm_test.cpp  ../ylm.cpp  ../timer.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
 )
 
 AddTest(
   TARGET base_abfs-vector3_order
   LIBS parameter 
-  SOURCES abfs-vector3_order_test.cpp ../blas_connector.cpp ../abfs-vector3_order.cpp
+  SOURCES abfs-vector3_order_test.cpp ../abfs-vector3_order.cpp
 )
 
 AddTest(
   TARGET base_global_file
   LIBS parameter 
-  SOURCES global_file_test.cpp ../blas_connector.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp
+  SOURCES global_file_test.cpp ../global_file.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../memory.cpp ../timer.cpp
 )
 
 AddTest(
   TARGET base_tool_title
   LIBS parameter 
-  SOURCES tool_title_test.cpp ../blas_connector.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp  ../tool_quit.cpp  ../global_file.cpp ../memory.cpp
+  SOURCES tool_title_test.cpp ../tool_title.cpp  ../global_variable.cpp ../global_function.cpp ../timer.cpp  ../tool_quit.cpp  ../global_file.cpp ../memory.cpp
 )
 
 AddTest(
   TARGET base_element_basis_index
   LIBS parameter 
-  SOURCES element_basis_index_test.cpp ../blas_connector.cpp ../element_basis_index.cpp
+  SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
 )
 
 AddTest(
   TARGET base_tool_threading
   LIBS parameter 
-  SOURCES tool_threading_test.cpp ../blas_connector.cpp ../tool_threading.h
+  SOURCES tool_threading_test.cpp ../tool_threading.h
 )
 
 AddTest(
@@ -234,6 +234,6 @@ if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET perf_sphbes
   LIBS parameter 
-    SOURCES perf_sphbes_test.cpp ../blas_connector.cpp ../math_sphbes.cpp ../timer.cpp
+    SOURCES perf_sphbes_test.cpp ../math_sphbes.cpp ../timer.cpp
   )
 endif()
