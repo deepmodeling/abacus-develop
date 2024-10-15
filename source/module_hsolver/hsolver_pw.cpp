@@ -228,7 +228,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
     if (std::find(std::begin(_methods), std::end(_methods), this->method) == std::end(_methods))
     {
-        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This method of DiagH is not supported!");
+        ModuleBase::WARNING_QUIT("HSolverPW::solve", "This type of eigensolver is not supported!");
     }
 
     // prepare for the precondition of diagonalization

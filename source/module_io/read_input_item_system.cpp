@@ -646,10 +646,6 @@ void ReadInput::item_system()
             {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
             }
-            else
-            {
-                para.input.read_file_dir = para.input.read_file_dir;
-            }
             para.input.read_file_dir = to_dir(para.input.read_file_dir);
         };
         this->add_item(item);

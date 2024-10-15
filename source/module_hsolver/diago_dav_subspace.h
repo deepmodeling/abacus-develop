@@ -11,7 +11,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class Diago_DavSubspace : public DiagH<T, Device>
+class Diago_DavSubspace
 {
   private:
     // Note GetTypeReal<T>::type will
@@ -29,7 +29,7 @@ class Diago_DavSubspace : public DiagH<T, Device>
                       const bool& need_subspace_in,
                       const diag_comm_info& diag_comm_in);
 
-    virtual ~Diago_DavSubspace() override;
+    ~Diago_DavSubspace();
 
     // See diago_david.h for information on the HPsiFunc function type
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;

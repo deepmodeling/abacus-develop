@@ -432,7 +432,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 {
-    if (!this->conv_elec)
+    if (!this->conv_esolver)
     {
         if (PARAM.inp.nspin == 4)
         {
