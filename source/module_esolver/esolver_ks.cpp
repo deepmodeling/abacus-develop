@@ -624,11 +624,10 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
 
         // 12.5) rdmft, add by jghan 2024-04-08/2024-10-09
-        // if ( PARAM.inp.ab_initio_type == "rdmft" )
-        if ( 1 ) /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        if ( PARAM.inp.ab_initio_type == "rdmft" )
         {
             // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
-            if ( 1 )
+            if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
             {
                 ModuleBase::matrix occ_number_ks(this->pelec->wg);
                 for(int ik=0; ik < occ_number_ks.nr; ++ik)

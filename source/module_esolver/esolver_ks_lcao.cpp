@@ -262,13 +262,10 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
 
     // add by jghan for rdmft calculation
-    // if( PARAM.inp.ab_initio_type == "rdmft" )
-    if( 1 )
+    if( PARAM.inp.ab_initio_type == "rdmft" )
     {
-        // rdmft_solver.init( this->UHM.GG, this->UHM.GK, this->orb_con.ParaV, ucell, this->kv, *(this->pelec),
-        //                         GlobalV::DFT_FUNCTIONAL, GlobalV::rdmft_power_alpha);
         rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
-                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, 1.0);
+                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
 
         // the initialization and necessary calculations of these quantities have been completed in init()
         // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
@@ -920,17 +917,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     {
         this->pelec->cal_converged();
     }
-
-    // if( iter==1 )   // add by jghan, 2024-03-16
-    // {
-    //     ModuleBase::matrix occ_number(this->pelec->wg);
-    //     for(int ik=0; ik < occ_number.nr; ++ik)
-    //     {
-    //         for(int inb=0; inb < this->pelec->wg.nc; ++inb) occ_number(ik, inb) /= this->kv.wk[ik];
-    //     }
-    //     rdmft_solver.update_elec(occ_number, *(this->psi));
-    //     std::cout << "\n******\nrdmft_solver: " << "update_elec" << "\n******" << std::endl;
-    // }
 
 }
 

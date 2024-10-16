@@ -10,7 +10,8 @@ namespace Conv_Coulomb_Pot_K
 	enum class Ccp_Type{		//	parameter:
 		Ccp,					//
 		Hf,						//		"hf_Rcut"
-		Hse};					//		"hse_omega"
+		Hse,					//		"hse_omega"
+		erf};					//		"hse_omega"
 
 	template<typename T> T cal_orbs_ccp(
 		const T &orbs,
@@ -34,6 +35,12 @@ namespace Conv_Coulomb_Pot_K
 		const std::vector<double> & psif,
 		const std::vector<double> & k_radial,
 		const double hse_omega);
+	// added by jghan, 2024-07-06
+	std::vector<double> cal_psi_erf(
+		const std::vector<double> & psif,
+		const std::vector<double> & k_radial,
+		const double hse_omega,
+		const double hf_Rcut);
 }
 
 #include "conv_coulomb_pot_k.hpp"

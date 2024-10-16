@@ -507,7 +507,7 @@ void ReadInput::item_others()
                           "used in exx-type functionals such as muller and power";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if( para.input.dft_functional == "hf" )
+            if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
             {
                 para.input.rdmft_power_alpha = 1.0;
             }
