@@ -21,28 +21,28 @@ class Diag_Cusolver_gvd{
 // private variables
 //-------------------
 
-    cusolverDnHandle_t cusolverH;
+    cusolverDnHandle_t cusolverH = nullptr;
 
-    cusolverEigType_t itype; //problem type: A*x = (lambda)*B*x
-    cusolverEigMode_t jobz; // compute eigenvalues and eigenvectors.
-    cublasFillMode_t uplo;
+    cusolverEigType_t itype = CUSOLVER_EIG_TYPE_1; //problem type: A*x = (lambda)*B*x
+    cusolverEigMode_t jobz = CUSOLVER_EIG_MODE_NOVECTOR; // compute eigenvalues and eigenvectors.
+    cublasFillMode_t uplo = CUBLAS_FILL_MODE_LOWER;
 
-    int m;
-    int lda;
+    int m = 0;
+    int lda = 0;
 
-    double *d_A;
-    double *d_B;
-    double *d_work;
+    double *d_A = nullptr;
+    double *d_B = nullptr;
+    double *d_work = nullptr;
     
-    cuDoubleComplex *d_A2;
-    cuDoubleComplex *d_B2;
-    cuDoubleComplex *d_work2;
+    cuDoubleComplex *d_A2 = nullptr;
+    cuDoubleComplex *d_B2 = nullptr;
+    cuDoubleComplex *d_work2 = nullptr;
 
-    double *d_W ;
-    int *devInfo;
+    double *d_W = nullptr;
+    int *devInfo = nullptr;
 
-    int  lwork;
-    int info_gpu;
+    int  lwork = 0;
+    int info_gpu = 0;
 
 //   subroutines that are related to initializing the class:
 //  - init_double : initializing relevant double type data structures and gpu apis' handle and memory
@@ -55,7 +55,7 @@ class Diag_Cusolver_gvd{
     void finalize();  // for recycling the usage of the static class Diag_Cusolver_gvd
 public:
 
-    int is_init;    // For expensive gpu initialization only once when using cusolver for lcao
+    int is_init = 0;    // For expensive gpu initialization only once when using cusolver for lcao
 
     Diag_Cusolver_gvd();
     ~Diag_Cusolver_gvd();
