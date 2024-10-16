@@ -889,8 +889,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 
     std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
                 << E_RDMFT[0] << "\nEhartree_RDMFT: " << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
-                << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\nExc_ksdft:       " << E_xc_KS 
-                << "\n\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
+                << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\n\nExc_ksdft:       " << E_xc_KS 
+                << "\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
 
     std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
 
@@ -902,8 +902,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 
         std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
                     << E_RDMFT[0] << "\nE_hartree_RDMFT: " << E_RDMFT[1] << "\nExc_" << XC_func_rdmft << "_RDMFT:   " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
-                    << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\nExc_ksdft:       " << E_xc_KS 
-                    << "\n\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
+                    << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\n\nExc_ksdft:       " << E_xc_KS 
+                    << "\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
 
         std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
 
