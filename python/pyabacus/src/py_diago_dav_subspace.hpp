@@ -106,7 +106,7 @@ public:
         double tol,
         int max_iter,
         bool need_subspace,
-        std::vector<bool> is_occupied,
+        std::vector<double> diag_ethr,
         bool scf_type,
         hsolver::diag_comm_info comm_info
     ) {
@@ -141,7 +141,7 @@ public:
             comm_info
         );
 
-        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, is_occupied, scf_type);
+        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr.data(), scf_type);
     }
 
 private:

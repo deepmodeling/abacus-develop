@@ -444,20 +444,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("diago_full_acc");
-        item.annotation = "all the empty states are diagonalized";
-        /**
-        * @brief diago_full_acc
-        * If .TRUE. all the empty states are diagonalized at the same level of
-        * accuracy of the occupied ones. Otherwise the empty states are
-        * diagonalized using a larger threshold (this should not affect total
-        * energy, forces, and other ground-state properties).
-        *
-        */
-        read_sync_bool(input.diago_full_acc);
-        this->add_item(item);
-    }
-    {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";

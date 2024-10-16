@@ -13,6 +13,7 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress.h"
 
 template <>
 void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
@@ -215,10 +216,17 @@ void Force_LCAO<double>::ftable(const bool isforce,
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
     this->allocate(pv, fsr, two_center_bundle, orb);
 
+    const double* dSx[3] = { fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z };
+    const double* dSxy[6] = { fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33 };
     // calculate the force related to 'energy density matrix'.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap);
+    PulayForceStress::cal_pulay_fs(foverlap, soverlap,
+        this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
+        ucell, pv, dSx, dSxy, isforce, isstress);
 
-    this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi);
+    const double* dHx[3] = { fsr.DHloc_fixed_x, fsr.DHloc_fixed_y, fsr.DHloc_fixed_z };
+    const double* dHxy[6] = { fsr.DHloc_fixed_11, fsr.DHloc_fixed_12, fsr.DHloc_fixed_13, fsr.DHloc_fixed_22, fsr.DHloc_fixed_23, fsr.DHloc_fixed_33 };
+    //tvnl_dphi
+    PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress);
 
     this->cal_fvnl_dbeta(dm,
                          pv,
@@ -231,9 +239,9 @@ void Force_LCAO<double>::ftable(const bool isforce,
                          fvnl_dbeta,
                          svnl_dbeta);
 
-    this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
+    // vl_dphi
+    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
-    // caoyu add for DeePKS
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
@@ -314,23 +322,3 @@ void Force_LCAO<double>::ftable(const bool isforce,
     ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }
-
-namespace StressTools
-{
-void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix)
-{
-    assert(omega_ > 0.0);
-    double weight = lat0_ / omega_;
-    for (int i = 0; i < 3; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            if (j > i)
-            {
-                stress_matrix(j, i) = stress_matrix(i, j);
-            }
-            stress_matrix(i, j) *= weight;
-        }
-    }
-}
-} // namespace StressTools
