@@ -10,6 +10,8 @@ enum class Type {
     StratmannMod
 };
 
+extern const double stratmann_a;
+extern const double stratmann_mod_b;
 
 /**
  * @brief Becke's partition weight.
@@ -56,7 +58,7 @@ double s_becke(double mu);
  *
  * @see w_becke
  *
- * @param   dRcRnn  Distance between the grid center and its nearest neighbor.
+ * @param   drR_thr     Radius of exclusive zone of each center.
  *
  * Reference:
  * Stratmann, R. E., Scuseria, G. E., & Frisch, M. J. (1996).
@@ -69,15 +71,14 @@ double w_stratmann(
     int nR0,
     double* drR,
     double* dRR,
+    double* drR_thr,
     int nR,
     int* iR,
-    int c,
-    double dRcRnn,
-    double a = 0.64
+    int c
 );
 
 // Stratmann's piecewise cell function
-double s_stratmann(double mu, double a);
+double s_stratmann(double mu);
 
 
 /**
@@ -86,8 +87,8 @@ double s_stratmann(double mu, double a);
  * tensor components for numeric atom-centered orbitals.
  * Computer Physics Communications, 190, 33-50.
  */
-double s_stratmann_mod(double mu, double y, double a = 0.64, double b = 0.8);
-double u_stratmann_mod(double y, double b); // used by s_stratmann_mod
+double s_stratmann_mod(double mu, double y);
+double u_stratmann_mod(double y); // used by s_stratmann_mod
 
 
 } // end of namespace Partition

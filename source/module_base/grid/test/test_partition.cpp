@@ -98,8 +98,32 @@ std::vector<Param> test_params = {
     },
 };
 
+std::vector<double> dist_R_R(const std::vector<Vec3>& R) {
+    // tabulate dRR[I,J] = || R[I] - R[J] ||
+    size_t nR = R.size();
+    std::vector<double> dRR(nR*nR, 0.0);
+    for (size_t I = 0; I < nR; I++) {
+        for (size_t J = I + 1; J < nR; J++) {
+            double d = norm(R[I] - R[J]);
+            dRR[I*nR + J] = d;
+            dRR[J*nR + I] = d;
+        }
+    }
+    return dRR;
+}
 
-TEST(PartitionTest, Becke) {
+class PartitionTest: public ::testing::Test {
+protected:
+    PartitionTest();
+
+    // grid & weight for one-center integration
+    std::vector<double> r;
+    std::vector<double> w;
+
+    const double tol = 1e-5;
+};
+
+PartitionTest::PartitionTest() {
     // angular grid & weight
     std::vector<double> r_ang, w_ang;
     int lmax = 25;
@@ -114,7 +138,8 @@ TEST(PartitionTest, Becke) {
 
     // complete grid & weight for one-center integration
     size_t ngrid = w_rad.size() * w_ang.size();
-    std::vector<double> r(3*ngrid), w(ngrid);
+    r.resize(3*ngrid);
+    w.resize(ngrid);
 
     size_t ir = 0;
     for (size_t i = 0; i < w_rad.size(); i++) {
@@ -126,36 +151,27 @@ TEST(PartitionTest, Becke) {
             ++ir;
         }
     }
+}
 
-    // each Param defines a test function
+
+TEST_F(PartitionTest, Becke) {
     for (const Param& param : test_params) {
         double val = 0.0;
         double val_ref = ref(param.a, param.n);
 
-        // tabulate dRR[I,J] = |R[I] - R[J]|
-        size_t nR = param.R.size();
-        std::vector<double> dRR(nR*nR, 0.0);
-        for (size_t I = 0; I < nR; I++) {
-            for (size_t J = I + 1; J < nR; J++) {
-                double d = norm(param.R[I] - param.R[J]);
-                dRR[I*nR + J] = d;
-                dRR[J*nR + I] = d;
-            }
-        }
+        // tabulate || R[I] - R[J] ||
+        std::vector<double> dRR(dist_R_R(param.R));
 
         // all centers are involved
+        size_t nR = param.R.size();
         std::vector<int> iR(nR);
         std::iota(iR.begin(), iR.end(), 0);
 
         for (size_t I = 0; I < nR; ++I) { // for each center
-            for (size_t i = 0; i < ngrid; i++) {
-                Vec3 ri = {
-                    r[3*i]   + param.R[I][0],
-                    r[3*i+1] + param.R[I][1],
-                    r[3*i+2] + param.R[I][2]
-                };
+            for (size_t i = 0; i < w.size(); i++) {
+                Vec3 ri = Vec3{r[3*i], r[3*i+1], r[3*i+2]} + param.R[I];
 
-                // tabulate drR[J] = |r - R[J]|
+                // tabulate || r - R[J] ||
                 std::vector<double> drR(nR);
                 for (size_t J = 0; J < nR; ++J) {
                     drR[J] = norm(ri - param.R[J]);
@@ -163,16 +179,67 @@ TEST(PartitionTest, Becke) {
 
                 // partition weight for this grid point
                 double w_part = Grid::Partition::w_becke(
-                    drR.size(), drR.data(), dRR.data(), iR.size(), iR.data(), I
+                    drR.size(), drR.data(), dRR.data(),
+                    iR.size(), iR.data(), I
                 );
 
                 val += w_part * w[i] * func(ri, param.R, param.a, param.n);
             }
         }
 
-        EXPECT_NEAR(val, val_ref, 1e-5);
+        EXPECT_NEAR(val, val_ref, tol);
     }
+}
 
+
+TEST_F(PartitionTest, Stratmann) {
+    for (const Param& param : test_params) {
+        double val = 0.0;
+        double val_ref = ref(param.a, param.n);
+
+        // tabulate || R[I] - R[J] ||
+        std::vector<double> dRR(dist_R_R(param.R));
+
+        // all centers are involved
+        size_t nR = param.R.size();
+        std::vector<int> iR(nR);
+        std::iota(iR.begin(), iR.end(), 0);
+
+        // radii of exclusive zone
+        using Grid::Partition::stratmann_a;
+        std::vector<double> drR_thr(nR);
+        for (size_t I = 0; I < nR; ++I) {
+            double dRRmin = 1e100;
+            for (size_t J = 0; J < nR; ++J) {
+                if (J != I) {
+                    dRRmin = std::min(dRRmin, dRR[I*nR + J]);
+                }
+            }
+            drR_thr[I] = 0.5 * (1-stratmann_a) * dRRmin;
+        }
+
+        for (size_t I = 0; I < nR; ++I) { // for each center
+            for (size_t i = 0; i < w.size(); i++) {
+                Vec3 ri = Vec3{r[3*i], r[3*i+1], r[3*i+2]} + param.R[I];
+
+                // tabulate || r - R[J] ||
+                std::vector<double> drR(nR);
+                for (size_t J = 0; J < nR; ++J) {
+                    drR[J] = norm(ri - param.R[J]);
+                }
+
+                // partition weight for this grid point
+                double w_part = Grid::Partition::w_stratmann(
+                    drR.size(), drR.data(), dRR.data(), drR_thr.data(), 
+                    iR.size(), iR.data(), I
+                );
+
+                val += w_part * w[i] * func(ri, param.R, param.a, param.n);
+            }
+        }
+
+        EXPECT_NEAR(val, val_ref, tol);
+    }
 }
 
 int main(int argc, char** argv)

@@ -8,6 +8,9 @@
 namespace Grid {
 namespace Partition {
 
+const double stratmann_a = 0.64;
+const double stratmann_mod_b = 0.8;
+
 double w_becke(
     int nR0,
     double* drR,
@@ -46,7 +49,62 @@ double s_becke(double mu) {
 }
 
 
-double s_stratmann(double mu, double a) {
+double w_stratmann(
+    int nR0,
+    double* drR,
+    double* dRR,
+    double* drR_thr,
+    int nR,
+    int* iR,
+    int c
+) {
+
+    // if r falls within the exclusive zone of the center
+    // whom this grid point belongs to
+    int I = iR[c];
+    if (drR[I] <= drR_thr[I]) {
+        return 1.0;
+    }
+
+    // if r falls within the exclusive zone of a center
+    // other than the one whom this grid point belongs to
+    for (int J = 0; J < nR; ++J) {
+        // no need to exclude J == c because it was checked before
+        if (drR[iR[J]] <= drR_thr[iR[J]]) {
+            return 0.0;
+        }
+    }
+
+    double Pc = 1.0;
+    for (int i = 0; i < c; ++i) {
+        int J = iR[i];
+        double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+        Pc *= s_stratmann(mu);
+    }
+    for (int i = c + 1; i < nR; ++i) {
+        int J = iR[i];
+        double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+        Pc *= s_stratmann(mu);
+    }
+    if (Pc == 0.0 || Pc == 1.0) {
+        return Pc;
+    }
+
+    std::vector<double> P(nR, 1.0);
+    for (int i = 0; i < nR; ++i) {
+        int I = iR[i];
+        for (int j = i + 1; j < nR; ++j) {
+            int J = iR[j];
+            double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+            double s = s_stratmann(mu);
+            P[I] *= s;
+            P[J] *= (1.0 - s); // s(-mu) = 1 - s(mu)
+        }
+    }
+    return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
+}
+
+double s_stratmann(double mu) {
     /*
      * Stratmann's piecewise cell function
      *
@@ -59,9 +117,9 @@ double s_stratmann(double mu, double a) {
      *        \             +1                          x >= +1
      *
      */
-    double x = mu / a;
+    double x = mu / stratmann_a;
     double x2 = x * x;
-    double h = 0.625 * x * (35 + x2 * (-35 + x2 * (21 - 5 * x2)));
+    double h = 0.0625 * x * (35 + x2 * (-35 + x2 * (21 - 5 * x2)));
 
     bool mid = std::abs(x) < 1;
     double g = !mid * (1 - 2 * std::signbit(x)) + mid * h;
@@ -69,18 +127,19 @@ double s_stratmann(double mu, double a) {
 }
 
 
-double u_stratmann_mod(double y, double b) {
+double u_stratmann_mod(double y) {
     using ModuleBase::PI;
-    bool core = y <= b;
+    bool core = y <= stratmann_mod_b;
     bool edge = !core && y < 1.0;
-    return core + edge * 0.5 * (std::cos(PI * (y - b) / (1.0 - b)) + 1.0);
+    return core + edge * 0.5 * (1.0 +
+            std::cos(PI * (y - stratmann_mod_b) / (1.0 - stratmann_mod_b)));
 }
 
 
-double s_stratmann_mod(double mu, double y, double a, double b) {
+double s_stratmann_mod(double mu, double y) {
     // Modified Stratmann's cell function by Knuth et al.
     // y = |r-R(J)| / Rcut(J)
-    return 1.0 + u_stratmann_mod(y, b) * (s_stratmann(mu, a) - 1.0);
+    return 1.0 + u_stratmann_mod(y) * (s_stratmann(mu) - 1.0);
 }
 
 
