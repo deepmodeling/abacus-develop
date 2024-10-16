@@ -457,7 +457,7 @@ endif()
 # Torch uses outdated components to detect CUDA arch, causing failure on
 # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
 # "major.minor" if required.
-if(DEFINED Torch_DIR)
+if(ENABLE_DEEPKS OR DEFINED Torch_DIR)
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)
