@@ -100,6 +100,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
     nbands_total = PARAM.inp.nbands;
     nspin = PARAM.inp.nspin;
+    only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
     // XC_func_rdmft = "power"; // just for test 
     // alpha_power = 0.525;
@@ -123,7 +124,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
     para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
     // para_Eij.init(nbands_total, nbands_total, PARAM.inp.nb2d, MPI_COMM_WORLD);
-
     // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
 
     // 
@@ -274,7 +274,7 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
     this->update_charge();
 
     // "default" = "pbe"
-    // if(  (XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power") || this->cal_E_type != 1 )
+    // if(  !only_exx_type || this->cal_E_type != 1 )
     if( this->cal_E_type != 1 )
     {
         // the second cal_E_type need the complete pot to get effctive_V to calEband and so on.
@@ -577,30 +577,30 @@ void RDMFT<TK, TR>::cal_V_XC()
 
     DM_XC_pass = DM_XC;
 
-    // elecstate::DensityMatrix<TK, double> DM_test(kv, ParaV, nspin);
-    // elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
-    // DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
-    // DM_test.cal_DMR();
+    elecstate::DensityMatrix<TK, double> DM_test(kv, ParaV, nspin);
+    elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
+    DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
+    DM_test.cal_DMR();
 
-    // // compare DM_XC and DM get in update_charge(or ABACUS)
-    // std::cout << "\n\ntest DM_XC - DM in ABACUS: \n" << std::endl;
-    // double DM_XC_minus_DMtest = 0.0;
-    // for(int ik=0; ik<nk_total; ++ik)
-    // {
-    //     TK* dmk_pointer = DM_test.get_DMK_pointer(ik);
-    //     for(int iloc=0; iloc<ParaV->nloc; ++iloc)
-    //     {
-    //         double test = std::abs(DM_XC[ik][iloc] - dmk_pointer[iloc]);
-    //         DM_XC_minus_DMtest += test;
-    //         if( test > 1e-16 )
-    //         {
-    //             std::cout << "\nik, iloc, minus[ik][iloc]: " << ik << " " << iloc << " " << test << std::endl; 
-    //         }
-    //     }
-    // }
-    // std::cout << "\nsum of DM_XC - DM in ABACUS: " << DM_XC_minus_DMtest << std::endl;
+    // compare DM_XC and DM get in update_charge(or ABACUS)
+    std::cout << "\n\ntest DM_XC - DM in ABACUS: \n" << std::endl;
+    double DM_XC_minus_DMtest = 0.0;
+    for(int ik=0; ik<nk_total; ++ik)
+    {
+        TK* dmk_pointer = DM_test.get_DMK_pointer(ik);
+        for(int iloc=0; iloc<ParaV->nloc; ++iloc)
+        {
+            double test = std::abs(DM_XC[ik][iloc] - dmk_pointer[iloc]);
+            DM_XC_minus_DMtest += test;
+            if( test > 1e-16 )
+            {
+                std::cout << "\nik, iloc, minus[ik][iloc]: " << ik << " " << iloc << " " << test << std::endl; 
+            }
+        }
+    }
+    std::cout << "\nsum of DM_XC - DM in ABACUS: " << DM_XC_minus_DMtest << std::endl;
 
-    if( XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power" )
+    if( !only_exx_type )
     {
         if( PARAM.inp.gamma_only )
         {
@@ -623,7 +623,6 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &etxc,
                 &vtxc
             );
-            // V_dft_XC->contributeHR();
         }
         else
         {   
@@ -646,7 +645,6 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &etxc,
                 &vtxc
             );
-            // V_dft_XC->contributeHR();
         }
         V_dft_XC->contributeHR();
     }
@@ -670,8 +668,16 @@ void RDMFT<TK, TR>::cal_V_XC()
                 hsk_exx_XC,
                 HR_exx_XC,
                 *kv,
-                &Vxc_fromRI_d->Hexxs
+                &Vxc_fromRI_d->Hexxs,
+                nullptr,
+                hamilt::Add_Hexx_Type::k
             );
+            // V_exx_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
+            //     hsk_exx_XC,
+            //     HR_exx_XC,
+            //     *kv
+            // );
+
         }
         else
         {
@@ -691,10 +697,12 @@ void RDMFT<TK, TR>::cal_V_XC()
                 HR_exx_XC,
                 *kv,
                 nullptr,
-                &Vxc_fromRI_c->Hexxs
+                &Vxc_fromRI_c->Hexxs,
+                hamilt::Add_Hexx_Type::k
             );
         }
-        V_exx_XC->contributeHR();
+        // use hamilt::Add_Hexx_Type::k, not R, contributeHR() should be skipped
+        // V_exx_XC->contributeHR();
     }
 }
 
@@ -740,7 +748,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
             for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_exx_XC->get_hk()[iloc];
         }
 
-        if( XC_func_rdmft != "hf" && XC_func_rdmft != "muller" && XC_func_rdmft != "power" )
+        if( !only_exx_type )
         {
             // set_zero_vector(HK_dft_XC);
             hsk_dft_XC->set_zero_hk();

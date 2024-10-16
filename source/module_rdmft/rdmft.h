@@ -182,6 +182,7 @@ class RDMFT
     double Etotal = 0.0;
     double etxc = 0.0;
     double vtxc = 0.0;
+    bool only_exx_type = false;
     const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
 
     void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
