@@ -456,7 +456,8 @@ void OperatorMock<double>::act(
     const int npol,
     const double* tmpsi_in,
     double* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    
@@ -489,6 +490,7 @@ void OperatorMock<std::complex<double>>::act(
     const int npol,
     const std::complex<double>* tmpsi_in,
     std::complex<double>* tmhpsi,
+    const bool is_first_node,
     const int ngk_ik)const
 {
     int nprocs = 1, mypnum = 0;
@@ -522,6 +524,7 @@ void OperatorMock<std::complex<float>>::act(
     const int npol,
     const std::complex<float>* tmpsi_in,
     std::complex<float>* tmhpsi,
+    const bool is_first_node,
     const int ngk_ik)const
 {
     int nprocs = 1, mypnum = 0;

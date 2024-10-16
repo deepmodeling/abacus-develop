@@ -62,7 +62,8 @@ class Operator
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk_ik = 0)const {};
+        const int ngk_ik = 0,
+        const bool is_first_node = false)const {};
 
     /// developer-friendly interfaces for act() function
     /// interface type 2: input and change the Psi-type HPsi

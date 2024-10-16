@@ -41,7 +41,8 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk_ik = 0)const override;
+        const int ngk_ik = 0,
+        const bool is_first_node = false)const override;
 
     // denghui added for copy constructor at 20221105
     const Real *get_veff() const {return this->veff;}

@@ -23,17 +23,16 @@ HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
 template <typename T, typename Device>
 void HamiltSdftPW<T, Device>::hPsi(const T* psi_in, T* hpsi, const int& nbands)
 {
-    auto call_act = [&, this](const Operator<T, Device>* op) -> void {
-        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()]);
+    auto call_act = [&, this](const Operator<T, Device>* op, const bool& is_first_node) -> void {
+        op->act(nbands, this->npwk_max, this->npol, psi_in, hpsi, this->ngk[op->get_ik()],  is_first_node);
     };
 
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi");
-    ModuleBase::GlobalFunc::ZEROS(hpsi, nbands * this->npwk_max * this->npol);
-    call_act(this->ops);
+    call_act(this->ops, true); // first node
     Operator<T, Device>* node((Operator<T, Device>*)this->ops->next_op);
     while (node != nullptr)
     {
-        call_act(node);
+        call_act(node, false); // other nodes
         node = (Operator<T, Device>*)(node->next_op);
     }
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi");

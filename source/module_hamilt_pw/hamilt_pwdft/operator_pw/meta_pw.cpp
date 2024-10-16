@@ -43,7 +43,8 @@ void Meta<OperatorPW<T, Device>>::act(
     const int npol,
     const T* tmpsi_in,
     T* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     if (XC_Functional::get_func_type() != 3)
     {
