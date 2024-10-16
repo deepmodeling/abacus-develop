@@ -97,7 +97,7 @@ void EleCond::KG(const int& smear_type, const double& fwhmin, const double& wcut
 void EleCond::jjresponse_ks(const int ik, const int nt, const double dt, const double decut, ModuleBase::matrix& wg,
                             hamilt::Velocity& velop, double* ct11, double* ct12, double* ct22)
 {
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
     if (wg(ik, 0) - wg(ik, nbands - 1) < 1e-8 || nbands == 0) {
         return;
 }

@@ -1,5 +1,6 @@
 // Refactored according to diago_scalapack
 // This code will be futher refactored to remove the dependency of psi and hamilt
+#include "module_parameter/parameter.h"
 
 #include "diago_lapack.h"
 
@@ -24,7 +25,7 @@ void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>&
 
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     // Diag
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
@@ -45,7 +46,7 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     int size = eigen.size();
     for (int i = 0; i < size; i++)
@@ -72,7 +73,7 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
 
     // Prepare caculate parameters
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, info = 0;
     double vl = 0, vu = 0;
     const double abstol = 0;
@@ -81,14 +82,14 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
 
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(GlobalV::NLOCAL, 0);
+    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
 
     // Original Lapack caculate, obelsete
     /*dsygvx_(&itype,
             &jobz,
             &range,
             &uplo,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             h_tmp.c,
             &ncol,
             s_tmp.c,
@@ -121,11 +122,11 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
             &jobz,
             &range,
             &uplo,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             h_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             s_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             &vl,
             &vu,
             &il,
@@ -143,7 +144,7 @@ int DiagoLapack<T>::dsygvx_once(const int ncol,
 
     double *ev = new double[ncol * ncol];
 
-    dsygv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, &info);
+    dsygv_(&itype, &jobz, &uplo, &PARAM.globalv.nlocal, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, &info);
 
     return info;
 }
@@ -163,7 +164,7 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
     memcpy(s_tmp.c, s_mat, sizeof(std::complex<double>) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = GlobalV::NBANDS, one = 1;
+    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
     int M = 0, lrwork = -1, info = 0;
     const double abstol = 0;
 
@@ -173,7 +174,7 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
     std::vector<std::complex<double>> work(1, 0);
     double *rwork = new double[3 * ncol - 2];
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(GlobalV::NLOCAL, 0);
+    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
 
     // Original Lapack caculate, obelsete
     /*
@@ -181,11 +182,11 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
             &jobz,
             &range,
             &uplo,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             h_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             s_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             &vl,
             &vu,
             &il,
@@ -219,11 +220,11 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
             &jobz,
             &range,
             &uplo,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             h_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             s_tmp.c,
-            &GlobalV::NLOCAL,
+            &PARAM.globalv.nlocal,
             &vl,
             &vu,
             &il,
@@ -244,7 +245,7 @@ int DiagoLapack<T>::zhegvx_once(const int ncol,
 
     std::complex<double> *ev = new std::complex<double>[ncol * ncol];
 
-    zhegv_(&itype, &jobz, &uplo, &GlobalV::NLOCAL, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, rwork, &info);
+    zhegv_(&itype, &jobz, &uplo, &PARAM.globalv.nlocal, h_tmp.c, &ncol, s_tmp.c, &ncol, ekb, ev, &lwork, rwork, &info);
 
     return info;
 }

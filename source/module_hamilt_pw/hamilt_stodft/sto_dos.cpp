@@ -108,7 +108,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         const int nchipk = this->p_stowf->nchip[ik];
 
         std::complex<double>* pchi;
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             p_stowf->chiortho->fix_k(ik);
             pchi = p_stowf->chiortho->get_pointer();
@@ -195,12 +195,12 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             che.calcoef_real(nroot_gauss);
             tmpsto = vTMv(che.coef_real, spolyv.data(), dos_nche);
         }
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             for (int ik = 0; ik < nk; ++ik)
             {
                 double* en = &(this->p_elec->ekb(ik, 0));
-                for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+                for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
                 {
                     tmpks += this->stofunc.gauss(en[ib]) * p_kv->wk[ik] / 2;
                 }

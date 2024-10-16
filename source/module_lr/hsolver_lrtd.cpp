@@ -95,9 +95,10 @@ namespace LR
                         pHamilt->ops->hPsi(info);
                     };
                 auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
-                               const int nrow, const int npw,  const int nbands){
-                    // sPsi determines S=I or not by GlobalV::use_uspp inside
-                    pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                               const int ld_psi, const int nbands)
+                {
+                    // sPsi determines S=I or not by PARAM.globalv.use_uspp inside
+                    pHamilt->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
                 };
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
@@ -145,12 +146,13 @@ namespace LR
                             nband_in);
                     };
 
+                std::vector<double> ethr_band(psi_k1_dav.get_nbands(), this->diag_ethr);
                 hsolver::DiagoIterAssist<T, Device>::avg_iter
                     += static_cast<double>(dav_subspace.diag(
                         hpsi_func, psi_k1_dav.get_pointer(),
                         psi_k1_dav.get_nbasis(),
                         eigenvalue.data(),
-                        std::vector<bool>(psi_k1_dav.get_nbands(), true),
+                        ethr_band.data(),
                         false /*scf*/));
             }
             else {throw std::runtime_error("HSolverLR::solve: method not implemented");}

@@ -93,9 +93,9 @@ cmake -B build -DUSE_CUDA=1 -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nv
 
 ## Build math library from source
 
-> Note: This flag is **enabled by default**. It will get better performance than the standard implementation on `gcc` and `clang`. But it **will be disabled** when using `Intel Compiler` since the math functions will get wrong results and the performance is also unexpectly poor.
+> Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.
 
-To build math functions from source code, instead of using c++ standard implementation, define `USE_ABACUS_LIBM` flag.
+This flag is disabled by default. To build math functions from source code, define `USE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
 
 Currently supported math functions:
  `sin`, `cos`, `sincos`, `exp`, `cexp`

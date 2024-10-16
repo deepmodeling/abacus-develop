@@ -10,6 +10,7 @@
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 
 #include <map>
 #include <unordered_map>

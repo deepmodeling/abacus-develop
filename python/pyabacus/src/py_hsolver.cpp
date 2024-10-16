@@ -59,8 +59,8 @@ void bind_hsolver(py::module& m)
                 The maximum number of iterations.
             need_subspace : bool
                 Whether to use the subspace function.
-            is_occupied : list[bool]
-                A list of boolean values indicating whether the band is occupied,
+            diag_ethr : list[float]
+                A list of float values indicating the thresholds of each band for the diagonalization,
                 meaning that the corresponding eigenvalue is to be calculated.
             scf_type : bool
                 Whether to use the SCF type, which is used to determine the
@@ -76,7 +76,7 @@ void bind_hsolver(py::module& m)
         "tol"_a, 
         "max_iter"_a, 
         "need_subspace"_a, 
-        "is_occupied"_a, 
+        "diag_ethr"_a, 
         "scf_type"_a, 
         "comm_info"_a)
         .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi, R"pbdoc(

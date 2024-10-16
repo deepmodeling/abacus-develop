@@ -29,11 +29,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
                  double* pvpR,
                  const bool is_gamma_only)
 {
-#ifdef __MPI
-    const int dev_id = base_device::information::set_device_by_rank();
-#else
-    const int dev_id = 0;
-#endif
+    checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
     const int nbzp = gridt.nbzp;
     const int num_streams = gridt.nstreams;
@@ -81,7 +77,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
         {
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
-            checkCuda(cudaSetDevice(dev_id));
+            checkCuda(cudaSetDevice(gridt.dev_id));
             const int sid = omp_get_thread_num();
 
             int max_m = 0;

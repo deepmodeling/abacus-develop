@@ -39,7 +39,6 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
-    - [diago\_full\_acc](#diago_full_acc)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
@@ -779,12 +778,6 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
 - **Default**: 4
 
-### diago_full_acc
-
-- **Type**: bool
-- **Description**: Only useful when you use `ks_solver = dav_subspace`. If `TRUE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. Otherwise the empty states are diagonalized using a larger threshold (10-5) (this should not affect total energy, forces, and other ground-state properties).
-- **Default**: false
-
 ### erf_ecut
 
 - **Type**: Real
@@ -925,7 +918,7 @@ calculations.
   - **cg**: cg method.
   - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
-  - **dav_subspace**: subspace Davidson algorithm
+  - **dav_subspace**: Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
   For atomic orbitals basis,
 

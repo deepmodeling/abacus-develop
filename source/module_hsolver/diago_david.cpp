@@ -198,7 +198,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         else
         {
             // phm_in->sPsi(psi_in + m*ld_psi, &this->spsi[m * dim], dim, dim, 1);
-            spsi_func(psi_in + m*ld_psi,&this->spsi[m*dim],dim,dim,1);
+            spsi_func(psi_in + m*ld_psi,&this->spsi[m*dim],dim, 1);
         }
     }
     // begin SchmidtOrth
@@ -223,7 +223,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         else
         {
             // phm_in->sPsi(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
-            spsi_func(basis + dim*m, &this->spsi[m * dim], dim, dim, 1);
+            spsi_func(basis + dim*m, &this->spsi[m * dim], dim, 1);
         }
     }
 
@@ -554,7 +554,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         else
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
         }
     }
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
@@ -595,7 +595,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         else
         {
             // phm_in->sPsi(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
-            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, dim, 1);
+            spsi_func(basis + dim*(nbase + m), &spsi[(nbase + m) * dim], dim, 1);
         }
     }
     // calculate H|psi> for not convergence bands

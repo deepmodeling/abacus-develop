@@ -568,12 +568,9 @@ OBJS_LCAO=evolve_elec.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
 	  FORCE_k.o\
-	  fvl_dphi_gamma.o\
-	  fvl_dphi_k.o\
-	  fedm_gamma.o\
-	  fedm_k.o\
-	  ftvnl_dphi_gamma.o\
-	  ftvnl_dphi_k.o\
+      stress_tools.o\
+      edm.o\
+      pulay_force_stress_center2.o\
 	  fvnl_dbeta_gamma.o\
 	  fvnl_dbeta_k.o\
 	  grid_init.o\

@@ -13,7 +13,7 @@
 namespace hsolver {
 
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class DiagoCG final : public DiagH<T, Device>
+class DiagoCG final
 {
     // private: accessibility within class is private by default
     // Note GetTypeReal<T>::type will
@@ -36,11 +36,11 @@ class DiagoCG final : public DiagH<T, Device>
         const int& pw_diag_nmax,
         const int& nproc_in_pool);
     
-    ~DiagoCG() override;
+    ~DiagoCG();
 
     // virtual void init(){};
     // refactor hpsi_info
-    // this is the override function diag() for CG method
+    // this is the diag() function for CG method
     void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
 
   private:

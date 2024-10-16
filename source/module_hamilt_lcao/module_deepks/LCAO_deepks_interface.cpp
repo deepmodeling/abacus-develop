@@ -54,7 +54,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         if (PARAM.inp.deepks_bandgap)
         {
-            const int nocc = GlobalV::nelec / 2;
+            const int nocc = PARAM.inp.nelec / 2;
             ModuleBase::matrix deepks_bands;
             deepks_bands.create(nks, 1);
             for (int iks = 0; iks < nks; ++iks)
@@ -72,7 +72,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
             if (PARAM.inp.deepks_scf)
             {
                 ModuleBase::matrix wg_hl;
-                wg_hl.create(nspin, GlobalV::NBANDS);
+                wg_hl.create(nspin, PARAM.inp.nbands);
 
                 std::vector<std::vector<ModuleBase::matrix>> dm_bandgap_gamma;
 
@@ -275,7 +275,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
         if (PARAM.inp.deepks_bandgap)
         {
-            int nocc = GlobalV::nelec / 2;
+            int nocc = PARAM.inp.nelec / 2;
             ModuleBase::matrix deepks_bands;
             deepks_bands.create(nks, 1);
             for (int iks = 0; iks < nks; iks++)
@@ -291,9 +291,9 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
             if (PARAM.inp.deepks_scf)
             {
-                int nocc = GlobalV::nelec / 2;
+                int nocc = PARAM.inp.nelec / 2;
                 ModuleBase::matrix wg_hl;
-                wg_hl.create(nks, GlobalV::NBANDS);
+                wg_hl.create(nks, PARAM.inp.nbands);
                 std::vector<std::vector<ModuleBase::ComplexMatrix>> dm_bandgap_k;
                 dm_bandgap_k.resize(1);
 

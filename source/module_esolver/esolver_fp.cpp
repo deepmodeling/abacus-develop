@@ -17,11 +17,11 @@ namespace ModuleESolver
 ESolver_FP::ESolver_FP()
 {
     // pw_rho = new ModuleBase::PW_Basis();
-    pw_rho = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
+    pw_rho = new ModulePW::PW_Basis_Big(PARAM.inp.device, PARAM.inp.precision);
 
     if ( PARAM.globalv.double_grid)
     {
-        pw_rhod = new ModulePW::PW_Basis_Big(PARAM.globalv.device_flag, PARAM.inp.precision);
+        pw_rhod = new ModulePW::PW_Basis_Big(PARAM.inp.device, PARAM.inp.precision);
     }
     else
     {
@@ -119,23 +119,14 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     return;
 }
 
-//------------------------------------------------------------------------------
-//! the 12th function of ESolver_KS: get_conv_elec
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-bool ESolver_FP::get_conv_elec()
-{
-    return this->conv_elec;
-}
-
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 void ESolver_FP::after_scf(const int istep)
 {
     // 0) output convergence information
-    ModuleIO::output_convergence_after_scf(this->conv_elec, this->pelec->f_en.etot);
+    ModuleIO::output_convergence_after_scf(this->conv_esolver, this->pelec->f_en.etot);
 
     // 1) write fermi energy
-    ModuleIO::output_efermi(this->conv_elec, this->pelec->eferm.ef);
+    ModuleIO::output_efermi(this->conv_esolver, this->pelec->eferm.ef);
 
     // 2) update delta rho for charge extrapolation
     CE.update_delta_rho(GlobalC::ucell, &(this->chr), &(this->sf));

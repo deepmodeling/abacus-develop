@@ -128,8 +128,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         if (istep >= 1)
         {
             module_tddft::Evolve_elec::solve_psi(istep,
-                                                 GlobalV::NBANDS,
-                                                 GlobalV::NLOCAL,
+                                                 PARAM.inp.nbands,
+                                                 PARAM.globalv.nlocal,
                                                  this->p_hamilt,
                                                  this->pv,
                                                  this->psi,
@@ -147,8 +147,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
     else if (istep >= 2)
     {
         module_tddft::Evolve_elec::solve_psi(istep,
-                                             GlobalV::NBANDS,
-                                             GlobalV::NLOCAL,
+                                             PARAM.inp.nbands,
+                                             PARAM.globalv.nlocal,
                                              this->p_hamilt,
                                              this->pv,
                                              this->psi,
@@ -189,7 +189,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 std::setprecision(6);
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib)
@@ -233,7 +233,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
 void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
-    if (this->conv_elec)
+    if (this->conv_esolver)
     {
         if (!PARAM.globalv.gamma_only_local)
         {
@@ -256,7 +256,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
                 {
                     ModuleIO::save_mat(istep,
                                        h_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -268,7 +268,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 
                     ModuleIO::save_mat(istep,
                                        s_mat.p,
-                                       GlobalV::NLOCAL,
+                                       PARAM.globalv.nlocal,
                                        bit,
                                        PARAM.inp.out_mat_hs[1],
                                        1,
@@ -282,8 +282,8 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
     }
 
-    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == PARAM.inp.scf_nmax)
-        && (istep % PARAM.inp.out_interval == 0))
+    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao
+        && (this->conv_esolver || iter == PARAM.inp.scf_nmax) && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
                                 this->psi[0],
@@ -295,7 +295,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     // Calculate new potential according to new Charge Density
-    if (!this->conv_elec)
+    if (!this->conv_esolver)
     {
         if (PARAM.inp.nspin == 4)
         {
@@ -312,11 +312,11 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     const int nloc = this->pv.nloc;
     const int ncol_nbands = this->pv.ncol_bands;
     const int nrow = this->pv.nrow;
-    const int nbands = GlobalV::NBANDS;
-    const int nlocal = GlobalV::NLOCAL;
+    const int nbands = PARAM.inp.nbands;
+    const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
-    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
+    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_esolver)
     {
         if (this->psi_laststep == nullptr)
         {
@@ -378,7 +378,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     // print "eigen value" for tddft
-    if (this->conv_elec)
+    if (this->conv_esolver)
     {
         GlobalV::ofs_running << "---------------------------------------------------------------"
                                 "---------------------------------"
@@ -390,7 +390,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      "
                                      << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;
