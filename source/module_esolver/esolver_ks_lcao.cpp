@@ -1339,6 +1339,24 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
     // ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
+    // rdmft, added by jghan, 2024-10-17
+    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    {
+        ModuleBase::matrix occ_number_ks(this->pelec->wg);
+        for(int ik=0; ik < occ_number_ks.nr; ++ik)
+        {
+            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+        } 
+        this->update_elec_rdmft(occ_number_ks, *(this->psi));
+
+        //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
+        ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+        psi::Psi<TK> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+        E_gradient_wfc.zero_out();
+
+        double Etotal_RDMFT = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
+    }
+
     // /******** test RDMFT *********/
 
 

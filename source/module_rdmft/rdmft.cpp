@@ -98,13 +98,18 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // else nk_total = kv->nks;
 
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
-    nbands_total = PARAM.inp.nbands;
+    // nbands_total = PARAM.inp.nbands;
+    nbands_total = GlobalV::NBANDS;
     nspin = PARAM.inp.nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
     // XC_func_rdmft = "power"; // just for test 
     // alpha_power = 0.525;
     std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
+    std::cout << "\n******\nGlobalC::exx_info.info_global.cal_exx: " << GlobalC::exx_info.info_global.cal_exx << "\n******\n" << std::endl;
+    std::cout << "\n******\nPARAM.inp.ab_initio_type: " << PARAM.inp.ab_initio_type << "\n******\n" << std::endl;
+    std::cout << "\n******\nGlobalV::NBANDS: " << GlobalV::NBANDS << "\n******\n" << std::endl;
+    std::cout << "\n******\nPARAM.inp.nbands: " << PARAM.inp.nbands << "\n******\n" << std::endl;
     // XC_func_rdmft = "hf";
     // std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
     // std::cout << "\n\n\n******\nXC-functional in GlobalC::atom: " << GlobalC::ucell.atoms[0].ncpp.xc_func << "\n******\n\n\n" << std::endl;
@@ -253,17 +258,28 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in)
 {
+    std::cout << "\n\n\n******\nrdmft-test-1.0\n******\n\n\n" << std::endl;
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
     wg = (occ_number);
+    std::cout << "\n\n\n******\nrdmft-test-1.1\n******\n\n\n" << std::endl;
+
+    std::cout << "\n***\nnk_total: " << nk_total << "\n***\n" << std::endl;
+    std::cout << "\n***\nnbands_total: " << nbands_total << "\n***\n" << std::endl;
+
+    std::cout << "\n***\nwg.nr: " << wg.nr<< "\n***\n" << std::endl;
+    std::cout << "\n***\nwg.nc: " << wg.nc << "\n***\n" << std::endl;   
+
     for(int ik=0; ik < wg.nr; ++ik)
     {
         for(int inb=0; inb < wg.nc; ++inb)
         {
             wg(ik, inb) *= kv->wk[ik];
+            std::cout << "\n\n\n******\nrdmft-test-1.2\n******\n\n\n" << std::endl;
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
+    std::cout << "\n\n\n******\nrdmft-test-1.3\n******\n\n\n" << std::endl;
 
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
