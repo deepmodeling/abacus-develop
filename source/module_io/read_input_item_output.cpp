@@ -42,12 +42,16 @@ void ReadInput::item_output()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_chg(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
             // assign non-negative values to para.input.out_chg
             std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") ? 1 : para.input.out_chg[0];
+            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                                        ? 1
+                                        : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -472,7 +476,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.bands_to_print);
         };
@@ -486,10 +490,75 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_pchg");
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_pchg);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_pchg, para.input.out_pchg.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_norm");
+        item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_norm);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_norm, para.input.out_wfc_norm.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_re_im");
+        item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_re_im);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_re_im, para.input.out_wfc_re_im.size(), 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("if_separate_k");
         item.annotation = "specify whether to write the partial charge densities for all k-points to individual files "
                           "or merge them";
         read_sync_bool(input.if_separate_k);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_elf");
+        item.annotation = "> 0 output electron localization function (ELF) for selected electron steps"
+                          ", second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_elf(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) { return std::stoi(s); });
+            // assign non-negative values to para.input.out_elf
+            std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+            }
+        };
+        sync_intvec(input.out_elf, 2, 0);
         this->add_item(item);
     }
 }

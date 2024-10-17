@@ -34,7 +34,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
     if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->rho_data);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
@@ -47,13 +47,13 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
@@ -64,7 +64,7 @@ void ElecStatePW<T, Device>::init_rho_data()
     }
     else {
         this->rho = reinterpret_cast<Real **>(this->charge->rho);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }
@@ -104,11 +104,11 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->add_usrho(psi);
     }
-    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)

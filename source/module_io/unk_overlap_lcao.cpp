@@ -15,7 +15,7 @@ unkOverlap_lcao::~unkOverlap_lcao()
 {
     if (allocate_flag)
     {
-        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+        for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
         {
             delete [] cal_tag[iw];
         }
@@ -88,11 +88,11 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
     this->kpoints_number = nkstot;
     if (allocate_flag)
     {
-        cal_tag = new int*[GlobalV::NLOCAL];
-        for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+        cal_tag = new int*[PARAM.globalv.nlocal];
+        for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
         {
-            cal_tag[iw] = new int[GlobalV::NLOCAL];
-            ModuleBase::GlobalFunc::ZEROS(cal_tag[iw], GlobalV::NLOCAL);
+            cal_tag[iw] = new int[PARAM.globalv.nlocal];
+            ModuleBase::GlobalFunc::ZEROS(cal_tag[iw], PARAM.globalv.nlocal);
         }
     }
 
@@ -101,7 +101,7 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
     int nproc, myrank;
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-    const int total_term = GlobalV::NLOCAL * GlobalV::NLOCAL;
+    const int total_term = PARAM.globalv.nlocal * PARAM.globalv.nlocal;
     const int remain = total_term % nproc;
     int local_term = total_term / nproc;
     if (myrank < remain)
@@ -125,12 +125,12 @@ void unkOverlap_lcao::init(const Grid_Technique& gt, const int nkstot, const LCA
     }
 #else
     int start = 0;
-    int local_term = GlobalV::NLOCAL * GlobalV::NLOCAL;
+    int local_term = PARAM.globalv.nlocal * PARAM.globalv.nlocal;
 #endif
     int count = -1;
-    for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+    for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
     {
-        for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+        for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
         {
             count++;
             if (count >= start && count < (start + local_term))
@@ -361,10 +361,10 @@ void unkOverlap_lcao::cal_R_number()
 {
     // The number of overlaps between atomic orbitals 1 and atomic orbitals 2,
     // or the number of R, is empty when there is no overlap
-    orb1_orb2_R.resize(GlobalV::NLOCAL);
-    for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+    orb1_orb2_R.resize(PARAM.globalv.nlocal);
+    for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
     {
-        orb1_orb2_R[iw].resize(GlobalV::NLOCAL);
+        orb1_orb2_R[iw].resize(PARAM.globalv.nlocal);
     }
 
     ModuleBase::Vector3<double> tau1, tau2, dtau;
@@ -419,19 +419,19 @@ void unkOverlap_lcao::cal_R_number()
 void unkOverlap_lcao::cal_orb_overlap()
 {
     // std::cout << "the cal_orb_overlap is start" << std::endl;
-    psi_psi.resize(GlobalV::NLOCAL);
-    psi_r_psi.resize(GlobalV::NLOCAL);
-    for (int iw = 0; iw < GlobalV::NLOCAL; iw++)
+    psi_psi.resize(PARAM.globalv.nlocal);
+    psi_r_psi.resize(PARAM.globalv.nlocal);
+    for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
     {
-        psi_psi[iw].resize(GlobalV::NLOCAL);
-        psi_r_psi[iw].resize(GlobalV::NLOCAL);
+        psi_psi[iw].resize(PARAM.globalv.nlocal);
+        psi_r_psi[iw].resize(PARAM.globalv.nlocal);
     }
 
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
 
-    for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+    for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
     {
-        for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+        for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
         {
             // if ( !pv.in_this_processor(iw1,iw2) ) continue;
 
@@ -501,9 +501,9 @@ void unkOverlap_lcao::prepare_midmatrix_pblas(const int ik_L,
     // ModuleBase::Vector3<double> dk = kv.kvec_c[ik_R] - kv.kvec_c[ik_L];
     midmatrix = new std::complex<double>[pv.nloc];
     ModuleBase::GlobalFunc::ZEROS(midmatrix, pv.nloc);
-    for (int iw_row = 0; iw_row < GlobalV::NLOCAL; iw_row++) // global
+    for (int iw_row = 0; iw_row < PARAM.globalv.nlocal; iw_row++) // global
     {
-        for (int iw_col = 0; iw_col < GlobalV::NLOCAL; iw_col++) // global
+        for (int iw_col = 0; iw_col < PARAM.globalv.nlocal; iw_col++) // global
         {
             int ir = pv.global2local_row(iw_row); // local
             int ic = pv.global2local_col(iw_col); // local
@@ -546,7 +546,7 @@ std::complex<double> unkOverlap_lcao::det_berryphase(const int ik_L,
     char transa = 'C';
     char transb = 'N';
     int occBands = occ_bands;
-    int nlocal = GlobalV::NLOCAL;
+    int nlocal = PARAM.globalv.nlocal;
     std::complex<double> alpha = {1.0, 0.0}, beta = {0.0, 0.0};
     int one = 1;
 #ifdef __MPI

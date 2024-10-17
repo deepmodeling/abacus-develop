@@ -48,7 +48,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
 {
     // preconditions
     GlobalV::KPAR = 1;
-    GlobalV::NBANDS = 4;
+    PARAM.input.nbands = 4;
     PARAM.input.nspin = 1;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
@@ -71,8 +71,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
     kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
     // std::cout<<"nks "<<kv->get_nks()<<std::endl;
-    ekb.create(kv->get_nks(), GlobalV::NBANDS);
-    wg.create(kv->get_nks(), GlobalV::NBANDS);
+    ekb.create(kv->get_nks(), PARAM.input.nbands);
+    wg.create(kv->get_nks(), PARAM.input.nbands);
     ekb.fill_out(0.15);
     wg.fill_out(0.0);
     kv->kvec_d.resize(kv->get_nkstot());
@@ -99,7 +99,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
 {
     // preconditions
     GlobalV::KPAR = 1;
-    GlobalV::NBANDS = 4;
+    PARAM.input.nbands = 4;
     PARAM.input.nspin = 2;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
@@ -122,8 +122,8 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
     kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
     // std::cout<<"nks "<<kv->get_nks()<<std::endl;
-    ekb.create(kv->get_nks(), GlobalV::NBANDS);
-    wg.create(kv->get_nks(), GlobalV::NBANDS);
+    ekb.create(kv->get_nks(), PARAM.input.nbands);
+    wg.create(kv->get_nks(), PARAM.input.nbands);
     ekb.fill_out(0.15);
     wg.fill_out(0.0);
     kv->kvec_d.resize(kv->get_nkstot());

@@ -2,6 +2,7 @@
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "module_base/module_device/device.h"
 
 #include <fstream>
 #include <unistd.h>
@@ -443,20 +444,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("diago_full_acc");
-        item.annotation = "all the empty states are diagonalized";
-        /**
-        * @brief diago_full_acc
-        * If .TRUE. all the empty states are diagonalized at the same level of
-        * accuracy of the occupied ones. Otherwise the empty states are
-        * diagonalized using a larger threshold (this should not affect total
-        * energy, forces, and other ground-state properties).
-        *
-        */
-        read_sync_bool(input.diago_full_acc);
-        this->add_item(item);
-    }
-    {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
@@ -645,10 +632,6 @@ void ReadInput::item_system()
             {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
             }
-            else
-            {
-                para.input.read_file_dir = para.input.read_file_dir;
-            }
             para.input.read_file_dir = to_dir(para.input.read_file_dir);
         };
         this->add_item(item);
@@ -756,6 +739,10 @@ void ReadInput::item_system()
         Input_Item item("device");
         item.annotation = "the computing device for ABACUS";
         read_sync_string(input.device);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            para.input.device=base_device::information::get_device_flag(
+                                para.inp.device, para.inp.basis_type);
+        };
         this->add_item(item);
     }
     {

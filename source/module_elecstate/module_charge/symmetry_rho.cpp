@@ -33,7 +33,7 @@ void Symmetry_rho::begin(const int& spin_now,
         psymmg(CHR.rhog[spin_now], rho_basis, symm); // need to modify
         rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
 
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5 || CHR.cal_elf)
         {
             // Use std::vector to manage kin_g instead of raw pointer
             std::vector<std::complex<double>> kin_g(CHR.ngmc);

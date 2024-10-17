@@ -132,7 +132,7 @@ void Charge::rho_mpi()
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         reduce_diff_pools(this->rho[is]);
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
         {
             reduce_diff_pools(this->kin_r[is]);
         }

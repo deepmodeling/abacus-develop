@@ -53,6 +53,7 @@ AddTest(
   LIBS parameter  ${math_libs} planewave_serial base device
   SOURCES elecstate_pw_test.cpp
     ../elecstate_pw.cpp
+    ../elecstate_pw_cal_tau.cpp
     ../elecstate.cpp
     ../occupy.cpp
     ../../module_psi/psi.cpp

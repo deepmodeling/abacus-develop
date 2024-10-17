@@ -1,0 +1,44 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                  autotest
+pseudo_dir              ../../../tests/PP_ORB
+orbital_dir                 ../../../tests/PP_ORB
+calculation             scf
+nbands                6
+symmetry               	-1
+
+#Parameters (2.Iteration)
+ecutwfc                10
+scf_thr                     1e-2
+scf_nmax                   20
+exx_hybrid_step 1
+
+#Parameters (3.Basis)
+basis_type              lcao 
+gamma_only              1
+
+#Parameters (4.Smearing)
+smearing_method                gaussian
+smearing_sigma                   0.02
+
+#Parameters (5.Mixing)
+mixing_type             pulay
+mixing_beta             0.4
+mixing_gg0 0
+
+dft_functional hf
+exx_real_number 1
+exx_ccp_rmesh_times 1
+
+lr_nstates 2
+xc_kernel hf
+lr_solver dav
+lr_thr 1e-2
+pw_diag_ndim 2
+
+esolver_type ks-lr
+
+nocc 4
+nvirt 2
+abs_wavelen_range  40 180
+abs_broadening 0.01

@@ -44,10 +44,9 @@ struct Input_para
     double erf_height = 0;              ///< the height of the energy step for reciprocal vectors
     double erf_sigma = 0.1;             ///< the width of the energy step for reciprocal vectors
     int fft_mode = 0;                   ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
-    bool diago_full_acc = false;        ///< all the empty states are diagonalized
     std::string init_wfc = "atomic";    ///< "file","atomic","random"
     bool psi_initializer = false;       ///< whether use psi_initializer to initialize wavefunctions
-    int pw_seed = 1;                    ///< random seed for initializing wave functions qianrui 2021-8-12
+    int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density
     std::string chg_extrap = "default"; ///< xiaohui modify 2015-02-01
@@ -57,8 +56,8 @@ struct Input_para
     std::string stru_file = "STRU";     ///< file contains atomic positions --
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
-    std::string pseudo_dir = "";      ///< directory of pseudopotential
-    std::string orbital_dir = "";     ///< directory of orbital file
+    std::string pseudo_dir = "";        ///< directory of pseudopotential
+    std::string orbital_dir = "";       ///< directory of orbital file
     std::string read_file_dir = "auto"; ///< directory of files for reading
     bool restart_load = false;
     std::string wannier_card = "none";              ///< input card for wannier functions.
@@ -68,7 +67,7 @@ struct Input_para
     std::vector<double> kspacing = {0.0, 0.0, 0.0}; ///< kspacing for k-point generation
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
-    std::string device = "cpu";
+    std::string device = "auto";
     std::string precision = "double";
 
     // ==============   #Parameters (2.Electronic structure) ===========================
@@ -110,13 +109,13 @@ struct Input_para
     bool mixing_dftu = false; ///< whether to mix locale in DFT+U
     bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
-    bool gamma_only = false; ///< for plane wave.
-    int scf_nmax = 100;      ///< number of max elec iter
-    double scf_thr = -1.0;   ///< \sum |rhog_out - rhog_in |^2
+    bool gamma_only = false;   ///< for plane wave.
+    int scf_nmax = 100;        ///< number of max elec iter
+    double scf_thr = -1.0;     ///< \sum |rhog_out - rhog_in |^2
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
-    int scf_thr_type = -1;   ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
-    bool final_scf= false;   ///< whether to do final scf
-    
+    int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
+    bool final_scf = false;    ///< whether to do final scf
+
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
     double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
@@ -331,11 +330,11 @@ struct Input_para
     bool out_mat_hs2 = false;             ///< LiuXh add 2019-07-16, output H(R) matrix and
                                           ///< S(R) matrix in local basis.
     bool out_mat_dh = false;
-    bool out_mat_xc = false; ///< output exchange-correlation matrix in
-                             ///< KS-orbital representation.
-    bool out_eband_terms = false;   ///< output the band energy terms separately
-    bool out_hr_npz = false; ///< output exchange-correlation matrix in
-                             ///< KS-orbital representation.
+    bool out_mat_xc = false;      ///< output exchange-correlation matrix in
+                                  ///< KS-orbital representation.
+    bool out_eband_terms = false; ///< output the band energy terms separately
+    bool out_hr_npz = false;      ///< output exchange-correlation matrix in
+                                  ///< KS-orbital representation.
     bool out_dm_npz = false;
 
     int out_interval = 1;
@@ -354,8 +353,12 @@ struct Input_para
     bool restart_save = false;            ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                     ///< rpa calculation
     int nbands_istate = 5;                ///< number of bands around fermi level for get_pchg calculation.
-    std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated in the get_pchg
+    std::vector<int> bands_to_print = {}; ///< specify the bands to be calculated for partial charge
+    std::vector<int> out_pchg = {};       ///< specify the bands to be calculated for partial charge
+    std::vector<int> out_wfc_norm = {};   ///< specify the bands to be calculated for norm of wfc
+    std::vector<int> out_wfc_re_im = {};  ///< specify the bands to be calculated for real and imaginary parts of wfc
     bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3};    ///< output the electron localization function (ELF). 0: no; 1: yes
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;
@@ -466,7 +469,7 @@ struct Input_para
     double exx_mixing_beta = 1.0;               ///< mixing_beta for outer-loop when exx_separate_loop=1
     double exx_lambda = 0.3;                    ///< used to compensate for divergence points at G=0 in the
                                                 ///< evaluation of Fock exchange using lcao_in_pw method
-    std::string exx_real_number = "0";          ///< exx calculated in real or complex
+    std::string exx_real_number = "default";          ///< exx calculated in real or complex
     double exx_pca_threshold = 0.0001;          ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;            ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;               ///< threshold to screen C matrix in exx
@@ -481,7 +484,7 @@ struct Input_para
                                                 ///< inequality
     double exx_cauchy_stress_threshold = 1e-07; ///< threshold to screen exx stress using Cauchy-Schwartz
                                                 ///< inequality
-    std::string exx_ccp_rmesh_times = "1";      ///< how many times larger the radial mesh required for
+    std::string exx_ccp_rmesh_times = "default";      ///< how many times larger the radial mesh required for
                                                 ///< calculating Columb potential is to that of atomic orbitals
     std::string exx_distribute_type = "htime";  ///< distribute type (assuming default as no specific value
                                                 ///< provided)
@@ -560,27 +563,27 @@ struct Input_para
     double pexsi_zero_thr = 1e-10;
 
     // ==============   #Parameters (20.Test) ====================
-    bool out_alllog = false;      ///< output all logs.
-    int nurse = 0;                ///< used for debug.
-    bool t_in_h = true;           ///< calculate the T or not.
-    bool vl_in_h = true;          ///< calculate the vloc or not.
-    bool vnl_in_h = true;         ///< calculate the vnl or not.
-    bool vh_in_h = true;          ///< calculate the hartree potential or not
-    bool vion_in_h = true;        ///< calculate the local ionic potential or not
-                                  ///< //only relevant when vl_in_h = 1
-    bool test_force = false;      ///< test the force.
-    bool test_stress = false;     ///< test the stress.
-    bool test_skip_ewald = false; ///< variables for test only
-    bool test_atom_input = false; ///< variables for test_atom_input only
-    bool test_symmetry = false;   ///< variables for test_lattice only
-    int test_wf = 0;         ///< variables for test_wf only
-    int test_grid = false;  ///< variables for test_grid only
-    bool test_charge = false; ///< variables for test_vloc only
-    bool test_energy = false; ///< variables for test_energy only
-    bool test_gridt = false;  ///< variables for test_gridt only
-    bool test_pseudo_cell = false; ///< variables for test_pseudo_cell only
-    int test_pp = 0;          ///< variables for test_pp only
-    bool test_relax_method = false; ///< variables for test_relax_method only
-    int test_deconstructor = false; ///< variables for test_deconstructor only
+    bool out_alllog = false;         ///< output all logs.
+    int nurse = 0;                   ///< used for debug.
+    bool t_in_h = true;              ///< calculate the T or not.
+    bool vl_in_h = true;             ///< calculate the vloc or not.
+    bool vnl_in_h = true;            ///< calculate the vnl or not.
+    bool vh_in_h = true;             ///< calculate the hartree potential or not
+    bool vion_in_h = true;           ///< calculate the local ionic potential or not
+                                     ///< //only relevant when vl_in_h = 1
+    bool test_force = false;         ///< test the force.
+    bool test_stress = false;        ///< test the stress.
+    bool test_skip_ewald = false;    ///< variables for test only
+    int  test_atom_input = false;    ///< variables for test_atom_input only
+    int  test_symmetry = false;      ///< variables for test_lattice only
+    int  test_wf = 0;                ///< variables for test_wf only
+    int  test_grid = false;          ///< variables for test_grid only
+    int  test_charge = false;        ///< variables for test_vloc only
+    int  test_energy = false;        ///< variables for test_energy only
+    int  test_gridt = false;         ///< variables for test_gridt only
+    int  test_pseudo_cell = false;   ///< variables for test_pseudo_cell only
+    int  test_pp = 0;                ///< variables for test_pp only
+    int  test_relax_method = false;  ///< variables for test_relax_method only
+    int  test_deconstructor = false; ///< variables for test_deconstructor only
 };
 #endif

@@ -14,7 +14,8 @@ namespace LR
     inline void print_eigs(const std::vector<T>& eigs, const std::string& label = "", const double factor = 1.0)
     {
         std::cout << label << std::endl;
-        for (auto& e : eigs)std::cout << e * factor << " ";
+        for (auto& e : eigs) {std::cout << e * factor << " ";
+}
         std::cout << std::endl;
     }
     template<typename T, typename Device>
@@ -84,21 +85,20 @@ namespace LR
                 auto hpsi_func = [pHamilt](
                     T* psi_in,
                     T* hpsi_out,
-                    const int nband_in,
-                    const int nbasis_in,
-                    const int band_index1,
-                    const int band_index2)
+                    const int ld_psi,
+                    const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
-                        psi::Range bands_range(true, 0, band_index1, band_index2);
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, nullptr);
+                        psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         pHamilt->ops->hPsi(info);
                     };
                 auto spsi_func = [pHamilt](const T* psi_in, T* spsi_out,
-                               const int nrow, const int npw,  const int nbands){
-                    // sPsi determines S=I or not by GlobalV::use_uspp inside
-                    pHamilt->sPsi(psi_in, spsi_out, nrow, npw, nbands);
+                               const int ld_psi, const int nbands)
+                {
+                    // sPsi determines S=I or not by PARAM.globalv.use_uspp inside
+                    pHamilt->sPsi(psi_in, spsi_out, ld_psi, ld_psi, nbands);
                 };
 
                 const int& dim = psi_k1_dav.get_nbasis();   //equals to leading dimension here
@@ -118,16 +118,14 @@ namespace LR
                     false, //always do the subspace diag (check the implementation)
                     comm_info);
 
-                std::function<void(T*, T*, const int, const int, const int, const int)> hpsi_func = [pHamilt](
+                auto hpsi_func = [pHamilt](
                     T* psi_in,
                     T* hpsi_out,
-                    const int nband_in,
-                    const int nbasis_in,
-                    const int band_index1,
-                    const int band_index2)
+                    const int ld_psi,
+                    const int nvec)
                     {
-                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nband_in, nbasis_in, nullptr);
-                        psi::Range bands_range(true, 0, band_index1, band_index2);
+                        auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, nullptr);
+                        psi::Range bands_range(true, 0, 0, nvec-1);
                         using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
                         hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
                         pHamilt->ops->hPsi(info);
@@ -148,12 +146,13 @@ namespace LR
                             nband_in);
                     };
 
+                std::vector<double> ethr_band(psi_k1_dav.get_nbands(), this->diag_ethr);
                 hsolver::DiagoIterAssist<T, Device>::avg_iter
                     += static_cast<double>(dav_subspace.diag(
                         hpsi_func, psi_k1_dav.get_pointer(),
                         psi_k1_dav.get_nbasis(),
                         eigenvalue.data(),
-                        std::vector<bool>(psi_k1_dav.get_nbands(), true),
+                        ethr_band.data(),
                         false /*scf*/));
             }
             else {throw std::runtime_error("HSolverLR::solve: method not implemented");}

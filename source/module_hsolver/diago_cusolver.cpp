@@ -1,5 +1,6 @@
 #include "diago_cusolver.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
 #include "module_base/scalapack_connector.h"
@@ -140,7 +141,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 #endif
 
     // Allocate memory for eigenvalues
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     // Start the timer for the cusolver operation
     ModuleBase::timer::tick("DiagoCusolver", "cusolver");
@@ -170,7 +171,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
         MPI_Barrier(MPI_COMM_WORLD);
 
         // broadcast eigenvalues to all processes
-        MPI_Bcast(eigen.data(), GlobalV::NBANDS, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
+        MPI_Bcast(eigen.data(), PARAM.inp.nbands, MPI_DOUBLE, root_proc, MPI_COMM_WORLD);
 
         // distribute psi to all processes
         distributePsi(this->ParaV->desc_wfc, psi.get_pointer(), psi_g.data());
@@ -194,7 +195,7 @@ void DiagoCusolver<T>::diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* e
 
     // Copy the eigenvalues to the output arrays
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 // Explicit instantiation of the DiagoCusolver class for real and complex numbers

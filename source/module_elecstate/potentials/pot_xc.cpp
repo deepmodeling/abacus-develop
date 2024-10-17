@@ -3,6 +3,10 @@
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
+#ifdef USE_LIBXC
+#include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+#endif
+
 namespace elecstate
 {
 
@@ -20,7 +24,7 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     {
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc_meta(nrxx_current, ucell->omega, ucell->tpiba, chg);
+            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

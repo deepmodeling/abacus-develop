@@ -39,7 +39,6 @@
     - [pw\_diag\_thr](#pw_diag_thr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
-    - [diago\_full\_acc](#diago_full_acc)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
@@ -161,6 +160,7 @@
     - [nbands\_istate](#nbands_istate)
     - [bands\_to\_print](#bands_to_print)
     - [if\_separate\_k](#if_separate_k)
+    - [out\_elf](#out_elf)
   - [Density of states](#density-of-states)
     - [dos\_edelta\_ev](#dos_edelta_ev)
     - [dos\_sigma](#dos_sigma)
@@ -778,12 +778,6 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
 - **Default**: 4
 
-### diago_full_acc
-
-- **Type**: bool
-- **Description**: Only useful when you use `ks_solver = dav_subspace`. If `TRUE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. Otherwise the empty states are diagonalized using a larger threshold (10-5) (this should not affect total energy, forces, and other ground-state properties).
-- **Default**: false
-
 ### erf_ecut
 
 - **Type**: Real
@@ -924,7 +918,7 @@ calculations.
   - **cg**: cg method.
   - **bpcg**: bpcg method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - **dav**: the Davidson algorithm.
-  - **dav_subspace**: subspace Davidson algorithm
+  - **dav_subspace**: Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
   For atomic orbitals basis,
 
@@ -932,6 +926,8 @@ calculations.
   - **genelpa**: This method should be used if you choose localized orbitals.
   - **scalapack_gvx**: Scalapack can also be used for localized orbitals.
   - **cusolver**: This method needs building with CUDA and at least one gpu is available.
+  - **cusolvermp**: This method supports multi-GPU acceleration and needs building with CUDA。 Note that when using cusolvermp, you should set the number of MPI processes to be equal to the number of GPUs.
+  - **elpa**: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will be stopped with an error message:
 
@@ -940,7 +936,13 @@ calculations.
   ```
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**: cg (plane-wave basis), or genelpa (localized atomic orbital basis, if compiling option `USE_ELPA` has been set),lapack (localized atomic orbital basis, if compiling option `ENABLE_MPI` has not been set), scalapack_gvx, (localized atomic orbital basis, if compiling option `USE_ELPA` has not been set and if compiling option `ENABLE_MPI` has been set)
+- **Default**: 
+  - **PW basis**: cg.
+  - **LCAO basis**:
+    - genelpa (if compiling option `USE_ELPA` has been set)
+    - lapack (if compiling option `ENABLE_MPI` has not been set)
+    - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+    - cusolver (if compiling option `USE_CUDA` has been set)
 
 ### nbands
 
@@ -1521,7 +1523,7 @@ These variables are used to control the output of properties.
 - **Type**: Integer \[Integer\](optional)
 - **Description**: 
   The first integer controls whether to output the charge density on real space grids:
-  - 1. Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+  - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
     - nspin = 1: SPIN1_CHG.cube;
     - nspin = 2: SPIN1_CHG.cube, and SPIN2_CHG.cube;
     - nspin = 4: SPIN1_CHG.cube, SPIN2_CHG.cube, SPIN3_CHG.cube, and SPIN4_CHG.cube.
@@ -1800,6 +1802,23 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 - **Availability**: Only for LCAO, used only when `calculation = get_pchg` and `gamma_only` is turned off.
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. **Warning**: Enabling symmetry may produce incorrect results due to incorrect k-point weights. Therefore, when calculating partial charge densities, it is strongly recommended to set `symmetry = -1`.
 - **Default**: false
+
+### out_elf
+
+- **Type**: Integer \[Integer\](optional)
+- **Availability**: Only for Kohn-Sham DFT and Orbital Free DFT.
+- **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as 
+    - nspin = 1:
+      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+    - nspin = 2:
+      - ELF_SPIN1.cube, ELF_SPIN2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+      - ELF.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+
+  The second integer controls the precision of the kinetic energy density output, if not given, will use `3` as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use `10`.
+
+  ---
+  In molecular dynamics calculations, the output frequency is controlled by [out_interval](#out_interval).
+- **Default**: 0 3
 
 [back to top](#full-list-of-input-keywords)
 

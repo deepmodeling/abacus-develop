@@ -22,9 +22,9 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     this->e_delta_band = 0;
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
         {
             const int mu = pv->global2local_row(j);
             const int nu = pv->global2local_col(i);
@@ -54,9 +54,9 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
 	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
     std::complex<double> e_delta_band_k=std::complex<double>(0.0,0.0);
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
         {
             const int mu = pv->global2local_row(j);
             const int nu = pv->global2local_col(i);

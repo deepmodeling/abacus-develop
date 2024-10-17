@@ -16,3 +16,5 @@ scf_nmax			100
 basis_type		pw
 
 out_wfc_pw 1
+
+pw_seed 1

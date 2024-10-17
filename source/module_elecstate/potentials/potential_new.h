@@ -169,6 +169,14 @@ class Potential : public PotBase
         return this->v_effective_fixed.data();
     }
 
+
+    /// @brief get the value of vloc at G=0;
+    /// @return vl(0)
+    double get_vl_of_0() const
+    {
+        return this->vl_of_0;
+    }
+
   private:
     void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
@@ -195,6 +203,8 @@ class Potential : public PotBase
     // gather etxc and vtxc in Potential, will be used in ESolver
     double* etxc_ = nullptr;
     double* vtxc_ = nullptr;
+
+    double vl_of_0 = 0.0;
 
     std::vector<PotBase*> components;
 

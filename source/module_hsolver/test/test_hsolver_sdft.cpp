@@ -146,7 +146,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
                                                            "pw",
                                                            "cg",
                                                            false,
-                                                           GlobalV::use_uspp,
+                                                           PARAM.sys.use_uspp,
                                                            PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
@@ -170,13 +170,14 @@ TEST_F(TestHSolverPW_SDFT, solve)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;
     stowf.nchi = 0;
     stowf.nchip_max = 0;
 	psi_test_cd.resize(1, 2, 3);
-	GlobalV::nelec = 1.0;
+	PARAM.input.nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     int istep = 0;
     int iter = 0;
@@ -213,6 +214,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;
@@ -221,7 +223,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     psi_test_no.nk = 2;
     psi_test_no.nbands = 0;
     psi_test_no.nbasis = 0;
-	GlobalV::nelec = 1.0;
+	PARAM.input.nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     PARAM.input.nspin = 1;
     elecstate_test.charge = new Charge;

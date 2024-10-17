@@ -24,7 +24,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 {
     T* line = nullptr;
     std::vector<int> indptr;
-    indptr.reserve(GlobalV::NLOCAL + 1);
+    indptr.reserve(PARAM.globalv.nlocal + 1);
     indptr.push_back(0);
 
     std::stringstream tem1;
@@ -44,10 +44,10 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         }
     }
 
-    line = new T[GlobalV::NLOCAL];
-    for(int row = 0; row < GlobalV::NLOCAL; ++row)
+    line = new T[PARAM.globalv.nlocal];
+    for(int row = 0; row < PARAM.globalv.nlocal; ++row)
     {
-        ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
+        ModuleBase::GlobalFunc::ZEROS(line, PARAM.globalv.nlocal);
 
         if (!reduce || pv.global2local_row(row) >= 0)
         {
@@ -61,12 +61,13 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (reduce)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (reduce) {Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+}
 
         if (!reduce || GlobalV::DRANK == 0)
         {
             int nonzeros_count = 0;
-            for (int col = 0; col < GlobalV::NLOCAL; ++col)
+            for (int col = 0; col < PARAM.globalv.nlocal; ++col)
             {
                 if (std::abs(line[col]) > sparse_threshold)
                 {

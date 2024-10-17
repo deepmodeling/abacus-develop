@@ -114,7 +114,7 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
     MPI_Bcast(&tpiba_in, 1, MPI_DOUBLE, 0, POOL_WORLD);
 #endif
 
-    if (ikstot_in != ikstot + 1 || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != GlobalV::NBANDS)
+    if (ikstot_in != ikstot + 1 || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands)
     {
         std::cout << "ikstot_in = " << ikstot_in << std::endl;
         std::cout << "ikstot = " << ikstot + 1 << std::endl;
@@ -123,10 +123,10 @@ void ModuleIO::read_wfc_pw(const std::string& filename,
         std::cout << "npwtot_in = " << npwtot_in << std::endl;
         std::cout << "npwtot = " << npwtot << std::endl;
         std::cout << "nbands_in = " << nbands_in << std::endl;
-        std::cout << "nbands = " << GlobalV::NBANDS << std::endl;
+        std::cout << "nbands = " << PARAM.inp.nbands << std::endl;
         ModuleBase::WARNING_QUIT(
             "ModuleIO::read_wfc_pw",
-            "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != GlobalV::NBANDS");
+            "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands");
     }
 
     if (kvec[0] != pw_wfc->kvec_c[ik].x || kvec[1] != pw_wfc->kvec_c[ik].y || kvec[2] != pw_wfc->kvec_c[ik].z)
