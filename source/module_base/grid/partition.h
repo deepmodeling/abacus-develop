@@ -7,11 +7,9 @@ namespace Partition {
 enum class Type {
     Becke,
     Stratmann,
-    StratmannMod
 };
 
 extern const double stratmann_a;
-extern const double stratmann_mod_b;
 
 /**
  * @brief Becke's partition weight.
@@ -79,32 +77,6 @@ double w_stratmann(
 
 // Stratmann's piecewise cell function
 double s_stratmann(double mu);
-
-
-/**
- * @brief Becke's partition weight with a modified Stratmann's scheme
- * by Knuth et al.
- *
- * Reference:
- * Knuth, F., Carbogno, C., Atalla, V., Blum, V., & Scheffler, M. (2015).
- * All-electron formalism for total energy strain derivatives and stress
- * tensor components for numeric atom-centered orbitals.
- * Computer Physics Communications, 190, 33-50.
- *
- */
-double w_stratmann_mod(
-    int nR0,
-    const double* drR,
-    const double* dRR,
-    const double* drR_thr,
-    const double* Rcut,
-    int nR,
-    int* iR,
-    int c
-);
-
-double s_stratmann_mod(double mu, double y); // y = || r - R[J] || / Rcut[J]
-
 
 } // end of namespace Partition
 } // end of namespace Grid

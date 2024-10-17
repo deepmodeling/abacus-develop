@@ -8,6 +8,8 @@
 #include <array>
 #include <numeric>
 #include <chrono>
+#include <random>
+#include <algorithm>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -154,7 +156,7 @@ PartitionTest::PartitionTest() {
     std::vector<double> r_rad, w_rad;
     int nrad = 60;
     int Rcut = 7.0;
-    int mult = 4;
+    int mult = 2;
     Grid::Radial::baker(nrad, Rcut, r_rad, w_rad, mult);
 
     // complete grid & weight for one-center integration
@@ -188,6 +190,10 @@ TEST_F(PartitionTest, Becke) {
         size_t nR = param.R.size();
         std::vector<int> iR(nR);
         std::iota(iR.begin(), iR.end(), 0);
+
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(iR.begin(), iR.end(), g);
 
         for (size_t I = 0; I < nR; ++I) { // for each center
             for (size_t i = 0; i < w.size(); i++) {
@@ -270,6 +276,7 @@ TEST_F(PartitionTest, Stratmann) {
     }
     printf("time elapsed = %8.3e seconds\n", dur.count());
 }
+
 
 int main(int argc, char** argv)
 {
