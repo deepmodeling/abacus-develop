@@ -91,7 +91,7 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC
-		     << std::setw(16) << Parallel_Global::omp_number;;
+		     << std::setw(16) << Parallel_Global::omp_number;
 		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
 		std::cout << std::endl;
