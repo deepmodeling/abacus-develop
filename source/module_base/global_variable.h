@@ -17,6 +17,7 @@ namespace GlobalV
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
 // NAME : NPROC( global number of process )
+// NAME : THREAD_PER_PROC ( global number of threads per process )
 // NAME : KPAR( global number of pools )
 // NAME : MY_RANK( global index of process )
 // NAME : MY_POOL( global index of pool (count in pool))
@@ -31,6 +32,7 @@ namespace GlobalV
 // NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
 //========================================================================
 extern int NPROC;
+extern int THREAD_PER_PROC;
 extern int KPAR;
 extern int MY_RANK;
 extern int MY_POOL;
