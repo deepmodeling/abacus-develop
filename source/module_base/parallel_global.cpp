@@ -139,6 +139,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
 #endif
     mpi_number = process_num;
     omp_number = current_thread_num;
+    GlobalV::NTHREAD_PER_PROC = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank == 0)
     {
         std::stringstream mess;
@@ -150,6 +151,8 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
         // the user may take their own risk by set the OMP_NUM_THREADS env var.
         if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
+            // print error message
+            std::cerr << "Error: OMP_NUM_THREADS setting is invalid. Please set it to a proper value." << std::endl;
             exit(1);
         }
     }
