@@ -12,7 +12,7 @@ namespace hsolver
 {
 
 template <typename T>
-class DiagoPexsi : public DiagH<T>
+class DiagoPexsi
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -20,7 +20,7 @@ class DiagoPexsi : public DiagH<T>
 
   public:
     DiagoPexsi(const Parallel_Orbitals* ParaV_in);
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
     const Parallel_Orbitals* ParaV;
     std::vector<T*> DM;
     std::vector<T*> EDM;
