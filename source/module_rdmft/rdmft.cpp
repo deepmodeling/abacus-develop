@@ -98,8 +98,8 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // else nk_total = kv->nks;
 
     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
-    // nbands_total = PARAM.inp.nbands;
-    nbands_total = GlobalV::NBANDS;
+    nbands_total = PARAM.inp.nbands;
+    // nbands_total = GlobalV::NBANDS;
     nspin = PARAM.inp.nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
