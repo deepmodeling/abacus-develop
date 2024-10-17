@@ -63,24 +63,24 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         ModuleBase::timer::tick("HSolverLCAO", "solve");
         return;
     }
-
 #endif
 
-#ifdef __MPI
     if (GlobalV::KPAR_LCAO > 1
         && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
     {
+#ifdef __MPI
         this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
-    }
-    else
 #endif
+    }
+    else if (GlobalV::KPAR_LCAO == 1)
     {
-        /// Loop over k points for solve Hamiltonian to charge density
+        /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
             pHamilt->updateHk(ik);
 
+            /// find psi pointer for each k point
             psi.fix_k(ik);
 
             /// solve eigenvector and eigenvalue for H(k)
@@ -88,17 +88,16 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         }
     }
 
-    if (skip_charge) // used in nscf calculation
+    if (!skip_charge) // used in scf calculation
     {
-        ModuleBase::timer::tick("HSolverLCAO", "solve");
-    }
-    else // used in scf calculation
-    {
-        // calculate charge by psi
+        // calculate charge by eigenpairs(eigenvalues and eigenvectors)
         pes->psiToRho(psi);
-        ModuleBase::timer::tick("HSolverLCAO", "solve");
+    }
+    else // used in nscf calculation
+    {
     }
 
+    ModuleBase::timer::tick("HSolverLCAO", "solve");
     return;
 }
 
