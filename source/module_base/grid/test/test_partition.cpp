@@ -7,6 +7,7 @@
 #include <cmath>
 #include <array>
 #include <numeric>
+#include <chrono>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -14,6 +15,10 @@
 
 using ModuleBase::PI;
 using Vec3 = std::array<double, 3>;
+
+using iclock = std::chrono::high_resolution_clock;
+iclock::time_point start;
+std::chrono::duration<double> dur;
 
 double norm(const Vec3& v) {
     return std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
@@ -96,6 +101,22 @@ std::vector<Param> test_params = {
         {1.0, 2.0, 1.5, 2.0},
         {2.5, 2, 0.5, 1}
     },
+    {
+        {
+            {0.0, 0.0, 0.0},
+            {0.0, 0.0, 3.0},
+            {0.0, 3.0, 0.0},
+            {9.0, 0.0, 0.0},
+            {1.0, 1.0, 1.0},
+            {2.0, 2.0, 2.0},
+            {3.0, 3.0, 3.0},
+            {4.0, 4.0, 4.0},
+            {5.0, 5.0, 5.0},
+            {6.0, 6.0, 6.0},
+        },
+        {1.0, 2.0, 1.5, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0, 2.0},
+        {2.5, 2.0, 0.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0}
+    },
 };
 
 std::vector<double> dist_R_R(const std::vector<Vec3>& R) {
@@ -133,7 +154,7 @@ PartitionTest::PartitionTest() {
     std::vector<double> r_rad, w_rad;
     int nrad = 60;
     int Rcut = 7.0;
-    int mult = 1;
+    int mult = 4;
     Grid::Radial::baker(nrad, Rcut, r_rad, w_rad, mult);
 
     // complete grid & weight for one-center integration
@@ -155,6 +176,7 @@ PartitionTest::PartitionTest() {
 
 
 TEST_F(PartitionTest, Becke) {
+    dur = dur.zero();
     for (const Param& param : test_params) {
         double val = 0.0;
         double val_ref = ref(param.a, param.n);
@@ -178,10 +200,12 @@ TEST_F(PartitionTest, Becke) {
                 }
 
                 // partition weight for this grid point
+                start = iclock::now();
                 double w_part = Grid::Partition::w_becke(
                     drR.size(), drR.data(), dRR.data(),
                     iR.size(), iR.data(), I
                 );
+                dur += iclock::now() - start;
 
                 val += w_part * w[i] * func(ri, param.R, param.a, param.n);
             }
@@ -189,10 +213,13 @@ TEST_F(PartitionTest, Becke) {
 
         EXPECT_NEAR(val, val_ref, tol);
     }
+    printf("time elapsed = %8.3e seconds\n", dur.count());
 }
 
 
 TEST_F(PartitionTest, Stratmann) {
+    dur = dur.zero();
+
     for (const Param& param : test_params) {
         double val = 0.0;
         double val_ref = ref(param.a, param.n);
@@ -206,7 +233,6 @@ TEST_F(PartitionTest, Stratmann) {
         std::iota(iR.begin(), iR.end(), 0);
 
         // radii of exclusive zone
-        using Grid::Partition::stratmann_a;
         std::vector<double> drR_thr(nR);
         for (size_t I = 0; I < nR; ++I) {
             double dRRmin = 1e100;
@@ -215,7 +241,7 @@ TEST_F(PartitionTest, Stratmann) {
                     dRRmin = std::min(dRRmin, dRR[I*nR + J]);
                 }
             }
-            drR_thr[I] = 0.5 * (1-stratmann_a) * dRRmin;
+            drR_thr[I] = 0.5 * (1.0 - Grid::Partition::stratmann_a) * dRRmin;
         }
 
         for (size_t I = 0; I < nR; ++I) { // for each center
@@ -229,10 +255,12 @@ TEST_F(PartitionTest, Stratmann) {
                 }
 
                 // partition weight for this grid point
+                start = iclock::now();
                 double w_part = Grid::Partition::w_stratmann(
                     drR.size(), drR.data(), dRR.data(), drR_thr.data(), 
                     iR.size(), iR.data(), I
                 );
+                dur += iclock::now() - start;
 
                 val += w_part * w[i] * func(ri, param.R, param.a, param.n);
             }
@@ -240,6 +268,7 @@ TEST_F(PartitionTest, Stratmann) {
 
         EXPECT_NEAR(val, val_ref, tol);
     }
+    printf("time elapsed = %8.3e seconds\n", dur.count());
 }
 
 int main(int argc, char** argv)

@@ -2,8 +2,9 @@
 #include "module_base/constants.h"
 
 #include <cmath>
+#include <functional>
 #include <numeric>
-#include <vector>
+#include <algorithm>
 
 namespace Grid {
 namespace Partition {
@@ -11,15 +12,17 @@ namespace Partition {
 const double stratmann_a = 0.64;
 const double stratmann_mod_b = 0.8;
 
+
 double w_becke(
     int nR0,
-    double* drR,
-    double* dRR,
+    const double* drR,
+    const double* dRR,
     int nR,
-    int* iR,
+    const int* iR,
     int c
 ) {
-    std::vector<double> P(nR, 1.0);
+    double P[nR];
+    std::fill(P, P + nR, 1.0);
     for (int i = 0; i < nR; ++i) {
         int I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
@@ -27,11 +30,12 @@ double w_becke(
             double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
             double s = s_becke(mu);
             P[I] *= s;
-            P[J] *= (1.0 - s); // s_becke(-mu) = 1 - s_becke(mu)
+            P[J] *= (1.0 - s); // s(-mu) = 1 - s(mu)
         }
     }
-    return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
+    return P[c] / std::accumulate(P, P + nR, 0.0);
 }
+
 
 double s_becke(double mu) {
     /* 
@@ -51,58 +55,62 @@ double s_becke(double mu) {
 
 double w_stratmann(
     int nR0,
-    double* drR,
-    double* dRR,
-    double* drR_thr,
-    int nR,
+    const double* drR,
+    const double* dRR,
+    const double* drR_thr,
+    const int nR,
     int* iR,
     int c
 ) {
+    int I = iR[c], J = 0;
 
-    // if r falls within the exclusive zone of the center
-    // whom this grid point belongs to
-    int I = iR[c];
-    if (drR[I] <= drR_thr[I]) {
-        return 1.0;
-    }
-
-    // if r falls within the exclusive zone of a center
-    // other than the one whom this grid point belongs to
-    for (int J = 0; J < nR; ++J) {
-        // no need to exclude J == c because it was checked before
-        if (drR[iR[J]] <= drR_thr[iR[J]]) {
-            return 0.0;
+    // If r falls within the exclusive zone of a center, return immediately.
+    for (int j = 0; j < nR; ++j) {
+        J = iR[j];
+        if (drR[J] <= drR_thr[J]) {
+            return static_cast<double>(I == J);
         }
     }
 
-    double Pc = 1.0;
-    for (int i = 0; i < c; ++i) {
-        int J = iR[i];
+    // Even if the grid point does not fall within the exclusive zone of any
+    // center, the normalized weight could still be 0 or 1, and this can be
+    // figured out by examining the unnormalized weight alone.
+
+    // Move the center to the first position for convenience. Swap back later.
+    std::swap(iR[0], iR[c]);
+
+    double P[nR];
+    for (int j = 1; j < nR; ++j) {
+        J = iR[j];
         double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
-        Pc *= s_stratmann(mu);
+        P[j] = s_stratmann(mu);
     }
-    for (int i = c + 1; i < nR; ++i) {
-        int J = iR[i];
-        double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
-        Pc *= s_stratmann(mu);
-    }
-    if (Pc == 0.0 || Pc == 1.0) {
-        return Pc;
+    P[0] = std::accumulate(P + 1, P + nR, 1.0, std::multiplies<double>());
+
+    if (P[0] == 0.0 || P[0] == 1.0) {
+        std::swap(iR[0], iR[c]);
+        return P[0];
     }
 
-    std::vector<double> P(nR, 1.0);
-    for (int i = 0; i < nR; ++i) {
-        int I = iR[i];
+    // If it passes all the screening, all unnormalized weights have to be
+    // calculated in order to get the normalized weight.
+
+    std::for_each(P + 1, P + nR, [](double& s) { s = 1.0 - s; });
+    for (int i = 1; i < nR; ++i) {
+        I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
-            int J = iR[j];
+            J = iR[j];
             double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
             double s = s_stratmann(mu);
-            P[I] *= s;
-            P[J] *= (1.0 - s); // s(-mu) = 1 - s(mu)
+            P[i] *= s;
+            P[j] *= (1.0 - s); // s(-mu) = 1 - s(mu)
         }
     }
-    return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
+
+    std::swap(iR[0], iR[c]);
+    return P[0] / std::accumulate(P, P + nR, 0.0);
 }
+
 
 double s_stratmann(double mu) {
     /*
@@ -127,57 +135,76 @@ double s_stratmann(double mu) {
 }
 
 
-double u_stratmann_mod(double y) {
-    using ModuleBase::PI;
-    bool core = y <= stratmann_mod_b;
-    bool edge = !core && y < 1.0;
-    return core + edge * 0.5 * (1.0 +
-            std::cos(PI * (y - stratmann_mod_b) / (1.0 - stratmann_mod_b)));
+double w_stratmann_mod(
+    int nR0,
+    const double* drR,
+    const double* dRR,
+    const double* drR_thr,
+    const double* Rcut,
+    int nR,
+    int* iR,
+    int c
+) {
+    int I = iR[c], J = 0;
+
+    // If r falls within the exclusive zone of a center, return immediately.
+    for (int j = 0; j < nR; ++j) {
+        J = iR[j];
+        if (drR[J] <= drR_thr[J]) {
+            return static_cast<double>(I == J);
+        }
+    }
+
+    // Even if the grid point does not fall within the exclusive zone of any
+    // center, the normalized weight could still be 0 or 1, and this can be
+    // figured out by examining the unnormalized weight alone.
+
+    // Move the center to the first position for convenience. Swap back later.
+    std::swap(iR[0], iR[c]);
+
+    double P[nR];
+    for (int j = 1; j < nR; ++j) {
+        J = iR[j];
+        double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+        P[j] = s_stratmann(mu);
+    }
+    P[0] = std::accumulate(P + 1, P + nR, 1.0, std::multiplies<double>());
+
+    if (P[0] == 0.0 || P[0] == 1.0) {
+        std::swap(iR[0], iR[c]);
+        return P[0];
+    }
+
+    // If it passes all the screening, all unnormalized weights have to be
+    // calculated in order to get the normalized weight.
+
+    std::for_each(P + 1, P + nR, [](double& s) { s = 1.0 - s; });
+    for (int i = 1; i < nR; ++i) {
+        I = iR[i];
+        for (int j = i + 1; j < nR; ++j) {
+            J = iR[j];
+            double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
+            double s = s_stratmann(mu);
+            P[i] *= s;
+            P[j] *= (1.0 - s); // s(-mu) = 1 - s(mu)
+        }
+    }
+
+    std::swap(iR[0], iR[c]);
+    return P[0] / std::accumulate(P, P + nR, 0.0);
 }
 
 
 double s_stratmann_mod(double mu, double y) {
-    // Modified Stratmann's cell function by Knuth et al.
-    // y = |r-R(J)| / Rcut(J)
-    return 1.0 + u_stratmann_mod(y) * (s_stratmann(mu) - 1.0);
+    using ModuleBase::PI;
+    bool core = y <= stratmann_mod_b;
+    bool edge = !core && y < 1.0;
+    double u = core + edge * 0.5 * (1.0 +
+            std::cos(PI * (y - stratmann_mod_b) / (1.0 - stratmann_mod_b)));
+    return 1.0 + u * (s_stratmann(mu) - 1.0);
 }
 
 
-//double weight(
-//    int nRtot,
-//    double* drR,
-//    double* dRR,
-//    int nR,
-//    int* iR,
-//    int c,
-//    CellFuncType type,
-//    double* Rcut
-//) {
-//    // unnormalized weight
-//    std::vector<double> P(nR, 1.0);
-//
-//    // confocal ellipsoidal coordinates
-//    std::vector<double> mu(nR*nR, 0.0);
-//    for (int i = 0; i < nR; ++i) {
-//        int I = iR[i];
-//        for (int j = i + 1; j < nR; ++j) {
-//            int J = iR[j];
-//            mu[I*nR + J] = (drR[I] - drR[J]) / dRR[I*nRtot + J];
-//            mu[J*nR + I] = -mu[I*nR + J];
-//        }
-//    }
-//
-//    for (int i = 0; i < nR; ++i) {
-//        if (i == c) {
-//            continue;
-//        }
-//        int J = iR[i];
-//        double mu = (drR[I] - drR[J]) / dRR[I*nRtot + J];
-//        P[i] *= s_becke(mu);
-//    }
-//
-//    return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
-//}
 
 } // end of namespace Partition
 } // end of namespace Grid
