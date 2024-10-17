@@ -201,12 +201,14 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
-}
+    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+    if (this->add_hexx_type == Add_Hexx_Type::k) { return; }
+
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         // add H(R) normally
-        if (GlobalC::exx_info.info_ri.real_number) {
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
@@ -215,7 +217,9 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
-        } else {
+        }
+        else
+        {
             RI_2D_Comm::add_HexxR(
                 this->current_spin,
                 GlobalC::exx_info.info_global.hybrid_alpha,
@@ -224,10 +228,9 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
                 PARAM.globalv.npol,
                 *this->hR,
                 this->use_cell_nearest ? &this->cell_nearest : nullptr);
-}
+        }
     }
-    if (PARAM.inp.nspin == 2) { this->current_spin = 1 - this->current_spin;
-}
+    if (PARAM.inp.nspin == 2) { this->current_spin = 1 - this->current_spin; }
 }
 
 template<typename TK, typename TR>
@@ -235,8 +238,10 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHR");
     // Peize Lin add 2016-12-03
-    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return;  //in the non-exx loop, do nothing 
-}
+    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+
+    if (this->add_hexx_type == Add_Hexx_Type::R) { throw std::invalid_argument("Set Add_Hexx_Type::k sto call OperatorEXX::contributeHk()."); }
+
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         if (this->restart && this->two_level_step != nullptr)

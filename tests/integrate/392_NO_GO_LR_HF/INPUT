@@ -28,6 +28,7 @@ mixing_gg0 0
 
 dft_functional hf
 exx_real_number 1
+exx_ccp_rmesh_times 1
 
 lr_nstates 2
 xc_kernel hf

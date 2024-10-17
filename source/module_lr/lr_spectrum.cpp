@@ -33,7 +33,7 @@ void LR::LR_Spectrum<double>::oscillator_strength()
     osc.resize(X.get_nbands(), 0.0);
     // const int nspin0 = (this->nspin == 2) ? 2 : 1;   use this in NSPIN=4 implementation
     double osc_tot = 0.0;
-    elecstate::DensityMatrix<double, double> DM_trans(&this->kv, &this->pmat, this->nspin);
+    elecstate::DensityMatrix<double, double> DM_trans(&this->pmat, this->nspin, this->kv.kvec_d, this->nk);
     DM_trans.init_DMR(&GlobalC::GridD, &this->ucell);
     this->transition_dipole_.resize(X.get_nbands(), ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int istate = 0;istate < X.get_nbands();++istate)
@@ -90,9 +90,9 @@ void LR::LR_Spectrum<std::complex<double>>::oscillator_strength()
     osc.resize(X.get_nbands(), 0.0);
     // const int nspin0 = (this->nspin == 2) ? 2 : 1;   use this in NSPIN=4 implementation
     double osc_tot = 0.0;
-    elecstate::DensityMatrix<std::complex<double>, std::complex<double>> DM_trans(&this->kv, &this->pmat, this->nspin);
+    elecstate::DensityMatrix<std::complex<double>, std::complex<double>> DM_trans(&this->pmat, this->nspin, this->kv.kvec_d, this->nk);
     DM_trans.init_DMR(&GlobalC::GridD, &this->ucell);
-    elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->kv, &this->pmat, this->nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&this->pmat, this->nspin, this->kv.kvec_d, this->nk);
     DM_trans_real_imag.init_DMR(&GlobalC::GridD, &this->ucell);
 
     this->transition_dipole_.resize(X.get_nbands(), ModuleBase::Vector3<std::complex<double>>(0.0, 0.0, 0.0));
