@@ -218,6 +218,10 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     const bool is_first_node)const
 {
     ModuleBase::timer::tick("Operator", "NonlocalPW");
+    if(is_first_node)
+    {
+        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands);
+    }
     if(!PARAM.inp.use_paw)
     {
         this->npw = ngk_ik;

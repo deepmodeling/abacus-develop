@@ -17,28 +17,32 @@ struct ekinetic_pw_op<FPTYPE, base_device::DEVICE_CPU>
     {
         if (is_first_node)
         {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
-#endif
             for (int ib = 0; ib < nband; ++ib)
             {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                 for (int ig = 0; ig < npw; ++ig)
                 {
-                    tmhpsi[ib * max_npw + ig] = gk2_ik[ig] * tpiba2 * tmpsi_in[ib * max_npw + ig];
+                    tmhpsi[ig] = gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
                 }
+                tmpsi_in += max_npw;
+                tmhpsi += max_npw;
             }
         }
         else
         {
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096 / sizeof(FPTYPE))
-#endif
             for (int ib = 0; ib < nband; ++ib)
             {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
                 for (int ig = 0; ig < npw; ++ig)
                 {
-                    tmhpsi[ib * max_npw + ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ib * max_npw + ig];
+                    tmhpsi[ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
                 }
+                tmpsi_in += max_npw;
+                tmhpsi += max_npw;
             }
         }
     }

@@ -73,6 +73,7 @@ class Veff<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 };
 
 } // namespace hamilt

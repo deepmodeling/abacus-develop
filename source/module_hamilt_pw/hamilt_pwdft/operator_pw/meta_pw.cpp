@@ -52,6 +52,10 @@ void Meta<OperatorPW<T, Device>>::act(
     }
 
     ModuleBase::timer::tick("Operator", "MetaPW");
+    if(is_first_node)
+    {
+        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands);
+    }
 
     const int current_spin = this->isk[this->ik];
     int max_npw = nbasis / npol;
