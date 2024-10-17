@@ -1,5 +1,6 @@
 //Deals with io of dm(r)/h(r) in npz format
 
+#include "module_parameter/parameter.h"
 #include "module_esolver/esolver_ks_lcao.h"
 
 #include "module_base/parallel_reduce.h"
@@ -426,8 +427,8 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 #ifdef __MPI
     hamilt::HContainer<double>* HR_serial;
     Parallel_Orbitals serialV;
-    serialV.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
-    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, GlobalV::NLOCAL);
+    serialV.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
+    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, PARAM.globalv.nlocal);
     if(GlobalV::MY_RANK == 0)
     {
         HR_serial = new hamilt::HContainer<double>(&serialV);

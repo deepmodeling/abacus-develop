@@ -1,5 +1,6 @@
 #include "sto_iter.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
@@ -26,7 +27,7 @@ void Stochastic_Iter::init(K_Vectors* pkv_in,
     p_che = stoche.p_che;
     spolyv = stoche.spolyv;
     nchip = stowf.nchip;
-    targetne = GlobalV::nelec;
+    targetne = PARAM.inp.nelec;
     this->pkv = pkv_in;
     this->method = stoche.method_sto;
 
@@ -38,7 +39,7 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
 {
     ModuleBase::TITLE("Stochastic_Iter", "orthog");
     // orthogonal part
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         const int nchipk = stowf.nchip[ik];
         const int npw = psi.get_current_nbas();
@@ -52,14 +53,14 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
         }
 
         // orthogonal part
-        std::complex<double>* sum = new std::complex<double>[GlobalV::NBANDS * nchipk];
+        std::complex<double>* sum = new std::complex<double>[PARAM.inp.nbands * nchipk];
         char transC = 'C';
         char transN = 'N';
 
         // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
         zgemm_(&transC,
                &transN,
-               &GlobalV::NBANDS,
+               &PARAM.inp.nbands,
                &nchipk,
                &npw,
                &ModuleBase::ONE,
@@ -69,20 +70,20 @@ void Stochastic_Iter::orthog(const int& ik, psi::Psi<std::complex<double>>& psi,
                &npwx,
                &ModuleBase::ZERO,
                sum,
-               &GlobalV::NBANDS);
-        Parallel_Reduce::reduce_pool(sum, GlobalV::NBANDS * nchipk);
+               &PARAM.inp.nbands);
+        Parallel_Reduce::reduce_pool(sum, PARAM.inp.nbands * nchipk);
 
         // psi -= psi * sum
         zgemm_(&transN,
                &transN,
                &npw,
                &nchipk,
-               &GlobalV::NBANDS,
+               &PARAM.inp.nbands,
                &ModuleBase::NEG_ONE,
                &psi(ik, 0, 0),
                &npwx,
                sum,
-               &GlobalV::NBANDS,
+               &PARAM.inp.nbands,
                &ModuleBase::ONE,
                wfgout,
                &npwx);
@@ -123,7 +124,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
 
     for (int ichi = 0; ichi < ntest; ++ichi)
     {
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             pchi = &stowf.chiortho->operator()(ik, ichi, 0);
         }
@@ -217,13 +218,13 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     if (iter == 1)
     {
         dmu = 2;
-        th_ne = 0.1 * PARAM.inp.scf_thr * GlobalV::nelec;
+        th_ne = 0.1 * PARAM.inp.scf_thr * PARAM.inp.nelec;
         // std::cout<<"th_ne "<<th_ne<<std::endl;
     }
     else
     {
         dmu = 0.1;
-        th_ne = 1e-2 * PARAM.inp.scf_thr * GlobalV::nelec;
+        th_ne = 1e-2 * PARAM.inp.scf_thr * PARAM.inp.nelec;
         th_ne = std::min(th_ne, 1e-5);
     }
     this->stofunc.mu = mu0 - dmu;
@@ -288,12 +289,12 @@ void Stochastic_Iter::itermu(const int iter, elecstate::ElecState* pes)
     this->check_precision(targetne, 10 * PARAM.inp.scf_thr, "Ne");
 
     // Set wf.wg
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* en = &pes->ekb(ikk, 0);
-            for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
+            for (int iksb = 0; iksb < PARAM.inp.nbands; ++iksb)
             {
                 pes->wg(ikk, iksb) = stofunc.fd(en[iksb]) * this->pkv->wk[ikk];
             }
@@ -324,7 +325,7 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
         }
     }
     std::complex<double>* pchi;
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         stowf.chiortho->fix_k(ik);
         pchi = stowf.chiortho->get_pointer();
@@ -385,12 +386,12 @@ double Stochastic_Iter::calne(elecstate::ElecState* pes)
         p_che->calcoef_real(nroot_fd);
         sto_ne = vTMv(p_che->coef_real, spolyv, norder);
     }
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* en = &pes->ekb(ikk, 0);
-            for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
+            for (int iksb = 0; iksb < PARAM.inp.nbands; ++iksb)
             {
                 KS_ne += stofunc.fd(en[iksb]) * this->pkv->wk[ikk];
             }
@@ -457,13 +458,13 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
         stodemet = -vTMv(p_che->coef_real, spolyv, norder);
     }
 
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         for (int ikk = 0; ikk < this->pkv->get_nks(); ++ikk)
         {
             double* enb = &pes->ekb(ikk, 0);
             // number of electrons in KS orbitals
-            for (int iksb = 0; iksb < GlobalV::NBANDS; ++iksb)
+            for (int iksb = 0; iksb < PARAM.inp.nbands; ++iksb)
             {
                 pes->f_en.demet += stofunc.fdlnfd(enb[iksb]) * this->pkv->wk[ikk];
             }
@@ -529,7 +530,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
     double out2;
 
     double* ksrho = nullptr;
-    if (GlobalV::NBANDS > 0 && GlobalV::MY_STOGROUP == 0)
+    if (PARAM.inp.nbands > 0 && GlobalV::MY_STOGROUP == 0)
     {
         ksrho = new double[nrxx];
         ModuleBase::GlobalFunc::DCOPY(pes->charge->rho[0], ksrho, nrxx);
@@ -582,7 +583,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
 
     if (GlobalV::MY_STOGROUP == 0)
     {
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             ModuleBase::GlobalFunc::DCOPY(ksrho, pes->charge->rho[0], nrxx);
         }
@@ -616,7 +617,7 @@ void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)
     stowf.shchi->fix_k(ik);
     std::complex<double>* out = stowf.shchi->get_pointer();
     std::complex<double>* pchi;
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         stowf.chiortho->fix_k(ik);
         pchi = stowf.chiortho->get_pointer();

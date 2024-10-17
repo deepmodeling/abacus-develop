@@ -64,7 +64,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     if (diag_ethr - 1e-2 > -1e-5) {
         diag_ethr
             = std::max(1e-13,
-                       0.1 * std::min(1e-2, PARAM.inp.scf_thr / GlobalV::nelec));
+                       0.1 * std::min(1e-2, PARAM.inp.scf_thr / PARAM.inp.nelec));
     }
     GlobalV::ofs_running << " PW_DIAG_THR  = " << diag_ethr << std::endl;
 
@@ -79,7 +79,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
     //! 4) print out band energies and weights
     std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing band energies");
     const int nspin = PARAM.inp.nspin;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
     for (int ik = 0; ik < this->kv.get_nks(); ik++) {
         if (nspin == 2) {
             if (ik == 0) {

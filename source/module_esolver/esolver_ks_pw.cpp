@@ -161,7 +161,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     //! 9) setup occupations
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 }
 
@@ -352,15 +352,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-
-        std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
-
-        elecstate::set_is_occupied(is_occupied,
-                                   this->pelec,
-                                   hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                   this->kspw_psi->get_nk(),
-                                   this->kspw_psi->get_nbands(),
-                                   PARAM.inp.diago_full_acc);
         
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
                                                      &this->wf, 
@@ -369,7 +360,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                                                      PARAM.inp.basis_type,
                                                      PARAM.inp.ks_solver,
                                                      PARAM.inp.use_paw,
-                                                     GlobalV::use_uspp,
+                                                     PARAM.globalv.use_uspp,
                                                      PARAM.inp.nspin,
                                                      
                                                      hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
@@ -383,7 +374,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                            this->kspw_psi[0],
                            this->pelec,
                            this->pelec->ekb.c,
-                           is_occupied,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
                            false);
@@ -432,7 +422,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 {
-    if (!this->conv_elec)
+    if (!this->conv_esolver)
     {
         if (PARAM.inp.nspin == 4)
         {
@@ -457,7 +447,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential
     // projectors
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
@@ -738,7 +728,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
             GlobalV::ofs_running << "\n Output bands in file: " << ss2.str() << std::endl;
             ModuleIO::nscf_band(is,
                                 ss2.str(),
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,

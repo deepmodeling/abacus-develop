@@ -27,7 +27,9 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET io_read_input_serial
   LIBS parameter ${math_libs} io_input_serial 
-  SOURCES read_input_test.cpp ../../module_base/test/tool_quit_no_exit.cpp
+  SOURCES read_input_test.cpp 
+          ../../module_base/test/tool_quit_no_exit.cpp 
+          ../../module_base/module_device/device.cpp
 )
 
 AddTest(

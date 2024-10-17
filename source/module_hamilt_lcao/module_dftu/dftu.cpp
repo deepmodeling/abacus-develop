@@ -57,7 +57,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     // needs reconstructions in future
     // global parameters, need to be removed in future
     const int npol = PARAM.globalv.npol;     // number of polarization directions
-    const int nlocal = GlobalV::NLOCAL; // number of total local orbitals
+    const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
     const int nspin = PARAM.inp.nspin;   // number of spins
 
     this->EU = 0.0;

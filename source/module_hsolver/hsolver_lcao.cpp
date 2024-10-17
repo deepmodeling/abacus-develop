@@ -169,7 +169,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         DiagoLapack<T> la;
         la.diag(hm, psi, eigenvalue);
 #else
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method of DiagH is not supported!");
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This type of eigensolver is not supported!");
 #endif
     }
     else
@@ -379,7 +379,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             else
             {
                 ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                         "This method of DiagH for k-parallelism diagnolization is not supported!");
+                                         "This type of eigensolver for k-parallelism diagnolization is not supported!");
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);

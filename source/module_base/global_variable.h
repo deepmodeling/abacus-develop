@@ -13,25 +13,6 @@
 
 namespace GlobalV
 {
-//==========================================================
-// EXPLAIN : Basic Global Variables
-//==========================================================
-
-extern int NBANDS;
-extern int NLOCAL;        // 1.1 // mohan add 2009-05-29
-
-extern double nupdown;
-extern bool use_uspp;
-
-extern std::string KS_SOLVER;  // xiaohui add 2013-09-01
-extern double SEARCH_RADIUS;   // 11.1 // mohan add 2011-03-10
-
-
-extern int NB2D;           // 16.5 dividsion of 2D_matrix.
-
-                         // pw, 2: real drho for lcao
-
-
 //========================================================================
 // EXPLAIN : Parallel information
 // GLOBAL VARIABLES :
@@ -84,30 +65,5 @@ extern std::ofstream ofs_running;
 extern std::ofstream ofs_warning;
 extern std::ofstream ofs_info;
 extern std::ofstream ofs_device;
-
-
-// mixing parameters
-
-//==========================================================
-// device flags added by denghui
-//==========================================================
-extern std::string device_flag;
-//==========================================================
-// precision flags added by denghui
-//==========================================================
-
-                             //  "out_chg" elec step.
-/// @brief method to initialize wavefunction
-/// @author kirk0830, 20230920
-/// @brief whether use the new psi initializer to initialize psi
-/// @author ykhuang, 20230920
-
-extern double nelec;
-
-// Deltaspin related
-
-// Quasiatomic orbital related
-
-// radius of on-site orbitals
 } // namespace GlobalV
 #endif

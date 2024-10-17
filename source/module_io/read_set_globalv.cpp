@@ -1,5 +1,6 @@
 #include "module_base/global_variable.h"
 #include "module_base/tool_quit.h"
+#include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
@@ -20,16 +21,9 @@ void ReadInput::set_globalv(Parameter& para)
         /// get the global output directory
         para.sys.global_matrix_dir = para.globalv.global_out_dir + "matrix/";
         para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
-        
+
         /// get the global readin directory
-        if (para.inp.read_file_dir == "auto")
-        {
-            para.sys.global_readin_dir = para.globalv.global_out_dir;
-        }
-        else
-        {
-            para.sys.global_readin_dir = para.inp.read_file_dir + '/';
-        }
+        para.sys.global_readin_dir = para.inp.read_file_dir + '/';
         para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
 
         /// get the stru file for md restart case
@@ -37,7 +31,7 @@ void ReadInput::set_globalv(Parameter& para)
         {
             int istep = current_md_step(para.sys.global_readin_dir);
 
-            if (para.inp.read_file_dir == "auto")
+            if (para.inp.read_file_dir == to_dir("OUT." + para.input.suffix))
             {
                 para.sys.global_in_stru = para.sys.global_stru_dir + "STRU_MD_" + std::to_string(istep);
             }
@@ -93,25 +87,6 @@ void ReadInput::set_globalv(Parameter& para)
             break;
         }
 
-        if (para.input.device == "cpu")
-        {
-            para.sys.device_flag = "cpu";
-        }
-        else if (para.input.device == "gpu")
-        {
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                GlobalV::ofs_warning << "The GPU currently does not support the basis type \"lcao_in_pw\"!" << std::endl;
-                para.sys.device_flag = "cpu";
-            }
-            para.sys.device_flag = "gpu";
-        }
-        else
-        {
-            GlobalV::ofs_warning << "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!" << std::endl;
-            ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
-        }
-
         para.sys.nqx=static_cast<int>((sqrt(para.inp.ecutwfc) / para.sys.dq + 4.0) * para.inp.cell_factor); 
         para.sys.nqxq=static_cast<int>((sqrt(para.inp.ecutrho) / para.sys.dq + 4.0) * para.inp.cell_factor);
     }
@@ -119,7 +94,9 @@ void ReadInput::set_globalv(Parameter& para)
 
 void ReadInput::set_globalv_bcast()
 {
+    add_int_bcast(sys.myrank);
     add_bool_bcast(sys.two_fermi);
+    add_bool_bcast(sys.use_uspp);
     add_bool_bcast(sys.dos_setemin);
     add_bool_bcast(sys.dos_setemax);
 
@@ -143,8 +120,6 @@ void ReadInput::set_globalv_bcast()
     add_bool_bcast(sys.domag);
     add_bool_bcast(sys.domag_z);
     add_int_bcast(sys.npol);
-
-    add_string_bcast(sys.device_flag);
     
     add_bool_bcast(sys.double_grid);
     add_double_bcast(sys.uramping);

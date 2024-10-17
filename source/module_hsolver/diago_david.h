@@ -8,7 +8,7 @@ namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoDavid : public DiagH<T, Device>
+class DiagoDavid
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -25,7 +25,7 @@ class DiagoDavid : public DiagH<T, Device>
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
-    virtual ~DiagoDavid() override;
+     ~DiagoDavid();
 
 
     // declare type of matrix-blockvector functions.
@@ -62,13 +62,10 @@ class DiagoDavid : public DiagH<T, Device>
      *
      * @param[in]   X       Pointer to the input blockvector.
      * @param[out] SX       Pointer to the output blockvector.
-     * @param[in] ld_spsi   Leading dimension of spsi. Dimension of SX: nbands * nrow.
-     * @param[in] ld_psi    Leading dimension of psi. Number of plane waves.
-     * @param[in] nbands    Number of vectors.
-     * 
-     * @note called like spsi(in, out, dim, dim, 1)
+     * @param[in] ld_psi    Leading dimension of psi and spsi. Dimension of X&SX: ld * nvec.
+     * @param[in] nvec      Number of vectors.
      */
-    using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
+    using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     int diag(
       const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 

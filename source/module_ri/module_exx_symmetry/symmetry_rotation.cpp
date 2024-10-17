@@ -420,7 +420,7 @@ namespace ModuleSymmetry
         const char notrans = 'N';
         std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
-        const int nbasis = GlobalV::NLOCAL;
+        const int nbasis = PARAM.globalv.nlocal;
         const int i1 = 1;
         if (TRS_conj)
         {

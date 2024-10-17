@@ -77,7 +77,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
 #ifdef __MPI
             ncol = this->pv.ncol_bands;
 #else
-            ncol = GlobalV::NBANDS;
+            ncol = PARAM.inp.nbands;
 #endif
         }
         this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
