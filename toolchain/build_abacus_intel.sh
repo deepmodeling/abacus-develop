@@ -29,8 +29,8 @@ LIBXC=$INSTALL_DIR/libxc-6.2.2
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
-# LIBRI=$INSTALL_DIR/LibRI-0.1.1
-# LIBCOMM=$INSTALL_DIR/LibComm-0.1.0
+# LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
+# LIBCOMM=$INSTALL_DIR/LibComm-0.1.1
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd
 
 # if use deepks and deepmd

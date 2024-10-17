@@ -44,7 +44,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         {
             this->updatePsiK(pHamilt, psi, ik);
             // template add precondition calculating here
-            update_precondition(precondition, ik, this->wfc_basis->npwk[ik]);
+            update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
             this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);

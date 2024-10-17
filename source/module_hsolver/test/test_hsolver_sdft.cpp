@@ -170,6 +170,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;
@@ -213,6 +214,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;

@@ -57,6 +57,12 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     return;
 }
 
+Potential::~Potential(){}
+
+void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff){}
+
+void Potential::cal_fixed_v(double* vl_pseudo){}
+
 } // namespace elecstate
 
 

@@ -37,17 +37,17 @@ case "${with_libtorch}" in
   __INSTALL__)
     echo "==================== Installing libtorch ===================="
     dirname="libtorch-${libtorch_ver}"
-    filename="${dirname}.zip"
-    pkg_install_dir="${INSTALLDIR}/${filename}"
+    pkg_install_dir="${INSTALLDIR}/${dirname}"
     #pkg_install_dir="${HOME}/lib/libtorch/${libtorch_ver}"
     install_lock_file="${pkg_install_dir}/install_successful"
     archive_file="libtorch-cxx11-abi-shared-with-deps-${libtorch_ver}%2Bcpu.zip"
+    filename="${dirname}.zip"
 
     if verify_checksums "${install_lock_file}"; then
       echo "${filename} is already installed, skipping it."
     else
-        if [ -f ${archive_file} ]; then
-            echo "${archive_file} is found"
+        if [ -f ${filename} ]; then
+            echo "${filename} is found"
         else
             # download from pytorch.com and checksum
             url=https://download.pytorch.org/libtorch/cpu/${archive_file}

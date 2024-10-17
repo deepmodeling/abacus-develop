@@ -352,15 +352,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-
-        std::vector<bool> is_occupied(this->kspw_psi->get_nk() * this->kspw_psi->get_nbands(), true);
-
-        elecstate::set_is_occupied(is_occupied,
-                                   this->pelec,
-                                   hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                   this->kspw_psi->get_nk(),
-                                   this->kspw_psi->get_nbands(),
-                                   PARAM.inp.diago_full_acc);
         
         hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
                                                      &this->wf, 
@@ -383,7 +374,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
                            this->kspw_psi[0],
                            this->pelec,
                            this->pelec->ekb.c,
-                           is_occupied,
                            GlobalV::RANK_IN_POOL,
                            GlobalV::NPROC_IN_POOL,
                            false);

@@ -38,13 +38,22 @@ cmake -B build -DENABLE_DEEPKS=1 -DTorch_DIR=~/libtorch/share/cmake/Torch/ -Dlib
 If the Deep Potential model is employed in Molecule Dynamics calculations, the following prerequisites and steps are needed:
 
 - [DeePMD-kit](https://github.com/deepmodeling/deepmd-kit)
-- [TensorFlow](https://www.tensorflow.org/)
+- [TensorFlow](https://www.tensorflow.org/) (optional)
+- [LibTorch](https://pytorch.org/) (optional)
+
+In the simplest case, the `tensorflow_cc` and `torch` libraries are in the same directory as the `deepmd_c`/`deepmd_cc` libraries, then
+```bash
+cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit
+```
+DeePMD-kit supports TensorFlow backend but its libraries are placed at another directory, then
 
 ```bash
-cmake -B build -DDeePMD_DIR=~/deepmd-kit -DTensorFlow_DIR=~/tensorflow
+cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit -DTensorFlow_DIR=/dir_to_tensorflow
 ```
-
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
+Similarly, DeePMD-kit supports PyTorch backend but its libraries are placed at another directory, then
+```bash
+cmake -B build -DDeePMD_DIR=/dir_to_deepmd-kit -DTorch_DIR=/dir_to_pytorch
+```
 
 ## Build with LibRI and LibComm
 
@@ -282,15 +291,21 @@ directly.
 
 > Note: This part is only required if you want to load a trained DeeP Potential and run molecular dynamics with that. To train the DeeP Potential with DP-GEN, no extra prerequisite is needed and please refer to [this page](http://abacus.deepmodeling.com/en/latest/advanced/interface/dpgen.html) for ABACUS interface with DP-GEN.
 
-To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` in the file `Makefile.vars` or use
+To compile ABACUS with DeePMD-kit, you need to define `DeePMD_DIR` and `TensorFlow_DIR` (TensorFlow Backend, optional) and/or `LIBTORCH_DIR` (PyTorch Backend, optional) in the file `Makefile.vars`.
+
+Or the `tensorflow_cc` and `torch` libraries are in the same directory as the `deepmd_c`/`deepmd_cc` libraries, then
+```makefile
+make DeePMD_DIR=/dir_to_deepmd-kit
+```
+DeePMD-kit supports TensorFlow backend but its libraries are placed at another directory, then
 
 ```makefile
-make DeePMD_DIR=~/deepmd-kit TensorFlow_DIR=~/tensorflow
+make DeePMD_DIR=/dir_to_deepmd-kit TensorFlow_DIR=/dir_to_tensorflow
 ```
-
-directly.
-
-> `deepmd_c`/`deepmd_cc` and `tensorflow_cc` libraries would be called according to `DeePMD_DIR` and `TensorFlow_DIR`, which is showed in detail in [this page](https://github.com/deepmodeling/deepmd-kit/blob/master/doc/inference/cxx.md). If `TensorFlow_DIR` is not defined, it will be the same as `DeePMD_DIR`. Note that `tensorflow_cc` is not required if `deepmd_c` is found.
+Similarly, DeePMD-kit supports PyTorch backend but its libraries are placed at another directory, then
+```makefile
+make DeePMD_DIR=/dir_to_deepmd-kit Torch_DIR=/dir_to_pytorch
+```
 
 ### Add LibRI Support
 To use new EXX, you need two libraries: [LibRI](https://github.com/abacusmodeling/LibRI) and [LibComm](https://github.com/abacusmodeling/LibComm) and need to define `LIBRI_DIR` and `LIBCOMM_DIR` in the file `Makefile.vars` or use
