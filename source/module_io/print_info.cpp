@@ -2,7 +2,8 @@
 
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
-#include "module_parameter/parallel_global.h"
+#include "module_base/parallel_global.h"
+
 
 namespace ModuleIO
 {
@@ -71,8 +72,8 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 
 		std::cout << " " << std::setw(8) << "SPIN"
 		     << std::setw(16) << "KPOINTS"
-		     << std::setw(12) << "PROCESSORS";
-             << std::setw(16) << "THREADS_PER_PROC";
+		     << std::setw(12) << "PROCESSORS"
+             << std::setw(12) << "THREADS";
 
 		const bool orbinfo = (PARAM.inp.basis_type=="lcao" || PARAM.inp.basis_type=="lcao_in_pw" 
 						  || (PARAM.inp.basis_type=="pw" && PARAM.inp.init_wfc.substr(0, 3) == "nao"));
@@ -91,7 +92,7 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC
-		     << std::setw(16) << Parallel_Global::omp_number;
+		     << std::setw(12) << Parallel_Global::omp_number * GlobalV::NPROC;
 		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
 		std::cout << std::endl;
