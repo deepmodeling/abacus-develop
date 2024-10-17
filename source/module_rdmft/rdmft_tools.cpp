@@ -284,8 +284,9 @@ void Veff_rdmft<TK, TR>::contributeHR()
     }
     else if( potential_ == "local" )
     {   
+        double vlocal_of_0 = 0.0;
         ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
-        elecstate::PotLocal potL(vloc_, sf_, rho_basis_);
+        elecstate::PotLocal potL(vloc_, sf_, rho_basis_, vlocal_of_0);
         potL.cal_fixed_v( &v_matrix_local(0, 0) );
 
         // use pointer to attach v(r)
@@ -362,8 +363,9 @@ void Veff_rdmft<double, double>::contributeHR()
     }
     else if( potential_ == "local" )
     {   
+        double vlocal_of_0 = 0.0;
         ModuleBase::matrix v_matrix_local(1, charge_->nrxx);
-        elecstate::PotLocal potL(vloc_, sf_, rho_basis_);
+        elecstate::PotLocal potL(vloc_, sf_, rho_basis_, vlocal_of_0);
         potL.cal_fixed_v( &v_matrix_local(0, 0) );
 
         // use pointer to attach v(r)

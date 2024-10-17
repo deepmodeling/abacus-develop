@@ -592,7 +592,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
         // 9.5) rdmft, add by jghan 2024-10-09
         bool one_step_exx = false;
-        if( GlobalC::exx_info.info_global.cal_exx && this->conv_elec ) one_step_exx = true;
+        if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
 
         // 10) finish scf iterations
         this->iter_finish(iter);

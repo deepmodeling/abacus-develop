@@ -108,7 +108,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
     std::cout << "\n******\nGlobalC::exx_info.info_global.cal_exx: " << GlobalC::exx_info.info_global.cal_exx << "\n******\n" << std::endl;
     std::cout << "\n******\nPARAM.inp.ab_initio_type: " << PARAM.inp.ab_initio_type << "\n******\n" << std::endl;
-    std::cout << "\n******\nGlobalV::NBANDS: " << GlobalV::NBANDS << "\n******\n" << std::endl;
+    // std::cout << "\n******\nGlobalV::NBANDS: " << GlobalV::NBANDS << "\n******\n" << std::endl;
     std::cout << "\n******\nPARAM.inp.nbands: " << PARAM.inp.nbands << "\n******\n" << std::endl;
     // XC_func_rdmft = "hf";
     // std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
@@ -340,7 +340,7 @@ void RDMFT<TK, TR>::update_charge()
     else
     {
         // calculate DMK and DMR
-        elecstate::DensityMatrix<TK, double> DM(kv, ParaV, nspin);
+        elecstate::DensityMatrix<TK, double> DM(ParaV, nspin, kv->kvec_d, nk_total);
         elecstate::cal_dm_psi(ParaV, wg, wfc, DM);
         DM.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
         DM.cal_DMR();
@@ -593,7 +593,7 @@ void RDMFT<TK, TR>::cal_V_XC()
 
     DM_XC_pass = DM_XC;
 
-    elecstate::DensityMatrix<TK, double> DM_test(kv, ParaV, nspin);
+    elecstate::DensityMatrix<TK, double> DM_test(ParaV, nspin, kv->kvec_d, nk_total);
     elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
     DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
     DM_test.cal_DMR();
