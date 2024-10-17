@@ -26,14 +26,14 @@ const_nums<double>::const_nums()
 template <>
 const_nums<float>::const_nums()
 {
-    base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->zero, 1);
+    //base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->zero, 1);
     *this->zero = 0.0;
-    base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->one, 1);
+    //base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->one, 1);
     *this->one = 1.0;
-    base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->neg_one, 1);
+    //base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->neg_one, 1);
     *this->neg_one = -1.0;
 }
 
@@ -41,14 +41,14 @@ const_nums<float>::const_nums()
 template <>
 const_nums<std::complex<double>>::const_nums()
 {
-    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->zero, 1);
+    //base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->zero, 1);
     *this->zero = std::complex<double>(0.0, 0.0);
-    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->one, 1);
+    //base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->one, 1);
     *this->one = std::complex<double>(1.0, 0.0);
-    base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->neg_one, 1);
+    //base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->neg_one, 1);
     *this->neg_one = std::complex<double>(-1.0, 0.0);
 }
 
@@ -56,13 +56,13 @@ const_nums<std::complex<double>>::const_nums()
 template <>
 const_nums<std::complex<float>>::const_nums()
 {
-    base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->zero, 1);
+    //base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->zero, 1);
     *this->zero = std::complex<float>(0.0, 0.0);
-    base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->one, 1);
+    //base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->one, 1);
     *this->one = std::complex<float>(1.0, 0.0);
-    base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->neg_one, 1);
+    //base_device::memory::resize_memory_op<std::complex<float>, base_device::DEVICE_CPU>()(
+    //                    this->cpu_ctx, this->neg_one, 1);
     *this->neg_one = std::complex<float>(-1.0, 0.0);
 }
