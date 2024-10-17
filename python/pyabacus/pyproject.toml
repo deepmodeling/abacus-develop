@@ -33,6 +33,15 @@ wheel.expand-macos-universal-tags = true
 cmake.verbose = true
 logging.level = "INFO"
 
+[tool.scikit-build.cmake.define]
+CMAKE_INSTALL_RPATH = "$ORIGIN"
+
+[tool.setuptools]
+package-dir = {"pyabacus" = "src/pyabacus"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pyabacus*"]
 
 [tool.pytest.ini_options]
 minversion = "6.0"
