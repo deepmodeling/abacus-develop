@@ -25,9 +25,9 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
 
-    this->one = this->cs.one[0];
-    this->zero = this->cs.zero[0];
-    this->neg_one = this->cs.neg_one[0];
+    this->one = this->cs.one;
+    this->zero = this->cs.zero;
+    this->neg_one = this->cs.neg_one;
 
     assert(david_ndim_in > 1);
     assert(david_ndim_in * nband_in < nbasis_in * this->diag_comm.nproc);
