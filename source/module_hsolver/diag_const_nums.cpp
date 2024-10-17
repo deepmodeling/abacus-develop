@@ -13,16 +13,13 @@ const_nums<double>::const_nums()
 {
     base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->zero, 1);
-    base_device::memory::set_memory_op<double, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->zero, 0.0, 1);
+    *this->zero = 0.0;
     base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->one, 1);
-    base_device::memory::set_memory_op<double, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->one, 1.0, 1);
+    *this->one = 1.0;
     base_device::memory::resize_memory_op<double, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->neg_one, 1);
-    base_device::memory::set_memory_op<double, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->neg_one, -1.0, 1);
+    *this->neg_one = -1.0;
 }
 
 // Specialize templates to support double types
@@ -31,16 +28,13 @@ const_nums<float>::const_nums()
 {
     base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->zero, 1);
-    base_device::memory::set_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->zero, 0.0, 1);
+    *this->zero = 0.0;
     base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->one, 1);
-    base_device::memory::set_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->one, 1.0, 1);
+    *this->one = 1.0;
     base_device::memory::resize_memory_op<float, base_device::DEVICE_CPU>()(
                         this->cpu_ctx, this->neg_one, 1);
-    base_device::memory::set_memory_op<float, base_device::DEVICE_CPU>()(
-                        this->cpu_ctx, this->neg_one, -1.0, 1);
+    *this->neg_one = -1.0;
 }
 
 // Specialized templates to support std:: complex<double>types
