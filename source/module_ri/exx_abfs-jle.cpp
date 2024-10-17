@@ -7,27 +7,25 @@
 #include "../module_base/mathzone.h"
 #include "../module_base/math_sphbes.h" // mohan add 2021-05-06
 
-bool Exx_Abfs::Jle::generate_matrix = false;
-int Exx_Abfs::Jle::Lmax = 2;
-double Exx_Abfs::Jle::Ecut_exx = 60;
-double Exx_Abfs::Jle::tolerence = 1.0e-12;	
-
-void Exx_Abfs::Jle::init_jle( const double kmesh_times, const LCAO_Orbitals& orb )
+std::vector< std::vector< std::vector< Numerical_Orbital_Lm>>>
+Exx_Abfs::Jle::init_jle(
+	const Exx_Info::Exx_Info_Opt_ABFs &info,
+	const double kmesh_times,
+	const LCAO_Orbitals& orb )
 {
-	jle.resize( GlobalC::ucell.ntype );
-
+	std::vector< std::vector< std::vector< Numerical_Orbital_Lm>>> jle( GlobalC::ucell.ntype );
 	for (int T = 0;  T < GlobalC::ucell.ntype ; T++)
 	{
-		jle[T].resize( Lmax+1 );
-		for (int L=0; L <= Lmax ; ++L)
+		jle[T].resize( info.abfs_Lmax+1 );
+		for (int L=0; L<=info.abfs_Lmax; ++L)
 		{
 			const size_t ecut_number 
-				= static_cast<size_t>( sqrt( Ecut_exx ) * orb.Phi[T].getRcut() / ModuleBase::PI ); // Rydberg Unit.
+				= static_cast<size_t>( sqrt( info.ecut_exx ) * orb.Phi[T].getRcut() / ModuleBase::PI ); // Rydberg Unit.
 
 			jle[T][L].resize( ecut_number );
 
 			std::vector<double> en(ecut_number, 0.0);
-			ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, L, tolerence, ModuleBase::GlobalFunc::VECTOR_TO_PTR(en), orb.Phi[T].getRcut());
+			ModuleBase::Sphbes::Spherical_Bessel_Roots(ecut_number, L, info.tolerence, ModuleBase::GlobalFunc::VECTOR_TO_PTR(en), orb.Phi[T].getRcut());
 
 			for(size_t E=0; E!=ecut_number; ++E)
 			{
@@ -56,4 +54,5 @@ void Exx_Abfs::Jle::init_jle( const double kmesh_times, const LCAO_Orbitals& orb
 			}
 		}
 	}
+	return jle;
 }

@@ -192,7 +192,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = false;
 	}
-    else if( xc_func == "OPT_ORB" ||  xc_func == "NONE" || xc_func == "NOX+NOC")
+    else if( xc_func == "NONE" || xc_func == "NOX+NOC")
     {
         // not doing anything
     }
