@@ -7,9 +7,9 @@ struct const_nums
 {
     const_nums();
     base_device::DEVICE_CPU* cpu_ctx = {};
-    T* zero;
-    T* one;
-    T* neg_one;
+    T* zero = nullptr;
+    T* one = nullptr;
+    T* neg_one = nullptr;
 };
 
 #endif
