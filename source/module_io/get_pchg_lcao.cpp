@@ -219,7 +219,8 @@ void IState_Charge::begin(Gint_k& gk,
         if (bands_picked_[ib])
         {
             // Using new density matrix inplementation (multi-k)
-            elecstate::DensityMatrix<std::complex<double>, double> DM(&kv, this->ParaV, nspin);
+            const int nspin_dm = std::map<int, int>({ {1,1},{2,2},{4,1} })[nspin];
+            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);

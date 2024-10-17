@@ -44,7 +44,7 @@ namespace LR
             if (ri_hartree_benchmark != "aims") { assert(aims_nbasis.empty()); }
             this->classname = "HamiltCasidaLR";
             this->DM_trans.resize(1);
-            this->DM_trans[0] = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&kv_in, pmat_in, nspin);
+            this->DM_trans[0] = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(pmat_in, nspin, kv_in.kvec_d, nk);
             // add the diag operator  (the first one)
             this->ops = new OperatorLRDiag<T>(eig_ks, pX_in, nk, nocc, nvirt);
             //add Hxc operator

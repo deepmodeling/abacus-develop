@@ -131,7 +131,7 @@ namespace LR
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(complex)");
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
 
-        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&kv, pmat, nspin);
+        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(pmat, nspin, kv.kvec_d, kv.get_nks() / nspin);
         DM_trans_real_imag.init_DMR(*this->hR);
         hamilt::HContainer<double> HR_real_imag(GlobalC::ucell, this->pmat);
         this->initialize_HR(HR_real_imag, ucell, gd, this->pmat);

@@ -469,7 +469,7 @@ struct Input_para
     double exx_mixing_beta = 1.0;               ///< mixing_beta for outer-loop when exx_separate_loop=1
     double exx_lambda = 0.3;                    ///< used to compensate for divergence points at G=0 in the
                                                 ///< evaluation of Fock exchange using lcao_in_pw method
-    std::string exx_real_number = "0";          ///< exx calculated in real or complex
+    std::string exx_real_number = "default";          ///< exx calculated in real or complex
     double exx_pca_threshold = 0.0001;          ///< threshold to screen on-site ABFs in exx
     double exx_c_threshold = 0.0001;            ///< threshold to screen C matrix in exx
     double exx_v_threshold = 0.1;               ///< threshold to screen C matrix in exx
@@ -484,7 +484,7 @@ struct Input_para
                                                 ///< inequality
     double exx_cauchy_stress_threshold = 1e-07; ///< threshold to screen exx stress using Cauchy-Schwartz
                                                 ///< inequality
-    std::string exx_ccp_rmesh_times = "1";      ///< how many times larger the radial mesh required for
+    std::string exx_ccp_rmesh_times = "default";      ///< how many times larger the radial mesh required for
                                                 ///< calculating Columb potential is to that of atomic orbitals
     std::string exx_distribute_type = "htime";  ///< distribute type (assuming default as no specific value
                                                 ///< provided)
