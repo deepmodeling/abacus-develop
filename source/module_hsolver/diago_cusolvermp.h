@@ -10,7 +10,7 @@ namespace hsolver
 {
 // DiagoCusolverMP class, derived from DiagH, for diagonalization using CUSOLVERMP
 template <typename T>
-class DiagoCusolverMP : public DiagH<T>
+class DiagoCusolverMP
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -19,8 +19,8 @@ class DiagoCusolverMP : public DiagH<T>
     DiagoCusolverMP()
     {
     }
-    // Override the diag function for CUSOLVERMP diagonalization
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    // the diag function for CUSOLVERMP diagonalization
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 };
 } // namespace hsolver
 #endif // __CUSOLVERMP

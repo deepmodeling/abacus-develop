@@ -1,4 +1,5 @@
 #pragma once
+#include "module_cell/klist.h"
 #include "module_hamilt_general/operator.h"
 #include "module_lr/utils/gint_template.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
@@ -87,7 +88,7 @@ namespace LR
                 for (int ib = prev_size;ib < nbands;++ib)
                 {
                     // the first dimenstion of DensityMatrix is nk=nks/nspin 
-                    DM_trans[ib] = LR_Util::make_unique<elecstate::DensityMatrix<T, TR>>(&this->kv, this->pmat, this->nspin);
+                    DM_trans[ib] = LR_Util::make_unique<elecstate::DensityMatrix<T, TR>>(this->pmat, this->nspin, this->kv.kvec_d, this->kv.get_nks() / nspin);
                     DM_trans[ib]->init_DMR(*this->hR);
                 }
             }

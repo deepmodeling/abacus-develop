@@ -9,9 +9,9 @@
 namespace hsolver
 {
 
-// DiagoCusolver class, derived from DiagH, for diagonalization using CUSOLVER
+// DiagoCusolver class for diagonalization using CUSOLVER
 template <typename T>
-class DiagoCusolver : public DiagH<T>
+class DiagoCusolver
 {
   private:
     // Real is the real part of the complex type T
@@ -24,7 +24,7 @@ class DiagoCusolver : public DiagH<T>
     ~DiagoCusolver();
     
     // Override the diag function for CUSOLVER diagonalization
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 
     // Static variable to keep track of the decomposition state
     static int DecomposedState;

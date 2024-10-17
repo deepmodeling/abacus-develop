@@ -242,7 +242,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
             else
             {
                 ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
-                                         "This method of DiagH for k-parallelism diagnolization is not supported!");
+                                         "This type of eigensolver for k-parallelism diagnolization is not supported!");
             }
         }
         MPI_Barrier(MPI_COMM_WORLD);
