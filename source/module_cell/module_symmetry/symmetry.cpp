@@ -1001,7 +1001,7 @@ bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double
     // the start atom index.
     bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
-    bool s_flag = 0;
+    bool s_flag = false;
 
     for (int it = 0; it < ntype; it++)
     {
@@ -1123,7 +1123,7 @@ bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double
         //the current test is successful
         if (no_diff == true)
         {
-            s_flag = 1;
+            s_flag = true;
             //save the detected translation std::vector temporarily
             trans.x = gtrans.x;
             trans.y = gtrans.y;
