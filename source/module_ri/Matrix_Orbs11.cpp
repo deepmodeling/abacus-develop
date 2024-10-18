@@ -65,12 +65,7 @@ void Matrix_Orbs11::init_radial(const std::vector<std::vector<std::vector<Numeri
                             center2_orb11_s[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
                                 Center2_Orb::Orb11(orb_A[TA][LA][NA], orb_B[TB][LB][NB], psb_, this->MGT)));
-}
-}
-}
-}
-}
-}
+    } } } } } }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
@@ -90,12 +85,7 @@ void Matrix_Orbs11::init_radial(const LCAO_Orbitals& orb_A, const LCAO_Orbitals&
                                                                   orb_B.Phi[TB].PhiLN(LB, NB),
                                                                   psb_,
                                                                   this->MGT)));
-}
-}
-}
-}
-}
-}
+    } } } } } }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial");
 }
 
@@ -110,12 +100,7 @@ void Matrix_Orbs11::init_radial_table()
                     for (auto& coE: coD.second) {
                         for (auto& coF: coE.second) {
                             coF.second.init_radial_table();
-}
-}
-}
-}
-}
-}
+    } } } } }}
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial_table");
 }
 
@@ -123,7 +108,8 @@ void Matrix_Orbs11::init_radial_table(const std::map<size_t, std::map<size_t, st
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init_radial_table_Rs");
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial_table");
-    for (const auto& RsA: Rs) {
+    for (const auto& RsA: Rs)
+    {
         for (const auto& RsB: RsA.second)
         {
             if (auto* const center2_orb11_sAB = static_cast<
@@ -135,21 +121,17 @@ void Matrix_Orbs11::init_radial_table(const std::map<size_t, std::map<size_t, st
                 {
                     const double position = R * GlobalC::ucell.lat0 / lcao_dr_;
                     const size_t iq = static_cast<size_t>(position);
-                    for (size_t i = 0; i != 4; ++i) {
-                        radials.insert(iq + i);
-}
+                    for (size_t i = 0; i != 4; ++i)
+                        { radials.insert(iq + i); }
                 }
                 for (auto& coC: *center2_orb11_sAB) {
                     for (auto& coD: coC.second) {
                         for (auto& coE: coD.second) {
                             for (auto& coF: coE.second) {
                                 coF.second.init_radial_table(radials);
-}
-}
-}
-}
+                } } } }
             }
         }
-}
+    }
     ModuleBase::timer::tick("Matrix_Orbs11", "init_radial_table");
 }

@@ -32,6 +32,7 @@
 #include <memory>
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
+#include "module_ri/exx_opt_orb.h"
 #include "module_ri/RPA_LRI.h"
 #endif
 
@@ -170,8 +171,18 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
                                  inp.lcao_rmax,
                                  ucell,
                                  two_center_bundle_,
-                                 orb_);
+                                 this->orb_);
     //------------------init Basis_lcao----------------------
+
+    if (PARAM.inp.calculation == "gen_opt_abfs")
+    {
+#ifdef __EXX
+        Exx_Opt_Orb::generate_matrix(GlobalC::exx_info.info_opt_abfs, this->kv, this->orb_);
+#else
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "calculation=gen_opt_abfs must compile __EXX");
+#endif
+        return;
+    }
 
     // 5) initialize density matrix
     // DensityMatrix is allocated here, DMK is also initialized here
@@ -188,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 6) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks(), orb_);
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks(), this->orb_);
 
 #ifdef __EXX
     // 7) initialize exx
@@ -202,11 +213,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
             // initialize 2-center radial tables for EXX-LRI
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, this->orb_);
             }
             else
             {
-                this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, this->orb_);
             }
         }
     }
@@ -215,7 +226,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // 8) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), orb_);
+        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), this->orb_);
     }
 
     // 9) initialize ppcell
@@ -244,7 +255,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
         // load the DeePKS model from deep neural network
         GlobalC::ld.load_model(PARAM.inp.deepks_model);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        GlobalC::ld.read_projected_DM((PARAM.inp.init_chg == "file"), PARAM.inp.deepks_equiv, *orb_.Alpha);
+        GlobalC::ld.read_projected_DM((PARAM.inp.init_chg == "file"), PARAM.inp.deepks_equiv, *this->orb_.Alpha);
     }
 #endif
 
@@ -313,7 +324,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force)
                        this->GG, // mohan add 2024-04-01
                        this->GK, // mohan add 2024-04-01
                        two_center_bundle_,
-                       orb_,
+                       this->orb_,
                        force,
                        this->scs,
                        this->sf,
@@ -466,7 +477,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                                     this->GG,
                                     this->GK,
                                     this->kv,
-                                    orb_.cutoffs(),
+                                    this->orb_.cutoffs(),
                                     this->pelec->wg,
                                     GlobalC::GridD
 #ifdef __EXX
@@ -495,7 +506,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners()
                                             this->kv,
                                             this->pelec->wg,
                                             GlobalC::GridD,
-                                            orb_.cutoffs(),
+                                            this->orb_.cutoffs(),
                                             this->two_center_bundle_
 #ifdef __EXX
                                             ,
@@ -1168,7 +1179,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                           this->pelec->ekb,
                           this->pelec->klist->kvec_d,
                           GlobalC::ucell,
-                          orb_,
+                          this->orb_,
                           GlobalC::GridD,
                           &(this->pv),
                           *(this->psi),
@@ -1188,8 +1199,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,
                                        this->kv,
-                                       orb_);
-        rpa_lri_double.init(MPI_COMM_WORLD, this->kv, orb_.cutoffs());
+                                       this->orb_);
+        rpa_lri_double.init(MPI_COMM_WORLD, this->kv, this->orb_.cutoffs());
         rpa_lri_double.out_for_RPA(this->pv, *(this->psi), this->pelec);
     }
 #endif
@@ -1278,7 +1289,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
                                                                     this->kv.kvec_d,
                                                                     &hR,
                                                                     &GlobalC::ucell,
-                                                                    orb_.cutoffs(),
+                                                                    this->orb_.cutoffs(),
                                                                     &GlobalC::GridD,
                                                                     two_center_bundle_.kinetic_orb.get());
 
