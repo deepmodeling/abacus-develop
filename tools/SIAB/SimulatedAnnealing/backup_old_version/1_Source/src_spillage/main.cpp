@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	// (2) if parallel, prepare.
 	cout << " First read in the parameters from INPUT." << endl;
-	Parallel_Global::read_mpi_parameters(argc,argv);
+	Parallel_Global::read_pal_param(argc,argv);
 	
 	// (2) init class input.
 	input.init();
