@@ -2,6 +2,7 @@
 
 #ifdef __MPI
 #include "diago_scalapack.h"
+#include "module_base/scalapack_connector.h"
 #else
 #include "diago_lapack.h"
 #endif
@@ -24,21 +25,11 @@
 #include "module_elecstate/elecstate_lcao.h"
 #endif
 
-#include "diago_cg.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
-#include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
-#include "module_hsolver/diago_iter_assist.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/parallel_k2d.h"
-#include "module_io/write_HS.h"
 #include "module_parameter/parameter.h"
-
-#include <ATen/core/tensor.h>
-#include <ATen/core/tensor_map.h>
-#include <ATen/core/tensor_types.h>
-#include <unistd.h>
 
 namespace hsolver
 {
@@ -74,51 +65,39 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     }
 #endif
 
-    if (this->method == "cg_in_lcao")
-    {
-        this->precondition_lcao.resize(psi.get_nbasis());
-
-        using Real = typename GetTypeReal<T>::type;
-        // set precondition
-        for (size_t i = 0; i < precondition_lcao.size(); i++)
-        {
-            precondition_lcao[i] = 1.0;
-        }
-    }
-
-#ifdef __MPI
     if (GlobalV::KPAR_LCAO > 1
         && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
     {
+#ifdef __MPI
         this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
-    }
-    else
 #endif
+    }
+    else if (GlobalV::KPAR_LCAO == 1)
     {
-        /// Loop over k points for solve Hamiltonian to charge density
+        /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
             pHamilt->updateHk(ik);
 
+            /// find psi pointer for each k point
             psi.fix_k(ik);
 
-            // solve eigenvector and eigenvalue for H(k)
+            /// solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
         }
     }
 
-    if (skip_charge) // used in nscf calculation
+    if (!skip_charge) // used in scf calculation
     {
-        ModuleBase::timer::tick("HSolverLCAO", "solve");
-    }
-    else // used in scf calculation
-    {
-        // calculate charge by psi
+        // calculate charge by eigenpairs(eigenvalues and eigenvectors)
         pes->psiToRho(psi);
-        ModuleBase::timer::tick("HSolverLCAO", "solve");
+    }
+    else // used in nscf calculation
+    {
     }
 
+    ModuleBase::timer::tick("HSolverLCAO", "solve");
     return;
 }
 
@@ -135,6 +114,7 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         sa.diag(hm, psi, eigenvalue);
 #endif
     }
+
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
@@ -147,151 +127,33 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         el.diag(hm, psi, eigenvalue);
     }
 #endif
+
 #ifdef __CUDA
     else if (this->method == "cusolver")
     {
         DiagoCusolver<T> cs(this->ParaV);
         cs.diag(hm, psi, eigenvalue);
     }
+#ifdef __CUSOLVERMP
     else if (this->method == "cusolvermp")
     {
-#ifdef __CUSOLVERMP
         DiagoCusolverMP<T> cm;
         cm.diag(hm, psi, eigenvalue);
-#else
-        ModuleBase::WARNING_QUIT("HSolverLCAO", "CUSOLVERMP did not compiled!");
-#endif
     }
 #endif
-    else if (this->method == "lapack")
-    {
+#endif
+
 #ifndef __MPI
+    else if (this->method == "lapack") // only for single core
+    {
         DiagoLapack<T> la;
         la.diag(hm, psi, eigenvalue);
-#else
-        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This type of eigensolver is not supported!");
-#endif
     }
+#endif
+
     else
     {
-
-        using ct_Device = typename ct::PsiToContainer<base_device::DEVICE_CPU>::type;
-
-        auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
-        };
-
-        DiagoCG<T, Device> cg(PARAM.inp.basis_type,
-                              PARAM.inp.calculation,
-                              DiagoIterAssist<T, Device>::need_subspace,
-                              subspace_func,
-                              DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                              DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                              GlobalV::NPROC_IN_POOL);
-
-        hamilt::MatrixBlock<T> h_mat, s_mat;
-        hm->matrix(h_mat, s_mat);
-
-        // set h_mat & s_mat
-        for (int i = 0; i < h_mat.row; i++)
-        {
-            for (int j = i; j < h_mat.col; j++)
-            {
-                h_mat.p[h_mat.row * j + i] = hsolver::get_conj(h_mat.p[h_mat.row * i + j]);
-                s_mat.p[s_mat.row * j + i] = hsolver::get_conj(s_mat.p[s_mat.row * i + j]);
-            }
-        }
-
-        const T *one_ = nullptr, *zero_ = nullptr;
-        one_ = new T(static_cast<T>(1.0));
-        zero_ = new T(static_cast<T>(0.0));
-
-        auto hpsi_func = [h_mat, one_, zero_](const ct::Tensor& psi_in, ct::Tensor& hpsi_out) {
-            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-
-            Device* ctx = {};
-
-            gemv_op<T, Device>()(ctx,
-                                 'N',
-                                 h_mat.row,
-                                 h_mat.col,
-                                 one_,
-                                 h_mat.p,
-                                 h_mat.row,
-                                 psi_in.data<T>(),
-                                 1,
-                                 zero_,
-                                 hpsi_out.data<T>(),
-                                 1);
-
-            ModuleBase::timer::tick("DiagoCG_New", "hpsi_func");
-        };
-
-        auto spsi_func = [s_mat, one_, zero_](const ct::Tensor& psi_in, ct::Tensor& spsi_out) {
-            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
-            // psi_in should be a 2D tensor:
-            // psi_in.shape() = [nbands, nbasis]
-            const auto ndim = psi_in.shape().ndim();
-            REQUIRES_OK(ndim <= 2, "dims of psi_in should be less than or equal to 2");
-
-            Device* ctx = {};
-
-            gemv_op<T, Device>()(ctx,
-                                 'N',
-                                 s_mat.row,
-                                 s_mat.col,
-                                 one_,
-                                 s_mat.p,
-                                 s_mat.row,
-                                 psi_in.data<T>(),
-                                 1,
-                                 zero_,
-                                 spsi_out.data<T>(),
-                                 1);
-
-            ModuleBase::timer::tick("DiagoCG_New", "spsi_func");
-        };
-
-        // if (this->is_first_scf)
-        // {
-        for (size_t i = 0; i < psi.get_nbands(); i++)
-        {
-            for (size_t j = 0; j < psi.get_nbasis(); j++)
-            {
-                psi(i, j) = *zero_;
-            }
-            psi(i, i) = *one_;
-        }
-        // }
-
-        auto psi_tensor = ct::TensorMap(psi.get_pointer(),
-                                        ct::DataTypeToEnum<T>::value,
-                                        ct::DeviceTypeToEnum<ct_Device>::value,
-                                        ct::TensorShape({psi.get_nbands(), psi.get_nbasis()}))
-                              .slice({0, 0}, {psi.get_nbands(), psi.get_current_nbas()});
-
-        auto eigen_tensor = ct::TensorMap(eigenvalue,
-                                          ct::DataTypeToEnum<Real>::value,
-                                          ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                          ct::TensorShape({psi.get_nbands()}));
-
-        auto prec_tensor = ct::TensorMap(this->precondition_lcao.data(),
-                                         ct::DataTypeToEnum<Real>::value,
-                                         ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
-                                         ct::TensorShape({static_cast<int>(this->precondition_lcao.size())}))
-                               .slice({0}, {psi.get_current_nbas()});
-
-        cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, prec_tensor);
-
-        // TODO: Double check tensormap's potential problem
-        ct::TensorMap(psi.get_pointer(), psi_tensor, {psi.get_nbands(), psi.get_nbasis()}).sync(psi_tensor);
+        ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");
     }
 
     ModuleBase::timer::tick("HSolverLCAO", "hamiltSolvePsiK");
