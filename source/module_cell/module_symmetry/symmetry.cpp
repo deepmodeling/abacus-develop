@@ -1560,8 +1560,8 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     assert(nrotk <=48 );
 
     //map the gmatrix to inv
-    int* invmap = new int[nrotk];
-    this->gmatrix_invmap(kgmatrix, nrotk, invmap);
+    std::vector<int>invmap(this->nrotk, -1);
+    this->gmatrix_invmap(kgmatrix, nrotk, invmap.data());
 
 // ---------------------------------------------------
 /* This code defines a lambda function called "rotate_recip" that takes 
@@ -1629,6 +1629,7 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
+                        if (invmap[isym] < 0 || invmap[isym] > nrotk) { continue; }
                         //tmp variables  
                         int ii, jj, kk=0;
                         rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
@@ -1750,7 +1751,6 @@ for (int g_index = 0; g_index < group_index; g_index++)
     delete[] symflag;
     delete[] isymflag;
     delete[] table_xyz;
-    delete[] invmap;
     delete[] count_xyz;
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
