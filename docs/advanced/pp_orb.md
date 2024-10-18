@@ -93,10 +93,17 @@ Users can find pseudopotentials in the following links:
 
 ### Pseudopotential Generation
 For pseudopotential generation, please refer to the following links for more information:
-- [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
-- [ONCVPSP]
-- [Opium]
+- [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/)
+- [ONCVPSP](http://www.mat-simresearch.com/)
+- [Opium](https://opium.sourceforge.net/)
 
 A Chinese guideline is also available here: [A brief introduction of norm-conserving pseudopotential generation](https://mcresearch.github.io/abacus-user-guide/abacus-upf.html)
 
-### Pseudopotential Test: ABACUS Pseudopotential-Numerical atomic orbital Square (APNS) project
+# ABACUS Pseudopotential-Numerical atomic orbital Square (APNS) project
+For the purpose of providing high-quality pseudopotentials and numerical atomic orbitals, we have initiated the APNS project. The project is aimed at providing a large number of high-quality pseudopotentials and numerical atomic orbitals, along with diverse test data for the ABACUS user community, reduce the cost of generating and testing pseudopotentials and numerical atomic orbitals by users, and promote the development of ABACUS software. The project is currently in the development stage, and we welcome contributions from the community. For more information, please refer to the following links:
+- [APNS website: test data and results](https://kirk0830.github.io/ABACUS-Pseudopot-Nao-Square/)
+- [APNS workflow (Github repository): high-throughput test of pseudopotentials and numerical atomic orbitals](https://github.com/kirk0830/ABACUS-Pseudopot-Nao-Square)
+
+There are also other excellent projects that provide high-quality pseudopotentials along with test data:
+- [Solid State Pseudopotential library](https://www.materialscloud.org/sssp).
+- [Verification of the precision of DFT implementation via AiiDA common workflows](https://acwf-verification.materialscloud.org/)
