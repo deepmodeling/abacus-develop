@@ -163,8 +163,8 @@ double XC_Functional_Libxc::convert_etxc(
 	return etxc;
 }
 
-// converting etxc from exc (libxc=>abacus)
-double XC_Functional_Libxc::convert_vtxc_v(
+// converting vtxc and v from vrho and vsigma (libxc=>abacus)
+std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const xc_func_type &func,
 	const int nspin,
 	const std::size_t nrxx,
@@ -174,13 +174,10 @@ double XC_Functional_Libxc::convert_vtxc_v(
 	const std::vector<double> &vrho,
 	const std::vector<double> &vsigma,
 	const double tpiba,
-	const Charge* const chr,
-	ModuleBase::matrix &v)
+	const Charge* const chr)
 {
-	assert(v.nr==nspin);
-	assert(v.nc==nrxx);
-
 	double vtxc = 0.0;
+	ModuleBase::matrix v(nspin, nrxx);
 
 	#ifdef _OPENMP
 	#pragma omp parallel for collapse(2) reduction(+:vtxc) schedule(static, 256)
@@ -215,7 +212,7 @@ double XC_Functional_Libxc::convert_vtxc_v(
 		vtxc -= rvtxc;
 	} // end if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA))
 
-	return vtxc;
+	return std::make_pair(vtxc, std::move(v));
 }
 
 
