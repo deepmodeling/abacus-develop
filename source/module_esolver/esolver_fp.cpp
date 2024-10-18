@@ -11,6 +11,10 @@
 #include "module_io/cif_io.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 
+#ifdef USE_LIBXC
+#include "module_io/write_libxc_r.h"
+#endif
+
 namespace ModuleESolver
 {
 
@@ -284,6 +288,23 @@ void ESolver_FP::after_scf(const int istep)
                 this->pw_rhod,
                 &(GlobalC::ucell),
                 PARAM.inp.out_elf[1]);
+        }
+
+        // 6) write xc(r)
+        if (PARAM.inp.out_xc_r[0]>=0)
+        {
+#ifdef USE_LIBXC            
+            ModuleIO::write_libxc_r(
+                PARAM.inp.out_xc_r[0],
+                XC_Functional::get_func_id(),
+                this->pw_rhod->nrxx, // number of real-space grid
+                GlobalC::ucell.omega, // volume of cell
+                GlobalC::ucell.tpiba,
+                &this->chr,
+                this);
+#else
+            throw std::invalid_argument("out_xc_r must compile with libxc.\nSee "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
+#endif
         }
     }
 }
