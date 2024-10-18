@@ -145,8 +145,10 @@ class toQO
         void append_ovlpR_eiRk(int ik, int iR);             //< append S(R) to S(k), memory saving
 
         // MPI related
-        void bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec);
-        void bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec);
+        static void bcast_stdvector_ofvector3int(std::vector<ModuleBase::Vector3<int>>& vec,
+                                                 const int rank);
+        static void bcast_stdvector_ofvector3double(std::vector<ModuleBase::Vector3<double>>& vec,
+                                                    const int rank);
 
         // Neighboring list
         /// @brief get all possible (n1n2n3) defining supercell and scatter if MPI enabled
