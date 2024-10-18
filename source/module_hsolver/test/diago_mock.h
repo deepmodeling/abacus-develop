@@ -447,7 +447,8 @@ class OperatorMock : public hamilt::Operator<T>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk_ik = 0)const;
+        const int ngk_ik = 0,
+        const bool is_first_node = false)const;
 };
 template<>
 void OperatorMock<double>::act(
@@ -490,8 +491,8 @@ void OperatorMock<std::complex<double>>::act(
     const int npol,
     const std::complex<double>* tmpsi_in,
     std::complex<double>* tmhpsi,
-    const bool is_first_node,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    
@@ -524,8 +525,8 @@ void OperatorMock<std::complex<float>>::act(
     const int npol,
     const std::complex<float>* tmpsi_in,
     std::complex<float>* tmhpsi,
-    const bool is_first_node,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    
