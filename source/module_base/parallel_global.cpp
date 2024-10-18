@@ -196,7 +196,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
                   << std::endl
                   << "                      Commit: " << commit << std::endl
                   << std::endl;
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::cout << " " << ctime(&time_now);
     }
 
