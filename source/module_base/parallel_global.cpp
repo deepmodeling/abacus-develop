@@ -87,7 +87,8 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
     return;
 }
 
-void Parallel_Global::read_mpi_parameters(int argc, 
+// changed from read_mpi_parameters in 2024-1018
+void Parallel_Global::read_pal_param(int argc, 
                                           char** argv, 
                                           int& NPROC, 
                                           int& NTHREAD_PER_PROC, 
@@ -158,7 +159,7 @@ void Parallel_Global::read_mpi_parameters(int argc,
         {
             // usage of WARNING_QUIT need module_base/tool_quit.cpp
             // lead to undefined error in unit_test building
-            // ModuleBase::WARNING_QUIT( "Parallel_Global::read_mpi_parameters","OMP_NUM_THREADS setting is invalid. Please set it to a proper value.");
+            // ModuleBase::WARNING_QUIT( "Parallel_Global::read_pal_param","OMP_NUM_THREADS setting is invalid. Please set it to a proper value.");
             std::cerr << "ERROR: OMP_NUM_THREADS setting is invalid. Please set it to a proper value." << std::endl;
             exit(1);
         }
