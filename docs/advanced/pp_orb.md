@@ -74,7 +74,7 @@ For more information about pseudopotential usage, check the `ATOMIC_SPECIES` sec
 Users can find pseudopotentials in the following links:
 
 **Website**
-- [Quantum Espresso](https://www.quantum-espresso.org/pseudopotentials): the official website of Quantum Espresso, where you can find a large number of pseudopotential files.
+- [Quantum ESPRESSO](https://www.quantum-espresso.org/pseudopotentials): the official website of Quantum ESPRESSO, where you can find a large number of pseudopotential files.
 - [Stantard Solid State Pseudopotential library](https://www.materialscloud.org/sssp): a library of **high-quality** pseudopotentials for solid-state calculations, with **a large number of tests on efficiency and precison**.
 - [PWmat](http://www.pwmat.com/potential-download): a website that provides a large number of pseudopotential files, various kinds of semi-core constructed pseudopotentials are included. **Several sets (with or without f-electrons/noncolinear core correction) of Lanthanide pseudopotentials are also available**.
 - [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, paw, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
@@ -105,5 +105,5 @@ For the purpose of providing high-quality pseudopotentials and numerical atomic 
 - [APNS workflow (Github repository): high-throughput test of pseudopotentials and numerical atomic orbitals](https://github.com/kirk0830/ABACUS-Pseudopot-Nao-Square)
 
 There are also other excellent projects that provide high-quality pseudopotentials along with test data:
-- [Solid State Pseudopotential library](https://www.materialscloud.org/sssp).
+- [Solid State Pseudopotential library](https://www.materialscloud.org/sssp)
 - [Verification of the precision of DFT implementation via AiiDA common workflows](https://acwf-verification.materialscloud.org/)
