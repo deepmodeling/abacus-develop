@@ -15,6 +15,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
+#include "module_base/tool_quit.h"
 #include "version.h"
 
 #include <iostream>
@@ -152,9 +153,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
         // the user may take their own risk by set the OMP_NUM_THREADS env var.
         if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
-            // print error message
-            std::cerr << "Error: OMP_NUM_THREADS setting is invalid. Please set it to a proper value." << std::endl;
-            exit(1);
+            ModuleBase::WARNING_QUIT("Parallel_Global::read_mpi_parameters", "OMP_NUM_THREADS setting is invalid. Please set it to a proper value.");
         }
     }
     else if (current_thread_num * process_num < max_thread_num && local_rank == 0)
