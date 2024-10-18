@@ -1,5 +1,9 @@
 #include "blas_connector.h"
 
+#ifdef __DSP
+#include "module_base/kernels/dsp/dsp_connector.h"
+#endif
+
 void BlasConnector::axpy( const int n, const float alpha, const float *X, const int incX, float *Y, const int incY, base_device::AbacusDevice_t device_type)
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
@@ -83,7 +87,14 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 		sgemm_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc);
-}
+	}
+	#ifdef __DSP
+	else if (device_type == base_device::AbacusDevice_t::DspDevice){
+		sgemm_mt_(&transb, &transa, &n, &m, &k,
+		&alpha, b, &ldb, a, &lda,
+		&beta, c, &ldc);
+	}
+	#endif
 }
 
 void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
@@ -94,7 +105,14 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 		dgemm_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc);
-}
+	}
+	#ifdef __DSP
+	else if (device_type == base_device::AbacusDevice_t::DspDevice){
+		sgemm_mt_(&transb, &transa, &n, &m, &k,
+		&alpha, b, &ldb, a, &lda,
+		&beta, c, &ldc);
+	}
+	#endif
 }
 
 void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
@@ -105,7 +123,14 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
     	cgemm_(&transb, &transa, &n, &m, &k,
         &alpha, b, &ldb, a, &lda,
         &beta, c, &ldc);
-}
+	}
+	#ifdef __DSP
+	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+    	cgemm_mt_(&transb, &transa, &n, &m, &k,
+        &alpha, b, &ldb, a, &lda,
+        &beta, c, &ldc);
+	}
+	#endif
 }
 
 void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
@@ -116,7 +141,14 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 		zgemm_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc);
-}
+	}
+	#ifdef __DSP
+	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
+    	zgemm_mt_(&transb, &transa, &n, &m, &k,
+        &alpha, b, &ldb, a, &lda,
+        &beta, c, &ldc);
+	}
+	#endif
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
