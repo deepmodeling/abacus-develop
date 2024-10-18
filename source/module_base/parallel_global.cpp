@@ -2,7 +2,7 @@
 // AUTHOR : fangwei, mohan
 // DATE : 2009-11-08
 //==========================================================
-// #include "parallel_global.h"
+#include "parallel_global.h"
 
 #ifdef __MPI
 #include <mpi.h>
