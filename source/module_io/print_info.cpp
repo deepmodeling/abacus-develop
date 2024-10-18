@@ -91,7 +91,7 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC
-		     << std::setw(12) << GlobalV::NTHREAD_PER_PROC * GlobalV::NPROC;
+		     << std::setw(12) << PARAM.globalv.nthread_per_proc * GlobalV::NPROC;
 		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
 		std::cout << std::endl;

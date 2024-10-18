@@ -2,7 +2,7 @@
 // AUTHOR : fangwei, mohan
 // DATE : 2009-11-08
 //==========================================================
-#include "parallel_global.h"
+// #include "parallel_global.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -14,6 +14,7 @@
 #include "module_base/global_function.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #include "version.h"
 
 #include <iostream>
@@ -139,7 +140,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
 #endif
     mpi_number = process_num;
     omp_number = current_thread_num;
-    GlobalV::NTHREAD_PER_PROC = current_thread_num;
+    PARAM.globalv.nthread_per_proc = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank == 0)
     {
         std::stringstream mess;
