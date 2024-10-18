@@ -43,10 +43,50 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
     ModuleBase::TITLE("HSolverLCAO", "solve");
     ModuleBase::timer::tick("HSolverLCAO", "solve");
 
-#ifdef __PEXSI // other purification methods should follow this routine
-    // Zhang Xiaoyang :  Please modify Pesxi usage later
-    if (this->method == "pexsi")
+    if (this->method != "pexsi")
     {
+        if (GlobalV::KPAR_LCAO > 1
+            && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
+        {
+#ifdef __MPI
+            this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
+#endif
+        }
+        else if (GlobalV::KPAR_LCAO == 1)
+        {
+            /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
+            for (int ik = 0; ik < psi.get_nk(); ++ik)
+            {
+                /// update H(k) for each k point
+                pHamilt->updateHk(ik);
+
+                /// find psi pointer for each k point
+                psi.fix_k(ik);
+
+                /// solve eigenvector and eigenvalue for H(k)
+                this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
+            }
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
+                                     "This method and KPAR setting is not supported for lcao basis in ABACUS!");
+        }
+
+        if (!skip_charge)
+        {
+            // used in scf calculation
+            // calculate charge by eigenpairs(eigenvalues and eigenvectors)
+            pes->psiToRho(psi);
+        }
+        else
+        {
+            // used in nscf calculation
+        }
+    }
+    else if (this->method == "pexsi")
+    {
+#ifdef __PEXSI // other purification methods should follow this routine
         DiagoPexsi<T> pe(ParaV);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
@@ -60,41 +100,7 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         pes->f_en.eband = pe.totalFreeEnergy;
         // maybe eferm could be dealt with in the future
         _pes->dmToRho(pe.DM, pe.EDM);
-        ModuleBase::timer::tick("HSolverLCAO", "solve");
-        return;
-    }
 #endif
-
-    if (GlobalV::KPAR_LCAO > 1
-        && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
-    {
-#ifdef __MPI
-        this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
-#endif
-    }
-    else if (GlobalV::KPAR_LCAO == 1)
-    {
-        /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
-        for (int ik = 0; ik < psi.get_nk(); ++ik)
-        {
-            /// update H(k) for each k point
-            pHamilt->updateHk(ik);
-
-            /// find psi pointer for each k point
-            psi.fix_k(ik);
-
-            /// solve eigenvector and eigenvalue for H(k)
-            this->hamiltSolvePsiK(pHamilt, psi, &(pes->ekb(ik, 0)));
-        }
-    }
-
-    if (!skip_charge) // used in scf calculation
-    {
-        // calculate charge by eigenpairs(eigenvalues and eigenvectors)
-        pes->psiToRho(psi);
-    }
-    else // used in nscf calculation
-    {
     }
 
     ModuleBase::timer::tick("HSolverLCAO", "solve");
@@ -114,7 +120,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         sa.diag(hm, psi, eigenvalue);
 #endif
     }
-
 #ifdef __ELPA
     else if (this->method == "genelpa")
     {
@@ -127,7 +132,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         el.diag(hm, psi, eigenvalue);
     }
 #endif
-
 #ifdef __CUDA
     else if (this->method == "cusolver")
     {
@@ -142,7 +146,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     }
 #endif
 #endif
-
 #ifndef __MPI
     else if (this->method == "lapack") // only for single core
     {
@@ -150,7 +153,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
         la.diag(hm, psi, eigenvalue);
     }
 #endif
-
     else
     {
         ModuleBase::WARNING_QUIT("HSolverLCAO::solve", "This method is not supported for lcao basis in ABACUS!");
