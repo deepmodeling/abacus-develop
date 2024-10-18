@@ -15,6 +15,7 @@ AddTest(
 	../../../module_base/global_file.cpp
 	../../../module_base/memory.cpp
 	../../../module_base/timer.cpp
+	../../../module_base/blas_connector.cpp
 	../../../module_base/parallel_global.cpp
 	../../../module_base/parallel_comm.cpp
 	../../../module_base/parallel_common.cpp

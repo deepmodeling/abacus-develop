@@ -74,10 +74,10 @@ class DiagoPrepare
         MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
         if (ks_solver == "scalapack_gvx")
-            dh = new hsolver::DiagoScalapack<T>;
+            ;//dh = new hsolver::DiagoScalapack<T>;
 #ifdef __CUDA
         else if (ks_solver == "cusolver")
-            dh = new hsolver::DiagoCusolver<T>;
+            ;//dh = new hsolver::DiagoCusolver<T>;
 #endif
         else
         {
@@ -96,7 +96,7 @@ class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    hsolver::DiagH<T>* dh = 0;
+    // hsolver::DiagH<T>* dh = 0;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;
@@ -222,11 +222,23 @@ class DiagoPrepare
         {
             hmtest.h_local = this->h_local;
             hmtest.s_local = this->s_local;
-            dh->diag(&hmtest, psi, e_solver.data());
+            if (ks_solver == "scalapack_gvx")
+            {
+                hsolver::DiagoScalapack<T> dh;
+                dh.diag(&hmtest, psi, e_solver.data());
+            }
+    #ifdef __CUDA
+            else if (ks_solver == "cusolver")
+                {
+                    hsolver::DiagoCusolver<T> dh;
+                    dh.diag(&hmtest, psi, e_solver.data());
+                }
+    #endif
+            // dh->diag(&hmtest, psi, e_solver.data());
         }
         endtime = MPI_Wtime();
         hsolver_time = (endtime - starttime) / REPEATRUN;
-        delete dh;
+        // delete dh;
     }
 
     void diago_lapack()

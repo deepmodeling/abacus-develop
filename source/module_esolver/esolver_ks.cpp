@@ -57,7 +57,13 @@ ESolver_KS<T, Device>::ESolver_KS()
 
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
-    pw_wfc = new ModulePW::PW_Basis_K_Big(PARAM.inp.device, PARAM.inp.precision);
+    std::string fft_device = PARAM.inp.device;
+    // LCAO basis doesn't support GPU acceleration on FFT currently
+    if(PARAM.inp.basis_type == "lcao")
+    {
+        fft_device = "cpu";
+    }
+    pw_wfc = new ModulePW::PW_Basis_K_Big(fft_device, PARAM.inp.precision);
     ModulePW::PW_Basis_K_Big* tmp = static_cast<ModulePW::PW_Basis_K_Big*>(pw_wfc);
 
     // should not use INPUT here, mohan 2024-05-12

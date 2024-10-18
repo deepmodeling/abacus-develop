@@ -20,15 +20,15 @@
 namespace hsolver
 {
     template<typename T>
-    class DiagoScalapack : public DiagH<T>
+    class DiagoScalapack
 {
 private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 #ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm) override;
+    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
 #endif
 
   private:
