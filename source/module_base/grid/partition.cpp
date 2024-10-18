@@ -5,6 +5,8 @@
 #include <functional>
 #include <numeric>
 #include <algorithm>
+#include <vector>
+#include <cassert>
 
 namespace Grid {
 namespace Partition {
@@ -19,8 +21,8 @@ double w_becke(
     const int* iR,
     int c
 ) {
-    double P[nR];
-    std::fill(P, P + nR, 1.0);
+    assert(nR > 0 && nR0 >= nR);
+    std::vector<double> P(nR, 1.0);
     for (int i = 0; i < nR; ++i) {
         int I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
@@ -31,7 +33,7 @@ double w_becke(
             P[J] *= (1.0 - s); // s(-mu) = 1 - s(mu)
         }
     }
-    return P[c] / std::accumulate(P, P + nR, 0.0);
+    return P[c] / std::accumulate(P.begin(), P.end(), 0.0);
 }
 
 
@@ -56,10 +58,11 @@ double w_stratmann(
     const double* drR,
     const double* dRR,
     const double* drR_thr,
-    const int nR,
+    int nR,
     int* iR,
     int c
 ) {
+    assert(nR > 0 && nR0 >= nR);
     int I = iR[c], J = 0;
 
     // If r falls within the exclusive zone of a center, return immediately.
@@ -74,26 +77,28 @@ double w_stratmann(
     // center, the normalized weight could still be 0 or 1, and this can be
     // figured out by examining the unnormalized weight alone.
 
-    // Move the center to the first position for convenience. Swap back later.
+    // Swap the grid center to the first position in iteration for convenience.
+    // Restore the original order before return.
     std::swap(iR[0], iR[c]);
 
-    double P[nR];
+    std::vector<double> P(nR);
     for (int j = 1; j < nR; ++j) {
         J = iR[j];
         double mu = (drR[I] - drR[J]) / dRR[I*nR0 + J];
         P[j] = s_stratmann(mu);
     }
-    P[0] = std::accumulate(P + 1, P + nR, 1.0, std::multiplies<double>());
+    P[0] = std::accumulate(P.begin() + 1, P.end(), 1.0,
+                           std::multiplies<double>());
 
     if (P[0] == 0.0 || P[0] == 1.0) {
-        std::swap(iR[0], iR[c]);
+        std::swap(iR[0], iR[c]); // restore the original order
         return P[0];
     }
 
-    // If it passes all the screening, all unnormalized weights have to be
-    // calculated in order to get the normalized weight.
+    // If it passes all the screening above, all unnormalized weights
+    // have to be calculated in order to get the normalized weight.
 
-    std::for_each(P + 1, P + nR, [](double& s) { s = 1.0 - s; });
+    std::for_each(P.begin() + 1, P.end(), [](double& s) { s = 1.0 - s; });
     for (int i = 1; i < nR; ++i) {
         I = iR[i];
         for (int j = i + 1; j < nR; ++j) {
@@ -105,8 +110,8 @@ double w_stratmann(
         }
     }
 
-    std::swap(iR[0], iR[c]);
-    return P[0] / std::accumulate(P, P + nR, 0.0);
+    std::swap(iR[0], iR[c]); // restore the original order
+    return P[0] / std::accumulate(P.begin(), P.end(), 0.0);
 }
 
 
@@ -129,7 +134,7 @@ double s_stratmann(double mu) {
 
     bool mid = std::abs(x) < 1;
     double g = !mid * (1 - 2 * std::signbit(x)) + mid * h;
-    return 0.5 * (1 - g);
+    return 0.5 * (1.0 - g);
 }
 
 
