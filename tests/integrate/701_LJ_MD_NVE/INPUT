@@ -15,9 +15,12 @@ cal_force           1
 cal_stress          1
 
 #Parameters (MD)
-md_nstep            5
+md_nstep            160
 md_type             nve
 md_dt               1
 md_tfirst           300
 
 init_vel            1
+
+md_restart          1
+read_file_dir       .

@@ -42,12 +42,16 @@ void ReadInput::item_output()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             std::vector<int> out_chg(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) { return std::stoi(s); });
+            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
             // assign non-negative values to para.input.out_chg
             std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") ? 1 : para.input.out_chg[0];
+            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                                        ? 1
+                                        : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -472,7 +476,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.bands_to_print);
         };
@@ -483,6 +487,51 @@ void ReadInput::item_output()
             }
         };
         add_intvec_bcast(input.bands_to_print, para.input.bands_to_print.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_pchg");
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_pchg);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_pchg, para.input.out_pchg.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_norm");
+        item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_norm);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_norm, para.input.out_wfc_norm.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_re_im");
+        item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_re_im);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_re_im, para.input.out_wfc_re_im.size(), 0);
         this->add_item(item);
     }
     {

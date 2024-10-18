@@ -68,7 +68,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     std::vector<double> sigma;
     if(is_gga)
     {
-        gdr = XC_Functional_Libxc::cal_gdr(nspin, rho, tpiba, chr);
+        gdr = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
         sigma = XC_Functional_Libxc::convert_sigma(gdr);
     }
 
@@ -183,7 +183,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr
-        = XC_Functional_Libxc::cal_gdr(nspin, rho, tpiba, chr);
+        = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
 
     //converting kin_r

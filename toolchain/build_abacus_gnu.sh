@@ -22,15 +22,15 @@ BUILD_DIR=build_abacus_gnu
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-LAPACK=$INSTALL_DIR/openblas-0.3.27/lib
+LAPACK=$INSTALL_DIR/openblas-0.3.28/lib
 SCALAPACK=$INSTALL_DIR/scalapack-2.2.1/lib
-ELPA=$INSTALL_DIR/elpa-2024.03.001/cpu
+ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
 LIBXC=$INSTALL_DIR/libxc-6.2.2
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
-# LIBRI=$INSTALL_DIR/LibRI-0.1.1
-# LIBCOMM=$INSTALL_DIR/LibComm-0.1.0
+# LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
+# LIBCOMM=$INSTALL_DIR/LibComm-0.1.1
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
 # DEEPMD=$HOME/apps/anaconda3/envs/deepmd

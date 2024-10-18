@@ -68,6 +68,7 @@ namespace XC_Functional_Libxc
 	// calculating grho
 	extern std::vector<std::vector<ModuleBase::Vector3<double>>> cal_gdr(
 		const int nspin,
+		const std::size_t nrxx,
 		const std::vector<double> &rho,
 		const double tpiba,
 		const Charge* const chr);

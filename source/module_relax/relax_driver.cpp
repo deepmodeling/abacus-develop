@@ -40,7 +40,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 || PARAM.inp.calculation == "nscf")
             && (PARAM.inp.esolver_type != "lr"))
         {
-            Print_Info::print_screen(stress_step, force_step, istep);
+            ModuleIO::print_screen(stress_step, force_step, istep);
         }
 
 #ifdef __RAPIDJSON
@@ -129,7 +129,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                                                "data_?");
                 }
 
-                ModuleIO::output_after_relax(stop, p_esolver->get_conv_elec(), GlobalV::ofs_running);
+                ModuleIO::output_after_relax(stop, p_esolver->conv_esolver, GlobalV::ofs_running);
             }
 
 #ifdef __RAPIDJSON
