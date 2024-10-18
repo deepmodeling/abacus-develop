@@ -140,7 +140,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
 #endif
     mpi_number = process_num;
     omp_number = current_thread_num;
-    PARAM.globalv.nthread_per_proc = current_thread_num;
+    // PARAM.globalv.nthread_per_proc = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank == 0)
     {
         std::stringstream mess;

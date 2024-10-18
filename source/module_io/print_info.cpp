@@ -2,6 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
+#include "module_base/parallel_global.h"
 
 
 namespace ModuleIO
@@ -91,7 +92,8 @@ void setup_parameters(UnitCell& ucell, K_Vectors& kv)
 		}
 
 		std::cout << std::setw(12) << GlobalV::NPROC
-		     << std::setw(12) << PARAM.globalv.nthread_per_proc * GlobalV::NPROC;
+			<< std::setw(12) << Parallel_Global::omp_number * GlobalV::NPROC;
+		     // << std::setw(12) << PARAM.globalv.nthread_per_proc * GlobalV::NPROC;
 		if (orbinfo) { std::cout << std::setw(12) << PARAM.globalv.nlocal; }
 
 		std::cout << std::endl;
