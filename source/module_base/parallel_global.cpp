@@ -87,7 +87,11 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
     return;
 }
 
-void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int& MY_RANK)
+void Parallel_Global::read_mpi_parameters(int argc, 
+                                          char** argv, 
+                                          int& NPROC, 
+                                          int& NTHREAD_PER_PROC, 
+                                          int& MY_RANK)
 {
 #ifdef __MPI
 #ifdef _OPENMP
@@ -141,7 +145,6 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
 #endif
     mpi_number = process_num;
     omp_number = current_thread_num;
-    // PARAM.globalv.nthread_per_proc = current_thread_num;
     if (current_thread_num * process_num > max_thread_num && local_rank == 0)
     {
         std::stringstream mess;
@@ -164,6 +167,8 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
                   << "Total thread number: " << current_thread_num * process_num << ","
                   << "Local thread limit: " << max_thread_num << std::endl;
     }
+
+    NTHREAD_PER_PROC = current_thread_num;
 
     if (MY_RANK == 0)
     {

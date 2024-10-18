@@ -28,7 +28,7 @@ class Parameter
     const System_para& globalv = sys;
 
     // Set the rank & nproc
-    void set_rank_nproc(const int& myrank, const int& nproc);
+    void set_rank_nproc(const int& myrank, const int& nproc, const int& nthread_per_proc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
 
