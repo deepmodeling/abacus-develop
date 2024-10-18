@@ -3,10 +3,10 @@
 #include "module_base/math_chebyshev.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_psi/psi.h"
 #include "sto_che.h"
 #include "sto_func.h"
-#include "sto_hchi.h"
 #include "sto_wf.h"
 
 //----------------------------------------------
@@ -33,9 +33,14 @@ class Stochastic_Iter
      * @param wfc_basis wfc pw basis
      * @param stowf stochastic wave function
      * @param stoche Chebyshev expansion for sDFT
+     * @param p_hamilt_sto hamiltonian for sDFT
      *
      */
-    void init(K_Vectors* pkv_in, ModulePW::PW_Basis_K* wfc_basis, Stochastic_WF& stowf, StoChe<double>& stoche);
+    void init(K_Vectors* pkv_in,
+              ModulePW::PW_Basis_K* wfc_basis,
+              Stochastic_WF& stowf,
+              StoChe<double>& stoche,
+              hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
 
     void sum_stoband(Stochastic_WF& stowf,
                      elecstate::ElecState* pes,
@@ -54,8 +59,8 @@ class Stochastic_Iter
 
     ModuleBase::Chebyshev<double>* p_che = nullptr;
 
-    Stochastic_hchi stohchi;
     Sto_Func<double> stofunc;
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
 
     double mu0; // chemical potential; unit in Ry
     bool change;
