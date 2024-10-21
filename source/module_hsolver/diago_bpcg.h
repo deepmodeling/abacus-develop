@@ -68,6 +68,8 @@ class DiagoBPCG
 
 
   private:
+    /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
+    Device * ctx = {};
     /// the number of rows of the input psi
     int n_band = 0;
     /// the number of cols of the input psi

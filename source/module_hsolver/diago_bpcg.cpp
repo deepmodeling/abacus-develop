@@ -96,6 +96,21 @@ void DiagoBPCG<T, Device>::orth_cholesky(
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
     hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
+    // using gemm instead einsum for different leading dimension and nbasis
+    // gemm_op<T, Device>()(this->ctx,
+    //                      'N',
+    //                      'N',
+    //                      this->dim,
+    //                      notconv,
+    //                      nbase,
+    //                      this->one,
+    //                      hphi,
+    //                      this->dim,
+    //                      vcc,
+    //                      this->nbase_x,
+    //                      this->zero,
+    //                      psi_iter + (nbase) * this->dim,
+    //                      this->dim);
 
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
