@@ -194,13 +194,5 @@ class ElecState
     bool skip_weights = false;
 };
 
-// This is an independent function under the elecstate namespace and does not depend on any class.
-void set_is_occupied(std::vector<bool>& is_occupied,
-                     elecstate::ElecState* pes,
-                     const int i_scf,
-                     const int nk,
-                     const int nband,
-                     const bool diago_full_acc);
-
 } // namespace elecstate
 #endif

@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'ABACUS'
-copyright = '2022, ABACUS'
+copyright = '2024, ABACUS'
 author = 'ABACUS'
 
 # The full version, including alpha/beta/rc tags

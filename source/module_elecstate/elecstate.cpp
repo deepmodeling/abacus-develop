@@ -252,31 +252,6 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     this->wg.create(nk_in, PARAM.inp.nbands);
 }
 
-void set_is_occupied(std::vector<bool>& is_occupied,
-                     elecstate::ElecState* pes,
-                     const int i_scf,
-                     const int nk,
-                     const int nband,
-                     const bool diago_full_acc)
-{
-    if (i_scf != 0 && diago_full_acc == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
-};
-
 
 
 } // namespace elecstate
