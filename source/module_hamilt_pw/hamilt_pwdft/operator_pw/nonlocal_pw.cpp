@@ -220,7 +220,7 @@ void Nonlocal<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "NonlocalPW");
     if(is_first_node)
     {
-        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands);
+        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands/npol);
     }
     if(!PARAM.inp.use_paw)
     {

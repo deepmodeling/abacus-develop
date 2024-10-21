@@ -57,6 +57,7 @@ class Operator
     ///do operation : |hpsi_choosed> = V|psi_choosed>
     ///V is the target operator act on choosed psi, the consequence should be added to choosed hpsi
     /// interface type 1: pointer-only (default)
+    /// @note PW: nbasis = max_npw * npol, nbands = nband * npol, npol = npol. Strange but PAY ATTENTION!!!
     virtual void act(const int nbands,
         const int nbasis,
         const int npol,
