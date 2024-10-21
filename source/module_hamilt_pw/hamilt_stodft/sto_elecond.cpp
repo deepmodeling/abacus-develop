@@ -386,8 +386,9 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
 
         remain -= tmpnb;
         startnb += tmpnb;
-        if (remain == 0)
+        if (remain == 0) {
             break;
+}
     }
 
     for (int id = 0; id < ndim; ++id)
