@@ -187,13 +187,8 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (PARAM.globalv.gamma_only_local){
-            return new LR::ESolver_LR<double, double>(inp, ucell);
-        } else if (PARAM.inp.nspin < 2) {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
-        } else {
-            throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
-}
+        if (PARAM.globalv.gamma_only_local) { return new LR::ESolver_LR<double, double>(inp, ucell); }
+        else { return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell); }
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {

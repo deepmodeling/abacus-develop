@@ -9,13 +9,14 @@ symmetry               	-1
 nspin                   2
 
 #Parameters (2.Iteration)
-ecutwfc                 20
-scf_thr                     1e-6
+ecutwfc                10
+scf_thr                     1e-2
 scf_nmax                   20
+exx_hybrid_step 1
 
 #Parameters (3.Basis)
 basis_type              lcao 
-gamma_only              0
+gamma_only              1
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
@@ -24,15 +25,20 @@ smearing_sigma                   0.02
 #Parameters (5.Mixing)
 mixing_type             pulay
 mixing_beta             0.4
+mixing_gg0 0
 
-lr_nstates 2 # for test/debug, you can try a smaller one like 2
+dft_functional lda
+exx_real_number 1
+exx_ccp_rmesh_times 1
+
+lr_nstates 3
 xc_kernel lda
-lr_solver dav_subspace
+lr_solver lapack
 lr_thr 1e-2
-pw_diag_ndim 4
+lr_unrestricted 1
+pw_diag_ndim 2
 
 esolver_type ks-lr
 
 nvirt 2
-abs_wavelen_range  200 600
-
+nocc 2

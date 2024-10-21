@@ -153,7 +153,7 @@ namespace RI_Benchmark
         return Amat_full;
     }
     template <typename TK>
-    TLRIX<TK> cal_CsX(const TLRI<TK>& Cs_mo, TK* X)
+    TLRIX<TK> cal_CsX(const TLRI<TK>& Cs_mo, const TK* X)
     {
         TLRIX<TK> CsX;
         for (auto& it1 : Cs_mo)

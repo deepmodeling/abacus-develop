@@ -6,6 +6,7 @@ orbital_dir                 ../../../tests/PP_ORB
 calculation             scf
 nbands                6
 symmetry               	-1
+nspin                   2
 
 #Parameters (2.Iteration)
 ecutwfc                10

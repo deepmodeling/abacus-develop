@@ -15,7 +15,6 @@ if(ENABLE_LCAO)
     operator_casida/operator_lr_hxc.cpp
     operator_casida/operator_lr_exx.cpp
     potentials/pot_hxc_lrtd.cpp
-    hsolver_lrtd.cpp
     lr_spectrum.cpp
     hamilt_casida.cpp
     esolver_lrtd_lcao.cpp)
