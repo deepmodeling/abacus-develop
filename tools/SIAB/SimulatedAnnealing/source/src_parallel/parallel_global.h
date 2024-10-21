@@ -16,7 +16,7 @@ extern MPI_Comm POOL_WORLD;
 
 namespace Parallel_Global
 {
-	void read_mpi_parameters(int argc, char **argv);
+	void read_pal_param(int argc, char **argv);
 
 #ifdef __MPI
 	void myProd(complex<double> *in,complex<double> *inout,int *len,MPI_Datatype *dptr);

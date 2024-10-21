@@ -25,7 +25,7 @@ void Parallel_Global::myProd(complex<double> *in,complex<double> *inout,int *len
 }
 #endif
 
-void Parallel_Global::read_mpi_parameters(int argc,char **argv)
+void Parallel_Global::read_pal_param(int argc,char **argv)
 {
 #if defined __MPI
 //for test

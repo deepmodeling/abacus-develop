@@ -27,13 +27,14 @@ int main(int argc, char** argv)
     */
     int nproc = 1;
     int my_rank = 0;
-    Parallel_Global::read_mpi_parameters(argc, argv, nproc, my_rank);
+    int nthread_per_proc = 1;
+    Parallel_Global::read_pal_param(argc, argv, nproc, nthread_per_proc, my_rank);
 #ifdef _OPENMP
     // ref: https://www.fftw.org/fftw3_doc/Usage-of-Multi_002dthreaded-FFTW.html
     fftw_init_threads();
     fftw_plan_with_nthreads(omp_get_max_threads());
 #endif
-    PARAM.set_rank_nproc(my_rank, nproc);
+    PARAM.set_pal_param(my_rank, nproc, nthread_per_proc);
 
     /*
     main program for doing electronic structure calculations.

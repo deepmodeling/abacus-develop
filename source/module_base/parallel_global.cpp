@@ -14,6 +14,8 @@
 #include "module_base/global_function.h"
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
+// #include "module_base/tool_quit.h"
 #include "version.h"
 
 #include <iostream>
@@ -85,7 +87,12 @@ void Parallel_Global::split_grid_world(const int diag_np, const int& nproc, cons
     return;
 }
 
-void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int& MY_RANK)
+// changed from read_mpi_parameters in 2024-1018
+void Parallel_Global::read_pal_param(int argc, 
+                                          char** argv, 
+                                          int& NPROC, 
+                                          int& NTHREAD_PER_PROC, 
+                                          int& MY_RANK)
 {
 #ifdef __MPI
 #ifdef _OPENMP
@@ -150,6 +157,10 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
         // the user may take their own risk by set the OMP_NUM_THREADS env var.
         if (std::getenv("OMP_NUM_THREADS") == nullptr)
         {
+            // usage of WARNING_QUIT need module_base/tool_quit.cpp
+            // lead to undefined error in unit_test building
+            // ModuleBase::WARNING_QUIT( "Parallel_Global::read_pal_param","OMP_NUM_THREADS setting is invalid. Please set it to a proper value.");
+            std::cerr << "ERROR: OMP_NUM_THREADS setting is invalid. Please set it to a proper value." << std::endl;
             exit(1);
         }
     }
@@ -161,6 +172,8 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
                   << "Total thread number: " << current_thread_num * process_num << ","
                   << "Local thread limit: " << max_thread_num << std::endl;
     }
+
+    NTHREAD_PER_PROC = current_thread_num;
 
     if (MY_RANK == 0)
     {
@@ -192,7 +205,7 @@ void Parallel_Global::read_mpi_parameters(int argc, char** argv, int& NPROC, int
                   << std::endl
                   << "                      Commit: " << commit << std::endl
                   << std::endl;
-        time_t time_now = time(NULL);
+        time_t time_now = time(nullptr);
         std::cout << " " << ctime(&time_now);
     }
 
