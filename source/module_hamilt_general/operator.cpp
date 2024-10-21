@@ -60,7 +60,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, *psi_input, 1, nbands / psi_input->npol);
     }
 
-    auto call_act = [&, this](const Operator* op) -> void {
+    auto call_act = [&, this](const Operator* op, const bool& is_first_node) -> void {
         // a "psi" with the bands of needed range
         psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis());
         switch (op->get_act_type())
@@ -69,17 +69,17 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
             op->act(psi_wrapper, *this->hpsi, nbands);
             break;
         default:
-            op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_ngk(op->ik));
+            op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_ngk(op->ik), is_first_node);
             break;
         }
         };
 
     ModuleBase::timer::tick("Operator", "hPsi");
-    call_act(this);
+    call_act(this, true); // first node
     Operator* node((Operator*)this->next_op);
     while (node != nullptr)
     {
-        call_act(node);
+        call_act(node, false); // other nodes
         node = (Operator*)(node->next_op);
     }
     ModuleBase::timer::tick("Operator", "hPsi");
@@ -162,7 +162,7 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
     size_t total_hpsi_size = nbands_range * this->hpsi->get_nbasis();
     // ModuleBase::GlobalFunc::ZEROS(hpsi_pointer, total_hpsi_size);
     // denghui replaced at 20221104
-    set_memory_op()(this->ctx, hpsi_pointer, 0, total_hpsi_size);
+    // set_memory_op()(this->ctx, hpsi_pointer, 0, total_hpsi_size);
     return hpsi_pointer;
 }
 

@@ -133,6 +133,15 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 void ESolver_SDFT_PW::before_scf(const int istep)
 {
     ESolver_KS_PW::before_scf(istep);
+    delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
+    this->p_hamilt = new hamilt::HamiltSdftPW<std::complex<double>>(this->pelec->pot,
+                                                                    this->pw_wfc,
+                                                                    &this->kv,
+                                                                    PARAM.globalv.npol,
+                                                                    &this->stoche.emin_sto,
+                                                                    &this->stoche.emax_sto);
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(this->p_hamilt);
+
     if (istep > 0 && PARAM.inp.nbands_sto != 0 && PARAM.inp.initsto_freq > 0 && istep % PARAM.inp.initsto_freq == 0)
     {
         Update_Sto_Orbitals(this->stowf, PARAM.inp.seed_sto);
@@ -177,7 +186,8 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                     this->pw_wfc, 
                     &this->wf, 
                     this->stowf, 
-                    this->stoche, 
+                    this->stoche,
+                    this->p_hamilt_sto,
                     PARAM.inp.calculation,
                     PARAM.inp.basis_type,
                     PARAM.inp.ks_solver,

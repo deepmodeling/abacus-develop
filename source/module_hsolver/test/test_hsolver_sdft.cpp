@@ -31,9 +31,6 @@ StoChe<REAL>::~StoChe(){}
 
 template class StoChe<double>;
 
-Stochastic_hchi::Stochastic_hchi(){};
-Stochastic_hchi::~Stochastic_hchi(){};
-
 Stochastic_Iter::Stochastic_Iter()
 {
     change = false;
@@ -43,7 +40,11 @@ Stochastic_Iter::Stochastic_Iter()
 
 Stochastic_Iter::~Stochastic_Iter(){};
 
-void Stochastic_Iter::init(K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf, StoChe<double> &stoche)
+void Stochastic_Iter::init(K_Vectors* pkv_in,
+              ModulePW::PW_Basis_K* wfc_basis,
+              Stochastic_WF& stowf,
+              StoChe<double>& stoche,
+              hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;;
     this->targetne = 1;
@@ -136,12 +137,13 @@ class TestHSolverPW_SDFT : public ::testing::Test
     K_Vectors kv;
     wavefunc wf;
     StoChe<double> stoche;
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
     hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, 
                                                            &pwbk, 
                                                            &wf, 
                                                            stowf, 
                                                            stoche, 
-                                                           
+                                                           p_hamilt_sto,
                                                            "scf",
                                                            "pw",
                                                            "cg",

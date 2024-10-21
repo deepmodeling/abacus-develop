@@ -41,9 +41,14 @@ void Veff<OperatorPW<T, Device>>::act(
     const int npol,
     const T* tmpsi_in,
     T* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     ModuleBase::timer::tick("Operator", "VeffPW");
+    if(is_first_node)
+    {
+        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands/npol);
+    }
 
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
