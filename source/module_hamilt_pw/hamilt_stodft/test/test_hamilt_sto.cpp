@@ -23,6 +23,8 @@ void hamilt::HamiltPW<T, Device>::sPsi(T const*, T*, const int, const int, const
 
 template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
 template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_CPU>;
+template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_GPU>;
+template class hamilt::HamiltPW<std::complex<float>, base_device::DEVICE_GPU>;
 
 /************************************************
  *  unit test of hamilt_sto_pw.cpp
