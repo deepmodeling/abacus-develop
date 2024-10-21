@@ -39,7 +39,7 @@ jobs:
             --from-ref ${{ github.event.pull_request.base.sha }}
               --to-ref ${{ github.event.pull_request.head.sha }}
         continue-on-error: true
-      - uses: pre-commit-ci/lite-action@v1.0.3
+      - uses: pre-commit-ci/lite-action@v1.1.0
 
       - name: Build
         run: |
