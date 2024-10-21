@@ -81,6 +81,21 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_xc_r");
+        item.annotation = "if >=0, output the derivatives of exchange correlation in realspace, second parameter controls the precision";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_xc_r(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_xc_r.begin(), [](std::string s) { return std::stoi(s); });
+            std::cout<<out_xc_r[0]<<"\t"<<out_xc_r[1]<<std::endl;
+            // assign non-negative values to para.input.out_xc_r
+            std::copy(out_xc_r.begin(), out_xc_r.end(), para.input.out_xc_r.begin());
+            std::cout<<para.input.out_xc_r[0]<<"\t"<<para.input.out_xc_r[1]<<std::endl;
+        };
+        sync_intvec(input.out_xc_r, 2, -1);
+        this->add_item(item);
+    }
+    {
         Input_Item item("printe");
         item.annotation = "Print out energy for each band for every printe steps";
         read_sync_int(input.printe);
