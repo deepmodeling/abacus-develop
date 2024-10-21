@@ -81,7 +81,11 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     // elpa_init(20210430);
     int success;
     elpa_t handle = elpa_allocate(&success);
+#ifdef _OPENMP
     int num_threads = omp_get_max_threads();
+#else
+    int num_threads = 1;
+#endif
     elpa_set(handle, "omp_threads", num_threads, &success);
     elpa_set(handle, "na", (int)nFull, &success);
     elpa_set(handle, "nev", (int)nev, &success);
