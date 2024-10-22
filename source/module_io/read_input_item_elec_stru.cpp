@@ -235,7 +235,18 @@ void ReadInput::item_elec_stru()
             para.input.nupdown = doublevalue;
             para.sys.two_fermi = true;
         };
-
+        item.reset_value = [](const Input_Item&, Parameter& para) {
+            if (para.input.nspin == 1)
+            {
+                para.sys.two_fermi = false;
+            }
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.nspin == 1 && para.input.nupdown != 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nupdown mustn't have a non-zero value for spin-unpolarized calculations.");
+            }
+        };
         sync_double(input.nupdown);
         this->add_item(item);
     }

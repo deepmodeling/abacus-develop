@@ -19,17 +19,13 @@ class HSolverLCAO
                const bool skip_charge);
 
   private:
-    void hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue);
+    void hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue); // for kpar_lcao == 1
 
-    void parakSolve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, int kpar);
+    void parakSolve(hamilt::Hamilt<T>* pHamilt, psi::Psi<T>& psi, elecstate::ElecState* pes, int kpar); // for kpar_lcao > 1
 
     const Parallel_Orbitals* ParaV;
     
     const std::string method;
-
-    // for cg_in_lcao
-    using Real = typename GetTypeReal<T>::type;
-    std::vector<Real> precondition_lcao;
 };
 
 } // namespace hsolver

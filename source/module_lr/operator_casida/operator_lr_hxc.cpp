@@ -101,9 +101,9 @@ namespace LR
         double** rho_trans;
         const int& nrxx = this->pot.lock()->nrxx;
         // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
-        LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
+        LR_Util::new_p2(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
-        Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
+        Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
         this->gint->cal_gint(&inout_rho);
 
         // 3. v_hxc = f_hxc * rho_trans
@@ -131,7 +131,7 @@ namespace LR
         ModuleBase::TITLE("OperatorLRHxc", "grid_calculation(complex)");
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
 
-        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(pmat, nspin, kv.kvec_d, kv.get_nks() / nspin);
+        elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(pmat, 1, kv.kvec_d, kv.get_nks() / nspin);
         DM_trans_real_imag.init_DMR(*this->hR);
         hamilt::HContainer<double> HR_real_imag(GlobalC::ucell, this->pmat);
         this->initialize_HR(HR_real_imag, ucell, gd, this->pmat);
@@ -150,7 +150,7 @@ namespace LR
                 // LR_Util::new_p2(rho_trans, nspin_solve, nrxx);
                 LR_Util::new_p2(rho_trans, nspin, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
                 for (int is = 0;is < nspin_solve;++is)ModuleBase::GlobalFunc::ZEROS(rho_trans[is], nrxx);
-                Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, false);
+                Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
                 this->gint->cal_gint(&inout_rho);
                 // print_grid_nonzero(rho_trans[0], nrxx, 10, "rho_trans");
 
