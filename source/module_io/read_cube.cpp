@@ -6,8 +6,6 @@ bool ModuleIO::read_cube(
     const Parallel_Grid*const Pgrid,
 #endif
     const int my_rank,
-    const std::string esolver_type,
-    const int rank_in_stogroup,
     const int is,
     std::ofstream& ofs_running,
     const int nspin,
@@ -112,12 +110,11 @@ bool ModuleIO::read_cube(
         }
     }
 
-    const bool flag_read_rank = (my_rank == 0 || (esolver_type == "sdft" && rank_in_stogroup == 0));
 #ifdef __MPI
     if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, Pgrid, flag_read_rank, data, nx*ny, nz);
+        ModuleIO::read_cube_core_match(ifs, Pgrid, (my_rank == 0), data, nx * ny, nz);
     else
-        ModuleIO::read_cube_core_mismatch(ifs, Pgrid, flag_read_rank, data, nx, ny, nz, nx_read, ny_read, nz_read);
+        ModuleIO::read_cube_core_mismatch(ifs, Pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
 #else
     ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
     if(nx == nx_read && ny == ny_read && nz == nz_read)
