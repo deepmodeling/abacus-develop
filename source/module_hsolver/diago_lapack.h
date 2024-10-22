@@ -8,6 +8,7 @@
 #ifndef DIAGOLAPACK_H
 #define DIAGOLAPACK_H
 
+#include "module_base/macros.h"   // GetRealType
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 
