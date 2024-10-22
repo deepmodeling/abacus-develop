@@ -140,7 +140,7 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
                                        std::placeholders::_1,
                                        std::placeholders::_2,
                                        std::placeholders::_3);
-            converge = p_che->checkconverge(hchi_norm, pchi, npw, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 5.0);
+            converge = p_che->checkconverge(hchi_norm, pchi, npw, stowf.npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 5.0);
 
             if (!converge)
             {

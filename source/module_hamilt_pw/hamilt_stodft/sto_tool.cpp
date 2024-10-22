@@ -74,7 +74,7 @@ void check_che(const int& nche_in,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
                                            std::placeholders::_3);
-                converge = chetest.checkconverge(hchi_norm, pchi, npw, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 2.0);
+                converge = chetest.checkconverge(hchi_norm, pchi, npw, p_stowf->npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 2.0);
 
                 if (!converge)
                 {
