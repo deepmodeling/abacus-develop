@@ -63,6 +63,7 @@ void ReadInput::set_globalv(Parameter& para)
         {
             para.sys.deepks_setorb = true;
         }
+        /// set the noncolin and lspinorb from nspin
         switch (para.input.nspin)
         {
         case 4:

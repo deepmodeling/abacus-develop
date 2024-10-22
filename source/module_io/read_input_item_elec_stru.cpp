@@ -469,8 +469,7 @@ void ReadInput::item_elec_stru()
                 GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
                 GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
                 GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
-                GlobalV::ofs_warning << " and a new KPT is generated with "
-                                        "gamma point as the only k point"<< std::endl;
+                GlobalV::ofs_warning << " and a new KPT is generated with gamma point as the only k point"<< std::endl;
                 GlobalV::ofs_warning << " Auto generating k-points file: " << para.input.kpoint_file << std::endl;
                 std::ofstream ofs(para.input.kpoint_file.c_str());
                 ofs << "K_POINTS" << std::endl;
@@ -478,6 +477,13 @@ void ReadInput::item_elec_stru()
                 ofs << "Gamma" << std::endl;
                 ofs << "1 1 1 0 0 0" << std::endl;
                 ofs.close();
+            }
+            if (para.input.basis_type == "lcao" && para.input.gamma_only)
+            {
+                if (para.input.nspin == 4)
+                {
+                    ModuleBase::WARNING_QUIT("NOTICE", "nspin=4(soc or noncollinear-spin) does not support gamma only calculation");
+                }
             }
         };
         this->add_item(item);
