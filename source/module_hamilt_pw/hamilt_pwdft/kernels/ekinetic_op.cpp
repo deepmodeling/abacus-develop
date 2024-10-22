@@ -26,6 +26,13 @@ struct ekinetic_pw_op<FPTYPE, base_device::DEVICE_CPU>
                 {
                     tmhpsi[ig] = gk2_ik[ig] * tpiba2 * tmpsi_in[ig];
                 }
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+                for (int ig = npw; ig < max_npw; ++ig)
+                {
+                    tmhpsi[ig] = 0.0;
+                }
                 tmpsi_in += max_npw;
                 tmhpsi += max_npw;
             }

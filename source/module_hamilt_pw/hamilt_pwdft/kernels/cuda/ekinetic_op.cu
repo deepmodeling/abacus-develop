@@ -27,6 +27,10 @@ __global__ void ekinetic_pw(
       {
           hpsi[block_idx * max_npw + ii] = gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
       }
+      for (int ii = npw + thread_idx; ii < max_npw; ii += blockDim.x)
+      {
+          hpsi[block_idx * max_npw + ii] = 0.0;
+      }
   }
   else
   {
