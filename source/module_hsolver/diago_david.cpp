@@ -1,6 +1,7 @@
 #include "diago_david.h"
 
 #include "module_base/timer.h"
+#include "module_base/tool_title.h"
 #include "module_base/module_device/device.h"
 
 #include "module_hsolver/kernels/dngvd_op.h"
