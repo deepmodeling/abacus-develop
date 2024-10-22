@@ -235,6 +235,31 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = true;
     }
+    // just for test BLYP in libxc, added by jghan, 2024-10-22
+    else if( xc_func == "BLYP_LIBXC")
+    {
+        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+        func_type = 2;
+        use_libxc = true;
+    }
+    else if( xc_func == "BLYP_LR")
+    {   
+        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
+        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+
+        // the scaling factor of BLYP_LR-functionals
+        scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
+        scaling_factor_xc[XC_GGA_C_LYPR] = -1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+
+        func_type = 2;
+        use_libxc = true;
+    }
 #endif
     else
     {

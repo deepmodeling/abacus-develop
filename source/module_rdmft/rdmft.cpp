@@ -583,32 +583,31 @@ void RDMFT<TK, TR>::cal_V_XC()
     
     get_DM_XC(DM_XC);
 
-    // //test
+    // // //test
+    // DM_XC_pass = DM_XC;
 
-    DM_XC_pass = DM_XC;
+    // elecstate::DensityMatrix<TK, double> DM_test(ParaV, nspin, kv->kvec_d, nk_total);
+    // elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
+    // DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
+    // DM_test.cal_DMR();
 
-    elecstate::DensityMatrix<TK, double> DM_test(ParaV, nspin, kv->kvec_d, nk_total);
-    elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
-    DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
-    DM_test.cal_DMR();
-
-    // compare DM_XC and DM get in update_charge(or ABACUS)
-    std::cout << "\n\ntest DM_XC - DM in ABACUS: \n" << std::endl;
-    double DM_XC_minus_DMtest = 0.0;
-    for(int ik=0; ik<nk_total; ++ik)
-    {
-        TK* dmk_pointer = DM_test.get_DMK_pointer(ik);
-        for(int iloc=0; iloc<ParaV->nloc; ++iloc)
-        {
-            double test = std::abs(DM_XC[ik][iloc] - dmk_pointer[iloc]);
-            DM_XC_minus_DMtest += test;
-            if( test > 1e-16 )
-            {
-                std::cout << "\nik, iloc, minus[ik][iloc]: " << ik << " " << iloc << " " << test << std::endl; 
-            }
-        }
-    }
-    std::cout << "\nsum of DM_XC - DM in ABACUS: " << DM_XC_minus_DMtest << std::endl;
+    // // compare DM_XC and DM get in update_charge(or ABACUS)
+    // std::cout << "\n\ntest DM_XC - DM in ABACUS: \n" << std::endl;
+    // double DM_XC_minus_DMtest = 0.0;
+    // for(int ik=0; ik<nk_total; ++ik)
+    // {
+    //     TK* dmk_pointer = DM_test.get_DMK_pointer(ik);
+    //     for(int iloc=0; iloc<ParaV->nloc; ++iloc)
+    //     {
+    //         double test = std::abs(DM_XC[ik][iloc] - dmk_pointer[iloc]);
+    //         DM_XC_minus_DMtest += test;
+    //         if( test > 1e-16 )
+    //         {
+    //             std::cout << "\nik, iloc, minus[ik][iloc]: " << ik << " " << iloc << " " << test << std::endl; 
+    //         }
+    //     }
+    // }
+    // std::cout << "\nsum of DM_XC - DM in ABACUS: " << DM_XC_minus_DMtest << std::endl;
 
     if( !only_exx_type )
     {
