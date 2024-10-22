@@ -21,22 +21,23 @@ __global__ void ekinetic_pw(
 {
   const int block_idx = blockIdx.x;
   const int thread_idx = threadIdx.x;
+  const int start_idx = block_idx * max_npw;
   if(is_first_node)
   {
       for (int ii = thread_idx; ii < npw; ii += blockDim.x)
       {
-          hpsi[block_idx * max_npw + ii] = gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
+          hpsi[start_idx + ii] = gk2[ii] * tpiba2 * psi[start_idx + ii];
       }
       for (int ii = npw + thread_idx; ii < max_npw; ii += blockDim.x)
       {
-          hpsi[block_idx * max_npw + ii] = 0.0;
+          hpsi[start_idx + ii] = 0.0;
       }
   }
   else
   {
       for (int ii = thread_idx; ii < npw; ii += blockDim.x)
       {
-          hpsi[block_idx * max_npw + ii] += gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
+          hpsi[start_idx + ii] += gk2[ii] * tpiba2 * psi[start_idx + ii];
       }
   }
 }

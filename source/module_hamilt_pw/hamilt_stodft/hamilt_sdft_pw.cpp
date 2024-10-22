@@ -59,9 +59,10 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     {
         for (int ig = 0; ig < npwk; ++ig)
         {
-            hpsi_norm[ib * npwk_max + ig]
-                = (hpsi_norm[ib * npwk_max + ig] - Ebar * psi_in[ib * npwk_max + ig]) / DeltaE;
+            hpsi_norm[ig] = (hpsi_norm[ig] - Ebar * psi_in[ig]) / DeltaE;
         }
+        hpsi_norm += npwk_max;
+        psi_in += npwk_max;
     }
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi_norm");
 }
