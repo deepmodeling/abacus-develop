@@ -23,5 +23,3 @@ time.json
 __pycache__
 abacus.json
 *.npy
-
-job.err
