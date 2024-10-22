@@ -110,7 +110,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 	#ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		sgemm_mt_(&transb, &transa, &n, &m, &k,
+		dgemm_mt_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc);
 	}
