@@ -1,10 +1,14 @@
 #ifndef DIAGO_NEW_DAV_H
 #define DIAGO_NEW_DAV_H
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_base/module_device/device.h"   // base_device
+#include "module_base/module_device/memory_op.h"// base_device::memory"
+
 #include "module_hsolver/diag_comm_info.h"
 #include "module_hsolver/diag_const_nums.h"
 
+#include <vector>
 #include <functional>
 
 namespace hsolver
