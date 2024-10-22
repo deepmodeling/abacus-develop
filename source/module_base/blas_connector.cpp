@@ -68,6 +68,7 @@ float BlasConnector::dot( const int n, const float *X, const int incX, const flo
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return sdot_(&n, X, &incX, Y, &incY);
+	return sdot_(&n, X, &incX, Y, &incY);
 }
 }
 
@@ -75,6 +76,7 @@ double BlasConnector::dot( const int n, const double *X, const int incX, const d
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return ddot_(&n, X, &incX, Y, &incY);
+	return ddot_(&n, X, &incX, Y, &incY);
 }
 }
 
@@ -184,6 +186,7 @@ float BlasConnector::nrm2( const int n, const float *X, const int incX, base_dev
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return snrm2_( &n, X, &incX );
+	return snrm2_( &n, X, &incX );
 }
 }
 
@@ -192,6 +195,7 @@ double BlasConnector::nrm2( const int n, const double *X, const int incX, base_d
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dnrm2_( &n, X, &incX );
+	return dnrm2_( &n, X, &incX );
 }
 }
 
@@ -200,6 +204,7 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dznrm2_( &n, X, &incX );
+	return dznrm2_( &n, X, &incX );
 }
 }
 
