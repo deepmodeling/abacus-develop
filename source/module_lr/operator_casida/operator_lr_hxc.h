@@ -88,7 +88,7 @@ namespace LR
                 for (int ib = prev_size;ib < nbands;++ib)
                 {
                     // the first dimenstion of DensityMatrix is nk=nks/nspin 
-                    DM_trans[ib] = LR_Util::make_unique<elecstate::DensityMatrix<T, TR>>(this->pmat, this->nspin, this->kv.kvec_d, this->kv.get_nks() / nspin);
+                    DM_trans[ib] = LR_Util::make_unique<elecstate::DensityMatrix<T, TR>>(this->pmat, 1, this->kv.kvec_d, this->kv.get_nks() / nspin);
                     DM_trans[ib]->init_DMR(*this->hR);
                 }
             }

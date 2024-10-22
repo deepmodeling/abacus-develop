@@ -219,7 +219,7 @@ void toQO::scan_supercell(const int& rank, const int& nranks)
 #ifdef __MPI // scatter supercells_ to all ranks
     Parallel_Common::bcast_int(nR_);
     Parallel_Common::bcast_int(nR_tot_);
-    bcast_stdvector_ofvector3int(supercells_);
+    bcast_stdvector_ofvector3int(supercells_, iproc_);
     // scatter
     std::vector<std::vector<int>> nR_divided(nranks);  // indiced by iproc, then list of indices of supercells_
     if(rank == 0)

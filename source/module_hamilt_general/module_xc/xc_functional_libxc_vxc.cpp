@@ -110,12 +110,13 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         }
 
         etxc += XC_Functional_Libxc::convert_etxc(nspin, nrxx, sgn, rho, exc);
-        vtxc += XC_Functional_Libxc::convert_vtxc_v(
+        const std::pair<double,ModuleBase::matrix> vtxc_v = XC_Functional_Libxc::convert_vtxc_v(
             func, nspin, nrxx,
             sgn, rho, gdr,
             vrho, vsigma,
-            tpiba, chr,
-            v);
+            tpiba, chr);
+        vtxc += std::get<0>(vtxc_v);
+        v += std::get<1>(vtxc_v);
     } // end for( xc_func_type &func : funcs )
 
     if(4==PARAM.inp.nspin)

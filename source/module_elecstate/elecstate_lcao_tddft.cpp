@@ -36,7 +36,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector());  // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho); // rho calculation
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin); // rho calculation
     this->gint_k->cal_gint(&inout);
 
     this->charge->renormalize_rho();

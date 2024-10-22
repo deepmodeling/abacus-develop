@@ -54,7 +54,7 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                 cal_flag.get_ptr_2D(),
                                 psir_ylm.get_ptr_2D());
 
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < inout->nspin_rho; ++is)
         {
             ModuleBase::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
             ModuleBase::GlobalFunc::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
