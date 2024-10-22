@@ -249,6 +249,7 @@ endif()
 
 if (USE_DSP)
   target_link_libraries(${ABACUS_BIN_NAME} ${DIR_MTBLAS_LIBRARY})
+  add_compile_definitions(__DSP)
 endif()
 
 find_package(Threads REQUIRED)
