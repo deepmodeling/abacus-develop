@@ -8,7 +8,7 @@
 #include <memory>
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/print_info.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
@@ -596,13 +596,11 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
-        if (ModuleIO::read_rho(
+        if (ModuleIO::read_cube(
 #ifdef __MPI
             & (GlobalC::Pgrid),
 #endif
             GlobalV::MY_RANK,
-            PARAM.inp.esolver_type,
-            GlobalV::RANK_IN_STOGROUP,
             is,
             GlobalV::ofs_running,
             this->nspin,
