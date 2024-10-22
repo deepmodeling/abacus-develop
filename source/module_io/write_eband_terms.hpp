@@ -87,7 +87,7 @@ namespace ModuleIO
             hamilt::HContainer<TR> v_pp_local_R_ao(pv);
             if_gamma_fix(v_pp_local_R_ao);
             std::vector<std::vector<double>> e_orb_pp_local;
-            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, &v_pp_local_k_ao, kv.kvec_d, &pot_local, &v_pp_local_R_ao, &ucell, orb_cutoff, &gd);
+            hamilt::Veff<hamilt::OperatorLCAO<TK, TR>> v_pp_local_op(gint, &v_pp_local_k_ao, kv.kvec_d, &pot_local, &v_pp_local_R_ao, &ucell, orb_cutoff, &gd, nspin);
             v_pp_local_op.contributeHR();
             for (int ik = 0;ik < kv.get_nks();++ik)
             {
@@ -142,7 +142,7 @@ namespace ModuleIO
             for (int is = 0; is < nspin0; ++is)
             {
                 v_hartree_op[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                    &v_hartree_k_ao, kv.kvec_d, &pot_hartree, &v_hartree_R_ao[is], &ucell, orb_cutoff, &gd);
+                    &v_hartree_k_ao, kv.kvec_d, &pot_hartree, &v_hartree_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
                 v_hartree_op[is]->contributeHR();
             }
             std::vector<std::vector<double>> e_orb_hartree;

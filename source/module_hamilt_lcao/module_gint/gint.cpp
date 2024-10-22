@@ -133,15 +133,15 @@ void Gint::prep_grid(const Grid_Technique& gt,
     return;
 }
 
-void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
+void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int& nspin) {
     ModuleBase::TITLE("Gint", "initialize_pvpR");
 
     int npol = 1;
     // there is the only resize code of DMRGint
     if (this->DMRGint.size() == 0) {
-        this->DMRGint.resize(PARAM.inp.nspin);
+        this->DMRGint.resize(nspin);
     }
-    if (PARAM.inp.nspin != 4) {
+    if (nspin != 4) {
         if (this->hRGint != nullptr) {
             delete this->hRGint;
         }
@@ -153,7 +153,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
         this->hRGintCd
             = new hamilt::HContainer<std::complex<double>>(ucell_in.nat);
-        for (int is = 0; is < PARAM.inp.nspin; is++) {
+        for (int is = 0; is < nspin; is++) {
             if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
             }
@@ -186,7 +186,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         }
     }
 
-    if (PARAM.globalv.gamma_only_local && PARAM.inp.nspin != 4) {
+    if (PARAM.globalv.gamma_only_local && nspin != 4) {
         this->hRGint->fix_gamma();
     }
     for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {
@@ -318,6 +318,26 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd) {
         ModuleBase::Memory::record("Gint::DMRGint_full",
                                    this->DMRGint_full->get_memory_size());
 #endif
+    }
+}
+
+void Gint::reset_DMRGint(const int& nspin)
+{
+    if (this->hRGint)
+    {
+        for (auto& d : this->DMRGint) { delete d; }
+        this->DMRGint.resize(nspin);
+        this->DMRGint.shrink_to_fit();
+        for (auto& d : this->DMRGint) { d = new hamilt::HContainer<double>(*this->hRGint); }
+        if (nspin == 4)
+        {
+            for (auto& d : this->DMRGint) { d->allocate(nullptr, false); }
+#ifdef __MPI
+            delete this->DMRGint_full;
+            this->DMRGint_full = new hamilt::HContainer<double>(*this->hRGint);
+            this->DMRGint_full->allocate(nullptr, false);
+#endif
+        }
     }
 }
 

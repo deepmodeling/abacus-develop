@@ -16,12 +16,16 @@
 
 Structure_Factor::Structure_Factor()
 {
-
+    // LCAO basis doesn't support GPU acceleration on this function currently.
+    if(PARAM.inp.basis_type == "pw")
+    {
+        this->device = PARAM.inp.device;
+    }
 }
 
 Structure_Factor::~Structure_Factor()
 {
-    if (PARAM.inp.device == "gpu") {
+    if (device == "gpu") {
         if (PARAM.inp.precision == "single") {
             delmem_cd_op()(gpu_ctx, this->c_eigts1);
             delmem_cd_op()(gpu_ctx, this->c_eigts2);
@@ -145,7 +149,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
             inat++;
         }
     }
-    if (PARAM.inp.device == "gpu") {
+    if (device == "gpu") {
         if (PARAM.inp.precision == "single") {
             resmem_cd_op()(gpu_ctx, this->c_eigts1, Ucell->nat * (2 * rho_basis->nx + 1));
             resmem_cd_op()(gpu_ctx, this->c_eigts2, Ucell->nat * (2 * rho_basis->ny + 1));
