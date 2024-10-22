@@ -22,7 +22,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX

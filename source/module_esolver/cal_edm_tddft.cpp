@@ -2,7 +2,6 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dipole_io.h"
-#include "module_io/rho_io.h"
 #include "module_io/td_current_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
