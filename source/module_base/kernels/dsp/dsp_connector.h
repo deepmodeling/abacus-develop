@@ -1,3 +1,5 @@
+#ifndef DSP_CONNECTOR_H
+#define DSP_CONNECTOR_H
 #ifdef __DSP
 
 // Base dsp functions
@@ -12,7 +14,7 @@ void free_ht(void* ptr);
 void sgemm_mt_(const char *transa, const char *transb,
 	const int *m, const int *n, const int *k,
 	const float *alpha, const float *a, const int *lda,
-	const float *b, const int *ldb, const const float *beta,
+	const float *b, const int *ldb, const float *beta,
 	const float *c, const int *ldc);
 
 void dgemm_mt_(const char *transa, const char *transb,
@@ -37,7 +39,7 @@ void cgemm_mt_(const char *transa, const char *transb,
 void sgemm_mth_(const char *transa, const char *transb,
 	const int *m, const int *n, const int *k,
 	const float *alpha, const float *a, const int *lda,
-	const float *b, const int *ldb, const const float *beta,
+	const float *b, const int *ldb, const float *beta,
 	const float *c, const int *ldc);
 
 void dgemm_mth_(const char *transa, const char *transb,
@@ -60,4 +62,5 @@ void cgemm_mth_(const char *transa, const char *transb,
 
 //#define zgemm_ zgemm_mt
 
+#endif
 #endif

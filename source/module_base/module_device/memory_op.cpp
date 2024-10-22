@@ -3,7 +3,7 @@
 #include "module_base/memory.h"
 #include "module_base/tool_threading.h"
 #ifdef __DSP
-#include "module_base/kernels/dsp_connector.h"
+#include "module_base/kernels/dsp/dsp_connector.h"
 #endif
 
 #include <complex>

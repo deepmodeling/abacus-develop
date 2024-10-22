@@ -49,6 +49,10 @@
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
 
+#ifdef __DSP
+#include "module_base/kernels/dsp/dsp_connector.h"
+#endif
+
 namespace ModuleESolver
 {
 
