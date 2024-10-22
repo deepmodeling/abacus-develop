@@ -35,6 +35,7 @@ void DiagoBPCG<T, Device>::init_iter(const psi::Psi<T, Device> &psi_in) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
     this->n_band        = psi_in.get_nbands();
     this->n_basis       = psi_in.get_nbasis();
+    this->n_dim         = psi_in.get_current_nbas();
 
     // All column major tensors
 
@@ -93,24 +94,24 @@ void DiagoBPCG<T, Device>::orth_cholesky(
 		ct::Tensor& hsub_out)
 {
     // hsub_out = psi_out * transc(psi_out)
-    ct::EinsumOption option(
-        /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
-    hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
+    // ct::EinsumOption option(
+    //     /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
+    // hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
     // using gemm instead einsum for different leading dimension and nbasis
-    // gemm_op<T, Device>()(this->ctx,
-    //                      'N',
-    //                      'N',
-    //                      this->dim,
-    //                      notconv,
-    //                      nbase,
-    //                      this->one,
-    //                      hphi,
-    //                      this->dim,
-    //                      vcc,
-    //                      this->nbase_x,
-    //                      this->zero,
-    //                      psi_iter + (nbase) * this->dim,
-    //                      this->dim);
+    gemm_op<T, Device>()(this->ctx,
+                         'N',
+                         'C',
+                         this->n_band,
+                         this->n_band,
+                         this->n_dim,
+                         this->one,
+                         psi_out.data<T>(),
+                         this->n_basis,
+                         psi_out.data<T>(),
+                         this->n_basis,
+                         this->zero,
+                         hsub_out.data<T>(),
+                         this->n_band);
 
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
