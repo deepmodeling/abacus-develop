@@ -1,0 +1,102 @@
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_base/blas_connector.cpp:68:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+   68 | }
+      | ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_base/blas_connector.cpp:75:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+   75 | }
+      | ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_base/blas_connector.cpp:156:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  156 | }
+      | ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_base/blas_connector.cpp:164:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  164 | }
+      | ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_base/blas_connector.cpp:172:1: warning: non-void function does not return a value in all control paths [-Wreturn-type]
+  172 | }
+      | ^
+5 warnings generated.
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:100:64: warning: 'nkstot_full' is a private member of 'K_Vectors' [-Wintel-compat]
+  100 |     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+      |                                                                ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:160:9: note: declared private here
+  160 |     int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+      |         ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:100:81: warning: 'nks' is a private member of 'K_Vectors' [-Wintel-compat]
+  100 |     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+      |                                                                                 ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:158:9: note: declared private here
+  158 |     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
+      |         ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:246:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  246 |             Vxc_fromRI_d->cal_exx_ions();
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
+   83 |         void cal_exx_ions(const bool write_cv = false);
+      |              ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:250:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  250 |             Vxc_fromRI_c->cal_exx_ions();
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
+   83 |         void cal_exx_ions(const bool write_cv = false);
+      |              ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:676:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  676 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
+   84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+      |          ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:704:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  704 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
+   84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+      |          ^
+In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.cpp:6:
+In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.h:120:
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.hpp:221:21: warning: 24 enumeration values not handled in switch: 'A1A2B1B2', 'A1A2B2B1', 'A1B1A2B2'... [-Wswitch]
+  221 |                                                                                                         switch(matrix_order)
+      |                                                                                                                ^~~~~~~~~~~~
+1 warning generated.
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:100:64: warning: 'nkstot_full' is a private member of 'K_Vectors' [-Wintel-compat]
+  100 |     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+      |                                                                ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:160:9: note: declared private here
+  160 |     int nkstot_full; /// number of k points before symmetry reduction in full k mesh
+      |         ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:100:81: warning: 'nks' is a private member of 'K_Vectors' [-Wintel-compat]
+  100 |     nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+      |                                                                                 ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:158:9: note: declared private here
+  158 |     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
+      |         ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:246:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  246 |             Vxc_fromRI_d->cal_exx_ions();
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
+   83 |         void cal_exx_ions(const bool write_cv = false);
+      |              ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:250:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  250 |             Vxc_fromRI_c->cal_exx_ions();
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
+   83 |         void cal_exx_ions(const bool write_cv = false);
+      |              ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:676:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  676 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
+   84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+      |          ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:704:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  704 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
+      |                           ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
+   84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+      |          ^
+In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/exx_opt_orb.cpp:11:
+In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.h:120:
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.hpp:221:21: warning: 24 enumeration values not handled in switch: 'A1A2B1B2', 'A1A2B2B1', 'A1B1A2B2'... [-Wswitch]
+  221 |                                                                                                         switch(matrix_order)
+      |                                                                                                                ^~~~~~~~~~~~
+6 warnings generated.
+1 warning generated.
+6 warnings generated.
