@@ -168,7 +168,7 @@ class XC_Functional
                          ModulePW::PW_Basis* rhopw,
                          const UnitCell* ucell,
                          std::vector<double>& stress_gga,
-                         const bool is_stress = 0);
+                         const bool is_stress = false);
 	template <typename T, typename Device,
           typename Real = typename GetTypeReal<T>::type>
 	static void grad_wfc(

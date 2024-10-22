@@ -111,7 +111,8 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::
 {
     for(int ir=0; ir<occ_number.nr; ++ ir)
     {
-        for(int ic=0; ic<occ_number.nc; ++ic) occNum_wfcHwfc(ir, ic) += occNum_func(occ_number(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
+        for(int ic=0; ic<occ_number.nc; ++ic) { occNum_wfcHwfc(ir, ic) += occNum_func(occ_number(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
+}
     } 
 }
 
@@ -129,7 +130,8 @@ void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const
     // consider W_k for dE/d_occNum
     for(int ik=0; ik<occ_number.nr; ++ik)
     {
-        for(int inb=0; inb<occ_number.nc; ++inb) occNum_wfcHwfc(ik, inb) *= kv.wk[ik];
+        for(int inb=0; inb<occ_number.nc; ++inb) { occNum_wfcHwfc(ik, inb) *= kv.wk[ik];
+}
     } 
 }
 
@@ -151,7 +153,8 @@ double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc)
     double energy = 0.0;
     for(int ir=0; ir<occNum_wfcHwfc.nr; ++ ir)
     {
-        for(int ic=0; ic<occNum_wfcHwfc.nc; ++ic) energy += occNum_wfcHwfc(ir, ic);
+        for(int ic=0; ic<occNum_wfcHwfc.nc; ++ic) { energy += occNum_wfcHwfc(ir, ic);
+}
     }
     return energy;
 }
@@ -166,17 +169,18 @@ double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, doub
     // else if( XC_func_rdmft == "muller" ) alpha = 0.5;
     // else if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
     // else alpha = 1.0;
-    if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
-    else if( XC_func_rdmft == "muller" ) alpha = 0.5;
-    else alpha = 1.0;
+    if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) { ;
+    } else if( XC_func_rdmft == "muller" ) { alpha = 0.5;
+    } else { alpha = 1.0;
+}
 
-    if( symbol==0 ) return eta;
-    else if ( symbol==1 ) return 0.5*eta;
-    else if ( symbol==2 ) return std::pow(eta, alpha);
-    else if ( symbol==3 ) return 0.5*std::pow(eta, alpha);
-    else if ( symbol==4 ) return alpha*std::pow(eta, alpha-1.0);
-    else if ( symbol==5 ) return 1.0;
-    else 
+    if( symbol==0 ) { return eta;
+    } else if ( symbol==1 ) { return 0.5*eta;
+    } else if ( symbol==2 ) { return std::pow(eta, alpha);
+    } else if ( symbol==3 ) { return 0.5*std::pow(eta, alpha);
+    } else if ( symbol==4 ) { return alpha*std::pow(eta, alpha-1.0);
+    } else if ( symbol==5 ) { return 1.0;
+    } else 
     {
         std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
         return eta ;
