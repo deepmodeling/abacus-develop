@@ -301,6 +301,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const UnitCell* ucell_in,
                       const std::vector<double>& orb_cutoff,
                       Grid_Driver* GridD_in,
+                      const int& nspin,
 
                       const Charge* charge_in,
                       const ModulePW::PW_Basis* rho_basis_in,
@@ -329,7 +330,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
         this->initialize_HR(ucell_in, GridD_in);
 
-        GK_in->initialize_pvpR(*ucell_in, GridD_in);
+        GK_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
     }
     Veff_rdmft(Gint_Gamma* GG_in,
                       hamilt::HS_Matrix_K<TK>* hsk_in,
@@ -339,6 +340,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const UnitCell* ucell_in,
                       const std::vector<double>& orb_cutoff,
                       Grid_Driver* GridD_in,
+                      const int& nspin,
 
                       const Charge* charge_in,
                       const ModulePW::PW_Basis* rho_basis_in,
@@ -367,7 +369,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
         this->initialize_HR(ucell_in, GridD_in);
 
-        GG_in->initialize_pvpR(*ucell_in, GridD_in);
+        GG_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
     }
 
     ~Veff_rdmft<TK, TR>(){};

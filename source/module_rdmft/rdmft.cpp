@@ -258,28 +258,18 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in)
 {
-    std::cout << "\n\n\n******\nrdmft-test-1.0\n******\n\n\n" << std::endl;
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
     wg = (occ_number);
-    std::cout << "\n\n\n******\nrdmft-test-1.1\n******\n\n\n" << std::endl;
-
-    std::cout << "\n***\nnk_total: " << nk_total << "\n***\n" << std::endl;
-    std::cout << "\n***\nnbands_total: " << nbands_total << "\n***\n" << std::endl;
-
-    std::cout << "\n***\nwg.nr: " << wg.nr<< "\n***\n" << std::endl;
-    std::cout << "\n***\nwg.nc: " << wg.nc << "\n***\n" << std::endl;   
 
     for(int ik=0; ik < wg.nr; ++ik)
     {
         for(int inb=0; inb < wg.nc; ++inb)
         {
             wg(ik, inb) *= kv->wk[ik];
-            std::cout << "\n\n\n******\nrdmft-test-1.2\n******\n\n\n" << std::endl;
             wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
         }
     }
-    std::cout << "\n\n\n******\nrdmft-test-1.3\n******\n\n\n" << std::endl;
 
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
@@ -321,7 +311,7 @@ void RDMFT<TK, TR>::update_charge()
         }
 
         GG->transfer_DM2DtoGrid(DM_gamma_only.get_DMR_vector());
-        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho);
+        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GG->cal_gint(&inout);
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -351,7 +341,7 @@ void RDMFT<TK, TR>::update_charge()
         }
 
         GK->transfer_DM2DtoGrid(DM.get_DMR_vector());
-        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho);
+        Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GK->cal_gint(&inout);
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -485,6 +475,7 @@ void RDMFT<TK, TR>::cal_V_TV()
             &GlobalC::ucell,
             orb->cutoffs(),
             &GlobalC::GridD,
+            nspin,
 
             charge,
             rho_basis,
@@ -504,6 +495,7 @@ void RDMFT<TK, TR>::cal_V_TV()
             &GlobalC::ucell,
             orb->cutoffs(),
             &GlobalC::GridD,
+            nspin,
 
             charge,
             rho_basis,
@@ -537,6 +529,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
             &GlobalC::ucell,
             orb->cutoffs(),
             &GlobalC::GridD,
+            nspin,
 
             charge,
             rho_basis,
@@ -557,6 +550,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
             &GlobalC::ucell,
             orb->cutoffs(),
             &GlobalC::GridD,
+            nspin,
 
             charge,
             rho_basis,
@@ -630,6 +624,7 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &GlobalC::ucell,
                 orb->cutoffs(),
                 &GlobalC::GridD,
+                nspin,
 
                 charge,
                 rho_basis,
@@ -652,6 +647,7 @@ void RDMFT<TK, TR>::cal_V_XC()
                 &GlobalC::ucell,
                 orb->cutoffs(),
                 &GlobalC::GridD,
+                nspin,
 
                 charge,
                 rho_basis,
@@ -866,8 +862,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
             Parallel_Reduce::reduce_all(E_RDMFT[2]);
 
             // // test
-            std::cout << "\n\n\n******\nE_exx-type in rdmft: " << E_RDMFT[2] << "\n******\n\n" << std::endl;
-            std::cout << "\n\n\n******\nE_dft-xc in rdmft: " << etxc << "\n******\n\n" << std::endl;
+            // std::cout << "\n\n\n******\nE_exx-type in rdmft: " << E_RDMFT[2] << "\n******\n\n" << std::endl;
+            // std::cout << "\n\n\n******\nE_dft-xc in rdmft: " << etxc << "\n******\n\n" << std::endl;
 
             // if E_XC is hybrid functional
             E_RDMFT[2] += etxc;
@@ -907,31 +903,41 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     }
 
     // print results
-    if( GlobalC::exx_info.info_global.cal_exx )
-    {
-    std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << ",   alpha_power:" << alpha_power << std::endl;
+    std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
+    if( GlobalC::exx_info.info_global.cal_exx ) std::cout << "alpha_power: " << alpha_power << std::endl;
 
-    std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
-                << E_RDMFT[0] << "\nEhartree_RDMFT: " << E_RDMFT[1] << "\nExc_RDMFT:      " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
-                << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\n\nExc_ksdft:       " << E_xc_KS 
-                << "\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
+    std::cout << std::fixed << std::setprecision(10) 
+                << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
+                << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 
+                << "\nE_hartree_RDMFT: " << E_RDMFT[1] 
+                << "\nExc_" << XC_func_rdmft << "_RDMFT:    " << E_RDMFT[2] 
+                << "\nE_Ewald:         " << E_Ewald
+                << "\nE_entropy(-TS):  " << E_entropy 
+                << "\nE_descf:         " << E_descf 
+                << "\n\nEtotal_RDMFT:    " << Etotal 
+                << "\n\nExc_ksdft:       " << E_xc_KS 
+                << "\nE_exx_ksdft:     " << E_exx_KS 
+                <<"\n******\n\n" << std::endl;
 
     std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
-
     std::cout << "\nE_deband_KS:  " << E_deband_KS << "\nE_deband_harris_KS:  " << E_deband_harris_KS << "\n\n" << std::endl;
-    }
-    else
+
+    if( 1 )
     {
-        std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
-
-        std::cout << std::fixed << std::setprecision(10) << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] << "\n\nETV_RDMFT:      " 
-                    << E_RDMFT[0] << "\nE_hartree_RDMFT: " << E_RDMFT[1] << "\nExc_" << XC_func_rdmft << "_RDMFT:   " << E_RDMFT[2] << "\nE_Ewald:        " << E_Ewald
-                    << "\nE_entropy(-TS): " << E_entropy << "\nE_descf:        " << E_descf << "\n\nEtotal_RDMFT:   " << Etotal << "\n\nExc_ksdft:       " << E_xc_KS 
-                    << "\nE_exx_ksdft:      " << E_exx_KS <<"\n******\n\n" << std::endl;
-
-        std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
-
-        std::cout << "\nE_deband_KS:  " << E_deband_KS << "\nE_deband_harris_KS:  " << E_deband_harris_KS << "\n\n" << std::endl;
+        // GlobalV::ofs_running << std::setprecision(12);
+        // GlobalV::ofs_running << std::setiosflags(std::ios::right);
+        GlobalV::ofs_running << std::fixed << std::setprecision(10)
+                << "\n******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
+                << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 
+                << "\nE_hartree_RDMFT: " << E_RDMFT[1] 
+                << "\nExc_" << XC_func_rdmft << "_RDMFT:    " << E_RDMFT[2] 
+                << "\nE_Ewald:         " << E_Ewald
+                << "\nE_entropy(-TS):  " << E_entropy 
+                << "\nE_descf:         " << E_descf 
+                << "\n\nEtotal_RDMFT:    " << Etotal 
+                << "\n\nExc_ksdft:       " << E_xc_KS 
+                << "\nE_exx_ksdft:     " << E_exx_KS 
+                <<"\n******\n" << std::endl;
     }
 
     ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
