@@ -277,7 +277,11 @@ struct gemm_op<T, base_device::DEVICE_CPU>
                     T* c,
                     const int& ldc)
     {
+#ifdef __DSP
+        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc, base_device::AbacusDevice_t::DspDevice);
+#else
         BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
+#endif
     }
 };
 
