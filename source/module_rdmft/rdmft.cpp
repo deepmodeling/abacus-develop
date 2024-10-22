@@ -784,7 +784,6 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         //     }
         // }
 
-
         // using them to the gradient of Etotal is not correct when do hybrid calculation, it's correct just for exx-type functional
         // HkPsi( ParaV, HK_XC[0], wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0));
         // psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_XC(ik, 0, 0), Eij_XC, &(wfcHwfc_XC(ik, 0)) );
