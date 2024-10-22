@@ -484,7 +484,6 @@ OBJS_IO=input_conv.o\
     output.o\
     print_info.o\
     read_cube.o\
-    read_rho.o\
     rhog_io.o\
     read_exit_file.o\
     read_wfc_pw.o\
