@@ -39,7 +39,7 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
-option(ENABLE_DSP "Enable DSP usage." OFF)
+option(USE_DSP "Enable DSP usage." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -248,7 +248,7 @@ if(ENABLE_MPI)
 endif()
 
 if (USE_DSP)
-  target_link_libraries(${ABACUS_BIN_NAME} DIR_MTBLAS_LIBRARY)
+  target_link_libraries(${ABACUS_BIN_NAME} ${DIR_MTBLAS_LIBRARY})
 endif()
 
 find_package(Threads REQUIRED)
