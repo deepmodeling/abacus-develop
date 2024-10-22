@@ -67,6 +67,10 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
         container::kernels::createGpuSolverHandle();
     }
 #endif
+#ifdef __DSP
+    std::cout << " ** Initializing DSP Hardware..." << std::endl;
+    dspInitHandle(GlobalV::MY_RANK % 4);
+#endif
 }
 
 template <typename T, typename Device>
@@ -92,7 +96,10 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 #endif
         delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
-    
+#ifdef __DSP
+    std::cout << " ** Closing DSP Hardware..." << std::endl;
+    dspDestoryHandle();
+#endif
     if (PARAM.inp.precision == "single")
     {
         delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);

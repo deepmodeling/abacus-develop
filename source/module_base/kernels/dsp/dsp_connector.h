@@ -1,8 +1,8 @@
 #ifdef __DSP
 
 // Base dsp functions
-void createMtblasHandle(int id);
-void destroyMtblasHandle();
+void dspInitHandle(int id);
+void dspDestoryHandle();
 void *malloc_ht(size_t bytes);
 void free_ht(void* ptr);
 
