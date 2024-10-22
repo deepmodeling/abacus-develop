@@ -6,28 +6,69 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include <set>
 #include "module_lr/utils/lr_util.h"
-
+#include "module_io/cube_io.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {
     // constructor for exchange-correlation kernel
     PotHxcLR::PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in,
-        const Charge* chg_gs/*ground state*/, const SpinType& st_in)
-        :xc_kernel(xc_kernel_in), tpiba_(ucell_in->tpiba), spin_type_(st_in)
+        const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
+        const SpinType& st_in, const std::vector<std::string>& init_fxc)
+        :xc_kernel(xc_kernel_in), tpiba_(ucell_in->tpiba), spin_type_(st_in),
+        xc_kernel_components_(*rho_basis_in)
     {
         this->rho_basis_ = rho_basis_in;
         this->nrxx = chg_gs->nrxx;
         this->nspin = (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
 
         this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
+
         std::set<std::string> local_xc = { "lda", "pbe", "hse" };
         if (local_xc.find(this->xc_kernel) != local_xc.end())
         {
             XC_Functional::set_xc_type(this->xc_kernel);    // for hse, (1-alpha) and omega are set here
             this->xc_type_ = XCType(XC_Functional::get_func_type());
-#ifdef USE_LIBXC
             this->set_integral_func(this->spin_type_, this->xc_type_);
-            this->xc_kernel_components_.f_xc_libxc(nspin, ucell_in->omega, ucell_in->tpiba, chg_gs);
+
+            if (init_fxc[0] == "file_fxc")
+            {
+                assert(this->xc_kernel == "lda");
+                const int spinsize = (1 == nspin) ? 1 : 3;
+                std::vector<double> v2rho2(spinsize * nrxx);
+                // read fxc adn add to xc_kernel_components
+                assert(init_fxc.size() >= spinsize + 1);
+                for (int is = 0;is < spinsize;++is)
+                {
+                    double ef = 0.0;
+                    int prenspin = 1;
+                    std::vector<double> v2rho2_tmp(nrxx);
+                    ModuleIO::read_vdata_palgrid(GlobalC::Pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, init_fxc[is + 1],
+                        v2rho2_tmp.data(), ucell_in->nat);
+                    for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * spinsize + is] = v2rho2_tmp[ir]; }
+                }
+                this->xc_kernel_components_.set_kernel("v2rho2", std::move(v2rho2));
+                return;
+            }
+
+#ifdef USE_LIBXC
+            if (init_fxc[0] == "file_chg")
+            {
+                assert(init_fxc.size() >= 2);
+                double** rho_for_fxc;
+                LR_Util::new_p2(rho_for_fxc, nspin, nrxx);
+                double ef = 0.0;
+                int prenspin = 1;
+                for (int is = 0;is < nspin;++is)
+                {
+                    const std::string file = init_fxc[init_fxc.size() > nspin ? 1 + is : 1];
+                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
+                        rho_for_fxc[is], ucell_in->nat);
+                }
+                this->xc_kernel_components_.f_xc_libxc(nspin, ucell_in->omega, ucell_in->tpiba, rho_for_fxc, chg_gs->rho_core);
+                LR_Util::delete_p2(rho_for_fxc, nspin);
+            }
+            else { this->xc_kernel_components_.f_xc_libxc(nspin, ucell_in->omega, ucell_in->tpiba, chg_gs->rho, chg_gs->rho_core); }
 #else 
             ModuleBase::WARNING_QUIT("KernelXC", "to calculate xc-kernel in LR-TDDFT, compile with LIBXC");
 #endif
@@ -63,7 +104,6 @@ namespace LR
         ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
     }
 
-#ifdef USE_LIBXC
     void PotHxcLR::set_integral_func(const SpinType& s, const XCType& xc)
     {
         auto& funcs = this->kernel_to_potential_;
@@ -168,5 +208,4 @@ namespace LR
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
     }
-#endif
 } // namespace LR

@@ -7,44 +7,31 @@
 #include <xc.h>
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"
 
-void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const Charge* chg_gs)
+void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
 {
     ModuleBase::TITLE("XC_Functional", "f_xc_libxc");
     ModuleBase::timer::tick("XC_Functional", "f_xc_libxc");
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 
+    assert(nspin == 1 || nspin == 2);
+
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         XC_Functional::get_func_id(), 
         (1 == nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
-    int nrxx = chg_gs->nrxx;
+    const int& nrxx = rho_basis_.nrxx;
 
     // converting rho (extract it as a subfuntion in the future)
     // -----------------------------------------------------------------------------------
     std::vector<double> rho(nspin * nrxx);    // r major / spin contigous
-    std::vector<double> amag;
-    if (1 == nspin || 2 == nspin)
-    {
+
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 1024)
 #endif
-        for (int is = 0; is < nspin; ++is)
-            for (int ir = 0; ir < nrxx; ++ir)
-                rho[ir * nspin + is] = chg_gs->rho[is][ir] + 1.0 / nspin * chg_gs->rho_core[ir];
-    }
-    else
+    for (int is = 0; is < nspin; ++is) { for (int ir = 0; ir < nrxx; ++ir) { rho[ir * nspin + is] = rho_gs[is][ir]; } }
+    if (rho_core)
     {
-        amag.resize(nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-        for (int ir = 0; ir < nrxx; ++ir)
-        {
-            const double arhox = std::abs(chg_gs->rho[0][ir] + chg_gs->rho_core[ir]);
-            amag[ir] = std::sqrt(std::pow(chg_gs->rho[1][ir], 2) + std::pow(chg_gs->rho[2][ir], 2) + std::pow(chg_gs->rho[3][ir], 2));
-            const double amag_clip = (amag[ir] < arhox) ? amag[ir] : arhox;
-            rho[ir * nspin + 0] = (arhox + amag_clip) / 2.0;
-            rho[ir * nspin + 1] = (arhox - amag_clip) / 2.0;
-        }
+        const double fac = 1.0 / nspin;
+        for (int is = 0; is < nspin; ++is) { for (int ir = 0; ir < nrxx; ++ir) { rho[ir * nspin + is] += fac * rho_core[ir]; } }
     }
 
     // -----------------------------------------------------------------------------------
@@ -81,7 +68,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #endif
                 for (int ir = 0; ir < nrxx; ++ir) rhor[ir] = rho[ir * nspin + is];
                 gdr[is].resize(nrxx);
-                LR_Util::grad(rhor.data(), gdr[is].data(), *(chg_gs->rhopw), tpiba);
+                LR_Util::grad(rhor.data(), gdr[is].data(), rho_basis_, tpiba);
             }
             // 2. |\nabla\rho|^2
             sigma.resize(nrxx * ((1 == nspin) ? 1 : 3));

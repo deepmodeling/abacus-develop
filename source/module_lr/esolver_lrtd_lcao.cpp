@@ -592,11 +592,11 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         using ST = PotHxcLR::SpinType;
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, ST::S1);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, ST::S1, input.init_fxc);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, openshell ? ST::S2_updown : ST::S2_singlet);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, openshell ? ST::S2_updown : ST::S2_triplet);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.init_fxc);
+        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.init_fxc);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");

@@ -310,6 +310,20 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("init_fxc");
+        item.annotation = "The method to initalize the xc kernel";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            auto& ifxc = para.input.init_fxc;
+            for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
+            };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.init_fxc.empty()) { para.input.init_fxc.push_back("gs"); }
+            };
+        sync_stringvec(input.init_fxc, para.input.init_fxc.size(), "gs");
+        this->add_item(item);
+    }
+    {
         Input_Item item("lr_solver");
         item.annotation = "the eigensolver for LR-TDDFT";
         read_sync_string(input.lr_solver);

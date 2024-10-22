@@ -266,7 +266,6 @@ namespace LR_Util
             vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, rwork.data(), &info);
         if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
     }
-#ifdef USE_LIBXC
     void grad(const double* rhor,
         ModuleBase::Vector3<double>* gdr,
         const ModulePW::PW_Basis& rho_basis,
@@ -295,5 +294,4 @@ namespace LR_Util
 }
         }
     }
-#endif
 }

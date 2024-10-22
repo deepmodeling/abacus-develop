@@ -4,6 +4,8 @@
 #include "kernel.h"
 #include <unordered_map>
 #include <memory>
+
+class Parallel_Grid;
 namespace LR
 {
     class PotHxcLR : public elecstate::PotBase
@@ -15,8 +17,9 @@ namespace LR
         enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3 };
         enum XCType { None = 0, LDA = 1, GGA = 2, HYB_GGA = 4 };
         /// constructor for exchange-correlation kernel
-        PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, const Charge* chg_gs/*ground state*/,
-            const SpinType& st_in = SpinType::S1);
+        PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in,
+            const UnitCell* ucell_in, const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
+            const SpinType& st_in = SpinType::S1, const std::vector<std::string>& init_fxc = { "gs" });
         ~PotHxcLR() {}
         void cal_v_eff(const Charge* chg/*excited state*/, const UnitCell* ucell, ModuleBase::matrix& v_eff) override {};
         void cal_v_eff(double** rho, const UnitCell* ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 });
