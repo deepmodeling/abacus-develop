@@ -206,7 +206,7 @@ class RDMFT
     void cal_Hk_Hpsi();
 
     // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
-    double Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
+    double run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
 
 
 

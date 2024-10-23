@@ -944,7 +944,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 
 
 template <typename TK, typename TR>
-double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
+double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
     // this->cal_V_hartree();
     // this->cal_V_XC();

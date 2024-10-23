@@ -633,6 +633,9 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         // 12.5) rdmft, add by jghan 2024-04-08/2024-10-09
         if ( PARAM.inp.ab_initio_type == "rdmft" )
         {
+            ModuleBase::TITLE("RDMFT", "E & Egradient");
+            ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
             // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
             if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
             {
@@ -644,12 +647,14 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
                 this->update_elec_rdmft(occ_number_ks, *(this->psi));
 
-                //initialize the gradients of Etotal on wg and wfc, and set all elements to 0. 
-                ModuleBase::matrix E_gradient_occNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
-                psi::Psi<T> E_gradient_wfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-                E_gradient_wfc.zero_out();
+                //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
+                ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                psi::Psi<T> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                dE_dWfc.zero_out();
 
-                double Etotal_RDMFT = this->Run_rdmft(E_gradient_occNum, E_gradient_wfc);
+                double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+
+                ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
                 // break;
             }
