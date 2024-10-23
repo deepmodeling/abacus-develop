@@ -103,30 +103,7 @@ list(APPEND _naos
 add_library(naopack SHARED 
     ${_naos}
     )
-# add diago shared library
-list(APPEND _diago
-    ${HSOLVER_PATH}/diago_dav_subspace.cpp
-    ${HSOLVER_PATH}/diago_david.cpp
-    ${HSOLVER_PATH}/diag_const_nums.cpp
-    ${HSOLVER_PATH}/diago_iter_assist.cpp
 
-    ${HSOLVER_PATH}/kernels/dngvd_op.cpp
-    ${HSOLVER_PATH}/kernels/math_kernel_op.cpp
-    # dependency
-    ${BASE_PATH}/module_device/device.cpp
-    ${BASE_PATH}/module_device/memory_op.cpp
-
-    ${HAMILT_PATH}/operator.cpp
-    ${PSI_PATH}/psi.cpp
-  )
-add_library(diagopack SHARED 
-    ${_diago}
-    )
-target_link_libraries(diagopack
-    PRIVATE
-    ${OpenBLAS_LIBRARIES} 
-    ${LAPACK_LIBRARIES}
-    )
 # link math_libs
 if(MKLROOT)
   target_link_libraries(naopack
@@ -152,24 +129,25 @@ list(APPEND _sources
     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
     ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
     ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
+    # ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
     )
 pybind11_add_module(_core MODULE ${_sources})
-target_link_libraries(_core PRIVATE pybind11::headers naopack diagopack)
+target_link_libraries(_core PRIVATE pybind11::headers naopack)
 target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
+
 # set RPATH
 execute_process(
   COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
   OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-
 # set package name to pyabacus
 set(TARGET_PACK pyabacus)
 set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
+
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
+
 set_target_properties(_core PROPERTIES INSTALL_RPATH "$ORIGIN")
 set_target_properties(naopack PROPERTIES INSTALL_RPATH "$ORIGIN")
-set_target_properties(diagopack PROPERTIES INSTALL_RPATH "$ORIGIN")
 install(TARGETS _core naopack DESTINATION ${TARGET_PACK})
-install(TARGETS _core diagopack DESTINATION ${TARGET_PACK})
 
