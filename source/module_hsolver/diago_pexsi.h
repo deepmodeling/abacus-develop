@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <memory>
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_hamilt_general/hamilt.h"
 #include "module_base/global_variable.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_pexsi/pexsi_solver.h"

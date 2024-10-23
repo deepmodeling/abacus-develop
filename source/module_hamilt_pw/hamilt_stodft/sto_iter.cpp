@@ -22,7 +22,8 @@ Stochastic_Iter::~Stochastic_Iter()
 void Stochastic_Iter::init(K_Vectors* pkv_in,
                            ModulePW::PW_Basis_K* wfc_basis,
                            Stochastic_WF& stowf,
-                           StoChe<double>& stoche)
+                           StoChe<double>& stoche,
+                           hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
 {
     p_che = stoche.p_che;
     spolyv = stoche.spolyv;
@@ -30,8 +31,7 @@ void Stochastic_Iter::init(K_Vectors* pkv_in,
     targetne = PARAM.inp.nelec;
     this->pkv = pkv_in;
     this->method = stoche.method_sto;
-
-    this->stohchi.init(wfc_basis, pkv, &stoche.emin_sto, &stoche.emax_sto);
+    this->p_hamilt_sto = p_hamilt_sto;
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
 
@@ -135,12 +135,12 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
         while (true)
         {
             bool converge;
-            auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                                       &stohchi,
+            auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                       p_hamilt_sto,
                                        std::placeholders::_1,
                                        std::placeholders::_2,
                                        std::placeholders::_3);
-            converge = p_che->checkconverge(hchi_norm, pchi, npw, *stohchi.Emax, *stohchi.Emin, 5.0);
+            converge = p_che->checkconverge(hchi_norm, pchi, npw, stowf.npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 5.0);
 
             if (!converge)
             {
@@ -155,14 +155,14 @@ void Stochastic_Iter::checkemm(const int& ik, const int istep, const int iter, S
     if (ik == nks - 1)
     {
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE, stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-        MPI_Allreduce(MPI_IN_PLACE, stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+        MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
         MPI_Allreduce(MPI_IN_PLACE, &change, 1, MPI_CHAR, MPI_LOR, MPI_COMM_WORLD);
 #endif
         if (change)
         {
-            GlobalV::ofs_running << "New Emax Ry" << *stohchi.Emax << " ; new Emin " << *stohchi.Emin << " Ry"
-                                 << std::endl;
+            GlobalV::ofs_running << "New Emax Ry" << *p_hamilt_sto->emax << " ; new Emin " << *p_hamilt_sto->emin
+                                 << " Ry" << std::endl;
         }
         change = false;
     }
@@ -336,8 +336,8 @@ void Stochastic_Iter::calPn(const int& ik, Stochastic_WF& stowf)
         pchi = stowf.chi0->get_pointer();
     }
 
-    auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                               &stohchi,
+    auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                               p_hamilt_sto,
                                std::placeholders::_1,
                                std::placeholders::_2,
                                std::placeholders::_3);
@@ -414,20 +414,7 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
-        // init k
-        if (this->pkv->get_nks() > 1)
-        {
-
-            if (GlobalC::ppcell.nkb > 0
-                && (PARAM.inp.basis_type == "pw"
-                    || PARAM.inp.basis_type == "lcao_in_pw")) // xiaohui add 2013-09-02. Attention...
-            {
-                GlobalC::ppcell.getvnl(ik, GlobalC::ppcell.vkb);
-            }
-
-        }
-        stohchi.current_ik = ik;
-
+        p_hamilt_sto->updateHk(ik);
         this->calTnchi_ik(ik, stowf);
     }
 }
@@ -497,13 +484,12 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
                 pHamilt->updateHk(ik);
                 stowf.shchi->fix_k(ik);
             }
-            stohchi.current_ik = ik;
             const int npw = this->pkv->ngk[ik];
             const double kweight = this->pkv->wk[ik];
             std::complex<double>* hshchi = new std::complex<double>[nchip_ik * npwx];
             std::complex<double>* tmpin = stowf.shchi->get_pointer();
             std::complex<double>* tmpout = hshchi;
-            stohchi.hchi(tmpin, tmpout, nchip_ik);
+            p_hamilt_sto->hPsi(tmpin, tmpout, nchip_ik);
             for (int ichi = 0; ichi < nchip_ik; ++ichi)
             {
                 sto_eband += kweight * ModuleBase::GlobalFunc::ddot_real(npw, tmpin, tmpout, false);
@@ -646,8 +632,8 @@ void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)
     }
     else
     {
-        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                                   &stohchi,
+        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                   p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,
                                    std::placeholders::_3);

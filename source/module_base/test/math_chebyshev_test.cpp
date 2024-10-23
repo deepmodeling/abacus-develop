@@ -346,15 +346,15 @@ TEST_F(MathChebyshevTest, checkconverge)
     double tmin = -1.1;
     double tmax = 1.1;
     bool converge;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, tmax, tmin, 0.2);
+    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
     EXPECT_TRUE(converge);
-    converge = p_chetest->checkconverge(fun_sigma_y, v + 2, 2, tmax, tmin, 0.2);
+    converge = p_chetest->checkconverge(fun_sigma_y, v + 2, 2, 2, tmax, tmin, 0.2);
     EXPECT_TRUE(converge);
     EXPECT_NEAR(tmin, -1.1, 1e-8);
     EXPECT_NEAR(tmax, 1.1, 1e-8);
 
     tmax = -1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, tmax, tmin, 2.2);
+    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 2.2);
     EXPECT_TRUE(converge);
     EXPECT_NEAR(tmin, -1.1, 1e-8);
     EXPECT_NEAR(tmax, 1.1, 1e-8);
@@ -363,12 +363,12 @@ TEST_F(MathChebyshevTest, checkconverge)
     v[0] = std::complex<double>(0, 1), v[1] = 1;
     fun.factor = 1.5;
     tmin = -1.1, tmax = 1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, tmax, tmin, 0.2);
+    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
     EXPECT_FALSE(converge);
 
     fun.factor = -1.5;
     tmin = -1.1, tmax = 1.1;
-    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, tmax, tmin, 0.2);
+    converge = p_chetest->checkconverge(fun_sigma_y, v, 2, 2, tmax, tmin, 0.2);
     EXPECT_FALSE(converge);
     fun.factor = 1;
 
@@ -632,9 +632,9 @@ TEST_F(MathChebyshevTest, checkconverge_float)
 
     auto fun_sigma_yf
         = [&](std::complex<float>* in, std::complex<float>* out, const int m = 1) { fun.sigma_y(in, out, m); };
-    converge = p_fchetest->checkconverge(fun_sigma_yf, v, 2, tmax, tmin, 0.2);
+    converge = p_fchetest->checkconverge(fun_sigma_yf, v, 2, 2, tmax, tmin, 0.2);
     EXPECT_TRUE(converge);
-    converge = p_fchetest->checkconverge(fun_sigma_yf, v + 2, 2, tmax, tmin, 0.2);
+    converge = p_fchetest->checkconverge(fun_sigma_yf, v + 2, 2, 2, tmax, tmin, 0.2);
     EXPECT_TRUE(converge);
     EXPECT_NEAR(tmin, -1.1, 1e-6);
     EXPECT_NEAR(tmax, 1.1, 1e-6);

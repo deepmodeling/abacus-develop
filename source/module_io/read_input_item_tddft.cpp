@@ -328,6 +328,12 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("lr_unrestricted");
+        item.annotation = "Whether to use unrestricted construction for LR-TDDFT";
+        read_sync_bool(input.lr_unrestricted);
+        this->add_item(item);
+    }
+    {
         Input_Item item("abs_wavelen_range");
         item.annotation = "the range of wavelength(nm) to output the absorption spectrum ";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -336,10 +342,6 @@ void ReadInput::item_lr_tddft()
             {
                 para.input.abs_wavelen_range.push_back(std::stod(item.str_values[i]));
             }
-            };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            auto& awr = para.input.abs_wavelen_range;
-            if (awr.size() < 2) { ModuleBase::WARNING_QUIT("ReadInput", "abs_wavelen_range must have two values"); }
             };
         sync_doublevec(input.abs_wavelen_range, 2, 0.0);
         this->add_item(item);
