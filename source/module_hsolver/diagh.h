@@ -12,15 +12,6 @@
 #include "mpi.h"
 #endif
 
-// template <typename T>
-// struct const_nums
-// {
-//     const_nums();
-//     T zero;
-//     T one;
-//     T neg_one;
-// };
-
 namespace hsolver
 {
 

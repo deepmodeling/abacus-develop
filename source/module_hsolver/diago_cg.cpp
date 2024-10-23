@@ -8,6 +8,8 @@
 #include <module_base/memory.h>
 #include <module_base/parallel_reduce.h>
 #include <module_base/timer.h>
+#include <module_base/tool_title.h>             // ModuleBase::TITLE
+#include <module_base/global_function.h>        // ModuleBase::GlobalFunc::NOTE
 #include <module_hsolver/diago_cg.h>
 
 using namespace hsolver;

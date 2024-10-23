@@ -7,10 +7,27 @@
  *  unit test of sto_tool.cpp
  ***********************************************/
 
-void Stochastic_hchi::hchi_norm(std::complex<double>* chig, std::complex<double>* hchig, const int m)
-{
-    return;
-}
+template <typename T, typename Device>
+hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv){}
+template <typename T, typename Device>
+hamilt::HamiltPW<T, Device>::~HamiltPW(){};
+template <typename T, typename Device>
+void hamilt::HamiltPW<T, Device>::updateHk(int){}
+template <typename T, typename Device>
+void hamilt::HamiltPW<T, Device>::sPsi(T const*, T*, const int, const int, const int) const{}
+
+template <typename T, typename Device>
+hamilt::HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
+                                      ModulePW::PW_Basis_K* wfc_basis,
+                                      K_Vectors* p_kv,
+                                      const int& npol,
+                                      double* emin_in,
+                                      double* emax_in): HamiltPW<T, Device>(pot_in, wfc_basis, p_kv), ngk(p_kv->ngk){}
+template <typename T, typename Device>
+void hamilt::HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi, const int& nbands){}
+
+template class hamilt::HamiltPW<std::complex<double>, base_device::DEVICE_CPU>;
+template class hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
 
 /**
  * - Tested Functions:

@@ -48,7 +48,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void cal_mag(const int istep, const bool print = false);
 
-    virtual double Run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc) override;     // add by jghan for rdmft calculation, 2024-03-16
+    virtual double run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc) override;     // add by jghan for rdmft calculation, 2024-03-16
 
     virtual void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in) override;   // add by jghan for rdmft calculation, 2024-03-16
 

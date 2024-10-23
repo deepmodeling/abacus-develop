@@ -105,18 +105,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
 
     // XC_func_rdmft = "power"; // just for test 
     // alpha_power = 0.525;
-    std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
-    std::cout << "\n******\nGlobalC::exx_info.info_global.cal_exx: " << GlobalC::exx_info.info_global.cal_exx << "\n******\n" << std::endl;
-    std::cout << "\n******\nPARAM.inp.ab_initio_type: " << PARAM.inp.ab_initio_type << "\n******\n" << std::endl;
-    // std::cout << "\n******\nGlobalV::NBANDS: " << GlobalV::NBANDS << "\n******\n" << std::endl;
-    std::cout << "\n******\nPARAM.inp.nbands: " << PARAM.inp.nbands << "\n******\n" << std::endl;
-    // XC_func_rdmft = "hf";
-    // std::cout << "\n\n\n******\nXC-functional in rdmft: " << XC_func_rdmft << "\n******\n\n\n" << std::endl;
-    // std::cout << "\n\n\n******\nXC-functional in GlobalC::atom: " << GlobalC::ucell.atoms[0].ncpp.xc_func << "\n******\n\n\n" << std::endl;
-    // if( XC_func_rdmft == "default" ) XC_func_rdmft = "default";
-
-    // std::cout << "\n\n\n******\nnbands_total: " << nbands_total << "\nnb2d:     " << 
-    //             ParaV->nb << "\nblacs_ctxt:   " << ParaV->blacs_ctxt << "\n******\n\n\n" << std::endl;
 
     // // create desc[] and something about MPI to Eij(nbands*nbands)
     // std::ofstream ofs_running;
@@ -127,6 +115,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
     // para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
     // para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
+
     para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
     // para_Eij.init(nbands_total, nbands_total, PARAM.inp.nb2d, MPI_COMM_WORLD);
     // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
@@ -944,7 +933,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 
 
 template <typename TK, typename TR>
-double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
+double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
     // this->cal_V_hartree();
     // this->cal_V_XC();
@@ -962,11 +951,7 @@ double RDMFT<TK, TR>::Run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     // test
     // rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
     // rdmft::printMatrix_pointer(occ_number.nr, occ_number.nc, &occ_number(0, 0), "occ_number");
-    // rdmft::printMatrix_pointer(wfcHwfc_TV.nr, wfcHwfc_TV.nc, &wfcHwfc_TV(0, 0), "wfcHwfc_TV");
-    // rdmft::printMatrix_pointer(wfcHwfc_hartree.nr, wfcHwfc_hartree.nc, &wfcHwfc_hartree(0, 0), "wfcHwfc_hartree");
-    // rdmft::printMatrix_pointer(wfcHwfc_XC.nr, wfcHwfc_XC.nc, &wfcHwfc_XC(0, 0), "wfcHwfc_XC");
     // rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(0, 0, 0), "E_gradient_wfc(ik=0)");
-    // rdmft::printMatrix_pointer(E_gradient_wfc.get_nbands(), E_gradient_wfc.get_nbasis(), &E_gradient_wfc(2, 0, 0), "E_gradient_wfc(ik=2)");
     // test
 
     // // test

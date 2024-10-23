@@ -13,6 +13,64 @@ namespace LR_Util
     }
 
     template<typename T>
+    int read_value(std::ifstream& ifs, T* ptr, const int& size) { for (int i = 0;i < size;++i) { ifs >> ptr[i]; } return size; }
+    template<typename T, typename... Args>
+    int read_value(std::ifstream& ifs, T* ptr, const int& size, Args&&... args)
+    {
+        int size_now = 0;
+        for (int i = 0;i < size;++i) { size_now += read_value(ifs, ptr + size_now, args...); }
+        return size_now;
+    }
+    template<typename T, typename... Args>
+    int read_value(const std::string& file, T* ptr, const int& size, Args&&... args)
+    {
+        std::ifstream ifs(file);
+        const int res = read_value(ifs, ptr, size, args...);
+        ifs.close();
+        return res;
+    }
+
+    template<typename T>
+    int write_value(std::ofstream& ofs, const T* ptr, const int& size)
+    {
+        for (int i = 0;i < size;++i) { ofs << filter(ptr[i]) << " "; }
+        ofs << std::endl;
+        return size;
+    }
+    template<typename T, typename... Args>
+    int write_value(std::ofstream& ofs, const T* ptr, const int& size, Args&&... args)
+    {
+        int size_now = 0;
+        for (int i = 0;i < size;++i) { size_now += write_value(ofs, ptr + size_now, args...); }
+        ofs << std::endl;
+        return size_now;
+    }
+    template<typename T, typename... Args>
+    int write_value(const std::string& file, const int& prec, const T* ptr, const int& size, Args&&... args)
+    {
+        std::ofstream ofs(file);
+        ofs << std::setprecision(prec) << std::scientific;
+        const int res = write_value(ofs, ptr, size, args...);
+        ofs.close();
+        return res;
+    }
+    template<typename T>
+    int print_value(const T* ptr, const int& size)
+    {
+        for (int i = 0;i < size;++i) { std::cout << filter(ptr[i]) << " "; }
+        std::cout << std::endl;
+        return size;
+    }
+    template<typename T, typename... Args>
+    int print_value(const T* ptr, const int& size, Args&&... args)
+    {
+        int size_now = 0;
+        for (int i = 0;i < size;++i) { size_now += print_value(ptr + size_now, args...); }
+        std::cout << std::endl;
+        return size_now;
+    }
+
+    template<typename T>
     void print_psi_bandfirst(const psi::Psi<T>& psi, const std::string& label, const int& ib, const double& threshold = 1e-10)
     {
         assert(psi.get_k_first() == 0);
@@ -34,17 +92,17 @@ namespace LR_Util
         std::ofstream ofs(filename + "_" + std::to_string(rank) + ".dat");
         ofs << std::setprecision(precision) << std::scientific;
         ofs << psi.get_nbands() << " " << psi.get_nk() << " " << psi.get_nbasis() << "\n";
-        for (int ib = 0;ib < psi.get_nbands();++ib)
-        {
-            for (int ik = 0;ik < psi.get_nk();++ik)
-            {
-                for (int i = 0;i < psi.get_nbasis();++i)
-                {
-                    ofs << filter(psi(ib, ik, i)) << " ";
-                }
-                ofs << "\n";
-            }
-        }
+        assert(psi.size() == write_value(ofs, &psi(0, 0, 0), psi.get_nbands(), psi.get_nk(), psi.get_nbasis()));
+        ofs.close();
+    }
+    template<typename T>
+    void write_psi_bandfirst(const T* psi, const int& nband, const int& nk, const int& nbasis,
+        const std::string& filename, const int& rank, const double& threshold = 1e-10, const int& precision = 8)
+    {
+        std::ofstream ofs(filename + "_" + std::to_string(rank) + ".dat");
+        ofs << std::setprecision(precision) << std::scientific;
+        ofs << nband << " " << nk << " " << nbasis << "\n";
+        assert(nband * nk * nbasis == write_value(ofs, psi, nband, nk, nbasis));
         ofs.close();
     }
     template<typename T>
@@ -54,13 +112,7 @@ namespace LR_Util
         int nbands, nks, nbasis;
         ifs >> nbands >> nks >> nbasis;
         psi::Psi<T> psi(nks, nbands, nbasis, nullptr, false);
-        for (int ib = 0;ib < psi.get_nbands();++ib) {
-            for (int ik = 0;ik < psi.get_nk();++ik) {
-                for (int i = 0;i < psi.get_nbasis();++i) {
-                    ifs >> psi(ib, ik, i);
-}
-}
-}
+        assert(psi.size() == read_value(ifs, psi.get_pointer(), nbands, nks, nbasis));
         ifs.close();
         return psi;
     }
@@ -101,9 +153,7 @@ namespace LR_Util
     {
         std::cout << "first " << nnz << " non-zero elements of " << label << "\n";
         int inz = 0;int i = 0;
-        while (inz < nnz && i < nrxx) {
-            if (rho[++i] - 0.0 > threshold) { std::cout << rho[i] << " ";++inz; }
-};
+        while (inz < nnz && i < nrxx) { if (rho[++i] - 0.0 > threshold) { std::cout << rho[i] << " ";++inz; } };
     }
 
 
