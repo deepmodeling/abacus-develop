@@ -95,7 +95,6 @@ class DiagoPrepare
     std::vector<T> s;
     std::vector<T> h_local;
     std::vector<T> s_local;
-    // hsolver::DiagH<T>* dh = 0;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;

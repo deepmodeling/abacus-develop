@@ -1,7 +1,6 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include "diagh.h"
 #include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"

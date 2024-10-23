@@ -60,8 +60,9 @@ class Sto_EleCond : protected EleCond
     int cond_dtbatch = 0;                           ///< number of time steps in a batch
     hamilt::Hamilt<std::complex<double>>* p_hamilt; ///< pointer to the Hamiltonian
     Stochastic_WF* p_stowf = nullptr;               ///< pointer to the stochastic wavefunctions
-    Stochastic_hchi stohchi;                        ///< stochastic hchi
     Sto_Func<double> stofunc;                       ///< functions
+
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 
   protected:
     /**

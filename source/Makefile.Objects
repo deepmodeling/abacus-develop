@@ -291,6 +291,7 @@ OBJS_GINT=gint.o\
       init_orb.o\
 
 OBJS_HAMILT=hamilt_pw.o\
+    hamilt_sdft_pw.o\
     operator.o\
     operator_pw.o\
     ekinetic_pw.o\
@@ -648,7 +649,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     structure_factor_k.o\
     soc.o\
     sto_iter.o\
-    sto_hchi.o\
     sto_che.o\
     sto_wf.o\
     sto_func.o\
@@ -728,7 +728,6 @@ OBJS_TENSOR=tensor.o\
     operator_lr_exx.o\
     kernel_xc.o\
     pot_hxc_lrtd.o\
-    hsolver_lrtd.o\
     lr_spectrum.o\
     hamilt_casida.o\
     esolver_lrtd_lcao.o\

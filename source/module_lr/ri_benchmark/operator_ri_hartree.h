@@ -1,3 +1,4 @@
+#pragma once
 #include "module_hamilt_general/operator.h"
 #include "module_lr/ri_benchmark/ri_benchmark.h"
 #include "module_lr/utils/lr_util_print.h"
@@ -49,22 +50,18 @@ namespace RI_Benchmark
             }
         };
         ~OperatorRIHartree() {}
-        void act(const psi::Psi<T>& X_in, psi::Psi<T>& X_out, const int nbands) const override
+        void act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik = 0)const override
         {
             assert(GlobalV::MY_RANK == 0);  // only serial now
-            const int nk = 1;
-            const psi::Psi<T>& X = LR_Util::k1_to_bfirst_wrapper(X_in, nk, npairs);
-            psi::Psi<T> AX = LR_Util::k1_to_bfirst_wrapper(X_out, nk, npairs);
-            for (int ib = 0;ib < nbands;++ib)
-            {
-                TLRIX<T> CsX_vo = cal_CsX(Cs_vo_mo, &X(ib, 0, 0));
-                TLRIX<T> CsX_ov = cal_CsX(Cs_ov_mo, &X(ib, 0, 0));
-                // LR_Util::print_CsX(Cs_bX, nvirt, "Cs_bX of state " + std::to_string(ib));
-                cal_AX(CV_vo, CsX_vo, &AX(ib, 0, 0), 4.);
-                cal_AX(CV_vo, CsX_ov, &AX(ib, 0, 0), 4.);
-                cal_AX(CV_ov, CsX_vo, &AX(ib, 0, 0), 4.);
-                cal_AX(CV_ov, CsX_ov, &AX(ib, 0, 0), 4.);
-            }
+            assert(nbasis == npairs);
+            TLRIX<T> CsX_vo = cal_CsX(Cs_vo_mo, psi_in);
+            TLRIX<T> CsX_ov = cal_CsX(Cs_ov_mo, psi_in);
+            // LR_Util::print_CsX(Cs_bX, nvirt, "Cs_bX of state " + std::to_string(ib));
+            // 4 for 4 terms in the expansion of local RI
+            cal_AX(CV_vo, CsX_vo, hpsi, 4.);
+            cal_AX(CV_vo, CsX_ov, hpsi, 4.);
+            cal_AX(CV_ov, CsX_vo, hpsi, 4.);
+            cal_AX(CV_ov, CsX_ov, hpsi, 4.);
         }
     protected:
         const int& naos;

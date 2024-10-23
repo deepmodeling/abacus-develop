@@ -3957,6 +3957,13 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Description**:  The number of 2-particle states to be solved
 - **Default**: 0
 
+### lr_unrestricted
+- **Type**: Boolean
+- **Description**: Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
+  - True:  Always use unrestricted LR-TDDFT. 
+  - False: Use unrestricted LR-TDDFT only when the system is open-shell.
+- **Default**: False
+
 ### abs_wavelen_range
 
 - **Type**: Real Real
