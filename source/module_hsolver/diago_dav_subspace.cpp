@@ -262,7 +262,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
     }
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif
+                        (this->ctx,
                          'N',
                          'N',
                          this->dim,
