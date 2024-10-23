@@ -50,7 +50,13 @@ namespace RI_Benchmark
             }
         };
         ~OperatorRIHartree() {}
-        void act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik = 0)const override
+        void act(const int nbands,
+                 const int nbasis,
+                 const int npol,
+                 const T* psi_in,
+                 T* hpsi,
+                 const int ngk_ik = 0,
+                 const bool is_first_node = false) const override
         {
             assert(GlobalV::MY_RANK == 0);  // only serial now
             assert(nbasis == npairs);

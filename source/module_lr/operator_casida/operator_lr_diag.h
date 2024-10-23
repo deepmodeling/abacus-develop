@@ -42,7 +42,8 @@ namespace LR
             const int npol,
             const T* psi_in,
             T* hpsi,
-            const int ngk_ik = 0)const override
+            const int ngk_ik = 0,
+            const bool is_first_node = false)const override
         {
             ModuleBase::TITLE("OperatorLRDiag", "act");
             const int nlocal_ph = nk * pX.get_local_size();   // local size of particle-hole basis
