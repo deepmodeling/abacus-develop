@@ -28,14 +28,15 @@ target_link_libraries(diagopack
     ${LAPACK_LIBRARIES}
     )
 
-list(APPEND _hsolver
+list(APPEND pymodule_hsolver
     ${PROJECT_SOURCE_DIR}/src/hsolver/py_hsolver.cpp
     )
 
-pybind11_add_module(_hsolver_pack MODULE ${_hsolver})
+pybind11_add_module(_hsolver_pack MODULE ${pymodule_hsolver})
 target_link_libraries(_hsolver_pack PRIVATE pybind11::headers diagopack)
 target_compile_definitions(_hsolver_pack PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
 set_target_properties(diagopack PROPERTIES INSTALL_RPATH "$ORIGIN")
 set_target_properties(_hsolver_pack PROPERTIES INSTALL_RPATH "$ORIGIN")
+
 install(TARGETS _hsolver_pack diagopack DESTINATION ${TARGET_PACK}/hsolver)

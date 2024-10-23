@@ -5,12 +5,12 @@ Basic math functions and integrals.
 """
 
 import numpy as np
-
-from typing import overload
+from typing import Protocol, overload
 from numpy.typing import NDArray
 
-class Sphbes:
-    def __init__(self) -> None: ...
+from ._base_pack import Sphbes as _Sphbes, Integral as _Integral, SphericalBesselTransformer as _SphericalBesselTransformer
+
+class SphbesProtocol(Protocol):
     @overload
     @staticmethod
     def sphbesj(l: int, x: float) -> float: ...
@@ -37,9 +37,8 @@ class Sphbes:
     ) -> None: ...
     @staticmethod
     def sphbes_zeros(l: int, n: int, zeros: NDArray[np.float64]) -> None: ...
-    
-class Integral:
-    def __init__(self) -> None: ...
+
+class IntegralProtocol(Protocol):
     @overload
     @staticmethod
     def Simpson_Integral(
@@ -101,5 +100,9 @@ class Integral:
         w: NDArray[np.float64],
     ) -> None: ...
 
-class SphericalBesselTransformer:
+class SphericalBesselTransformerProtocol(Protocol):
     def __init__(self) -> None: ...
+
+Sphbes: SphbesProtocol = _Sphbes  
+Integral: IntegralProtocol = _Integral  
+SphericalBesselTransformer: SphericalBesselTransformerProtocol = _SphericalBesselTransformer  

@@ -6,23 +6,22 @@ Module for Solver for Hamiltonian in ABACUS
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import Tuple, List, Union, Callable
+from typing import Tuple, List, Union, Callable, Protocol
 
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
 from ._hsolver_pack import diago_dav_subspace, diago_david
 
-class diag_comm_info(_diag_comm_info):
-    def __init__(self, rank: int, nproc: int) -> None:
-        super().__init__(rank, nproc)
+class Diag_Comm_Info_Protocol(Protocol):
+    def __init__(self, rank: int, nproc: int) -> None: ...
     
     @property
-    def rank(self) -> int:
-        return super().rank
+    def rank(self) -> int: ...
     
     @property
-    def nproc(self) -> int:
-        return super().nproc
-    
+    def nproc(self) -> int: ...
+
+diag_comm_info: Diag_Comm_Info_Protocol = _diag_comm_info
+
 def dav_subspace(
     mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],

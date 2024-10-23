@@ -1,13 +1,16 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 
+# project settings
 project(
   ${SKBUILD_PROJECT_NAME}
   VERSION ${SKBUILD_PROJECT_VERSION}
   LANGUAGES CXX)
 
+# find python and pybind11
 find_package(Python REQUIRED COMPONENTS Interpreter Development.Module)
 find_package(pybind11 CONFIG REQUIRED)
 
+# set source path
 set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
 set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
@@ -63,11 +66,14 @@ else()
   endif()
 endif()
 
-include_directories(${BASE_PATH} 
+# add include directories
+include_directories(
+    ${BASE_PATH} 
     ${ABACUS_SOURCE_DIR}
-    ${ABACUS_SOURCE_DIR}/module_base/module_container)
+    ${ABACUS_SOURCE_DIR}/module_base/module_container
+    )
 
-# add library
+# add basic libraries
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 # add base
 set(BASE_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/base")
@@ -80,60 +86,16 @@ set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
 # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-# add nao shared library  
-list(APPEND _naos
-    ${NAO_PATH}/atomic_radials.cpp
-    ${NAO_PATH}/beta_radials.cpp
-    ${NAO_PATH}/hydrogen_radials.cpp
-    ${NAO_PATH}/numerical_radial.cpp
-    ${NAO_PATH}/pswfc_radials.cpp
-    ${NAO_PATH}/radial_collection.cpp
-    ${NAO_PATH}/radial_set.cpp
-    ${NAO_PATH}/real_gaunt_table.cpp
-    ${NAO_PATH}/sphbes_radials.cpp
-    ${NAO_PATH}/two_center_bundle.cpp
-    ${NAO_PATH}/two_center_integrator.cpp
-    ${NAO_PATH}/two_center_table.cpp
-    ${NAO_PATH}/projgen.cpp
-    # dependency
-    ${ABACUS_SOURCE_DIR}/module_base/kernels/math_op.cpp
-    # ${ABACUS_SOURCE_DIR}/module_psi/kernels/psi_memory_op.cpp
-    ${ABACUS_SOURCE_DIR}/module_base/module_device/memory_op.cpp
-    )
-add_library(naopack SHARED 
-    ${_naos}
-    )
 
-# link math_libs
-if(MKLROOT)
-  target_link_libraries(naopack
-    base
-    parameter
-    container
-    orb
-    ${math_libs}
-    MPI::MPI_CXX
-    OpenMP::OpenMP_CXX
-  )
-else()
-  target_link_libraries(naopack
-    base
-    parameter
-    container
-    orb
-    ${math_libs}
-  )
-endif()
-# list(APPEND _sources ${_naos} ${_bases})
-list(APPEND _sources
-    ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
-    ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
-    # ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
-    )
-pybind11_add_module(_core MODULE ${_sources})
-target_link_libraries(_core PRIVATE pybind11::headers naopack)
-target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
+# list(APPEND _sources
+#     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
+#     # ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
+#     # ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
+#     # ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
+#     )
+# pybind11_add_module(_core MODULE ${_sources})
+# target_link_libraries(_core PRIVATE pybind11::headers)
+# target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
 # set RPATH
 execute_process(
@@ -146,8 +108,9 @@ set(TARGET_PACK pyabacus)
 set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
 
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleBase)
+add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleNAO)
 
-set_target_properties(_core PROPERTIES INSTALL_RPATH "$ORIGIN")
-set_target_properties(naopack PROPERTIES INSTALL_RPATH "$ORIGIN")
-install(TARGETS _core naopack DESTINATION ${TARGET_PACK})
+# set_target_properties(_core PROPERTIES INSTALL_RPATH "$ORIGIN")
+# install(TARGETS _core DESTINATION ${TARGET_PACK})
 
