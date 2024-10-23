@@ -75,7 +75,7 @@ namespace LR
     }
 
     template<typename T>
-    void OperatorLREXX<T>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik)const
+    void OperatorLREXX<T>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLREXX", "act");
 
