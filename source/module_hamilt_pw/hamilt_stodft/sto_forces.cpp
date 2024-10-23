@@ -1,5 +1,6 @@
 #include "sto_forces.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/mathzone.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
@@ -39,21 +40,21 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     this->cal_force_loc(forcelc, rho_basis, chr);
     this->cal_force_ew(forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, psi_in, stowf);
-    this->cal_force_cc(forcecc, rho_basis, chr);
-    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist,GlobalC::ucell);
+    this->cal_force_cc(forcecc, rho_basis, chr, GlobalC::ucell);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, GlobalC::ucell);
 
     //impose total force = 0
     int iat = 0;
 
 	ModuleBase::matrix force_e;
-	if(GlobalV::EFIELD_FLAG)
+	if(PARAM.inp.efield_flag)
 	{
 		force_e.create( GlobalC::ucell.nat, 3);
 		elecstate::Efield::compute_force(GlobalC::ucell, force_e);
 	}
 
     ModuleBase::matrix force_gate;
-    if(GlobalV::GATE_FLAG)
+    if(PARAM.inp.gate_flag)
     {
         force_gate.create( GlobalC::ucell.nat, 3);
         elecstate::Gatefield::compute_force(GlobalC::ucell, force_gate);
@@ -75,12 +76,12 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 					+ forcecc(iat, ipol)
 					+ forcescc(iat, ipol);																									   
 					
-				if(GlobalV::EFIELD_FLAG)
+				if(PARAM.inp.efield_flag)
 				{
 					force(iat,ipol) = force(iat, ipol) + force_e(iat, ipol);
 				}
 
-                if(GlobalV::GATE_FLAG)
+                if(PARAM.inp.gate_flag)
                 {
                     force(iat,ipol) = force(iat, ipol) + force_gate(iat, ipol);
                 }
@@ -91,7 +92,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
 			}
 		}
 
-        if(!(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG))
+        if(!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
         {
             double compen = sum / GlobalC::ucell.nat;
             for (int iat = 0; iat < GlobalC::ucell.nat; ++iat)
@@ -101,7 +102,7 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
         }
 	}
 
-    if(GlobalV::GATE_FLAG || GlobalV::EFIELD_FLAG)
+    if(PARAM.inp.gate_flag || PARAM.inp.efield_flag)
     {
         GlobalV::ofs_running << "Atomic forces are not shifted if gate_flag or efield_flag == true!" << std::endl;
     }
@@ -132,17 +133,17 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     }
 
  	GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(6) << std::endl;
-	if(GlobalV::TEST_FORCE)
+	if(PARAM.inp.test_force)
 	{
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (Ry/Bohr)", forcelc);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (Ry/Bohr)", forcenl);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (Ry/Bohr)", forcecc);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (Ry/Bohr)", forceion);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (Ry/Bohr)", forcescc);
-        if (GlobalV::EFIELD_FLAG) {
+        if (PARAM.inp.efield_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (Ry/Bohr)", force_e);
 }
-        if (GlobalV::GATE_FLAG) {
+        if (PARAM.inp.gate_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "GATEFIELD   FORCE (Ry/Bohr)", force_gate);
 }
     }
@@ -150,17 +151,17 @@ void Sto_Forces::cal_stoforce(ModuleBase::matrix& force,
     // output force in unit eV/Angstrom
     GlobalV::ofs_running << std::endl;
     
-	if(GlobalV::TEST_FORCE)
+	if(PARAM.inp.test_force)
 	{
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "LOCAL    FORCE (eV/Angstrom)", forcelc, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NONLOCAL FORCE (eV/Angstrom)", forcenl, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "NLCC     FORCE (eV/Angstrom)", forcecc, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "ION      FORCE (eV/Angstrom)", forceion, false);
         ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "SCC      FORCE (eV/Angstrom)", forcescc, false);
-        if (GlobalV::EFIELD_FLAG) {
+        if (PARAM.inp.efield_flag) {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "EFIELD   FORCE (eV/Angstrom)", force_e, false);
 }
-        if (GlobalV::GATE_FLAG) {
+        if (PARAM.inp.gate_flag) {
             ModuleIO::print_force(GlobalV::ofs_running,
                                   GlobalC::ucell,
                                   "GATEFIELD   FORCE (eV/Angstrom)",
@@ -223,13 +224,13 @@ void Sto_Forces::cal_sto_force_nl(ModuleBase::matrix& forcenl,
 		psi_in->fix_k(ik);
 		stowf.shchi->fix_k(ik);
 		//KS orbitals
-		int npmks = GlobalV::NPOL * nksbands;
+		int npmks = PARAM.globalv.npol * nksbands;
 		zgemm_(&transa,&transb,&nkb,&npmks,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
             	psi_in->get_pointer(),&npwx,
             	&ModuleBase::ZERO,becp.c,&nkb);
 		//stochastic orbitals
-		int npmsto = GlobalV::NPOL * nstobands;
+		int npmsto = PARAM.globalv.npol * nstobands;
 		zgemm_(&transa,&transb,&nkb,&npmsto,&npw,&ModuleBase::ONE,
 				GlobalC::ppcell.vkb.c,&npwx,
             	stowf.shchi->get_pointer(),&npwx,

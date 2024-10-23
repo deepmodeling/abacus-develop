@@ -67,10 +67,10 @@ class TNLTest : public ::testing::Test
         ucell.atoms[0].ncpp.non_zero_count_soc[1] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[2] = 0;
         ucell.atoms[0].ncpp.non_zero_count_soc[3] = 5;
-        ucell.atoms[0].ncpp.index1_soc[0] = new int[5];
-        ucell.atoms[0].ncpp.index2_soc[0] = new int[5];
-        ucell.atoms[0].ncpp.index1_soc[3] = new int[5];
-        ucell.atoms[0].ncpp.index2_soc[3] = new int[5];
+        ucell.atoms[0].ncpp.index1_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[0] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index1_soc[3] = std::vector<int>(5, 0);
+        ucell.atoms[0].ncpp.index2_soc[3] = std::vector<int>(5, 0);
         for (int i = 0; i < 5; ++i)
         {
             ucell.atoms[0].ncpp.d_real(i, i) = 1.0;
@@ -95,10 +95,6 @@ class TNLTest : public ::testing::Test
         delete[] ucell.atoms[0].iw2l;
         delete[] ucell.atoms[0].iw2m;
         delete[] ucell.atoms[0].iw2n;
-        delete[] ucell.atoms[0].ncpp.index1_soc[0];
-        delete[] ucell.atoms[0].ncpp.index2_soc[0];
-        delete[] ucell.atoms[0].ncpp.index1_soc[3];
-        delete[] ucell.atoms[0].ncpp.index2_soc[3];
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
@@ -138,13 +134,14 @@ TEST_F(TNLTest, testTVNLcd2cd)
     kvec_d_in[1] = ModuleBase::Vector3<double>(0.1, 0.2, 0.3);
     hamilt::HS_Matrix_K<std::complex<double>> hsk(paraV, 1);
     hsk.set_zero_hk();
-    Grid_Driver gd(0, 0, 0);
+    Grid_Driver gd(0, 0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::Operator<std::complex<double>>* op
         = new hamilt::EkineticNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(&hsk,
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
+                                                                                                    {1.0},
                                                                                                     &gd,
                                                                                                     &intor_);
     hamilt::Operator<std::complex<double>>* op1
@@ -152,6 +149,7 @@ TEST_F(TNLTest, testTVNLcd2cd)
                                                                                                     kvec_d_in,
                                                                                                     HR,
                                                                                                     &ucell,
+                                                                                                    {1.0},
                                                                                                     &gd,
                                                                                                     &intor_);
     // merge two Operators to a chain

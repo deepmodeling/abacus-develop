@@ -1,5 +1,6 @@
 #include "H_Hartree_pw.h"
 #include "efield.h"
+#include "module_parameter/parameter.h"
 #include "gatefield.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -24,9 +25,9 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     ModuleBase::TITLE("Potential", "get_pot_type");
     if (pot_type == "local")
     {
-        if(!GlobalV::use_paw)
+        if(!PARAM.inp.use_paw)
         {
-            return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_);
+            return new PotLocal(this->vloc_, &(this->structure_factors_->strucFac), this->rho_basis_, this->vl_of_0);
         }
         else
         {
@@ -50,7 +51,7 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, GlobalV::DIP_COR_FLAG);
+        return new PotEfield(this->rho_basis_, this->ucell_, PARAM.inp.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {

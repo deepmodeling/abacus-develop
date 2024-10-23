@@ -20,19 +20,21 @@ add_library(
     ../read_input_item_other.cpp   
     ../read_input_item_output.cpp
     ../read_input.cpp
-    ../bcast_globalv.cpp
+    ../read_set_globalv.cpp
 )
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET io_read_input_serial
-  LIBS ${math_libs} io_input_serial parameter
-  SOURCES read_input_test.cpp ../../module_base/test/tool_quit_no_exit.cpp
+  LIBS parameter ${math_libs} io_input_serial 
+  SOURCES read_input_test.cpp 
+          ../../module_base/test/tool_quit_no_exit.cpp 
+          ../../module_base/module_device/device.cpp
 )
 
 AddTest(
   TARGET io_read_item_serial
-  LIBS ${math_libs} base device io_input_serial parameter
+  LIBS parameter ${math_libs} base device io_input_serial 
   SOURCES read_input_item_test.cpp
 )
 
@@ -43,24 +45,30 @@ AddTest(
 
 AddTest(
   TARGET io_rho_io
-  LIBS ${math_libs} base device cell_info parameter
-  SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../read_rho.cpp ../output.cpp
+  LIBS parameter ${math_libs} base device cell_info 
+  SOURCES rho_io_test.cpp ../read_cube.cpp ../write_cube.cpp ../output.cpp
 )
 
 AddTest(
   TARGET io_dmk_io
-  LIBS ${math_libs} base device cell_info parameter
+  LIBS parameter ${math_libs} base device cell_info 
   SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
 
 AddTest(
   TARGET io_nscf_band
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES nscf_band_test.cpp ../nscf_band.cpp
 )
 
 AddTest(
   TARGET io_read_wfc_nao_test
-  LIBS ${math_libs} base device
+  LIBS parameter ${math_libs} base device
   SOURCES read_wfc_nao_test.cpp ../read_wfc_nao.cpp ../../module_psi/psi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../../module_basis/module_ao/parallel_2d.cpp
+)
+
+AddTest(
+  TARGET io_system_variable_test
+  LIBS parameter ${math_libs} base device io_input_serial 
+  SOURCES io_system_variable_test.cpp
 )

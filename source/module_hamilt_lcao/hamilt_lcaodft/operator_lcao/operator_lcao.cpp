@@ -5,8 +5,11 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_hsolver/hsolver_lcao.h"
 
+#include "module_parameter/parameter.h"
+
 #ifdef __ELPA
 #include "module_hsolver/diago_elpa.h"
+#include "module_hsolver/diago_elpa_native.h"
 #endif
 
 namespace hamilt {
@@ -15,7 +18,7 @@ template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
     ModuleBase::timer::tick("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->hsk->get_hk();
-    if ((this->new_e_iteration && ik == 0) || hsolver::HSolverLCAO<double>::out_mat_hs[0])
+    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_mat_hs[0])
     {
         if (this->smatrix_k == nullptr)
         {
@@ -26,6 +29,7 @@ void OperatorLCAO<double, double>::get_hs_pointers() {
         BlasConnector::copy(this->hsk->get_size(), this->hsk->get_sk(), inc, this->smatrix_k, inc);
 #ifdef __ELPA
         hsolver::DiagoElpa<double>::DecomposedState = 0;
+        hsolver::DiagoElpaNative<double>::DecomposedState = 0;
 #endif
         this->new_e_iteration = false;
     }
@@ -225,7 +229,7 @@ template <typename TK, typename TR>
 void OperatorLCAO<TK, TR>::contributeHk(int ik) {
     ModuleBase::TITLE("OperatorLCAO", "contributeHk");
     ModuleBase::timer::tick("OperatorLCAO", "contributeHk");
-    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);

@@ -1,6 +1,7 @@
 #include "td_velocity.h"
 
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
+#include "module_parameter/parameter.h"
 
 bool TD_Velocity::tddft_velocity = false;
 bool TD_Velocity::out_mat_R = false;
@@ -60,7 +61,7 @@ void TD_Velocity::output_cart_At(const std::string& out_dir)
         // divide by 2.0 to get the atomic unit
         for (int i = 0; i < 3; i++)
         {
-            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i] ;
+            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i];
         }
         ofs << std::endl;
         ofs.close();
@@ -78,12 +79,12 @@ void TD_Velocity::cal_cart_At(const ModuleBase::Vector3<double>& At)
     else
     {
         // transfrom into atomic unit
-        this->cart_At = At/2.0;
+        this->cart_At = At / 2.0;
     }
     // output the vector potential if needed
     if (out_vecpot == true)
     {
-        this->output_cart_At(GlobalV::global_out_dir);
+        this->output_cart_At(PARAM.globalv.global_out_dir);
     }
 }
 
@@ -170,7 +171,8 @@ void TD_Velocity::initialize_current_term(const hamilt::HContainer<std::complex<
     {
         this->current_term[dir]->allocate(nullptr, true);
     }
-    ModuleBase::timer::tick("TDEkinetic", "initialize_HR_tmp");
+
+    ModuleBase::timer::tick("TD_Velocity", "initialize_current_term");
 }
 
 void TD_Velocity::destroy_HS_R_td_sparse(void)

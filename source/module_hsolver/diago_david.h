@@ -1,15 +1,20 @@
 #ifndef DIAGODAVID_H
 #define DIAGODAVID_H
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_base/module_device/device.h"   // base_device
+#include "module_base/module_device/memory_op.h"// base_device::memory
+
 #include "module_hsolver/diag_comm_info.h"
-#include "module_hsolver/diag_const_nums.h"
+
+#include <vector>
+#include <functional>
 
 namespace hsolver
 {
 
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoDavid : public DiagH<T, Device>
+class DiagoDavid
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -26,53 +31,58 @@ class DiagoDavid : public DiagH<T, Device>
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
-    virtual ~DiagoDavid() override;
+     ~DiagoDavid();
 
 
     // declare type of matrix-blockvector functions.
     // the function type is defined as a std::function object.
-    // notice that hpsi and spsi functions require
-    // !different! order of input and output blockvectors.
     /**
      * @brief A function type representing the HX function.
      *
      * This function type is used to define a matrix-blockvector operator H.
      * For eigenvalue problem HX = λX or generalized eigenvalue problem HX = λSX,
      * this function computes the product of the Hamiltonian matrix H and a blockvector X.
+     * 
+     * Called as follows:
+     * hpsi(X, HX, ld, nvec) where X and HX are (ld, nvec)-shaped blockvectors.
+     * Result HX = H * X is stored in HX.
      *
-     * @param[out] HX  Pointer to output blockvector of type `T*`.
-     * @param[in]  X  Pointer to input blockvector of type `T*`.
-     * @param[in]  neig  Number of eigebpairs required.
-     * @param[in]  dim  Dimension of matrix.
-     * @param[in]  id_start  Start index of blockvector.
-     * @param[in]  id_end  End index of blockvector.
+     * @param[out] X      Head address of input blockvector of type `T*`.
+     * @param[in]  HX     Head address of output blockvector of type `T*`.
+     * @param[in]  ld     Leading dimension of blockvector.
+     * @param[in]  nvec   Number of vectors in a block.
+     * 
+     * @warning X and HX are the exact address to read input X and store output H*X,
+     * @warning both of size ld * nvec.
      */
-    using HPsiFunc = std::function<void(T*, T*, const int, const int, const int, const int)>;
+    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     /**
      * @brief A function type representing the SX function.
+     * 
+     * nrow is leading dimension of spsi, npw is leading dimension of psi, nbands is number of vecs
      *
      * This function type is used to define a matrix-blockvector operator S.
      * For generalized eigenvalue problem HX = λSX,
      * this function computes the product of the overlap matrix S and a blockvector X.
      *
-     * @param[in]   X     Pointer to the input array.
-     * @param[out] SX     Pointer to the output array.
-     * @param[in] nrow    Dimension of SX: nbands * nrow.
-     * @param[in] npw     Number of plane waves.
-     * @param[in] nbands  Number of bands.
+     * @param[in]   X       Pointer to the input blockvector.
+     * @param[out] SX       Pointer to the output blockvector.
+     * @param[in] ld_psi    Leading dimension of psi and spsi. Dimension of X&SX: ld * nvec.
+     * @param[in] nvec      Number of vectors.
      */
-    using SPsiFunc = std::function<void(T*, T*, const int, const int, const int)>;
+    using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
-    int diag(const HPsiFunc& hpsi_func,           // function void hpsi(T*, T*, const int, const int, const int, const int) 
-             const SPsiFunc& spsi_func,           // function void spsi(T*, T*, const int, const int, const int) 
-                      const int ldPsi,            // Leading dimension of the psi input
-                      T *psi_in,                  // Pointer to eigenvectors
-                      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
-                      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
-                      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
-                      const int ntry_max = 5,     // Maximum number of diagonalization attempts (default is 5)
-                      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
+    int diag(
+      const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 
+      const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
+      const int ld_psi,           // Leading dimension of the psi input
+      T *psi_in,                  // Pointer to eigenvectors
+      Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
+      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+      const int david_maxiter,    // Maximum allowed iterations for the Davidson method
+      const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
+      const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
 
   private:
     bool use_paw = false;
@@ -121,7 +131,7 @@ class DiagoDavid : public DiagH<T, Device>
                   const SPsiFunc& spsi_func,
                   const int dim,
                   const int nband,
-                  const int ldPsi,
+                  const int ld_psi,
                   T *psi_in,
                   Real* eigenvalue_in,
                   const Real david_diag_thr,
@@ -154,7 +164,7 @@ class DiagoDavid : public DiagH<T, Device>
                  const int nbase_x,
                  const Real* eigenvalue,
                  const T *psi_in,
-                 const int ldPsi,
+                 const int ld_psi,
                  T* hpsi,
                  T* spsi,
                  T* hcc,
@@ -162,12 +172,12 @@ class DiagoDavid : public DiagH<T, Device>
                  T* vcc);
 
     void SchmidtOrth(const int& dim,
-                    const int nband,
-                    const int m,
-                    const T* spsi,
-                    T* lagrange_m,
-                    const int mm_size,
-                    const int mv_size);
+                     const int nband,
+                     const int m,
+                     const T* spsi,
+                     T* lagrange_m,
+                     const int mm_size,
+                     const int mv_size);
 
     void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
@@ -195,10 +205,10 @@ class DiagoDavid : public DiagH<T, Device>
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+    // using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info; // Dependence of hpsi removed
 
-    const_nums<T> cs;
-    const T* one = nullptr, * zero = nullptr, * neg_one = nullptr;
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
 };
 } // namespace hsolver
 

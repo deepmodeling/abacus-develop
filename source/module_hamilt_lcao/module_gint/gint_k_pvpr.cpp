@@ -1,5 +1,6 @@
 #include "gint_k.h"
 #include "grid_technique.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
@@ -24,14 +25,14 @@ void Gint_k::allocate_pvpR(void)
 
     // xiaohui modify 2015-05-30
     //  the number of matrix element <phi_0 | V | phi_R> is nnrg.
-    this->pvpR_reduced = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    this->pvpR_reduced = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         this->pvpR_reduced[is] = new double[this->gridt->nnrg];
         ModuleBase::GlobalFunc::ZEROS(pvpR_reduced[is], this->gridt->nnrg);
     }
 
-    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * GlobalV::NSPIN);
+    ModuleBase::Memory::record("pvpR_reduced", sizeof(double) * this->gridt->nnrg * PARAM.inp.nspin);
 
     this->pvpR_alloc_flag = true;
     return;
@@ -46,7 +47,7 @@ void Gint_k::destroy_pvpR(void)
         return;
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         delete[] pvpR_reduced[is];
     }
@@ -70,7 +71,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
     }
     this->hRGint->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
@@ -194,7 +195,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
     }
     this->hRGintCd->set_zero();
 
-    const int npol = GlobalV::NPOL;
+    const int npol = PARAM.globalv.npol;
     const UnitCell& ucell = *ucell_in;
 
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -280,7 +281,7 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const U
                                 }
                                 tmp_pointer += 2 * atom2->nw;
                             }
-                            if (GlobalV::DOMAG)
+                            if (PARAM.globalv.domag)
                             {
                                 tmp_pointer = tmp_matrix->get_pointer();
                                 for (int iw = 0; iw < atom1->nw; iw++)

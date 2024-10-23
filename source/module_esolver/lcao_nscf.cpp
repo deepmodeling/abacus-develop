@@ -29,7 +29,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX
@@ -52,14 +51,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     // then when the istep is a variable of scf or nscf,
     // istep becomes istep-1, this should be fixed in future
     int istep = 0;
-    if (this->phsol != nullptr)
-    {
-        this->phsol->solve(this->p_hamilt, this->psi[0], this->pelec, GlobalV::KS_SOLVER, true);
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW", "HSolver has not been initialed!");
-    }
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, true);
 
     time_t time_finish = std::time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("cal_bands", time_start, time_finish);
@@ -67,8 +60,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     GlobalV::ofs_running << " end of band structure calculation " << std::endl;
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
-    const int nspin = GlobalV::NSPIN;
-    const int nbands = GlobalV::NBANDS;
+    const int nspin = PARAM.inp.nspin;
+    const int nbands = PARAM.inp.nbands;
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
@@ -97,7 +90,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
     if (PARAM.inp.out_bandgap) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "band gap calculation");
-        if (!GlobalV::TWO_EFERMI) {
+        if (!PARAM.globalv.two_fermi) {
             this->pelec->cal_bandgap();
             GlobalV::ofs_running << " E_bandgap " << this->pelec->bandgap * ModuleBase::Ry_to_eV << " eV" << std::endl;
         }
@@ -113,7 +106,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
 
     // add by jingan in 2018.11.7
-    if (GlobalV::CALCULATION == "nscf" && PARAM.inp.towannier90)
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
 #ifdef __LCAO
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
@@ -142,7 +135,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                                        PARAM.inp.out_wannier_eig,
                                        PARAM.inp.out_wannier_wvfn_formatted,
                                        PARAM.inp.nnkpfile,
-                                       PARAM.inp.wannier_spin);
+                                       PARAM.inp.wannier_spin,
+                                       orb_);
 
             myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
@@ -156,7 +150,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&(this->pv));
         bp.lcao_init(this->kv,
-                     this->GridT); // additional step before calling
+                     this->GridT,
+                     orb_); // additional step before calling
                                    // macroscopic_polarization (why capitalize
                                    // the function name?)
         bp.Macroscopic_polarization(this->pw_wfc->npwk_max,
@@ -169,7 +164,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 
     // below is for DeePKS NSCF calculation
 #ifdef __DEEPKS
-    if (GlobalV::deepks_out_labels || GlobalV::deepks_scf) {
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf) {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "DeepKS output");
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
@@ -197,9 +192,9 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     /// write potential
     if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            std::string fn = GlobalV::global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
+            std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
             ModuleIO::write_cube(
 #ifdef __MPI
@@ -210,8 +205,8 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
 #endif
                 this->pelec->pot->get_effective_v(is),
                 is,
-                GlobalV::NSPIN,
-                istep,
+                PARAM.inp.nspin,
+                0,
                 fn,
                 this->pw_rhod->nx,
                 this->pw_rhod->ny,
@@ -224,13 +219,14 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     }
     else if (PARAM.inp.out_pot == 2)
     {
-        std::string fn = GlobalV::global_out_dir + "/ElecStaticPot.cube";
+        std::string fn = PARAM.globalv.global_out_dir + "/ElecStaticPot.cube";
         ModuleIO::write_elecstat_pot(
 #ifdef __MPI
             this->pw_big->bz,
             this->pw_big->nbz,
 #endif
             fn,
+            0, // istep
             this->pw_rhod,
             this->pelec->charge,
             &(GlobalC::ucell),

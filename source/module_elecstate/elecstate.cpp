@@ -1,6 +1,7 @@
 #include "elecstate.h"
-
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
+#include "module_parameter/parameter.h"
 #include "module_base/memory.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
@@ -57,12 +58,11 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
 
 void ElecState::init_nelec_spin()
 {
-    this->nelec_spin.resize(GlobalV::NSPIN);
-    if (GlobalV::NSPIN == 2)
+    this->nelec_spin.resize(PARAM.inp.nspin);
+    if (PARAM.inp.nspin == 2)
     {
-        // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
-        this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
-        this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
+        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
+        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
 }
 
@@ -79,7 +79,7 @@ void ElecState::calculate_weights()
 
     if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             Occupy::iweights(nks,
                              this->klist->wk,
@@ -107,7 +107,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              this->ekb,
                              this->eferm.ef,
                              this->wg,
@@ -117,7 +117,7 @@ void ElecState::calculate_weights()
     }
     else if (Occupy::use_gaussian_broadening)
     {
-        if (GlobalV::TWO_EFERMI)
+        if (PARAM.globalv.two_fermi)
         {
             double demet_up = 0.0;
             double demet_dw = 0.0;
@@ -153,7 +153,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              this->ekb,
@@ -192,7 +192,7 @@ void ElecState::calEBand()
         }
     }
     this->f_en.eband = eband;
-    if (GlobalV::KPAR != 1 && GlobalV::ESOLVER_TYPE != "sdft")
+    if (GlobalV::KPAR != 1 && PARAM.inp.esolver_type != "sdft")
     {
         //==================================
         // Reduce all the Energy in each cpu
@@ -205,11 +205,11 @@ void ElecState::calEBand()
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry& symm, const void* wfcpw)
 {
     //---------Charge part-----------------
     // core correction potential.
-    if (!GlobalV::use_paw)
+    if (!PARAM.inp.use_paw)
     {
         this->charge->set_rho_core(strucfac);
     }
@@ -224,7 +224,7 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
     //--------------------------------------------------------------------
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm, strucfac, this->bigpw->nbz, this->bigpw->bz);
+        this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 
@@ -247,140 +247,10 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     this->bigpw = bigpw_in;
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
-    // autoset and check GlobalV::NBANDS, nelec_spin is used when NSPIN==2
-    this->cal_nbands();
     // initialize ekb and wg
-    this->ekb.create(nk_in, GlobalV::NBANDS);
-    this->wg.create(nk_in, GlobalV::NBANDS);
+    this->ekb.create(nk_in, PARAM.inp.nbands);
+    this->wg.create(nk_in, PARAM.inp.nbands);
 }
-
-void ElecState::cal_nbands()
-{
-    if (GlobalV::ESOLVER_TYPE == "sdft") // qianrui 2021-2-20
-    {
-        return;
-    }
-    //=======================================
-    // calculate number of bands (setup.f90)
-    //=======================================
-    double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
-    if (GlobalV::LSPINORB == 1) {
-        occupied_bands = static_cast<double>(GlobalV::nelec);
-    }
-
-    if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
-    {
-        occupied_bands = std::floor(occupied_bands) + 1.0; // mohan fix 2012-04-16
-    }
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "occupied bands", occupied_bands);
-
-    if (GlobalV::NBANDS == 0)
-    {
-        if (GlobalV::NSPIN == 1)
-        {
-            const int nbands1 = static_cast<int>(occupied_bands) + 10;
-            const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
-            GlobalV::NBANDS = std::max(nbands1, nbands2);
-            if (GlobalV::BASIS_TYPE != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
-            }
-        }
-        else if (GlobalV::NSPIN == 4)
-        {
-            const int nbands3 = GlobalV::nelec + 20;
-            const int nbands4 = static_cast<int>(1.2 * GlobalV::nelec) + 1;
-            GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
-            }
-        }
-        else if (GlobalV::NSPIN == 2)
-        {
-            const double max_occ = std::max(this->nelec_spin[0], this->nelec_spin[1]);
-            const int nbands3 = static_cast<int>(max_occ) + 11;
-            const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
-            GlobalV::NBANDS = std::max(nbands3, nbands4);
-            if (GlobalV::BASIS_TYPE != "pw") {
-                GlobalV::NBANDS = std::min(GlobalV::NBANDS, GlobalV::NLOCAL);
-            }
-        }
-        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
-    }
-    // else if ( GlobalV::CALCULATION=="scf" || GlobalV::CALCULATION=="md" || GlobalV::CALCULATION=="relax") //pengfei
-    // 2014-10-13
-    else
-    {
-        if (GlobalV::NBANDS < occupied_bands) {
-            ModuleBase::WARNING_QUIT("unitcell", "Too few bands!");
-        }
-        if (GlobalV::NSPIN == 2)
-        {
-            if (GlobalV::NBANDS < this->nelec_spin[0])
-            {
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_up", this->nelec_spin[0]);
-                ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "Too few spin up bands!");
-            }
-            if (GlobalV::NBANDS < this->nelec_spin[1])
-            {
-                ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "nelec_down", this->nelec_spin[1]);
-                ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "Too few spin down bands!");
-            }
-        }
-    }
-
-    // mohan add 2010-09-04
-    // std::cout << "nbands(this-> = " <<GlobalV::NBANDS <<std::endl;
-    if (GlobalV::NBANDS == occupied_bands)
-    {
-        if (Occupy::gauss())
-        {
-            ModuleBase::WARNING_QUIT("ElecState::cal_nbands", "for smearing, num. of bands > num. of occupied bands");
-        }
-    }
-
-    // mohan update 2021-02-19
-    // mohan add 2011-01-5
-    if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
-    {
-        if (GlobalV::NBANDS > GlobalV::NLOCAL)
-        {
-            ModuleBase::WARNING_QUIT("ElecState::cal_nbandsc", "NLOCAL < NBANDS");
-        }
-        else
-        {
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NLOCAL", GlobalV::NLOCAL);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", GlobalV::NBANDS);
-        }
-    }
-
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "NBANDS", GlobalV::NBANDS);
-}
-
-void set_is_occupied(std::vector<bool>& is_occupied,
-                     elecstate::ElecState* pes,
-                     const int i_scf,
-                     const int nk,
-                     const int nband,
-                     const bool diago_full_acc)
-{
-    if (i_scf != 0 && diago_full_acc == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
-};
 
 
 

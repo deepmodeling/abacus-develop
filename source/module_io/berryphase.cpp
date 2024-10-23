@@ -1,5 +1,6 @@
 ﻿#include "berryphase.h"
 
+#include "module_parameter/parameter.h"
 #include "module_cell/klist.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
@@ -23,14 +24,14 @@ berryphase::~berryphase()
 
 void berryphase::get_occupation_bands()
 {
-    double occupied_bands = static_cast<double>(GlobalV::nelec / ModuleBase::DEGSPIN);
+    double occupied_bands = static_cast<double>(PARAM.inp.nelec / ModuleBase::DEGSPIN);
     if ((occupied_bands - std::floor(occupied_bands)) > 0.0)
     {
         occupied_bands = std::floor(occupied_bands) + 1.0;
     }
 
     occ_nbands = (int)occupied_bands;
-    if (occ_nbands > GlobalV::NBANDS)
+    if (occ_nbands > PARAM.inp.nbands)
     {
         ModuleBase::WARNING_QUIT("berryphase::get_occupation_bands",
                                  "not enough bands for berryphase, increase band numbers.");
@@ -39,10 +40,10 @@ void berryphase::get_occupation_bands()
 }
 
 #ifdef __LCAO
-void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech)
+void berryphase::lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("berryphase", "lcao_init");
-    lcao_method.init(grid_tech, kv.get_nkstot());
+    lcao_method.init(grid_tech, kv.get_nkstot(), orb);
     lcao_method.cal_R_number();
     lcao_method.cal_orb_overlap();
     return;
@@ -63,12 +64,12 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
     {
         const int num_string = mp_y * mp_z;
 
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
         {
             total_string = num_string;
             k_index.resize(total_string);
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             total_string = 2 * num_string;
             k_index.resize(total_string);
@@ -96,7 +97,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int istring = num_string; istring < total_string; istring++)
             {
@@ -113,12 +114,12 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
     {
         const int num_string = mp_x * mp_z;
 
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
         {
             total_string = num_string;
             k_index.resize(total_string);
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             total_string = 2 * num_string;
             k_index.resize(total_string);
@@ -146,7 +147,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int istring = num_string; istring < total_string; istring++)
             {
@@ -163,12 +164,12 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
     {
         const int num_string = mp_x * mp_y;
 
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
         {
             total_string = num_string;
             k_index.resize(total_string);
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             total_string = 2 * num_string;
             k_index.resize(total_string);
@@ -196,7 +197,7 @@ void berryphase::set_kpoints(const K_Vectors& kv, const int direction)
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int istring = num_string; istring < total_string; istring++)
             {
@@ -252,7 +253,7 @@ double berryphase::stringPhase(int index_str,
         ik_1 = k_index[index_str][k_start];
         ik_2 = k_index[index_str][k_start + 1];
 
-        if (GlobalV::BASIS_TYPE == "pw")
+        if (PARAM.inp.basis_type == "pw")
         {
             for (int mb = 0; mb < nbands; mb++)
             {
@@ -260,7 +261,7 @@ double berryphase::stringPhase(int index_str,
                 for (int nb = 0; nb < nbands; nb++)
                 {
 
-                    if (GlobalV::NSPIN != 4)
+                    if (PARAM.inp.nspin != 4)
                     {
                         if (k_start == (nppstr - 2))
                         {
@@ -341,9 +342,9 @@ double berryphase::stringPhase(int index_str,
             // delete[] ipiv;
         }
 #ifdef __LCAO
-        else if (GlobalV::BASIS_TYPE == "lcao")
+        else if (PARAM.inp.basis_type == "lcao")
         {
-            if (GlobalV::NSPIN != 4)
+            if (PARAM.inp.nspin != 4)
             {
                 // std::complex<double> my_det = lcao_method.det_berryphase(ik_1,ik_2,dk,nbands);
                 zeta = zeta * lcao_method.det_berryphase(ik_1, ik_2, dk, nbands, *(this->paraV), psi_in, kv);
@@ -413,7 +414,7 @@ void berryphase::Berry_Phase(int nbands,
     for (int istring = 0; istring < total_string; istring++)
     {
         wistring[istring] = 1.0 / total_string;
-        if (GlobalV::NSPIN == 2) {
+        if (PARAM.inp.nspin == 2) {
             wistring[istring] = wistring[istring] * 2;
         }
     }
@@ -439,21 +440,21 @@ void berryphase::Berry_Phase(int nbands,
         // test by jingan
     }
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         pdl_elec_tot = 2 * phik_ave;
     }
-    else if (GlobalV::NSPIN == 2 || GlobalV::NSPIN == 4)
+    else if (PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4)
     {
         pdl_elec_tot = phik_ave;
     }
 
-    if (GlobalV::NSPIN == 1) // remap to [-1,1]
+    if (PARAM.inp.nspin == 1) // remap to [-1,1]
     {
         pdl_elec_tot = pdl_elec_tot - 2.0 * round(pdl_elec_tot / 2.0);
         mod_elec_tot = 2;
     }
-    else if (GlobalV::NSPIN == 2 || GlobalV::NSPIN == 4) // remap to [-0.5,0.5]
+    else if (PARAM.inp.nspin == 2 || PARAM.inp.nspin == 4) // remap to [-0.5,0.5]
     {
         pdl_elec_tot = pdl_elec_tot - 1.0 * round(pdl_elec_tot / 1.0);
         mod_elec_tot = 1;
@@ -575,7 +576,7 @@ void berryphase::Macroscopic_polarization(const int npwx,
 
     // calculate Macroscopic polarization modulus because berry phase
     int modulus = 0;
-    if ((!lodd) && (GlobalV::NSPIN == 1)) {
+    if ((!lodd) && (PARAM.inp.nspin == 1)) {
         modulus = 2;
     } else {
         modulus = 1;

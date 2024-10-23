@@ -1,37 +1,57 @@
 #include "sto_dos.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "sto_tool.h"
+Sto_DOS::~Sto_DOS()
+{
+}
 
-Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
-                 psi::Psi<std::complex<double>>* p_psi_in, hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                 hsolver::HSolverPW_SDFT* p_hsol_in, Stochastic_WF* p_stowf_in)
+Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
+                 K_Vectors* p_kv_in,
+                 elecstate::ElecState* p_elec_in,
+                 psi::Psi<std::complex<double>>* p_psi_in,
+                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+                 StoChe<double>& stoche,
+                 Stochastic_WF* p_stowf_in)
 {
     this->p_wfcpw = p_wfcpw_in;
     this->p_kv = p_kv_in;
     this->p_elec = p_elec_in;
     this->p_psi = p_psi_in;
     this->p_hamilt = p_hamilt_in;
-    this->p_hsol = p_hsol_in;
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
+    this->method_sto = stoche.method_sto;
+    this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
-void Sto_DOS::decide_param(const int& dos_nche, const double& emin_sto, const double& emax_sto, const bool& dos_setemin,
-                           const bool& dos_setemax, const double& dos_emin_ev, const double& dos_emax_ev,
+void Sto_DOS::decide_param(const int& dos_nche,
+                           const double& emin_sto,
+                           const double& emax_sto,
+                           const bool& dos_setemin,
+                           const bool& dos_setemax,
+                           const double& dos_emin_ev,
+                           const double& dos_emax_ev,
                            const double& dos_scale)
 {
     this->dos_nche = dos_nche;
-    check_che(this->dos_nche, emin_sto, emax_sto, this->nbands_sto, this->p_kv, this->p_stowf, this->p_hamilt,
-              this->p_hsol);
+    check_che(this->dos_nche,
+              emin_sto,
+              emax_sto,
+              this->nbands_sto,
+              this->p_kv,
+              this->p_stowf,
+              this->p_hamilt_sto);
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
     }
     else
     {
-        this->emax = p_hsol->stoiter.stohchi.Emax * ModuleBase::Ry_to_eV;
+        this->emax = *p_hamilt_sto->emax * ModuleBase::Ry_to_eV;
     }
     if (dos_setemin)
     {
@@ -39,7 +59,7 @@ void Sto_DOS::decide_param(const int& dos_nche, const double& emin_sto, const do
     }
     else
     {
-        this->emin = p_hsol->stoiter.stohchi.Emin * ModuleBase::Ry_to_eV;
+        this->emin = *p_hamilt_sto->emin * ModuleBase::Ry_to_eV;
     }
 
     if (!dos_setemax && !dos_setemin)
@@ -59,13 +79,11 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     std::cout << "=========================" << std::endl;
     ModuleBase::Chebyshev<double> che(dos_nche);
     const int nk = p_kv->get_nks();
-    Stochastic_Iter& stoiter = p_hsol->stoiter;
-    Stochastic_hchi& stohchi = stoiter.stohchi;
     const int npwx = p_wfcpw->npwk_max;
 
     std::vector<double> spolyv;
     std::vector<std::complex<double>> allorderchi;
-    if (stoiter.method == 1)
+    if (this->method_sto == 1)
     {
         spolyv.resize(dos_nche, 0);
     }
@@ -84,12 +102,11 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         {
             this->p_hamilt->updateHk(ik);
         }
-        stohchi.current_ik = ik;
         const int npw = p_kv->ngk[ik];
         const int nchipk = this->p_stowf->nchip[ik];
 
         std::complex<double>* pchi;
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             p_stowf->chiortho->fix_k(ik);
             pchi = p_stowf->chiortho->get_pointer();
@@ -99,9 +116,14 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
-        if (stoiter.method == 1)
+        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                   p_hamilt_sto,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3);
+        if (this->method_sto == 1)
         {
-            che.tracepolyA(&stohchi, &Stochastic_hchi::hchi_norm, pchi, npw, npwx, nchipk);
+            che.tracepolyA(hchi_norm, pchi, npw, npwx, nchipk);
             for (int i = 0; i < dos_nche; ++i)
             {
                 spolyv[i] += che.polytrace[i] * p_kv->wk[ik] / 2;
@@ -125,7 +147,11 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
                 }
                 ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
                 std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
-                che.calpolyvec_complex(&stohchi, &Stochastic_hchi::hchi_norm, tmpchi, allorderchi.data(), npw, npwx,
+                che.calpolyvec_complex(hchi_norm,
+                                       tmpchi,
+                                       allorderchi.data(),
+                                       npw,
+                                       npwx,
                                        nchipk_new);
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
@@ -140,7 +166,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
 
     std::ofstream ofsdos;
     int ndos = int((emax - emin) / de) + 1;
-    stoiter.stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
+    this->stofunc.sigma = sigmain / ModuleBase::Ry_to_eV;
     ModuleBase::timer::tick("Sto_DOS", "Tracepoly");
 
     std::cout << "2. Dos:" << std::endl;
@@ -154,32 +180,34 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
     {
         double tmpks = 0;
         double tmpsto = 0;
-        stoiter.stofunc.targ_e = (emin + ie * de) / ModuleBase::Ry_to_eV;
-        if (stoiter.method == 1)
+        this->stofunc.targ_e = (emin + ie * de) / ModuleBase::Ry_to_eV;
+        if (this->method_sto == 1)
         {
-            che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::ngauss);
+            auto ngauss = std::bind(&Sto_Func<double>::ngauss, &this->stofunc, std::placeholders::_1);
+            che.calcoef_real(ngauss);
             tmpsto = BlasConnector::dot(dos_nche, che.coef_real, 1, spolyv.data(), 1);
         }
         else
         {
-            che.calcoef_real(&stoiter.stofunc, &Sto_Func<double>::nroot_gauss);
-            tmpsto = stoiter.vTMv(che.coef_real, spolyv.data(), dos_nche);
+            auto nroot_gauss = std::bind(&Sto_Func<double>::nroot_gauss, &this->stofunc, std::placeholders::_1);
+            che.calcoef_real(nroot_gauss);
+            tmpsto = vTMv(che.coef_real, spolyv.data(), dos_nche);
         }
-        if (GlobalV::NBANDS > 0)
+        if (PARAM.inp.nbands > 0)
         {
             for (int ik = 0; ik < nk; ++ik)
             {
                 double* en = &(this->p_elec->ekb(ik, 0));
-                for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+                for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
                 {
-                    tmpks += stoiter.stofunc.gauss(en[ib]) * p_kv->wk[ik] / 2;
+                    tmpks += this->stofunc.gauss(en[ib]) * p_kv->wk[ik] / 2;
                 }
             }
         }
         tmpks /= GlobalV::NPROC_IN_POOL;
 
         double tmperror = 0;
-        if (stoiter.method == 1)
+        if (this->method_sto == 1)
         {
             tmperror = che.coef_real[dos_nche - 1] * spolyv[dos_nche - 1];
         }
@@ -211,7 +239,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
 #endif
     if (GlobalV::MY_RANK == 0)
     {
-        std::string dosfile = GlobalV::global_out_dir + "DOS1_smearing.dat";
+        std::string dosfile = PARAM.globalv.global_out_dir + "DOS1_smearing.dat";
         ofsdos.open(dosfile.c_str());
         double maxerror = 0;
         double sum = 0;
@@ -221,7 +249,9 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         {
             double tmperror = 2.0 * std::abs(error[ie]);
             if (maxerror < tmperror)
+            {
                 maxerror = tmperror;
+            }
             double dos = 2.0 * (ks_dos[ie] + sto_dos[ie]) / ModuleBase::Ry_to_eV;
             sum += dos;
             ofsdos << std::setw(8) << emin + ie * de << std::setw(20) << dos << std::setw(20) << sum * de

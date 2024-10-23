@@ -125,7 +125,7 @@ class Grid_Technique : public Grid_MeshBall {
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
-    void cal_nnrg(Parallel_Orbitals* pv);
+    void cal_nnrg(Parallel_Orbitals* pv, const std::vector<double>& orb_cutoff);
     int cal_RindexAtom(const int& u1,
                        const int& u2,
                        const int& u3,
@@ -177,6 +177,7 @@ class Grid_Technique : public Grid_MeshBall {
     double* rcut_g;
     double*mcell_pos_g;
 
+    int dev_id = 0;
     int nstreams = 4;
     // streams[nstreams]
     // TODO it needs to be implemented through configuration files

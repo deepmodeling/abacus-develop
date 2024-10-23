@@ -31,7 +31,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                         const Grid_Technique& gridt,
                         const UnitCell& ucell)
 { 
-    int dev_id = base_device::information::set_device_by_rank();
+    checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
@@ -95,7 +95,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
         {
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
-            checkCuda(cudaSetDevice(dev_id));
+            checkCuda(cudaSetDevice(gridt.dev_id));
             const int sid = omp_get_thread_num();
 
             int max_m = 0;

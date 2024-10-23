@@ -1,5 +1,6 @@
 //==========================================================
 // AUTHOR : Peize Lin
+
 // DATE : 2015-03-10
 //==========================================================
 
@@ -13,7 +14,7 @@
 #include "module_base/lapack_connector.h"
 #include <limits>
 #include "module_base/parallel_global.h"
-
+#include "module_parameter/parameter.h"
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::cal_exx()
 {
@@ -29,32 +30,39 @@ void Exx_Lip<T, Device>::cal_exx()
         //t_phi_cal += my_time(t);
 
         judge_singularity(ik);
-        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
-                sum1[iw_l * GlobalV::NLOCAL + iw_r] = T(0.0, 0.0);
+        for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) {
+            for (int iw_r = 0; iw_r < PARAM.globalv.nlocal; ++iw_r) {
+                sum1[iw_l * PARAM.globalv.nlocal + iw_r] = T(0.0, 0.0);
+}
+}
         if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
         {
             sum2_factor = 0.0;
-            if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
-                for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-                    for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
+            if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
+                for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) {
+                    for (int iw_r = 0; iw_r < PARAM.globalv.nlocal; ++iw_r) {
                         sum3[iw_l][iw_r] = T(0.0, 0.0);
+}
+}
+}
         }
 
-        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / GlobalV::NSPIN; ++iq_tmp)					// !!! k_point
+        for (int iq_tmp = iq_vecik; iq_tmp < iq_vecik + q_pack->kv_ptr->get_nks() / PARAM.inp.nspin; ++iq_tmp)					// !!! k_point
             // parallel incompleted.need to loop iq in other pool
         {
-            int iq = (ik < (k_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN)) :
-                (iq_tmp % (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) + (q_pack->kv_ptr->get_nks() / GlobalV::NSPIN));
+            int iq = (ik < (k_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) ? (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin)) :
+                (iq_tmp % (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) + (q_pack->kv_ptr->get_nks() / PARAM.inp.nspin));
             qkg2_exp(ik, iq);
             //t_qkg2_exp += my_time(t);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 b_cal(ik, iq, ib);
                 //t_b_cal += my_time(t);
-                if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
-                    if (iq == iq_vecik)
+                if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+                    if (iq == iq_vecik) {
                         sum3_cal(iq, ib);
+}
+}
                 //t_sum3_cal += my_time(t);
                 b_sum(iq, ib);
                 //t_b_sum += my_time(t);
@@ -72,10 +80,11 @@ void Exx_Lip<T, Device>::cal_exx()
             {
                 std::ofstream
                     ofs("Hexxk_" + ModuleBase::GlobalFunc::TO_STRING(istep++) + "_" + ModuleBase::GlobalFunc::TO_STRING(ik) + "_" + ModuleBase::GlobalFunc::TO_STRING(GlobalV::MY_RANK));
-                for (int i = 0; i != GlobalV::NLOCAL; ++i)
+                for (int i = 0; i != PARAM.globalv.nlocal; ++i)
                 {
-                    for (int j = 0; j != GlobalV::NLOCAL; ++j)
+                    for (int j = 0; j != PARAM.globalv.nlocal; ++j) {
                         ofs << exx_matrix[ik][i][j] << "\t";
+}
                     ofs << std::endl;
                 }
             };
@@ -93,23 +102,23 @@ void Exx_Lip::cal_exx()
 		phi_cal(k_pack, ik);
 
 		judge_singularity(ik);
-		for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
-			for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
-				sum1[iw_l*GlobalV::NLOCAL+iw_r] = std::complex<double>(0.0,0.0);
+		for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l)
+			for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
+				sum1[iw_l*PARAM.globalv.nlocal+iw_r] = std::complex<double>(0.0,0.0);
 		if( Exx_Info::Hybrid_Type::HF==info.hybrid_type || Exx_Info::Hybrid_Type::PBE0==info.hybrid_type || Exx_Info::Hybrid_Type::SCAN0==info.hybrid_type )
 		{
 			sum2_factor = 0.0;
 			if(gzero_rank_in_pool==GlobalV::RANK_IN_POOL)
-				for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
-					for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
+				for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l)
+					for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 						sum3[iw_l][iw_r] = std::complex<double>(0.0,0.0);
 		}
 
-		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/GlobalV::NSPIN; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
+		for( int iq_tmp=iq_vecik; iq_tmp<iq_vecik+q_pack->kv_ptr->get_nks()/PARAM.inp.nspin; ++iq_tmp)					// !!! k_point parallel incompleted. need to loop iq in other pool
 		{
-			int iq = (ik<(k_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN)+(q_pack->kv_ptr->get_nks()/GlobalV::NSPIN));
+			int iq = (ik<(k_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) ? (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)) : (iq_tmp%(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin)+(q_pack->kv_ptr->get_nks()/PARAM.inp.nspin));
 			qkg2_exp(ik, iq);
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 			{
 				b_cal(ik, iq, ib);
 				if( Exx_Info::Hybrid_Type::HF==info.hybrid_type || Exx_Info::Hybrid_Type::PBE0==info.hybrid_type || Exx_Info::Hybrid_Type::SCAN0==info.hybrid_type )
@@ -157,53 +166,54 @@ Exx_Lip<T, Device>::Exx_Lip(
 #ifdef __MPI
         MPI_Allreduce(&gzero_judge, &gzero_rank_in_pool, 1, MPI_INT, MPI_MAX, POOL_WORLD);
 	#endif
-		k_pack->wf_wg.create(k_pack->kv_ptr->get_nks(),GlobalV::NBANDS);
+		k_pack->wf_wg.create(k_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
 
-        k_pack->hvec_array = new psi::Psi<T, Device>(k_pack->kv_ptr->get_nks(), GlobalV::NBANDS, GlobalV::NLOCAL);
+        k_pack->hvec_array = new psi::Psi<T, Device>(k_pack->kv_ptr->get_nks(), PARAM.inp.nbands, PARAM.globalv.nlocal);
         // k_pack->hvec_array = new ModuleBase::ComplexMatrix[k_pack->kv_ptr->get_nks()];
         // for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
         // {
-        // 	k_pack->hvec_array[ik].create(GlobalV::NLOCAL,GlobalV::NBANDS);
+        // 	k_pack->hvec_array[ik].create(PARAM.globalv.nlocal,PARAM.inp.nbands);
         // }
 
-        // if (GlobalV::init_chg=="atomic")
+        // if (PARAM.inp.init_chg=="atomic")
 		{
 			q_pack = k_pack;
 		}
-        // else if(GlobalV::init_chg=="file")
+        // else if(PARAM.inp.init_chg=="file")
         // {
         //     read_q_pack(symm, wfc_basis, sf);
         // }
 
-        phi.resize(GlobalV::NLOCAL);
-        for (int iw = 0; iw < GlobalV::NLOCAL; ++iw) { phi[iw].resize(rho_basis->nrxx); }
+        phi.resize(PARAM.globalv.nlocal);
+        for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw) { phi[iw].resize(rho_basis->nrxx); }
 
         psi.resize(q_pack->kv_ptr->get_nks());
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
-            psi[iq].resize(GlobalV::NBANDS);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib) { psi[iq][ib].resize(rho_basis->nrxx); }
+            psi[iq].resize(PARAM.inp.nbands);
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) { psi[iq][ib].resize(rho_basis->nrxx); }
         }
 
         recip_qkg2.resize(rho_basis->npw);
 
-        b.resize(GlobalV::NLOCAL * rho_basis->npw);
+        b.resize(PARAM.globalv.nlocal * rho_basis->npw);
 
-        sum1.resize(GlobalV::NLOCAL * GlobalV::NLOCAL);
+        sum1.resize(PARAM.globalv.nlocal * PARAM.globalv.nlocal);
 
-        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
             if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
             {
-                b0.resize(GlobalV::NLOCAL);
-                sum3.resize(GlobalV::NLOCAL);
-                for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) { sum3[iw_l].resize(GlobalV::NLOCAL); }
+                b0.resize(PARAM.globalv.nlocal);
+                sum3.resize(PARAM.globalv.nlocal);
+                for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) { sum3[iw_l].resize(PARAM.globalv.nlocal); }
             }
+}
 
         exx_matrix.resize(k_pack->kv_ptr->get_nks());
         for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
         {
-            exx_matrix[ik].resize(GlobalV::NLOCAL);
-            for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l) { exx_matrix[ik][iw_l].resize(GlobalV::NLOCAL); }
+            exx_matrix[ik].resize(PARAM.globalv.nlocal);
+            for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) { exx_matrix[ik][iw_l].resize(PARAM.globalv.nlocal); }
         }
     }
     catch (const std::bad_alloc& ex)
@@ -215,19 +225,20 @@ Exx_Lip<T, Device>::Exx_Lip(
 template <typename T, typename Device>
 Exx_Lip<T, Device>::~Exx_Lip()
 {
-    if (k_pack)delete k_pack->hvec_array;
+    if (k_pack) {delete k_pack->hvec_array;
+}
     delete k_pack;
 
-    if (GlobalV::init_chg == "atomic")
+    if (PARAM.inp.init_chg == "atomic")
     {
-        q_pack = NULL;
+        q_pack = nullptr;
     }
-    else if (GlobalV::init_chg == "file")
+    else if (PARAM.inp.init_chg == "file")
     {
-        delete q_pack->kv_ptr;	q_pack->kv_ptr = NULL;
-        delete q_pack->wf_ptr;	q_pack->wf_ptr = NULL;
+        delete q_pack->kv_ptr;	q_pack->kv_ptr = nullptr;
+        delete q_pack->wf_ptr;	q_pack->wf_ptr = nullptr;
         // delete[] q_pack->hvec_array;	q_pack->hvec_array=NULL;
-        delete q_pack;	q_pack = NULL;
+        delete q_pack;	q_pack = nullptr;
     }
 }
 
@@ -235,21 +246,26 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::wf_wg_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "wf_wg_cal");
-    if (GlobalV::NSPIN == 1)
-        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+    if (PARAM.inp.nspin == 1) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib) / 2;
-    else if (GlobalV::NSPIN == 2)
-        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik)
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+}
+}
+    } else if (PARAM.inp.nspin == 2) {
+        for (int ik = 0; ik < k_pack->kv_ptr->get_nks(); ++ik) {
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib) {
                 k_pack->wf_wg(ik, ib) = k_pack->pelec->wg(ik, ib);
+}
+}
+}
 }
 
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::phi_cal(k_package* kq_pack, int ikq)
 {
     T* porter = new T[wfc_basis->nrxx];
-    for (int iw = 0; iw < GlobalV::NLOCAL; ++iw)
+    for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
 	{
         // wfc_basis->recip2real(&kq_pack->wf_ptr->wanf2[ikq](iw,0), porter, ikq);
         wfc_basis->recip2real(&(kq_pack->wf_ptr->get_psig().lock()->operator()(ikq, iw, 0)), porter, ikq);
@@ -276,12 +292,12 @@ template <typename T, typename Device>
 void Exx_Lip<T, Device>::psi_cal()
 {
     ModuleBase::TITLE("Exx_Lip", "psi_cal");
-    if (GlobalV::init_chg == "atomic")
+    if (PARAM.inp.init_chg == "atomic")
     {
         T* porter = new T[wfc_basis->nrxx];
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 wfc_basis->recip2real(&(q_pack->kspw_psi_ptr->operator()(iq, ib, 0)), porter, iq);
 
@@ -305,15 +321,15 @@ void Exx_Lip<T, Device>::psi_cal()
         }
         delete[] porter;
     }
-    else if (GlobalV::init_chg == "file")
+    else if (PARAM.inp.init_chg == "file")
     {
         for (int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
         {
             phi_cal(q_pack, iq);
-            for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+            for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
             {
                 ModuleBase::GlobalFunc::ZEROS(psi[iq][ib].data(), rho_basis->nrxx);
-                for (int iw = 0; iw < GlobalV::NLOCAL; ++iw)
+                for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
                 {
                     for (int ir = 0; ir < rho_basis->nrxx; ++ir)
                     {
@@ -331,11 +347,11 @@ void Exx_Lip<T, Device>::psi_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::judge_singularity(int ik)
 {
-	if (GlobalV::init_chg=="atomic")
+	if (PARAM.inp.init_chg=="atomic")
 	{
 		iq_vecik = ik;
 	}
-	else if(GlobalV::init_chg=="file")
+	else if(PARAM.inp.init_chg=="file")
 	{
         Real min_q_minus_k(std::numeric_limits<Real>::max());
 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
@@ -358,19 +374,21 @@ void Exx_Lip<T, Device>::qkg2_exp(int ik, int iq)
         const Real qkg2 = ((q_pack->kv_ptr->kvec_c[iq] - k_pack->kv_ptr->kvec_c[ik] + rho_basis->gcar[ig]) * (ModuleBase::TWO_PI / ucell_ptr->lat0)).norm2();
         if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
 		{
-            if (std::abs(qkg2) < 1e-10)
+            if (std::abs(qkg2) < 1e-10) {
                 recip_qkg2[ig] = 0.0;												// 0 to ignore bb/qkg2 when qkg2==0
-            else
+            } else {
                 recip_qkg2[ig] = 1.0 / qkg2;
+}
             sum2_factor += recip_qkg2[ig] * exp(-info.lambda * qkg2);
 			recip_qkg2[ig] = sqrt(recip_qkg2[ig]);
 		}
         else if (Conv_Coulomb_Pot_K::Ccp_Type::Hse == info.ccp_type)
 		{
-            if (std::abs(qkg2) < 1e-10)
+            if (std::abs(qkg2) < 1e-10) {
                 recip_qkg2[ig] = 1.0 / (2 * info.hse_omega);
-            else
+            } else {
                 recip_qkg2[ig] = sqrt((1 - exp(-qkg2 / (4 * info.hse_omega * info.hse_omega))) / qkg2);
+}
         }
 	}
 }
@@ -398,7 +416,7 @@ void Exx_Lip<T, Device>::b_cal(int ik, int iq, int ib)
 
     T* const porter = new T[rho_basis->nrxx];
 
-	for(size_t iw=0; iw< GlobalV::NLOCAL; ++iw)
+	for(size_t iw=0; iw< PARAM.globalv.nlocal; ++iw)
 	{
         auto& phi_w = phi[iw];
 		for( size_t ir=0; ir<rho_basis->nrxx; ++ir)
@@ -408,12 +426,15 @@ void Exx_Lip<T, Device>::b_cal(int ik, int iq, int ib)
 		}
         T* const b_w = &b[iw * rho_basis->npw];
 		rho_basis->real2recip( porter, b_w);
-        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
-            if ((iq == iq_vecik) && (gzero_rank_in_pool == GlobalV::RANK_IN_POOL))							/// need to check while use k_point parallel
+        if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
+            if ((iq == iq_vecik) && (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)) {							/// need to check while use k_point parallel
                 b0[iw] = b_w[rho_basis->ig_gge0];
+}
+}
 
-        for (size_t ig = 0; ig < rho_basis->npw; ++ig)
+        for (size_t ig = 0; ig < rho_basis->npw; ++ig) {
             b_w[ig] *= recip_qkg2[ig];
+}
     }
 	delete [] porter;
 }
@@ -421,10 +442,13 @@ void Exx_Lip<T, Device>::b_cal(int ik, int iq, int ib)
 template <typename T, typename Device>
 void  Exx_Lip<T, Device>::sum3_cal(int iq, int ib)
 {
-    if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
-        for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
-            for (int iw_r = 0; iw_r < GlobalV::NLOCAL; ++iw_r)
+    if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
+        for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) {
+            for (int iw_r = 0; iw_r < PARAM.globalv.nlocal; ++iw_r) {
                 sum3[iw_l][iw_r] += b0[iw_l] * conj(b0[iw_r]) * (Real)q_pack->wf_wg(iq, ib);
+}
+}
+}
 }
 
 template <typename T, typename Device>
@@ -433,13 +457,13 @@ void Exx_Lip<T, Device>::b_sum(int iq, int ib)			// Peize Lin change 2019-04-14
 	// sum1[iw_l,iw_r] += \sum_{ig} b[iw_l,ig] * conj(b[iw_r,ig]) * q_pack->wf_wg(iq,ib)
     LapackConnector::herk(
 		'U','N',
-		GlobalV::NLOCAL, rho_basis->npw,
+		PARAM.globalv.nlocal, rho_basis->npw,
         (Real)q_pack->wf_wg(iq, ib), b.data(), rho_basis->npw,
-        1.0, sum1.data(), GlobalV::NLOCAL);
+        1.0, sum1.data(), PARAM.globalv.nlocal);
 //	cblas_zherk( CblasRowMajor, CblasUpper, CblasNoTrans,
-//				GlobalV::NLOCAL, rho_basis->npw,
+//				PARAM.globalv.nlocal, rho_basis->npw,
 //				q_pack->wf_wg(iq,ib), static_cast<void*>(b), rho_basis->npw,
-//				1.0, static_cast<void*>(sum1), GlobalV::NLOCAL);
+//				1.0, static_cast<void*>(sum1), PARAM.globalv.nlocal);
 }
 
 template <typename T, typename Device>
@@ -449,24 +473,28 @@ void Exx_Lip<T, Device>::sum_all(int ik)
     Real fourpi_div_omega = 4 * (Real)(ModuleBase::PI / ucell_ptr->omega);
     Real spin_fac = 2.0;
 #ifdef __MPI
-    if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+    if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
         MPI_Reduce(&sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD);
+}
 #endif
-    for (size_t iw_l = 1; iw_l < GlobalV::NLOCAL; ++iw_l)
-        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r)
-            sum1[iw_l * GlobalV::NLOCAL + iw_r] = conj(sum1[iw_r * GlobalV::NLOCAL + iw_l]);		// Peize Lin add conj 2019-04-14
+    for (size_t iw_l = 1; iw_l < PARAM.globalv.nlocal; ++iw_l) {
+        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r) {
+            sum1[iw_l * PARAM.globalv.nlocal + iw_r] = conj(sum1[iw_r * PARAM.globalv.nlocal + iw_l]);		// Peize Lin add conj 2019-04-14
+}
+}
 
-    for (int iw_l = 0; iw_l < GlobalV::NLOCAL; ++iw_l)
+    for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l)
 	{
-		for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
+		for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 		{
-            exx_matrix[ik][iw_l][iw_r] = -fourpi_div_omega * sum1[iw_l * GlobalV::NLOCAL + iw_r] * spin_fac;
-            if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
+            exx_matrix[ik][iw_l][iw_r] = -fourpi_div_omega * sum1[iw_l * PARAM.globalv.nlocal + iw_r] * spin_fac;
+            if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type) {
                 if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
 				{
                     exx_matrix[ik][iw_l][iw_r] += spin_fac * (fourpi_div_omega * sum3[iw_l][iw_r] * sum2_factor_g);
-                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / GlobalV::NSPIN) * sum3[iw_l][iw_r]);
+                    exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Real)sqrt(info.lambda * ModuleBase::PI) * (Real)(q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) * sum3[iw_l][iw_r]);
                 }
+}
         }
 	}
 }
@@ -480,11 +508,11 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 
 	for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
 	{
-		for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
+		for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l)
 		{
-			for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
+			for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 			{
-				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 				{
                     exx_energy_tmp += (exx_matrix[ik][iw_l][iw_r] * conj((*k_pack->hvec_array)(ik, ib, iw_l)) * (*k_pack->hvec_array)(ik, ib, iw_r)).real() * k_pack->wf_wg(ik, ib);
 				}
@@ -494,7 +522,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 #ifdef __MPI
 	MPI_Allreduce( &exx_energy_tmp, &exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different kv.set_nks(>) deadlock
 #endif
-	exx_energy *= (GlobalV::NSPIN==1) ? 2 : 1;
+	exx_energy *= (PARAM.inp.nspin==1) ? 2 : 1;
 	exx_energy /= 2;										// ETOT = E_band - 1/2 E_exx
 
 	#if TEST_EXX==1
@@ -505,9 +533,9 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
 		{
 			ofs<<"ik:\t"<<ik<<std::endl;
-			for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
+			for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l)
 			{
-				for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
+				for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 				{
 					ofs<<exx_matrix[ik][iw_l][iw_r]<<"\t";
 				}
@@ -524,12 +552,12 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 		for( int ik=0; ik<k_pack->kv_ptr->get_nks(); ++ik)
 		{
 			ofs<<"ik:\t"<<ik<<std::endl;
-			for( int iw_l=0; iw_l<GlobalV::NLOCAL; ++iw_l)
+			for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l)
 			{
-				for( int iw_r=0; iw_r<GlobalV::NLOCAL; ++iw_r)
+				for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r)
 				{
                     T DM = { 0,0 };
-					for( int ib=0; ib<GlobalV::NBANDS; ++ib )
+					for( int ib=0; ib<PARAM.inp.nbands; ++ib )
                         DM += conj((*k_pack->hvec_array)(ik, ib, iw_l)) * (*k_pack->hvec_array)(ik, ib, iw_r) * k_pack->wf_wg(ik, ib);
 					ofs<<DM<<"\t";
 				}
@@ -549,27 +577,28 @@ void Exx_Lip<T, Device>::exx_energy_cal()
 template <typename T, typename Device>
 void Exx_Lip<T, Device>::write_q_pack() const
 {
-    if (PARAM.inp.out_chg == 0)
+    if (PARAM.inp.out_chg[0] == 0) {
         return;
+}
 
     if (!GlobalV::RANK_IN_POOL)
 	{
 		const std::string exx_q_pack = "exx_q_pack/";
 		int return_value=0;
-		const std::string command_mkdir = "test -d " + GlobalV::global_out_dir + exx_q_pack + " || mkdir " + GlobalV::global_out_dir + exx_q_pack;
+		const std::string command_mkdir = "test -d " + PARAM.globalv.global_out_dir + exx_q_pack + " || mkdir " + PARAM.globalv.global_out_dir + exx_q_pack;
         return_value = system(command_mkdir.c_str());
         assert(return_value == 0);
 
-        const std::string command_kpoint = "test -f " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card + " || cp " + GlobalV::global_kpoint_card + " " + GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
+        const std::string command_kpoint = "test -f " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file + " || cp " + PARAM.inp.kpoint_file + " " + PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
         return_value = system(command_kpoint.c_str());
 		assert(return_value==0);
 
 		std::stringstream ss_wf_wg;
-		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 		std::ofstream ofs_wf_wg(ss_wf_wg.str().c_str());
 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 		{
-			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 			{
 				ofs_wf_wg<<q_pack->wf_wg(iq,ib)<<"\t";
 			}
@@ -578,13 +607,13 @@ void Exx_Lip<T, Device>::write_q_pack() const
 		ofs_wf_wg.close();
 
 		std::stringstream ss_hvec;
-		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 		std::ofstream ofs_hvec(ss_hvec.str().c_str());
 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 		{
-			for( int iw=0; iw<GlobalV::NLOCAL; ++iw)
+			for( int iw=0; iw<PARAM.globalv.nlocal; ++iw)
 			{
-				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 				{
                     ofs_hvec << (*q_pack->hvec_array)(iq, ib, iw).real() << " " << (*q_pack->hvec_array)(iq, ib, iw).imag() << " ";
 				}
@@ -605,8 +634,8 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	q_pack = new k_package();
 
 // 	q_pack->kv_ptr = new K_Vectors();
-// 	const std::string exx_kpoint_card = GlobalV::global_out_dir + exx_q_pack + GlobalV::global_kpoint_card;
-// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, GlobalV::NSPIN, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
+// 	const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
+// 	q_pack->kv_ptr->set( symm, exx_kpoint_card, PARAM.inp.nspin, ucell_ptr->G, ucell_ptr->latvec, GlobalV::ofs_running );
 
 // 	q_pack->wf_ptr = new wavefunc();
 //     q_pack->wf_ptr->allocate(q_pack->kv_ptr->get_nkstot(),
@@ -614,8 +643,8 @@ void Exx_Lip<T, Device>::write_q_pack() const
 //                              q_pack->kv_ptr->ngk.data(),
 //                              wfc_basis->npwk_max); // mohan update 2021-02-25
 //     //	q_pack->wf_ptr->init(q_pack->kv_ptr->get_nks(),q_pack->kv_ptr,ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, GlobalV::NQX);
-// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, GlobalV::NQX);
+//     q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
+// //	q_pack->wf_ptr->table_local.create(q_pack->wf_ptr->ucell_ptr->ntype, q_pack->wf_ptr->ucell_ptr->nmax_total, PARAM.globalv.nqx);
 // #ifdef __LCAO
 // 	Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, q_pack->wf_ptr->table_local);
 // //	Wavefunc_in_pw::make_table_q(q_pack->wf_ptr->ORB_ptr->orbital_file, q_pack->wf_ptr->table_local, q_pack->wf_ptr);
@@ -630,15 +659,15 @@ void Exx_Lip<T, Device>::write_q_pack() const
 //         // q_pack->wf_ptr);
 //     }
 // #endif
-// 	q_pack->wf_wg.create(q_pack->kv_ptr->get_nks(),GlobalV::NBANDS);
+// 	q_pack->wf_wg.create(q_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_wf_wg;
-// 		ss_wf_wg << GlobalV::global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
+// 		ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_wf_wg(ss_wf_wg.str().c_str());
 // 		for( int iq = 0; iq < q_pack->kv_ptr->get_nks(); ++iq)
 // 		{
-// 			for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+// 			for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 // 			{
 // 				ifs_wf_wg>>q_pack->wf_wg(iq,ib);
 // 			}
@@ -646,24 +675,24 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 		ifs_wf_wg.close();
 // 	}
 // 	#ifdef __MPI
-// 	MPI_Bcast( q_pack->wf_wg.c, q_pack->kv_ptr->get_nks()*GlobalV::NBANDS, MPI_DOUBLE, 0, POOL_WORLD);
+// 	MPI_Bcast( q_pack->wf_wg.c, q_pack->kv_ptr->get_nks()*PARAM.inp.nbands, MPI_DOUBLE, 0, POOL_WORLD);
 // 	#endif
 
 // 	q_pack->hvec_array = new ModuleBase::ComplexMatrix [q_pack->kv_ptr->get_nks()];
 // 	for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 	{
-// 		q_pack->hvec_array[iq].create(GlobalV::NLOCAL,GlobalV::NBANDS);
+// 		q_pack->hvec_array[iq].create(PARAM.globalv.nlocal,PARAM.inp.nbands);
 // 	}
 // 	if(!GlobalV::RANK_IN_POOL)
 // 	{
 // 		std::stringstream ss_hvec;
-// 		ss_hvec	<< GlobalV::global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
+// 		ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
 // 		std::ifstream ifs_hvec(ss_hvec.str().c_str());
 // 		for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 		{
-// 			for( int iw=0; iw<GlobalV::NLOCAL; ++iw)
+// 			for( int iw=0; iw<PARAM.globalv.nlocal; ++iw)
 // 			{
-// 				for( int ib=0; ib<GlobalV::NBANDS; ++ib)
+// 				for( int ib=0; ib<PARAM.inp.nbands; ++ib)
 // 				{
 // 					double a,b;
 // 					ifs_hvec>>a>>b;
@@ -676,7 +705,7 @@ void Exx_Lip<T, Device>::write_q_pack() const
 // 	#ifdef __MPI
 // 	for( int iq=0; iq<q_pack->kv_ptr->get_nks(); ++iq)
 // 	{
-// 		MPI_Bcast( q_pack->hvec_array[iq].c, GlobalV::NLOCAL*GlobalV::NBANDS, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
+// 		MPI_Bcast( q_pack->hvec_array[iq].c, PARAM.globalv.nlocal*PARAM.inp.nbands, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
 // 	}
 // 	#endif
 

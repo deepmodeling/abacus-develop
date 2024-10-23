@@ -1,5 +1,6 @@
 #include "spar_st.h"
 
+#include "module_parameter/parameter.h"
 #include "force_stress_arrays.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h" // only for INPUT
@@ -23,7 +24,7 @@ void sparse_format::cal_SR(
 
     sparse_format::set_R_range(all_R_coor, grid);
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2) {
@@ -57,6 +58,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                            LCAO_HS_Arrays& HS_Arrays,
                            Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
+                           const LCAO_Orbitals& orb,
                            const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_TR");
 
@@ -72,8 +74,9 @@ void sparse_format::cal_TR(const UnitCell& ucell,
     LCAO_domain::build_ST_new(fsr_tmp,
                               'T',
                               false,
+                              PARAM.inp.cal_stress,
                               ucell,
-                              GlobalC::ORB,
+                              orb,
                               pv,
                               two_center_bundle,
                               &(GlobalC::GridD),
@@ -81,7 +84,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, sparse_thr);
+    sparse_format::cal_STN_R_for_T(ucell, pv, HS_Arrays, grid, orb.cutoffs(), sparse_thr);
 
     return;
 }
@@ -90,10 +93,11 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const Parallel_Orbitals& pv,
                                     LCAO_HS_Arrays& HS_arrays,
                                     Grid_Driver& grid,
+                                    const std::vector<double>& orb_cutoff,
                                     const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "cal_STN_R_for_T");
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     int index = 0;
     ModuleBase::Vector3<double> dtau, tau1, tau2;
@@ -118,8 +122,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                 tau2 = grid.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut()
-                              + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
                 bool adj = false;
 
@@ -138,9 +141,9 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut()
+                        double rcut1 = orb_cutoff[T1]
                                        + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut()
+                        double rcut2 = orb_cutoff[T2]
                                        + ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2) {
@@ -157,7 +160,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                                 grid.getBox(ad).y,
                                                 grid.getBox(ad).z);
 
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++) {
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++) {
                         const int iw1_all = start + ii;
                         const int mu = pv.global2local_row(iw1_all);
 
@@ -165,7 +168,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                             continue;
                         }
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++) {
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++) {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
 
@@ -195,7 +198,7 @@ void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
 void sparse_format::destroy_T_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("sparse_format", "destroy_T_R_sparse");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>,
                  std::map<size_t, std::map<size_t, double>>>
             empty_TR_sparse;

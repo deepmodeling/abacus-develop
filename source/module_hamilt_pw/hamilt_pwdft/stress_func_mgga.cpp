@@ -1,5 +1,6 @@
 #include "module_base/timer.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "stress_func.h"
 
@@ -18,8 +19,9 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
 {
     ModuleBase::timer::tick("Stress_Func", "stress_mgga");
 
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4) {
         ModuleBase::WARNING_QUIT("stress_mgga", "noncollinear stress + mGGA not implemented");
+}
 
     int current_spin = 0;
     const int nrxx = wfc_basis->nrxx;
@@ -37,17 +39,18 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     auto crosstaus = ct::Tensor(
         ct::DataTypeToEnum<FPTYPE>::value,
         ct::DeviceTypeToEnum<ct_Device>::value,
-        {GlobalV::NSPIN, nrxx * 6});
+        {PARAM.inp.nspin, nrxx * 6});
     crosstaus.zero(); // Must be zeroed out 
 
     auto cal_stress_mgga_solver = hamilt::cal_stress_mgga_op<std::complex<FPTYPE>, Device>();
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2) {
             current_spin = p_kv->isk[ik];
+}
         const int npw = p_kv->ngk[ik];
 
-        for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
+        for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
         {
             const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
@@ -60,7 +63,7 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
     auto crosstaus_host = crosstaus.to_device<ct::DEVICE_CPU>();
     auto crosstaus_pack = crosstaus_host.accessor<FPTYPE, 2>();
 #ifdef __MPI
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ipol = 0; ipol < 6; ++ipol)
         {
@@ -77,15 +80,16 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
         }
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         for (int ix = 0; ix < 3; ix++)
         {
             for (int iy = 0; iy < 3; iy++)
             {
                 FPTYPE delta = 0.0;
-                if (ix == iy)
+                if (ix == iy) {
                     delta = 1.0;
+}
                 for (int ir = 0; ir < nrxx; ir++)
                 {
                     FPTYPE x

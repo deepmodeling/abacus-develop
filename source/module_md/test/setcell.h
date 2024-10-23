@@ -126,10 +126,11 @@ class Setcell
 
     static void parameters(Input_para& input)
     {
-        GlobalV::global_out_dir = "./";
-        GlobalV::global_readin_dir = "./";
-        GlobalV::SEARCH_RADIUS = 8.5 * ModuleBase::ANGSTROM_AU;
-        GlobalV::CAL_STRESS = true;
+        PARAM.sys.global_out_dir = "./";
+        PARAM.sys.global_readin_dir = "./";
+        PARAM.input.search_radius = 8.5 * ModuleBase::ANGSTROM_AU;
+        PARAM.input.cal_stress = true;
+
 
         input.mdp.dump_virial = true;
         input.mdp.dump_force = true;
@@ -140,7 +141,7 @@ class Setcell
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
-        GlobalV::ESOLVER_TYPE = "lj";
+        PARAM.input.esolver_type = "lj";
         input.mdp.lj_rcut = {8.5};
         input.mdp.lj_epsilon = {0.01032};
         input.mdp.lj_sigma = {3.405};

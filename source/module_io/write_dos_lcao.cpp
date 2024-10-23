@@ -1,5 +1,6 @@
 #include "write_dos_lcao.h"
 
+#include "module_parameter/parameter.h"
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -39,7 +40,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         nspin0 = 2;
     }
@@ -52,7 +53,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     double emin = ekb(0, 0);
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             emax = std::max(emax, ekb(ik, ib));
             emin = std::min(emin, ekb(ik, ib));
@@ -93,7 +94,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
-    int NUM = GlobalV::NLOCAL * npoints;
+    int NUM = PARAM.globalv.nlocal * npoints;
 
     const int np = npoints;
     ModuleBase::matrix* pdosk = new ModuleBase::matrix[nspin0];
@@ -101,19 +102,19 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
 
-        pdosk[is].create(GlobalV::NLOCAL, np, true);
+        pdosk[is].create(PARAM.globalv.nlocal, np, true);
     }
     ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
     for (int is = 0; is < nspin0; ++is)
     {
-        pdos[is].create(GlobalV::NLOCAL, np, true);
+        pdos[is].create(PARAM.globalv.nlocal, np, true);
     }
 
     double a = bcoeff;
     double c = 2 * 3.141592653;
     double b = sqrt(c) * a;
 
-    std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
+    std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 
     double* Gauss = new double[np];
 
@@ -126,9 +127,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
         psi->fix_k(is);
         const double* ppsi = psi->get_pointer();
-        for (int i = 0; i < GlobalV::NBANDS; ++i)
+        for (int i = 0; i < PARAM.inp.nbands; ++i)
         {
-            ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+            ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
             ModuleBase::GlobalFunc::ZEROS(Gauss, np);
             for (int n = 0; n < npoints; ++n)
@@ -148,8 +149,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 #ifdef __MPI
             const char T_char = 'T';
             pdgemv_(&T_char,
-                    &GlobalV::NLOCAL,
-                    &GlobalV::NLOCAL,
+                    &PARAM.globalv.nlocal,
+                    &PARAM.globalv.nlocal,
                     &one_float,
                     sk,
                     &one_int,
@@ -168,7 +169,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     &one_int);
 #endif
 
-            for (int j = 0; j < GlobalV::NLOCAL; ++j)
+            for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
 
                 if (pv.in_this_processor(j, i))
@@ -194,16 +195,16 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     {
         {
             std::stringstream ps;
-            ps << GlobalV::global_out_dir << "TDOS";
+            ps << PARAM.globalv.global_out_dir << "TDOS";
             std::ofstream out(ps.str().c_str());
-            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
             {
 
                 for (int n = 0; n < npoints; ++n)
                 {
                     double y = 0.0;
                     double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
+                    for (int i = 0; i < PARAM.globalv.nlocal; i++)
                     {
                         y += pdos[0](i, n);
                     }
@@ -211,14 +212,14 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     out << std::setw(20) << en << std::setw(30) << y << std::endl;
                 }
             }
-            else if (GlobalV::NSPIN == 2)
+            else if (PARAM.inp.nspin == 2)
             {
                 for (int n = 0; n < npoints; ++n)
                 {
                     double y = 0.0;
                     double z = 0.0;
                     double en = emin + n * de_ev;
-                    for (int i = 0; i < GlobalV::NLOCAL; i++)
+                    for (int i = 0; i < PARAM.globalv.nlocal; i++)
                     {
                         y += pdos[0](i, n);
                         z += pdos[1](i, n);
@@ -234,15 +235,15 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 
         {
             std::stringstream as;
-            as << GlobalV::global_out_dir << "PDOS";
+            as << PARAM.globalv.global_out_dir << "PDOS";
             std::ofstream out(as.str().c_str());
 
             out << "<pdos>" << std::endl;
-            out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-            if (GlobalV::NSPIN == 4) {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+            out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
+            if (PARAM.inp.nspin == 4) {
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
             } else {
-                out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
 }
             out << "<energy_values units=\"eV\">" << std::endl;
 
@@ -276,7 +277,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                     out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
                     out << ">" << std::endl;
                     out << "<data>" << std::endl;
-                    if (GlobalV::NSPIN == 1)
+                    if (PARAM.inp.nspin == 1)
                     {
                         for (int n = 0; n < npoints; ++n)
                         {
@@ -284,14 +285,14 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                             out << std::setw(13) << pdos[0](w, n) << std::endl;
                         } // n
                     }
-                    else if (GlobalV::NSPIN == 2)
+                    else if (PARAM.inp.nspin == 2)
                     {
                         for (int n = 0; n < npoints; ++n)
                         {
                             out << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
                         } // n
                     }
-                    else if (GlobalV::NSPIN == 4)
+                    else if (PARAM.inp.nspin == 4)
                     {
                         int w0 = w - s0;
                         for (int n = 0; n < npoints; ++n)
@@ -316,9 +317,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
                                 ss.str(),
@@ -331,7 +332,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                                 kv.get_nkstot(),
                                 kv.wk,
                                 kv.isk,
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 ekb,
                                 wg);
     }
@@ -353,7 +354,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     ModuleBase::TITLE("ModuleIO", "write_dos_lcao");
 
     int nspin0 = 1;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         nspin0 = 2;
     }
@@ -363,7 +364,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     double emin = ekb(0, 0);
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+        for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
         {
             emax = std::max(emax, ekb(ik, ib));
             emin = std::min(emin, ekb(ik, ib));
@@ -405,7 +406,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
     const int npoints = static_cast<int>(std::floor((emax - emin) / de_ev));
 
-    int NUM = GlobalV::NLOCAL * npoints;
+    int NUM = PARAM.globalv.nlocal * npoints;
 
     const int np = npoints;
 
@@ -415,21 +416,21 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
         for (int is = 0; is < nspin0; ++is)
         {
-            pdosk[is].create(GlobalV::NLOCAL, np, true);
+            pdosk[is].create(PARAM.globalv.nlocal, np, true);
         }
 
         ModuleBase::matrix* pdos = new ModuleBase::matrix[nspin0];
 
         for (int is = 0; is < nspin0; ++is)
         {
-            pdos[is].create(GlobalV::NLOCAL, np, true);
+            pdos[is].create(PARAM.globalv.nlocal, np, true);
         }
 
         double a = bcoeff;
         double c = 2 * 3.141592653;
         double b = sqrt(c) * a;
 
-        std::complex<double>* waveg = new std::complex<double>[GlobalV::NLOCAL];
+        std::complex<double>* waveg = new std::complex<double>[PARAM.globalv.nlocal];
 
         double* Gauss = new double[np]();
 
@@ -446,7 +447,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                 {
                     // calculate SK for current k point
                     const std::complex<double>* sk = nullptr;
-                    if (GlobalV::NSPIN == 4)
+                    if (PARAM.inp.nspin == 4)
                     {
                         dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->updateSk(ik, 1);
                         sk = dynamic_cast<const hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>*>(p_ham)->getSk();
@@ -465,10 +466,10 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                         p_dwfc[index] = conj(p_dwfc[index]);
                     }
 
-                    for (int i = 0; i < GlobalV::NBANDS; ++i)
+                    for (int i = 0; i < PARAM.inp.nbands; ++i)
                     {
 
-                        ModuleBase::GlobalFunc::ZEROS(waveg, GlobalV::NLOCAL);
+                        ModuleBase::GlobalFunc::ZEROS(waveg, PARAM.globalv.nlocal);
 
                         ModuleBase::GlobalFunc::ZEROS(Gauss, np);
                         for (int n = 0; n < npoints; ++n)
@@ -489,8 +490,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
 #ifdef __MPI
                         pzgemv_(&T_char,
-                                &GlobalV::NLOCAL,
-                                &GlobalV::NLOCAL,
+                                &PARAM.globalv.nlocal,
+                                &PARAM.globalv.nlocal,
                                 &one_float[0],
                                 sk,
                                 &one_int,
@@ -509,7 +510,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                                 &one_int);
 #endif
 
-                        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                         {
 
                             if (pv.in_this_processor(j, i))
@@ -541,16 +542,16 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
         {
             {
                 std::stringstream ps;
-                ps << GlobalV::global_out_dir << "TDOS";
+                ps << PARAM.globalv.global_out_dir << "TDOS";
                 std::ofstream out(ps.str().c_str());
-                if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+                if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
                 {
 
                     for (int n = 0; n < npoints; ++n)
                     {
                         double y = 0.0;
                         double en = emin + n * de_ev;
-                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
                         {
                             y += pdos[0](i, n);
                         }
@@ -558,14 +559,14 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                         out << std::setw(20) << en << std::setw(30) << y << std::endl;
                     }
                 }
-                else if (GlobalV::NSPIN == 2)
+                else if (PARAM.inp.nspin == 2)
                 {
                     for (int n = 0; n < npoints; ++n)
                     {
                         double y = 0.0;
                         double z = 0.0;
                         double en = emin + n * de_ev;
-                        for (int i = 0; i < GlobalV::NLOCAL; i++)
+                        for (int i = 0; i < PARAM.globalv.nlocal; i++)
                         {
                             y += pdos[0](i, n);
                             z += pdos[1](i, n);
@@ -581,18 +582,18 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
 
             {
                 std::stringstream as;
-                as << GlobalV::global_out_dir << "PDOS";
+                as << PARAM.globalv.global_out_dir << "PDOS";
                 std::ofstream out(as.str().c_str());
 
                 out << "<pdos>" << std::endl;
-                out << "<nspin>" << GlobalV::NSPIN << "</nspin>" << std::endl;
-                if (GlobalV::NSPIN == 4)
+                out << "<nspin>" << PARAM.inp.nspin << "</nspin>" << std::endl;
+                if (PARAM.inp.nspin == 4)
                 {
-                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL / 2 << "</norbitals>" << std::endl;
+                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal / 2 << "</norbitals>" << std::endl;
                 }
                 else
                 {
-                    out << "<norbitals>" << std::setw(2) << GlobalV::NLOCAL << "</norbitals>" << std::endl;
+                    out << "<norbitals>" << std::setw(2) << PARAM.globalv.nlocal << "</norbitals>" << std::endl;
                 }
                 out << "<energy_values units=\"eV\">" << std::endl;
 
@@ -626,21 +627,21 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                         out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
                         out << ">" << std::endl;
                         out << "<data>" << std::endl;
-                        if (GlobalV::NSPIN == 1)
+                        if (PARAM.inp.nspin == 1)
                         {
                             for (int n = 0; n < npoints; ++n)
                             {
                                 out << std::setw(13) << pdos[0](w, n) << std::endl;
                             } // n
                         }
-                        else if (GlobalV::NSPIN == 2)
+                        else if (PARAM.inp.nspin == 2)
                         {
                             for (int n = 0; n < npoints; ++n)
                             {
                                 out << std::setw(20) << pdos[0](w, n) << std::setw(30) << pdos[1](w, n) << std::endl;
                             } // n
                         }
-                        else if (GlobalV::NSPIN == 4)
+                        else if (PARAM.inp.nspin == 4)
                         {
                             int w0 = w - s0;
                             for (int n = 0; n < npoints; ++n)
@@ -665,9 +666,9 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
     for (int is = 0; is < nspin0; ++is)
     {
         std::stringstream ss;
-        ss << GlobalV::global_out_dir << "DOS" << is + 1;
+        ss << PARAM.globalv.global_out_dir << "DOS" << is + 1;
         std::stringstream ss1;
-        ss1 << GlobalV::global_out_dir << "DOS" << is + 1 << "_smearing.dat";
+        ss1 << PARAM.globalv.global_out_dir << "DOS" << is + 1 << "_smearing.dat";
 
         ModuleIO::calculate_dos(is,
                                 ss.str(),
@@ -680,7 +681,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                                 kv.get_nkstot(),
                                 kv.wk,
                                 kv.isk,
-                                GlobalV::NBANDS,
+                                PARAM.inp.nbands,
                                 ekb,
                                 wg);
     }

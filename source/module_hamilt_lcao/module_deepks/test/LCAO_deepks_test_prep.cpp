@@ -1,6 +1,8 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 void test_deepks::preparation()
 {
     this->count_ntype();
@@ -14,24 +16,24 @@ void test_deepks::preparation()
     this->set_orbs(ucell.lat0);
     this->prep_neighbour();
 
-    this->ParaO.set_serial(GlobalV::NLOCAL, GlobalV::NLOCAL);
+    this->ParaO.set_serial(PARAM.sys.nlocal, PARAM.sys.nlocal);
 }
 
 void test_deepks::set_parameters()
 {
-    GlobalV::BASIS_TYPE = "lcao";
+    PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
-    GlobalV::PSEUDORCUT = 15.0;
-    GlobalV::global_out_dir = "./";
+    PARAM.input.pseudo_rcut = 15.0;
+    PARAM.sys.global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
-    GlobalV::deepks_setorb = true;
-    GlobalV::CAL_FORCE = 1;
+    PARAM.sys.deepks_setorb = true;
+    PARAM.input.cal_force = 1;
 
     std::ifstream ifs("INPUT");
     char word[80];
     ifs >> word;
-    ifs >> GlobalV::GAMMA_ONLY_LOCAL;
+    ifs >> PARAM.sys.gamma_only_local;
     ifs.close();
 
     ucell.latName = "none";
@@ -132,10 +134,10 @@ void test_deepks::setup_cell()
 void test_deepks::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   GlobalV::OUT_LEVEL,
+                                                   PARAM.input.out_level,
                                                    ORB.get_rcutmax_Phi(),
                                                    ucell.infoNL.get_rcutmax_Beta(),
-                                                   GlobalV::GAMMA_ONLY_LOCAL);
+                                                   PARAM.sys.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
@@ -159,9 +161,9 @@ void test_deepks::set_orbs(const double& lat0_in)
                            lcao_dk,
                            lcao_dr,
                            lcao_rmax,
-                           GlobalV::deepks_setorb,
+                           PARAM.sys.deepks_setorb,
                            out_mat_r,
-                           GlobalV::CAL_FORCE,
+                           PARAM.input.cal_force,
                            my_rank);
 
         ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
@@ -189,10 +191,10 @@ void test_deepks::set_orbs(const double& lat0_in)
 void test_deepks::setup_kpt()
 {
     this->kv.set("KPT",
-                 GlobalV::NSPIN,
+                 PARAM.input.nspin,
                  ucell.G,
                  ucell.latvec,
-                 GlobalV::GAMMA_ONLY_LOCAL,
+                 PARAM.sys.gamma_only_local,
                  GlobalV::ofs_running,
                  GlobalV::ofs_warning);
 }

@@ -27,9 +27,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_NLCC>");
         }
-        delete[] pp.rho_atc;
-        pp.rho_atc = new double[pp.mesh];
-        ModuleBase::GlobalFunc::ZEROS(pp.rho_atc, pp.mesh);
+        pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
         for (int ir = 0; ir < pp.mesh; ir++)
         {
             ifs >> pp.rho_atc[ir];
@@ -50,9 +48,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_LOCAL>");
         }
-        delete[] pp.vloc_at;
-        pp.vloc_at = new double[pp.mesh];
-        ModuleBase::GlobalFunc::ZEROS(pp.vloc_at, pp.mesh);
+        pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
         for (int ir = 0; ir < pp.mesh; ir++)
         {
             ifs >> pp.vloc_at[ir];
@@ -89,9 +85,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
     {
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RHOATOM>");
     }
-    delete[] pp.rho_at;
-    pp.rho_at = new double[pp.mesh];
-    ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+    pp.rho_at = std::vector<double>(pp.mesh, 0.0);
     for (int ir = 0; ir < pp.mesh; ir++)
     {
         ifs >> pp.rho_at[ir];
@@ -318,9 +312,11 @@ void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& p
         else if (name[ip] == "mesh_size")
         {
             pp.mesh = atoi(val[ip].c_str());
+            this->mesh_changed = false;
             if (pp.mesh % 2 == 0)
             {
                 pp.mesh -= 1;
+                this->mesh_changed = true;
             }
         }
         else if (name[ip] == "number_of_wfc")
@@ -363,9 +359,11 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
             else if (name[ip] == "mesh")
             {
                 pp.mesh = atoi(val[ip].c_str());
+                this->mesh_changed = false;
                 if (pp.mesh % 2 == 0)
                 {
                     pp.mesh -= 1;
+                    this->mesh_changed = true;
                 }
             }
             else if (name[ip] == "xmin")
@@ -401,13 +399,9 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
     {
         ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_R>");
     }
-    delete[] pp.r;
-    delete[] pp.rab;
     assert(pp.mesh > 0);
-    pp.r = new double[pp.mesh];
-    pp.rab = new double[pp.mesh];
-    ModuleBase::GlobalFunc::ZEROS(pp.r, pp.mesh);
-    ModuleBase::GlobalFunc::ZEROS(pp.rab, pp.mesh);
+    pp.r = std::vector<double>(pp.mesh, 0.0);
+    pp.rab = std::vector<double>(pp.mesh, 0.0);
     for (int ir = 0; ir < pp.mesh; ir++)
     {
         ifs >> pp.r[ir];
@@ -441,16 +435,11 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
     std::string name[50];
     std::string val[50];
     int nparameter;
-    delete[] this->kbeta;
-    delete[] pp.lll;
-    delete[] els_beta;
-    delete[] rcut;
-    delete[] rcutus;
-    this->kbeta = new int[pp.nbeta];
-    pp.lll = new int[pp.nbeta];
-    this->els_beta = new std::string[pp.nbeta];
-    this->rcut = new double[pp.nbeta];
-    this->rcutus = new double[pp.nbeta];
+    this->kbeta = std::vector<int>(pp.nbeta);
+    pp.lll = std::vector<int>(pp.nbeta);
+    this->els_beta = std::vector<std::string>(pp.nbeta);
+    this->rcut = std::vector<double>(pp.nbeta, 0.0);
+    this->rcutus = std::vector<double>(pp.nbeta, 0.0);
     pp.betar.create(pp.nbeta, pp.mesh);
     pp.dion.create(pp.nbeta, pp.nbeta);
     for (int ib = 0; ib < pp.nbeta; ib++)
@@ -586,11 +575,9 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_Q>");
 
         // Read polinomial coefficients for Q_ij expansion at small radius
-        delete[] rinner;
-        this->rinner = new double[pp.nqlc];
+        this->rinner = std::vector<double>(pp.nqlc, 0.0);
         if (nqf <= 0)
         {
-            ModuleBase::GlobalFunc::ZEROS(rinner, pp.nqlc);
             this->qfcoef.create(1, 1, 1, 1);
         }
         else
@@ -689,22 +676,13 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
     std::string val[50];
     int nparameter;
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_PSWFC>");
-    delete[] pp.els;
-    delete[] pp.lchi;
-    delete[] nchi;
-    delete[] pp.oc;
-    delete[] epseu;
-    delete[] rcut_chi;
-    delete[] rcutus_chi;
-    pp.els = new std::string[pp.nchi];
-    pp.lchi = new int[pp.nchi];
-    this->nchi = new int[pp.nchi];
-    pp.oc = new double[pp.nchi];
-    this->epseu = new double[pp.nchi];
-    this->rcut_chi = new double[pp.nchi];
-    this->rcutus_chi = new double[pp.nchi];
-    ModuleBase::GlobalFunc::ZEROS(pp.lchi, pp.nchi); // angular momentum of each orbital
-    ModuleBase::GlobalFunc::ZEROS(pp.oc, pp.nchi);   // occupation of each orbital
+    pp.els = std::vector<std::string>(pp.nchi, "");
+    pp.lchi = std::vector<int>(pp.nchi, 0);
+    this->nchi = std::vector<int>(pp.nchi, 0);
+    pp.oc = std::vector<double>(pp.nchi, 0.0);
+    this->epseu = std::vector<double>(pp.nchi, 0.0);
+    this->rcut_chi = std::vector<double>(pp.nchi, 0.0);
+    this->rcutus_chi = std::vector<double>(pp.nchi, 0.0);
     pp.chi.create(pp.nchi, pp.mesh);
     for (int iw = 0; iw < pp.nchi; iw++)
     {
@@ -832,15 +810,9 @@ void Pseudopot_upf::read_pseudo_upf201_so(std::ifstream& ifs, Atom_pseudo& pp)
     std::string val[50];
     int nparameter;
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_SPIN_ORB>");
-    delete[] pp.jchi;
-    delete[] pp.jjj;
-    delete[] pp.nn;
-    pp.jchi = new double[pp.nchi];
-    pp.jjj = new double[pp.nbeta];
-    pp.nn = new int[pp.nchi];
-    ModuleBase::GlobalFunc::ZEROS(pp.jchi, pp.nchi);
-    ModuleBase::GlobalFunc::ZEROS(pp.jjj, pp.nbeta);
-    ModuleBase::GlobalFunc::ZEROS(pp.nn, pp.nchi);
+    pp.jchi = std::vector<double>(pp.nchi, 0.0);
+    pp.jjj = std::vector<double>(pp.nbeta, 0.0);
+    pp.nn = std::vector<int>(pp.nchi, 0);
 
     for (int nw = 0; nw < pp.nchi; nw++)
     {

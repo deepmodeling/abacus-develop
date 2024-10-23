@@ -214,7 +214,7 @@ TEST(AbacusJsonTest, GeneralInfo)
     PARAM.input.device = "cpu";
     PARAM.input.pseudo_dir = "./abacus/test/pseudo_dir";
     PARAM.input.orbital_dir = "./abacus/test/orbital_dir";
-    PARAM.input.stru_file = "./abacus/test/stru_file";
+    PARAM.sys.global_in_stru = "./abacus/test/stru_file";
     PARAM.input.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");
@@ -272,7 +272,7 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.spgname = "O_h";
     ucell.atoms = atomlist;
     ucell.ntype = 3;
-    GlobalV::NBANDS = 10;
+    PARAM.input.nbands = 10;
 
     ucell.atoms[0].label = "Si";
     ucell.atoms[0].ncpp.zv = 3;

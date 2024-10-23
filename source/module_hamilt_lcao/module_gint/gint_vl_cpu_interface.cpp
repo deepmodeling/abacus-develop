@@ -1,5 +1,6 @@
 #include "gint.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
 void Gint::gint_kernel_vlocal(Gint_inout* inout) {
@@ -12,7 +13,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    if (!GlobalV::GAMMA_ONLY_LOCAL) {
+    if (!PARAM.globalv.gamma_only_local) {
         if (!pvpR_alloc_flag) {
             ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
                                      "pvpR has not been allocated yet!");
@@ -28,7 +29,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     */
     hamilt::HContainer<double>* hRGint_thread;
     double* pvpR_thread; 
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (PARAM.globalv.gamma_only_local) {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     } else {
         pvpR_thread = new double[nnrg];
@@ -80,7 +81,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(PARAM.globalv.gamma_only_local)
         {
             this->cal_meshball_vlocal_gamma(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
@@ -96,7 +97,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
 
     }
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (PARAM.globalv.gamma_only_local) {
         {
         #pragma omp critical(gint_gamma)
             BlasConnector::axpy(this->hRGint->get_nnr(),
@@ -134,7 +135,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (PARAM.globalv.gamma_only_local) {
         ModuleBase::WARNING_QUIT("Gint_interface::cal_gint","dvlocal only for k point!");
     }
 
@@ -241,13 +242,22 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
 
+    if (!PARAM.globalv.gamma_only_local) {
+        if (!pvpR_alloc_flag) {
+            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
+                                     "pvpR has not been allocated yet!");
+        } else {
+            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
+        }
+    }
+    
 #pragma omp parallel
 {
     // define HContainer here to reference.
     //Under the condition of gamma_only, hRGint will be instantiated.
     hamilt::HContainer<double>* hRGint_thread;
     double* pvpR_thread; 
-    if (GlobalV::GAMMA_ONLY_LOCAL)
+    if (PARAM.globalv.gamma_only_local)
     {
         hRGint_thread =new hamilt::HContainer<double>(*this->hRGint);
     }else{
@@ -320,7 +330,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
 	    const ModuleBase::Array_Pool<double> dpsiz_vlbr3 = Gint_Tools::get_psir_vlbr3(
 			this->bxyz, na_grid, LD_pool, block_index.data(), cal_flag.get_ptr_2D(), vkdr3.data(), dpsir_ylm_z.get_ptr_2D());
 
-        if(GlobalV::GAMMA_ONLY_LOCAL)
+        if(PARAM.globalv.gamma_only_local)
         {
             //integrate (psi_mu*v(r)*dv) * psi_nu on grid
             //and accumulates to the corresponding element in Hamiltonian
@@ -355,7 +365,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
                 dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), pvpR_thread,ucell);
         }
     }
-    if (GlobalV::GAMMA_ONLY_LOCAL) {
+    if (PARAM.globalv.gamma_only_local) {
 #pragma omp critical(gint_gamma)
         {
             BlasConnector::axpy(this->hRGint->get_nnr(),

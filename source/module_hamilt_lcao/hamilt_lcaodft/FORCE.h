@@ -66,6 +66,7 @@ class Force_LCAO
 #endif
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,
+                const LCAO_Orbitals& orb,
                 const Parallel_Orbitals& pv,
                 const K_Vectors* kv = nullptr,
                 Record_adj* ra = nullptr);
@@ -74,6 +75,7 @@ class Force_LCAO
     void allocate(const Parallel_Orbitals& pv,
                   ForceStressArrays& fsr, // mohan add 2024-06-15
                   const TwoCenterBundle& two_center_bundle,
+                  const LCAO_Orbitals& orb,
                   const int& nks = 0,
                   const std::vector<ModuleBase::Vector3<double>>& kvec_d = {});
 
@@ -81,7 +83,7 @@ class Force_LCAO
 
     void average_force(double* fm);
 
-    void test(Parallel_Orbitals& pv, double* mm, const std::string& name);
+    //void test(Parallel_Orbitals& pv, double* mm, const std::string& name);
 
     //-------------------------------------------------------------
     // forces reated to overlap matrix
@@ -92,7 +94,7 @@ class Force_LCAO
                   const bool isstress,
                   ForceStressArrays& fsr,
                   const UnitCell& ucell,
-                  const elecstate::DensityMatrix<T, double>* dm,
+                  const elecstate::DensityMatrix<T, double>& dm,
                   const psi::Psi<T>* psi,
                   const Parallel_Orbitals& pv,
                   const elecstate::ElecState* pelec,
@@ -134,12 +136,16 @@ class Force_LCAO
                       typename TGint<T>::type& gint,
                       ModuleBase::matrix& fvl_dphi,
                       ModuleBase::matrix& svl_dphi);
+
+    elecstate::DensityMatrix<T, double> cal_edm(const elecstate::ElecState* pelec,
+        const psi::Psi<T>& psi,
+        const elecstate::DensityMatrix<T, double>& dm,
+        const K_Vectors& kv,
+        const Parallel_Orbitals& pv,
+        const int& nspin, 
+        const int& nbands,
+        const UnitCell& ucell,
+        Record_adj& ra) const;
 };
 
-// this namespace used to store global function for some stress operation
-namespace StressTools
-{
-// set upper matrix to whole matrix
-void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix);
-} // namespace StressTools
 #endif

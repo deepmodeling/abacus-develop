@@ -1,9 +1,9 @@
 add_definitions(-D__NORMAL)
 AddTest(
   TARGET pw_test
-  LIBS ${math_libs} planewave device
+  LIBS parameter ${math_libs} planewave device 
   SOURCES ../../../module_base/matrix.cpp ../../../module_base/complexmatrix.cpp ../../../module_base/matrix3.cpp ../../../module_base/tool_quit.cpp
-          ../../../module_base/mymath.cpp ../../../module_base/timer.cpp ../../../module_base/memory.cpp 
+          ../../../module_base/mymath.cpp ../../../module_base/timer.cpp ../../../module_base/memory.cpp ../../../module_base/blas_connector.cpp 
           ../../../module_base/libm/branred.cpp ../../../module_base/libm/sincos.cpp
       #     ../../../module_psi/kernels/psi_memory_op.cpp 
           ../../../module_base/module_device/memory_op.cpp

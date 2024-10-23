@@ -37,7 +37,7 @@ void single_derivative(ForceStressArrays& fsr,
 )
 {
 
-    const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
     const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
@@ -233,7 +233,7 @@ void single_overlap(const LCAO_Orbitals& orb,
                     double* HSloc   // output value
 )
 {
-    const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     // convert m (0,1,...2l) to M (-l, -l+1, ..., l-1, l)
     const int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
@@ -311,6 +311,7 @@ void single_overlap(const LCAO_Orbitals& orb,
 void build_ST_new(ForceStressArrays& fsr,
                   const char& dtype,
                   const bool& calc_deri,
+                  const bool& cal_stress,
                   const UnitCell& ucell,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
@@ -323,10 +324,9 @@ void build_ST_new(ForceStressArrays& fsr,
     ModuleBase::TITLE("LCAO_domain", "build_ST_new");
     ModuleBase::timer::tick("LCAO_domain", "build_ST_new");
 
-    const int nspin = GlobalV::NSPIN;
-    const int npol = GlobalV::NPOL;
-    const bool cal_stress = GlobalV::CAL_STRESS;
-    const bool gamma_only_local = GlobalV::GAMMA_ONLY_LOCAL;
+    const int nspin = PARAM.inp.nspin;
+    const int npol = PARAM.globalv.npol;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
 
     int total_nnr = 0;
 #ifdef _OPENMP

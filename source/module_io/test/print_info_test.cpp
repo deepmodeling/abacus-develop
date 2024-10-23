@@ -1,12 +1,12 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_cell/klist.h"
 #include "module_cell/parallel_kpoints.h"
 #include "module_cell/unitcell.h"
 #include "module_io/berryphase.h"
 #include "module_io/print_info.h"
-#include "module_parameter/parameter.h"
 #include "prepare_unitcell.h"
 #undef private
 #ifdef __LCAO
@@ -60,11 +60,6 @@ protected:
 	}
 };
 
-TEST_F(PrintInfoTest, Constructor)
-{
-	EXPECT_NO_THROW(Print_Info pinfo);
-}
-
 TEST_F(PrintInfoTest, SetupParameters)
 {
 	UcellTestPrepare utp = UcellTestLib["Si"];
@@ -80,35 +75,33 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		if(cal_type[i] != "md")
 		{
-			GlobalV::COLOUR = false;
-			GlobalV::GAMMA_ONLY_LOCAL = false;
-			GlobalV::CALCULATION = cal_type[i];
+			PARAM.sys.gamma_only_local = false;
+			PARAM.input.calculation = cal_type[i];
 			testing::internal::CaptureStdout();
-			EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-			output = testing::internal::GetCapturedStdout();
-			if(GlobalV::CALCULATION == "scf")
+            EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+            output = testing::internal::GetCapturedStdout();
+			if(PARAM.input.calculation == "scf")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Self-consistent calculations"));
 			}
-			else if(GlobalV::CALCULATION == "relax")
+			else if(PARAM.input.calculation == "relax")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Ion relaxation calculations"));
 			}
-			else if(GlobalV::CALCULATION == "cell-relax")
+			else if(PARAM.input.calculation == "cell-relax")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Cell relaxation calculations"));
 			}
 		}
 		else
 		{
-			GlobalV::COLOUR = true;
-			GlobalV::GAMMA_ONLY_LOCAL = true;
-			GlobalV::CALCULATION = cal_type[i];
+			PARAM.sys.gamma_only_local = true;
+      PARAM.input.calculation = cal_type[i];
 			for(int j=0; j<md_types.size(); ++j)
 			{
                 PARAM.input.mdp.md_type = md_types[j];
                 testing::internal::CaptureStdout();
-                EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
+                EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
                 if (PARAM.mdp.md_type == "fire")
@@ -141,19 +134,19 @@ TEST_F(PrintInfoTest, SetupParameters)
 	std::vector<std::string> basis_type = {"lcao","pw","lcao_in_pw"};
 	for(int i=0; i<basis_type.size(); ++i)
 	{
-		GlobalV::BASIS_TYPE = basis_type[i];
+		PARAM.input.basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
-		EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-		output = testing::internal::GetCapturedStdout();
-		if(GlobalV::BASIS_TYPE == "lcao")
+        EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+        output = testing::internal::GetCapturedStdout();
+		if(PARAM.input.basis_type == "lcao")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use Systematically Improvable Atomic bases"));
 		}
-		else if(GlobalV::BASIS_TYPE == "lcao_in_pw")
+		else if(PARAM.input.basis_type == "lcao_in_pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Expand Atomic bases into plane waves"));
 		}
-		else if(GlobalV::BASIS_TYPE == "pw")
+		else if(PARAM.input.basis_type == "pw")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use plane wave basis"));
 		}
@@ -168,50 +161,50 @@ TEST_F(PrintInfoTest, PrintScreen)
 	std::vector<std::string> cal_type = {"scf","nscf","md","relax","cell-relax"};
 	for(int i=0; i<cal_type.size(); ++i)
 	{
-		GlobalV::CALCULATION = cal_type[i];
-		if(GlobalV::CALCULATION=="scf")
+		PARAM.input.calculation = cal_type[i];
+		if(PARAM.input.calculation=="scf")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("SELF-CONSISTENT"));
 		}
-		else if(GlobalV::CALCULATION=="nscf")
+		else if(PARAM.input.calculation=="nscf")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("NONSELF-CONSISTENT"));
 		}
-		else if(GlobalV::CALCULATION=="md")
+		else if(PARAM.input.calculation=="md")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("STEP OF MOLECULAR DYNAMICS"));
 		}
 		else
 		{
-			GlobalV::relax_new = false;
-			if(GlobalV::CALCULATION=="relax")
+			PARAM.input.relax_new = false;
+			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
-				Print_Info::print_screen(stress_step,force_step,istep);
-				output = testing::internal::GetCapturedStdout();
+                ModuleIO::print_screen(stress_step, force_step, istep);
+                output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("STEP OF ION RELAXATION"));
 			}
-			else if(GlobalV::CALCULATION=="cell-relax")
+			else if(PARAM.input.calculation=="cell-relax")
 			{
 				testing::internal::CaptureStdout();
-				Print_Info::print_screen(stress_step,force_step,istep);
-				output = testing::internal::GetCapturedStdout();
+                ModuleIO::print_screen(stress_step, force_step, istep);
+                output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
 				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
 			}
-			GlobalV::relax_new = true;
+			PARAM.input.relax_new = true;
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("STEP OF RELAXATION"));
 		}
 	}
@@ -222,8 +215,8 @@ TEST_F(PrintInfoTest, PrintTime)
 	time_t time_start = std::time(nullptr);
 	time_t time_finish = std::time(nullptr);
 	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(Print_Info::print_time(time_start,time_finish));
-	output = testing::internal::GetCapturedStdout();
+    EXPECT_NO_THROW(ModuleIO::print_time(time_start, time_finish));
+    output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("START  Time"));
 	EXPECT_THAT(output,testing::HasSubstr("FINISH Time"));
 	EXPECT_THAT(output,testing::HasSubstr("TOTAL  Time"));

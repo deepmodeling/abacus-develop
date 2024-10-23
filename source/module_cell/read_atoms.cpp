@@ -1,4 +1,5 @@
 #include "unitcell.h"
+#include "module_parameter/parameter.h"
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
@@ -44,7 +45,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             pseudo_fn[i] = "auto";
             pseudo_type[i] = "auto";
 
-            if(!GlobalV::use_paw)
+            if(!PARAM.inp.use_paw)
             {
                 bool end = false;
                 if (ss >> one_string)
@@ -76,7 +77,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
                     }
                 }
 
-                if(GlobalV::test_pseudo_cell==2) 
+                if(PARAM.inp.test_pseudo_cell==2) 
                 {
                     ofs_running << "\n" << std::setw(6) << atom_label[i] 
                             << std::setw(12) << atom_mass[i] 
@@ -94,12 +95,12 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
     }
 
     if(
-        (GlobalV::BASIS_TYPE == "lcao")
-      ||(GlobalV::BASIS_TYPE == "lcao_in_pw")
+        (PARAM.inp.basis_type == "lcao")
+      ||(PARAM.inp.basis_type == "lcao_in_pw")
       ||(
-          (GlobalV::BASIS_TYPE == "pw")
-        &&(GlobalV::psi_initializer)
-        &&(GlobalV::init_wfc.substr(0, 3) == "nao")
+          (PARAM.inp.basis_type == "pw")
+        &&(PARAM.inp.psi_initializer)
+        &&(PARAM.inp.init_wfc.substr(0, 3) == "nao")
         )
     )
     {
@@ -111,7 +112,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
             }
         }    
         // caoyu add 2021-03-16
-        if(GlobalV::deepks_setorb)
+        if(PARAM.globalv.deepks_setorb)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
                 ifa >> descriptor_file;
@@ -138,18 +139,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         }
     }
 
-    if (PARAM.globalv.rpa_setorb)
-    {
-        if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "ABFS_ORBITAL"))
-        {
-            std::cout << "RPA_EXX_LCAO read abfs_orb!!!" << std::endl;
-            GlobalV::rpa_orbitals.resize(ntype);
-            for (int i = 0; i < ntype; i++)
-            {
-                ifa >> GlobalV::rpa_orbitals[i];
-            }
-        }
-    }
 #endif // __EXX
 #endif // __MPI
 #endif // __LCAO
@@ -458,14 +447,14 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             // int* atoms[it].l_nchi;
             //===========================================
 
-            if ((GlobalV::BASIS_TYPE == "lcao")||(GlobalV::BASIS_TYPE == "lcao_in_pw"))
+            if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
             {
                 std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                 this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
             }
-            else if(GlobalV::BASIS_TYPE == "pw")
+            else if(PARAM.inp.basis_type == "pw")
             {
-                if ((GlobalV::psi_initializer)&&(GlobalV::init_wfc.substr(0, 3) == "nao"))
+                if ((PARAM.inp.psi_initializer)&&(PARAM.inp.init_wfc.substr(0, 3) == "nao"))
                 {
                     std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                     this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));
@@ -637,13 +626,11 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     std::string mags;
                     //cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
-                        if(GlobalV::NONCOLIN)
+                        if(PARAM.inp.noncolin)
                         {
                             //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
-                            GlobalV::DOMAG_Z = false;
-                            GlobalV::DOMAG = true;
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
@@ -697,7 +684,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         }
                         ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
                     }
-                    else if(GlobalV::NSPIN==2)
+                    else if(PARAM.inp.nspin==2)
                     {
                         atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
                         //print only ia==0 && mag>0 to avoid too much output
@@ -826,7 +813,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
         }
         if (autoset_mag)
         {
-            if(GlobalV::NSPIN==4)
+            if(PARAM.inp.nspin==4)
             {
                 for (int it = 0;it < ntype; it++)
                 {
@@ -840,7 +827,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     }
                 }
             }
-            else if(GlobalV::NSPIN==2)
+            else if(PARAM.inp.nspin==2)
             {
                 for (int it = 0;it < ntype; it++)
                 {
@@ -857,7 +844,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
     }   // end scan_begin
 
 //check if any atom can move in MD
-    if(!this->if_atoms_can_move() && GlobalV::CALCULATION=="md" && GlobalV::ESOLVER_TYPE!="tddft")
+    if(!this->if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atom can move in MD!");
         return false;
@@ -1051,7 +1038,7 @@ void UnitCell::print_tau() const {
 /*
 int UnitCell::find_type(const std::string &label)
 {
-    if(GlobalV::test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
+    if(PARAM.inp.test_pseudo_cell) ModuleBase::TITLE("UnitCell","find_type");
     assert(ntype>0);
     for(int it=0;it<ntype;it++)
     {

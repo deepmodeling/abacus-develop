@@ -9,19 +9,21 @@ namespace ModuleIO
 {
 
 /// @brief write electric static potential to file
-/// @param bz 
-/// @param nbz 
-/// @param fn 
-/// @param rho_basis 
-/// @param chr 
-/// @param ucell_ 
-/// @param v_effective_fixed 
+/// @param bz
+/// @param nbz
+/// @param fn
+/// @param istep
+/// @param rho_basis
+/// @param chr
+/// @param ucell_
+/// @param v_effective_fixed
 void write_elecstat_pot(
 #ifdef __MPI
     const int& bz,
     const int& nbz,
 #endif
     const std::string& fn,
+    const int& istep,
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell_,

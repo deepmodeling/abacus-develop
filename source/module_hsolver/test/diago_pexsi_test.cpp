@@ -1,5 +1,8 @@
 #ifdef __PEXSI
 #include "module_hsolver/diago_pexsi.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
@@ -180,10 +183,10 @@ class PexsiPrepare
 
     void set_env()
     {
-        GlobalV::NLOCAL = nlocal;
-        GlobalV::NBANDS = nbands;
+        PARAM.sys.nlocal = nlocal;
+        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         DIAG_WORLD = MPI_COMM_WORLD;
         GlobalV::NPROC = dsize;
 
@@ -295,7 +298,7 @@ class PexsiPrepare
             return false;
         }
 
-        f_dm >> GlobalV::nelec >> mu;
+        f_dm >> PARAM.input.nelec >> mu;
 
         dm.resize(nread * nread);
         // T* edm = new T[nglobal*nglobal];

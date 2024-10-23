@@ -1,5 +1,6 @@
 #include "write_HS.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -17,14 +18,14 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
 
     if(bit)
     {
-        ssh << GlobalV::global_out_dir << "H_bit.ccf";
-        sss << GlobalV::global_out_dir << "S_bit.ccf";
+        ssh << PARAM.globalv.global_out_dir << "H_bit.ccf";
+        sss << PARAM.globalv.global_out_dir << "S_bit.ccf";
     }
     else
     {
         // mohan update 2021-02-10
-        ssh << GlobalV::global_out_dir << "H" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
-        sss << GlobalV::global_out_dir << "S" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
+        ssh << PARAM.globalv.global_out_dir << "H" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
+        sss << PARAM.globalv.global_out_dir << "S" << ELEC_scf::iter << "_" << iter+1 << ".ccf";
     }
 
     if(bit)
@@ -32,9 +33,9 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
         FILE *g1 = fopen(ssh.str().c_str(),"wb");
         FILE *g2 = fopen(sss.str().c_str(),"wb");
 
-        fwrite(&GlobalV::NLOCAL,sizeof(int),1,g1);
+        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g1);
         fwrite(&Hnnz,sizeof(int),1,g1);
-        fwrite(&GlobalV::NLOCAL,sizeof(int),1,g2);
+        fwrite(&PARAM.globalv.nlocal,sizeof(int),1,g2);
         fwrite(&Hnnz,sizeof(int),1,g2);
 
         fclose(g1);
@@ -47,10 +48,10 @@ void ModuleIO::save_HS_ccf(const int &iter, const int &Hnnz, const int *colptr_H
         std::ofstream g1(ssh.str().c_str());
         std::ofstream g2(sss.str().c_str());
 
-        g1 << GlobalV::NLOCAL << " " << Hnnz << std::endl;
-        g2 << GlobalV::NLOCAL << " " << Hnnz << std::endl;
+        g1 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
+        g2 << PARAM.globalv.nlocal << " " << Hnnz << std::endl;
 
-        for(int i=0; i<GlobalV::NLOCAL+1; ++i)
+        for(int i=0; i<PARAM.globalv.nlocal+1; ++i)
         {
             g1 << colptr_H[i] << " ";
             g2 << colptr_H[i] << " ";
@@ -101,13 +102,13 @@ void ModuleIO::save_mat(const int istep,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Dimension of " + label + " : ", dim);
 
     std::stringstream ss;
-    if (bit) {ss << GlobalV::global_out_dir << file_name + "-" + label + "-bit";
+    if (bit) {ss << PARAM.globalv.global_out_dir << file_name + "-" + label + "-bit";
     } else
     {
         if (app || istep < 0) {
-            ss << GlobalV::global_out_dir << file_name + "-" + label;
+            ss << PARAM.globalv.global_out_dir << file_name + "-" + label;
         } else {
-            ss << GlobalV::global_out_dir << istep << "_" << file_name + "-" + label;
+            ss << PARAM.globalv.global_out_dir << istep << "_" << file_name + "-" + label;
 }
     }
     if (bit)
@@ -137,7 +138,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -213,7 +214,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }

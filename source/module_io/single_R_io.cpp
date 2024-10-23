@@ -1,5 +1,6 @@
 #include "single_R_io.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 
@@ -23,11 +24,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 {
     T* line = nullptr;
     std::vector<int> indptr;
-    indptr.reserve(GlobalV::NLOCAL + 1);
+    indptr.reserve(PARAM.globalv.nlocal + 1);
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
+    tem1 << PARAM.globalv.global_out_dir << std::to_string(GlobalV::DRANK) + "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
@@ -43,10 +44,10 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         }
     }
 
-    line = new T[GlobalV::NLOCAL];
-    for(int row = 0; row < GlobalV::NLOCAL; ++row)
+    line = new T[PARAM.globalv.nlocal];
+    for(int row = 0; row < PARAM.globalv.nlocal; ++row)
     {
-        ModuleBase::GlobalFunc::ZEROS(line, GlobalV::NLOCAL);
+        ModuleBase::GlobalFunc::ZEROS(line, PARAM.globalv.nlocal);
 
         if (!reduce || pv.global2local_row(row) >= 0)
         {
@@ -60,12 +61,13 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             }
         }
 
-        if (reduce)Parallel_Reduce::reduce_all(line, GlobalV::NLOCAL);
+        if (reduce) {Parallel_Reduce::reduce_all(line, PARAM.globalv.nlocal);
+}
 
         if (!reduce || GlobalV::DRANK == 0)
         {
             int nonzeros_count = 0;
-            for (int col = 0; col < GlobalV::NLOCAL; ++col)
+            for (int col = 0; col < PARAM.globalv.nlocal; ++col)
             {
                 if (std::abs(line[col]) > sparse_threshold)
                 {

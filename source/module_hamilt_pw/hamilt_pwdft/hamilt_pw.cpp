@@ -1,5 +1,6 @@
 #include "hamilt_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
@@ -57,15 +58,15 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         }
         //no variable can choose xc, maybe it is necessary
         pot_register_in.push_back("xc");
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             pot_register_in.push_back("surchem");
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             pot_register_in.push_back("efield");
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             pot_register_in.push_back("gatefield");
         }
@@ -211,7 +212,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     const T one{1, 0};
     const T zero{0, 0};
 
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef USE_PAW
         for(int m = 0; m < nbands; m ++)
@@ -224,7 +225,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     }
 
     syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         T* becp = nullptr;
         T* ps = nullptr;
@@ -275,7 +276,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         setmem_complex_op()(this->ctx, ps, 0, this->ppcell->nkb * nbands);
 
         // spsi = psi + sum qq <beta|psi> |beta>
-        if (GlobalV::NONCOLIN)
+        if (PARAM.inp.noncolin)
         {
             // spsi_nc
             std::cout << " noncolinear in uspp is not implemented yet " << std::endl;

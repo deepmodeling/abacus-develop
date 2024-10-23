@@ -1,5 +1,6 @@
 #include "to_wannier90.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
 #include "module_base/math_sphbes.h"
@@ -33,7 +34,7 @@ toWannier90::toWannier90(const bool& out_wannier_mmn,
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support kpar groups");
     }
 
-    if (GlobalV::NSTOGROUP != 1)
+    if (PARAM.inp.bndpar != 1)
     {
         ModuleBase::WARNING_QUIT("toWannier90", "The wannier90 interface does not currently support bndpar groups");
     }
@@ -51,7 +52,7 @@ toWannier90::~toWannier90()
         delete[] x_axis;
         delete[] alfa;
 
-        if (GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 4)
         {
             delete[] spin_eig;
             delete[] spin_qaxis;
@@ -100,7 +101,7 @@ void toWannier90::out_eig(const ModuleBase::matrix& ekb)
     if (GlobalV::MY_RANK == 0)
 #endif
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".eig";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".eig";
         std::ofstream eig_file(fileaddress.c_str());
         for (int ik = start_k_index; ik < (cal_num_kpts + start_k_index); ik++)
         {
@@ -193,22 +194,22 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "kpoints"))
     {
         num_kpts = kv.get_nkstot();
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
         {
             cal_num_kpts = num_kpts;
         }
-        else if (GlobalV::NSPIN == 2)
+        else if (PARAM.inp.nspin == 2)
         {
             cal_num_kpts = num_kpts / 2;
         }
 
         int numkpt_nnkp;
         ModuleBase::GlobalFunc::READ_VALUE(nnkp_read, numkpt_nnkp);
-        if ((GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4) && numkpt_nnkp != num_kpts)
+        if ((PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4) && numkpt_nnkp != num_kpts)
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
         }
-        else if (GlobalV::NSPIN == 2 && numkpt_nnkp != (num_kpts / 2))
+        else if (PARAM.inp.nspin == 2 && numkpt_nnkp != (num_kpts / 2))
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error kpoints in *.nnkp file");
         }
@@ -237,7 +238,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
     // read projections
     if (out_wannier_amn)
     {
-        if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "projections"))
             {
@@ -271,7 +272,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
                 ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Cannot find projections in *.nnkp file");
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             if (ModuleBase::GlobalFunc::SCAN_BEGIN(nnkp_read, "spinor_projections"))
             {
@@ -341,7 +342,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
         }
 
         // Generate spin-related coefficients
-        if (GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 4)
         {
             up_con = new std::complex<double>[num_wannier];
             dn_con = new std::complex<double>[num_wannier];
@@ -415,11 +416,11 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
             }
 
             int numkpt_nnkp;
-            if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
             {
                 numkpt_nnkp = kv.get_nkstot();
             }
-            else if (GlobalV::NSPIN == 2)
+            else if (PARAM.inp.nspin == 2)
             {
                 numkpt_nnkp = kv.get_nkstot() / 2;
             }
@@ -478,31 +479,31 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
 
     nnkp_read.close();
 
-    if (GlobalV::NBANDS <= num_exclude_bands)
+    if (PARAM.inp.nbands <= num_exclude_bands)
     {
         ModuleBase::WARNING_QUIT("toWannier90::read_nnkp",
                                  "you set the band numer is not enough, please add bands number.");
     }
 
-    // tag_cal_band = new bool[GlobalV::NBANDS];
-    // for (int ib = 0; ib < GlobalV::NBANDS; ib++) tag_cal_band[ib] = true;
+    // tag_cal_band = new bool[PARAM.inp.nbands];
+    // for (int ib = 0; ib < PARAM.inp.nbands; ib++) tag_cal_band[ib] = true;
     // for (int ib = 0; ib < num_exclude_bands; ib++) tag_cal_band[ib] = false;
 
     if (num_exclude_bands == 0)
     {
-        num_bands = GlobalV::NBANDS;
+        num_bands = PARAM.inp.nbands;
         cal_band_index = new int[num_bands];
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             cal_band_index[ib] = ib;
         }
     }
     else
     {
-        num_bands = GlobalV::NBANDS - num_exclude_bands;
+        num_bands = PARAM.inp.nbands - num_exclude_bands;
         cal_band_index = new int[num_bands];
         int count = 0;
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             if (exclude_bands.count(ib) != 1)
             {

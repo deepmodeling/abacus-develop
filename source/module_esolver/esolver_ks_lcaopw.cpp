@@ -32,7 +32,6 @@
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_elecstat_pot.h"
@@ -55,21 +54,13 @@ namespace ModuleESolver
         this->classname = "ESolver_KS_LIP";
         this->basisname = "LIP";
     }
+    template <typename T>
+    ESolver_KS_LIP<T>::~ESolver_KS_LIP()
+    {
+        // delete Hamilt
+        this->deallocate_hamilt();
+    }
 
-    template <typename T>
-    void ESolver_KS_LIP<T>::allocate_hsolver()
-    {
-        this->phsol = new hsolver::HSolverLIP<T>(this->pw_wfc);
-    }
-    template <typename T>
-    void ESolver_KS_LIP<T>::deallocate_hsolver()
-    {
-        if (this->phsol != nullptr)
-        {
-            delete reinterpret_cast<hsolver::HSolverLIP<T>*>(this->phsol);
-            this->phsol = nullptr;
-        }
-    }
     template <typename T>
     void ESolver_KS_LIP<T>::allocate_hamilt()
     {
@@ -79,15 +70,24 @@ namespace ModuleESolver
 #endif
         );
     }
+    template <typename T>
+    void ESolver_KS_LIP<T>::deallocate_hamilt()
+    {
+        if (this->p_hamilt != nullptr)
+        {
+            delete reinterpret_cast<hamilt::HamiltLIP<T>*>(this->p_hamilt);
+            this->p_hamilt = nullptr;
+        }
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(const Input_para& inp, UnitCell& cell)
     {
         ESolver_KS_PW<T>::before_all_runners(inp, cell);
 #ifdef __EXX
-        if (GlobalV::CALCULATION == "scf" || GlobalV::CALCULATION == "relax"
-            || GlobalV::CALCULATION == "cell-relax"
-            || GlobalV::CALCULATION == "md") {
+        if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
+            || PARAM.inp.calculation == "cell-relax"
+            || PARAM.inp.calculation == "md") {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(cell);
@@ -116,7 +116,6 @@ namespace ModuleESolver
         ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density");
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
 
-        if (this->phsol != nullptr)
         {
             // reset energy
             this->pelec->f_en.eband = 0.0;
@@ -127,7 +126,7 @@ namespace ModuleESolver
             hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
             hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
             hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
-            hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = GlobalV::PW_DIAG_NMAX;
+            hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
             // It is not a good choice to overload another solve function here, this will spoil the concept of
             // multiple inheritance and polymorphism. But for now, we just do it in this way.
@@ -139,15 +138,16 @@ namespace ModuleESolver
                 ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
             }
 
-            // from HSolverLIP
-            this->phsol->solve(this->p_hamilt,        // hamilt::Hamilt<T>* pHamilt,
-                this->kspw_psi[0],     // psi::Psi<T>& psi,
-                this->pelec,           // elecstate::ElecState<T>* pelec,
-                psig.lock().get()[0]); // psi::Psi<T>& transform,
+            hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
+            hsolver_lip_obj.solve(this->p_hamilt, 
+                                  this->kspw_psi[0], 
+                                  this->pelec, 
+                                  psig.lock().get()[0], 
+                                  false);
 
             if (PARAM.inp.out_bandgap)
             {
-                if (!GlobalV::TWO_EFERMI)
+                if (!PARAM.globalv.two_fermi)
                 {
                     this->pelec->cal_bandgap();
                 }
@@ -157,10 +157,7 @@ namespace ModuleESolver
                 }
             }
         }
-        else
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LIP", "HSolver has not been allocated.");
-        }
+   
         // add exx
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx) {
@@ -174,9 +171,9 @@ namespace ModuleESolver
         this->pelec->cal_energies(1);
 
         Symmetry_rho srho;
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::Pgrid, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
         }
 
         // compute magnetization, only for LSDA(spin==2)
@@ -193,11 +190,13 @@ namespace ModuleESolver
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
     }
 
-#ifdef __EXX
     template <typename T>
-    bool ESolver_KS_LIP<T>::do_after_converge(int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(int& iter)
     {
-        if (GlobalC::exx_info.info_global.cal_exx)
+        ESolver_KS_PW<T>::iter_finish(iter);
+
+#ifdef __EXX
+        if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
         {
             // no separate_loop case
             if (!GlobalC::exx_info.info_global.separate_loop)
@@ -208,24 +207,24 @@ namespace ModuleESolver
                 // in first scf loop, exx updated once in beginning,
                 // in second scf loop, exx updated every iter
 
-                if (this->two_level_step) {
-                    return true;
-                } else
+                if (!this->two_level_step)
                 {
                     // update exx and redo scf
                     XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
                     iter = 0;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
-                    return false;
+                    this->conv_esolver = false;
                 }
             }
             // has separate_loop case
             // exx converged or get max exx steps
             else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
-                || (iter == 1 && this->two_level_step != 0)) {
-                return true;
-            } else
+                     || (iter == 1 && this->two_level_step != 0))
+            {
+                this->conv_esolver = true;
+            }
+            else
             {
                 // update exx and redo scf
                 if (this->two_level_step == 0)
@@ -234,32 +233,34 @@ namespace ModuleESolver
                 }
 
                 std::cout << " Updating EXX " << std::flush;
-                timeval t_start;       gettimeofday(&t_start, nullptr);
+                timeval t_start;
+                gettimeofday(&t_start, nullptr);
 
                 this->exx_lip->cal_exx();
                 iter = 0;
                 this->two_level_step++;
 
-                timeval t_end;       gettimeofday(&t_end, nullptr);
-                std::cout << "and rerun SCF\t"
-                    << std::setprecision(3) << std::setiosflags(std::ios::scientific)
-                    << (double)(t_end.tv_sec - t_start.tv_sec) + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
-                    << std::defaultfloat << " (s)" << std::endl;
-                return false;
+                timeval t_end;
+                gettimeofday(&t_end, nullptr);
+                std::cout << "and rerun SCF\t" << std::setprecision(3) << std::setiosflags(std::ios::scientific)
+                          << (double)(t_end.tv_sec - t_start.tv_sec)
+                                 + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
+                          << std::defaultfloat << " (s)" << std::endl;
+                this->conv_esolver = false;
             }
         }
-        else { return true; }
-    }
 #endif
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::after_all_runners()
     {
         ESolver_KS_PW<T>::after_all_runners();
+        
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
-            ModuleIO::write_Vxc(GlobalV::NSPIN, GlobalV::NLOCAL,
+            ModuleIO::write_Vxc(PARAM.inp.nspin, PARAM.globalv.nlocal,
                 GlobalV::DRANK, *this->kspw_psi, GlobalC::ucell, this->sf,
                 *this->pw_wfc, *this->pw_rho, *this->pw_rhod,
                 GlobalC::ppcell.vloc, *this->pelec->charge, this->kv, this->pelec->wg

@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include<memory>
 /************************************************
  *  unit test of read_pp
@@ -76,7 +79,7 @@ TEST_F(ReadPPTest, ReadUPF100_Coulomb)
 	std::ifstream ifs;
 	ifs.open("./support/Te.pbe-coulomb.UPF");
 	read_pp->read_pseudo_upf(ifs, *upf);
-	EXPECT_EQ(upf->vloc_at, nullptr);
+	EXPECT_TRUE(upf->vloc_at.empty());
 	EXPECT_EQ(read_pp->coulomb_potential, true);
 	EXPECT_EQ(upf->tvanp, false);
 	EXPECT_EQ(upf->nbeta, 0);
@@ -287,7 +290,7 @@ TEST_F(ReadPPTest, ReadUPF201_Coulomb)
 	std::ifstream ifs;
 	ifs.open("./support/Al.pbe-coulomb.UPF");
 	read_pp->read_pseudo_upf201(ifs, *upf);
-	EXPECT_EQ(upf->vloc_at, nullptr);
+	EXPECT_TRUE(upf->vloc_at.empty());
 	EXPECT_EQ(read_pp->coulomb_potential, true);
 	EXPECT_EQ(upf->nbeta, 0);
 	EXPECT_EQ(upf->lmax, 0);
@@ -383,7 +386,7 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_DOUBLE_EQ(upf->rab[892], 3.344685763390000e0);
     EXPECT_DOUBLE_EQ(upf->vloc_at[0], 3.456089057550000e0);
     EXPECT_DOUBLE_EQ(upf->vloc_at[892], -1.096266796840000e-1);
-    EXPECT_EQ(upf->rho_atc, nullptr);
+	EXPECT_TRUE(upf->rho_atc.empty());
     EXPECT_EQ(upf->lll[0], 0);
     EXPECT_EQ(read_pp->kbeta[0], 617);
     EXPECT_EQ(read_pp->els_beta[0], "2S");
@@ -419,9 +422,9 @@ TEST_F(ReadPPTest, ReadUSPPUPF201)
     EXPECT_DOUBLE_EQ(upf->chi(0, 892), 0.0);
     EXPECT_DOUBLE_EQ(upf->rho_at[0], 0.0);
     EXPECT_DOUBLE_EQ(upf->rho_at[892], 0.0);
-    EXPECT_EQ(upf->jchi, nullptr);
-    EXPECT_EQ(upf->jjj, nullptr);
-    EXPECT_EQ(upf->nn, nullptr);
+    EXPECT_TRUE(upf->jchi.empty());
+	EXPECT_TRUE(upf->jjj.empty());
+	EXPECT_TRUE(upf->nn.empty());
     ifs.close();
 }
 
@@ -589,7 +592,7 @@ TEST_F(ReadPPTest, BLPS)
 	std::ifstream ifs;
 	// this pp file is a vwr type of pp
 	ifs.open("./support/si.lda.lps");
-	GlobalV::DFT_FUNCTIONAL="default";
+	PARAM.input.dft_functional="default";
 	read_pp->read_pseudo_blps(ifs, *upf);
 	EXPECT_FALSE(upf->nlcc);
 	EXPECT_FALSE(upf->tvanp);
@@ -634,8 +637,8 @@ TEST_F(ReadPPTest, SetEmptyElement)
 {
 	upf->mesh = 10;
 	upf->nbeta = 10;
-	upf->vloc_at = new double[upf->mesh];
-	upf->rho_at = new double[upf->mesh];
+	upf->vloc_at = std::vector<double>(upf->mesh, 0.0);
+	upf->rho_at = std::vector<double>(upf->mesh, 0.0);
 	upf->dion.create(upf->nbeta,upf->nbeta);
 	read_pp->set_empty_element(*upf);
 	for(int ir=0;ir<upf->mesh;++ir)
@@ -741,7 +744,7 @@ TEST_F(ReadPPTest, AverageSimpleReturns)
 	int ierr;
 	double lambda = 1.0;
 	// first return
-	GlobalV::LSPINORB = 1;
+	PARAM.input.lspinorb = 1;
 	upf->has_so = 0;
 	ierr = read_pp->average_p(lambda, *upf);
 	EXPECT_EQ(ierr,1);
@@ -764,7 +767,7 @@ TEST_F(ReadPPTest, AverageErrReturns)
 	ifs.open("./support/Te.pbe-rrkj.UPF");
 	read_pp->read_pseudo_upf(ifs, *upf);
 	EXPECT_TRUE(upf->has_so); // has soc info
-	GlobalV::LSPINORB = 0;
+	PARAM.input.lspinorb = 0;
 	ierr = read_pp->average_p(lambda, *upf);
 	EXPECT_EQ(upf->nbeta,3);
 	EXPECT_EQ(ierr,1);
@@ -784,7 +787,7 @@ TEST_F(ReadPPTest, AverageLSPINORB0)
 	int ierr;
 	double lambda = 1.0;
 	// LSPINORB = 0
-	GlobalV::LSPINORB = 0;
+	PARAM.input.lspinorb = 0;
 	ierr = read_pp->average_p(lambda, *upf);
 	EXPECT_EQ(ierr,0);
 	EXPECT_EQ(upf->nbeta,4);
@@ -801,7 +804,7 @@ TEST_F(ReadPPTest, AverageLSPINORB1)
 	int ierr;
 	double lambda = 1.1;
 	// LSPINORB = 0
-	GlobalV::LSPINORB = 1;
+	PARAM.input.lspinorb = 1;
 	ierr = read_pp->average_p(lambda, *upf);
 	EXPECT_EQ(ierr,0);
 	EXPECT_EQ(upf->nbeta,6);

@@ -80,7 +80,6 @@ class ESolver_OF : public ESolver_FP
     psi::Psi<double>* psi_ = nullptr;             // sqrt(rho)
 
     // ----------------- used for convergence check -------------------
-    bool conv_ = false;
     double energy_llast_ = 0;
     double energy_last_ = 0;
     double energy_current_ = 0;
@@ -126,6 +125,7 @@ class ESolver_OF : public ESolver_FP
     void init_kedf(const Input_para& inp);
     void kinetic_potential(double** prho, double** pphi, ModuleBase::matrix& rpot);
     double kinetic_energy();
+    void kinetic_energy_density(double** prho, double** pphi, double** rtau);
     void kinetic_stress(ModuleBase::matrix& kinetic_stress);
 
     // ---------------------- interfaces to optimization methods --------

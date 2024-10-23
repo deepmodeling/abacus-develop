@@ -1,7 +1,6 @@
 #include "module_cell/klist.h"
-#include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
 #include "module_psi/psi.h"
 /**
  * @brief Check if Emin and Emax are converged
@@ -11,9 +10,13 @@
  * @param try_emax trial Emax
  * @param nbands_sto number of stochastic bands
  */
-void check_che(const int& nche_in, const double& try_emin, const double& try_emax, const int& nbands_sto,
-               K_Vectors* p_kv, Stochastic_WF* p_stowf, hamilt::Hamilt<std::complex<double>>* p_hamilt,
-               hsolver::HSolverPW_SDFT* p_hsol_in);
+void check_che(const int& nche_in,
+               const double& try_emin,
+               const double& try_emax,
+               const int& nbands_sto,
+               K_Vectors* p_kv,
+               Stochastic_WF* p_stowf,
+               hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
 
 #ifndef PARALLEL_DISTRIBUTION
 #define PARALLEL_DISTRIBUTION
@@ -104,5 +107,9 @@ void convert_psi(const psi::Psi<std::complex<double>>& psi_in, psi::Psi<std::com
  * @return psi::Psi<std::complex<float>> pointer to gathered stochastic wave function
  *
  */
-psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi, psi::Psi<std::complex<float>>& chi_all,
-                                         const int& npwx, int* nrecv_sto, int* displs_sto, const int perbands_sto);
+psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
+                                         psi::Psi<std::complex<float>>& chi_all,
+                                         const int& npwx,
+                                         int* nrecv_sto,
+                                         int* displs_sto,
+                                         const int perbands_sto);

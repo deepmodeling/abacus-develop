@@ -1,26 +1,13 @@
 #include "atom_pseudo.h"
+#include "module_parameter/parameter.h"
 
+#include "module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
 {
-    for (int is = 0; is < 4; is++) {
-        this->index1_soc[is] = nullptr;
-}
-    for (int is = 0; is < 4; is++) {
-        this->index2_soc[is] = nullptr;
-}
 }
 
 Atom_pseudo::~Atom_pseudo()
 {
-    for (int is = 0; is < 4; is++)
-    {
-        if (this->index1_soc[is] != nullptr) {
-            delete[] this->index1_soc[is];
-}
-        if (this->index2_soc[is] != nullptr) {
-            delete[] this->index2_soc[is];
-}
-    }
 }
 
 // mohan add 2021-05-07
@@ -42,10 +29,8 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     for (int is = 0; is < spin_dimension; is++)
     {
         this->non_zero_count_soc[is] = 0;
-        delete[] this->index1_soc[is];
-        this->index1_soc[is] = new int[nproj_soc * nproj_soc];
-        delete[] this->index2_soc[is];
-        this->index2_soc[is] = new int[nproj_soc * nproj_soc];
+        this->index1_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
+        this->index2_soc[is] = std::vector<int>(nproj_soc * nproj_soc, 0);
     }
 
     if (!has_so)
@@ -84,7 +69,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
 
         if (this->lmax > -1)
         {
-            if (GlobalV::LSPINORB)
+            if (PARAM.inp.lspinorb)
             {
                 int is = 0;
                 for (int is1 = 0; is1 < 2; is1++)
@@ -122,7 +107,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= GlobalV::NSPIN) {
+                        if (is >= PARAM.inp.nspin) {
                             break;
 }
                         for (int L1 = 0; L1 < nproj_soc; L1++)
@@ -189,26 +174,20 @@ void Atom_pseudo::bcast_atom_pseudo()
 
     if (GlobalV::MY_RANK != 0)
     {
-        delete[] jjj;
-        delete[] els;
-        delete[] lchi;
-        delete[] oc;
-        delete[] jchi;
-        delete[] nn;
-        jjj = new double[nbeta];
-        els = new std::string[nchi];
-        lchi = new int[nchi];
-        oc = new double[nchi];
-        jchi = new double[nchi];
-        nn = new int[nchi];
+        jjj = std::vector<double>(nbeta, 0.0);
+        els = std::vector<std::string>(nchi, "");
+        lchi = std::vector<int>(nchi, 0);
+        oc = std::vector<double>(nchi, 0.0);
+        jchi = std::vector<double>(nchi, 0.0);
+        nn = std::vector<int>(nchi, 0);
     }
 
-    Parallel_Common::bcast_double(jjj, nbeta);
-    Parallel_Common::bcast_string(els, nchi);
-    Parallel_Common::bcast_int(lchi, nchi);
-    Parallel_Common::bcast_double(oc, nchi);
-    Parallel_Common::bcast_double(jchi, nchi);
-    Parallel_Common::bcast_int(nn, nchi);
+    Parallel_Common::bcast_double(jjj.data(), nbeta);
+    Parallel_Common::bcast_string(els.data(), nchi);
+    Parallel_Common::bcast_int(lchi.data(), nchi);
+    Parallel_Common::bcast_double(oc.data(), nchi);
+    Parallel_Common::bcast_double(jchi.data(), nchi);
+    Parallel_Common::bcast_int(nn.data(), nchi);
     // == end of pseudo_h
 
     // == pseudo_atom ==
@@ -217,31 +196,26 @@ void Atom_pseudo::bcast_atom_pseudo()
     if (GlobalV::MY_RANK != 0)
     {
         assert(mesh != 0);
-        delete[] r;
-        delete[] rab;
-        delete[] rho_atc;
-        delete[] rho_at;
-        r = new double[mesh];
-        rab = new double[mesh];
-        rho_atc = new double[mesh];
-        rho_at = new double[mesh];
+        r = std::vector<double>(mesh, 0.0);
+        rab = std::vector<double>(mesh, 0.0);
+        rho_atc = std::vector<double>(mesh, 0.0);
+        rho_at = std::vector<double>(mesh, 0.0);
         chi.create(nchi, mesh);
     }
 
-    Parallel_Common::bcast_double(r, mesh);
-    Parallel_Common::bcast_double(rab, mesh);
-    Parallel_Common::bcast_double(rho_atc, mesh);
-    Parallel_Common::bcast_double(rho_at, mesh);
+    Parallel_Common::bcast_double(r.data(), mesh);
+    Parallel_Common::bcast_double(rab.data(), mesh);
+    Parallel_Common::bcast_double(rho_atc.data(), mesh);
+    Parallel_Common::bcast_double(rho_at.data(), mesh);
     Parallel_Common::bcast_double(chi.c, nchi * mesh);
     // == end of pseudo_atom ==
 
     // == pseudo_vl ==
     if (GlobalV::MY_RANK != 0)
     {
-        delete[] vloc_at;
-        vloc_at = new double[mesh];
+        vloc_at = std::vector<double>(mesh, 0.0);
     }
-    Parallel_Common::bcast_double(vloc_at, mesh);
+    Parallel_Common::bcast_double(vloc_at.data(), mesh);
     // == end of pseudo_vl ==
 
     // == pseudo ==
@@ -251,10 +225,9 @@ void Atom_pseudo::bcast_atom_pseudo()
 
     if (GlobalV::MY_RANK != 0)
     {
-        delete[] lll;
-        lll = new int[nbeta];
+        lll = std::vector<int>(nbeta, 0);
     }
-    Parallel_Common::bcast_int(lll, nbeta);
+    Parallel_Common::bcast_int(lll.data(), nbeta);
     Parallel_Common::bcast_int(kkbeta);
     Parallel_Common::bcast_int(nh);
 

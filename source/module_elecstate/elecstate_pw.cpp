@@ -1,5 +1,5 @@
 #include "elecstate_pw.h"
-
+#include "module_parameter/parameter.h"
 #include "elecstate_getters.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
@@ -34,7 +34,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
     if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
     {
         delmem_var_op()(this->ctx, this->rho_data);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
@@ -47,13 +47,13 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = new Real*[this->charge->nspin];
             resmem_var_op()(this->ctx, this->kin_r_data, this->charge->nspin * this->charge->nrxx);
@@ -64,7 +64,7 @@ void ElecStatePW<T, Device>::init_rho_data()
     }
     else {
         this->rho = reinterpret_cast<Real **>(this->charge->rho);
-        if (get_xc_func_type() == 3)
+        if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
         }
@@ -87,7 +87,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 
     this->calEBand();
 
-    for(int is=0; is<GlobalV::NSPIN; is++)
+    for(int is=0; is<PARAM.inp.nspin; is++)
 	{
         // denghui replaced at 20221110
 		// ModuleBase::GlobalFunc::ZEROS(this->rho[is], this->charge->nrxx);
@@ -104,12 +104,12 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->add_usrho(psi);
     }
-    if (GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single") {
-        for (int ii = 0; ii < GlobalV::NSPIN; ii++) {
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
+        for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)
             {
@@ -132,7 +132,7 @@ void ElecStatePW<T, Device>::parallelK()
 {
 #ifdef __MPI
     this->charge->rho_mpi();
-    if(GlobalV::ESOLVER_TYPE == "sdft") //qinarui add it 2021-7-21
+    if(PARAM.inp.esolver_type == "sdft") //qinarui add it 2021-7-21
 	{
         this->f_en.eband /= GlobalV::NPROC_IN_POOL;
         MPI_Allreduce(MPI_IN_PLACE, &this->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
@@ -151,7 +151,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     // wfcr.resize(this->basis->nmaxgr);
     // used for plane wavefunction FFT3D to real space, non-collinear spin case
     // static std::vector<std::complex<double>> wfcr_another_spin;
-    // if (GlobalV::NSPIN == 4)
+    // if (PARAM.inp.nspin == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
     if (!this->init_rho) {
@@ -160,13 +160,13 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     int ik = psi.get_current_k();
     int npw = psi.get_current_nbas();
     int current_spin = 0;
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         current_spin = this->klist->isk[ik];
     }
     int nbands = psi.get_nbands();
     //  here we compute the band energy: the sum of the eigenvalues
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         int npwx = npw / 2;
         for (int ibnd = 0; ibnd < nbands; ibnd++)
@@ -186,8 +186,8 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             {
                 // replaced by denghui at 20221110
                 elecstate_pw_op()(this->ctx,
-                                  GlobalV::DOMAG,
-                                  GlobalV::DOMAG_Z,
+                                  PARAM.globalv.domag,
+                                  PARAM.globalv.domag_z,
                                   this->basis->nrxx,
                                   w1,
                                   this->rho,
@@ -254,8 +254,8 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     T* becp = nullptr;
     resmem_complex_op()(this->ctx, becp, nbands * nkb, "ElecState<PW>::becp");
     const int nh_tot = this->ppcell->nhm * (this->ppcell->nhm + 1) / 2;
-    resmem_var_op()(this->ctx, becsum, nh_tot * ucell->nat * GlobalV::NSPIN, "ElecState<PW>::becsum");
-    setmem_var_op()(this->ctx, becsum, 0, nh_tot * ucell->nat * GlobalV::NSPIN);
+    resmem_var_op()(this->ctx, becsum, nh_tot * ucell->nat * PARAM.inp.nspin, "ElecState<PW>::becsum");
+    setmem_var_op()(this->ctx, becsum, 0, nh_tot * ucell->nat * PARAM.inp.nspin);
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
@@ -324,7 +324,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                 for (int ia = 0; ia < atom->na; ia++)
                 {
                     const int iat = ucell->itia2iat(it, ia);
-                    if (GlobalV::NONCOLIN)
+                    if (PARAM.inp.noncolin)
                     {
                         // noncolinear case
                     }
@@ -360,10 +360,10 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
                     }
 
                     // copy output from GEMM into desired format
-                    if (GlobalV::NONCOLIN && !atom->ncpp.has_so)
+                    if (PARAM.inp.noncolin && !atom->ncpp.has_so)
                     {
                     }
-                    else if (GlobalV::NONCOLIN && atom->ncpp.has_so)
+                    else if (PARAM.inp.noncolin && atom->ncpp.has_so)
                     {
                     }
                     else
@@ -399,9 +399,9 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
 
     // transform soft charge to recip space using smooth grids
     T* rhog = nullptr;
-    resmem_complex_op()(this->ctx, rhog, this->charge->rhopw->npw * GlobalV::NSPIN, "ElecState<PW>::rhog");
-    setmem_complex_op()(this->ctx, rhog, 0, this->charge->rhopw->npw * GlobalV::NSPIN);
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    resmem_complex_op()(this->ctx, rhog, this->charge->rhopw->npw * PARAM.inp.nspin, "ElecState<PW>::rhog");
+    setmem_complex_op()(this->ctx, rhog, 0, this->charge->rhopw->npw * PARAM.inp.nspin);
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         this->rhopw_smooth->real2recip(this->rho[is], &rhog[is * this->charge->rhopw->npw]);
     }
@@ -411,7 +411,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     this->addusdens_g(becsum, rhog);
 
     // transform back to real space using dense grids
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         this->charge->rhopw->recip2real(&rhog[is * this->charge->rhopw->npw], this->rho[is]);
     }
@@ -456,11 +456,11 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
             T *skk = nullptr, *aux2 = nullptr, *tbecsum = nullptr;
             resmem_complex_op()(this->ctx, skk, atom->na * npw, "ElecState<PW>::skk");
             resmem_complex_op()(this->ctx, aux2, nij * npw, "ElecState<PW>::aux2");
-            resmem_complex_op()(this->ctx, tbecsum, GlobalV::NSPIN * atom->na * nij, "ElecState<PW>::tbecsum");
+            resmem_complex_op()(this->ctx, tbecsum, PARAM.inp.nspin * atom->na * nij, "ElecState<PW>::tbecsum");
             for (int ia = 0; ia < atom->na; ia++)
             {
                 const int iat = ucell->itia2iat(it, ia);
-                for (int is = 0; is < GlobalV::NSPIN; is++)
+                for (int is = 0; is < PARAM.inp.nspin; is++)
                 {
                     for (int ij = 0; ij < nij; ij++)
                     {
@@ -475,7 +475,7 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
                 }
             }
 
-            for (int is = 0; is < GlobalV::NSPIN; is++)
+            for (int is = 0; is < PARAM.inp.nspin; is++)
             {
                 // sum over atoms
                 char transa = 'N';

@@ -1,14 +1,23 @@
 #ifndef STO_DOS
 #define STO_DOS
+#include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_che.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_func.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
 
 class Sto_DOS
 {
   public:
-    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in, K_Vectors* p_kv_in, elecstate::ElecState* p_elec_in,
-            psi::Psi<std::complex<double>>* p_psi_in, hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-            hsolver::HSolverPW_SDFT* p_hsol_in, Stochastic_WF* p_stowf_in);
+    Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
+            K_Vectors* p_kv_in,
+            elecstate::ElecState* p_elec_in,
+            psi::Psi<std::complex<double>>* p_psi_in,
+            hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
+            StoChe<double>& stoche,
+            Stochastic_WF* p_stowf_in);
+    ~Sto_DOS();
+
     /**
      * @brief decide the parameters for the DOS calculation
      *
@@ -21,8 +30,13 @@ class Sto_DOS
      * @param dos_emax_ev Emax input for DOS
      * @param dos_scale dos_scale input for DOS
      */
-    void decide_param(const int& dos_nche, const double& emin_sto, const double& emax_sto, const bool& dos_setemin,
-                      const bool& dos_setemax, const double& dos_emin_ev, const double& dos_emax_ev,
+    void decide_param(const int& dos_nche,
+                      const double& emin_sto,
+                      const double& emax_sto,
+                      const bool& dos_setemin,
+                      const bool& dos_setemax,
+                      const double& dos_emin_ev,
+                      const double& dos_emax_ev,
                       const double& dos_scale);
     /**
      * @brief Calculate DOS using stochastic wavefunctions
@@ -37,6 +51,7 @@ class Sto_DOS
     int nbands_ks = 0;                               ///< number of KS bands
     int nbands_sto = 0;                              ///< number of stochastic bands
     int dos_nche = 0;                                ///< number of Chebyshev orders for DOS
+    int method_sto = 1;                              ///< method for sDFT
     double emax = 0.0;                               ///< maximum energy
     double emin = 0.0;                               ///< minimum energy
     ModulePW::PW_Basis_K* p_wfcpw = nullptr;         ///< pointer to the plane wave basis
@@ -44,8 +59,10 @@ class Sto_DOS
     elecstate::ElecState* p_elec = nullptr;          ///< pointer to the electronic state
     psi::Psi<std::complex<double>>* p_psi = nullptr; ///< pointer to the wavefunction
     hamilt::Hamilt<std::complex<double>>* p_hamilt;  ///< pointer to the Hamiltonian
-    hsolver::HSolverPW_SDFT* p_hsol = nullptr;       ///< pointer to the Hamiltonian solver
     Stochastic_WF* p_stowf = nullptr;                ///< pointer to the stochastic wavefunctions
+    Sto_Func<double> stofunc;                        ///< functions
+
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 };
 
 #endif // STO_DOS

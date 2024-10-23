@@ -1,5 +1,6 @@
 #include "magnetism.h"
 #include "elecstate_getters.h"
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 
 Magnetism::Magnetism()
@@ -16,7 +17,7 @@ Magnetism::~Magnetism()
 
 void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const double* const * rho, double* nelec_spin)
 {
-    if (GlobalV::NSPIN==2)
+    if (PARAM.inp.nspin==2)
     {
         this->tot_magnetization = 0.00;
         this->abs_magnetization = 0.00;
@@ -39,17 +40,17 @@ void Magnetism::compute_magnetization(const int& nrxx, const int& nxyz, const do
 		
 		//update number of electrons for each spin
 		//if TWO_EFERMI, no need to update
-		if(!GlobalV::TWO_EFERMI)
+		if(!PARAM.globalv.two_fermi)
 		{
-			nelec_spin[0] = (GlobalV::nelec + this->tot_magnetization) / 2;
-			nelec_spin[1] = (GlobalV::nelec - this->tot_magnetization) / 2;
+			nelec_spin[0] = (PARAM.inp.nelec + this->tot_magnetization) / 2;
+			nelec_spin[1] = (PARAM.inp.nelec - this->tot_magnetization) / 2;
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin up", nelec_spin[0]);
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nelec for spin down", nelec_spin[1]);
 		}
     }
 
 	// noncolliear :
-	else if(GlobalV::NSPIN==4)
+	else if(PARAM.inp.nspin==4)
 	{
 		for(int i=0;i<3;i++)this->tot_magnetization_nc[i] = 0.00;
 		this->abs_magnetization = 0.00;

@@ -46,7 +46,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(const int iter) override;
+    virtual void iter_finish(int& iter) override;
 
     virtual void after_scf(const int istep) override;
 
@@ -56,8 +56,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     // Init Global class
     void Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
 
-    virtual void allocate_hsolver();
-    virtual void deallocate_hsolver();
     virtual void allocate_hamilt();
     virtual void deallocate_hamilt();
 

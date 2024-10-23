@@ -1,5 +1,6 @@
 #include "cal_r_overlap_R.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -13,7 +14,7 @@ cal_r_overlap_R::~cal_r_overlap_R()
 {
 }
 
-void cal_r_overlap_R::initialize_orb_table()
+void cal_r_overlap_R::initialize_orb_table(const LCAO_Orbitals& orb)
 {
     int Lmax_used = 0;
     int Lmax = 0;
@@ -22,17 +23,17 @@ void cal_r_overlap_R::initialize_orb_table()
     exx_lmax = GlobalC::exx_info.info_ri.abfs_Lmax;
 #endif
 
-    const int ntype = GlobalC::ORB.get_ntype();
+    const int ntype = orb.get_ntype();
     int lmax_orb = -1, lmax_beta = -1;
     for (int it = 0; it < ntype; it++)
     {
-        lmax_orb = std::max(lmax_orb, GlobalC::ORB.Phi[it].getLmax());
+        lmax_orb = std::max(lmax_orb, orb.Phi[it].getLmax());
         lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
     }
-    const double dr = GlobalC::ORB.get_dR();
-    const double dk = GlobalC::ORB.get_dk();
-    const int kmesh = GlobalC::ORB.get_kmesh() * 4 + 1;
-    int Rmesh = static_cast<int>(GlobalC::ORB.get_Rmax() / dr) + 4;
+    const double dr = orb.get_dR();
+    const double dk = orb.get_dk();
+    const int kmesh = orb.get_kmesh() * 4 + 1;
+    int Rmesh = static_cast<int>(orb.get_Rmax() / dr) + 4;
     Rmesh += 1 - Rmesh % 2;
 
     Center2_Orb::init_Table_Spherical_Bessel(2,
@@ -52,29 +53,29 @@ void cal_r_overlap_R::initialize_orb_table()
     MGT.init_Gaunt(Lmax);
 }
 
-void cal_r_overlap_R::construct_orbs_and_orb_r()
+void cal_r_overlap_R::construct_orbs_and_orb_r(const LCAO_Orbitals& orb)
 {
     int orb_r_ntype = 0;
-    int mat_Nr = GlobalC::ORB.Phi[0].PhiLN(0, 0).getNr();
+    int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
     int count_Nr = 0;
 
-    orbs.resize(GlobalC::ORB.get_ntype());
-    for (int T = 0; T < GlobalC::ORB.get_ntype(); ++T)
+    orbs.resize(orb.get_ntype());
+    for (int T = 0; T < orb.get_ntype(); ++T)
     {
-        count_Nr = GlobalC::ORB.Phi[T].PhiLN(0, 0).getNr();
+        count_Nr = orb.Phi[T].PhiLN(0, 0).getNr();
         if (count_Nr > mat_Nr)
         {
             mat_Nr = count_Nr;
             orb_r_ntype = T;
         }
 
-        orbs[T].resize(GlobalC::ORB.Phi[T].getLmax() + 1);
-        for (int L = 0; L <= GlobalC::ORB.Phi[T].getLmax(); ++L)
+        orbs[T].resize(orb.Phi[T].getLmax() + 1);
+        for (int L = 0; L <= orb.Phi[T].getLmax(); ++L)
         {
-            orbs[T][L].resize(GlobalC::ORB.Phi[T].getNchi(L));
-            for (int N = 0; N < GlobalC::ORB.Phi[T].getNchi(L); ++N)
+            orbs[T][L].resize(orb.Phi[T].getNchi(L));
+            for (int N = 0; N < orb.Phi[T].getNchi(L); ++N)
             {
-                const auto& orb_origin = GlobalC::ORB.Phi[T].PhiLN(L, N);
+                const auto& orb_origin = orb.Phi[T].PhiLN(L, N);
                 orbs[T][L][N].set_orbital_info(orb_origin.getLabel(),
                                                orb_origin.getType(),
                                                orb_origin.getL(),
@@ -89,7 +90,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                                                orb_origin.getDruniform(),
                                                false,
                                                true,
-                                               GlobalV::CAL_FORCE);
+                                               PARAM.inp.cal_force);
             }
         }
     }
@@ -108,19 +109,19 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
                            orbs[orb_r_ntype][0][0].getDruniform(),
                            false,
                            true,
-                           GlobalV::CAL_FORCE);
+                           PARAM.inp.cal_force);
 
-    for (int TA = 0; TA < GlobalC::ORB.get_ntype(); ++TA)
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
     {
-        for (int TB = 0; TB < GlobalC::ORB.get_ntype(); ++TB)
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); ++LA)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb11[TA][TB][LA][NA][LB].insert(
                                 std::make_pair(NB, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs[TB][LB][NB], psb_, MGT)));
@@ -131,17 +132,17 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
         }
     }
 
-    for (int TA = 0; TA < GlobalC::ORB.get_ntype(); ++TA)
+    for (int TA = 0; TA < orb.get_ntype(); ++TA)
     {
-        for (int TB = 0; TB < GlobalC::ORB.get_ntype(); ++TB)
+        for (int TB = 0; TB < orb.get_ntype(); ++TB)
         {
-            for (int LA = 0; LA <= GlobalC::ORB.Phi[TA].getLmax(); ++LA)
+            for (int LA = 0; LA <= orb.Phi[TA].getLmax(); ++LA)
             {
-                for (int NA = 0; NA < GlobalC::ORB.Phi[TA].getNchi(LA); ++NA)
+                for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int LB = 0; LB <= GlobalC::ORB.Phi[TB].getLmax(); ++LB)
+                    for (int LB = 0; LB <= orb.Phi[TB].getLmax(); ++LB)
                     {
-                        for (int NB = 0; NB < GlobalC::ORB.Phi[TB].getNchi(LB); ++NB)
+                        for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
                             center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
                                 NB,
@@ -193,11 +194,11 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
         }
     }
 
-    iw2it.resize(GlobalV::NLOCAL);
-    iw2ia.resize(GlobalV::NLOCAL);
-    iw2iL.resize(GlobalV::NLOCAL);
-    iw2iN.resize(GlobalV::NLOCAL);
-    iw2im.resize(GlobalV::NLOCAL);
+    iw2it.resize(PARAM.globalv.nlocal);
+    iw2ia.resize(PARAM.globalv.nlocal);
+    iw2iL.resize(PARAM.globalv.nlocal);
+    iw2iN.resize(PARAM.globalv.nlocal);
+    iw2im.resize(PARAM.globalv.nlocal);
 
     int iw = 0;
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -223,14 +224,14 @@ void cal_r_overlap_R::construct_orbs_and_orb_r()
     }
 }
 
-void cal_r_overlap_R::init(const Parallel_Orbitals& pv)
+void cal_r_overlap_R::init(const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
-    initialize_orb_table();
-    construct_orbs_and_orb_r();
+    initialize_orb_table(orb);
+    construct_orbs_and_orb_r(orb);
 
     ModuleBase::timer::tick("cal_r_overlap_R", "init");
     return;
@@ -271,7 +272,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
     int output_R_number = 0;
 
     std::stringstream tem1;
-    tem1 << GlobalV::global_out_dir << "temp-data-rR-sparse.dat";
+    tem1 << PARAM.globalv.global_out_dir << "temp-data-rR-sparse.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
@@ -298,22 +299,22 @@ void cal_r_overlap_R::out_rR(const int& istep)
         ModuleBase::Vector3<double> R_car = ModuleBase::Vector3<double>(dRx, dRy, dRz) * GlobalC::ucell.latvec;
 
         int ir, ic;
-        for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / GlobalV::NPOL;
-                        int orb_index_col = iw2 / GlobalV::NPOL;
+                        int orb_index_row = iw1 / PARAM.globalv.npol;
+                        int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - GlobalV::NPOL * orb_index_row
-                                        + (iw2 - GlobalV::NPOL * orb_index_col) * GlobalV::NPOL;
+                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
+                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -446,20 +447,21 @@ void cal_r_overlap_R::out_rR(const int& istep)
     {
         std::ofstream out_r;
         std::stringstream ssr;
-        if (GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
+        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
-            ssr << GlobalV::global_matrix_dir << step << "_"
+            ssr << PARAM.globalv.global_matrix_dir << step << "_"
                 << "data-rR-sparse.csr";
         }
         else
         {
-            ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+            ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
         }
 
         if (binary)
         {
             ofs_tem1.close();
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            int nlocal = PARAM.globalv.nlocal;
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
@@ -468,7 +470,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
 
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
@@ -479,7 +481,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         else
         {
             ofs_tem1.close();
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::app);
             }
@@ -488,7 +490,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
                 out_r.open(ssr.str().c_str());
             }
             out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL << std::endl;
+            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
 
             ifs_tem1.open(tem1.str().c_str());
@@ -518,21 +520,22 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
 
     std::ofstream out_r;
     std::stringstream ssr;
-    if (GlobalV::CALCULATION == "md" && !GlobalV::out_app_flag)
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
     {
-        ssr << GlobalV::global_matrix_dir << step << "_"
+        ssr << PARAM.globalv.global_matrix_dir << step << "_"
             << "data-rR-sparse.csr";
     }
     else
     {
-        ssr << GlobalV::global_out_dir << "data-rR-sparse.csr";
+        ssr << PARAM.globalv.global_out_dir << "data-rR-sparse.csr";
     }
 
     if (GlobalV::DRANK == 0)
     {
         if (binary)
         {
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            int nlocal = PARAM.globalv.nlocal;
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
             }
@@ -541,12 +544,12 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         }
         else
         {
-            if (GlobalV::CALCULATION == "md" && GlobalV::out_app_flag && step)
+            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::app);
             }
@@ -555,7 +558,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                 out_r.open(ssr.str().c_str());
             }
             out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL << std::endl;
+            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
         }
     }
@@ -572,22 +575,22 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
 
         int ir = 0;
         int ic = 0;
-        for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
                     {
-                        int orb_index_row = iw1 / GlobalV::NPOL;
-                        int orb_index_col = iw2 / GlobalV::NPOL;
+                        int orb_index_row = iw1 / PARAM.globalv.npol;
+                        int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - GlobalV::NPOL * orb_index_row
-                                        + (iw2 - GlobalV::NPOL * orb_index_col) * GlobalV::NPOL;
+                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
+                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {

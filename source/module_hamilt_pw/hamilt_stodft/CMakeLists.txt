@@ -1,6 +1,7 @@
 list(APPEND hamilt_stodft_srcs
+    hamilt_sdft_pw.cpp
     sto_iter.cpp
-    sto_hchi.cpp
+    sto_che.cpp
     sto_wf.cpp
     sto_func.cpp
     sto_forces.cpp

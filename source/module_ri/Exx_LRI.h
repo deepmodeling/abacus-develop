@@ -18,6 +18,8 @@
 #include <deque>
 #include <mpi.h>
 
+#include "module_exx_symmetry/symmetry_rotation.h"
+
 	class Parallel_Orbitals;
 	
 	template<typename T, typename Tdata>
@@ -51,20 +53,25 @@ public:
     Exx_LRI operator=(const Exx_LRI&) = delete;
     Exx_LRI operator=(Exx_LRI&&);
 
+    void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
+    void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
 
-	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in);
+	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const LCAO_Orbitals& orb);
 	void cal_exx_force();
-	void cal_exx_stress();
+    void cal_exx_stress();
+    std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
     double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
+    
 
 private:
 	const Exx_Info::Exx_Info_RI &info;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
+    std::vector<double> orb_cutoff_;
 
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> lcaos;
 	std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs;
@@ -73,8 +80,10 @@ private:
 	LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
-	void cal_exx_ions();
-	void cal_exx_elec(const std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>> &Ds, const Parallel_Orbitals &pv);
+	void cal_exx_ions(const bool write_cv = false);
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+        const Parallel_Orbitals& pv,
+        const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
     double post_process_Eexx(const double& Eexx_in) const;
 

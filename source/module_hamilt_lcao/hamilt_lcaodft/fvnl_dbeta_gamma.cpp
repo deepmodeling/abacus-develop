@@ -1,7 +1,9 @@
 #include "FORCE.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 
 #include <unordered_map>
 
@@ -192,7 +194,7 @@ void Force_LCAO<double>::cal_fvnl_dbeta(const elecstate::DensityMatrix<double, d
                         // only one projector for each atom force.
 
                         double sum = 0.0;
-                        for (int is = 0; is < GlobalV::NSPIN; ++is)
+                        for (int is = 0; is < PARAM.inp.nspin; ++is)
                         {
                             // sum += dm2d[is](iw2_local, iw1_local);
                             sum += dm->get_DMK(is + 1, 0, iw2_local, iw1_local);

@@ -1,5 +1,6 @@
 #include "gint.h"
 #include "module_base/memory.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
 void Gint::gint_kernel_rho(Gint_inout* inout) {
@@ -53,42 +54,24 @@ void Gint::gint_kernel_rho(Gint_inout* inout) {
                                 cal_flag.get_ptr_2D(),
                                 psir_ylm.get_ptr_2D());
 
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < inout->nspin_rho; ++is)
         {
             ModuleBase::Array_Pool<double> psir_DM(this->bxyz, LD_pool);
             ModuleBase::GlobalFunc::ZEROS(psir_DM.get_ptr_1D(), this->bxyz * LD_pool);
-            if (GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                Gint_Tools::mult_psi_DM_new(*this->gridt,
-                                            this->bxyz,
-                                            grid_index,
-                                            na_grid,
-                                            LD_pool,
-                                            block_iw.data(),
-                                            block_size.data(),
-                                            block_index.data(),
-                                            cal_flag.get_ptr_2D(),
-                                            psir_ylm.get_ptr_2D(),
-                                            psir_DM.get_ptr_2D(),
-                                            this->DMRGint[is],
-                                            inout->if_symm);
-            }
-            else
-            {
-                // calculating g_mu(r) = sum_nu rho_mu,nu psi_nu(r)
-                Gint_Tools::mult_psi_DMR(*this->gridt,
-                                        this->bxyz,
-                                        LD_pool,
-                                        grid_index,
-                                        na_grid,
-                                        block_index.data(),
-                                        block_size.data(),
-                                        cal_flag.get_ptr_2D(),
-                                        psir_ylm.get_ptr_2D(),
-                                        psir_DM.get_ptr_2D(),
-                                        this->DMRGint[is],
-                                        inout->if_symm);
-            }
+
+            // calculating g_mu(r) = sum_nu rho_mu,nu psi_nu(r)
+            Gint_Tools::mult_psi_DMR(*this->gridt,
+                                    this->bxyz,
+                                    LD_pool,
+                                    grid_index,
+                                    na_grid,
+                                    block_index.data(),
+                                    block_size.data(),
+                                    cal_flag.get_ptr_2D(),
+                                    psir_ylm.get_ptr_2D(),
+                                    psir_DM.get_ptr_2D(),
+                                    this->DMRGint[is],
+                                    inout->if_symm);
 
             // do sum_mu g_mu(r)psi_mu(r) to get electron density on grid
             this->cal_meshball_rho(na_grid, block_index.data(), vindex.data(), psir_ylm.get_ptr_2D(), psir_DM.get_ptr_2D(), inout->rho[is]);
@@ -148,7 +131,7 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             dpsir_ylm_y.get_ptr_2D(),
             dpsir_ylm_z.get_ptr_2D());
 
-        for(int is=0; is<GlobalV::NSPIN; ++is)
+        for(int is=0; is<PARAM.inp.nspin; ++is)
         {
             ModuleBase::Array_Pool<double> dpsix_DM(this->bxyz, LD_pool);
             ModuleBase::Array_Pool<double> dpsiy_DM(this->bxyz, LD_pool);
@@ -158,63 +141,36 @@ void Gint::gint_kernel_tau(Gint_inout* inout) {
             ModuleBase::GlobalFunc::ZEROS(dpsiz_DM.get_ptr_1D(), this->bxyz*LD_pool);
 
             //calculating g_i,mu(r) = sum_nu rho_mu,nu d/dx_i psi_nu(r), x_i=x,y,z
-            if(GlobalV::GAMMA_ONLY_LOCAL)
-            {
-                Gint_Tools::mult_psi_DM_new(
-                    *this->gridt,this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw.data(), block_size.data(),
-                    block_index.data(), cal_flag.get_ptr_2D(),
-                    dpsir_ylm_x.get_ptr_2D(),
-                    dpsix_DM.get_ptr_2D(),
-                    this->DMRGint[is], true);
-                Gint_Tools::mult_psi_DM_new(
-                    *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw.data(), block_size.data(),
-                    block_index.data(), cal_flag.get_ptr_2D(),
-                    dpsir_ylm_y.get_ptr_2D(),
-                    dpsiy_DM.get_ptr_2D(),
-                    this->DMRGint[is], true);	
-                Gint_Tools::mult_psi_DM_new(
-                    *this->gridt, this->bxyz, grid_index, na_grid, LD_pool,
-                    block_iw.data(), block_size.data(),
-                    block_index.data(), cal_flag.get_ptr_2D(),
-                    dpsir_ylm_z.get_ptr_2D(),
-                    dpsiz_DM.get_ptr_2D(),
-                    this->DMRGint[is], true);
-            }
-            else
-            {
-                Gint_Tools::mult_psi_DMR(
-                    *this->gridt, this->bxyz,
-                    LD_pool,
-                    grid_index, na_grid,
-                    block_index.data(), block_size.data(),
-                    cal_flag.get_ptr_2D(), 
-                    dpsir_ylm_x.get_ptr_2D(),
-                    dpsix_DM.get_ptr_2D(),
-                    this->DMRGint[is],
-                    true);
-                Gint_Tools::mult_psi_DMR(
-                    *this->gridt, this->bxyz,
-                    LD_pool,
-                    grid_index, na_grid,
-                    block_index.data(), block_size.data(),
-                    cal_flag.get_ptr_2D(),
-                    dpsir_ylm_y.get_ptr_2D(),
-                    dpsiy_DM.get_ptr_2D(),
-                    this->DMRGint[is],
-                    true);
-                Gint_Tools::mult_psi_DMR(
-                    *this->gridt, this->bxyz,
-                    LD_pool,
-                    grid_index, na_grid,
-                    block_index.data(), block_size.data(),
-                    cal_flag.get_ptr_2D(), 
-                    dpsir_ylm_z.get_ptr_2D(),
-                    dpsiz_DM.get_ptr_2D(),
-                    this->DMRGint[is],
-                    true);
-            }
+            Gint_Tools::mult_psi_DMR(
+                *this->gridt, this->bxyz,
+                LD_pool,
+                grid_index, na_grid,
+                block_index.data(), block_size.data(),
+                cal_flag.get_ptr_2D(), 
+                dpsir_ylm_x.get_ptr_2D(),
+                dpsix_DM.get_ptr_2D(),
+                this->DMRGint[is],
+                true);
+            Gint_Tools::mult_psi_DMR(
+                *this->gridt, this->bxyz,
+                LD_pool,
+                grid_index, na_grid,
+                block_index.data(), block_size.data(),
+                cal_flag.get_ptr_2D(),
+                dpsir_ylm_y.get_ptr_2D(),
+                dpsiy_DM.get_ptr_2D(),
+                this->DMRGint[is],
+                true);
+            Gint_Tools::mult_psi_DMR(
+                *this->gridt, this->bxyz,
+                LD_pool,
+                grid_index, na_grid,
+                block_index.data(), block_size.data(),
+                cal_flag.get_ptr_2D(), 
+                dpsir_ylm_z.get_ptr_2D(),
+                dpsiz_DM.get_ptr_2D(),
+                this->DMRGint[is],
+                true);
 
         //do sum_i,mu g_i,mu(r) * d/dx_i psi_mu(r) to get kinetic energy density on grid
             if(inout->job==Gint_Tools::job_type::tau)

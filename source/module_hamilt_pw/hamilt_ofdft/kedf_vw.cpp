@@ -1,5 +1,6 @@
 #include "./kedf_vw.h"
 
+#include "module_parameter/parameter.h"
 #include <iostream>
 
 #include "module_base/parallel_reduce.h"
@@ -21,8 +22,8 @@ void KEDF_vW::set_para(double dV, double vw_weight)
 double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
-    double** tempPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** tempPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -31,13 +32,14 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
         }
     }
 
-    double** LapPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** LapPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energy = 0.; // in Ry
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -45,9 +47,9 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
         }
         energy *= this->dV_ * 0.5 * this->vw_weight_ * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < pw_rho->nrxx; ++ir)
             {
@@ -59,7 +61,7 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
     this->vw_energy = energy;
     Parallel_Reduce::reduce_all(this->vw_energy);
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] tempPhi[is];
         delete[] LapPhi[is];
@@ -83,8 +85,8 @@ double KEDF_vW::get_energy(double** pphi, ModulePW::PW_Basis* pw_rho)
 double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_Basis* pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
-    double** tempPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** tempPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -93,16 +95,17 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
         }
     }
 
-    double** LapPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** LapPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     double energyDen = 0.; // in Ry
     energyDen
         = 0.5 * tempPhi[is][ir] * LapPhi[is][ir] * this->vw_weight_ * 2.; // vw_weight * 2 to convert Hartree to Ry
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] tempPhi[is];
         delete[] LapPhi[is];
@@ -110,6 +113,42 @@ double KEDF_vW::get_energy_density(double** pphi, int is, int ir, ModulePW::PW_B
     delete[] tempPhi;
     delete[] LapPhi;
     return energyDen;
+}
+
+/**
+ * @brief Get the positive definite energy density of vW KEDF
+ * \f[ \tau_{vW} = |\nabla \rho|^2 / (8 \rho) \f]
+ * 
+ * @param prho charge density
+ * @param pw_rho pw basis
+ * @param rtau_vw rtau_vw => rtau_vw + tau_vw
+ */
+void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, double* rtau_vw)
+{
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    {
+        std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(pw_rho->nrxx, 0.));
+
+        std::vector<std::complex<double>> recip_rho(pw_rho->npw, 0.);
+        std::vector<std::complex<double>> recip_nabla_rho(pw_rho->npw, 0.);
+        pw_rho->real2recip(prho[is], recip_rho.data());
+        
+        std::complex<double> img(0.0, 1.0);
+        for (int j = 0; j < 3; ++j)
+        {
+            for (int ip = 0; ip < pw_rho->npw; ++ip)
+            {
+                recip_nabla_rho[ip] = img * pw_rho->gcar[ip][j] * recip_rho[ip] * pw_rho->tpiba;
+            }
+
+            pw_rho->recip2real(recip_nabla_rho.data(), nabla_rho[j].data());
+
+            for (int ir = 0; ir < pw_rho->nrxx; ++ir)
+            {
+                rtau_vw[ir] += nabla_rho[j][ir] * nabla_rho[j][ir] / (8. * prho[is][ir]) * 2.0; // convert Ha to Ry.
+            }
+        }
+    }
 }
 
 /**
@@ -128,8 +167,8 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
     ModuleBase::timer::tick("KEDF_vW", "vw_potential");
 
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
-    double** tempPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** tempPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -139,13 +178,14 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
     }
 
     // calculate the minus \nabla^2 sqrt(rho)
-    double** LapPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** LapPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is) {
         LapPhi[is] = new double[pw_rho->nrxx];
+}
     this->laplacian_phi(tempPhi, LapPhi, pw_rho);
 
     // calculate potential
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -162,7 +202,7 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
 
     // calculate energy
     double energy = 0.; // in Ry
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
         {
@@ -170,9 +210,9 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
         }
         energy *= this->dV_ * 0.5 * this->vw_weight_ * 2.; // vw_weight * 2 to convert Hartree to Ry
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ir = 0; ir < pw_rho->nrxx; ++ir)
             {
@@ -184,7 +224,7 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
     this->vw_energy = energy;
     Parallel_Reduce::reduce_all(this->vw_energy);
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] tempPhi[is];
         delete[] LapPhi[is];
@@ -204,8 +244,8 @@ void KEDF_vW::vw_potential(const double* const* pphi, ModulePW::PW_Basis* pw_rho
 void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
 {
     // since pphi may contain minus element, we define tempPhi = std::abs(phi), which is true sqrt(rho)
-    double** tempPhi = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    double** tempPhi = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         tempPhi[is] = new double[pw_rho->nrxx];
         for (int ir = 0; ir < pw_rho->nrxx; ++ir)
@@ -214,9 +254,9 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
         }
     }
 
-    std::complex<double>** recipPhi = new std::complex<double>*[GlobalV::NSPIN];
-    std::complex<double>** ggrecipPhi = new std::complex<double>*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
+    std::complex<double>** ggrecipPhi = new std::complex<double>*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         recipPhi[is] = new std::complex<double>[pw_rho->npw];
         ggrecipPhi[is] = new std::complex<double>[pw_rho->npw];
@@ -231,7 +271,7 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
         for (int beta = alpha; beta < 3; ++beta)
         {
             this->stress(alpha, beta) = 0;
-            for (int is = 0; is < GlobalV::NSPIN; ++is)
+            for (int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 for (int ik = 0; ik < pw_rho->npw; ++ik)
                 {
@@ -256,7 +296,7 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
             this->stress(alpha, beta) = this->stress(beta, alpha);
         }
     }
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] tempPhi[is];
         delete[] recipPhi[is];
@@ -277,8 +317,8 @@ void KEDF_vW::get_stress(const double* const* pphi, ModulePW::PW_Basis* pw_rho)
  */
 void KEDF_vW::laplacian_phi(const double* const* pphi, double** rLapPhi, ModulePW::PW_Basis* pw_rho)
 {
-    std::complex<double>** recipPhi = new std::complex<double>*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    std::complex<double>** recipPhi = new std::complex<double>*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         recipPhi[is] = new std::complex<double>[pw_rho->npw];
 
@@ -290,7 +330,7 @@ void KEDF_vW::laplacian_phi(const double* const* pphi, double** rLapPhi, ModuleP
         pw_rho->recip2real(recipPhi[is], rLapPhi[is]);
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] recipPhi[is];
     }

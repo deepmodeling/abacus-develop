@@ -42,7 +42,7 @@ has_cond=$(get_input_key_value "cal_cond" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
-has_eband_separate=$(get_input_key_value "out_eband_separate_term" "INPUT")
+has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
 has_r=$(get_input_key_value "out_mat_r" "INPUT")
 deepks_out_labels=$(get_input_key_value "deepks_out_labels" "INPUT")
 deepks_scf=$(get_input_key_value "deepks_scf" "INPUT")
@@ -58,6 +58,7 @@ gamma_only=$(get_input_key_value "gamma_only" "INPUT")
 imp_sol=$(get_input_key_value "imp_sol" "INPUT")
 run_rpa=$(get_input_key_value "rpa" "INPUT")
 out_pot=$(get_input_key_value "out_pot" "INPUT")
+out_elf=$(get_input_key_value "out_elf" "INPUT")
 out_dm1=$(get_input_key_value "out_dm1" "INPUT")
 get_s=$(get_input_key_value "calculation" "INPUT")
 out_pband=$(get_input_key_value "out_proj_band" "INPUT")
@@ -163,6 +164,14 @@ if ! test -z "$out_pot"  && [  $out_pot == 2 ]; then
 	pot1cal=OUT.autotest/ElecStaticPot.cube
 	python3 ../tools/CompareFile.py $pot1ref $pot1cal 8
 	echo "ComparePot_pass $?" >>$1
+fi
+
+#echo $out_elf
+if ! test -z "$out_elf"  && [  $out_elf == 1 ]; then
+	elf1ref=refELF.cube
+	elf1cal=OUT.autotest/ELF.cube
+	python3 ../tools/CompareFile.py $elf1ref $elf1cal 3
+	echo "ComparePot1_pass $?" >>$1
 fi
 
 #echo $get_s
@@ -495,7 +504,7 @@ if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 1 ]; then
 	echo "totalh $totalh" >>$1
 	totalvdelta=`python3 get_v_delta.py`
 	echo "totalvdelta $totalvdelta" >>$1
-	totalvdp=`python3 get_sum_numpy.py v_delta_precalc.npy `
+	totalvdp=`python3 get_sum_numpy.py OUT.autotest/deepks_vdpre.npy `
 	echo "totalvdp $totalvdp" >> $1
 fi
 
@@ -504,9 +513,9 @@ if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
 	echo "totalh $totalh" >>$1
 	totalvdelta=`python3 get_v_delta.py`
 	echo "totalvdelta $totalvdelta" >>$1
-	total_psialpha=`python3 get_sum_numpy.py psialpha.npy `
+	total_psialpha=`python3 get_sum_numpy.py OUT.autotest/deepks_psialpha.npy `
 	echo "total_psialpha $total_psialpha" >> $1
-	total_gevdm=`python3 get_sum_numpy.py grad_evdm.npy `
+	total_gevdm=`python3 get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
 	echo "total_gevdm $total_gevdm" >> $1
 fi
 
@@ -530,7 +539,7 @@ if [ $is_lr == 1 ]; then
 	lr_path=OUT.autotest/running_lr.log
 	lrns=$(get_input_key_value "lr_nstates" "INPUT")
 	lrns1=`echo "$lrns + 1" |bc`
-	grep -A$lrns1 "Excitation Energy" $lr_path | tail -$lrns | awk '{print $2}' > lr_eig.txt
+	grep -A$lrns1 "Excitation Energy" $lr_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
 	lreig_tot=`sum_file lr_eig.txt`
 	echo "totexcitationenergyref $lreig_tot" >>$1
 fi

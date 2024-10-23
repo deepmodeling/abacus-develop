@@ -1,5 +1,6 @@
 #include "output_log.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
@@ -20,9 +21,31 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
     }
 }
 
+void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running)
+{
+    if (conv_ion && !conv_esolver)
+    {
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << " Relaxation is converged, but the SCF is unconverged! The results are unreliable. " << std::endl;
+        std::cout << " It is suggested to increase the maximum SCF step and/or perform the relaxation again."
+                  << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n Relaxation is converged, but the SCF is unconverged! The results are unreliable.. "
+                    << std::endl;
+        ofs_running << "\n It is suggested to increase the maximum SCF step and/or perform the relaxation again. "
+                    << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        ofs_running << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+    }
+}
+
 void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running)
 {
-    if (convergence && GlobalV::OUT_LEVEL != "m")
+    if (convergence && PARAM.inp.out_level != "m")
     {
         ofs_running << std::setprecision(16);
         ofs_running << " EFERMI = " << std::setprecision(11) << efermi * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -139,7 +162,7 @@ void output_vacuum_level(const UnitCell* ucell,
     {
         totchg[ir] = rho[0][ir];
     }
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         for (int ir = 0; ir < nrxx; ++ir)
         {
@@ -223,9 +246,9 @@ void print_force(std::ofstream& ofs_running,
     fmt << atom_label << force_x << force_y << force_z;
     table = fmt.str();
     ofs_running << table << std::endl;
-    if (GlobalV::TEST_FORCE) std::cout << table << std::endl;
+    if (PARAM.inp.test_force) { std::cout << table << std::endl;
 }
-
+}
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
     const double output_acc = 1.0e-8;
@@ -280,6 +303,12 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         }
     }
     return;
+}
+
+void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname)
+{
+    ofs_running << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 
 }// namespace ModuleIO

@@ -1,5 +1,6 @@
 #include "lr_util.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 
@@ -8,15 +9,15 @@
 
 template <typename T>
 using D2 = void(*) (T**, size_t);
-template <typename T>
-using D3 = void(*) (T***, size_t, size_t);
+// template <typename T>
+// using D3 = void(*) (T***, size_t, size_t);
 // template <typename T>
 // D2<T> d2 = LR_Util::delete_p2<T>;
 // template <typename T>
 // D3<T> d3 = LR_Util::delete_p3<T>;
 // Change to C++ 11
 D2<double> d2 = LR_Util::delete_p2<double>;
-D3<double> d3 = LR_Util::delete_p3<double>;
+// D3<double> d3 = LR_Util::delete_p3<double>;
 
 
 Gint& Gint::operator=(Gint&& rhs)
@@ -38,13 +39,13 @@ Gint& Gint::operator=(Gint&& rhs)
     this->nplane = rhs.nplane;
     this->startz_current = rhs.startz_current;
 
-    if (this->pvpR_reduced != nullptr) { d2(this->pvpR_reduced, GlobalV::NSPIN);  //nspin*gridt.nnrg
+    if (this->pvpR_reduced != nullptr) { d2(this->pvpR_reduced, PARAM.inp.nspin);  //nspin*gridt.nnrg
 }
-    if (this->pvdpRx_reduced != nullptr) { d2(this->pvdpRx_reduced, GlobalV::NSPIN);
+    if (this->pvdpRx_reduced != nullptr) { d2(this->pvdpRx_reduced, PARAM.inp.nspin);
 }
-    if (this->pvdpRy_reduced != nullptr) { d2(this->pvdpRy_reduced, GlobalV::NSPIN);
+    if (this->pvdpRy_reduced != nullptr) { d2(this->pvdpRy_reduced, PARAM.inp.nspin);
 }
-    if (this->pvdpRz_reduced != nullptr) { d2(this->pvdpRz_reduced, GlobalV::NSPIN);
+    if (this->pvdpRz_reduced != nullptr) { d2(this->pvdpRz_reduced, PARAM.inp.nspin);
 }
     this->pvpR_alloc_flag = rhs.pvpR_alloc_flag;
     rhs.pvpR_alloc_flag = false;
@@ -79,7 +80,7 @@ Gint_Gamma& Gint_Gamma::operator=(Gint_Gamma&& rhs)
     Gint::operator=(std::move(rhs));
 
     // DM may not needed in beyond DFT ESolver
-    // if (this->DM != nullptr) d3<double>(this->DM, GlobalV::NSPIN, gridt.lgd);
+    // if (this->DM != nullptr) d3<double>(this->DM, PARAM.inp.nspin, gridt.lgd);
     assert(this->DM == nullptr);
     return *this;
 }

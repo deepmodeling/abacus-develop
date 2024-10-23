@@ -10,7 +10,7 @@
 
 class K_Vectors
 {
-  public:
+public:
     std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
     std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
 
@@ -21,6 +21,10 @@ class K_Vectors
 
     int nmp[3];                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
+
+    /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
+    /// dim: [iks_ibz][(isym, kvec_d)]
+    std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
     K_Vectors();
     ~K_Vectors();
@@ -47,11 +51,11 @@ class K_Vectors
      * @note Only available for nspin = 1 or 2 or 4.
      */
     void set(const ModuleSymmetry::Symmetry& symm,
-             const std::string& k_file_name,
-             const int& nspin,
-             const ModuleBase::Matrix3& reciprocal_vec,
-             const ModuleBase::Matrix3& latvec,
-             std::ofstream& ofs);
+        const std::string& k_file_name,
+        const int& nspin,
+        const ModuleBase::Matrix3& reciprocal_vec,
+        const ModuleBase::Matrix3& latvec,
+        std::ofstream& ofs);
 
     /**
      * @brief Generates irreducible k-points in the Brillouin zone considering symmetry operations.
@@ -67,10 +71,10 @@ class K_Vectors
      * @param match A boolean flag that indicates if the results matches the real condition.
      */
     void ibz_kpoint(const ModuleSymmetry::Symmetry& symm,
-                    bool use_symm,
-                    std::string& skpt,
-                    const UnitCell& ucell,
-                    bool& match);
+        bool use_symm,
+        std::string& skpt,
+        const UnitCell& ucell,
+        bool& match);
     // LiuXh add 20180515
 
     /**
@@ -104,6 +108,7 @@ class K_Vectors
      * This function gets the global index of a k-point based on its local index and the process pool ID.
      * The global index is used when the k-points are distributed among multiple process pools.
      *
+     * @param nkstot The total number of k-points.
      * @param ik The local index of the k-point.
      *
      * @return int Returns the global index of the k-point.
@@ -112,7 +117,7 @@ class K_Vectors
      * process pools (KPAR), and adding the remainder if the process pool ID (MY_POOL) is less than the remainder.
      * @note The function is declared as inline for efficiency.
      */
-    inline int getik_global(const int& ik) const;
+    static int get_ik_global(const int& ik, const int& nkstot);
 
     int get_nks() const
     {
@@ -149,7 +154,7 @@ class K_Vectors
         this->nkstot_full = value;
     }
 
-  private:
+private:
     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
     int nkstot;      /// number of symmetry-reduced k points in full k mesh
     int nkstot_full; /// number of k points before symmetry reduction in full k mesh
@@ -278,8 +283,8 @@ class K_Vectors
      * be recalculated.
      */
     void update_use_ibz(const int& nkstot_ibz,
-                        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
-                        const std::vector<double>& wk_ibz);
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
+        const std::vector<double>& wk_ibz);
 
     /**
      * @brief Sets both the direct and Cartesian k-vectors.
@@ -385,19 +390,4 @@ class K_Vectors
      */
     void print_klists(std::ofstream& fn);
 };
-
-inline int K_Vectors::getik_global(const int& ik) const
-{
-    int nkp = this->nkstot / GlobalV::KPAR;
-    int rem = this->nkstot % GlobalV::KPAR;
-    if (GlobalV::MY_POOL < rem)
-    {
-        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
-    }
-    else
-    {
-        return GlobalV::MY_POOL * nkp + rem + ik;
-    }
-}
-
 #endif // KVECT_H

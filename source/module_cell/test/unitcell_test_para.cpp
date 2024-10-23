@@ -1,10 +1,12 @@
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "memory"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
-
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -71,17 +73,16 @@ class UcellTest : public ::testing::Test
     void SetUp()
     {
         ofs.open("running.log");
-        GlobalV::relax_new = utp.relax_new;
-        GlobalV::global_out_dir = "./";
+        PARAM.input.relax_new = utp.relax_new;
+        PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
-        GlobalV::LSPINORB = false;
+        PARAM.input.lspinorb = false;
         pp_dir = "./support/";
-        GlobalV::PSEUDORCUT = 15.0;
-        GlobalV::DFT_FUNCTIONAL = "default";
-        GlobalV::test_unitcell = 1;
-        GlobalV::test_pseudo_cell = 1;
-        GlobalV::NSPIN = 1;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.pseudo_rcut = 15.0;
+        PARAM.input.dft_functional = "default";
+        PARAM.input.test_pseudo_cell = 1;
+        PARAM.input.nspin = 1;
+        PARAM.input.basis_type = "pw";
     }
     void TearDown()
     {
@@ -105,7 +106,7 @@ TEST_F(UcellTest, BcastUnitcell2)
 
 TEST_F(UcellTest, BcastUnitcell)
 {
-    GlobalV::NSPIN = 4;
+    PARAM.input.nspin = 4;
     ucell->bcast_unitcell();
     if (GlobalV::MY_RANK != 0)
     {

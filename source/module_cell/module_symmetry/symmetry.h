@@ -68,8 +68,7 @@ public:
 	ModuleBase::Vector3<double> gtrans[48];
 	
 	ModuleBase::Matrix3 symop[48];	//the rotation matrices for the pure bravais lattice
-	int nop;	//the number of point group operations of the pure bravais lattice without basis
-	int s_flag;	//whether the current matrix is one of all space group operations
+    int nop;	//the number of point group operations of the pure bravais lattice without basis
 	int nrot;	//the number of pure point group rotations
     int nrotk = -1; 	//the number of all space group operations, >0 means the nrotk has been analyzed
     int max_nrotk = -1;  ///< record the maximum number of symmetry operations during cell-relax
@@ -90,8 +89,11 @@ public:
         double* cel_const, double* pre_const, int& real_brav, std::string& bravname, const Atom* atoms,
         bool convert_atoms, double* newpos = nullptr)const;
 
-    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos);
-    void checksym(ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans, double* pos);
+    void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
+        const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
+        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
+    bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
+        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 
@@ -114,19 +116,17 @@ public:
 	//convert n translation-vectors from va on basis {a1, a2, a3} to vb on basis {b1, b2, b3}
 	void gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase::Vector3<double>* vb, 
 			const int n, const ModuleBase::Matrix3 &a, const ModuleBase::Matrix3 &b)const;
-	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap);
+	void gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const;
 	void hermite_normal_form(const ModuleBase::Matrix3 &s, ModuleBase::Matrix3 &H, ModuleBase::Matrix3 &b) const;
-	/// @brief return a map that is inequivalent atom index to its symmetry multiplicity
-	std::map<int, int> inequivalent_atoms() const;
+    int get_rotated_atom(int isym, int iat)const
+    {
+        if (!this->isym_rotiat_.empty()) { return this->isym_rotiat_[isym][iat]; }
+        else { return -1; }
+    }
 	private:
-
-	// (s)tart (p)osition of atom (t)ype which
-	// has (min)inal number.
-	ModuleBase::Vector3<double> sptmin;
 
     /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
     std::vector<std::vector<int>> isym_rotiat_;
-
 
     /// @brief  set atom map for each symmetry operation
     void set_atom_map(const Atom* atoms);
@@ -144,6 +144,7 @@ public:
 
     /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
     bool magmom_same_check(const Atom* atoms)const;
+
 };
 }
 

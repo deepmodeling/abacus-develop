@@ -2,6 +2,7 @@
 #include "module_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+#include "module_base/module_device/device.h"
 
 #include <fstream>
 #include <unistd.h>
@@ -65,12 +66,6 @@ void ReadInput::item_system()
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.calculation = strvalue;
             std::string& calculation = para.input.calculation;
-            para.sys.global_calculation = calculation;
-            if (calculation == "nscf" || calculation == "get_S")
-            {
-                // Maybe it should be modified.
-                para.sys.global_calculation = "nscf";
-            }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::string& calculation = para.input.calculation;
@@ -87,7 +82,8 @@ void ReadInput::item_system()
                                                 "gen_bessel"};
             if (!find_str(callist, calculation))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "check 'calculation' !");
+                const std::string warningstr = nofound_str(callist, "calculation");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             if (calculation == "get_pchg" || calculation == "get_wf")
             {
@@ -117,9 +113,8 @@ void ReadInput::item_system()
             const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
             if (!find_str(esolver_types, para.input.esolver_type))
             {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "esolver_type should be ksdft, sdft, "
-                                         "ofdft, tddft, lr, ks-lr, lj or dp.");
+                const std::string warningstr = nofound_str(esolver_types, "esolver_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
             if (para.input.esolver_type == "dp")
             {
@@ -449,20 +444,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("diago_full_acc");
-        item.annotation = "all the empty states are diagonalized";
-        /**
-        * @brief diago_full_acc
-        * If .TRUE. all the empty states are diagonalized at the same level of
-        * accuracy of the occupied ones. Otherwise the empty states are
-        * diagonalized using a larger threshold (this should not affect total
-        * energy, forces, and other ground-state properties).
-        *
-        */
-        read_sync_bool(input.diago_full_acc);
-        this->add_item(item);
-    }
-    {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
@@ -522,9 +503,11 @@ void ReadInput::item_system()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.init_chg != "atomic" && para.input.init_chg != "file" && para.input.init_chg != "auto")
+            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto"};
+            if (!find_str(init_chgs, para.input.init_chg))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "init_chg should be 'atomic', 'file' or 'auto'");
+                const std::string warningstr = nofound_str(init_chgs, "init_chg");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);
@@ -599,13 +582,27 @@ void ReadInput::item_system()
         Input_Item item("kpoint_file");
         item.annotation = "the name of file containing k points";
         read_sync_string(input.kpoint_file);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.stru_file == "")
+            {
+                GlobalV::ofs_warning << "kpoint_file is set to KPT when stru_file is not set" << std::endl;
+                para.input.stru_file = "KPT";
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("pseudo_dir");
         item.annotation = "the directory containing pseudo files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.pseudo_dir = to_dir(strvalue);
+            if(item.get_size() == 0)
+            {
+                para.input.pseudo_dir = "";
+            }
+            else
+            {
+                para.input.pseudo_dir = to_dir(strvalue);
+            }
         };
         sync_string(input.pseudo_dir);
         this->add_item(item);
@@ -614,7 +611,14 @@ void ReadInput::item_system()
         Input_Item item("orbital_dir");
         item.annotation = "the directory containing orbital files";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.orbital_dir = to_dir(strvalue);
+            if(item.get_size() == 0)
+            {
+                para.input.orbital_dir = "";
+            }
+            else
+            {
+                para.input.orbital_dir = to_dir(strvalue);
+            }
         };
         sync_string(input.orbital_dir);
         this->add_item(item);
@@ -627,10 +631,6 @@ void ReadInput::item_system()
             if (para.input.read_file_dir == "auto")
             {
                 para.input.read_file_dir = "OUT." + para.input.suffix;
-            }
-            else
-            {
-                para.input.read_file_dir = para.input.read_file_dir;
             }
             para.input.read_file_dir = to_dir(para.input.read_file_dir);
         };
@@ -739,6 +739,10 @@ void ReadInput::item_system()
         Input_Item item("device");
         item.annotation = "the computing device for ABACUS";
         read_sync_string(input.device);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            para.input.device=base_device::information::get_device_flag(
+                                para.inp.device, para.inp.basis_type);
+        };
         this->add_item(item);
     }
     {

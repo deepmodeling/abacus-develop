@@ -1,11 +1,12 @@
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "../relax.h"
 #include "module_cell/unitcell.h"
 #include "relax_test.h"
 #include <fstream>
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
+
 
 class Test_SETGRAD : public testing::Test
 {
@@ -16,8 +17,8 @@ class Test_SETGRAD : public testing::Test
 
         void SetUp()
         {
-            GlobalV::FORCE_THR = 0.001;
-            GlobalV::CALCULATION = "cell-relax";
+            PARAM.input.force_thr  = 0.001;
+            PARAM.input.calculation = "cell-relax";
 
             ModuleBase::matrix force_in, stress_in;
             int nat = 3;

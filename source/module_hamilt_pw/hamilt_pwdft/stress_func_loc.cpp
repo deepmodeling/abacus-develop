@@ -1,5 +1,6 @@
 #include "stress_func.h"
 #include "module_base/math_integral.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_threading.h"
 #include "module_base/timer.h"
 #include "module_base/libm/libm.h"
@@ -20,9 +21,10 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
     FPTYPE evloc=0.0;
 	FPTYPE fact=1.0;
 
-	const int nspin_rho = (GlobalV::NSPIN == 2) ? 2 : 1;
+	const int nspin_rho = (PARAM.inp.nspin == 2) ? 2 : 1;
 
-	if (PARAM.inp.gamma_only && is_pw) fact=2.0;
+	if (PARAM.globalv.gamma_only_pw && is_pw) { fact=2.0;
+}
 
     
 
@@ -32,7 +34,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		blocking rho_basis->nrxx for data locality.
 
 		By blocking aux with block size 1024,
-		we can keep the blocked aux in L1 cache when iterating GlobalV::NSPIN loop
+		we can keep the blocked aux in L1 cache when iterating PARAM.inp.nspin loop
 		performance will be better when number of atom is quite huge
 	*/
 	const int block_ir = 1024;
@@ -70,12 +72,13 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		{
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
-                if (rho_basis->ig_gge0 == ig)
+                if (rho_basis->ig_gge0 == ig) {
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
-                else
+                } else {
                     evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
+}
             }
 		}
     }
@@ -95,8 +98,8 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 		//
 		// normal case: dvloc contains dV_loc(G)/dG
 		//
-			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab, atom->ncpp.r,
-					atom->ncpp.vloc_at, atom->ncpp.zv, dvloc.data(), rho_basis);
+			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab.data(), atom->ncpp.r.data(),
+					atom->ncpp.vloc_at.data(), atom->ncpp.zv, dvloc.data(), rho_basis, GlobalC::ucell);
 		//
 		}
 #ifndef _OPENMP
@@ -163,6 +166,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 	return;
 }
 
+
 template<typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::dvloc_of_g
 (
@@ -172,7 +176,8 @@ const FPTYPE* r,
 const FPTYPE* vloc_at,
 const FPTYPE& zp,
 FPTYPE*  dvloc,
-ModulePW::PW_Basis* rho_basis
+ModulePW::PW_Basis* rho_basis,
+const UnitCell& ucell_in
 )
 {
   //----------------------------------------------------------------------
@@ -187,11 +192,15 @@ ModulePW::PW_Basis* rho_basis
 	
 
 	int igl0;
+	this->device = base_device::get_device_type<Device>(this->ctx);
+
+	std::vector<double> gx_arr(rho_basis->ngg+1);
+    double* gx_arr_d = nullptr;
 	// counter on erf functions or gaussians
 	// counter on g shells vectors
 	// first shell with g != 0
 	
-	std::vector<FPTYPE> aux1(msh);
+	std::vector<FPTYPE> aux(msh);
 
 	// the  G=0 component is not computed
 	if (rho_basis->gg_uniq[0] < 1.0e-8)
@@ -207,57 +216,61 @@ ModulePW::PW_Basis* rho_basis
 	// Pseudopotentials in numerical form (Vloc contains the local part)
 	// In order to perform the Fourier transform, a term erf(r)/r is
 	// subtracted in real space and added again in G space
-
 #ifdef _OPENMP
-#pragma omp parallel
-{
-	#pragma omp for
+#pragma omp parallel for
 #endif
+    for (int igl = igl0; igl < rho_basis->ngg; igl++) {
+        gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl]) * ucell_in.tpiba;
+    }
+
+	gx_arr[rho_basis->ngg] = zp * ModuleBase::e2;
+
 	//
 	//   This is the part of the integrand function
 	//   indipendent of |G| in real space
 	//
 	for(int i = 0;i< msh; i++)
 	{
-		aux1[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
+		aux[i] = r [i] * vloc_at [i] + zp * ModuleBase::e2 * erf(r[i]);
 	}
 
-	std::vector<FPTYPE> aux(msh);
-	aux[0] = 0.0;
-#ifdef _OPENMP
-	#pragma omp for
-#endif
-	for(int igl = igl0;igl< rho_basis->ngg;igl++)
-	{
-		const FPTYPE g2 = rho_basis->gg_uniq[igl];
-		const FPTYPE gx = sqrt (g2 * GlobalC::ucell.tpiba2);
-		const FPTYPE gx2 = g2 * GlobalC::ucell.tpiba2;
-		//
-		//    and here we perform the integral, after multiplying for the |G|
-		//    dependent  part
-		//
-		// DV(g)/Dg = ModuleBase::Integral of r (Dj_0(gr)/Dg) V(r) dr
-		for(int i = 1;i< msh;i++)
-		{
-			FPTYPE sinp, cosp;
-            ModuleBase::libm::sincos(gx * r [i], &sinp, &cosp);
-			aux [i] = aux1 [i] * (r [i] * cosp / gx - sinp / pow(gx,2));
-		}
-		FPTYPE vlcp=0;
-		// simpson (msh, aux, rab, vlcp);
-		ModuleBase::Integral::Simpson_Integral(msh, aux.data(), rab, vlcp );
-		// DV(g^2)/Dg^2 = (DV(g)/Dg)/2g
-		vlcp *= ModuleBase::FOUR_PI / GlobalC::ucell.omega / 2.0 / gx;
-		// subtract the long-range term
-		FPTYPE g2a = gx2 / 4.0;
-		vlcp += ModuleBase::FOUR_PI / GlobalC::ucell.omega * zp * ModuleBase::e2 * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx2 , 2);
-		dvloc [igl] = vlcp;
-	}
 
-#ifdef _OPENMP
-}
-#endif
-	
+
+    double *r_d = nullptr;
+	double *rhoc_d = nullptr;
+	double *rab_d = nullptr;
+    double *aux_d = nullptr;
+	double *drhocg_d = nullptr;
+    if (this->device == base_device::GpuDevice) {
+        resmem_var_op()(this->ctx, r_d, msh);
+        resmem_var_op()(this->ctx, rhoc_d, msh);
+        resmem_var_op()(this->ctx, rab_d, msh);
+
+        resmem_var_op()(this->ctx, aux_d, msh);
+        resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg+1);
+        resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+
+        syncmem_var_h2d_op()(this->ctx,
+                             this->cpu_ctx,
+                             gx_arr_d,
+                             gx_arr.data(),
+                             rho_basis->ngg+1);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, msh);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, msh);
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, aux.data(), msh);
+    }
+
+
+
+	if(this->device == base_device::GpuDevice) {
+		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
+		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+
+	} else {
+		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
+			r,aux.data(),gx_arr.data()+igl0,rab,dvloc+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
+	}	
 
 	return;
 }

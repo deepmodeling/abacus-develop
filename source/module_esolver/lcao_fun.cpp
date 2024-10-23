@@ -52,18 +52,19 @@ namespace ModuleESolver
 template <typename TK, typename TR>
 ModuleIO::Output_Mat_Sparse<TK> ESolver_KS_LCAO<TK, TR>::create_Output_Mat_Sparse(int istep)
 {
-    return ModuleIO::Output_Mat_Sparse<TK>(hsolver::HSolverLCAO<TK>::out_mat_hsR,
-        hsolver::HSolverLCAO<TK>::out_mat_dh,
-        hsolver::HSolverLCAO<TK>::out_mat_t,
-        PARAM.inp.out_mat_r,
-        istep,
-        this->pelec->pot->get_effective_v(),
-        this->pv,
-        this->GK, // mohan add 2024-04-01
-        two_center_bundle_,
-        GlobalC::GridD, // mohan add 2024-04-06
-        this->kv,
-        this->p_hamilt);
+    return ModuleIO::Output_Mat_Sparse<TK>(PARAM.inp.out_mat_hs2,
+                                           PARAM.inp.out_mat_dh,
+                                           PARAM.inp.out_mat_t,
+                                           PARAM.inp.out_mat_r,
+                                           istep,
+                                           this->pelec->pot->get_effective_v(),
+                                           this->pv,
+                                           this->GK, // mohan add 2024-04-01
+                                           two_center_bundle_,
+                                           orb_,
+                                           GlobalC::GridD, // mohan add 2024-04-06
+                                           this->kv,
+                                           this->p_hamilt);
 }
 
 //------------------------------------------------------------------------------
@@ -89,30 +90,30 @@ void ESolver_KS_LCAO<TK, TR>::cal_mag(const int istep, const bool print)
     auto cell_index = CellIndex(GlobalC::ucell.get_atomLabels(),
                                 GlobalC::ucell.get_atomCounts(),
                                 GlobalC::ucell.get_lnchiCounts(),
-                                GlobalV::NSPIN);
+                                PARAM.inp.nspin);
     auto out_sk = ModuleIO::Output_Sk<TK>(this->p_hamilt,
                                           &(this->pv),
-                                          GlobalV::NSPIN,
+                                          PARAM.inp.nspin,
                                           this->kv.get_nks());
     auto out_dmk = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                             &(this->pv),
-                                            GlobalV::NSPIN,
+                                            PARAM.inp.nspin,
                                             this->kv.get_nks());
     auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_sk),
                                               &(out_dmk),
                                               &(this->pv),
                                               &cell_index,
                                               this->kv.isk,
-                                              GlobalV::NSPIN);
+                                              PARAM.inp.nspin);
     auto atom_chg = mulp.get_atom_chg();
     /// used in updating mag info in STRU file
     GlobalC::ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
     if (print && GlobalV::MY_RANK == 0)
     {
         /// write the Orbital file
-        cell_index.write_orb_info(GlobalV::global_out_dir);
+        cell_index.write_orb_info(PARAM.globalv.global_out_dir);
         /// write mulliken.txt
-        mulp.write(istep, GlobalV::global_out_dir);
+        mulp.write(istep, PARAM.globalv.global_out_dir);
         /// write atomic mag info in running log file
         mulp.print_atom_mag(atom_chg, GlobalV::ofs_running);
     }

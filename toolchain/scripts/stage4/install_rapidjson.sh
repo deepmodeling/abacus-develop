@@ -40,19 +40,23 @@ case "$with_rapidjson" in
         echo "$filename is found"
         else
         # download from github.com and checksum
-            echo "wget --quiet $url -O $filename"
-            if ! wget --quiet $url -O $filename; then
-            report_error "failed to download $url"
-            recommend_offline_installation $filename $url
-            fi
-        # checksum
-        checksum "$filename" "$rapidjson_sha256"
+            echo "===> Notice: This version of rapidjson is downloaded in GitHub Release, which will always be out-of-date version <==="
+            download_pkg_from_url "${rapidjson_sha256}" "${filename}" "${url}"
+            # echo "wget $url -O $filename"
+            # if ! wget $url -O $filename; then
+            # report_error "failed to download $url"
+            # recommend_offline_installation $filename $url
+            # fi
+            # # checksum
+            # checksum "$filename" "$rapidjson_sha256"
         fi
         echo "Installing from scratch into ${pkg_install_dir}"
         [ -d $dirname ] && rm -rf $dirname
         tar -xzf $filename
         mkdir -p "${pkg_install_dir}"
         cp -r $dirname/* "${pkg_install_dir}/"
+        # for CMake to find rapidjson
+        cp ${pkg_install_dir}/RapidJSONConfig.cmake.in ${pkg_install_dir}/RapidJSONConfig.cmake
         write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
     fi
         ;;
@@ -78,7 +82,7 @@ if [ "$with_rapidjson" != "__DONTUSE__" ]; then
     # LibRI deps should find rapidjson include in CPATH
         cat << EOF > "${BUILDDIR}/setup_rapidjson"
 prepend_path CPATH "$pkg_install_dir/include"
-export CPATH="${pkg_install_dir}/include:"\${CPATH}
+export CPATH="${pkg_install_dir}/include":\${CPATH}
 EOF
         cat "${BUILDDIR}/setup_rapidjson" >> $SETUPFILE
     fi

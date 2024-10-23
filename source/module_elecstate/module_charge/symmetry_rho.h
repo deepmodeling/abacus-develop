@@ -14,7 +14,6 @@ class Symmetry_rho
     void begin(const int& spin_now,
                const Charge& CHR,
                const ModulePW::PW_Basis* pw,
-               Parallel_Grid& Pgrid,
                ModuleSymmetry::Symmetry& symm) const;
 
     void begin(const int& spin_now,
@@ -23,7 +22,6 @@ class Symmetry_rho
                int ngmc,
                double** kin_r,
                const ModulePW::PW_Basis* pw,
-               Parallel_Grid& Pgrid,
                ModuleSymmetry::Symmetry& symm) const;
 
   private:
@@ -35,7 +33,6 @@ class Symmetry_rho
     // in reciprocal space:
     void psymmg(std::complex<double>* rhog_part,
                 const ModulePW::PW_Basis* rho_basis,
-                Parallel_Grid& Pgrid,
                 ModuleSymmetry::Symmetry& symm) const;
 #ifdef __MPI
     void reduce_to_fullrhog(const ModulePW::PW_Basis* rho_basis,

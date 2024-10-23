@@ -6,11 +6,16 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
+#include "module_base/abfs-vector3_order.h"
+
 #include <RI/global/Tensor.h>
 
 #include <cstddef>
 #include <array>
 #include <vector>
+#include <map>
+
+#include "module_ri/abfs.h"
 
 namespace LRI_CV_Tools
 {
@@ -75,7 +80,7 @@ namespace LRI_CV_Tools
 		std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> && ds_in);
 
 	template<typename Tcell>
-	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times);
+	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times, const std::vector<double>& orb_cutoff);
 
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>
@@ -84,9 +89,27 @@ namespace LRI_CV_Tools
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>>
 	get_dCVws(
-		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);	
+		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);
+
+	template<typename TA, typename TC, typename Tdata>
+	extern std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
+	cal_dMRs(
+		const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs);
+
+    using TC = std::array<int, 3>;
+    using TAC = std::pair<int, TC>;
+    template <typename T>
+    using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
+    template <typename T>
+    TLRI<T> read_Cs_ao(const std::string& file_path, const double& threshold = 1e-10);
+    template <typename T>
+    void write_Cs_ao(const TLRI<T>& Vs, const std::string& file_path);
+    template <typename T>
+    TLRI<T> read_Vs_abf(const std::string& file_path, const double& threshold = 1e-10);
+    template <typename T>
+    void write_Vs_abf(const TLRI<T>& Vs, const std::string& file_path);
 }
 
 #include "LRI_CV_Tools.hpp"
-
+#include "write_ri_cv.hpp"
 #endif

@@ -23,7 +23,11 @@ void warp_reduce(FPTYPE & val) {
         val += __shfl_down_sync(FULL_MASK, val, offset);
     }
 }
-
+template <typename T>
+__device__ static inline 
+thrust::complex<T> conj(thrust::complex<T>& in) {
+    return thrust::conj(in);
+}
 template <typename T>
 __global__ void cal_stress_mgga(
     const int spin,
@@ -461,6 +465,91 @@ __global__ void cal_stress_drhoc_aux2(
     drhocg [idx] = rhocg1;
 }
 
+
+template <typename FPTYPE>
+__global__ void cal_stress_drhoc_aux3(
+        const FPTYPE* r, const FPTYPE* rhoc, 
+        const FPTYPE *gx_arr, const FPTYPE *rab, FPTYPE *drhocg, 
+        const int mesh, const int igl0, const int ngg, const double omega
+){
+    const double FOUR_PI =  4.0 * 3.14159265358979323846;
+
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+
+    if (idx >= ngg) {return;}
+
+    FPTYPE rhocg1=0.0;
+    FPTYPE gx = gx_arr[idx];    
+    const FPTYPE pow_gx = gx * gx;
+
+    auto aux = [](FPTYPE r, FPTYPE rhoc, FPTYPE gx, FPTYPE rab) -> FPTYPE{
+        return rab * rhoc * (r * cos(gx * r)/gx - sin(gx * r)/(gx * gx));
+    };
+
+    FPTYPE f_0 = r[0] * r[0] * rhoc[0] * rab[0];
+    for( int ir = 1 ; ir< mesh - 2; ir+=2)
+    {
+        rhocg1 += 2 * aux(r[ir],rhoc[ir], gx, rab[ir]) + aux(r[ir+1],rhoc[ir+1], gx, rab[ir+1]);
+    }//ir
+    FPTYPE f_2 = aux(r[mesh - 2],rhoc[mesh - 2], gx, rab[mesh - 2]);
+    FPTYPE f_1 = aux(r[mesh - 1],rhoc[mesh - 1], gx, rab[mesh - 1]);
+    
+    rhocg1 += f_2+f_2;
+    rhocg1 += rhocg1;
+    rhocg1 += f_0 + f_1;
+    rhocg1/=3.0;
+
+    // calculations after Simpson Integral
+    const double g2a = pow_gx / 4.0;
+    rhocg1 *= FOUR_PI / omega / 2.0 / gx;
+    rhocg1 += FOUR_PI / omega * gx_arr[ngg] * exp(-g2a) * (g2a + 1) / (pow_gx*pow_gx);
+    drhocg [idx] = rhocg1;
+}
+
+
+
+template <typename FPTYPE>
+__global__ void cal_force_npw(
+        const thrust::complex<FPTYPE> *psiv,
+        const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+        const FPTYPE* rhocgigg_vec,
+        FPTYPE* force,
+        const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+        const int npw,
+        const FPTYPE omega, const FPTYPE tpiba
+){
+    const double TWO_PI = 2.0 * 3.14159265358979323846;
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int begin_idx = tid * 1024;
+    if(begin_idx > npw) return;
+
+    FPTYPE t_force0 = 0;
+    FPTYPE t_force1 = 0;
+    FPTYPE t_force2 = 0;
+    for(int ig = begin_idx; ig<begin_idx+1024 && ig<npw;ig++) {
+        const thrust::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
+
+        const FPTYPE arg = TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
+        const FPTYPE sinp = sin(arg);
+        const FPTYPE cosp = cos(arg);
+        const thrust::complex<FPTYPE> expiarg = thrust::complex<FPTYPE>(sinp, cosp);
+
+        const thrust::complex<FPTYPE> tmp_var = psiv_conj * expiarg * tpiba * omega * rhocgigg_vec[ig];
+
+        const thrust::complex<FPTYPE> ipol0 = tmp_var * gv_x[ig];
+        t_force0 += ipol0.real();
+
+        const thrust::complex<FPTYPE> ipol1 = tmp_var * gv_y[ig];
+        t_force1 += ipol1.real();
+
+        const thrust::complex<FPTYPE> ipol2 = tmp_var * gv_z[ig];
+        t_force2 += ipol2.real();
+    }
+    atomicAdd(&force[0], t_force0);
+    atomicAdd(&force[1], t_force1);
+    atomicAdd(&force[2], t_force2);
+}
+
 template <typename FPTYPE>
 void cal_vkb_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const base_device::DEVICE_GPU* ctx,
@@ -556,6 +645,15 @@ void cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     return ;
 }
 
+
+/**
+ * The implementation of this operator is detailed in stress_op.h.
+ * The function is called by the module as follows
+ *      Type = 0 -> stress_cc
+ *      Type = 1 -> stress_cc, force_cc
+ *      Type = 2 -> force_scc
+ *      Type = 3 -> stress_loc
+ */
 template <typename FPTYPE>
 void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         const FPTYPE* r, const FPTYPE* rhoc,  
@@ -578,9 +676,39 @@ void cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
         cal_stress_drhoc_aux2<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
             r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
         );        
+    } else if(type == 3 ){
+        cal_stress_drhoc_aux3<FPTYPE><<<block,THREADS_PER_BLOCK>>>(
+            r,rhoc,gx_arr,rab,drhocg,mesh,igl0,ngg,omega
+        );        
     }
     return ;
 }
+
+
+template <typename FPTYPE>
+void cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
+        const std::complex<FPTYPE> *psiv,
+        const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+        const FPTYPE* rhocgigg_vec,
+        FPTYPE* force,
+        const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+        const int npw,
+        const FPTYPE omega, const FPTYPE tpiba
+    )
+{
+    // Divide the npw size range into blocksize 1024 blocks
+    int t_size = 1024;
+    int t_num = (npw%t_size) ? (npw/t_size + 1) : (npw/t_size);
+    dim3 npwgrid(((t_num%THREADS_PER_BLOCK) ? (t_num/THREADS_PER_BLOCK + 1) : (t_num/THREADS_PER_BLOCK)));
+
+    cal_force_npw << < npwgrid, THREADS_PER_BLOCK >> > (
+        reinterpret_cast<const thrust::complex<FPTYPE>*>(psiv),
+        gv_x, gv_y, gv_z, rhocgigg_vec, force, pos_x, pos_y, pos_z,
+        npw, omega, tpiba
+    ); 
+    return ;
+}
+
 
 // template <typename FPTYPE>
 // void prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
@@ -656,6 +784,9 @@ template struct cal_vkb_deri_op<float, base_device::DEVICE_GPU>;
 
 template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_GPU>;
 template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_GPU>;
+
+template struct cal_force_npw_op<double, base_device::DEVICE_GPU>;
+template struct cal_force_npw_op<float, base_device::DEVICE_GPU>;
 
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_GPU>;
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_GPU>;

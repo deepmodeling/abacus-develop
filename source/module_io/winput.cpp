@@ -5,7 +5,7 @@
 #endif
 
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
+#include "module_parameter/parameter.h"
 #include <cstring>
 #include <iostream>
 
@@ -79,8 +79,6 @@ winput::~winput()
 void winput::Init(const std::string& fn)
 {
     Default();
-    if (GlobalV::test_winput)
-        ModuleBase::TITLE("winput", "Init");
     //==========================================
     // First readin and check value in root cpu
     // and then bcast value
@@ -448,8 +446,6 @@ void winput::Read(const std::string& fn)
 
 void winput::Default()
 {
-    if (GlobalV::test_winput)
-        ModuleBase::TITLE("winput", "Default");
     //========================
     //	part1 : control
     //========================
@@ -557,13 +553,10 @@ void winput::Default()
 
 void winput::Check()
 {
-    if (GlobalV::test_winput)
-        ModuleBase::TITLE("winput", "Check");
-
     if (GlobalV::MY_RANK != 0)
         return;
 
-    if (GlobalV::CALCULATION == "nscf")
+    if (PARAM.inp.calculation == "nscf")
     {
         if (out_chg)
         {
@@ -710,9 +703,9 @@ void winput::Check()
     //			{
     //				ModuleBase::WARNING_QUIT("winput::Check","Please check your bloch_end");
     //			}
-    //			if(bloch_end > GlobalV::NBANDS)
+    //			if(bloch_end > PARAM.inp.nbands)
     //			{
-    //				ModuleBase::WARNING_QUIT("winput::Check","Bloch_end > GlobalV::NBANDS, reset either of them");
+    //				ModuleBase::WARNING_QUIT("winput::Check","Bloch_end > PARAM.inp.nbands, reset either of them");
     //			}
     //		}
     //	}// end after_iter
@@ -741,9 +734,6 @@ void winput::Check()
 
 void winput::Print(const std::string& fn)
 {
-    if (GlobalV::test_winput)
-        ModuleBase::TITLE("winput", "Print");
-
     if (GlobalV::MY_RANK != 0)
         return;
 
@@ -841,9 +831,6 @@ void winput::Print(const std::string& fn)
 #ifdef __MPI
 void winput::Bcast()
 {
-    if (GlobalV::test_winput)
-        ModuleBase::TITLE("winput", "Bcast");
-
     Parallel_Common::bcast_string(target);
     Parallel_Common::bcast_bool(before_iter);
     Parallel_Common::bcast_bool(after_iter);

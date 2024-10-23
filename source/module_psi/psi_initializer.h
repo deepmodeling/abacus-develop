@@ -89,7 +89,7 @@ class psi_initializer
                                 pseudopot_cell_vnl* = nullptr) = 0; //< nonlocal pseudopotential
         #endif
         /// @brief CENTRAL FUNCTION: allocate memory for psi
-        psi::Psi<std::complex<double>>* allocate(bool only_psig = false);           //< if only allocate memory for psig
+        psi::Psi<std::complex<double>>* allocate(const bool only_psig = false);           //< if only allocate memory for psig
 
         void random_t(T* psi,                       //< [out] psi
                       const int iw_start,           //< iw_start, starting band index
@@ -105,7 +105,7 @@ class psi_initializer
         /// @brief CENTRAL FUNCTION: calculate the interpolate table
         virtual void tabulate() = 0;
         /// @brief CENTRAL FUNCTION: calculate projection of atomic radial function onto planewave basis BASED ON THE OVERLAP TABLE
-        virtual void proj_ao_onkG(int ik) = 0;
+        virtual void proj_ao_onkG(const int ik) = 0;
 
         // getter and setter
         UnitCell* p_ucell() const { return this->p_ucell_; }

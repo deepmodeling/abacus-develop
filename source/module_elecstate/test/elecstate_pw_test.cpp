@@ -2,10 +2,12 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #define protected public
 #include "module_elecstate/elecstate_pw.h"
-
+#undef protected
 // mock functions for testing
 namespace elecstate
 {
@@ -143,7 +145,11 @@ void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
 void Charge::set_rho_core_paw()
 {
 }
-void Charge::init_rho(elecstate::efermi&, ModuleBase::ComplexMatrix const&, const int&, const int&)
+void Charge::init_rho(elecstate::efermi&,
+                      ModuleBase::ComplexMatrix const&,
+                      ModuleSymmetry::Symmetry& symm,
+                      const void*,
+                      const void*)
 {
 }
 void Charge::set_rhopw(ModulePW::PW_Basis*)
@@ -158,23 +164,23 @@ void Charge::check_rho()
 
 void Set_GlobalV_Default()
 {
-    GlobalV::device_flag = "cpu";
-    GlobalV::precision_flag = "double";
-    GlobalV::DOMAG = false;
-    GlobalV::DOMAG_Z = false;
+    PARAM.input.device = "cpu";
+    PARAM.input.precision = "double";
+    PARAM.sys.domag = false;
+    PARAM.sys.domag_z = false;
     // Base class dependent
-    GlobalV::NSPIN = 1;
-    GlobalV::nelec = 10.0;
-    GlobalV::nupdown = 0.0;
-    GlobalV::TWO_EFERMI = false;
-    GlobalV::NBANDS = 6;
-    GlobalV::NLOCAL = 6;
-    GlobalV::ESOLVER_TYPE = "ksdft";
-    GlobalV::LSPINORB = false;
-    GlobalV::BASIS_TYPE = "pw";
+    PARAM.input.nspin = 1;
+    PARAM.input.nelec = 10.0;
+    PARAM.input.nupdown  = 0.0;
+    PARAM.sys.two_fermi = false;
+    PARAM.input.nbands = 6;
+    PARAM.sys.nlocal = 6;
+    PARAM.input.esolver_type = "ksdft";
+    PARAM.input.lspinorb = false;
+    PARAM.input.basis_type = "pw";
     GlobalV::KPAR = 1;
     GlobalV::NPROC_IN_POOL = 1;
-    GlobalV::use_uspp = false;
+    PARAM.sys.use_uspp = false;
 }
 
 /************************************************
@@ -291,9 +297,9 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
-    GlobalV::precision_flag = "single";
+    PARAM.input.precision = "single";
     elecstate::tmp_xc_func_type = 3;
-    chg->nspin = GlobalV::NSPIN;
+    chg->nspin = PARAM.input.nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,
                                                                                               chg,

@@ -93,7 +93,8 @@ class Stress_Func
                     const FPTYPE* vloc_at,
                     const FPTYPE& zp,
                     FPTYPE* dvloc,
-                    ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
+                    ModulePW::PW_Basis* rho_basis,
+                    const UnitCell& ucell_in); // used in local pseudopotential stress
 
     /**
      * @brief compute the derivative of the coulomb potential in reciprocal space

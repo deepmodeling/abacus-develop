@@ -1,5 +1,6 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
+#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/module_container/base/third_party/blas.h"
 #include "module_base/scalapack_connector.h"
@@ -161,7 +162,7 @@ inline void write_orb_energy(const K_Vectors& kv,
     assert(e_orb.size() == kv.get_nks());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
-    ofs.open(GlobalV::global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
+    ofs.open(PARAM.globalv.global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
         app ? std::ios::app : std::ios::out);
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);
@@ -194,6 +195,7 @@ void write_Vxc(const int nspin,
     Gint_Gamma& gint_gamma, // mohan add 2024-04-01
     Gint_k& gint_k,         // mohan add 2024-04-01
     const K_Vectors& kv,
+    const std::vector<double>& orb_cutoff,
     const ModuleBase::matrix& wg,
     Grid_Driver& gd
 #ifdef __EXX
@@ -219,7 +221,10 @@ void write_Vxc(const int nspin,
     // R (the number of hR: 1 for nspin=1, 4; 2 for nspin=2)
     int nspin0 = (nspin == 2) ? 2 : 1;
     std::vector<hamilt::HContainer<TR>> vxcs_R_ao(nspin0, hamilt::HContainer<TR>(pv));
-    for (int is = 0; is < nspin0; ++is) { vxcs_R_ao[is].set_zero(); }
+    for (int is = 0; is < nspin0; ++is) {
+        vxcs_R_ao[is].set_zero();
+        if (std::is_same<TK, double>::value) { vxcs_R_ao[is].fix_gamma(); }
+    }
     // k (size for each k-point)
     hamilt::HS_Matrix_K<TK> vxc_k_ao(pv, 1); // only hk is needed, sk is skipped
 
@@ -233,12 +238,7 @@ void write_Vxc(const int nspin,
     for (int is = 0; is < nspin0; ++is)
     {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                                                                        &vxc_k_ao,
-                                                                        kv.kvec_d,
-                                                                        potxc,
-                                                                        &vxcs_R_ao[is],
-                                                                        &ucell,
-                                                                        &gd);
+            &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
 
         vxcs_op_ao[is]->contributeHR();
     }
@@ -278,12 +278,12 @@ void write_Vxc(const int nspin,
             vexxonly_op_ao.contributeHk(ik);
             std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
+            // ======test=======
+            // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
+            // ======test=======
         }
-        // ======test=======
-        // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
-        // ======test=======
 #endif
-        if (GlobalV::dft_plus_u)
+        if (PARAM.inp.dft_plus_u)
         {
             vdftu_op_ao.contributeHk(ik);
         }

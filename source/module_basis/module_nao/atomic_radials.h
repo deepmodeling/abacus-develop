@@ -51,6 +51,7 @@ class AtomicRadials : public RadialSet
                          std::ofstream* ptr_log = nullptr, //!< output file stream for logging
                          const int rank = 0                //!< MPI rank
     );
+
 };
 
 #endif

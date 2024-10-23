@@ -58,18 +58,15 @@ class ESolver
         return 0;
     }
 
-    // get conv_elec used in current scf
-    virtual bool get_conv_elec()
-    {
-        return false;
-    }
+    bool conv_esolver = true; // whether esolver is converged
+
     std::string classname;
 };
 
 /**
  * @brief A subrutine called in init_esolver()
  *        This function returns type of ESolver
- *        Based on GlobalV::BASIS_TYPE and GlobalV::ESOLVER_TYPE
+ *        Based on PARAM.inp.basis_type and PARAM.inp.esolver_type
  * 
  * @return [out] std::string The type of ESolver
  */

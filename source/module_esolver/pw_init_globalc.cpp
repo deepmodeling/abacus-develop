@@ -34,7 +34,6 @@
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_elecstat_pot.h"
@@ -90,11 +89,11 @@ void ESolver_KS_PW<T, Device>::Init_GlobalC(const Input_para& inp,
                                   &(this->sf));
 
     this->kspw_psi
-        = GlobalV::device_flag == "gpu" || GlobalV::precision_flag == "single"
+        = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
               ? new psi::Psi<T, Device>(this->psi[0])
               : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
 
-    if (GlobalV::precision_flag == "single") {
+    if (PARAM.inp.precision == "single") {
         ModuleBase::Memory::record("Psi_single",
                                    sizeof(T) * this->psi[0].size());
     }

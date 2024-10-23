@@ -1,8 +1,13 @@
 #include "xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
+#endif
+
+#ifdef USE_LIBXC
+#include "xc_functional_libxc.h"
 #endif
 
 XC_Functional::XC_Functional(){}
@@ -14,9 +19,14 @@ int XC_Functional::func_type = 0;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 
-void XC_Functional::get_hybrid_alpha(const double alpha_in)
+void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
     hybrid_alpha = alpha_in;
+}
+
+double XC_Functional::get_hybrid_alpha()
+{
+    return hybrid_alpha;
 }
 
 int XC_Functional::get_func_type()
@@ -49,7 +59,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     //such as for PBE we have:
     //        func_id.push_back(XC_GGA_X_PBE);
     //        func_id.push_back(XC_GGA_C_PBE);
-    
+
     func_id.clear();
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
@@ -60,9 +70,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw)
+        if(PARAM.inp.use_paw)
         {
-            if(GlobalV::NSPIN != 1)
+            if(PARAM.inp.nspin != 1)
             {
                 ModuleBase::WARNING_QUIT("set_xc_type","paw does not support pz with spin polarization");
             }
@@ -80,7 +90,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 1;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(1,7);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(1,7);
 }
 #endif
     }
@@ -91,7 +101,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,11);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,11);
 }
 #endif
 	}
@@ -109,7 +119,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
 #ifdef USE_PAW
-        if(GlobalV::use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,14);
+        if(PARAM.inp.use_paw) { GlobalC::paw_cell.set_libpaw_xc(2,14);
 }
 #endif
 	}
@@ -119,7 +129,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_GGA_C_PBE);
         func_type = 2;
         use_libxc = false;
-	}	
+	}
 	else if ( xc_func == "BLYP") //B88+LYP
 	{
         func_id.push_back(XC_GGA_X_B88);
@@ -133,14 +143,14 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_GGA_C_P86);
         func_type = 2;
         use_libxc = false;
-	} 
+	}
 	else if ( xc_func == "PW91") //PW91_X+PW91_C
 	{
         func_id.push_back(XC_GGA_X_PW91);
         func_id.push_back(XC_GGA_C_PW91);
         func_type = 2;
         use_libxc = false;
-	} 
+	}
 	else if ( xc_func == "HCTH") //HCTH_X+HCTH_C
 	{
         func_id.push_back(XC_GGA_X_HCTH_A);
@@ -198,7 +208,9 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
 #ifdef USE_LIBXC
         //see if it matches libxc functionals
-        set_xc_type_libxc(xc_func);
+        const std::pair<int,std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
+        func_type = std::get<0>(type_id);
+        func_id = std::get<1>(type_id);
         use_libxc = true;
 #else
         ModuleBase::WARNING_QUIT("xc_functional.cpp","functional name not recognized!");
@@ -210,15 +222,15 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 		std::cerr << "\n OPTX untested please test,";
 	}
 
-    if((func_type == 4 || func_type == 5) && GlobalV::BASIS_TYPE == "pw")
+    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
     {
         ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     }
-    if((func_type == 3 || func_type == 5) && GlobalV::NSPIN==4)
+    if((func_type == 3 || func_type == 5) && PARAM.inp.nspin==4)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
-    //if((func_type == 3 || func_type == 5) && GlobalV::CAL_STRESS == 1 && GlobalV::NSPIN!=1)
+    //if((func_type == 3 || func_type == 5) && PARAM.inp.cal_stress == 1 && PARAM.inp.nspin!=1)
     //{
     //    ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
     //}
@@ -239,101 +251,3 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
 
 }
-
-#ifdef USE_LIBXC
-void XC_Functional::set_xc_type_libxc(std::string xc_func_in)
-{
-
-    // determine the type (lda/gga/mgga)
-    func_type = 1;
-    if(xc_func_in.find("GGA") != std::string::npos) { func_type = 2;
-}
-    if(xc_func_in.find("MGGA") != std::string::npos) { func_type = 3;
-}
-    if(xc_func_in.find("HYB") != std::string::npos) { func_type =4;
-}
-    if(xc_func_in.find("HYB") != std::string::npos && xc_func_in.find("MGGA") != std::string::npos) { func_type =5;
-}
-
-    // determine the id
-    int pos = 0;
-    std::string delimiter = "+";
-    std::string token;
-    while ((pos = xc_func_in.find(delimiter)) != std::string::npos)
-    {
-        token = xc_func_in.substr(0, pos);
-        int id = xc_functional_get_number(token.c_str());
-        std::cout << "func,id" << token << " " << id << std::endl;
-        if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!");
-}
-        func_id.push_back(id);
-        xc_func_in.erase(0, pos + delimiter.length());
-    }
-    int id = xc_functional_get_number(xc_func_in.c_str());
-    std::cout << "func,id" << xc_func_in << " " << id << std::endl;
-    if (id == -1) { ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functional name not recognized!");
-}
-    func_id.push_back(id);
-
-}
-#endif
-
-#ifdef USE_LIBXC
-std::vector<xc_func_type> XC_Functional::init_func(const int xc_polarized)
-{
-	// 'funcs' is the return value
-	std::vector<xc_func_type> funcs;
-
-	//-------------------------------------------
-	// define a function named 'add_func', which 
-	// initialize a functional according to its ID
-	//-------------------------------------------
-	auto add_func = [&]( const int func_id )
-	{
-		funcs.push_back({});
-		// 'xc_func_init' is defined in Libxc
-		xc_func_init( &funcs.back(), func_id, xc_polarized );
-	};
-
-	for(int id : func_id)
-	{
-        if(id == XC_LDA_XC_KSDT || id == XC_LDA_XC_CORRKSDT || id == XC_LDA_XC_GDSMFB) //finite temperature XC functionals
-        {
-            add_func(id);
-            double parameter_finitet[1] = {PARAM.inp.xc_temperature * 0.5}; // converts to Hartree for libxc
-            xc_func_set_ext_params(&funcs.back(), parameter_finitet);
-        }
-#ifdef __EXX
-		else if( id == XC_HYB_GGA_XC_PBEH ) // PBE0
-		{
-			add_func( XC_HYB_GGA_XC_PBEH );		
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha, 
-				GlobalC::exx_info.info_global.hse_omega, 
-				GlobalC::exx_info.info_global.hse_omega };
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);	
-		}
-		else if( id == XC_HYB_GGA_XC_HSE06 ) // HSE06 hybrid functional
-		{
-			add_func( XC_HYB_GGA_XC_HSE06 );	
-			double parameter_hse[3] = { GlobalC::exx_info.info_global.hybrid_alpha, 
-				GlobalC::exx_info.info_global.hse_omega, 
-				GlobalC::exx_info.info_global.hse_omega };
-			xc_func_set_ext_params(&funcs.back(), parameter_hse);
-		}
-#endif
-		else
-		{
-			add_func( id );
-		}
-	}
-	return funcs;
-}
-
-void XC_Functional::finish_func(std::vector<xc_func_type> &funcs)
-{
-    for(xc_func_type func : funcs)
-	{
-        xc_func_end(&func);
-    }
-}
-#endif

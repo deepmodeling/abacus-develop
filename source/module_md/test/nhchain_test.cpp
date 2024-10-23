@@ -1,6 +1,9 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
+#include "module_parameter/parameter.h"
+#undef private
+#define private public
 #define protected public
 #include "module_esolver/esolver_lj.h"
 #include "module_md/nhchain.h"
@@ -51,7 +54,7 @@ class NHC_test : public testing::Test
         param_in.input.mdp.md_pfirst = 1;
         param_in.input.mdp.md_plast = 1;
         mdrun = new Nose_Hoover(param_in, ucell);
-        mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
     }
 
     void TearDown()
@@ -63,7 +66,7 @@ class NHC_test : public testing::Test
 
 TEST_F(NHC_test, setup)
 {
-    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999665, doublethreshold);
+    EXPECT_NEAR(mdrun->t_current * ModuleBase::Hartree_to_K, 299.99999999999994, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 0), 6.0100555286436806e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 1), -1.4746713013791574e-06, doublethreshold);
     EXPECT_NEAR(mdrun->stress(0, 2), 1.5039983732220751e-06, doublethreshold);
@@ -146,7 +149,7 @@ TEST_F(NHC_test, write_restart)
     ;
     mdrun->step_ = 1;
     mdrun->step_rst_ = 2;
-    mdrun->write_restart(GlobalV::global_out_dir);
+    mdrun->write_restart(PARAM.sys.global_out_dir);
 
     std::ifstream ifs("Restart_md.dat");
     std::string output_str;
@@ -174,7 +177,7 @@ TEST_F(NHC_test, write_restart)
 
 TEST_F(NHC_test, restart)
 {
-    mdrun->restart(GlobalV::global_readin_dir);
+    mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.dat");
 
     Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);

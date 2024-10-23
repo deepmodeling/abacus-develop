@@ -3,11 +3,16 @@
 #include "module_base/math_integral.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_quit.h"
+
+// FIXME: should update with pyabacus
+// #include "module_io/orb_io.h"
+
 #include "projgen.h"
 
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <numeric>
 
 AtomicRadials& AtomicRadials::operator=(const AtomicRadials& rhs)
 {
@@ -207,7 +212,6 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     {
         rgrid[ir] = ir * dr;
     }
-
     chi_ = new NumericalRadial[nchi_];
 
     // record whether an orbital has been read or not
@@ -268,3 +272,48 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
     delete[] rvalue;
     delete[] rgrid;
 }
+
+// FIXME: should update with pyabacus
+// void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, const int rank)
+// {
+//     /*
+//      * Read the orbital file.
+//      *
+//      * For orbital file format, see
+//      * (new) abacus-develop/tools/SIAB/PyTorchGradient/source/IO/print_orbital.py
+//      * (old) abacus-develop/tools/SIAB/SimulatedAnnealing/source/src_spillage/Plot_Psi.cpp
+//      *                                                                                  */
+//     int ngrid = 0; // number of grid points
+//     double dr = 0; // grid spacing
+//     std::string tmp;
+
+//     int nr;
+//     std::vector<int> nzeta;
+//     std::vector<std::vector<double>> radials;
+
+//     ModuleIO::read_abacus_orb(ifs, symbol_, orb_ecut_, nr, dr, nzeta, radials, rank);
+
+//     lmax_ = nzeta.size() - 1;
+//     nzeta_ = new int[lmax_ + 1];
+//     std::copy(nzeta.begin(), nzeta.end(), nzeta_);
+
+//     nchi_ = std::accumulate(nzeta.begin(), nzeta.end(), 0);
+//     nzeta_max_ = *std::max_element(nzeta.begin(), nzeta.end());
+
+//     indexing();
+    
+//     std::vector<double> rgrid(nr);
+//     std::iota(rgrid.begin(), rgrid.end(), 0);
+//     std::for_each(rgrid.begin(), rgrid.end(), [dr](double& r) { r *= dr; });
+//     chi_ = new NumericalRadial[nchi_];
+//     int ichi = 0;
+//     for (int l = 0; l <= lmax_; ++l)
+//     {
+//         for (int izeta = 0; izeta < nzeta[l]; ++izeta)
+//         {
+//             chi_[index(l, izeta)].build(l, true, nr, rgrid.data(), radials[ichi].data(), 0, izeta, symbol_, itype_, false);
+//             chi_[index(l, izeta)].normalize();
+//             ++ichi;
+//         }
+//     }
+// }

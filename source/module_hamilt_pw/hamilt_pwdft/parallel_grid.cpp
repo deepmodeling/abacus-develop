@@ -1,6 +1,6 @@
 #include "parallel_grid.h"
 #include "module_base/parallel_global.h"
-
+#include "module_parameter/parameter.h"
 Parallel_Grid::Parallel_Grid()
 {
     this->allocate = false;
@@ -84,7 +84,7 @@ void Parallel_Grid::init(
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
-	if(GlobalV::ESOLVER_TYPE == "sdft")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
+	if(PARAM.inp.esolver_type == "sdft")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
 	else											nprocgroup = GlobalV::NPROC;
 
 	const int remain_pro = nprocgroup%GlobalV::KPAR;
@@ -182,9 +182,9 @@ void Parallel_Grid::z_distribution(void)
 
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
+void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho) const
 {
-	if(GlobalV::ESOLVER_TYPE == "sdft")
+	if(PARAM.inp.esolver_type == "sdft")
 	{
 		this->zpiece_to_stogroup(zpiece,iz,rho);
 		return;
@@ -256,7 +256,7 @@ void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho)
 #endif
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rho)
+void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const
 {
 	assert(allocate);	
 	//TITLE("Parallel_Grid","zpiece_to_all");

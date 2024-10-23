@@ -7,12 +7,12 @@
 void Relax_old::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.
-    if (GlobalV::CALCULATION == "relax")
+    if (PARAM.inp.calculation == "relax")
     {
         // Ions_Move_Methods
         IMM.allocate(natom);
     }
-    if (GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "cell-relax")
     {
         // Ions_Move_Methods
         IMM.allocate(natom);
@@ -42,7 +42,7 @@ bool Relax_old::relax_step(const int& istep,
         return true;
     }
     // choose what to do next
-    if (GlobalV::CALCULATION != "cell-relax") {
+    if (PARAM.inp.calculation != "cell-relax") {
         force_step = istep;
 }
     if (this->if_do_relax(ucell))
@@ -55,7 +55,7 @@ bool Relax_old::relax_step(const int& istep,
             ucell.ionic_position_updated = true;
             return converged;
         }
-        else if (GlobalV::CALCULATION != "cell-relax")
+        else if (PARAM.inp.calculation != "cell-relax")
         {
             return converged;
         }
@@ -82,7 +82,7 @@ bool Relax_old::relax_step(const int& istep,
 bool Relax_old::if_do_relax(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Relax_old", "if_do_relax");
-    if (GlobalV::CALCULATION == "relax" || GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
         if (!ucell.if_atoms_can_move())
         {
@@ -92,7 +92,7 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
         //		if(!IMM.get_converged()) return 1;
         else
         {
-            assert(GlobalV::CAL_FORCE == 1);
+            assert(PARAM.inp.cal_force == 1);
             return true;
         }
     }
@@ -103,7 +103,7 @@ bool Relax_old::if_do_relax(const UnitCell& ucell)
 bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Relax_old", "if_do_cellrelax");
-    if (GlobalV::CALCULATION == "cell-relax")
+    if (PARAM.inp.calculation == "cell-relax")
     {
         if (!ucell.if_cell_can_change())
         {
@@ -117,7 +117,7 @@ bool Relax_old::if_do_cellrelax(const UnitCell& ucell)
         }
         else
         {
-            assert(GlobalV::CAL_STRESS == 1);
+            assert(PARAM.inp.cal_stress == 1);
             return true;
         }
     }

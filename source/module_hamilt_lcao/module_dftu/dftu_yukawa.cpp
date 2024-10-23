@@ -1,5 +1,6 @@
 //==========================================================
 // Author:Xin Qu
+#include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
 #include "module_base/constants.h"
@@ -31,9 +32,9 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
 
     double sum_rho = 0.0;
     double sum_rho_lambda = 0.0;
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        if(GlobalV::NSPIN == 4 && is > 0) { continue;// for non-collinear spin case, first spin contains the charge density
+        if(PARAM.inp.nspin == 4 && is > 0) { continue;// for non-collinear spin case, first spin contains the charge density
 }
         for (int ir = 0; ir < nrxx; ir++)
         {
@@ -70,22 +71,22 @@ void DFTU::cal_slater_Fk(const int L, const int T)
         for (int chi = 0; chi < GlobalC::ucell.atoms[T].l_nchi[L]; chi++)
         {
             //	if(chi!=0) continue;
-            const int mesh = GlobalC::ORB.Phi[T].PhiLN(L, chi).getNr();
+            const int mesh = ptr_orb_->Phi[T].PhiLN(L, chi).getNr();
 
             for (int k = 0; k <= L; k++)
             {
                 for (int ir0 = 1; ir0 < mesh; ir0++)
                 {
-                    double r0 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getRadial(ir0);
-                    const double rab0 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getRab(ir0);
-                    const double R_L0 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getPsi(ir0);
+                    double r0 = ptr_orb_->Phi[T].PhiLN(L, chi).getRadial(ir0);
+                    const double rab0 = ptr_orb_->Phi[T].PhiLN(L, chi).getRab(ir0);
+                    const double R_L0 = ptr_orb_->Phi[T].PhiLN(L, chi).getPsi(ir0);
 
                     for (int ir1 = 1; ir1 < mesh; ir1++)
                     {
                         double bslval, hnkval;
-                        double r1 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getRadial(ir1);
-                        const double rab1 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getRab(ir1);
-                        const double R_L1 = GlobalC::ORB.Phi[T].PhiLN(L, chi).getPsi(ir1);
+                        double r1 = ptr_orb_->Phi[T].PhiLN(L, chi).getRadial(ir1);
+                        const double rab1 = ptr_orb_->Phi[T].PhiLN(L, chi).getRab(ir1);
+                        const double R_L1 = ptr_orb_->Phi[T].PhiLN(L, chi).getPsi(ir1);
 
                         int l = 2 * k;
                         if (ir0 < ir1) // less than

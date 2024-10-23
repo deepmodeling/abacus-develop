@@ -43,7 +43,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac)
+void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry&, const void*)
 {
     return;
 }
@@ -57,10 +57,11 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     return;
 }
 
-void ElecState::cal_nbands()
-{
-    return;
-}
+Potential::~Potential(){}
+
+void Potential::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff){}
+
+void Potential::cal_fixed_v(double* vl_pseudo){}
 
 } // namespace elecstate
 

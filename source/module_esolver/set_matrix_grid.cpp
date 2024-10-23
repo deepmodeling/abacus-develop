@@ -12,7 +12,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
@@ -27,18 +26,19 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");
 
     // (1) Find adjacent atoms for each atom.
-    GlobalV::SEARCH_RADIUS = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                     GlobalV::OUT_LEVEL,
-                                                     GlobalC::ORB.get_rcutmax_Phi(),
+    double search_radius = -1.0;
+    search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+                                                     PARAM.inp.out_level,
+                                                     orb_.get_rcutmax_Phi(),
                                                      GlobalC::ucell.infoNL.get_rcutmax_Beta(),
-                                                     GlobalV::GAMMA_ONLY_LOCAL);
+                                                     PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
                          GlobalC::ucell,
-                         GlobalV::SEARCH_RADIUS,
-                         GlobalV::test_atom_input);
+                         search_radius,
+                         PARAM.inp.test_atom_input);
 
     // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"SEARCH ADJACENT
     // ATOMS");
@@ -50,7 +50,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -84,13 +84,13 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    ra.for_2d(this->pv, GlobalV::GAMMA_ONLY_LOCAL);
+    ra.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
-    if (!GlobalV::GAMMA_ONLY_LOCAL)
+    if (!PARAM.globalv.gamma_only_local)
     {
         // need to first calculae lgd.
         // using GridT.init.
-        this->GridT.cal_nnrg(&this->pv);
+        this->GridT.cal_nnrg(&this->pv, orb_.cutoffs());
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");

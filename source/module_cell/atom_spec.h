@@ -48,7 +48,6 @@ public:
     // Coulomb potential v(r) = z/r
     // It is a local potentail, and has no non-local potential parts.
     bool coulomb_potential = false;
-
     void print_Atom(std::ofstream &ofs);
     void update_force(ModuleBase::matrix &fcs);
 #ifdef __MPI

@@ -1,5 +1,8 @@
 #include "module_base/matrix3.h"
 #include "module_base/parallel_global.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/module_charge/charge.h"
 
 #include "gmock/gmock.h"
@@ -23,8 +26,9 @@ int get_xc_func_type()
 
 auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
-    for (int i = 0; i < nv; ++i)
+    for (int i = 0; i < nv; ++i) {
         sum += v[i];
+}
     return sum;
 };
 /************************************************
@@ -64,7 +68,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -93,7 +97,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         }
         double refsum = sum_array(array_rho, nrxx);
 
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         EXPECT_EQ(sum, refsum * GlobalV::KPAR);
@@ -110,7 +114,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         GlobalV::KPAR = 3;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -146,7 +150,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
             }
         }
 
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
@@ -165,7 +169,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      GlobalV::NSTOGROUP,
+                                      PARAM.input.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_STOGROUP,
                                       GlobalV::RANK_IN_STOGROUP,
@@ -179,7 +183,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
         charge->rhopw = rhopw;
-        GlobalV::NSPIN = 1;
+        PARAM.input.nspin = 1;
         charge->rho = new double*[1];
         charge->kin_r = new double*[1];
 
@@ -190,7 +194,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         charge->nrxx = nrxx;
         charge->rho[0] = new double[nrxx];
         charge->kin_r[0] = new double[nrxx];
-        charge->init_chgmpi(nz, 1);
+        charge->init_chgmpi();
         charge->rho_mpi();
 
         delete[] charge->rho[0];

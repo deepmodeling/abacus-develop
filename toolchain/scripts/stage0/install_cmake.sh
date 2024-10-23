@@ -3,7 +3,7 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0219
+# Last Update in 2024-0811
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
@@ -21,13 +21,13 @@ cd "${BUILDDIR}"
 case "${with_cmake}" in
   __INSTALL__)
     echo "==================== Installing CMake ===================="
-    cmake_ver="3.28.1"
+    cmake_ver="3.30.0"
     if [ "${OPENBLAS_ARCH}" = "arm64" ]; then
       cmake_arch="linux-aarch64"
-      cmake_sha256="4ecba78ef9499a973d012a83feab5f888e86fc5388e9a768037ab4f7232cab16"
+      cmake_sha256="daa89552fd9102fb70399b31b5605c4f61125023bbbed947757a7b53ce36c4d0"
     elif [ "${OPENBLAS_ARCH}" = "x86_64" ]; then
       cmake_arch="linux-x86_64"
-      cmake_sha256="ada6a46be9da5f8cbeb00b9523ffe45ee6b36172eb81aaa5bdc6a2a8231b677c"
+      cmake_sha256="1a5969fe81fea6e5220d053d9d3e3754cbc85be07d2d428bebdcfe87137971a9"
     else
       report_error ${LINENO} \
         "cmake installation for ARCH=${ARCH} is not supported. You can try to use the system installation using the flag --with-cmake=system instead."
@@ -36,17 +36,18 @@ case "${with_cmake}" in
     pkg_install_dir="${INSTALLDIR}/cmake-${cmake_ver}"
     #pkg_install_dir="${HOME}/apps/cmake/${cmake_ver}"
     install_lock_file="$pkg_install_dir/install_successful"
+    cmake_pkg="cmake-${cmake_ver}-${cmake_arch}.sh"
     if verify_checksums "${install_lock_file}"; then
       echo "cmake-${cmake_ver} is already installed, skipping it."
     else
-      if [ -f cmake-${cmake_ver}-${cmake_arch}.sh ]; then
-        echo "cmake-${cmake_ver}-${cmake_arch}.sh is found"
+      if [ -f $cmake_pkg ]; then
+        echo "$cmake_pkg is found"
       else
-        download_pkg_from_ABACUS_org "${cmake_sha256}" "cmake-${cmake_ver}-${cmake_arch}.sh"
+        download_pkg_from_ABACUS_org "${cmake_sha256}" "$cmake_pkg"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       mkdir -p ${pkg_install_dir}
-      /bin/sh cmake-${cmake_ver}-${cmake_arch}.sh --prefix=${pkg_install_dir} --skip-license > install.log 2>&1 || tail -n ${LOG_LINES} install.log
+      /bin/sh $cmake_pkg --prefix=${pkg_install_dir} --skip-license > install.log 2>&1 || tail -n ${LOG_LINES} install.log
       write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage0/$(basename ${SCRIPT_NAME})"
     fi
     ;;
@@ -67,7 +68,7 @@ if [ "${with_cmake}" != "__DONTUSE__" ]; then
   if [ "${with_cmake}" != "__SYSTEM__" ]; then
     cat << EOF > "${BUILDDIR}/setup_cmake"
 prepend_path PATH "${pkg_install_dir}/bin"
-export PATH="${pkg_install_dir}/bin:":\${PATH}
+export PATH="${pkg_install_dir}/bin":\${PATH}
 EOF
     cat "${BUILDDIR}/setup_cmake" >> $SETUPFILE
   fi

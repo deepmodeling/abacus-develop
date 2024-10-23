@@ -1,4 +1,7 @@
 #include "module_cell/unitcell.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 /*
     README:
     This file supports idea like "I dont need any functions of UnitCell, I want
@@ -11,8 +14,6 @@ bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
 }
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell() {
-    if (GlobalV::test_unitcell)
-        ModuleBase::TITLE("unitcell", "Constructor");
     Coordinate = "Direct";
     latName = "none";
     lat0 = 0.0;
@@ -67,7 +68,6 @@ UnitCell::~UnitCell() {
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 void UnitCell::print_cell_xyz(const std::string& fn) const {}
-void UnitCell::print_cell_cif(const std::string& fn) const {}
 int UnitCell::read_atom_species(std::ifstream& ifa,
                                 std::ofstream& ofs_running) {
     return 0;
@@ -124,5 +124,5 @@ void UnitCell::setup(const std::string& latname_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
                      const std::string& fixed_axes_in) {}
-void UnitCell::cal_nelec(double& nelec) {}
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
 void UnitCell::compare_atom_labels(std::string label1, std::string label2) {}

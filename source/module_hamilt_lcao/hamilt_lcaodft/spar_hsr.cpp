@@ -1,5 +1,6 @@
 #include "spar_hsr.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "spar_dh.h"
@@ -22,7 +23,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nspin = GlobalV::NSPIN;
+    const int nspin = PARAM.inp.nspin;
 
     // cal_STN_R_sparse(current_spin, sparse_thr);
     if (nspin == 1 || nspin == 2) {
@@ -72,7 +73,7 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     }
 
     // only old DFT+U method need to cal extra contribution to HR
-    if (GlobalV::dft_plus_u == 2) {
+    if (PARAM.inp.dft_plus_u == 2) {
         if (nspin == 1 || nspin == 2) {
             cal_HR_dftu(pv,
                         HS_Arrays.all_R_coor,
@@ -96,14 +97,17 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
 #ifdef __MPI
     // if EXX is considered
     if (GlobalC::exx_info.info_global.cal_exx) {
-        if (GlobalC::exx_info.info_ri.real_number) {
+        if (Hexxd && GlobalC::exx_info.info_ri.real_number)
+        {
             sparse_format::cal_HR_exx(pv,
                 HS_Arrays,
                 current_spin,
                 sparse_thr,
                 nmp,
                 *Hexxd);
-        } else {
+        }
+        else if (Hexxc && !GlobalC::exx_info.info_ri.real_number)
+        {
             sparse_format::cal_HR_exx(pv,
                 HS_Arrays,
                 current_spin,
@@ -246,7 +250,7 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
                                         const double& sparse_thr) {
     ModuleBase::TITLE("sparse_format", "clear_zero_elements");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         for (auto& R_loop: HS_Arrays.HR_sparse[current_spin]) {
             for (auto& row_loop: R_loop.second) {
                 auto& col_map = row_loop.second;
@@ -326,7 +330,7 @@ void sparse_format::clear_zero_elements(LCAO_HS_Arrays& HS_Arrays,
 void sparse_format::destroy_HS_R_sparse(LCAO_HS_Arrays& HS_Arrays) {
     ModuleBase::TITLE("sparse_format", "destroy_HS_R_sparse");
 
-    if (GlobalV::NSPIN != 4) {
+    if (PARAM.inp.nspin != 4) {
         std::map<Abfs::Vector3_Order<int>,
                  std::map<size_t, std::map<size_t, double>>>
             empty_HR_sparse_up;

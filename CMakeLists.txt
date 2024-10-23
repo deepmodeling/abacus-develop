@@ -238,11 +238,6 @@ if(ENABLE_MPI)
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)
   list(APPEND math_libs MPI::MPI_CXX)
-else()
-  find_package(MPI REQUIRED)
-  include_directories(${MPI_CXX_INCLUDE_PATH})
-  target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
-  list(APPEND math_libs MPI::MPI_CXX)
 endif()
 
 find_package(Threads REQUIRED)
@@ -441,22 +436,6 @@ if(ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_DEEPKS)
-  # Torch uses outdated components to detect CUDA arch, causing failure on
-  # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
-  # "major.minor" if required.
-  find_package(Torch REQUIRED)
-  if(NOT Torch_VERSION VERSION_LESS "2.1.0")
-    set_if_higher(CMAKE_CXX_STANDARD 17)
-  elseif(NOT Torch_VERSION VERSION_LESS "1.5.0")
-    set_if_higher(CMAKE_CXX_STANDARD 14)
-  endif()
-  include_directories(${TORCH_INCLUDE_DIRS})
-  if(MKL_FOUND)
-    list(PREPEND math_libs ${TORCH_LIBRARIES})
-  else()
-    list(APPEND math_libs ${TORCH_LIBRARIES})
-  endif()
-  add_compile_options(${TORCH_CXX_FLAGS})
   target_link_libraries(${ABACUS_BIN_NAME} deepks)
 
   find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
@@ -473,6 +452,25 @@ if(ENABLE_DEEPKS)
   endif()
   include_directories(${libnpy_SOURCE_DIR}/include)
   add_compile_definitions(__DEEPKS)
+endif()
+
+# Torch uses outdated components to detect CUDA arch, causing failure on
+# latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
+# "major.minor" if required.
+if(ENABLE_DEEPKS OR DEFINED Torch_DIR)
+  find_package(Torch REQUIRED)
+  if(NOT Torch_VERSION VERSION_LESS "2.1.0")
+    set_if_higher(CMAKE_CXX_STANDARD 17)
+  elseif(NOT Torch_VERSION VERSION_LESS "1.5.0")
+    set_if_higher(CMAKE_CXX_STANDARD 14)
+  endif()
+  include_directories(${TORCH_INCLUDE_DIRS})
+  if(MKL_FOUND)
+    list(PREPEND math_libs ${TORCH_LIBRARIES})
+  else()
+    list(APPEND math_libs ${TORCH_LIBRARIES})
+  endif()
+  add_compile_options(${TORCH_CXX_FLAGS})
 endif()
 
 if (ENABLE_CNPY)
@@ -492,7 +490,10 @@ if (ENABLE_CNPY)
     include_directories(${cnpy_INCLUDE_DIR})
   endif()
   include_directories(${cnpy_SOURCE_DIR})
-  target_link_libraries(${ABACUS_BIN_NAME} cnpy)
+  
+  # find ZLIB and link
+  find_package(ZLIB REQUIRED)
+  target_link_libraries(${ABACUS_BIN_NAME} cnpy ZLIB::ZLIB)
   add_compile_definitions(__USECNPY)
 endif()
 
@@ -532,7 +533,7 @@ if(ENABLE_LIBRI)
   else()
     message(FATAL_ERROR "Must provide LIBRI_DIR for RI related features.")
   endif()
-  target_link_libraries(${ABACUS_BIN_NAME} ri)
+  target_link_libraries(${ABACUS_BIN_NAME} ri module_exx_symmetry)
   add_compile_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                           TEST_EXX_RADIAL=1)
 endif()
@@ -592,13 +593,14 @@ if(DEFINED DeePMD_DIR)
     add_compile_definitions(__DPMDC)
   else()
     target_link_libraries(${ABACUS_BIN_NAME} DeePMD::deepmd_cc)
-    if(NOT DEFINED TensorFlow_DIR)
-      set(TensorFlow_DIR ${DeePMD_DIR})
-    endif()
-    find_package(TensorFlow REQUIRED)
-    if(TensorFlow_FOUND)
-      target_link_libraries(${ABACUS_BIN_NAME} TensorFlow::tensorflow_cc)
-    endif()
+  endif()
+endif()
+
+if(DEFINED TensorFlow_DIR)
+  find_package(TensorFlow REQUIRED)
+  include_directories(${TensorFlow_DIR}/include)
+  if(TensorFlow_FOUND)
+    target_link_libraries(${ABACUS_BIN_NAME} TensorFlow::tensorflow_cc)
   endif()
 endif()
 
@@ -680,6 +682,7 @@ add_subdirectory(source)
 target_link_libraries(
   ${ABACUS_BIN_NAME}
   base
+  parameter
   cell
   symmetry
   md
@@ -702,7 +705,6 @@ target_link_libraries(
   psi_initializer
   esolver
   vdw
-  parameter
   device
   container)
 if(ENABLE_LCAO)

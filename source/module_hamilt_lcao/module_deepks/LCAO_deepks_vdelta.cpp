@@ -1,5 +1,6 @@
 //This file contains subroutines related to V_delta, which is the deepks contribution to Hamiltonian
 //defined as |alpha>V(D)<alpha|
+#include "module_parameter/parameter.h"
 //as well as subroutines for printing them for checking
 //It also contains subroutine related to calculating e_delta_bands, which is basically
 //tr (rho * V_delta)
@@ -21,9 +22,9 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     this->e_delta_band = 0;
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
         {
             const int mu = pv->global2local_row(j);
             const int nu = pv->global2local_col(i);
@@ -31,7 +32,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
             if (mu >= 0 && nu >= 0)
             {                
                 const int index = nu * pv->nrow + mu;
-                for (int is = 0; is < dm.size(); ++is)  //dm.size() == GlobalV::NSPIN
+                for (int is = 0; is < dm.size(); ++is)  //dm.size() == PARAM.inp.nspin
                 {
                     //this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
 					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[index];
@@ -53,9 +54,9 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
 	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
     std::complex<double> e_delta_band_k=std::complex<double>(0.0,0.0);
-    for (int i = 0; i < GlobalV::NLOCAL; ++i)
+    for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
-        for (int j = 0; j < GlobalV::NLOCAL; ++j)
+        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
         {
             const int mu = pv->global2local_row(j);
             const int nu = pv->global2local_col(i);
@@ -63,7 +64,7 @@ void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<
             if (mu >= 0 && nu >= 0)
             {                
                 int iic;
-                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
                     iic = mu + nu * pv->nrow;
                 }

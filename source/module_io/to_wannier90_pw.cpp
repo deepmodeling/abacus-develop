@@ -1,5 +1,6 @@
 #include "to_wannier90_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_polyint.h"
@@ -36,7 +37,7 @@ void toWannier90_PW::calculate(
 {
     read_nnkp(kv);
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         if (wannier_spin == "up")
         {
@@ -83,7 +84,7 @@ void toWannier90_PW::cal_Mmn(
 
     if (GlobalV::MY_RANK == 0)
     {
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".mmn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".mmn";
         mmn_file.open(fileaddress.c_str(), std::ios::out);
 
         time_t time_now = time(NULL);
@@ -143,7 +144,7 @@ void toWannier90_PW::cal_Amn(
     if (GlobalV::MY_RANK == 0)
     {
         time_t time_now = time(NULL);
-        std::string fileaddress = GlobalV::global_out_dir + wannier_file_name + ".amn";
+        std::string fileaddress = PARAM.globalv.global_out_dir + wannier_file_name + ".amn";
         Amn_file.open(fileaddress.c_str(), std::ios::out);
         Amn_file << " Created on " << ctime(&time_now);
         Amn_file << std::setw(12) << num_bands << std::setw(12) << cal_num_kpts << std::setw(12) << num_wannier
@@ -215,17 +216,17 @@ void toWannier90_PW::out_unk(
             {
                 
                 std::stringstream name;
-                if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+                if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
                 {
-                    name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0') << ik + 1 << ".1";
+                    name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0') << ik + 1 << ".1";
                 }
-                else if (GlobalV::NSPIN == 2)
+                else if (PARAM.inp.nspin == 2)
                 {
                     if (wannier_spin == "up")
-                        name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
+                        name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".1";
                     else if (wannier_spin == "down")
-                        name << GlobalV::global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
+                        name << PARAM.globalv.global_out_dir << "UNK" << std::setw(5) << std::setfill('0')
                             << ik + 1 - start_k_index << ".2";
                 }
                 if (wvfn_formatted)
@@ -377,7 +378,7 @@ void toWannier90_PW::unkdotkb(
 
         wfcpw->recip2real(phase, phase, cal_ik);
 
-        if (GlobalV::NSPIN == 4)
+        if (PARAM.inp.nspin == 4)
         {
             // (1) set value
             std::complex<double>* psir_up = new std::complex<double>[wfcpw->nmaxgr];
@@ -540,7 +541,7 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
         auto &tmp_radial = radial_in_q[wannier_index];
         if (L[wannier_index] >= 0)
         {
-            tmp_radial.create(1, GlobalV::NQX);
+            tmp_radial.create(1, PARAM.globalv.nqx);
             integral(mesh_r, psir, r, dr, L[wannier_index], tmp_radial.c);
         }
         else
@@ -551,11 +552,11 @@ void toWannier90_PW::gen_radial_function_in_q(std::vector<ModuleBase::matrix> &r
 
             if (L[wannier_index] == -4 || L[wannier_index] == -5) tmp_size = 3;
 
-            tmp_radial.create(tmp_size, GlobalV::NQX);
+            tmp_radial.create(tmp_size, PARAM.globalv.nqx);
 
             for (int tmp_L = 0; tmp_L < tmp_size; tmp_L++)
             {
-                integral(mesh_r, psir, r, dr, tmp_L, tmp_radial.c+tmp_L*GlobalV::NQX);
+                integral(mesh_r, psir, r, dr, tmp_L, tmp_radial.c+tmp_L*PARAM.globalv.nqx);
             }
         }
 
@@ -636,7 +637,7 @@ void toWannier90_PW::produce_trial_in_pw(
                 std::complex<double> *orb_px = new std::complex<double>[npw];
 
                 get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
+                get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
 
                 for (int ig = 0; ig < npw; ig++)
                 {
@@ -662,8 +663,8 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_py = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
-                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_py);
+                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
+                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_py);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -682,7 +683,7 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_s = new std::complex<double>[npw];
                     std::complex<double> *orb_px = new std::complex<double>[npw];
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
+                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -725,9 +726,9 @@ void toWannier90_PW::produce_trial_in_pw(
                 std::complex<double> *orb_pz = new std::complex<double>[npw];
 
                 get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
-                get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_py);
-                get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_pz);
+                get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
+                get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_py);
+                get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_pz);
 
                 for (int ig = 0; ig < npw; ig++)
                 {
@@ -755,8 +756,8 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_py = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
-                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_py);
+                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
+                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_py);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -776,7 +777,7 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_px = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
+                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -797,8 +798,8 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_pz = new std::complex<double>[npw];
                     std::complex<double> *orb_dz2 = new std::complex<double>[npw];
 
-                    get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_pz);
-                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dz2);
+                    get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_pz);
+                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dz2);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -832,9 +833,9 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_dx2_y2 = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_px);
-                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dz2);
-                    get_trial_orbitals_lm_k(2, 3, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dx2_y2);
+                    get_trial_orbitals_lm_k(1, 1, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_px);
+                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dz2);
+                    get_trial_orbitals_lm_k(2, 3, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dx2_y2);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -866,9 +867,9 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_dx2_y2 = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_py);
-                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dz2);
-                    get_trial_orbitals_lm_k(2, 3, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dx2_y2);
+                    get_trial_orbitals_lm_k(1, 2, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_py);
+                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dz2);
+                    get_trial_orbitals_lm_k(2, 3, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dx2_y2);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -894,8 +895,8 @@ void toWannier90_PW::produce_trial_in_pw(
                     std::complex<double> *orb_dz2 = new std::complex<double>[npw];
 
                     get_trial_orbitals_lm_k(0, 0, ylm, gk, npw, radial_in_q[wannier_index].c, orb_s);
-                    get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+GlobalV::NQX, orb_pz);
-                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*GlobalV::NQX, orb_dz2);
+                    get_trial_orbitals_lm_k(1, 0, ylm, gk, npw, radial_in_q[wannier_index].c+PARAM.globalv.nqx, orb_pz);
+                    get_trial_orbitals_lm_k(2, 0, ylm, gk, npw, radial_in_q[wannier_index].c+2*PARAM.globalv.nqx, orb_dz2);
 
                     for (int ig = 0; ig < npw; ig++)
                     {
@@ -947,7 +948,7 @@ void toWannier90_PW::get_trial_orbitals_lm_k(
 {
     for (int ig = 0; ig < npw; ig++)
     {
-        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, GlobalV::NQX, GlobalV::DQ, gk[ig].norm() * GlobalC::ucell.tpiba);
+        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba);
     }
 
     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, orbital_L);
@@ -983,9 +984,9 @@ void toWannier90_PW::integral(
 
     double *aux = new double[meshr];
     double *vchi = new double[meshr];
-    for (int iq = 0; iq < GlobalV::NQX; iq++)
+    for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
     {
-        const double q = GlobalV::DQ * iq;
+        const double q = PARAM.globalv.dq * iq;
         ModuleBase::Sphbes::Spherical_Bessel(meshr, r, q, l, aux);
         for (int ir = 0; ir < meshr; ir++)
         {
@@ -1023,7 +1024,7 @@ void toWannier90_PW::unkdotW_A(
         {
             int ib = cal_band_index[ib_w];
 
-            if (GlobalV::NSPIN != 4)
+            if (PARAM.inp.nspin != 4)
             {
                 for (int ig = 0; ig < npw; ig++)
                 {

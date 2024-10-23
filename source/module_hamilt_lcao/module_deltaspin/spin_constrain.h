@@ -12,6 +12,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
 #include "module_hsolver/hsolver.h"
+#include "module_hsolver/hsolver_lcao.h"
 
 struct ScAtomData;
 
@@ -36,7 +37,6 @@ public:
                int nspin_in,
                K_Vectors& kv_in,
                std::string KS_SOLVER_in,
-               hsolver::HSolver<FPTYPE, Device>* phsol_in,
                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                psi::Psi<FPTYPE>* psi_in,
                elecstate::ElecState* pelec_in);
@@ -96,7 +96,6 @@ public:
      * important outter class pointers used in spin-constrained DFT
     */
     Parallel_Orbitals *ParaV = nullptr;
-    hsolver::HSolver<FPTYPE, Device>* phsol = nullptr;
     hamilt::Hamilt<FPTYPE, Device>* p_hamilt = nullptr;
     psi::Psi<FPTYPE>* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
@@ -202,7 +201,6 @@ public:
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
     void set_solver_parameters(K_Vectors& kv_in,
-                               hsolver::HSolver<FPTYPE, Device>* phsol_in,
                                hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
                                psi::Psi<FPTYPE>* psi_in,
                                elecstate::ElecState* pelec_in,

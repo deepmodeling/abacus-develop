@@ -20,7 +20,7 @@ void ElecState::cal_bandgap()
         this->bandgap = 0.0;
         return;
     }
-    int nbands = GlobalV::NBANDS;
+    int nbands = PARAM.inp.nbands;
     int nks = this->klist->get_nks();
     double homo = this->ekb(0, 0);
     double lumo = this->ekb(0, nbands - 1);
@@ -51,7 +51,7 @@ void ElecState::cal_bandgap_updw()
         this->bandgap_dw = 0.0;
         return;
     }
-    int nbands = GlobalV::NBANDS;
+    int nbands = PARAM.inp.nbands;
     int nks = this->klist->get_nks();
     double homo_up = this->ekb(0, 0);
     double lumo_up = this->ekb(0, nbands - 1);
@@ -105,7 +105,7 @@ double ElecState::cal_delta_eband() const
     const double* v_ofk = nullptr;
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -116,7 +116,7 @@ double ElecState::cal_delta_eband() const
         {
             deband_aux -= this->charge->rho[0][ir] * v_xc(0,ir);
         }
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
@@ -126,7 +126,7 @@ double ElecState::cal_delta_eband() const
     }
 #endif
 
-    if(!GlobalV::use_paw)
+    if(!PARAM.inp.use_paw)
     {
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
@@ -142,7 +142,7 @@ double ElecState::cal_delta_eband() const
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             v_eff = this->pot->get_effective_v(1);
             v_ofk = this->pot->get_effective_vofk(1);
@@ -155,7 +155,7 @@ double ElecState::cal_delta_eband() const
                 }
             }
         }
-        else if (GlobalV::NSPIN == 4)
+        else if (PARAM.inp.nspin == 4)
         {
             for (int is = 1; is < 4; is++)
             {
@@ -211,7 +211,7 @@ double ElecState::cal_delta_escf() const
         }
     }
 
-    if (GlobalV::NSPIN == 2)
+    if (PARAM.inp.nspin == 2)
     {
         v_eff = this->pot->get_effective_v(1);
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
@@ -227,7 +227,7 @@ double ElecState::cal_delta_escf() const
             }
         }
     }
-    if (GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 4)
     {
         for (int is = 1; is < 4; is++)
         {
@@ -280,7 +280,7 @@ void ElecState::cal_energies(const int type)
     this->f_en.gatefield = get_etot_gatefield();
 
     //! energy from implicit solvation model 
-    if (GlobalV::imp_sol)
+    if (PARAM.inp.imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
         this->f_en.esol_cav = get_solvent_model_Acav();
@@ -294,7 +294,7 @@ void ElecState::cal_energies(const int type)
     }
 
      // energy from DFT+U
-    if (GlobalV::dft_plus_u)
+    if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
     }
@@ -302,7 +302,7 @@ void ElecState::cal_energies(const int type)
 
 #ifdef __DEEPKS
     // energy from deepks
-    if (GlobalV::deepks_scf)
+    if (PARAM.inp.deepks_scf)
     {
         this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
     }

@@ -38,9 +38,9 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         // now
         //    psi::Psi<std::complex<double>> dm_k_2d();
 
-        if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-            || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp"
-            || GlobalV::KS_SOLVER == "cg_in_lcao") // Peize Lin test 2019-05-15
+        if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
+            || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp"
+            || PARAM.inp.ks_solver == "cg_in_lcao") // Peize Lin test 2019-05-15
         {
             elecstate::cal_dm_psi(this->DM->get_paraV_pointer(),
                                   this->wg,
@@ -50,7 +50,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
         }
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -62,17 +62,12 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-        }
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_k->cal_gint(&inout1);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();
@@ -91,8 +86,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     this->calculate_weights();
     this->calEBand();
 
-    if (GlobalV::KS_SOLVER == "genelpa" || GlobalV::KS_SOLVER == "scalapack_gvx" || GlobalV::KS_SOLVER == "lapack"
-        || GlobalV::KS_SOLVER == "cusolver" || GlobalV::KS_SOLVER == "cusolvermp" || GlobalV::KS_SOLVER == "cg_in_lcao")
+    if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "scalapack_gvx" || PARAM.inp.ks_solver == "lapack"
+        || PARAM.inp.ks_solver == "cusolver" || PARAM.inp.ks_solver == "cusolvermp" || PARAM.inp.ks_solver == "cg_in_lcao")
     {
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
 
@@ -105,7 +100,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
         ModuleBase::timer::tick("ElecStateLCAO", "cal_dm_2d");
     }
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -118,18 +113,13 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
 
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
 
     this->gint_gamma->cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
-        }
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_gamma->cal_gint(&inout1);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();
@@ -141,7 +131,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 template <typename TK>
 void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
 {
-    this->DM = new DensityMatrix<TK, double>(kv, paraV, nspin);
+    const int nspin_dm = nspin == 2 ? 2 : 1;
+    this->DM = new DensityMatrix<TK, double>(paraV, nspin_dm, kv->kvec_d, kv->get_nks() / nspin_dm);
 }
 
 template <>
@@ -165,8 +156,8 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 {
     ModuleBase::timer::tick("ElecStateLCAO", "dmToRho");
 
-    int nspin = GlobalV::NSPIN;
-    if (GlobalV::NSPIN == 4)
+    int nspin = PARAM.inp.nspin;
+    if (PARAM.inp.nspin == 4)
     {
         nspin = 1;
     }
@@ -179,7 +170,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
     DM->cal_DMR();
 
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::ZEROS(this->charge->rho[is],
                                       this->charge->nrxx); // mohan 2009-11-10
@@ -187,11 +178,11 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }

@@ -10,7 +10,7 @@ void ReadInput::item_elec_stru()
     // Electronic Structure
     {
         Input_Item item("ks_solver");
-        item.annotation = "cg; dav; lapack; genelpa; scalapack_gvx; cusolver";
+        item.annotation = "cg; dav; lapack; genelpa; elpa; scalapack_gvx; cusolver";
         read_sync_string(input.ks_solver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default")
@@ -65,9 +65,11 @@ void ReadInput::item_elec_stru()
             const std::vector<std::string> pw_solvers = {"cg", "dav", "bpcg", "dav_subspace"};
             const std::vector<std::string> lcao_solvers = {
                 "genelpa",
+                "elpa",
                 "lapack",
                 "scalapack_gvx",
                 "cusolver",
+                "cusolvermp",
                 "pexsi",
                 "cg_in_lcao",
             };
@@ -76,19 +78,16 @@ void ReadInput::item_elec_stru()
             {
                 if (!find_str(pw_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be cg, dav, bpcg "
-                                             "or dav_subspace for pw basis.");
+                    const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
             }
             else if (para.input.basis_type == "lcao")
             {
                 if (!find_str(lcao_solvers, ks_solver))
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "ks_solver must be genelpa, lapack, scalapack_gvx, "
-                                             "cusolver, pexsi or "
-                                             "cg_in_lcao for lcao basis.");
+                    const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
+                    ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
                 if (ks_solver == "cg_in_lcao")
                 {
@@ -103,6 +102,16 @@ void ReadInput::item_elec_stru()
                                              "ks_solver to scalapack_gvx.");
 #endif
                 }
+                else if (ks_solver == "elpa")
+                {
+#ifndef __ELPA
+                    ModuleBase::WARNING_QUIT("Input",
+                                             "Can not use elpa if abacus is not compiled with "
+                                             "ELPA. Please change "
+                                             "ks_solver to scalapack_gvx.");
+#endif
+                }
+
                 else if (ks_solver == "scalapack_gvx")
                 {
 #ifdef __MPI
@@ -156,7 +165,8 @@ void ReadInput::item_elec_stru()
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
             if (!find_str(basis_types, para.input.basis_type))
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "basis_type should be pw, lcao_in_pw, or lcao");
+                const std::string warningstr = nofound_str(basis_types, "basis_type");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
             }
         };
         this->add_item(item);
@@ -225,7 +235,18 @@ void ReadInput::item_elec_stru()
             para.input.nupdown = doublevalue;
             para.sys.two_fermi = true;
         };
-
+        item.reset_value = [](const Input_Item&, Parameter& para) {
+            if (para.input.nspin == 1)
+            {
+                para.sys.two_fermi = false;
+            }
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.nspin == 1 && para.input.nupdown != 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nupdown mustn't have a non-zero value for spin-unpolarized calculations.");
+            }
+        };
         sync_double(input.nupdown);
         this->add_item(item);
     }
@@ -442,47 +463,21 @@ void ReadInput::item_elec_stru()
                           "set to 1, a fast algorithm is used";
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            Input_para& input = para.input;
-            std::string& basis_type = input.basis_type;
-            bool& gamma_only = input.gamma_only;
-            if (basis_type == "pw" && gamma_only) // pengfei Li add 2015-1-31
+            if (para.input.basis_type == "pw" && para.input.gamma_only) 
             {
-                gamma_only = false;
-                GlobalV::ofs_warning << " WARNING : gamma_only has not been "
-                                        "implemented for pw yet"
-                                     << std::endl;
+                para.input.gamma_only = false;   
+                GlobalV::ofs_warning << " WARNING : gamma_only has not been implemented for pw yet" << std::endl;
+                GlobalV::ofs_warning << "gamma_only is not supported in the pw model" << std::endl;
                 GlobalV::ofs_warning << " the INPUT parameter gamma_only has been reset to 0" << std::endl;
                 GlobalV::ofs_warning << " and a new KPT is generated with "
-                                        "gamma point as the only k point"
-                                     << std::endl;
-
-                GlobalV::ofs_warning << " Auto generating k-points file: " << input.kpoint_file << std::endl;
-                std::ofstream ofs(input.kpoint_file.c_str());
+                                        "gamma point as the only k point"<< std::endl;
+                GlobalV::ofs_warning << " Auto generating k-points file: " << para.input.kpoint_file << std::endl;
+                std::ofstream ofs(para.input.kpoint_file.c_str());
                 ofs << "K_POINTS" << std::endl;
                 ofs << "0" << std::endl;
                 ofs << "Gamma" << std::endl;
                 ofs << "1 1 1 0 0 0" << std::endl;
                 ofs.close();
-            }
-            else if (basis_type == "lcao" && gamma_only == 1)
-            {
-                para.sys.gamma_only_local = true;
-                // std::cout << "gamma_only_local =" << gamma_only_local <<
-                // std::endl;
-                if (input.esolver_type == "tddft")
-                {
-                    GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
-                    para.sys.gamma_only_local = false;
-                }
-            }
-
-            if ((input.out_mat_r || input.out_mat_hs2 || input.out_mat_t || input.out_mat_dh || input.out_hr_npz
-                 || input.out_dm_npz || input.dm_to_rho)
-                && para.sys.gamma_only_local)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
-                                         "available for gamma only calculations");
             }
         };
         this->add_item(item);
@@ -519,6 +514,12 @@ void ReadInput::item_elec_stru()
                 }
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_ene_thr");
+        item.annotation = "total energy error threshold";
+        read_sync_double(input.scf_ene_thr);
         this->add_item(item);
     }
     {

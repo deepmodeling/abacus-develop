@@ -38,13 +38,13 @@ namespace ModuleIO
 
     write_dos_lcao(psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
-    int nspin0 = (GlobalV::NSPIN == 2) ? 2 : 1;
+    int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
     if (PARAM.inp.out_dos == 3)
     {
         for (int i = 0; i < nspin0; i++)
         {
             std::stringstream ss3;
-            ss3 << GlobalV::global_out_dir << "Fermi_Surface_" << i << ".bxsf";
+            ss3 << PARAM.globalv.global_out_dir << "Fermi_Surface_" << i << ".bxsf";
             nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, Pkpoints, ucell, ekb);
         }
     }

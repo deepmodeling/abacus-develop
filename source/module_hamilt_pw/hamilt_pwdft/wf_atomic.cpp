@@ -1,5 +1,6 @@
 #include "wf_atomic.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/math_integral.h"
 #include "module_base/math_sphbes.h"
 #include "module_base/math_polyint.h"
@@ -15,7 +16,7 @@ WF_atomic::WF_atomic()
 
 WF_atomic::~WF_atomic()
 {
-	if(GlobalV::test_deconstructor)
+	if(PARAM.inp.test_deconstructor)
 	{
 		std::cout << " ~WF_atomic()" << std::endl;
 	}
@@ -36,9 +37,9 @@ WF_atomic::~WF_atomic()
 //==========================================================
 void WF_atomic::init_at_1(Structure_Factor *sf_in)
 {
-    if(GlobalV::use_paw) { return;
+    if(PARAM.inp.use_paw) { return;
 }
-    if (GlobalV::test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
+    if (PARAM.inp.test_wf) { ModuleBase::TITLE("WF_atomic","init_at_1");
 }
     ModuleBase::timer::tick("WF_atomic","init_at_1");
     this->psf = sf_in;
@@ -73,8 +74,8 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
     double *aux = new double[ndm];
     double *vchi = new double[ndm];
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",GlobalV::DQ);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",GlobalV::NQX);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
 
     for (int it=0; it<GlobalC::ucell.ntype; it++)
     {
@@ -100,7 +101,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                 inner_part[ir] = atom->ncpp.chi(ic,ir) * atom->ncpp.chi(ic,ir);
             }
             double unit = 0.0;
-            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab, unit);
+            ModuleBase::Integral::Simpson_Integral(nmesh, inner_part, atom->ncpp.rab.data(), unit);
             delete[] inner_part;
 
             // liuyu add 2023-10-06
@@ -150,7 +151,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                         {
                             norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
                         }
-                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, atom->ncpp.rab, work[ib]);
+                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta, atom->ncpp.rab.data(), work[ib]);
                     }
                     else
                     {
@@ -185,17 +186,17 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
             if (atom->ncpp.oc[ic] >= 0.0)
             {
                 const int l = atom->ncpp.lchi[ic];
-                for (int iq=startq; iq<GlobalV::NQX; iq++)
+                for (int iq=startq; iq<PARAM.globalv.nqx; iq++)
                 {
-                    const double q = GlobalV::DQ * iq;
-                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r, q, l, aux);
+                    const double q = PARAM.globalv.dq * iq;
+                    ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux);
                     for (int ir = 0;ir < atom->ncpp.msh;ir++)
                     {
                         vchi[ir] = atom->ncpp.chi(ic,ir) * aux[ir] * atom->ncpp.r[ir];
                     }
 
                     double vqint = 0.0;
-                    ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab, vqint);
+                    ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab.data(), vqint);
 
                     GlobalC::ppcell.tab_at(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )
@@ -228,7 +229,7 @@ void WF_atomic::print_PAOs()const
         for (int icc=0; icc<GlobalC::ucell.atoms[it].ncpp.nchi ;icc++)
         {
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
+            ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/" << GlobalC::ucell.atoms[it].label
                << "-" << GlobalC::ucell.atoms[it].ncpp.els[icc] << ".ORBITAL";
 
             std::ofstream ofs(ss.str().c_str());
@@ -259,7 +260,7 @@ void WF_atomic::atomic_wfc(const int ik,
                            const int& table_dimension,
                            const double& dq) const
 {
-    if (GlobalV::test_wf>3) { ModuleBase::TITLE("WF_atomic","atomic_wfc");
+    if (PARAM.inp.test_wf>3) { ModuleBase::TITLE("WF_atomic","atomic_wfc");
 }
     ModuleBase::timer::tick("WF_atomic","atomic_wfc");
     //=========================================================
@@ -313,14 +314,14 @@ void WF_atomic::atomic_wfc(const int ik,
                                                                it, iw, table_dimension, dq, gk[ig].norm() * GlobalC::ucell.tpiba );
                     }
 
-                    if(GlobalV::NSPIN==4)
+                    if(PARAM.inp.nspin==4)
                     {
                         if(GlobalC::ucell.atoms[it].ncpp.has_so)
                         {
                             Soc soc;
 						    soc.rot_ylm(l+1);
                             const double j = GlobalC::ucell.atoms[it].ncpp.jchi[iw];
-                            if ( !(GlobalV::DOMAG||GlobalV::DOMAG_Z))
+                            if ( !(PARAM.globalv.domag||PARAM.globalv.domag_z))
                             {//atomic_wfc_so
                                 double fact[2];
                                 for(int m=-l-1;m<l+1;m++)
@@ -491,7 +492,7 @@ void WF_atomic::atomic_wfc(const int ik,
         } //end ia //mohan modify 2007-11-7
     } // end nt
 
-	if(GlobalV::test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
+	if(PARAM.inp.test_wf) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"wf_index",index);
 }
 
     if (index != GlobalC::ucell.natomwfc)
@@ -614,9 +615,9 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
         FPTYPE *tmparg = new FPTYPE[nstnz];
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
             
 	            for(int ir=0; ir < nxy; ir++)
@@ -661,7 +662,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
 #endif // __MPI
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
-            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * GlobalV::NPOL]);
+            std::complex<FPTYPE>* ppsi = &(psi[iw * this->npwx * PARAM.globalv.npol]);
             for (int ig = 0;ig < ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX); //qianrui add RAND_MAX
@@ -669,7 +670,7 @@ void WF_atomic::random_t(std::complex<FPTYPE>* psi,
                 const FPTYPE gk2 = wfc_basis->getgk2(ik,ig);
                 ppsi[ig] = std::complex<FPTYPE>(rr * cos(arg), rr * sin(arg)) / FPTYPE(gk2 + 1.0);
             }
-            if(GlobalV::NPOL==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
+            if(PARAM.globalv.npol==2) {for (int ig = this->npwx;ig < this->npwx + ng;ig++)
             {
                 const FPTYPE rr = std::rand()/FPTYPE(RAND_MAX);
                 const FPTYPE arg= ModuleBase::TWO_PI * std::rand()/FPTYPE(RAND_MAX);
@@ -709,7 +710,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
         for (int iw = iw_start ;iw < iw_end;iw++)
         {
             int startig = 0;
-            for(int ipol = 0 ; ipol < GlobalV::NPOL ; ++ipol)
+            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
             {
 	            for(int ir=0; ir < nxy; ir++)
 	            {
@@ -753,7 +754,7 @@ void WF_atomic::atomicrandom(ModuleBase::ComplexMatrix& psi,
 		for (int iw = iw_start ;iw < iw_end;iw++)
 		{
 			int startig = 0;
-			for(int ip = 0 ; ip < GlobalV::NPOL; ++ip)
+			for(int ip = 0 ; ip < PARAM.globalv.npol; ++ip)
 			{
 				for(int ig = 0 ; ig < npw ; ++ig)
 				{

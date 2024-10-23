@@ -1,7 +1,8 @@
-#include "../xc_functional.h"
 #include "gtest/gtest.h"
+#include "xctest.h"
+#include "../xc_functional.h"
+#include "../xc_functional_libxc.h"
 #include "../exx_info.h"
-
 /************************************************
 *  unit test of functionals
 ***********************************************/
@@ -27,7 +28,7 @@ namespace GlobalC
 	Exx_Info exx_info;
 }
 
-class XCTest_PBE_SPN : public testing::Test
+class XCTest_PBE_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -79,7 +80,7 @@ TEST_F(XCTest_PBE_SPN, set_xc_type)
     }
 }
 
-class XCTest_BP_SPN : public testing::Test
+class XCTest_BP_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -131,7 +132,7 @@ TEST_F(XCTest_BP_SPN, set_xc_type)
     }
 }
 
-class XCTest_revPBE_SPN : public testing::Test
+class XCTest_revPBE_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -183,7 +184,7 @@ TEST_F(XCTest_revPBE_SPN, set_xc_type)
     }
 }
 
-class XCTest_PZ_SPN : public testing::Test
+class XCTest_PZ_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -220,7 +221,7 @@ TEST_F(XCTest_PZ_SPN, set_xc_type)
     }
 }
 
-class XCTest_SLATER1_SPN : public testing::Test
+class XCTest_SLATER1_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -255,7 +256,7 @@ TEST_F(XCTest_SLATER1_SPN, set_xc_type)
     }
 }
 
-class XCTest_SLATER_RXC_SPN : public testing::Test
+class XCTest_SLATER_RXC_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -290,7 +291,7 @@ TEST_F(XCTest_SLATER_RXC_SPN, set_xc_type)
     }
 }
 
-class XCTest_P86_SPN : public testing::Test
+class XCTest_P86_SPN : public XCTest
 {
     protected:
         std::vector<double> e_gga, v1_gga, v2_gga, v3_gga;
@@ -329,7 +330,7 @@ TEST_F(XCTest_P86_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBE0_SPN : public testing::Test
+class XCTest_PBE0_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -381,7 +382,7 @@ TEST_F(XCTest_PBE0_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBEsol_SPN : public testing::Test
+class XCTest_PBEsol_SPN : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -433,7 +434,7 @@ TEST_F(XCTest_PBEsol_SPN, set_xc_type)
     }
 }
 
-class XCTest_PBE_SPN_LibXC : public testing::Test
+class XCTest_PBE_SPN_LibXC : public XCTest
 {
     protected:
         std::vector<double> e_gga, v1_gga, v2_gga;
@@ -455,7 +456,7 @@ class XCTest_PBE_SPN_LibXC : public testing::Test
                 double e,v1,v2,v3,v4,v5;
                 double r1 = rho[i] * (1+zeta[i]) / 2.0;
                 double r2 = rho[i] * (1-zeta[i]) / 2.0;
-                XC_Functional::gcxc_spin_libxc(r1,r2,gdr[i],gdr[i],e,v1,v2,v3,v4,v5);
+                XC_Functional_Libxc::gcxc_spin_libxc(XC_Functional::get_func_id(), r1,r2,gdr[i],gdr[i],e,v1,v2,v3,v4,v5);
                 e_gga.push_back(e);
                 v1_gga.push_back(v1+v3);
                 v2_gga.push_back(v2+v4);
@@ -478,7 +479,7 @@ TEST_F(XCTest_PBE_SPN_LibXC, set_xc_type)
     }
 }
 
-class XCTest_PZ_SPN_LibXC : public testing::Test
+class XCTest_PZ_SPN_LibXC : public XCTest
 {
     protected:
         std::vector<double> e_lda, v1_lda, v2_lda;
@@ -494,7 +495,7 @@ class XCTest_PZ_SPN_LibXC : public testing::Test
                 double e,v1,v2;
                 double r1 = rho[i] * (1+zeta[i]) / 2.0;
                 double r2 = rho[i] * (1-zeta[i]) / 2.0;
-                XC_Functional::xc_spin_libxc(r1,r2,e,v1,v2);
+                XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), r1,r2,e,v1,v2);
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);

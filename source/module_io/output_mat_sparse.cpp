@@ -17,11 +17,12 @@ Output_Mat_Sparse<T>::Output_Mat_Sparse(int out_mat_hsR,
     const Parallel_Orbitals& pv,
     Gint_k& gint_k, // mohan add 2024-04-01
     const TwoCenterBundle& two_center_bundle,
+    const LCAO_Orbitals& orb,
     Grid_Driver& grid, // mohan add 2024-04-06
     const K_Vectors& kv,
     hamilt::Hamilt<T>* p_ham)
     : _out_mat_hsR(out_mat_hsR), _out_mat_dh(out_mat_dh), _out_mat_t(out_mat_t), _out_mat_r(out_mat_r), _istep(istep),
-    _v_eff(v_eff), _pv(pv), _gint_k(gint_k),                     // mohan add 2024-04-01
+    _v_eff(v_eff), _pv(pv), orb_(orb), _gint_k(gint_k),                     // mohan add 2024-04-01
     two_center_bundle_(two_center_bundle), _grid(grid), // mohan add 2024-04-06
     _kv(kv), _p_ham(p_ham) {}
 
@@ -49,7 +50,9 @@ void Output_Mat_Sparse<std::complex<double>>::write()
                   this->_pv,
                   HS_Arrays,
                   this->_grid,
-                  two_center_bundle_); // LiuXh add 2019-07-15
+                  two_center_bundle_,
+                  orb_
+                  ); // LiuXh add 2019-07-15
     }
 
     //! generate a file containing the derivatives of the Hamiltonian matrix (in Ry/Bohr)
@@ -62,6 +65,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
                    HS_Arrays,
                    this->_grid, // mohan add 2024-04-06
                    two_center_bundle_,
+                   orb_,
                    _kv); // LiuXh add 2019-07-15
     }
 
@@ -69,7 +73,7 @@ void Output_Mat_Sparse<std::complex<double>>::write()
     if (_out_mat_r)
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(this->_pv);
+        r_matrix.init(this->_pv, orb_);
         if (_out_mat_hsR)
         {
             r_matrix.out_rR_other(_istep, HS_Arrays.output_R_coor);

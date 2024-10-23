@@ -7,6 +7,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "operator_lcao.h"
+#include <vector>
 
 
 namespace hamilt
@@ -38,6 +39,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
                                  hamilt::HContainer<TR>* hR_in,
                                  const K_Vectors* kv_in,
                                  const UnitCell* ucell_in,
+                                 const std::vector<double>& orb_cutoff,
                                  Grid_Driver* GridD_in,
                                  const TwoCenterIntegrator* intor);
     ~TDEkinetic();
@@ -82,6 +84,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 
   private:
     const UnitCell* ucell = nullptr;
+    std::vector<double> orb_cutoff_;
     
     HContainer<TR>* SR = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.

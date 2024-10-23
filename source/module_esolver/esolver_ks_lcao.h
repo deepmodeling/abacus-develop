@@ -56,11 +56,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(const int iter) override;
+    virtual void iter_finish(int& iter) override;
 
     virtual void after_scf(const int istep) override;
-
-    virtual bool do_after_converge(int& iter) override;
 
     virtual void others(const int istep) override;
 
@@ -79,6 +77,9 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     Grid_Technique GridT;
 
     TwoCenterBundle two_center_bundle_;
+
+    // temporary introduced during removing GlobalC::ORB
+    LCAO_Orbitals orb_;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.

@@ -427,12 +427,6 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("colour");
-        item.annotation = "for coders, make their live colourful";
-        read_sync_bool(input.colour);
-        this->add_item(item);
-    }
-    {
         Input_Item item("t_in_h");
         item.annotation = "calculate the kinetic energy or not";
         read_sync_bool(input.t_in_h);
@@ -478,6 +472,25 @@ void ReadInput::item_others()
         Input_Item item("test_skip_ewald");
         item.annotation = "whether to skip ewald";
         read_sync_bool(input.test_skip_ewald);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("ri_hartree_benchmark");
+        item.annotation = "whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)";
+        read_sync_string(input.ri_hartree_benchmark);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("aims_nbasis");
+        item.annotation = "the number of basis functions for each atom type used in FHI-aims (for benchmark)";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            for (int i = 0; i < count; i++)
+            {
+                para.input.aims_nbasis.push_back(std::stod(item.str_values[i]));
+            }
+            };
+        sync_intvec(input.aims_nbasis, para.input.aims_nbasis.size(), 0);
         this->add_item(item);
     }
 }

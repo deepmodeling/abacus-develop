@@ -1,5 +1,6 @@
 #include "run_md.h"
 
+#include "module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
 #include "md_func.h"
@@ -50,11 +51,11 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, GlobalV::global_readin_dir);
+            mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
         }
         else
         {
-            Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
+            ModuleIO::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
@@ -83,10 +84,10 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
         if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
-            mdrun->print_md(GlobalV::ofs_running, GlobalV::CAL_STRESS);
+            mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
-                               GlobalV::global_out_dir,
+                               PARAM.globalv.global_out_dir,
                                unit_in,
                                param_in,
                                mdrun->virial,
@@ -98,30 +99,28 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         {
             unit_in.update_vel(mdrun->vel);
             std::stringstream file;
-            file << GlobalV::global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
+            file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             // changelog 20240509
             // because I move out the dependence on GlobalV from UnitCell::print_stru_file
             // so its parameter is calculated here
-            bool need_orb = GlobalV::BASIS_TYPE=="pw";
-            need_orb = need_orb && GlobalV::psi_initializer;
-            need_orb = need_orb && GlobalV::init_wfc.substr(0, 3)=="nao";
-            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao";
-            need_orb = need_orb || GlobalV::BASIS_TYPE=="lcao_in_pw";
+            bool need_orb = PARAM.inp.basis_type=="pw";
+            need_orb = need_orb && PARAM.inp.psi_initializer;
+            need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3)=="nao";
+            need_orb = need_orb || PARAM.inp.basis_type=="lcao";
+            need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
             unit_in.print_stru_file(file.str(), 
-                                    GlobalV::NSPIN, 
+                                    PARAM.inp.nspin, 
                                     false, // Cartesian coordinates
-                                    GlobalV::CALCULATION == "md", 
+                                    PARAM.inp.calculation == "md", 
                                     PARAM.inp.out_mul,
                                     need_orb,
-                                    GlobalV::deepks_setorb,
+                                    PARAM.globalv.deepks_setorb,
                                     GlobalV::MY_RANK);
-            mdrun->write_restart(GlobalV::global_out_dir);
+            mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 
         mdrun->step_++;
     }
-
-    ModuleBase::Global_File::delete_tmp_files();
 
     delete mdrun;
     ModuleBase::timer::tick("Run_MD", "md_line");

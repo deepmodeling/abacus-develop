@@ -1,5 +1,6 @@
 //=========================================================
 // AUTHOR : Peize Lin
+#include "module_parameter/parameter.h"
 // DATE : 2016-01-24
 //=========================================================
 
@@ -46,7 +47,7 @@ void Center2_Orb::Orb22::init_radial_table()
                                       nB_short.getDruniform(),
                                       false,
                                       true,
-                                      GlobalV::CAL_FORCE); // mohan add 2021-05-07
+                                      PARAM.inp.cal_force); // mohan add 2021-05-07
 
         this->orb21s.insert(std::make_pair(LB, Center2_Orb::Orb21(nA1, nA2, this->nB[LB], psb_, this->MGT)));
 
@@ -85,7 +86,7 @@ void Center2_Orb::Orb22::init_radial_table(const std::set<size_t>& radials)
                                       nB_short.getDruniform(),
                                       false,
                                       true,
-                                      GlobalV::CAL_FORCE);
+                                      PARAM.inp.cal_force);
 
         this->orb21s.insert(std::make_pair(LB, Center2_Orb::Orb21(nA1, nA2, this->nB[LB], psb_, this->MGT)));
 

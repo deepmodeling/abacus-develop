@@ -1,16 +1,21 @@
 #include "kernel.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
 #ifdef USE_LIBXC
 #include <xc.h>
+#include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const Charge* chg_gs)
 {
     ModuleBase::TITLE("XC_Functional", "f_xc_libxc");
     ModuleBase::timer::tick("XC_Functional", "f_xc_libxc");
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 
-    std::vector<xc_func_type> funcs = XC_Functional::init_func((1 == nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
+    std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
+        XC_Functional::get_func_id(), 
+        (1 == nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
     int nrxx = chg_gs->nrxx;
 
     // converting rho (extract it as a subfuntion in the future)
@@ -115,8 +120,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         for (xc_func_type& func : funcs)
         {
-            constexpr double rho_threshold = 1E-6;
-            constexpr double grho_threshold = 1E-10;
+            const double rho_threshold = 1E-6;
+            const double grho_threshold = 1E-10;
 
             xc_func_set_dens_threshold(&func, rho_threshold);
 
@@ -216,13 +221,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 }
             }
         } // end for( xc_func_type &func : funcs )
-        XC_Functional::finish_func(funcs);
+        XC_Functional_Libxc::finish_func(funcs);
 
-        if (1 == GlobalV::NSPIN || 2 == GlobalV::NSPIN) return;
-        // else if (4 == GlobalV::NSPIN)
+        if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) return;
+        // else if (4 == PARAM.inp.nspin)
         else//NSPIN != 1,2,4 is not supported
         {
-            throw std::domain_error("GlobalV::NSPIN =" + std::to_string(GlobalV::NSPIN)
+            throw std::domain_error("PARAM.inp.nspin =" + std::to_string(PARAM.inp.nspin)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
 }

@@ -46,7 +46,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
     // Check if length of bands_to_print is valid
     if (static_cast<int>(bands_to_print.size()) > nbands)
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW::get_pchg_pw",
                                  "The number of bands specified by `bands_to_print` in the "
                                  "INPUT file exceeds `nbands`!");
     }
@@ -56,7 +56,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
     {
         if (value != 0 && value != 1)
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::after_scf",
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW::get_pchg_pw",
                                      "The elements of `bands_to_print` must be either 0 or 1. "
                                      "Invalid values found!");
         }
@@ -185,7 +185,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                            ngmc,
                            nullptr,
                            pw_rhod,
-                           Pgrid,
                            ucell->symm);
             }
 

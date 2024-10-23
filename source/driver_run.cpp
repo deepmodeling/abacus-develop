@@ -32,7 +32,7 @@ void Driver::driver_run() {
 
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
-    if (GlobalV::BASIS_TYPE == "lcao_in_pw" || GlobalV::BASIS_TYPE == "lcao") {
+    if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
         ModuleBase::WARNING_QUIT("driver",
                                  "to use LCAO basis, compile with __LCAO");
     }
@@ -40,7 +40,7 @@ void Driver::driver_run() {
 
     // the life of ucell should begin here, mohan 2024-05-12
     // delete ucell as a GlobalC in near future
-    GlobalC::ucell.setup_cell(GlobalV::stru_file, GlobalV::ofs_running);
+    GlobalC::ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(GlobalC::ucell,
                                          PARAM.inp.min_dist_coef);
 
@@ -55,7 +55,7 @@ void Driver::driver_run() {
     Json::gen_stru_wrapper(&GlobalC::ucell);
 #endif
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     //! 4: different types of calculations
     if (cal_type == "md")

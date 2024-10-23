@@ -37,14 +37,23 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_chg");
-        item.annotation = ">0 output charge density for selected electron steps";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-            {
-                para.input.out_chg = 1;
-            }
+        item.annotation = "> 0 output charge density for selected electron steps"
+                          ", second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_chg(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) {
+                return std::stoi(s);
+            });
+            // assign non-negative values to para.input.out_chg
+            std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
         };
-        read_sync_int(input.out_chg);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                                        ? 1
+                                        : para.input.out_chg[0];
+        };
+        sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
     }
     {
@@ -136,6 +145,12 @@ void ReadInput::item_output()
         Input_Item item("out_mul");
         item.annotation = "mulliken charge or not";
         read_sync_bool(input.out_mul);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.basis_type == "pw" && para.input.out_mul)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mul is only for lcao");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -244,9 +259,38 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_mat_tk");
+        item.annotation = "output T(k)";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            if (count == 1)
+            {
+                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_tk[1] = 8;
+            }
+            else if (count == 2)
+            {
+                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
+                para.input.out_mat_tk[1] = std::stoi(item.str_values[1]);
+            }
+            else
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
+            }
+        };
+        sync_intvec(input.out_mat_tk, 2, 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("out_mat_hs2");
         item.annotation = "output H(R) and S(R) matrix";
         read_sync_bool(input.out_mat_hs2);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_r && para.sys.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r is not available for gamma only calculations");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -309,6 +353,12 @@ void ReadInput::item_output()
         Input_Item item("out_interval");
         item.annotation = "interval for printing H(R) and S(R) matrix during MD";
         read_sync_int(input.out_interval);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_interval <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_interval should be larger than 0");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -340,6 +390,17 @@ void ReadInput::item_output()
         Input_Item item("out_mat_r");
         item.annotation = "output r(R) matrix";
         read_sync_bool(input.out_mat_r);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if ((para.inp.out_mat_r || para.inp.out_mat_hs2 || para.inp.out_mat_t 
+                    || para.inp.out_mat_dh || para.inp.out_hr_npz
+                    || para.inp.out_dm_npz || para.inp.dm_to_rho)
+                && para.sys.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                            "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                            "available for gamma only calculations");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -415,7 +476,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.bands_to_print);
         };
@@ -429,10 +490,75 @@ void ReadInput::item_output()
         this->add_item(item);
     }
     {
+        Input_Item item("out_pchg");
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_pchg);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_pchg, para.input.out_pchg.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_norm");
+        item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_norm);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_norm, para.input.out_wfc_norm.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_re_im");
+        item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_re_im);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_re_im, para.input.out_wfc_re_im.size(), 0);
+        this->add_item(item);
+    }
+    {
         Input_Item item("if_separate_k");
         item.annotation = "specify whether to write the partial charge densities for all k-points to individual files "
                           "or merge them";
         read_sync_bool(input.if_separate_k);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_elf");
+        item.annotation = "> 0 output electron localization function (ELF) for selected electron steps"
+                          ", second parameter controls the precision, default is 3.";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            std::vector<int> out_elf(count); // create a placeholder vector
+            std::transform(item.str_values.begin(), item.str_values.end(), out_elf.begin(), [](std::string s) { return std::stoi(s); });
+            // assign non-negative values to para.input.out_elf
+            std::copy(out_elf.begin(), out_elf.end(), para.input.out_elf.begin());
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+            }
+        };
+        sync_intvec(input.out_elf, 2, 0);
         this->add_item(item);
     }
 }

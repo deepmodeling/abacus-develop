@@ -1,5 +1,6 @@
 //wenfei 2022-1-11
 //This file contains subroutines for calculating F_delta,
+#include "module_parameter/parameter.h"
 //which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
 
 //There are 2 subroutines in this file:
@@ -55,7 +56,7 @@ void DeePKS_domain::cal_f_delta_gamma(
                 const int ibt1 = ucell.itia2iat(T1,I1);
                 const ModuleBase::Vector3<double> tau1 = gd.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw*GlobalV::NPOL;
+                const int nw1_tot = atom1->nw*PARAM.globalv.npol;
                 const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
                 for (int ad2=0; ad2 < gd.getAdjacentNum()+1 ; ad2++)
@@ -65,7 +66,7 @@ void DeePKS_domain::cal_f_delta_gamma(
                     const int ibt2 = ucell.itia2iat(T2,I2);
                     const ModuleBase::Vector3<double> tau2 = gd.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
-                    const int nw2_tot = atom2->nw*GlobalV::NPOL;
+                    const int nw2_tot = atom2->nw*PARAM.globalv.npol;
                     
                     const double Rcut_AO2 = orb.Phi[T2].getRcut();
                     const double dist1 = (tau1-tau0).norm() * ucell.lat0;
@@ -103,7 +104,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                     for(int is=0;is<dm.size();is++)
                     {
-                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
                         }
@@ -132,7 +133,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                             assert(nlm1.size()==nlm2[0].size());
 
-                            if(!GlobalV::deepks_equiv)
+                            if(!PARAM.inp.deepks_equiv)
                             {
                                 int ib=0;
                                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
@@ -195,7 +196,7 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                                 assert(nlm1.size()==nlm2[0].size());                                
 
-                                if(!GlobalV::deepks_equiv)
+                                if(!PARAM.inp.deepks_equiv)
                                 {
                                     int ib=0;
                                     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)

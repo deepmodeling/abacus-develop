@@ -134,15 +134,16 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                    it,       // type
                                    lnow,     // angular momentum L
                                    cut_mesh, // number of radial mesh
-                                   atom->ncpp.rab,
-                                   atom->ncpp.r, // radial mesh value (a.u.)
+                                   atom->ncpp.rab.data(),
+                                   atom->ncpp.r.data(), // radial mesh value (a.u.)
                                    beta_r,
                                    kmesh,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info)
+        if (PARAM.inp.out_element_info) {
             tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
+}
 
         delete[] beta_r;
     }
@@ -319,7 +320,7 @@ void InfoNonlocal::Read_NonLocal(const int& it,
         int meshr_ps = 0;
         if (my_rank == 0)
         {
-            if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", 0))
+            if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_BETA>", false))
             {
                 int iproj;
                 ModuleBase::GlobalFunc::READ_VALUE(ifs, iproj);
@@ -390,8 +391,9 @@ void InfoNonlocal::Read_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info)
+        if (PARAM.inp.out_element_info) {
             tmpBeta_lm[p1].plot(my_rank);
+}
 
         delete[] radial_ps;
         delete[] rab_ps;
@@ -423,7 +425,7 @@ void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& l
     // from .UPF file directly.
     // mohan note 2011-03-04
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (GlobalV::BASIS_TYPE == "lcao" || GlobalV::BASIS_TYPE == "lcao_in_pw")
+    if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
     {
         delete[] this->Beta;
         this->Beta = new Numerical_Nonlocal[ntype];

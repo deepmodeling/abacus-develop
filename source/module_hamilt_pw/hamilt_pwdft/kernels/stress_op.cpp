@@ -6,7 +6,7 @@
 #include "vnl_tools.hpp"
 #include <vector>
 #include <iomanip>
-
+#include "module_base/libm/libm.h"
 namespace hamilt
 {
 
@@ -352,7 +352,6 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                     const double omega,
                     int type) {
     const double FOUR_PI = 4.0 * 3.14159265358979323846;
-    FPTYPE rhocg1 = 0;
     // printf("%d,%d,%lf\n",ngg,mesh,omega);
 
 #ifdef _OPENMP
@@ -365,6 +364,7 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
 #endif
         for(int igl = 0;igl< ngg;igl++)
         {
+            FPTYPE rhocg1 = 0;
             //FPTYPE *aux = new FPTYPE[mesh];
             std::vector<FPTYPE> aux(mesh);
             for( int ir = 0;ir< mesh; ir++)
@@ -374,14 +374,25 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
                 } else if(type == 1) {
                     aux [ir] = ir!=0 ? std::sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]) : 1.0;
                     aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
-                } else {
+                } else if(type == 2) {
                     aux [ir] = r[ir] < 1.0e-8 ? rhoc [ir] : rhoc [ir] * sin(gx_arr[igl] * r[ir]) / (gx_arr[igl] * r[ir]);
+                } else if(type == 3) {
+                    FPTYPE sinp, cosp;
+                    sinp = std::sin(gx_arr[igl] * r[ir]);
+                    cosp = std::cos(gx_arr[igl] * r[ir]);
+                    aux[ir] = rhoc [ir] *  (r [ir] * cosp / gx_arr[igl] - sinp / pow(gx_arr[igl],2));
                 }
             }//ir
             Simpson_Integral<FPTYPE>(mesh, aux.data(), rab, rhocg1);
-            if(type ==0 ) drhocg [igl] = FOUR_PI / omega * rhocg1;
-            else if(type == 1) drhocg [igl] = FOUR_PI * rhocg1 / omega;
-            else drhocg [igl] = rhocg1;
+            if(type ==0 ) { drhocg [igl] = FOUR_PI / omega * rhocg1;
+            } else if(type == 1) { drhocg [igl] = FOUR_PI * rhocg1 / omega;
+            } else if(type == 2) { drhocg [igl] = rhocg1;
+            } else if(type == 3) {
+                rhocg1 *= FOUR_PI / omega / 2.0 / gx_arr[igl];
+                FPTYPE g2a = (gx_arr[igl]*gx_arr[igl]) / 4.0;
+                rhocg1 += FOUR_PI / omega * gx_arr[ngg] * ModuleBase::libm::exp ( - g2a) * (g2a + 1) / pow(gx_arr[igl]*gx_arr[igl] , 2);
+                drhocg [igl] = rhocg1;
+            }
         }
 #ifdef _OPENMP
         }
@@ -389,6 +400,45 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_CPU> {
     }
 };
 
+
+template <typename FPTYPE>
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_z,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba) {
+        const double TWO_PI = 2.0 * 3.14159265358979323846;
+        // printf("%d,%d,%lf\n",ngg,mesh,omega);
+
+        // printf("iminininininin\n\n\n\n");
+#ifdef _OPENMP
+#pragma omp for nowait
+#endif
+        for (int ig = 0; ig < npw; ig++)
+        {
+            const std::complex<FPTYPE> psiv_conj = conj(psiv[ig]);
+
+            const FPTYPE arg = TWO_PI * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z);
+            FPTYPE sinp, cosp;
+            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+            const std::complex<FPTYPE> expiarg = std::complex<FPTYPE>(sinp, cosp);
+
+            const std::complex<FPTYPE> tmp_var = psiv_conj * expiarg * tpiba * omega * rhocgigg_vec[ig];
+
+            const std::complex<FPTYPE> ipol0 = tmp_var * gv_x[ig];
+            force[0] += ipol0.real();
+
+            const std::complex<FPTYPE> ipol1 = tmp_var * gv_y[ig];
+            force[1] += ipol1.real();
+
+            const std::complex<FPTYPE> ipol2 = tmp_var * gv_z[ig];
+            force[2] += ipol2.real();
+        }
+    }
+};
 
 // // cpu version first, gpu version later
 // template <typename FPTYPE>
@@ -464,6 +514,10 @@ template struct cal_vq_deri_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_CPU>;
 template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_CPU>;
+
+template struct cal_force_npw_op<float, base_device::DEVICE_CPU>;
+template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
+
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_CPU>;

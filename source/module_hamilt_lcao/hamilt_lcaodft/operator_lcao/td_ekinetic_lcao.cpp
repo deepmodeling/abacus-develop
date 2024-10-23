@@ -1,5 +1,6 @@
 #include "td_ekinetic_lcao.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/global_variable.h"
 #include "module_base/libm/libm.h"
 #include "module_base/timer.h"
@@ -18,9 +19,10 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
                                              hamilt::HContainer<TR>* hR_in,
                                              const K_Vectors* kv_in,
                                              const UnitCell* ucell_in,
+                                             const std::vector<double>& orb_cutoff,
                                              Grid_Driver* GridD_in,
                                              const TwoCenterIntegrator* intor)
-    : kv(kv_in), OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), intor_(intor)
+    : OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), orb_cutoff_(orb_cutoff), kv(kv_in), intor_(intor)
 {
     this->ucell = ucell_in;
     this->cal_type = calculation_type::lcao_tddft_velocity;
@@ -131,7 +133,6 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
                                                   std::complex<double>* hr_mat_p,
                                                   std::complex<double>** current_mat_p)
 {
-    const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
@@ -276,12 +277,11 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
                 is_adj[ad1] = true;
             }
@@ -380,7 +380,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
         ModuleBase::timer::tick("TDEkinetic", "contributeHk");
         const Parallel_Orbitals* paraV = this->hR_tmp->get_atom_pair(0).get_paraV();
         // save HR data for output
-        int spin_tot = GlobalV::NSPIN;
+        int spin_tot = PARAM.inp.nspin;
         if (spin_tot == 4)
             ;
         else if (!output_hR_done && TD_Velocity::out_mat_R)
@@ -396,7 +396,7 @@ void TDEkinetic<OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik
             output_hR_done = true;
         }
         // folding inside HR to HK
-        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
             const int nrow = paraV->get_row_size();
             hamilt::folding_HR(*this->hR_tmp, this->hsk->get_hk(), this->kvec_d[ik], nrow, 1);

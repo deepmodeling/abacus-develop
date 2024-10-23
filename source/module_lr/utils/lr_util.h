@@ -50,21 +50,17 @@ namespace LR_Util
     /// =================ALGORITHM====================
 
     //====== newers and deleters========
-    //(arbitrary dimention will be supported in the future)
-    /// @brief  delete 2d pointer 
-    /// @tparam T 
-    /// @param p2 
-    /// @param size 
+    /// @brief  delete 2d pointer  
     template <typename T>
     void delete_p2(T** p2, size_t size);
-    
-    /// @brief  delete 3d pointer 
-    /// @tparam T 
-    /// @param p2 
-    /// @param size1
-    /// @param size2
+    /// @brief  new 2d pointer  
     template <typename T>
-    void delete_p3(T*** p3, size_t size1, size_t size2);
+    void new_p2(T**& p2, size_t size1, size_t size2);
+
+    template<typename T> ct::Tensor newTensor(const ct::TensorShape& shape)
+    {
+        return ct::Tensor(ct::DataTypeToEnum<T>::value, ct::DeviceTypeToEnum<base_device::DEVICE_CPU>::value, shape);
+    }
 
     ///================ BLAS ======================
     /// calculate (A+A^T)/2
@@ -119,5 +115,8 @@ namespace LR_Util
     /// @brief  diagonalize a hermitian matrix
     void diag_lapack(const int& n, double* mat, double* eig);
     void diag_lapack(const int& n, std::complex<double>* mat, double* eig);
+    /// @brief  diagonalize a general matrix
+    void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
+    void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
 }
 #include "lr_util.hpp"

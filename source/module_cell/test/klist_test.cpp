@@ -1,12 +1,9 @@
-#include "module_base/mathzone.h"
-#include "module_base/parallel_global.h"
-#include "module_cell/parallel_kpoints.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <iostream>
 #include <streambuf>
 #define private public
+#include "module_parameter/parameter.h"
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_cell/atom_pseudo.h"
 #include "module_cell/atom_spec.h"
@@ -20,6 +17,9 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
 #undef private
+#include "module_base/mathzone.h"
+#include "module_base/parallel_global.h"
+#include "module_cell/parallel_kpoints.h"
 bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
@@ -98,7 +98,7 @@ UnitCell ucell;
  *   - K_Vectors()
  *     - basic parameters (nks,nkstot,nkstot_ibz) are set
  *   - read_kpoints()
- *     - ReadKpointsGammaOnlyLocal: GlobalV::GAMMA_ONLY_LOCAL = 1
+ *     - ReadKpointsGammaOnlyLocal: PARAM.sys.gamma_only_local = 1
  *     - ReadKpointsKspacing: generate KPT from kspacing parameter
  *     - ReadKpointsGamma: "Gamma" mode of `KPT` file
  *     - ReadKpointsMP: "MP" mode of `KPT` file
@@ -118,7 +118,7 @@ UnitCell ucell;
  *       according to different spin case
  *   - set_both_kvec()
  *     - SetBothKvec: set kvec_c (cartesian coor.) and kvec_d (direct coor.)
- *     - SetBothKvecFinalSCF: same as above, with GlobalV::FINAL_SCF=1
+ *     - SetBothKvecFinalSCF: same as above, with PARAM.input.final_scf=1
  *   - print_klists()
  *     - PrintKlists: print kpoints coordinates
  *     - PrintKlistsWarningQuit: for nkstot < nks error
@@ -296,7 +296,7 @@ TEST_F(KlistTest, MP)
 
 TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
 {
-    GlobalV::GAMMA_ONLY_LOCAL = true;
+    PARAM.sys.gamma_only_local = true;
     std::string kfile = "KPT_GO";
     kv->nspin = 1;
     kv->read_kpoints(kfile);
@@ -305,50 +305,50 @@ TEST_F(KlistTest, ReadKpointsGammaOnlyLocal)
     EXPECT_THAT(str, testing::HasSubstr("Gamma"));
     EXPECT_THAT(str, testing::HasSubstr("1 1 1 0 0 0"));
     ifs.close();
-    GlobalV::GAMMA_ONLY_LOCAL = false; // this is important for the following tests because it is global
+    PARAM.sys.gamma_only_local = false; // this is important for the following tests because it is global
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing)
 {
     kv->nspin = 1;
-    GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[1] = 0.052918; // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[2] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[2] = 0.052918; // 0.52918/Bohr = 1/A
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(k_file);
     EXPECT_EQ(kv->get_nkstot(), 343);
-    GlobalV::KSPACING[0] = 0.0;
-    GlobalV::KSPACING[1] = 0.0;
-    GlobalV::KSPACING[2] = 0.0;
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
 }
 
 TEST_F(KlistTest, ReadKpointsKspacing3values)
 {
     kv->nspin = 1;
-    GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[1] = 0.06;     // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0.06;     // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
     std::string k_file = "./support/KPT3";
     kv->read_kpoints(k_file);
     EXPECT_EQ(kv->get_nkstot(), 210);
-    GlobalV::KSPACING[0] = 0.0;
-    GlobalV::KSPACING[1] = 0.0;
-    GlobalV::KSPACING[2] = 0.0;
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
 }
 
 TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
 {
     kv->nspin = 1;
-    GlobalV::KSPACING[0] = 0.052918; // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[1] = 0;        // 0.52918/Bohr = 1/A
-    GlobalV::KSPACING[2] = 0.07;     // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[0] = 0.052918; // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[1] = 0;        // 0.52918/Bohr = 1/A
+    PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
     EXPECT_EXIT(kv->read_kpoints(k_file), ::testing::ExitedWithCode(0), "");
     output = testing::internal::GetCapturedStdout();
-    GlobalV::KSPACING[0] = 0.0;
-    GlobalV::KSPACING[1] = 0.0;
-    GlobalV::KSPACING[2] = 0.0;
+    PARAM.input.kspacing[0] = 0.0;
+    PARAM.input.kspacing[1] = 0.0;
+    PARAM.input.kspacing[2] = 0.0;
 }
 
 TEST_F(KlistTest, ReadKpointsGamma)
@@ -596,7 +596,7 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
+    kv->set_after_vc(PARAM.input.nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_DOUBLE_EQ(kv->kvec_d[0].x, 0);
@@ -616,7 +616,7 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].x = 0;
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
-    kv->set_after_vc(GlobalV::NSPIN, GlobalC::ucell.G, GlobalC::ucell.latvec);
+    kv->set_after_vc(PARAM.input.nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
     EXPECT_TRUE(kv->kd_done);
     kv->print_klists(GlobalV::ofs_running);
     GlobalV::ofs_running.close();
@@ -651,7 +651,7 @@ TEST_F(KlistTest, SetBothKvecFinalSCF)
     kv->kvec_c[0].y = 0.0;
     kv->kvec_c[0].z = 0.0;
     std::string skpt;
-    GlobalV::FINAL_SCF = true;
+    PARAM.input.final_scf = true;
     kv->kd_done = false;
     kv->kc_done = false;
     // case 1
@@ -694,7 +694,7 @@ TEST_F(KlistTest, SetBothKvec)
     kv->kc_done = false;
     kv->kd_done = true;
     std::string skpt;
-    GlobalV::FINAL_SCF = false;
+    PARAM.input.final_scf = false;
     kv->set_both_kvec(GlobalC::ucell.G, GlobalC::ucell.latvec, skpt);
     EXPECT_TRUE(kv->kc_done);
     kv->kc_done = true;

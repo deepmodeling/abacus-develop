@@ -7,6 +7,7 @@
 #include "operator_lcao.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
+#include <vector>
 
 namespace hamilt
 {
@@ -35,37 +36,41 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
-                               HS_Matrix_K<TK>* hsk_in,
-                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                               elecstate::Potential* pot_in,
-                               hamilt::HContainer<TR>* hR_in,
-                               const UnitCell* ucell_in,
-                               Grid_Driver* GridD_in)
-        : GK(GK_in), pot(pot_in), ucell(ucell_in),
+        HS_Matrix_K<TK>* hsk_in,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+        elecstate::Potential* pot_in,
+        hamilt::HContainer<TR>* hR_in,
+        const UnitCell* ucell_in,
+        const std::vector<double>& orb_cutoff,
+        Grid_Driver* GridD_in,
+        const int& nspin)
+        : GK(GK_in), orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
           gd(GridD_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_gint;
 
         this->initialize_HR(ucell_in, GridD_in);
-        GK_in->initialize_pvpR(*ucell_in, GridD_in);
+        GK_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
     }
     /**
      * @brief Construct a new Veff object for Gamma-only calculation
      * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
-                               HS_Matrix_K<TK>* hsk_in,
-                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                               elecstate::Potential* pot_in,
-                               hamilt::HContainer<TR>* hR_in,
-                               const UnitCell* ucell_in,
-                               Grid_Driver* GridD_in)
-        : GG(GG_in), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
+        HS_Matrix_K<TK>* hsk_in,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+        elecstate::Potential* pot_in,
+        hamilt::HContainer<TR>* hR_in,
+        const UnitCell* ucell_in,
+        const std::vector<double>& orb_cutoff,
+        Grid_Driver* GridD_in,
+        const int& nspin)
+        : GG(GG_in), orb_cutoff_(orb_cutoff), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_gint;
         this->initialize_HR(ucell_in, GridD_in);
 
-        GG_in->initialize_pvpR(*ucell_in, GridD_in);
+        GG_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
     }
 
     ~Veff<OperatorLCAO<TK, TR>>(){};
@@ -86,6 +91,8 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     // used for gamma only algorithms.
     Gint_Gamma* GG = nullptr;
+
+    std::vector<double> orb_cutoff_;
 
     // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
 

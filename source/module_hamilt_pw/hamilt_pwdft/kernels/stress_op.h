@@ -1,5 +1,6 @@
 #ifndef SRC_PW_STRESS_MULTI_DEVICE_H
 #define SRC_PW_STRESS_MULTI_DEVICE_H
+#include "module_parameter/parameter.h"
 
 #include "module_psi/psi.h"
 
@@ -76,8 +77,8 @@ struct cal_stress_nl_op
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
-    /// @param becp - intermediate matrix with GlobalV::NBANDS * nkb
-    /// @param dbecp - intermediate matrix with 3 * GlobalV::NBANDS * nkb
+    /// @param becp - intermediate matrix with PARAM.inp.nbands * nkb
+    /// @param dbecp - intermediate matrix with 3 * PARAM.inp.nbands * nkb
     ///
     /// Output Parameters
     /// @param stress - output stresses
@@ -189,6 +190,19 @@ struct cal_stress_drhoc_aux_op{
         int type
     );
 };
+
+template <typename FPTYPE, typename Device>
+struct cal_force_npw_op{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
+
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -306,7 +320,29 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
 };
 
 
-
+/**
+ * The operator is used to compute the auxiliary amount of stress /force 
+ * in parallel on the GPU. They identify type with the type provided and 
+ * select different calculation methods,
+ *
+ * The function is called by the module as follows
+ *      Type = 0 -> stress_cc
+ *      Type = 1 -> stress_cc, force_cc
+ *      Type = 2 -> force_scc
+ *      Type = 3 -> stress_loc
+ *
+ *  Int the function aux is obtained by traversing the `ngg` and `mesh` firstly,
+ *  and then aux is processed by Simpson integral method to obtain auxiliary 
+ *  quantities drhocg.
+ *
+ * In the GPU operator, temporary array space of mesh size is required in order 
+ * not to apply Simpson interpolation (which causes GPU memory overflow). 
+ * The Simpson integral is then reconstructed in the loop body of the mesh, 
+ * using the Simpson integral computed in the loop, rather than executed once 
+ * after the loop. After that, in order to reduce the if condition judgment brought 
+ * by Simpson interpolation in the loop body, lambda expression is used to shift the 
+ * boundary condition out.
+ */
 template <typename FPTYPE>
 struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     void operator()(
@@ -317,6 +353,27 @@ struct cal_stress_drhoc_aux_op<FPTYPE, base_device::DEVICE_GPU>{
     );
 };
 
+
+/**
+ * This operator is used to compute the force force in three directions for each atom in force_cc 
+ * in parallel on GPU [0~3], which is:
+ * Force_p =    (2* pi * tpiba * omega * rhocg[ig] * gv_p[ig] 
+ *              * (gv_x[ig] * pos_x + gv_y[ig] * pos_y + gv_z[ig] * pos_z)
+ *              * complex(sinp, cosp) * psiv[ig]).real()
+ *
+ * The operator splits NPW into blocks on the GPU in parallel, and the block size is t_size = 1024.
+ */
+template <typename FPTYPE>
+struct cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>{
+    void operator()(const std::complex<FPTYPE> *psiv,
+                    const FPTYPE* gv_x, const FPTYPE* gv_y, const FPTYPE* gv_z,
+                    const FPTYPE* rhocgigg_vec,
+                    FPTYPE* force,
+                    const FPTYPE pos_x, const FPTYPE pos_y, const FPTYPE pos_xz,
+                    const int npw,
+                    const FPTYPE omega, const FPTYPE tpiba
+    );
+};
 
 
 

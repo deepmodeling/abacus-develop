@@ -19,6 +19,7 @@ list(APPEND depend_files
   ../../module_base/matrix3.cpp
   ../../module_base/matrix.cpp
   ../../module_base/timer.cpp
+  ../../module_base/blas_connector.cpp
   ../../module_base/memory.cpp
   ../../module_base/global_variable.cpp
   ../../module_base/global_function.cpp
@@ -42,6 +43,7 @@ list(APPEND depend_files
   ../../module_cell/module_neighbor/sltk_grid_driver.cpp
   ../../module_io/output.cpp
   ../../module_io/print_info.cpp
+  ../../module_io/cif_io.cpp
   ../../module_esolver/esolver_lj.cpp
   ../../module_base/parallel_reduce.cpp
   ../../module_base/parallel_global.cpp
@@ -50,21 +52,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -73,7 +75,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -82,7 +84,7 @@ AddTest(
 
 AddTest(
   TARGET md_nhc
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
@@ -91,7 +93,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
@@ -100,7 +102,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS ${math_libs} psi device parameter
+  LIBS parameter ${math_libs} psi device 
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp

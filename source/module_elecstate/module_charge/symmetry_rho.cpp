@@ -13,7 +13,6 @@ Symmetry_rho::~Symmetry_rho()
 void Symmetry_rho::begin(const int& spin_now,
                          const Charge& CHR,
                          const ModulePW::PW_Basis* rho_basis,
-                         Parallel_Grid& Pgrid,
                          ModuleSymmetry::Symmetry& symm) const
 {
     assert(spin_now < 4); // added by zhengdy-soc
@@ -31,15 +30,15 @@ void Symmetry_rho::begin(const int& spin_now,
     // else	//space group, do rho_symm in reciprocal space
     {
         rho_basis->real2recip(CHR.rho[spin_now], CHR.rhog[spin_now]);
-        psymmg(CHR.rhog[spin_now], rho_basis, Pgrid, symm); // need to modify
+        psymmg(CHR.rhog[spin_now], rho_basis, symm); // need to modify
         rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
 
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5 || CHR.cal_elf)
         {
             // Use std::vector to manage kin_g instead of raw pointer
             std::vector<std::complex<double>> kin_g(CHR.ngmc);
             rho_basis->real2recip(CHR.kin_r[spin_now], kin_g.data());
-            psymmg(kin_g.data(), rho_basis, Pgrid, symm);
+            psymmg(kin_g.data(), rho_basis, symm);
             rho_basis->recip2real(kin_g.data(), CHR.kin_r[spin_now]);
         }
     }
@@ -52,7 +51,6 @@ void Symmetry_rho::begin(const int& spin_now,
                          int ngmc,
                          double** kin_r,
                          const ModulePW::PW_Basis* rho_basis,
-                         Parallel_Grid& Pgrid,
                          ModuleSymmetry::Symmetry& symm) const
 {
     assert(spin_now < 4); // added by zhengdy-soc
@@ -71,7 +69,7 @@ void Symmetry_rho::begin(const int& spin_now,
     // else	//space group, do rho_symm in reciprocal space
     {
         rho_basis->real2recip(rho[spin_now], rhog[spin_now]);
-        psymmg(rhog[spin_now], rho_basis, Pgrid, symm);
+        psymmg(rhog[spin_now], rho_basis, symm);
         rho_basis->recip2real(rhog[spin_now], rho[spin_now]);
 
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -79,7 +77,7 @@ void Symmetry_rho::begin(const int& spin_now,
             // Use std::vector to manage kin_g instead of raw pointer
             std::vector<std::complex<double>> kin_g(ngmc);
             rho_basis->real2recip(kin_r[spin_now], kin_g.data());
-            psymmg(kin_g.data(), rho_basis, Pgrid, symm);
+            psymmg(kin_g.data(), rho_basis, symm);
             rho_basis->recip2real(kin_g.data(), kin_r[spin_now]);
         }
     }

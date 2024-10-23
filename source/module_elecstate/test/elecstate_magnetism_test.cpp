@@ -2,6 +2,9 @@
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "module_elecstate/elecstate_getters.h"
 
 /************************************************
@@ -14,8 +17,8 @@
  *   - Magnetism::~Magnetism()
  *   - Magnetism::judge_parallel()
  *   - Magnetism::compute_magnetization()
- *      - compute magnetization for spin-polarized system when GlobalV::NSPIN = 2
- *      - and non-collinear case with GlobalV::NSPIN = 4 
+ *      - compute magnetization for spin-polarized system when PARAM.input.nspin = 2
+ *      - and non-collinear case with PARAM.input.nspin = 4 
 */
 
 #define private public
@@ -70,15 +73,15 @@ TEST_F(MagnetismTest, JudgeParallel)
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)
 {
-                  GlobalV::NSPIN = 2;
-                  GlobalV::TWO_EFERMI = false;
-                  GlobalV::nelec = 10.0;
+                  PARAM.input.nspin = 2;
+                  PARAM.sys.two_fermi = false;
+                  PARAM.input.nelec = 10.0;
 
                   Charge* chr = new Charge;
                   chr->nrxx = 100;
                   chr->nxyz = 1000;
-                  chr->rho = new double*[GlobalV::NSPIN];
-                  for (int i=0; i< GlobalV::NSPIN; i++)
+                  chr->rho = new double*[PARAM.input.nspin];
+                  for (int i=0; i< PARAM.input.nspin; i++)
                   {
                                     chr->rho[i] = new double[chr->nrxx];
                   }
@@ -94,7 +97,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                   EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
                   EXPECT_DOUBLE_EQ(5.25, nelec_spin[1]);
                   delete[] nelec_spin;
-                  for (int i=0; i< GlobalV::NSPIN; i++)
+                  for (int i=0; i< PARAM.input.nspin; i++)
                   {
                                     delete[] chr->rho[i];
                   }
@@ -104,13 +107,13 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 
 TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
-                    GlobalV::NSPIN = 4;
+                    PARAM.input.nspin = 4;
 
                     Charge* chr = new Charge;
-                    chr->rho = new double*[GlobalV::NSPIN];
+                    chr->rho = new double*[PARAM.input.nspin];
                     chr->nrxx = 100;
                     chr->nxyz = 1000;
-                    for (int i=0; i< GlobalV::NSPIN; i++)
+                    for (int i=0; i< PARAM.input.nspin; i++)
                     {
                                         chr->rho[i] = new double[chr->nrxx];
                     }
@@ -128,7 +131,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                     EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[1]);
                     EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[2]);
                     delete[] nelec_spin;
-                    for (int i=0; i< GlobalV::NSPIN; i++)
+                    for (int i=0; i< PARAM.input.nspin; i++)
                     {
                                         delete[] chr->rho[i];
                     }

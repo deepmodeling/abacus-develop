@@ -2,9 +2,10 @@
 #define ESOLVER_SDFT_PW_H
 
 #include "esolver_ks_pw.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_hchi.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_che.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 
 namespace ModuleESolver
 {
@@ -25,6 +26,8 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
 
   public:
     Stochastic_WF stowf;
+    StoChe<double> stoche;
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
 
   protected:
     virtual void before_scf(const int istep) override;
@@ -35,7 +38,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>>
 
     virtual void others(const int istep) override;
 
-    virtual void iter_finish(const int iter) override;
+    virtual void iter_finish(int& iter) override;
 
     virtual void after_scf(const int istep) override;
 

@@ -147,10 +147,6 @@ void TwoCenterIntegrator::snap(
 }
 
 #include "module_basis/module_ao/ORB_read.h"
-const LCAO_Orbitals& LCAO_Orbitals::get_const_instance() {
-    static LCAO_Orbitals instance;
-    return instance;
-}
 LCAO_Orbitals::LCAO_Orbitals() { this->Phi = new Numerical_Orbital[1]; }
 LCAO_Orbitals::~LCAO_Orbitals() { delete[] Phi; }
 
@@ -177,10 +173,8 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
 Grid::~Grid() {}
 Grid_Driver::Grid_Driver(const int& test_d_in,
-                         const int& test_gd_in,
                          const int& test_grid_in)
-    : Grid(test_grid_in), test_deconstructor(test_d_in),
-      test_grid_driver(test_gd_in) {}
+    : Grid(test_grid_in), test_deconstructor(test_d_in) {}
 Grid_Driver::~Grid_Driver() {}
 
 // filter_adjs delete not adjacent atoms in adjs

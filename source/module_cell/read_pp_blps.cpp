@@ -11,23 +11,14 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     pp.nbeta = 0;
     pp.kkbeta = 0;
-    delete[] this->kbeta;
-    delete[] pp.lll;
-    this->kbeta = nullptr;
-    pp.lll = nullptr;
-    pp.betar.create(1, 1);
-    pp.dion.create(1, 1);
+    pp.lll = std::vector<int>(pp.nbeta, 0);
+    pp.betar.create(0, 0);
+    pp.dion.create(pp.nbeta, pp.nbeta);
 
     pp.nchi = 0;
-    delete[] pp.nn;
-    delete[] pp.jchi;
-    delete[] pp.jjj;
-    pp.nn = new int[pp.nchi];
-    pp.jchi = new double[pp.nchi];
-    pp.jjj = new double[pp.nchi];
-    ModuleBase::GlobalFunc::ZEROS(pp.nn, pp.nchi);
-    ModuleBase::GlobalFunc::ZEROS(pp.jchi, pp.nchi);
-    ModuleBase::GlobalFunc::ZEROS(pp.jjj, pp.nchi);
+    pp.nn = std::vector<int>(pp.nchi, 0);
+    pp.jchi = std::vector<double>(pp.nchi, 0.0);
+    pp.jjj = std::vector<double>(pp.nchi, 0.0);
 
     ifs >> pp.psd;
     // if(!SCAN_BEGIN(ifs,"BLPS")) WARNING_QUIT("read_pp_blps","Find no PP_HEADER");
@@ -51,9 +42,11 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     int pspcod, pspxc, lloc, r2well;
     ifs >> pspcod >> pspxc >> pp.lmax >> lloc >> pp.mesh >> r2well;
+    this->mesh_changed = false;
     if (pp.mesh%2 == 0)
 	{
 		pp.mesh -= 1;
+        this->mesh_changed = true;
 	}
 
     if (pspxc == 2)
@@ -92,15 +85,9 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
 
     assert(pp.mesh > 0);
 
-    delete[] pp.r;
-    delete[] pp.rab;
-    delete[] pp.vloc_at;
-    pp.r = new double[pp.mesh]; // Bohr
-    pp.rab = new double[pp.mesh];
-    pp.vloc_at = new double[pp.mesh]; // Hartree
-    ModuleBase::GlobalFunc::ZEROS(pp.r, pp.mesh);
-    ModuleBase::GlobalFunc::ZEROS(pp.rab, pp.mesh);
-    ModuleBase::GlobalFunc::ZEROS(pp.vloc_at, pp.mesh);
+    pp.r = std::vector<double>(pp.mesh, 0.0); // Bohr
+    pp.rab = std::vector<double>(pp.mesh, 0.0);
+    pp.vloc_at = std::vector<double>(pp.mesh, 0.0); // Hartree
     int num = 0;
     if (pspcod == 8)
     {
@@ -126,9 +113,7 @@ int Pseudopot_upf::read_pseudo_blps(std::ifstream &ifs, Atom_pseudo& pp)
     }
     pp.rab[pp.mesh - 1] = pp.r[pp.mesh - 1] - pp.r[pp.mesh - 2];
 
-    delete[] pp.rho_at;
-    pp.rho_at = new double[pp.mesh];
-    ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+    pp.rho_at = std::vector<double>(pp.mesh, 0.0);
     double charge = zion/pp.r[pp.mesh - 1];
     for(int i = 0;i < pp.mesh; ++i)
     {

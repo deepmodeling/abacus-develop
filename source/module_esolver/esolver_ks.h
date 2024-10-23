@@ -11,7 +11,7 @@
 #include "module_psi/psi.h"
 
 #include <fstream>
-#include <string.h>
+#include <cstring>
 namespace ModuleESolver
 {
 
@@ -26,7 +26,9 @@ class ESolver_KS : public ESolver_FP
         //! Deconstructor
 		virtual ~ESolver_KS();
 
-		double scf_thr;   // scf threshold
+		double scf_thr;   // scf density threshold
+
+		double scf_ene_thr; // scf energy threshold
 
 		double drho;      // the difference between rho_in (before HSolver) and rho_out (After HSolver)
 
@@ -34,11 +36,9 @@ class ESolver_KS : public ESolver_FP
 
 		int niter;        // iter steps actually used in scf
 
-		bool conv_elec;   // If electron density is converged in scf.
+        int out_freq_elec; // frequency for output
 
-		int out_freq_elec;// frequency for output
-
-		virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+        virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
 		virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override;    // liuyu add 2023-03-09
 
@@ -56,35 +56,24 @@ class ESolver_KS : public ESolver_FP
 		// get maxniter used in current scf
 		virtual int get_maxniter() override;
 
-		// get conv_elec used in current scf
-		virtual bool get_conv_elec() override;
-
-	protected:
-		//! Something to do before SCF iterations.
+      protected:
+        //! Something to do before SCF iterations.
 		virtual void before_scf(const int istep) {};
 
 		//! Something to do before hamilt2density function in each iter loop.
 		virtual void iter_init(const int istep, const int iter) {};
 
 		//! Something to do after hamilt2density function in each iter loop.
-		virtual void iter_finish(const int iter) {};
+        virtual void iter_finish(int& iter);
 
-		//! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-		virtual void after_scf(const int istep) {};
+        //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+        virtual void after_scf(const int istep) override;
 
-		//! <Temporary> It should be replaced by a function in Hamilt Class
+        //! <Temporary> It should be replaced by a function in Hamilt Class
 		virtual void update_pot(const int istep, const int iter) {};
 
-		//! choose strategy when charge density convergence achieved
-		virtual bool do_after_converge(int& iter){return true;}
-
-	protected:
-
-		// Print the headline on the screen:
-		// ITER   ETOT(eV)       EDIFF(eV)      DRHO    TIME(s) 
-		void print_head();
-
-		// Print inforamtion in each iter
+    protected:
+        // Print inforamtion in each iter
 		// G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
 		// for metaGGA
 		// ITER   ETOT(eV)       EDIFF(eV)      DRHO       DKIN       TIME(s) 
@@ -95,16 +84,6 @@ class ESolver_KS : public ESolver_FP
 				const double dkin, 
 				const double duration, 
 				const double ethr);
-
-		// Write the headline in the running_log file
-		// "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
-		void write_head(
-				std::ofstream& ofs_running, 
-				const int istep, 
-				const int iter);
-
-        //! Solve Hamitonian
-		hsolver::HSolver<T, Device>* phsol = nullptr;
 
         //! Hamiltonian
 		hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
@@ -122,7 +101,9 @@ class ESolver_KS : public ESolver_FP
 
 		std::string basisname; //PW or LCAO
 
-		void print_wfcfft(const Input_para& inp, std::ofstream &ofs);
+        void print_wfcfft(const Input_para& inp, std::ofstream& ofs);
+
+	    double esolver_KS_ne = 0.0;
 };	
 } // end of namespace
 #endif

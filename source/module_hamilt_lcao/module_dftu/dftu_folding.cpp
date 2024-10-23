@@ -1,5 +1,6 @@
 #include "dftu.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
@@ -60,7 +61,7 @@ void DFTU::fold_dSR_gamma(
                 tau2 = gd->getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
                 bool adj = false;
 				if (distance < rcut)
 				{
@@ -79,8 +80,8 @@ void DFTU::fold_dSR_gamma(
                         dtau2 = tau0 - tau2;
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
                             adj = true;
@@ -91,9 +92,9 @@ void DFTU::fold_dSR_gamma(
 
                 if (adj)
                 {
-                    for (int jj = 0; jj < atom1->nw * GlobalV::NPOL; ++jj)
+                    for (int jj = 0; jj < atom1->nw * PARAM.globalv.npol; ++jj)
                     {
-                        const int jj0 = jj / GlobalV::NPOL;
+                        const int jj0 = jj / PARAM.globalv.npol;
                         const int iw1_all = start1 + jj0;
                         const int mu = pv.global2local_row(iw1_all);
 						if (mu < 0) 
@@ -101,9 +102,9 @@ void DFTU::fold_dSR_gamma(
 							continue;
 						}
 
-                        for (int kk = 0; kk < atom2->nw * GlobalV::NPOL; ++kk)
+                        for (int kk = 0; kk < atom2->nw * PARAM.globalv.npol; ++kk)
                         {
-                            const int kk0 = kk / GlobalV::NPOL;
+                            const int kk0 = kk / PARAM.globalv.npol;
                             const int iw2_all = start2 + kk0;
                             const int nu = pv.global2local_col(iw2_all);
 							if (nu < 0) 
@@ -138,9 +139,10 @@ void DFTU::folding_matrix_k(
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr;
-    if      (dim1 == 1 || dim1 == 4) mat_ptr = fsr.DSloc_Rx;
-    else if (dim1 == 2 || dim1 == 5) mat_ptr = fsr.DSloc_Ry;
-    else if (dim1 == 3 || dim1 == 6) mat_ptr = fsr.DSloc_Rz;
+    if      (dim1 == 1 || dim1 == 4) { mat_ptr = fsr.DSloc_Rx;
+    } else if (dim1 == 2 || dim1 == 5) { mat_ptr = fsr.DSloc_Ry;
+    } else if (dim1 == 3 || dim1 == 6) { mat_ptr = fsr.DSloc_Rz;
+}
 
     int nnr = 0;
     ModuleBase::Vector3<double> dtau;
@@ -171,7 +173,7 @@ void DFTU::folding_matrix_k(
                 tau2 = GlobalC::GridD.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * GlobalC::ucell.lat0;
-                double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
 
                 bool adj = false;
 
@@ -193,8 +195,8 @@ void DFTU::folding_matrix_k(
                         double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
                         double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                        double rcut1 = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = GlobalC::ORB.Phi[T2].getRcut() + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -222,21 +224,23 @@ void DFTU::folding_matrix_k(
                     // calculate how many matrix elements are in
                     // this processor.
                     //--------------------------------------------------
-                    for (int ii = 0; ii < atom1->nw * GlobalV::NPOL; ii++)
+                    for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ii++)
                     {
                         // the index of orbitals in this processor
                         const int iw1_all = start1 + ii;
                         const int mu = pv.global2local_row(iw1_all);
-                        if (mu < 0) continue;
+                        if (mu < 0) { continue;
+}
 
-                        for (int jj = 0; jj < atom2->nw * GlobalV::NPOL; jj++)
+                        for (int jj = 0; jj < atom2->nw * PARAM.globalv.npol; jj++)
                         {
                             int iw2_all = start2 + jj;
                             const int nu = pv.global2local_col(iw2_all);
-                            if (nu < 0) continue;
+                            if (nu < 0) { continue;
+}
 
                             int iic;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
                                 iic = mu + nu * pv.nrow;
                             }
@@ -274,19 +278,19 @@ void DFTU::folding_matrix_k_new(const int ik,
     ModuleBase::timer::tick("DFTU", "folding_matrix_k_new");
 
     int hk_type = 0;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER())
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         hk_type = 1;
     }
 
     // get SR and fold to mat_k
-    if(GlobalV::GAMMA_ONLY_LOCAL)
+    if(PARAM.globalv.gamma_only_local)
     {
         dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->updateSk(ik, hk_type);
     }
     else
     {
-        if(GlobalV::NSPIN != 4)
+        if(PARAM.inp.nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->updateSk(ik, hk_type);
         }

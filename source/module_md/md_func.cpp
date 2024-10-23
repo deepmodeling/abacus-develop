@@ -83,21 +83,46 @@ void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel)
         for (int ia = 0; ia < unit_in.atoms[it].na; ++ia)
         {
             vel[iat] = unit_in.atoms[it].vel[ia];
-            if (unit_in.atoms[it].mbl[ia].x == 0) {
+            if (unit_in.atoms[it].mbl[ia].x == 0)
+            {
                 vel[iat].x = 0;
-}
-            if (unit_in.atoms[it].mbl[ia].y == 0) {
+            }
+            if (unit_in.atoms[it].mbl[ia].y == 0)
+            {
                 vel[iat].y = 0;
-}
-            if (unit_in.atoms[it].mbl[ia].z == 0) {
+            }
+            if (unit_in.atoms[it].mbl[ia].z == 0)
+            {
                 vel[iat].z = 0;
-}
+            }
             ++iat;
         }
     }
     assert(iat == unit_in.nat);
 
     return;
+}
+
+void rescale_vel(const int& natom,
+                 const double& temperature,
+                 const double* allmass,
+                 const int& frozen_freedom,
+                 ModuleBase::Vector3<double>* vel)
+{
+    double factor = 0.0;
+    if (3 * natom == frozen_freedom || temperature == 0)
+    {
+        factor = 0;
+    }
+    else
+    {
+        factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
+    }
+
+    for (int i = 0; i < natom; i++)
+    {
+        vel[i] = vel[i] * sqrt(factor);
+    }
 }
 
 void rand_vel(const int& natom,
@@ -146,20 +171,8 @@ void rand_vel(const int& natom,
             }
         }
 
-        double factor=0.0;
-        if (3 * natom == frozen_freedom || temperature == 0)
-        {
-            factor = 0;
-        }
-        else
-        {
-            factor = 0.5 * (3 * natom - frozen_freedom) * temperature / kinetic_energy(natom, vel, allmass);
-        }
-
-        for (int i = 0; i < natom; i++)
-        {
-            vel[i] = vel[i] * sqrt(factor);
-        }
+        // rescale the velocity to the target temperature
+        rescale_vel(natom, temperature, allmass, frozen_freedom, vel);
     }
 
 #ifdef __MPI
@@ -212,16 +225,14 @@ void init_vel(const UnitCell& unit_in,
                       << std::endl;
             temperature = t_current;
         }
-        else if (std::fabs(temperature - t_current) > 1e-8)
+        else
         {
             std::cout << " INITIAL TEMPERATURE IN INPUT  = " << temperature * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
             std::cout << " READING TEMPERATURE FROM STRU = " << t_current * ModuleBase::Hartree_to_K << " K"
                       << std::endl;
-            std::cout << " INCONSISTENCE, PLEASE CHECK" << std::endl;
-            std::cout << " ------------------------------------- DONE -----------------------------------------"
-                      << std::endl;
-            exit(0);
+            std::cout << " RESCALE VEL TO INITIAL TEMPERATURE" << std::endl;
+            rescale_vel(unit_in.nat, temperature, allmass, frozen_freedom, vel);
         }
     }
     else

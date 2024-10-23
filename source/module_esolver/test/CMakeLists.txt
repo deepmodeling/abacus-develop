@@ -5,6 +5,6 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
   TARGET esolver_dp_test
-  LIBS ${math_libs} base device parameter
-  SOURCES esolver_dp_test.cpp ../esolver_dp.cpp
+  LIBS parameter ${math_libs} base device 
+  SOURCES esolver_dp_test.cpp ../esolver_dp.cpp ../../module_io/cif_io.cpp
 )

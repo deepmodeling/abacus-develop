@@ -270,18 +270,18 @@ TEST_F(CubicSplineTest, MultiEval)
 
     std::for_each(x_, x_ + n, [&](double& x) { x = xmin + (&x - x_) * dx; });
 
-    std::transform(x_, x_ + n, y_, [this](double x) { return f_[0][0](x); });
-    CubicSpline cubspl(n, xmin, dx, y_,
-                       {BoundaryType::first_deriv, f_[0][1](xmin)},
-                       {BoundaryType::first_deriv, f_[0][1](xmax)});
-
+    // empty interpolant with specified knots
+    CubicSpline cubspl(n, xmin, dx);
     cubspl.reserve(f_.size());
-    for (size_t i = 1; i < f_.size(); ++i)
+
+    for (size_t i = 0; i < f_.size(); ++i)
     {
         std::transform(x_, x_ + n, y_, [this, i](double x) { return f_[i][0](x); });
         cubspl.add(y_, {BoundaryType::first_deriv, f_[i][1](xmin)},
                        {BoundaryType::first_deriv, f_[i][1](xmax)});
     }
+
+    EXPECT_EQ(cubspl.n_spline(), f_.size());
 
     std::vector<std::vector<double>> err_bound(f_.size(), std::vector<double>(3));
     for (size_t i = 0; i < f_.size(); ++i)

@@ -78,9 +78,9 @@ class UnitCell {
     inline const int& get_npol() const { return npol; }
 
   private:
-    std::vector<int>
-        iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
+    std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
     int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
+    const int test_unitcell = 0;
                   // ----------------- END of iat2iwt part -----------------
 
   public:
@@ -201,7 +201,6 @@ class UnitCell {
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
     void print_cell_xyz(const std::string& fn) const;
-    void print_cell_cif(const std::string& fn) const;
 
     void update_pos_tau(const double* pos);
     void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
@@ -263,7 +262,7 @@ class UnitCell {
      * elsewhere. Print STRU file respect to given setting
      *
      * @param fn STRU file name
-     * @param nspin GlobalV::NSPIN feed in
+     * @param nspin PARAM.inp.nspin feed in
      * @param direct true for direct coords, false for cartesian coords
      * @param vol true for printing velocities
      * @param magmom true for printing Mulliken population analysis produced
@@ -308,10 +307,6 @@ class UnitCell {
                const bool& init_vel_in,
                const std::string& fixed_axes_in);
 
-    /// @brief calculate the total number of electrons in system
-    /// (GlobalV::nelec)
-    void cal_nelec(double& nelec);
-
     /// @brief check consistency between two atom labels from STRU and pseudo or
     /// orb file
     void compare_atom_labels(std::string label1, std::string label2);
@@ -334,5 +329,24 @@ class UnitCell {
     /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
 };
+
+/**
+ * @brief calculate the total number of electrons in system
+ *
+ * @param atoms [in] atom pointer
+ * @param ntype [in] number of atom types
+ * @param nelec [out] total number of electrons
+ */
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec);
+
+/**
+ * @brief Calculate the number of bands.
+ *
+ * @param nelec [in] total number of electrons
+ * @param nlocal [in] total number of local basis
+ * @param nelec_spin [in] number of electrons for each spin
+ * @param nbands  [out] number of bands
+ */
+void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
 
 #endif // unitcell class

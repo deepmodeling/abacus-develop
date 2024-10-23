@@ -1,5 +1,5 @@
 #include "read_pp.h"
-
+#include "module_parameter/parameter.h"
 
 void Pseudopot_upf::complete_default(Atom_pseudo& pp)
 {
@@ -14,10 +14,9 @@ void Pseudopot_upf::complete_default(Atom_pseudo& pp)
 		return;
 	}
 	
-	if (pp.lll == nullptr)
+	if (pp.lll.empty())
 	{
-		pp.lll = new int[pp.nbeta];
-		assert(pp.lll != nullptr);
+		pp.lll = std::vector<int>(pp.nbeta, 0);
 	}
 
 	pp.nh = 0;
@@ -42,48 +41,42 @@ void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
 		std::cout << "\n complete_default_h, too many grid points,";
 	}
 
-	if (pp.els == nullptr)
+	if (pp.els.empty())
 	{
-		pp.els = new std::string[pp.nchi];
-		assert(pp.els != nullptr);
+		pp.els = std::vector<std::string>(pp.nchi, "");
 	}
 
-	if (pp.lchi == nullptr)
+	if (pp.lchi.empty())
 	{
-		pp.lchi = new int[pp.nchi];
-		assert(pp.lchi != nullptr);
+		pp.lchi = std::vector<int>(pp.nchi, 0);
 	}
 
-	if (pp.oc == nullptr)
+	if (pp.oc.empty())
 	{
-		pp.oc = new double[pp.nchi];
-		assert(pp.oc != nullptr);
+		pp.oc = std::vector<double>(pp.nchi, 0.0);
 	}
 
-	if (pp.jjj == nullptr) {
-		pp.jjj = new double[pp.nbeta];
-		assert(pp.jjj != nullptr);
-		assert(!pp.has_so);
+	if (pp.jjj.empty()) {
+		pp.jjj = std::vector<double>(pp.nbeta, 0.0);
+		assert(!pp.has_so or pp.nbeta == 0);
 		for (int i=0; i<pp.nbeta; i++)
 		{
 			pp.jjj[i]  = 0;
 		}
 	}
 
-	if (pp.nn == nullptr) {
-		pp.nn = new int[pp.nchi];
-		assert(pp.nn != nullptr);
-		assert(!pp.has_so);
+	if (pp.nn.empty()) {
+		pp.nn = std::vector<int>(pp.nchi, 0);
+		assert(!pp.has_so or pp.nchi == 0);
 		for (int i=0; i<pp.nchi; i++)
 		{
 			pp.nn[i] = 0;
 		}
 	}
 
-	if (pp.jchi == nullptr) {
-		pp.jchi = new double[pp.nchi];
-		assert(pp.jchi != nullptr);
-		assert(!pp.has_so);
+	if (pp.jchi.empty()) {
+		pp.jchi = std::vector<double>(pp.nchi, 0.0);
+		assert(!pp.has_so or pp.nchi == 0);
 		for (int i=0; i<pp.nchi; i++)
 		{
 			pp.jchi[i] = 0;
@@ -100,12 +93,12 @@ void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
 	// mohan 2009-12-15
 	// mohan update again 2011-05-23, 
 	// in order to calculate more accurate Vna.
-	pp.rcut = GlobalV::PSEUDORCUT;//(a.u.);
+	pp.rcut = PARAM.inp.pseudo_rcut;//(a.u.);
 	
 	// remember to update here if you need it.
 	//	rcut = 25.0; 
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"PAO radial cut off (Bohr)",rcut);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"PAO radial cut off (Bohr)", pp.rcut);
 	if(pp.rcut <= 0.0)
 	{
 		ModuleBase::WARNING_QUIT("Pseudopot_upf::complete_default_atom","PAO rcut<=0.0");
@@ -113,29 +106,21 @@ void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
 
 	// chi.create(nchi, mesh);
 
-	if (pp.r == nullptr) {
-		pp.r = new double[pp.mesh];
-		assert(pp.r != nullptr);
-		ModuleBase::GlobalFunc::ZEROS(pp.r, pp.mesh);
+	if (pp.r.empty()) {
+		pp.r = std::vector<double>(pp.mesh, 0.0);
 	}
 
-	if (pp.rab == nullptr) {
-		pp.rab = new double[pp.mesh];
-		assert(pp.rab != nullptr);
-		ModuleBase::GlobalFunc::ZEROS(pp.rab, pp.mesh);
+	if (pp.rab.empty()) {
+		pp.rab = std::vector<double>(pp.mesh, 0.0);
 	}
 
-	if (pp.rho_at == nullptr) {
-		pp.rho_at = new double[pp.mesh];
-		assert(pp.rho_at != nullptr);
-		ModuleBase::GlobalFunc::ZEROS(pp.rho_at, pp.mesh);
+	if (pp.rho_at.empty()) {
+		pp.rho_at = std::vector<double>(pp.mesh, 0.0);
 	}
 
-	if (pp.rho_atc == nullptr) {
-		pp.rho_atc = new double[pp.mesh];
-		assert(pp.rho_atc != nullptr);
-		assert(!pp.nlcc);
-		ModuleBase::GlobalFunc::ZEROS(pp.rho_atc, pp.mesh);
+	if (pp.rho_atc.empty()) {
+		pp.rho_atc = std::vector<double>(pp.mesh, 0.0);
+		assert(!pp.nlcc or pp.mesh == 0);
 	}
 
 	bool br = false;
@@ -171,9 +156,8 @@ void Pseudopot_upf::complete_default_vl(Atom_pseudo& pp)
 
 	assert(pp.mesh>0);//mohan add 2021-05-01
 
-	if (pp.vloc_at == nullptr) {
-		pp.vloc_at = new double[pp.mesh];
-		assert(pp.vloc_at != nullptr);
+	if (pp.vloc_at.empty()) {
+		pp.vloc_at = std::vector<double>(pp.mesh, 0.0);
 	}
 
 	return;

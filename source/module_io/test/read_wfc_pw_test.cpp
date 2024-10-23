@@ -1,5 +1,8 @@
 #include "module_io/read_wfc_pw.h"
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #ifdef __MPI
@@ -27,10 +30,12 @@ class ReadWfcPwTest : public ::testing::Test
     }
     virtual void TearDown()
     {
-        if (wfcpw != nullptr)
+        if (wfcpw != nullptr) {
             delete wfcpw;
-        if (kvec_d != nullptr)
+}
+        if (kvec_d != nullptr) {
             delete[] kvec_d;
+}
     }
 };
 
@@ -47,12 +52,11 @@ TEST_F(ReadWfcPwTest, ReadWfcPw)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    GlobalV::NBANDS = 8;
+    PARAM.input.nbands = 8;
     const int nbasis = wfcpw->npwk[0];
-    ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
-    bool result = ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
+    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
+    ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
 
-    EXPECT_TRUE(result);
     if (GlobalV::NPROC_IN_POOL == 1)
     {
         EXPECT_DOUBLE_EQ(wfcatom(0, 0).real(), -0.017953720885562179);
@@ -115,73 +119,32 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, wfcpw->npwk[0]);
+    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, wfcpw->npwk[0]);
 
+    if(GlobalV::RANK_IN_POOL == 0)
+    {
     // dat file
     std::string filename = "notfound.dat";
-    GlobalV::ofs_warning.open("test_read_wfc_pw.txt");
-    bool result = ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
-    GlobalV::ofs_warning.close();
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.dat"));
 
-    std::ifstream ifs_running("test_read_wfc_pw.txt");
-    std::stringstream ss;
-    ss << ifs_running.rdbuf();
-    std::string file_content = ss.str();
-    ifs_running.close();
-
-    std::string expected_content = " ModuleIO::read_wfc_pw  warning : Can't open file notfound.dat\n";
-
-    EXPECT_FALSE(result);
-    if (GlobalV::RANK_IN_POOL == 0)
-        EXPECT_EQ(file_content, expected_content);
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    std::remove("test_read_wfc_pw.txt");
 
     // txt file
     filename = "notfound.txt";
-    GlobalV::ofs_warning.open("test_read_wfc_pw.txt");
-    result = ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
-    GlobalV::ofs_warning.close();
-
-    ifs_running.open("test_read_wfc_pw.txt");
-    std::stringstream ss2;
-    ss2 << ifs_running.rdbuf();
-    file_content = ss2.str();
-    ifs_running.close();
-
-    expected_content = " ModuleIO::read_wfc_pw  warning : Can't open file notfound.txt\n";
-
-    EXPECT_FALSE(result);
-    if (GlobalV::RANK_IN_POOL == 0)
-        EXPECT_EQ(file_content, expected_content);
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    std::remove("test_read_wfc_pw.txt");
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.txt"));
 
     // other file
     filename = "notfound";
-    GlobalV::ofs_warning.open("test_read_wfc_pw.txt");
-    result = ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
-    GlobalV::ofs_warning.close();
-
-    ifs_running.open("test_read_wfc_pw.txt");
-    std::stringstream ss3;
-    ss3 << ifs_running.rdbuf();
-    file_content = ss3.str();
-    ifs_running.close();
-
-    expected_content = " ModuleIO::read_wfc_pw  warning : Unknown file type und\n";
-
-    EXPECT_FALSE(result);
-    if (GlobalV::RANK_IN_POOL == 0)
-        EXPECT_EQ(file_content, expected_content);
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
-    std::remove("test_read_wfc_pw.txt");
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output,testing::HasSubstr("Unknown file type und"));
+    }
 }
 
 // Test the read_wfc_pw function when nbands is inconsistent
@@ -199,9 +162,9 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 4;
+        PARAM.input.nbands = 4;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -210,7 +173,7 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         EXPECT_THAT(
             output,
             testing::HasSubstr(
-                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != GlobalV::NBANDS"));
+                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands"));
     }
 }
 
@@ -231,9 +194,9 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -259,9 +222,9 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -287,9 +250,9 @@ TEST_F(ReadWfcPwTest, InconsistentG)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();

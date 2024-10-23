@@ -34,7 +34,6 @@
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/rho_io.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_elecstat_pot.h"
@@ -54,7 +53,7 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::others(const int istep) {
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
-    const std::string cal_type = GlobalV::CALCULATION;
+    const std::string cal_type = PARAM.inp.calculation;
 
     if (cal_type == "test_memory") {
         Cal_Test::test_memory(this->pw_rho,

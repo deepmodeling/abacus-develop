@@ -1,6 +1,8 @@
 #include <memory>
 #include <array>
+#include "module_parameter/parameter.h"
 #include "symmetry.h"
+#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
@@ -117,11 +119,11 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         // which should be loop over all atoms, f.e only loop over spin-up atoms
         // --------------------------------
         // AFM analysis Start
-        if (GlobalV::NSPIN > 1) {
+        if (PARAM.inp.nspin > 1) {
             pricell_loop = this->magmom_same_check(atoms);
         }
 
-        if (!pricell_loop && GlobalV::NSPIN == 2)
+        if (!pricell_loop && PARAM.inp.nspin == 2)
         {//analyze symmetry for spin-up atoms only
             std::vector<double> pos_spinup;
             for (int it = 0;it < ntype;++it)
@@ -153,7 +155,8 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
                     this->itmin_start = istart[it];
                 }
             }
-            this->getgroup(nrot_out, nrotk_out, ofs_running, pos_spinup.data());
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                pos_spinup.data(), this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
             // recover na and istart
             for (int it = 0;it < ntype;++it)
             {
@@ -164,11 +167,14 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             }
             // For AFM analysis End
             //------------------------------------------------------------
-        } else {
+        }
+        else
+        {
             // get the real symmetry operations according to the input structure
             // nrot_out: the number of pure point group rotations
             // nrotk_out: the number of all space group operations
-            this->getgroup(nrot_out, nrotk_out, ofs_running, this->newpos);
+            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+                this->newpos, this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
         }
         };
 
@@ -176,7 +182,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 2. analyze the symmetry
     // --------------------------------
     // 2.1 skip the symmetry analysis if the symmetry has been analyzed
-    if (GlobalV::CALCULATION == "cell-relax" && nrotk > 0)
+    if (PARAM.inp.calculation == "cell-relax" && nrotk > 0)
     {
         std::ofstream no_out;   // to screen the output when trying new epsilon
 
@@ -287,16 +293,16 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 3. output to running.log
     //----------------------------------
     // output the point group
-    this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
+    bool valid_group = this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
 	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     // output the space group
-    this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
+    valid_group = this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
     ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
 
     //-----------------------------
     // 4. For the case where point group is not complete due to symmetry_prec
     //-----------------------------
-    if (!this->valid_group)
+    if (!valid_group)
     {   // select the operations that have the inverse
         std::vector<int>invmap(this->nrotk, -1);
         this->gmatrix_invmap(this->gmatrix, this->nrotk, invmap.data());
@@ -327,7 +333,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     this->set_atom_map(atoms); // find the atom mapping according to the symmetry operations
 
     // Do this here for debug
-    if (GlobalV::CALCULATION == "relax")
+    if (PARAM.inp.calculation == "relax")
     {
         this->all_mbl = this->is_all_movable(atoms, st);
         if (!this->all_mbl)
@@ -787,7 +793,7 @@ void Symmetry::lattice_type(
             }       
             /*
             std::stringstream ss;
-            ss << GlobalV::global_out_dir << "STRU_SIMPLE.cif";
+            ss << PARAM.globalv.global_out_dir << "STRU_SIMPLE.cif";
 
             std::ofstream ofs( ss.str().c_str() );
             ofs << "Lattice vector  : " << std::endl;
@@ -881,7 +887,9 @@ void Symmetry::lattice_type(
 }
 
 
-void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, double* pos)
+void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
+    const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
     ModuleBase::TITLE("Symmetry", "getgroup");
 
@@ -905,9 +913,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, doubl
     //std::cout << "nop = " <<nop <<std::endl;
     for (int i = 0; i < nop; ++i)
     {
-    //    std::cout << "symop = " << symop[i].e11 <<" "<< symop[i].e12 <<" "<< symop[i].e13 <<" "<< symop[i].e21 <<" "<< symop[i].e22 <<" "<< symop[i].e23 <<" "<< symop[i].e31 <<" "<< symop[i].e32 <<" "<< symop[i].e33 << std::endl;
-        this->checksym(this->symop[i], this->gtrans[i], pos);
-      //  std::cout << "s_flag =" <<s_flag<<std::endl;
+        bool s_flag = this->checksym(symop[i], gtrans[i], pos, rotpos, index, itmin_type, itmin_start, istart, na);
         if (s_flag == 1)
         {
 			//------------------------------
@@ -985,7 +991,8 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, doubl
     return;
 }
 
-void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtrans, double* pos)
+bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
+    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
 	//----------------------------------------------
     // checks whether a point group symmetry element 
@@ -994,7 +1001,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
     // the start atom index.
     bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
-    s_flag = 0;
+    bool s_flag = false;
 
     for (int it = 0; it < ntype; it++)
     {
@@ -1049,9 +1056,9 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
 	//---------------------------------------------------------
-    sptmin.x = rotpos[itmin_start*3];
-    sptmin.y = rotpos[itmin_start*3+1];
-    sptmin.z = rotpos[itmin_start*3+2];
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(rotpos[itmin_start * 3], rotpos[itmin_start * 3 + 1], rotpos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1116,7 +1123,7 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         //the current test is successful
         if (no_diff == true)
         {
-            s_flag = 1;
+            s_flag = true;
             //save the detected translation std::vector temporarily
             trans.x = gtrans.x;
             trans.y = gtrans.y;
@@ -1141,13 +1148,12 @@ void Symmetry::checksym(ModuleBase::Matrix3 &s, ModuleBase::Vector3<double> &gtr
         gtrans.y = trans.y;
         gtrans.z = trans.z;
     }
-    return;
+    return s_flag;
 }
 
 void Symmetry::pricell(double* pos, const Atom* atoms)
 {
     bool no_diff = false;
-    s_flag = 0;
     ptrans.clear();
 
     for (int it = 0; it < ntype; it++)
@@ -1182,10 +1188,10 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
 	//---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
-	//---------------------------------------------------------
-    sptmin.x = pos[itmin_start*3];
-    sptmin.y = pos[itmin_start*3+1];
-    sptmin.z = pos[itmin_start*3+2];
+    //---------------------------------------------------------
+    // (s)tart (p)osition of atom (t)ype which has (min)inal number.
+    ModuleBase::Vector3<double> sptmin(pos[itmin_start * 3], pos[itmin_start * 3 + 1], pos[itmin_start * 3 + 2]);
+
     for (int i = itmin_start; i < itmin_start + na[itmin_type]; ++i)
     {
         //set up the current test std::vector "gtrans"
@@ -1476,7 +1482,6 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rho_symmetry");
 
 	// allocate flag for each FFT grid.
@@ -1534,7 +1539,6 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
     const int &fftnx, const int &fftny, const int &fftnz)
 {
-//  if (GlobalV::test_symmetry)ModuleBase::TITLE("Symmetry","rho_symmetry");
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 // ----------------------------------------------------------------------
 // the current way is to cluster the FFT grid points into groups in advance.
@@ -1556,8 +1560,8 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     assert(nrotk <=48 );
 
     //map the gmatrix to inv
-    int* invmap = new int[nrotk];
-    this->gmatrix_invmap(kgmatrix, nrotk, invmap);
+    std::vector<int>invmap(this->nrotk, -1);
+    this->gmatrix_invmap(kgmatrix, nrotk, invmap.data());
 
 // ---------------------------------------------------
 /* This code defines a lambda function called "rotate_recip" that takes 
@@ -1625,12 +1629,13 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
                     int rot_count=0;
                     for (int isym = 0; isym < nrotk; ++isym)
                     {
+                        if (invmap[isym] < 0 || invmap[isym] > nrotk) { continue; }
                         //tmp variables  
                         int ii, jj, kk=0;
                         rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
-                            if(!GlobalV::GAMMA_ONLY_PW)
+                            if(!PARAM.globalv.gamma_only_pw)
                             {
                                 std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
 		                        ModuleBase::QUIT();
@@ -1746,7 +1751,6 @@ for (int g_index = 0; g_index < group_index; g_index++)
     delete[] symflag;
     delete[] isymflag;
     delete[] table_xyz;
-    delete[] invmap;
     delete[] count_xyz;
     ModuleBase::timer::tick("Symmetry","rhog_symmetry");
 }
@@ -1814,36 +1818,6 @@ void Symmetry::set_atom_map(const Atom* atoms)
             }
         }
     }
-}
-
-/// @brief return a map that is inequivalent atom index to its symmetry multiplicity
-std::map<int, int> Symmetry::inequivalent_atoms() const
-{
-    // do not use get_inequivalent_atom_positions() to avoid redundant calculation
-    std::map<int, int> inequivalent_atoms;
-    std::vector<bool> is_equivalent(this->nat, false);
-    // Iterate over all atoms
-    for (int ia = 0; ia < this->nat; ++ia) {
-        if (!is_equivalent[ia]) {
-            // If this atom has not been marked as equivalent to another, it's inequivalent
-            int multiplicity = 0;
-            // Now mark all atoms equivalent to this one under any symmetry operation
-            std::vector<int> equivalent_atoms;
-            for (int k = 0; k < this->nrotk; ++k) {
-                int equivalent_atom = this->isym_rotiat_[k][ia];
-                if (equivalent_atom != -1) { // Check if a mapping exists
-                    is_equivalent[equivalent_atom] = true;
-                    if (std::find(equivalent_atoms.begin(), equivalent_atoms.end(), equivalent_atom) == equivalent_atoms.end())
-                    {
-                        equivalent_atoms.push_back(equivalent_atom);
-                        multiplicity++;
-                    }
-                }
-            }
-            inequivalent_atoms[ia] = multiplicity;
-        }
-    }
-    return inequivalent_atoms;
 }
 
 void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
@@ -1936,7 +1910,7 @@ void Symmetry::gtrans_convert(const ModuleBase::Vector3<double>* va, ModuleBase:
           vb[i]=va[i]*a*bi;
     }
 }
-void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap)
+void Symmetry::gmatrix_invmap(const ModuleBase::Matrix3* s, const int n, int* invmap) const
 {
     ModuleBase::Matrix3 eig(1, 0, 0, 0, 1, 0, 0, 0, 1);
     ModuleBase::Matrix3 tmp;

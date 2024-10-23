@@ -1,5 +1,6 @@
 #include "module_base/element_name.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -16,6 +17,7 @@ void write_elecstat_pot(
     const int& nbz,
 #endif
     const std::string& fn,
+    const int& istep,
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell,
@@ -26,10 +28,10 @@ void write_elecstat_pot(
 
     std::vector<double> v_elecstat(rho_basis->nrxx, 0.0);
 
-    const int nspin = GlobalV::NSPIN;
-    const int efield = GlobalV::EFIELD_FLAG;
-    const int dip_corr = GlobalV::DIP_COR_FLAG;
-    const bool imp_sol = GlobalV::imp_sol;
+    const int nspin = PARAM.inp.nspin;
+    const int efield = PARAM.inp.efield_flag;
+    const int dip_corr = PARAM.inp.dip_cor_flag;
+    const bool imp_sol = PARAM.inp.imp_sol;
 
     //==========================================
     // Hartree potential
@@ -101,7 +103,7 @@ void write_elecstat_pot(
         v_elecstat.data(),
         is,
         nspin,
-        0,
+        istep,
         fn,
         rho_basis->nx,
         rho_basis->ny,

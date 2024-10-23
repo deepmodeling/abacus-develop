@@ -2,6 +2,7 @@ if(ENABLE_LCAO)
   add_subdirectory(utils)
   add_subdirectory(AX)
   add_subdirectory(dm_trans)
+  add_subdirectory(ri_benchmark)
 
   list(APPEND objects
     utils/lr_util.cpp
@@ -14,7 +15,6 @@ if(ENABLE_LCAO)
     operator_casida/operator_lr_hxc.cpp
     operator_casida/operator_lr_exx.cpp
     potentials/pot_hxc_lrtd.cpp
-    hsolver_lrtd.cpp
     lr_spectrum.cpp
     hamilt_casida.cpp
     esolver_lrtd_lcao.cpp)

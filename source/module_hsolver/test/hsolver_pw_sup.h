@@ -55,12 +55,6 @@ FFT::~FFT() {}
 #include "module_hsolver/diago_david.h"
 #include "module_hsolver/diago_iter_assist.h"
 
-template <typename T>
-const_nums<T>::const_nums()
-{
-}
-template class const_nums<std::complex<float>>;
-template class const_nums<std::complex<double>>;
 
 namespace hsolver {
 
@@ -138,10 +132,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     this->device = base_device::get_device_type<Device>(this->ctx);
     this->precondition = precondition_in;
 
-    this->one = &this->cs.one;
-    this->zero = &this->cs.zero;
-    this->neg_one = &this->cs.neg_one;
-
     test_david = 2;
     // 1: check which function is called and which step is executed
     // 2: check the eigenvalues of the result of each iteration
@@ -163,9 +153,9 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int, const int, const int)>& hpsi_func,
-                                const std::function<void(T*, T*, const int, const int, const int)>& spsi_func,
-                                const int ldPsi,
+int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
+                                const std::function<void(T*, T*, const int, const int)>& spsi_func,
+                                const int ld_psi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,

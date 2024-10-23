@@ -48,7 +48,7 @@ void bind_m_nao(py::module& m)
              "update"_a = 0)
         .def("set_uniform_grid",
              &RadialCollection::set_uniform_grid,
-             "Sets a common uniform grid for all RadialSet objects",
+             "Sets a common uniform grid for all RadialSet objects.",
              "for_r_space"_a,
              "ngrid"_a,
              "cutoff"_a,
@@ -68,7 +68,7 @@ void bind_m_nao(py::module& m)
                 }
                 self.set_grid(for_r_space, ngrid, static_cast<double*>(grid_info.ptr), mode);
             },
-            "Sets a common grid for all RadialSet objects",
+            "Sets a common grid for all RadialSet objects.",
             "for_r_space"_a,
             "ngrid"_a,
             "grid"_a,

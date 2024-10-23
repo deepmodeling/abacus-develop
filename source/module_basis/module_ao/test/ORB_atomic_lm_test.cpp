@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
 #include "module_base/math_integral.h"
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -145,7 +148,7 @@ void NumericalOrbitalLmTest::SetUp() {
     // in agreement with the current code
     flag_sbpool_ = true;
 
-    // GlobalV::CAL_FORCE
+    // PARAM.input.cal_force
     // if true, extra_uniform will compute zty
     force_flag_ = true;
 
@@ -713,7 +716,7 @@ TEST_F(NumericalOrbitalLmTest, PsiSave) {
     std::string tmp_r, tmp_k, tmp_beta, tmp;
     double tol = 1e-5;
 
-    // should be GlobalV::global_out_dir+label
+    // should be PARAM.sys.global_out_dir+label
     // but in this unit test global_out_dir is empty string
     // see Numerical_Nonlocal_Lm::plot() for details
     std::string dir = "./O/";

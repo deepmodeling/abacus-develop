@@ -88,7 +88,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_real_number);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
-            {
+            {  // to run through here, the default value of para.input.exx_real_number should be "default"
                 if (para.input.gamma_only)
                 {
                     para.input.exx_real_number = "1";
@@ -150,6 +150,18 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_c_grad_r_threshold");
+        item.annotation = "threshold to screen nabla C matrix in exx";
+        read_sync_double(input.exx_c_grad_r_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_v_grad_r_threshold");
+        item.annotation = "threshold to screen nabla V matrix in exx";
+        read_sync_double(input.exx_v_grad_r_threshold);
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_cauchy_force_threshold");
         item.annotation = "threshold to screen exx force using Cauchy-Schwartz inequality";
         read_sync_double(input.exx_cauchy_force_threshold);
@@ -169,7 +181,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_ccp_rmesh_times);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_ccp_rmesh_times == "default")
-            {
+            {   // to run through here, the default value of para.input.exx_ccp_rmesh_times should be "default"
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
@@ -248,6 +260,15 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_symmetry_realspace");
+        item.annotation = "whether to reduce real-space sector in Hexx calculation";
+        read_sync_bool(input.exx_symmetry_realspace);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
+            };
+        this->add_item(item);
+    }
+    {
         Input_Item item("rpa_ccp_rmesh_times");
         item.annotation = "how many times larger the radial mesh required for "
                           "calculating Columb potential is to that "
@@ -259,6 +280,12 @@ void ReadInput::item_exx()
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
             }
         };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_ri_cv");
+        item.annotation = "Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V";
+        read_sync_bool(input.out_ri_cv);
         this->add_item(item);
     }
 }

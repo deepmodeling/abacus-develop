@@ -1,5 +1,6 @@
 #include "exx_abfs-construct_orbs.h"
 
+#include "module_parameter/parameter.h"
 #include "ABFs_Construct-PCA.h"
 #include "module_base/gram_schmidt_orth-inl.h"
 #include "module_base/gram_schmidt_orth.h"
@@ -39,8 +40,19 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_origin.getDk() / kmesh_times,
 					orb_origin.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
+		}
+	}
+
+	for (int T = 0;  T < orbs.size() ; T++)
+	{
+		for (int L=orbs[T].size()-1; L >= 0  ; L--)
+		{
+			if (orbs[T][L].size()>0)
+				break;
+			else
+				orbs[T].resize(L);
 		}
 	}
 	return orbs;
@@ -76,6 +88,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 
 // P = f * Y
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::abfs_same_atom(
+    const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	const double kmesh_times_mot,
 	const double times_threshold )
@@ -98,7 +111,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	#endif
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		abfs_same_atom_pca_psi = pca( abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
+		abfs_same_atom_pca_psi = pca( orb, abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
 
 	#if TEST_EXX_LCAO==1
 		print_orbs(abfs_same_atom_pca_psi,"abfs_same_atom_pca_psi.dat");
@@ -254,6 +267,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 }
 
 std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_Orbs::pca(
+    const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	const double kmesh_times_mot,
@@ -263,7 +277,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
 	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>>
-		eig = ABFs_Construct::PCA::cal_PCA( orbs, abfs, kmesh_times_mot );
+		eig = ABFs_Construct::PCA::cal_PCA( orb, orbs, abfs, kmesh_times_mot );
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>> psis = get_psi( abfs );
 	std::vector<std::vector<std::vector<std::vector<double>>>> psis_new( psis.size() );
@@ -416,7 +430,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 //					orb_info.getDk() / kmesh_times,
 					orb_info.getDruniform(),
 					false,
-					true, GlobalV::CAL_FORCE);
+					true, PARAM.inp.cal_force);
 			}
 		}
 	}

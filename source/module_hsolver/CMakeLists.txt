@@ -8,7 +8,7 @@ list(APPEND objects
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
-    
+    hsolver.cpp
 )
 
 if(ENABLE_LCAO)
@@ -27,6 +27,7 @@ if(ENABLE_LCAO)
   if (USE_ELPA)
     list(APPEND objects
         diago_elpa.cpp
+        diago_elpa_native.cpp
     )
   endif ()
 

@@ -29,22 +29,23 @@ namespace ModuleIO
                         TC dR({ R[0], R[1], R[2] });
                         Hexxs[is][iat1][{iat2, dR}] = RI::Tensor<Tdata>({ static_cast<size_t>(ucell.atoms[ucell.iat2it[iat1]].nw), static_cast<size_t>(ucell.atoms[ucell.iat2it[iat2]].nw) });
                     }
-}
-}
-            // read Hexxs[is]
-            for (int i = 0;i < nbasis;++i) {
-                for (int j = 0;j < nbasis;++j) {
-                    for (int iR = 0;iR < nR;++iR)
-                    {
-                        int iat1 = ucell.iwt2iat[i];
-                        int iat2 = ucell.iwt2iat[j];
-                        const std::vector<int>& R = csr.getRCoordinate(iR);
-                        const auto& matrix = csr.getMatrix(iR);
-                        TC dR({ R[0], R[1], R[2] });
-                        Hexxs.at(is).at(iat1).at({ iat2, dR })(ucell.iwt2iw[i], ucell.iwt2iw[j]) = matrix(i, j);
-                    }
-}
-}
+                }
+            }
+#ifdef _OPENMP
+#pragma omp for schedule(dynamic)
+#endif
+            for (int iR = 0;iR < nR;++iR)
+            {
+                const std::vector<int>& R = csr.getRCoordinate(iR);
+                const SparseMatrix<Tdata>& matrix = csr.getMatrix(iR);
+                for (auto& ijv : matrix.getElements())
+                {
+                    const int& npol = ucell.get_npol();
+                    const int& i = ijv.first.first * npol;
+                    const int& j = ijv.first.second * npol;
+                    Hexxs.at(is).at(ucell.iwt2iat[i]).at({ ucell.iwt2iat[j], { R[0], R[1], R[2] } })(ucell.iwt2iw[i] / npol, ucell.iwt2iw[j] / npol) = ijv.second;
+                }
+            }
         }
     }
 
@@ -64,8 +65,8 @@ namespace ModuleIO
                 int iat2 = a2R_data.first.first;
                 int nw1 = ucell.atoms[ucell.iat2it[iat1]].nw;
                 int nw2 = ucell.atoms[ucell.iat2it[iat2]].nw;
-                int start1 = ucell.atoms[ucell.iat2it[iat1]].stapos_wf + ucell.iat2ia[iat1] * nw1;
-                int start2 = ucell.atoms[ucell.iat2it[iat2]].stapos_wf + ucell.iat2ia[iat2] * nw2;
+                int start1 = ucell.atoms[ucell.iat2it[iat1]].stapos_wf / ucell.get_npol() + ucell.iat2ia[iat1] * nw1;
+                int start2 = ucell.atoms[ucell.iat2it[iat2]].stapos_wf / ucell.get_npol() + ucell.iat2ia[iat2] * nw2;
 
                 const TC& R = a2R_data.first.second;
                 auto& matrix = a2R_data.second;
@@ -73,8 +74,8 @@ namespace ModuleIO
                 for (int i = 0;i < nw1;++i) {
                     for (int j = 0;j < nw2;++j) {
                         target[dR][start1 + i][start2 + j] = ((std::abs(matrix(i, j)) > sparse_threshold) ? matrix(i, j) : static_cast<Tdata>(0));
-}
-}
+                    }
+                }
             }
         }
         return target;

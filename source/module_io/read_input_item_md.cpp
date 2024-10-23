@@ -144,8 +144,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljrcut = para.input.mdp.lj_rcut.size();
             if (n_ljrcut != 1 && n_ljrcut != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -174,8 +175,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljepsilon = para.input.mdp.lj_epsilon.size();
             if (n_ljepsilon != para.input.ntype && n_ljepsilon != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -197,8 +199,9 @@ void ReadInput::item_md()
                            [](std::string str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            if (!item.is_read()) {
                 return;
+}
             size_t n_ljsigma = para.input.mdp.lj_sigma.size();
             if (n_ljsigma != para.input.ntype && n_ljsigma != para.input.ntype * (para.input.ntype + 1) / 2)
             {
@@ -212,6 +215,40 @@ void ReadInput::item_md()
         Input_Item item("pot_file");
         item.annotation = "the filename of potential files for CMD such as DP";
         read_sync_string(input.mdp.pot_file);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dp_rescaling");
+        item.annotation = "rescaling factor for dp potential";
+        read_sync_double(input.mdp.dp_rescaling);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dp_fparam");
+        item.annotation = "the frame parameter for dp potential";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.dp_fparam.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.dp_fparam),
+                           [](std::string str) { return std::stod(str); });
+        };
+        sync_doublevec(input.mdp.dp_fparam, para.input.mdp.dp_fparam.size(), 0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("dp_aparam");
+        item.annotation = "the atomic parameter for dp potential";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            para.input.mdp.dp_aparam.resize(count);
+            std::transform(begin(item.str_values),
+                           end(item.str_values),
+                           begin(para.input.mdp.dp_aparam),
+                           [](std::string str) { return std::stod(str); });
+        };
+        sync_doublevec(input.mdp.dp_aparam, para.input.mdp.dp_aparam.size(), 0.0);
         this->add_item(item);
     }
     {

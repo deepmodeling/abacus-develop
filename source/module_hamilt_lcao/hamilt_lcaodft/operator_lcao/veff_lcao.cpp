@@ -1,5 +1,6 @@
 #include "veff_lcao.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_cell/unitcell.h"
@@ -15,7 +16,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
 
-    this->nspin = GlobalV::NSPIN;
+    this->nspin = PARAM.inp.nspin;
     auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
@@ -38,12 +39,11 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (ucell_in->cal_dtau(iat1, iat2, R_index2).norm() * ucell_in->lat0
-                < orb.Phi[T1].getRcut() + orb.Phi[T2].getRcut())
+                < orb_cutoff_[T1] + orb_cutoff_[T2])
             {
                 hamilt::AtomPair<TR> tmp(iat1, iat2, R_index2, paraV);
                 this->hR->insert_pair(tmp);
@@ -117,7 +117,8 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     }
     this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 
-    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+    if(this->nspin == 2) { this->current_spin = 1 - this->current_spin;
+}
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;

@@ -1,9 +1,9 @@
 FROM nvidia/cuda:12.2.0-devel-ubuntu22.04
 
 RUN apt update && apt install -y --no-install-recommends \
-    libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libelpa-dev libfftw3-dev libcereal-dev \
+    libopenblas-openmp-dev liblapack-dev libscalapack-mpi-dev libfftw3-dev libcereal-dev \
     libxc-dev libgtest-dev libgmock-dev libbenchmark-dev python3-numpy \
-    bc cmake git g++ make bc time sudo unzip vim wget
+    bc cmake git g++ make bc time sudo unzip vim wget libopenmpi-dev gfortran libtool-bin
 
 ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
     OMPI_ALLOW_RUN_AS_ROOT=1 OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1 \
@@ -12,6 +12,17 @@ ENV GIT_SSL_NO_VERIFY=true TERM=xterm-256color \
 RUN git clone https://github.com/llohse/libnpy.git && \
     cp libnpy/include/npy.hpp /usr/local/include && \
     rm -r libnpy
+
+RUN cd /tmp && \
+    ELPA_VER=2024.05.001 && \
+    wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
+    tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
+    cd elpa-$ELPA_VER && \
+    ./configure CXX=mpic++ CFLAGS="-O3 -march=native" FCFLAGS="-O3" LDFLAGS="-L/usr/local/cuda/lib64 -lstdc++" NVCCFLAGS="-arch sm_75 -arch sm_80" --enable-openmp --enable-nvidia-gpu --with-NVIDIA-GPU-compute-capability="sm_70" --with-cuda-path=/usr/local/cuda/ && \
+    make -j`nproc` && \
+    make PREFIX=/usr/local install && \
+    ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
+    cd /tmp && rm -rf elpa-$ELPA_VER
 
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 

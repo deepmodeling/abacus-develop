@@ -2,6 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_cell/klist.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
@@ -9,6 +10,7 @@
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+#include <vector>
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
@@ -32,6 +34,7 @@ class HamiltLCAO : public Hamilt<TK>
           elecstate::Potential* pot_in,
           const K_Vectors& kv_in,
           const TwoCenterBundle& two_center_bundle,
+          const LCAO_Orbitals& orb,
           elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
           , int* exx_two_level_step = nullptr
@@ -42,7 +45,7 @@ class HamiltLCAO : public Hamilt<TK>
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb);
+    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb, const std::vector<double>& orb_cutoff);
 
     ~HamiltLCAO()
     {

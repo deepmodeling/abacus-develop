@@ -1,5 +1,6 @@
 #include "sto_stress_pw.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
@@ -74,19 +75,19 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     bool ry = false;
     ModuleIO::print_stress("TOTAL-STRESS", sigmatot, true, ry);
 
-    if (GlobalV::TEST_STRESS)
+    if (PARAM.inp.test_stress)
     {
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
         GlobalV::ofs_running << setiosflags(std::ios::showpos);
         GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
-        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("XC    STRESS", sigmaxc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, GlobalV::TEST_STRESS, ry);
-        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, GlobalV::TEST_STRESS, ry);
+        ModuleIO::print_stress("KINETIC    STRESS", sigmakin, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("HARTREE    STRESS", sigmahar, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("NON-LOCAL    STRESS", sigmanl, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
+        ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
     }
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
     return;
@@ -115,8 +116,9 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     double twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
     double* kfac = new double[npwx];
     int nksbands = psi_in->get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (GlobalV::MY_STOGROUP != 0) {
         nksbands = 0;
+}
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -236,8 +238,9 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in->get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (GlobalV::MY_STOGROUP != 0) {
         nksbands = 0;
+}
 
     // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
     ModuleBase::ComplexMatrix vkb1(nkb, npwx);
@@ -274,7 +277,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
         psi_in[0].fix_k(ik);
         stowf.shchi->fix_k(ik);
         // KS orbitals
-        int npmks = GlobalV::NPOL * nksbands;
+        int npmks = PARAM.globalv.npol * nksbands;
         zgemm_(&transa,
                &transb,
                &nkb,
@@ -289,7 +292,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                becp.c,
                &nkb);
         // stochastic orbitals
-        int npmsto = GlobalV::NPOL * nstobands;
+        int npmsto = PARAM.globalv.npol * nstobands;
         zgemm_(&transa,
                &transb,
                &nkb,
@@ -363,10 +366,11 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                     {
                         qvec = wfc_basis->getgpluskcar(ik, ig);
                         double qm1;
-                        if (qvec.norm2() > 1e-16)
+                        if (qvec.norm2() > 1e-16) {
                             qm1 = 1.0 / qvec.norm();
-                        else
+                        } else {
                             qm1 = 0;
+}
                         pdbecp_noevc[ig] -= 2.0 * pvkb[ig] * qvec0[ipol][0] * qvec0[jpol][0] * qm1 * this->ucell->tpiba;
                     } // end ig
                 }     // end i
@@ -403,10 +407,11 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                 for (int ib = 0; ib < nbandstot; ++ib)
                 {
                     double fac;
-                    if (ib < nksbands)
+                    if (ib < nksbands) {
                         fac = wg(ik, ib);
-                    else
+                    } else {
                         fac = p_kv->wk[ik];
+}
                     int iat = 0;
                     int sum = 0;
                     for (int it = 0; it < this->ucell->ntype; ++it)

@@ -1,5 +1,6 @@
 #include "charge_mixing.h"
 
+#include "module_parameter/parameter.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/inverse_matrix.h"
 #include "module_base/module_mixing/broyden_mixing.h"
@@ -47,7 +48,7 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta to [0.0, 1.0]!");
     }
-    if (GlobalV::NSPIN >= 2 && this->mixing_beta_mag < 0.0)
+    if (PARAM.inp.nspin >= 2 && this->mixing_beta_mag < 0.0)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "You'd better set mixing_beta_mag >= 0.0!");
     }
@@ -62,15 +63,15 @@ void Charge_Mixing::set_mixing(const std::string& mixing_mode_in,
     GlobalV::ofs_running<<"mixing_type: "<< this->mixing_mode <<std::endl;
     GlobalV::ofs_running<<"mixing_beta: "<< this->mixing_beta <<std::endl;
     GlobalV::ofs_running<<"mixing_gg0: "<< this->mixing_gg0 <<std::endl;
-    GlobalV::ofs_running<<"mixing_gg0_min: "<< GlobalV::MIXING_GG0_MIN <<std::endl;
-    if (GlobalV::NSPIN==2 || GlobalV::NSPIN==4)
+    GlobalV::ofs_running<<"mixing_gg0_min: "<< PARAM.inp.mixing_gg0_min <<std::endl;
+    if (PARAM.inp.nspin==2 || PARAM.inp.nspin==4)
     {
         GlobalV::ofs_running<<"mixing_beta_mag: "<< this->mixing_beta_mag <<std::endl;
-        GlobalV::ofs_running<<"mixing_gg0_mag: "<< GlobalV::MIXING_GG0_MAG <<std::endl;
+        GlobalV::ofs_running<<"mixing_gg0_mag: "<< PARAM.inp.mixing_gg0_mag <<std::endl;
     }
-    if (GlobalV::MIXING_ANGLE > 0)
+    if (PARAM.inp.mixing_angle > 0)
     {
-        GlobalV::ofs_running<<"mixing_angle: "<< GlobalV::MIXING_ANGLE <<std::endl;
+        GlobalV::ofs_running<<"mixing_angle: "<< PARAM.inp.mixing_angle <<std::endl;
     }
     GlobalV::ofs_running<<"mixing_ndim: "<< this->mixing_ndim <<std::endl;
     GlobalV::ofs_running<<"----------- Double Check Mixing Parameters End ------------"<<std::endl;
@@ -106,7 +107,7 @@ void Charge_Mixing::init_mixing()
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing mode is not implemended yet,coming soon.");
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // ONLY smooth part of charge density is mixed by specific mixing method
         // The high_frequency part is mixed by plain mixing method.
@@ -116,9 +117,9 @@ void Charge_Mixing::init_mixing()
 
     // allocate memory for mixing data, if exists, free it first and then allocate new memory
     // initailize rho_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {  
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata,
                                         this->rhopw->npw * 2,
@@ -127,40 +128,41 @@ void Charge_Mixing::init_mixing()
         else
         {
             this->mixing->init_mixing_data(this->rho_mdata,
-                                        this->rhopw->npw * GlobalV::NSPIN,
+                                        this->rhopw->npw * PARAM.inp.nspin,
                                         sizeof(std::complex<double>));
         }
     }
     else
     {
-        if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0 )
+        if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0 )
         {
             this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * 2, sizeof(double));
         }
         else
         {
-            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+            this->mixing->init_mixing_data(this->rho_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
         }
     }
     
     // initailize tau_mdata
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        if (GlobalV::SCF_THR_TYPE == 1)
+        if (PARAM.inp.scf_thr_type == 1)
         {
             this->mixing->init_mixing_data(this->tau_mdata,
-                                           this->rhopw->npw * GlobalV::NSPIN,
+                                           this->rhopw->npw * PARAM.inp.nspin,
                                            sizeof(std::complex<double>));
         }
         else
         {
-            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+            this->mixing->init_mixing_data(this->tau_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
         }
     }
 
     // initailize nhat_mdata
 #ifdef USE_PAW
-    if(GlobalV::use_paw) this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * GlobalV::NSPIN, sizeof(double));
+    if(PARAM.inp.use_paw) { this->mixing->init_mixing_data(this->nhat_mdata, this->rhopw->nrxx * PARAM.inp.nspin, sizeof(double));
+}
 #endif
 
     ModuleBase::timer::tick("Charge_Mixing", "init_mixing");
@@ -176,13 +178,13 @@ void Charge_Mixing::allocate_mixing_dmr(int nnr)
     ModuleBase::TITLE("Charge_Mixing", "allocate_mixing_dmr");
     ModuleBase::timer::tick("Charge_Mixing", "allocate_mixing_dmr");
     //
-    const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
     // allocate memory for dmr_mdata
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         ModuleBase::WARNING_QUIT("Charge_Mixing", "This Mixing of Density Matrix is not supported for PW basis yet");
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         this->mixing->init_mixing_data(this->dmr_mdata, nnr * dmr_nspin, sizeof(double));
     }
@@ -205,9 +207,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     ModuleBase::timer::tick("Charge_Mixing", "get_drho");
     double drho = 0.0;
 
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             ModuleBase::GlobalFunc::NOTE("Perform FFT on rho(r) to obtain rho(G).");
             chr->rhopw->real2recip(chr->rho[is], chr->rhog[is]);
@@ -217,11 +219,11 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         }
 
         ModuleBase::GlobalFunc::NOTE("Calculate the charge difference between rho(G) and rho_save(G)");
-        std::vector<std::complex<double>> drhog(GlobalV::NSPIN * this->rhopw->npw);
+        std::vector<std::complex<double>> drhog(PARAM.inp.nspin * this->rhopw->npw);
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 512)
 #endif
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
@@ -236,9 +238,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
     {
         // Note: Maybe it is wrong.
         //       The inner_product_real function (L1-norm) is different from that (L2-norm) in mixing.
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+            if (is != 0 && is != 3 && PARAM.globalv.domag_z)
             {
                 continue;
             }
@@ -275,9 +277,9 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     double dkin = 0.0;
     
     // Get dkin from kin_r and kin_r_save for PW and LCAO both, which is different from drho.
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        if (is != 0 && is != 3 && GlobalV::DOMAG_Z)
+        if (is != 0 && is != 3 && PARAM.globalv.domag_z)
         {
             continue;
         }
@@ -313,7 +315,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     std::complex<double>* rhoghf_in = nullptr;
     std::complex<double>* rhoghf_out = nullptr;
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // divide into smooth part and high_frequency part
         divide_data(chr->rhog_save[0], rhogs_in, rhoghf_in);
@@ -325,7 +327,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         = std::bind(&Charge_Mixing::inner_product_recip_hartree, this, std::placeholders::_1, std::placeholders::_2);
 
     // DIIS Mixing Only for smooth part, while high_frequency part is mixed by plain mixing method.
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         rhog_in = rhogs_in;
         rhog_out = rhogs_out;
@@ -334,17 +336,17 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // magnetic density
         std::complex<double> *rhog_mag = nullptr;
         std::complex<double> *rhog_mag_save = nullptr;
         const int npw = this->rhopw->npw;
         // allocate rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
-        rhog_mag = new std::complex<double>[npw * GlobalV::NSPIN];
-        rhog_mag_save = new std::complex<double>[npw * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * GlobalV::NSPIN);
+        rhog_mag = new std::complex<double>[npw * PARAM.inp.nspin];
+        rhog_mag_save = new std::complex<double>[npw * PARAM.inp.nspin];
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag, npw * PARAM.inp.nspin);
+        ModuleBase::GlobalFunc::ZEROS(rhog_mag_save, npw * PARAM.inp.nspin);
         // get rhog_mag[is*ngmc] and rhog_mag_save[is*ngmc]
         for (int ig = 0; ig < npw; ig++)
         {
@@ -383,7 +385,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
         // get rhog[is][ngmc] from rhog_mag[is*ngmc]
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rhog[is], npw);
         }
@@ -396,7 +398,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rhog_mag;
         delete[] rhog_mag_save;
         // get rhogs_out for combine_data()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             for (int ig = 0; ig < npw; ig++)
             {
@@ -405,7 +407,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
             }
         }
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhog_in = rhogs_in;
@@ -434,12 +436,12 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhog_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
         // old support see mix_rho_recip()
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             ModuleBase::WARNING_QUIT("Charge_Mixing", "double_grid is not supported for new mixing method yet.");
         }
@@ -504,7 +506,8 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         {
             chr->rhog[0][ig] = rhog_magabs[ig]; // rhog
             double norm = std::sqrt(chr->rho[1][ig] * chr->rho[1][ig] + chr->rho[2][ig] * chr->rho[2][ig] + chr->rho[3][ig] * chr->rho[3][ig]);
-            if (std::abs(norm) < 1e-10) continue;
+            if (std::abs(norm) < 1e-10) { continue;
+}
             double rescale_tmp = rho_magabs[npw + ig] / norm; 
             chr->rho[1][ig] *= rescale_tmp;
             chr->rho[2][ig] *= rescale_tmp;
@@ -517,10 +520,10 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         delete[] rho_magabs_save;
     }
 
-    if (GlobalV::double_grid)
+    if ( PARAM.globalv.double_grid)
     {
         // plain mixing for high_frequencies
-        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+        const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * PARAM.inp.nspin;
         this->mixing_highf->plain_mix(rhoghf_out, rhoghf_in, rhoghf_out, ndimhf, nullptr);
 
         // combine smooth part and high_frequency part
@@ -529,7 +532,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
     // rhog to rho
-    if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0)
     {
         // only tranfer rhog[0]
         // do not support double_grid, use rhopw directly
@@ -537,10 +540,10 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
     else
     {
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             // use rhodpw for double_grid
-            // rhodpw is the same as rhopw for !GlobalV::double_grid
+            // rhodpw is the same as rhopw for ! PARAM.globalv.double_grid
             this->rhodpw->recip2real(chr->rhog[is], chr->rho[is]);
         }
     }
@@ -548,19 +551,19 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     // For kinetic energy density
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        std::vector<std::complex<double>> kin_g(GlobalV::NSPIN * rhodpw->npw);
-        std::vector<std::complex<double>> kin_g_save(GlobalV::NSPIN * rhodpw->npw);
+        std::vector<std::complex<double>> kin_g(PARAM.inp.nspin * rhodpw->npw);
+        std::vector<std::complex<double>> kin_g_save(PARAM.inp.nspin * rhodpw->npw);
         // FFT to get kin_g and kin_g_save
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             rhodpw->real2recip(chr->kin_r[is], &kin_g[is * rhodpw->npw]);
             rhodpw->real2recip(chr->kin_r_save[is], &kin_g_save[is * rhodpw->npw]);
         }
-        // for smooth part, for !GlobalV::double_grid only have this part
+        // for smooth part, for ! PARAM.globalv.double_grid only have this part
         std::complex<double>*taugs_in = kin_g_save.data(), *taugs_out = kin_g.data();
         // for high frequency part
         std::complex<double>*taughf_in = nullptr, *taughf_out = nullptr;
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // divide into smooth part and high_frequency part
             divide_data(kin_g_save.data(), taugs_in, taughf_in);
@@ -573,10 +576,10 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
 
         this->mixing->mix_data(this->tau_mdata, taugs_out);
 
-        if (GlobalV::double_grid)
+        if ( PARAM.globalv.double_grid)
         {
             // simple mixing for high_frequencies
-            const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * GlobalV::NSPIN;
+            const int ndimhf = (this->rhodpw->npw - this->rhopw->npw) * PARAM.inp.nspin;
             this->mixing_highf->plain_mix(taughf_out, taughf_in, taughf_out, ndimhf, nullptr);
 
             // combine smooth part and high_frequency part
@@ -585,14 +588,14 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
         }
 
         // kin_g to kin_r
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             rhodpw->recip2real(&kin_g[is * rhodpw->npw], chr->kin_r[is]);
         }
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
         double *nhat_out, *nhat_in;
         nhat_in = chr->nhat_save[0];
@@ -612,7 +615,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
 {
     double* rhor_in;
     double* rhor_out;
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         rhor_in = chr->rho_save[0];
         rhor_out = chr->rho[0];
@@ -623,17 +626,17 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // magnetic density
         double *rho_mag = nullptr;
         double *rho_mag_save = nullptr; 
         const int nrxx = this->rhopw->nrxx;
         // allocate rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
-        rho_mag = new double[nrxx * GlobalV::NSPIN];
-        rho_mag_save = new double[nrxx * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * GlobalV::NSPIN);
+        rho_mag = new double[nrxx * PARAM.inp.nspin];
+        rho_mag_save = new double[nrxx * PARAM.inp.nspin];
+        ModuleBase::GlobalFunc::ZEROS(rho_mag, nrxx * PARAM.inp.nspin);
+        ModuleBase::GlobalFunc::ZEROS(rho_mag_save, nrxx * PARAM.inp.nspin);
         // get rho_mag[is*nnrx] and rho_mag_save[is*nnrx]
         for (int ir = 0; ir < nrxx; ir++)
         {
@@ -673,7 +676,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
         // get new rho[is][nrxx] from rho_mag[is*nrxx]
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(chr->rho[is], nrxx);
             //ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
@@ -687,7 +690,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         delete[] rho_mag;
         delete[] rho_mag_save;
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE <= 0)
+    else if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle <= 0)
     {
         // normal broyden mixing for {rho, mx, my, mz}
         rhor_in = chr->rho_save[0];
@@ -718,7 +721,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         this->mixing->cal_coef(this->rho_mdata, inner_product);
         this->mixing->mix_data(this->rho_mdata, rhor_out);
     }
-    else if (GlobalV::NSPIN == 4 && GlobalV::MIXING_ANGLE > 0)
+    else if (PARAM.inp.nspin == 4 && PARAM.inp.mixing_angle > 0)
     {
         // special broyden mixing for {rho, |m|} proposed by J. Phys. Soc. Jpn. 82 (2013) 114706
         // here only consider the case of mixing_angle = 1, which mean only change |m| and keep angle fixed
@@ -769,7 +772,8 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
         {
             chr->rho[0][ir] = rho_magabs[ir]; // rho
             double norm = std::sqrt(chr->rho[1][ir] * chr->rho[1][ir] + chr->rho[2][ir] * chr->rho[2][ir] + chr->rho[3][ir] * chr->rho[3][ir]);
-            if (norm < 1e-10) continue;
+            if (norm < 1e-10) { continue;
+}
             double rescale_tmp = rho_magabs[nrxx + ir] / norm; 
             chr->rho[1][ir] *= rescale_tmp;
             chr->rho[2][ir] *= rescale_tmp;
@@ -803,27 +807,27 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
-    //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    //const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
     double* dmr_in;
     double* dmr_out;
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
     {
         dmr_in = dmr_save[0].data();
         dmr_out = dmr[0]->get_wrapper();
         this->mixing->push_data(this->dmr_mdata, dmr_in, dmr_out, nullptr, false);    
         this->mixing->mix_data(this->dmr_mdata, dmr_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // magnetic density matrix
         double* dmr_mag = nullptr;
         double* dmr_mag_save = nullptr; 
         const int nnr = dmr[0]->get_nnr();
         // allocate dmr_mag[is*nnrx] and dmr_mag_save[is*nnrx]
-        dmr_mag = new double[nnr * GlobalV::NSPIN];
-        dmr_mag_save = new double[nnr * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * GlobalV::NSPIN);
+        dmr_mag = new double[nnr * PARAM.inp.nspin];
+        dmr_mag_save = new double[nnr * PARAM.inp.nspin];
+        ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * PARAM.inp.nspin);
+        ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * PARAM.inp.nspin);
         double* dmr_up;
         double* dmr_down;
         // tranfer dmr into dmr_mag
@@ -873,7 +877,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
         // get new dmr from dmr_mag
         dmr_up = dmr[0]->get_wrapper();
         dmr_down = dmr[1]->get_wrapper();
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(dmr_up, nnr);
             ModuleBase::GlobalFunc::ZEROS(dmr_down, nnr);
@@ -902,27 +906,27 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
     std::vector<hamilt::HContainer<double>*> dmr = DM->get_DMR_vector();
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
-    //const int dmr_nspin = (GlobalV::NSPIN == 2) ? 2 : 1;
+    //const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
     double* dmr_in;
     double* dmr_out;
-    if (GlobalV::NSPIN == 1 || GlobalV::NSPIN == 4)
+    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
     {
         dmr_in = dmr_save[0].data();
         dmr_out = dmr[0]->get_wrapper();
         this->mixing->push_data(this->dmr_mdata, dmr_in, dmr_out, nullptr, false);    
         this->mixing->mix_data(this->dmr_mdata, dmr_out);
     }
-    else if (GlobalV::NSPIN == 2)
+    else if (PARAM.inp.nspin == 2)
     {
         // magnetic density matrix
         double* dmr_mag = nullptr;
         double* dmr_mag_save = nullptr; 
         const int nnr = dmr[0]->get_nnr();
         // allocate dmr_mag[is*nnrx] and dmr_mag_save[is*nnrx]
-        dmr_mag = new double[nnr * GlobalV::NSPIN];
-        dmr_mag_save = new double[nnr * GlobalV::NSPIN];
-        ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * GlobalV::NSPIN);
-        ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * GlobalV::NSPIN);
+        dmr_mag = new double[nnr * PARAM.inp.nspin];
+        dmr_mag_save = new double[nnr * PARAM.inp.nspin];
+        ModuleBase::GlobalFunc::ZEROS(dmr_mag, nnr * PARAM.inp.nspin);
+        ModuleBase::GlobalFunc::ZEROS(dmr_mag_save, nnr * PARAM.inp.nspin);
         double* dmr_up;
         double* dmr_down;
         // tranfer dmr into dmr_mag
@@ -972,7 +976,7 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
         // get new dmr from dmr_mag
         dmr_up = dmr[0]->get_wrapper();
         dmr_down = dmr[1]->get_wrapper();
-        for (int is = 0; is < GlobalV::NSPIN; is++)
+        for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(dmr_up, nnr);
             ModuleBase::GlobalFunc::ZEROS(dmr_down, nnr);
@@ -1014,10 +1018,10 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     // the charge before mixing.
     const int nrxx = chr->rhopw->nrxx;
-    std::vector<double> rho123(GlobalV::NSPIN * nrxx);
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    std::vector<double> rho123(PARAM.inp.nspin * nrxx);
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1032,8 +1036,8 @@ void Charge_Mixing::mix_rho(Charge* chr)
     std::vector<double> kin_r123;
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        kin_r123.resize(GlobalV::NSPIN * nrxx);
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        kin_r123.resize(PARAM.inp.nspin * nrxx);
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1047,15 +1051,15 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 #ifdef USE_PAW
     std::vector<double> nhat_r123;
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
-        nhat_r123.resize(GlobalV::NSPIN * nrxx);
+        nhat_r123.resize(PARAM.inp.nspin * nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
         for(int ir = 0 ; ir < nrxx ; ++ir)
         {
-            for(int is = 0; is < GlobalV::NSPIN; ++is)
+            for(int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 nhat_r123[ir+is*nrxx] = chr->nhat[0][ir];
             }
@@ -1063,11 +1067,11 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }        
 #endif
     // --------------------Mixing Body--------------------
-    if (GlobalV::SCF_THR_TYPE == 1)
+    if (PARAM.inp.scf_thr_type == 1)
     {
         mix_rho_recip(chr);
     }
-    else if (GlobalV::SCF_THR_TYPE == 2)
+    else if (PARAM.inp.scf_thr_type == 2)
     {
         mix_rho_real(chr);
     }
@@ -1075,9 +1079,9 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     // mohan add 2012-06-05
     // rho_save is the charge before mixing
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        if (is == 0 || is == 3 || !GlobalV::DOMAG_Z)
+        if (is == 0 || is == 3 || !PARAM.globalv.domag_z)
         {
             double* rho123_is = rho123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1092,7 +1096,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
 
     if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             double* kin_r123_is = kin_r123.data() + is * nrxx;
 #ifdef _OPENMP
@@ -1106,14 +1110,14 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 
 #ifdef USE_PAW
-    if(GlobalV::use_paw)
+    if(PARAM.inp.use_paw)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
         for(int ir = 0 ; ir < nrxx ; ++ir)
         {
-            for(int is = 0; is < GlobalV::NSPIN; ++is)
+            for(int is = 0; is < PARAM.inp.nspin; ++is)
             {
                 chr->nhat_save[is][ir] = nhat_r123[ir+is*nrxx];
             }
@@ -1121,24 +1125,27 @@ void Charge_Mixing::mix_rho(Charge* chr)
     }
 #endif
 
-    if (new_e_iteration)
+    if (new_e_iteration) {
         new_e_iteration = false;
+}
     ModuleBase::timer::tick("Charge", "mix_rho");
     return;
 }
 
 void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 {
-    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0 || this->mixing_beta <= 0.1) {
         return;
+}
     double fac, gg0, amin;
 
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 
     // implement Kerker for density and magnetization separately
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
+    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
     {
         // new mixing method only support nspin=2 not nspin=4
         if (is >= 1)
@@ -1148,7 +1155,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
-                double is_mag = GlobalV::NSPIN - 1;
+                double is_mag = PARAM.inp.nspin - 1;
                 //for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 //{
                 //    drhog[is * this->rhopw->npw + ig] *= 1;
@@ -1180,15 +1187,17 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
 
 void Charge_Mixing::Kerker_screen_real(double* drhor)
 {
-    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1)
+    if (this->mixing_gg0 <= 0.0001 || this->mixing_beta <= 0.1) {
         return;
+}
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
     //
-    std::vector<std::complex<double>> drhog(this->rhopw->npw * GlobalV::NSPIN / resize_tmp);
-    std::vector<double> drhor_filter(this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp);
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
+    std::vector<std::complex<double>> drhog(this->rhopw->npw * PARAM.inp.nspin / resize_tmp);
+    std::vector<double> drhor_filter(this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp);
+    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
     {
         // Note after this process some G which is higher than Gmax will be filtered.
         // Thus we cannot use Kerker_screen_recip(drhog.data()) directly after it.
@@ -1196,7 +1205,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
     }
     // implement Kerker for density and magnetization separately
     double fac, gg0, amin;
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; is++)
+    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; is++)
     {
 
         if (is >= 1)
@@ -1206,8 +1215,9 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef __DEBUG
                 assert(is == 1); // make sure break works
 #endif
-                double is_mag = GlobalV::NSPIN - 1;
-                if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) is_mag = 1;
+                double is_mag = PARAM.inp.nspin - 1;
+                if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { is_mag = 1;
+}
                 for (int ig = 0; ig < this->rhopw->npw * is_mag; ig++)
                 {
                     drhog[is * this->rhopw->npw + ig] = 0;
@@ -1241,7 +1251,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
         }
     }
     // inverse FT
-    for (int is = 0; is < GlobalV::NSPIN / resize_tmp; ++is)
+    for (int is = 0; is < PARAM.inp.nspin / resize_tmp; ++is)
     {
         this->rhopw->recip2real(drhog.data() + is * this->rhopw->npw, drhor_filter.data() + is * this->rhopw->nrxx);
     }
@@ -1249,7 +1259,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp; ir++)
+    for (int ir = 0; ir < this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp; ir++)
     {
         drhor[ir] -= drhor_filter[ir];
     }
@@ -1260,9 +1270,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_rho");
     ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
 
-    std::complex<double>** rhog1 = new std::complex<double>*[GlobalV::NSPIN];
-    std::complex<double>** rhog2 = new std::complex<double>*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; is++)
+    std::complex<double>** rhog1 = new std::complex<double>*[PARAM.inp.nspin];
+    std::complex<double>** rhog2 = new std::complex<double>*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         rhog1[is] = rho1 + is * this->rhopw->npw;
         rhog2[is] = rho2 + is * this->rhopw->npw;
@@ -1281,15 +1291,16 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
         return sum;
     };
 
-    switch (GlobalV::NSPIN)
+    switch (PARAM.inp.nspin)
     {
     case 1:
         sum += part_of_noncolin();
@@ -1302,13 +1313,14 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[0][ig] + rhog1[1][ig]) * (rhog2[0][ig] + rhog2[1][ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             sum *= 2.0;
         }
@@ -1329,8 +1341,8 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         }
         mag *= fac2;
 
-        // if(GlobalV::GAMMA_ONLY_PW);
-        if (GlobalV::GAMMA_ONLY_PW) // Peize Lin delete ; 2020.01.31
+        // if(PARAM.globalv.gamma_only_pw);
+        if (PARAM.globalv.gamma_only_pw) // Peize Lin delete ; 2020.01.31
         {
             mag *= 2.0;
         }
@@ -1342,9 +1354,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
     }
     case 4:
         // non-collinear spin, added by zhengdy
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z) {
             sum += part_of_noncolin();
-        else
+        } else
         {
             // another part with magnetization
 #ifdef _OPENMP
@@ -1352,8 +1364,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[0][ig]) * rhog2[0][ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1365,7 +1378,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
                           + (conj(rhog1[3][ig0]) * rhog2[3][ig0]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }
@@ -1374,8 +1387,9 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[1][ig]) * rhog2[1][ig]).real() + (conj(rhog1[2][ig]) * rhog2[2][ig]).real()
                           + (conj(rhog1[3][ig]) * rhog2[3][ig]).real());
@@ -1404,11 +1418,12 @@ double Charge_Mixing::inner_product_recip_simple(std::complex<double>* rho1, std
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
-    for (int ig = 0; ig < this->rhopw->npw * GlobalV::NSPIN / resize_tmp; ++ig)
+    for (int ig = 0; ig < this->rhopw->npw * PARAM.inp.nspin / resize_tmp; ++ig)
     {
         rnorm += (conj(rho1[ig]) * rho2[ig]).real();
     }
@@ -1442,19 +1457,20 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
         return sum;
     };
     
-    if (GlobalV::NSPIN==1)
+    if (PARAM.inp.nspin==1)
     {
         sum += part_of_rho();
     }
-    else if (GlobalV::NSPIN==2)
+    else if (PARAM.inp.nspin==2)
     {
         // charge density part
 #ifdef _OPENMP
@@ -1462,13 +1478,14 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ++ig)
         {
-            if (this->rhopw->gg[ig] < 1e-8)
+            if (this->rhopw->gg[ig] < 1e-8) {
                 continue;
+}
             sum += (conj(rhog1[ig]) * (rhog2[ig])).real() / this->rhopw->gg[ig];
         }
         sum *= fac;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             sum *= 2.0;
         }
@@ -1489,7 +1506,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         }
         mag *= fac2;
 
-        if (GlobalV::GAMMA_ONLY_PW)
+        if (PARAM.globalv.gamma_only_pw)
         {
             mag *= 2.0;
         }
@@ -1497,9 +1514,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         sum2 += mag;
         sum += sum2;
     }
-    else if (GlobalV::NSPIN==4)
+    else if (PARAM.inp.nspin==4)
     {
-        if (!GlobalV::DOMAG && !GlobalV::DOMAG_Z)
+        if (!PARAM.globalv.domag && !PARAM.globalv.domag_z)
         {
             sum += part_of_rho();
         }
@@ -1511,8 +1528,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1524,7 +1542,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                           + (conj(rhog1[ig0 + 3*npw]) * rhog2[ig0 + 3*npw]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }
@@ -1533,8 +1551,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[ig + npw]) * rhog2[ig + npw]).real() + (conj(rhog1[ig + 2*npw]) * rhog2[ig + 2*npw]).real()
                           + (conj(rhog1[ig + 3*npw]) * rhog2[ig + 3*npw]).real());
@@ -1548,8 +1567,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == this->rhopw->ig_gge0)
+                if (ig == this->rhopw->ig_gge0) {
                     continue;
+}
                 sum += (conj(rhog1[ig]) * rhog2[ig]).real() / this->rhopw->gg[ig];
             }
             sum *= fac;
@@ -1560,7 +1580,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
                        * ((conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real());
             }
             double fac3 = fac2;
-            if (GlobalV::GAMMA_ONLY_PW)
+            if (PARAM.globalv.gamma_only_pw)
             {
                 fac3 *= 2.0;
             }
@@ -1569,8 +1589,9 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
             for (int ig = 0; ig < this->rhopw->npw; ig++)
             {
-                if (ig == ig0)
+                if (ig == ig0) {
                     continue;
+}
                 sum += fac3
                        * ((conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real());
             }
@@ -1592,12 +1613,13 @@ double Charge_Mixing::inner_product_real(double* rho1, double* rho2)
     double rnorm = 0.0;
     // consider a resize for mixing_angle
     int resize_tmp = 1;
-    if (GlobalV::NSPIN == 4 && this->mixing_angle > 0) resize_tmp = 2;
+    if (PARAM.inp.nspin == 4 && this->mixing_angle > 0) { resize_tmp = 2;
+}
 
 #ifdef _OPENMP
 #pragma omp parallel for reduction(+ : rnorm)
 #endif
-    for (int ir = 0; ir < this->rhopw->nrxx * GlobalV::NSPIN / resize_tmp; ++ir)
+    for (int ir = 0; ir < this->rhopw->nrxx * PARAM.inp.nspin / resize_tmp; ++ir)
     {
         rnorm += rho1[ir] * rho2[ir];
     }
@@ -1612,7 +1634,7 @@ void Charge_Mixing::divide_data(std::complex<double>* data_d,
                                 std::complex<double>*& data_hf)
 {
     ModuleBase::TITLE("Charge_Mixing", "divide_data");
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         data_s = data_d;
         data_hf = data_d + this->rhopw->npw;
@@ -1622,13 +1644,13 @@ void Charge_Mixing::divide_data(std::complex<double>* data_d,
         const int ndimd = this->rhodpw->npw;
         const int ndims = this->rhopw->npw;
         const int ndimhf = ndimd - ndims;
-        data_s = new std::complex<double>[GlobalV::NSPIN * ndims];
+        data_s = new std::complex<double>[PARAM.inp.nspin * ndims];
         data_hf = nullptr;
         if (ndimhf > 0)
         {
-            data_hf = new std::complex<double>[GlobalV::NSPIN * ndimhf];
+            data_hf = new std::complex<double>[PARAM.inp.nspin * ndimhf];
         }
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             std::memcpy(data_s + is * ndims, data_d + is * ndimd, ndims * sizeof(std::complex<double>));
             std::memcpy(data_hf + is * ndimhf, data_d + is * ndimd + ndims, ndimhf * sizeof(std::complex<double>));
@@ -1640,7 +1662,7 @@ void Charge_Mixing::combine_data(std::complex<double>* data_d,
                                  std::complex<double>*& data_hf)
 {
     ModuleBase::TITLE("Charge_Mixing", "combine_data");
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         data_s = nullptr;
         data_hf = nullptr;
@@ -1651,7 +1673,7 @@ void Charge_Mixing::combine_data(std::complex<double>* data_d,
         const int ndimd = this->rhodpw->npw;
         const int ndims = this->rhopw->npw;
         const int ndimhf = ndimd - ndims;
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             std::memcpy(data_d + is * ndimd, data_s + is * ndims, ndims * sizeof(std::complex<double>));
             std::memcpy(data_d + is * ndimd + ndims, data_hf + is * ndimhf, ndimhf * sizeof(std::complex<double>));
@@ -1666,7 +1688,7 @@ void Charge_Mixing::combine_data(std::complex<double>* data_d,
 void Charge_Mixing::clean_data(std::complex<double>*& data_s, std::complex<double>*& data_hf)
 {
     ModuleBase::TITLE("Charge_Mixing", "clean_data");
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         data_s = nullptr;
         data_hf = nullptr;

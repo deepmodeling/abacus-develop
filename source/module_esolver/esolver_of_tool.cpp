@@ -16,10 +16,11 @@ namespace ModuleESolver
  */
 void ESolver_OF::init_elecstate(UnitCell& ucell)
 {
-    delete this->pelec;
-    this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
-
-    this->pelec->charge->allocate(GlobalV::NSPIN);
+    if (this->pelec == nullptr)
+    {
+        this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
+        this->pelec->charge->allocate(PARAM.inp.nspin);
+    }
     this->pelec->omega = ucell.omega;
 
     delete this->pelec->pot;
@@ -42,15 +43,15 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     }
     // no variable can choose xc, maybe it is necessary
     pot_register_in.push_back("xc");
-    if (GlobalV::imp_sol)
+    if (PARAM.inp.imp_sol)
     {
         pot_register_in.push_back("surchem");
     }
-    if (GlobalV::EFIELD_FLAG)
+    if (PARAM.inp.efield_flag)
     {
         pot_register_in.push_back("efield");
     }
-    if (GlobalV::GATE_FLAG)
+    if (PARAM.inp.gate_flag)
     {
         pot_register_in.push_back("gatefield");
     }
@@ -68,10 +69,10 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, GlobalV::NSPIN, this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
-    this->pphi_ = new double*[GlobalV::NSPIN];
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
+    this->pphi_ = new double*[PARAM.inp.nspin];
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         this->pphi_[is] = this->psi_->get_pointer(is);
     }
@@ -81,25 +82,25 @@ void ESolver_OF::allocate_array()
     delete this->ptemp_rho_;
     this->ptemp_rho_ = new Charge();
     this->ptemp_rho_->set_rhopw(this->pw_rho);
-    this->ptemp_rho_->allocate(GlobalV::NSPIN);
+    this->ptemp_rho_->allocate(PARAM.inp.nspin);
 
-    this->theta_ = new double[GlobalV::NSPIN];
-    this->pdLdphi_ = new double*[GlobalV::NSPIN];
-    this->pdEdphi_ = new double*[GlobalV::NSPIN];
-    this->pdirect_ = new double*[GlobalV::NSPIN];
-    this->precip_dir_ = new std::complex<double>*[GlobalV::NSPIN];
+    this->theta_ = new double[PARAM.inp.nspin];
+    this->pdLdphi_ = new double*[PARAM.inp.nspin];
+    this->pdEdphi_ = new double*[PARAM.inp.nspin];
+    this->pdirect_ = new double*[PARAM.inp.nspin];
+    this->precip_dir_ = new std::complex<double>*[PARAM.inp.nspin];
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
         this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
         this->pdirect_[is] = new double[this->pw_rho->nrxx];
         this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
     }
-    ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * GlobalV::NSPIN * this->pw_rho->nrxx);
-    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * GlobalV::NSPIN * this->pw_rho->npw);
+    ModuleBase::Memory::record("OFDFT::pdLdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdEdphi_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::pdirect_", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
+    ModuleBase::Memory::record("OFDFT::precip_dir_", sizeof(std::complex<double>) * PARAM.inp.nspin * this->pw_rho->npw);
 }
 
 /**
@@ -111,10 +112,10 @@ void ESolver_OF::allocate_array()
  */
 void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
 {
-    double** dEdtemp_phi = new double*[GlobalV::NSPIN];
-    double** temp_phi = new double*[GlobalV::NSPIN];
+    double** dEdtemp_phi = new double*[PARAM.inp.nspin];
+    double** temp_phi = new double*[PARAM.inp.nspin];
 
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         dEdtemp_phi[is] = new double[this->pw_rho->nrxx];
         if (is == this->tn_spin_flag_)
@@ -131,7 +132,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
         }
     }
 
-    if (GlobalV::NSPIN == 4) 
+    if (PARAM.inp.nspin == 4) 
     {
         GlobalC::ucell.cal_ux();
     }
@@ -148,7 +149,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
     {
         rdLdphi[i] = dEdtemp_phi[this->tn_spin_flag_][i] - 2. * temp_mu * ptemp_phi[i];
     }
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         delete[] dEdtemp_phi[is];
     }
@@ -171,14 +172,14 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    if (GlobalV::NSPIN == 4) {
+    if (PARAM.inp.nspin == 4) {
         ucell.cal_ux();
 }
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
     this->kinetic_potential(temp_rho->rho, ptemp_phi, vr_eff);
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
@@ -217,14 +218,14 @@ void ESolver_OF::adjust_direction()
     // filter the high frequency term in direction if of_full_pw = false
     if (!PARAM.inp.of_full_pw)
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             pw_rho->real2recip(this->pdirect_[is], this->precip_dir_[is]);
             pw_rho->recip2real(this->precip_dir_[is], this->pdirect_[is]);
         }
     }
 
-    if (GlobalV::NSPIN == 1)
+    if (PARAM.inp.nspin == 1)
     {
         double temp_theta = 0; // temp_theta = |d'|/|d0 + phi|, theta = min(theta, temp_theta)
 
@@ -255,9 +256,9 @@ void ESolver_OF::adjust_direction()
         temp_theta = norm_direction / temp_theta;
         this->theta_[0] = std::min(this->theta_[0], temp_theta);
     }
-    else if (GlobalV::NSPIN == 2) // theta = 0
+    else if (PARAM.inp.nspin == 2) // theta = 0
     {
-        for (int is = 0; is < GlobalV::NSPIN; ++is)
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             // (1) make direction orthogonal to phi
             // |d'> = |d0> - |phi><phi|d0>/nelec
@@ -295,15 +296,15 @@ void ESolver_OF::adjust_direction()
  */
 void ESolver_OF::check_direction(double* dEdtheta, double** ptemp_phi, UnitCell& ucell)
 {
-    assert(GlobalV::NSPIN > 0);
-    double* temp_theta = new double[GlobalV::NSPIN];
-    ModuleBase::GlobalFunc::ZEROS(temp_theta, GlobalV::NSPIN);
+    assert(PARAM.inp.nspin > 0);
+    double* temp_theta = new double[PARAM.inp.nspin];
+    ModuleBase::GlobalFunc::ZEROS(temp_theta, PARAM.inp.nspin);
 
     double max_dEdtheta = 1e5; // threshould of dEdtheta, avoid the unstable optimization
     this->cal_dEdtheta(ptemp_phi, this->ptemp_rho_, ucell, temp_theta, dEdtheta);
 
     // Assert dEdtheta(theta = 0) < 0, otherwise line search will not work.
-    for (int is = 0; is < GlobalV::NSPIN; ++is)
+    for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         if (dEdtheta[is] > max_dEdtheta)
         {
@@ -429,7 +430,8 @@ void ESolver_OF::print_info()
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (PARAM.inp.printe > 0 && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_ || this->iter_ == GlobalV::SCF_NMAX))
+    if (PARAM.inp.printe > 0
+        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_esolver || this->iter_ == PARAM.inp.scf_nmax))
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);
@@ -475,19 +477,19 @@ void ESolver_OF::print_info()
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(this->pelec->f_en.evdw);
         }
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(this->pelec->f_en.esol_el);
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(this->pelec->f_en.esol_cav);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
@@ -499,7 +501,7 @@ void ESolver_OF::print_info()
         energies_Ry.push_back(this->pelec->f_en.etot);
     }
 
-    if (GlobalV::TWO_EFERMI)
+    if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
         energies_Ry.push_back(this->pelec->eferm.get_efval(0));

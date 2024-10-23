@@ -76,7 +76,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                 }
 
                 const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw * GlobalV::NPOL;
+                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
 
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x,
                                                 GridD.getBox(ad1).y,
@@ -126,7 +126,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
 
                     const Atom* atom2 = &ucell.atoms[T2];
 
-                    const int nw2_tot = atom2->nw * GlobalV::NPOL;
+                    const int nw2_tot = atom2->nw * PARAM.globalv.npol;
 
                     ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x,
                                                     GridD.getBox(ad2).y,
@@ -193,7 +193,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                         const std::complex<double> kphase
                             = std::complex<double>(cosp, sinp);
 
-						if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER()) 
+						if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)) 
 						{
 							dm_pair.add_from_matrix(dm_hl_k[0][ik].c,
 									pv->get_row_size(),

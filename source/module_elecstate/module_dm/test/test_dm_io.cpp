@@ -57,10 +57,8 @@ Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 Grid::~Grid()
 {
 }
-Grid_Driver::Grid_Driver(const int& test_d_in, const int& test_gd_in, const int& test_grid_in)
-    : Grid(test_grid_in), test_deconstructor(test_d_in), test_grid_driver(test_gd_in)
-{
-}
+Grid_Driver::Grid_Driver(const int& test_d_in,const int& test_grid_in)
+    : Grid(test_grid_in), test_deconstructor(test_d_in){}
 Grid_Driver::~Grid_Driver()
 {
 }
@@ -144,7 +142,7 @@ TEST_F(DMTest, DMConstructor1)
     int nspin = 1;
     // construct DM
     std::cout << paraV->nrow << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks());
     // read DMK
     std::string directory = "./support/";
     for (int is = 1; is <= nspin; ++is)
@@ -164,7 +162,7 @@ TEST_F(DMTest, DMConstructor1)
         }
     }
     // construct a new DM
-    elecstate::DensityMatrix<double, double> DM1(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM1(paraV, nspin, kv->kvec_d, kv->get_nks());
     directory = "./support/output";
     for (int is = 1; is <= nspin; ++is)
     {

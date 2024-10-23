@@ -137,41 +137,24 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
                 }
             }
         }
-        double* work = new double[ndim_cal_dF];
-        int* iwork = new int[ndim_cal_dF];
+        double* work = new double[ndim_cal_dF];   // workspace
+        int* iwork = new int[ndim_cal_dF];   // ipiv
         char uu = 'U';
         int info;
-        dsytrf_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &ndim_cal_dF, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when factorizing beta.");
-        dsytri_(&uu, &ndim_cal_dF, beta_tmp.c, &ndim_cal_dF, iwork, work, &info);
-        if (info != 0)
-            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYTRI beta.");
-        for (int i = 0; i < ndim_cal_dF; ++i)
-        {
-            for (int j = i + 1; j < ndim_cal_dF; ++j)
-            {
-                beta_tmp(i, j) = beta_tmp(j, i);
-            }
-        }
+        int m = 1;
+        // gamma means the coeficients for mixing
+        // but now gamma store <dFi|Fm>, namely c
+        std::vector<double> gamma(ndim_cal_dF);
         for (int i = 0; i < ndim_cal_dF; ++i)
         {
             FPTYPE* dFi = FP_dF + i * length;
-            work[i] = inner_product(dFi, FP_F);
+            gamma[i] = inner_product(dFi, FP_F);
         }
-        // gamma[i] = \sum_j beta_tmp(i,j) * work[j]
-        std::vector<double> gamma(ndim_cal_dF);
-        container::BlasConnector::gemv('N',
-                                       ndim_cal_dF,
-                                       ndim_cal_dF,
-                                       1.0,
-                                       beta_tmp.c,
-                                       ndim_cal_dF,
-                                       work,
-                                       1,
-                                       0.0,
-                                       gamma.data(),
-                                       1);
+        // solve aG = c 
+        dsysv_(&uu, &ndim_cal_dF, &m, beta_tmp.c, &ndim_cal_dF, iwork, gamma.data(), &ndim_cal_dF, work, &ndim_cal_dF, &info);
+        if (info != 0)
+            ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
+        // after solving, gamma store the coeficients for mixing
         coef[mdata.start] = 1 + gamma[dFindex_move(0)];
         for (int i = 1; i < ndim_cal_dF; ++i)
         {

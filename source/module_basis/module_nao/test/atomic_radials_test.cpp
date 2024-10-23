@@ -36,7 +36,6 @@ using ModuleBase::SphericalBesselTransformer;
  *
  *  - to_numerical_orbital
  *      - Overwrites the content of a Numerical_Orbital object with the current object.
- *
  *                                                                      */
 class AtomicRadialsTest : public ::testing::Test
 {

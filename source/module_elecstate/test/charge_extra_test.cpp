@@ -1,8 +1,8 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-
 #define private public
 #define protected public
+#include "module_parameter/parameter.h"
 #include "module_elecstate/module_charge/charge_extra.h"
 #include "prepare_unitcell.h"
 #undef private
@@ -108,12 +108,8 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
  *     - charge extrapolation
  *   - Charge_Extra::update_all_dis()
  *     - update displacements
- *   - Charge_Extra::save_files()
- *     - save the difference of the convergent charge density and the initial atomic charge density
  *   - Charge_Extra::find_alpha_and_beta()
  *     - determine alpha and beta
- *   - Charge_Extra::read_files()
- *     - read cube files containing the charge difference of previous steps
  */
 
 class ChargeExtraTest : public ::testing::Test
@@ -126,8 +122,8 @@ class ChargeExtraTest : public ::testing::Test
     Structure_Factor sf;
     void SetUp() override
     {
-        GlobalV::NSPIN = 1;
-        GlobalV::global_out_dir = "./support/";
+        PARAM.input.nspin = 1;
+        PARAM.sys.global_out_dir = "./support/";
         ucell = utp.SetUcellInfo();
         ucell->omega = 1.0;
     }
@@ -136,82 +132,63 @@ class ChargeExtraTest : public ::testing::Test
     }
 };
 
+TEST_F(ChargeExtraTest, InitCEWarningQuit)
+{
+    PARAM.input.chg_extrap = "wwww";
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap),
+                ::testing::ExitedWithCode(0),
+                "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
+}
+
 TEST_F(ChargeExtraTest, InitCECase1)
 {
-    GlobalV::chg_extrap = "none";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "none";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 0);
 }
 
 TEST_F(ChargeExtraTest, InitCECase2)
 {
-    GlobalV::chg_extrap = "atomic";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "atomic";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 1);
 }
 
 TEST_F(ChargeExtraTest, InitCECase3)
 {
-    GlobalV::chg_extrap = "first-order";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "first-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 2);
+    EXPECT_NE(CE.delta_rho1.size(), 0);
+    EXPECT_NE(CE.delta_rho2.size(), 0);
 }
 
 TEST_F(ChargeExtraTest, InitCECase4)
 {
-    GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     EXPECT_EQ(CE.pot_order, 3);
     EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
     EXPECT_DOUBLE_EQ(CE.beta, 0.0);
+    EXPECT_NE(CE.delta_rho1.size(), 0);
+    EXPECT_NE(CE.delta_rho2.size(), 0);
     EXPECT_NE(CE.dis_old1, nullptr);
     EXPECT_NE(CE.dis_old2, nullptr);
     EXPECT_NE(CE.dis_now, nullptr);
 }
 
-TEST_F(ChargeExtraTest, InitCEWarningQuit)
-{
-    GlobalV::chg_extrap = "error";
-    testing::internal::CaptureStdout();
-    EXPECT_EXIT(CE.Init_CE(ucell->nat), ::testing::ExitedWithCode(0), "");
-    std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output, testing::HasSubstr("charge extrapolation method is not available"));
-}
-
-TEST_F(ChargeExtraTest, SaveFiles)
-{
-    int istep = 2;
-    CE.pot_order = 3;
-
-    CE.save_files(istep, *ucell.get(), &charge, &sf);
-
-    std::ifstream input1("./support/NOW_SPIN1_CHG.cube");
-    EXPECT_TRUE(input1.good());
-    input1.close();
-
-    std::ifstream input2("./support/OLD1_SPIN1_CHG.cube");
-    EXPECT_TRUE(input2.good());
-    input2.close();
-
-    std::ifstream input3("./support/OLD2_SPIN1_CHG.cube");
-    EXPECT_TRUE(input3.good());
-    input3.close();
-}
-
-TEST_F(ChargeExtraTest, ReadFiles)
-{
-    CE.read_files(2, 2, 2, ucell.get(), "OLD1", charge.rho);
-    EXPECT_DOUBLE_EQ(charge.rho[0][0], 1.0);
-    EXPECT_DOUBLE_EQ(charge.rho[0][4], 5.0);
-}
-
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
 {
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 0;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
@@ -227,17 +204,18 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase1)
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
 {
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 1;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output = " Find the file, try to read charge from file.\n read in fermi energy = 0\n Read "
-                                  "SPIN = 1 charge now.\n NEW-OLD atomic charge density approx. for the potential !\n";
+    std::string expected_output = " NEW-OLD atomic charge density approx. for the potential !\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
     std::remove("log");
@@ -248,19 +226,18 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase2)
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
 {
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 2;
     CE.pot_order = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output
-        = " Find the file, try to read charge from file.\n read in fermi energy = 0\n Read SPIN = 1 charge now.\n "
-          "first order charge density extrapolation !\n Find the file, try to read charge from file.\n read in fermi "
-          "energy = 0\n Read SPIN = 1 charge now.\n";
+    std::string expected_output = " first order charge density extrapolation !\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
     std::remove("log");
@@ -271,21 +248,17 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase3)
 
 TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 {
-    GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
 
     GlobalV::ofs_running.open("log");
-    CE.extrapolate_charge(*ucell.get(), &charge, &sf);
+    CE.extrapolate_charge(*ucell.get(), &charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     GlobalV::ofs_running.close();
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output
-        = " Find the file, try to read charge from file.\n read in fermi energy = 0\n Read SPIN = 1 charge now.\n "
-          "second order charge density extrapolation !\n alpha = 0\n beta = 0\n Find the file, try to read charge from "
-          "file.\n read in fermi energy = 0\n Read SPIN = 1 charge now.\n Find the file, try to read charge from "
-          "file.\n read in fermi energy = 0\n Read SPIN = 1 charge now.\n";
+    std::string expected_output = " second order charge density extrapolation !\n alpha = 0\n beta = 0\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
     std::remove("log");
@@ -297,8 +270,8 @@ TEST_F(ChargeExtraTest, ExtrapolateChargeCase4)
 
 TEST_F(ChargeExtraTest, UpdateAllDis)
 {
-    GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
     {
@@ -319,8 +292,8 @@ TEST_F(ChargeExtraTest, UpdateAllDis)
 
 TEST_F(ChargeExtraTest, FindAlphaAndBeta)
 {
-    GlobalV::chg_extrap = "second-order";
-    CE.Init_CE(ucell->nat);
+    PARAM.input.chg_extrap = "second-order";
+    CE.Init_CE(PARAM.input.nspin, ucell->nat, charge.rhopw->nrxx, PARAM.input.chg_extrap);
     CE.istep = 3;
     for (int i = 0; i < ucell->nat; ++i)
     {
@@ -331,7 +304,7 @@ TEST_F(ChargeExtraTest, FindAlphaAndBeta)
         }
     }
 
-    CE.find_alpha_and_beta(ucell->nat);
+    CE.find_alpha_and_beta(ucell->nat, GlobalV::ofs_running, GlobalV::ofs_warning);
 
     EXPECT_DOUBLE_EQ(CE.alpha, 1.0);
     EXPECT_DOUBLE_EQ(CE.beta, 0.0);

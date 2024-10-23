@@ -3,6 +3,7 @@ list(APPEND objects
     bessel_basis.cpp
     cal_test.cpp
     cal_dos.cpp
+    cif_io.cpp
     write_dos_pw.cpp
     nscf_band.cpp
     write_istate_info.cpp
@@ -12,21 +13,23 @@ list(APPEND objects
     output.cpp
     print_info.cpp
     read_cube.cpp
-    read_rho.cpp
-    read_rhog.cpp
+    rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
+    read_wfc_to_rho.cpp
     restart.cpp
     binstream.cpp
     write_wfc_pw.cpp
     write_cube.cpp
     write_elecstat_pot.cpp
+    write_elf.cpp
     write_dipole.cpp
     td_current_io.cpp
     write_wfc_r.cpp
     output_log.cpp
     para_json.cpp
     parse_args.cpp
+    orb_io.cpp
 )
 
 list(APPEND objects_advanced
@@ -91,7 +94,7 @@ add_library(
     read_input_item_other.cpp   
     read_input_item_output.cpp  
     read_input.cpp
-    bcast_globalv.cpp
+    read_set_globalv.cpp
 )
 
 add_library(

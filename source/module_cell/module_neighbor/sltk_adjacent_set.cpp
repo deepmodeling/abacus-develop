@@ -1,5 +1,6 @@
 #include <stdexcept>
 #include <string>
+#include "module_parameter/parameter.h"
 #include "sltk_adjacent_set.h"
 
 
@@ -91,7 +92,7 @@ void AdjacentSet::getBox
 		now = now -  3 * (y + 1);
 		z = now - 1;
 
-//		if (GlobalV::test_grid > 3) GlobalV::ofs_running << "\n value=" << value << " x=" << x << " y=" << y << " z=" << z;
+//		if (PARAM.inp.test_grid > 3) GlobalV::ofs_running << "\n value=" << value << " x=" << x << " y=" << y << " z=" << z;
 	}
 	else
 	{
@@ -113,7 +114,7 @@ void AdjacentSet::getBox
 	return;
 }
 //2015-05-07
-void AdjacentSet::delete_vector(void)
+void AdjacentSet::delete_vector()
 {
 	std::vector<int>().swap(box);
 	std::vector<int>().swap(offset);

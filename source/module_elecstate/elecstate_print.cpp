@@ -1,5 +1,6 @@
 #include "elecstate.h"
 #include "elecstate_getters.h"
+#include "module_parameter/parameter.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -51,6 +52,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"cg_in_lcao", "CG"},
            {"lapack", "LA"},
            {"genelpa", "GE"},
+           {"elpa", "EL"},
            {"dav", "DA"},
            {"dav_subspace", "DS"},
            {"scalapack_gvx", "GV"},
@@ -181,21 +183,21 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
         ofs << std::setiosflags(std::ios::showpoint);
         if (ik == 0)
         {
-            ofs << "   NSPIN == " << GlobalV::NSPIN << std::endl;
-            if (GlobalV::NSPIN == 2)
+            ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
+            if (PARAM.inp.nspin == 2)
             {
                 ofs << "SPIN UP : " << std::endl;
             }
         }
         else if (ik == this->klist->get_nks() / 2)
         {
-            if (GlobalV::NSPIN == 2)
+            if (PARAM.inp.nspin == 2)
             {
                 ofs << "SPIN DOWN : " << std::endl;
             }
         }
 
-        if (GlobalV::NSPIN == 2)
+        if (PARAM.inp.nspin == 2)
         {
             if (this->klist->isk[ik] == 0)
             {
@@ -243,7 +245,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 {
     // check the band energy.
     bool wrong = false;
-    for (int ib = 0; ib < GlobalV::NBANDS; ++ib)
+    for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
     {
         if (std::abs(this->ekb(ik, ib)) > 1.0e10)
         {
@@ -265,7 +267,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
             GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
-            for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
                                      << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
@@ -307,13 +309,14 @@ void ElecState::print_etot(const bool converged,
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-    if (GlobalV::BASIS_TYPE == "pw")
+    if (PARAM.inp.basis_type == "pw") {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
+}
 
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == GlobalV::SCF_NMAX))
+    if (printe > 0 && ((iter + 1) % printe == 0 || converged || iter == PARAM.inp.scf_nmax))
     {
         int n_order = std::max(0, Occupy::gaussian_type);
         titles.push_back("E_KohnSham");
@@ -349,26 +352,26 @@ void ElecState::print_etot(const bool converged,
         }
         titles.push_back("E_exx");
         energies_Ry.push_back(this->f_en.exx);
-        if (GlobalV::imp_sol)
+        if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
             energies_Ry.push_back(this->f_en.esol_el);
             titles.push_back("E_sol_cav");
             energies_Ry.push_back(this->f_en.esol_cav);
         }
-        if (GlobalV::EFIELD_FLAG)
+        if (PARAM.inp.efield_flag)
         {
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
-        if (GlobalV::GATE_FLAG)
+        if (PARAM.inp.gate_flag)
         {
             titles.push_back("E_gatefield");
             energies_Ry.push_back(elecstate::Gatefield::etotgatefield);
         }
 
 #ifdef __DEEPKS
-        if (GlobalV::deepks_scf) // caoyu add 2021-08-10
+        if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
         {
             titles.push_back("E_DeePKS");
             energies_Ry.push_back(GlobalC::ld.E_delta);
@@ -383,7 +386,7 @@ void ElecState::print_etot(const bool converged,
         energies_Ry.push_back(this->f_en.etot_harris);
     }
 
-    if (GlobalV::TWO_EFERMI)
+    if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
         energies_Ry.push_back(this->eferm.ef_up);
@@ -397,7 +400,7 @@ void ElecState::print_etot(const bool converged,
     }
     if (PARAM.inp.out_bandgap)
     {
-        if (!GlobalV::TWO_EFERMI)
+        if (!PARAM.globalv.two_fermi)
         {
             titles.push_back("E_bandgap");
             energies_Ry.push_back(this->bandgap);
@@ -420,15 +423,10 @@ void ElecState::print_etot(const bool converged,
                    {FmtTable::Align::LEFT, FmtTable::Align::CENTER});
     table << titles << energies_Ry << energies_eV;
     GlobalV::ofs_running << table.str() << std::endl;
-    if (iter_in == 1) // pengfei Li added 2015-1-31
-    {
-        this->f_en.etot_old = this->f_en.etot;
-    }
-    this->f_en.etot_delta = this->f_en.etot - this->f_en.etot_old;
-    if (GlobalV::OUT_LEVEL == "ie" || GlobalV::OUT_LEVEL == "m") // xiaohui add 'm' option, 2015-09-16
+    if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m") // xiaohui add 'm' option, 2015-09-16
     {
         std::vector<double> mag;
-        switch (GlobalV::NSPIN)
+        switch (PARAM.inp.nspin)
         {
         case 2:
             mag = {get_ucell_tot_magnetization(), get_ucell_abs_magnetization()};
@@ -461,7 +459,6 @@ void ElecState::print_etot(const bool converged,
                                       duration,
                                       6);
     }
-    this->f_en.etot_old = this->f_en.etot;
     return;
 }
 

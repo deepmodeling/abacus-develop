@@ -1,12 +1,12 @@
-#include <string>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_elecstate/elecstate.h"
+#include "module_elecstate/elecstate_getters.h"
+#include <string>
 Parameter PARMA;
 
 // mock functions
@@ -73,21 +73,21 @@ class MockElecState : public ElecState
   public:
     void Set_GlobalV_Default()
     {
-        GlobalV::imp_sol = false;
-        GlobalV::dft_plus_u = 0;
+        PARAM.input.imp_sol = false;
+        PARAM.input.dft_plus_u = 0;
         // base class
-        GlobalV::NSPIN = 1;
-        GlobalV::nelec = 10.0;
-        GlobalV::nupdown = 0.0;
-        GlobalV::TWO_EFERMI = false;
-        GlobalV::NBANDS = 6;
-        GlobalV::NLOCAL = 6;
-        GlobalV::ESOLVER_TYPE = "ksdft";
-        GlobalV::LSPINORB = false;
-        GlobalV::BASIS_TYPE = "pw";
+        PARAM.input.nspin = 1;
+        PARAM.input.nelec = 10.0;
+        PARAM.input.nupdown  = 0.0;
+        PARAM.sys.two_fermi = false;
+        PARAM.input.nbands = 6;
+        PARAM.sys.nlocal = 6;
+        PARAM.input.esolver_type = "ksdft";
+        PARAM.input.lspinorb = false;
+        PARAM.input.basis_type = "pw";
         GlobalV::KPAR = 1;
         GlobalV::NPROC_IN_POOL = 1;
-        PARAM.input.sc_mag_switch = 1;
+        PARAM.input.sc_mag_switch = true;
     }
 };
 const double* ElecState::getRho(int spin) const
@@ -126,7 +126,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarris)
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 {
     elecstate->f_en.deband_harris = 0.1;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.6);
@@ -135,7 +135,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
 {
     elecstate->f_en.deband_harris = 0.1;
-    GlobalV::dft_plus_u = 1;
+    PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
@@ -156,7 +156,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 {
     elecstate->f_en.deband = 0.1;
-    GlobalV::imp_sol = true;
+    PARAM.input.imp_sol = true;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + esol_el + esol_cav + escon
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.6);
@@ -165,7 +165,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotImpSol)
 TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
 {
     elecstate->f_en.deband = 0.1;
-    GlobalV::dft_plus_u = 1;
+    PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + edftu + escon
 #ifdef __LCAO
@@ -193,10 +193,10 @@ TEST_F(ElecStateEnergyTest, CalBandgap)
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), GlobalV::NBANDS);
+    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
     for (int ik = 0; ik < klist->get_nks(); ik++)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.input.nbands; ib++)
         {
             elecstate->ekb(ik, ib) = ib;
         }
@@ -230,10 +230,10 @@ TEST_F(ElecStateEnergyTest, CalBandgapUpDw)
         } 
     }
     elecstate->klist = klist;
-    elecstate->ekb.create(klist->get_nks(), GlobalV::NBANDS);
+    elecstate->ekb.create(klist->get_nks(), PARAM.input.nbands);
     for (int ik = 0; ik < klist->get_nks(); ik++)
     {
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.input.nbands; ib++)
         {
             if (ik < 3)
             {

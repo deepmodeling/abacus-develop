@@ -3,13 +3,16 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-1111
+# Last Update in 2024-0811
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
-
+# gcc 13 is good
 gcc_ver="13.2.0"
 gcc_sha256="8cb4be3796651976f94b9356fa08d833524f62420d6292c5033a9a26af315078"
+# use gcc 14 with caution
+#gcc_ver="14.1.0"
+#gcc_sha256="a0be066c02775002a0fa65ad3c65fb56a8bfd923d072a26ed148c0439ecdb68f"
 
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
@@ -61,7 +64,7 @@ case "${with_gcc}" in
       # TODO: Unfortunately, we can not simply use --disable-shared, because
       # it would break OpenBLAS build and probably others too.
       COMMON_FLAGS="-O2 -fPIC -fno-omit-frame-pointer -fopenmp -g"
-      CFLAGS="${COMMON_FLAGS} -std=gnu99"
+      CFLAGS="${COMMON_FLAGS}"
       CXXFLAGS="${CFLAGS}"
       FCFLAGS="${COMMON_FLAGS} -fbacktrace"
       ${GCCROOT}/configure --prefix="${pkg_install_dir}" \

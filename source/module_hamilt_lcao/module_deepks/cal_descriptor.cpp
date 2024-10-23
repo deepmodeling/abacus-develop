@@ -39,7 +39,7 @@ void LCAO_Deepks::cal_descriptor(const int nat) {
     ModuleBase::TITLE("LCAO_Deepks", "cal_descriptor");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_descriptor");
 
-    if (GlobalV::deepks_equiv) 
+    if (PARAM.inp.deepks_equiv) 
     {
         this->cal_descriptor_equiv(nat);
         return;
@@ -110,7 +110,7 @@ void LCAO_Deepks::check_descriptor(const UnitCell& ucell, const std::string& out
     
     std::ofstream ofs(file.c_str());
 	ofs << std::setprecision(10);
-	if (!GlobalV::deepks_equiv) 
+	if (!PARAM.inp.deepks_equiv) 
 	{
 		for (int it = 0; it < ucell.ntype; it++) 
 		{

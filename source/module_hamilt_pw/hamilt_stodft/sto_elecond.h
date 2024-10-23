@@ -16,7 +16,7 @@ class Sto_EleCond : protected EleCond
                 psi::Psi<std::complex<double>>* p_psi_in,
                 pseudopot_cell_vnl* p_ppcell_in,
                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
-                hsolver::HSolverPW_SDFT* p_hsol_in,
+                StoChe<double>& stoche,
                 Stochastic_WF* p_stowf_in);
     ~Sto_EleCond(){};
     /**
@@ -59,8 +59,10 @@ class Sto_EleCond : protected EleCond
     int fd_nche = 0;                                ///< number of Chebyshev orders for Fermi-Dirac function
     int cond_dtbatch = 0;                           ///< number of time steps in a batch
     hamilt::Hamilt<std::complex<double>>* p_hamilt; ///< pointer to the Hamiltonian
-    hsolver::HSolverPW_SDFT* p_hsol = nullptr;      ///< pointer to the Hamiltonian solver
     Stochastic_WF* p_stowf = nullptr;               ///< pointer to the stochastic wavefunctions
+    Sto_Func<double> stofunc;                       ///< functions
+
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 
   protected:
     /**

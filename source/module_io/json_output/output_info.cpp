@@ -1,5 +1,6 @@
 #include "output_info.h"
 #include "../para_json.h"
+#include "module_parameter/parameter.h"
 #include "abacusjson.h"
 
 
@@ -47,7 +48,7 @@ namespace Json
         int iat = 0;
         const double output_acc = 1.0e-8;
 
-        if (GlobalV::CAL_FORCE){
+        if (PARAM.inp.cal_force){
             //add force
             Json::jsonValue force_array(JarrayType);
             for (int it = 0; it < ucell->ntype; it++)
@@ -71,7 +72,7 @@ namespace Json
             // AbacusJson::add_Json(force_array,false,"output",-1,"force");
         }
 
-        if (GlobalV::CAL_STRESS){
+        if (PARAM.inp.cal_stress){
         //add stress
             Json::jsonValue stress_array(JarrayType);
             for (int i = 0; i < 3; i++)

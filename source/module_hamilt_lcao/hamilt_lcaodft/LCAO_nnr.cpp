@@ -1,5 +1,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_parameter/parameter.h"
 #include "record_adj.h" //mohan add 2012-07-06
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
@@ -11,7 +12,7 @@
 #include <algorithm>
 
 // This is for cell R dependent part. 
-void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
+void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv, const std::vector<double>& orb_cutoff)
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_nnrg");
 
@@ -69,16 +70,16 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 						tau2 = GlobalC::GridD.getAdjacentTau(ad);
 						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
 						double distance = dtau.norm() * GlobalC::ucell.lat0;
-						double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+						double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 
 						//if(distance < rcut)
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than orb_cutoff[T1] 
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// orb_cutoff[T1] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 							//storing the indexed for nnrg
@@ -99,7 +100,8 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 		}// end I1
 	}// end T1
 
-	if(GlobalV::OUT_LEVEL != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
+	if(PARAM.inp.out_level != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"nnrg",this->nnrg);
+}
 
 	//--------------------------------------------------
 	// search again, to order each (iat2, b1, b2, b3)
@@ -157,7 +159,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 					{
 						dtau = GlobalC::GridD.getAdjacentTau(ad) - tau1;
                         double distance = dtau.norm() * GlobalC::ucell.lat0;
-                        double rcut = GlobalC::ORB.Phi[T1].getRcut() + GlobalC::ORB.Phi[T2].getRcut();
+                        double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
 						const int b1 = GlobalC::GridD.getBox(ad).x;
 						const int b2 = GlobalC::GridD.getBox(ad).y;
@@ -167,11 +169,11 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 						//			if(distance < rcut)
 
 						// mohan reset this 2013-07-02 in Princeton
-						// we should make absolutely sure that the distance is smaller than GlobalC::ORB.Phi[it].getRcut
+						// we should make absolutely sure that the distance is smaller than orb_cutoff[it] 
 						// this should be consistant with LCAO_nnr::cal_nnrg function 
 						// typical example : 7 Bohr cutoff Si orbital in 14 Bohr length of cell.
 						// distance = 7.0000000000000000
-						// GlobalC::ORB.Phi[it].getRcut = 7.0000000000000008
+						// orb_cutoff[it] = 7.0000000000000008
 						if(distance < rcut - 1.0e-15)
 						{
 						//	assert( count < nad[iat] );
@@ -206,7 +208,7 @@ void Grid_Technique::cal_nnrg(Parallel_Orbitals* pv)
 	return;
 }
 
-void Grid_Technique::cal_max_box_index(void)
+void Grid_Technique::cal_max_box_index()
 {
 	ModuleBase::TITLE("LCAO_nnr","cal_max_box_index");
 	this->maxB1 = this->maxB2 = this->maxB3 = -10000;
