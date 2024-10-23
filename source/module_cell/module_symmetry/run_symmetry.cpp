@@ -14,7 +14,7 @@ int main(int argc, char **argv)
 	std::cout << "Hello, this is the 'symmetry' module of ABACUS." << std::endl;
 
 	std::cout << "The module does symmetry analysis for an input geometry." << std::endl;
-	Parallel_Global::read_mpi_parameters(argc,argv);
+	Parallel_Global::read_pal_param(argc,argv);
 	//std::cout << "Right now, the module is still empty, soon we will have more tests." << std::endl;
 
     calculate();

@@ -9,18 +9,17 @@ namespace LR
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<double>& AX_istate)
+        double* AX_istate)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
         const int nks = V_istate.size();
         int naos = c.get_nbasis();
-        AX_istate.fix_k(0);
-        ModuleBase::GlobalFunc::ZEROS(AX_istate.get_pointer(), nks * nocc * nvirt);
+        ModuleBase::GlobalFunc::ZEROS(AX_istate, nks * nocc * nvirt);
 
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * nocc * nvirt;
             for (int i = 0;i < nocc;++i)
             {
                 for (int a = 0;a < nvirt;++a)
@@ -29,7 +28,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            AX_istate(i * nvirt + a) += c(nocc + a, mu) * V_istate[isk].data<double>()[nu * naos + mu] * c(i, nu);
+                            AX_istate[ax_start + i * nvirt + a] += c(nocc + a, mu) * V_istate[isk].data<double>()[nu * naos + mu] * c(i, nu);
                         }
                     }
                 }
@@ -41,18 +40,17 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<std::complex<double>>& AX_istate)
+        std::complex<double>* AX_istate)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
         const int nks = V_istate.size();
         int naos = c.get_nbasis();
-        AX_istate.fix_k(0);
-        ModuleBase::GlobalFunc::ZEROS(AX_istate.get_pointer(), nks * nocc * nvirt);
+        ModuleBase::GlobalFunc::ZEROS(AX_istate, nks * nocc * nvirt);
 
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * nocc * nvirt;
             for (int i = 0;i < nocc;++i)
             {
                 for (int a = 0;a < nvirt;++a)
@@ -61,7 +59,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            AX_istate(i * nvirt + a) += std::conj(c(nocc + a, mu)) * V_istate[isk].data<std::complex<double>>()[nu * naos + mu] * c(i, nu);
+                            AX_istate[ax_start + i * nvirt + a] += std::conj(c(nocc + a, mu)) * V_istate[isk].data<std::complex<double>>()[nu * naos + mu] * c(i, nu);
                         }
                     }
                 }
@@ -74,7 +72,7 @@ namespace LR
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<double>& AX_istate,
+        double* AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
@@ -84,7 +82,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * nocc * nvirt;
 
             // Vc[naos*nocc]
             container::Tensor Vc(DAT::DT_DOUBLE, DEV::CpuDevice, { nocc, naos });// (Vc)^T
@@ -101,7 +99,7 @@ namespace LR
             //AX_istate=c^TVc (nvirt major)
             dgemm_(&transa, &transb, &nvirt, &nocc, &naos, &alpha,
                 c.get_pointer(nocc), &naos, Vc.data<double>(), &naos, &beta,
-                AX_istate.get_pointer(), &nvirt);
+                AX_istate + ax_start, &nvirt);
         }
     }
     void cal_AX_blas(
@@ -109,7 +107,7 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<std::complex<double>>& AX_istate,
+        std::complex<double>* AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
@@ -119,7 +117,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * nocc * nvirt;
 
             // Vc[naos*nocc] (V is hermitian)
             container::Tensor Vc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { nocc, naos });// (Vc)^T
@@ -136,7 +134,7 @@ namespace LR
             //AX_istate=c^\dagger Vc (nvirt major)
             zgemm_(&transa, &transb, &nvirt, &nocc, &naos, &alpha,
                 c.get_pointer(nocc), &naos, Vc.data<std::complex<double>>(), &naos, &beta,
-                AX_istate.get_pointer(), &nvirt);
+                AX_istate + ax_start, &nvirt);
         }
     }
 }

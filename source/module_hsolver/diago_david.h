@@ -1,8 +1,14 @@
 #ifndef DIAGODAVID_H
 #define DIAGODAVID_H
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_base/module_device/device.h"   // base_device
+#include "module_base/module_device/memory_op.h"// base_device::memory
+
 #include "module_hsolver/diag_comm_info.h"
+
+#include <vector>
+#include <functional>
 
 namespace hsolver
 {
@@ -199,7 +205,7 @@ class DiagoDavid
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+    // using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info; // Dependence of hpsi removed
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);

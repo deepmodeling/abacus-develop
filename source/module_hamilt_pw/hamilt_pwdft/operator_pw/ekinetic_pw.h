@@ -42,7 +42,8 @@ class Ekinetic<OperatorPW<T, Device>> : public OperatorPW<T, Device>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk_ik = 0)const override;
+        const int ngk_ik = 0,
+        const bool is_first_node = false)const override;
 
     // denghuilu added for copy construct at 20221105
     int get_gk2_row() const {return this->gk2_row;}

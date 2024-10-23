@@ -21,11 +21,11 @@ Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
     this->p_elec = p_elec_in;
     this->p_psi = p_psi_in;
     this->p_hamilt = p_hamilt_in;
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
     this->method_sto = stoche.method_sto;
-    this->stohchi.init(p_wfcpw_in, p_kv_in, &stoche.emin_sto, &stoche.emax_sto);
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
 void Sto_DOS::decide_param(const int& dos_nche,
@@ -44,15 +44,14 @@ void Sto_DOS::decide_param(const int& dos_nche,
               this->nbands_sto,
               this->p_kv,
               this->p_stowf,
-              this->p_hamilt,
-              this->stohchi);
+              this->p_hamilt_sto);
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
     }
     else
     {
-        this->emax = *stohchi.Emax * ModuleBase::Ry_to_eV;
+        this->emax = *p_hamilt_sto->emax * ModuleBase::Ry_to_eV;
     }
     if (dos_setemin)
     {
@@ -60,7 +59,7 @@ void Sto_DOS::decide_param(const int& dos_nche,
     }
     else
     {
-        this->emin = *stohchi.Emin * ModuleBase::Ry_to_eV;
+        this->emin = *p_hamilt_sto->emin * ModuleBase::Ry_to_eV;
     }
 
     if (!dos_setemax && !dos_setemin)
@@ -103,7 +102,6 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         {
             this->p_hamilt->updateHk(ik);
         }
-        stohchi.current_ik = ik;
         const int npw = p_kv->ngk[ik];
         const int nchipk = this->p_stowf->nchip[ik];
 
@@ -118,11 +116,11 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
             p_stowf->chi0->fix_k(ik);
             pchi = p_stowf->chi0->get_pointer();
         }
-        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                                       &stohchi,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2,
-                                       std::placeholders::_3);
+        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                   p_hamilt_sto,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3);
         if (this->method_sto == 1)
         {
             che.tracepolyA(hchi_norm, pchi, npw, npwx, nchipk);

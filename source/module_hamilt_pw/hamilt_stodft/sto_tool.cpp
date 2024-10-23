@@ -14,8 +14,7 @@ void check_che(const int& nche_in,
                const int& nbands_sto,
                K_Vectors* p_kv,
                Stochastic_WF* p_stowf,
-               hamilt::Hamilt<std::complex<double>>* p_hamilt,
-               Stochastic_hchi& stohchi)
+               hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
 {
     //------------------------------
     //      Convergence test
@@ -24,8 +23,8 @@ void check_che(const int& nche_in,
     const int nk = p_kv->get_nks();
     ModuleBase::Chebyshev<double> chetest(nche_in);
     int ntest0 = 5;
-    *stohchi.Emax = try_emax;
-    *stohchi.Emin = try_emin;
+    *p_hamilt_sto->emax = try_emax;
+    *p_hamilt_sto->emin = try_emin;
     // if (PARAM.inp.nbands > 0)
     // {
     //     double tmpemin = 1e10;
@@ -33,16 +32,15 @@ void check_che(const int& nche_in,
     //     {
     //         tmpemin = std::min(tmpemin, this->pelec->ekb(ik, PARAM.inp.nbands - 1));
     //     }
-    //     stohchi.Emin = tmpemin;
+    //     *p_hamilt_sto->emin = tmpemin;
     // }
     // else
     // {
-    //     stohchi.Emin = 0;
+    //     *p_hamilt_sto->emin = 0;
     // }
     for (int ik = 0; ik < nk; ++ik)
     {
-        p_hamilt->updateHk(ik);
-        stohchi.current_ik = ik;
+        p_hamilt_sto->updateHk(ik);
         const int npw = p_kv->ngk[ik];
         std::complex<double>* pchi = nullptr;
         std::vector<std::complex<double>> randchi;
@@ -71,12 +69,12 @@ void check_che(const int& nche_in,
             while (true)
             {
                 bool converge;
-                auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                                           &stohchi,
+                auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                           p_hamilt_sto,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
                                            std::placeholders::_3);
-                converge = chetest.checkconverge(hchi_norm, pchi, npw, *stohchi.Emax, *stohchi.Emin, 2.0);
+                converge = chetest.checkconverge(hchi_norm, pchi, npw, p_stowf->npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 2.0);
 
                 if (!converge)
                 {
@@ -92,11 +90,11 @@ void check_che(const int& nche_in,
         if (ik == nk - 1)
         {
 #ifdef __MPI
-            MPI_Allreduce(MPI_IN_PLACE, stohchi.Emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-            MPI_Allreduce(MPI_IN_PLACE, stohchi.Emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emax, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE, p_hamilt_sto->emin, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
 #endif
-            GlobalV::ofs_running << "New Emax " << *stohchi.Emax << " Ry; new Emin " << *stohchi.Emin << " Ry"
-                                 << std::endl;
+            GlobalV::ofs_running << "New Emax " << *p_hamilt_sto->emax << " Ry; new Emin " << *p_hamilt_sto->emin
+                                 << " Ry" << std::endl;
             change = false;
         }
     }
