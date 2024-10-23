@@ -8,7 +8,7 @@ ABACUS uses periodic boundary conditions for both crystals and finite systems. F
 
 ## Gamma-only Calculations
 
-In ABACUS, we offer th option of running gamma-only calculations for LCAO basis by setting [gamma_only](./input-main.md#gamma_only) to be 1. Due to details of implementation, gamma-only calculation will be slightly faster than running a non gamma-only calculation and explicitly setting gamma point to be the only the k-point, but the results should be consistent.
+In ABACUS, we offer the option of running gamma-only calculations for LCAO basis by setting [gamma_only](./input-main.md#gamma_only) to be 1. Due to details of implementation, gamma-only calculation will be slightly faster than running a non gamma-only calculation and explicitly setting gamma point to be the only the k-point, but the results should be consistent.
 
 > If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.
 
@@ -23,7 +23,7 @@ method to generate k-mesh, and the following is an example input k-point (`KPT`)
 K_POINTS //keyword for start
 0 //total number of k-point, `0' means generate automatically
 Gamma //which kind of Monkhorst-Pack method, `Gamma' or `MP'
-2 2 2 0 0 0 //first three number: subdivisions along recpri. vectors
+2 2 2 0 0 0 //first three number: subdivisions along reciprocal vectors
             //last three number: shift of the mesh
 ```
 
@@ -63,8 +63,8 @@ Direct //`Direct' or `Cartesian' coordinate
 ## Band structure calculations
 
 ABACUS uses specified high-symmetry directions of the Brillouin zone for band structure
-calculations. The third line of k-point file should start with ‘Line’ or ‘Line_Cartesian’ for
-line mode. ‘Line’ means the positions below are in Direct coordinates, while ‘Line_Cartesian’
+calculations. The third line of k-point file should start with 'Line' or 'Line_Cartesian' for
+line mode. 'Line' means the positions below are in Direct coordinates, while 'Line_Cartesian'
 means in Cartesian coordinates:
 
 ```

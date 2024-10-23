@@ -4,7 +4,6 @@
 #include <functional>
 
 #include <module_base/macros.h>
-#include <module_hsolver/diagh.h>
 #include <module_hsolver/kernels/math_kernel_op.h>
 
 #include <ATen/core/tensor.h>

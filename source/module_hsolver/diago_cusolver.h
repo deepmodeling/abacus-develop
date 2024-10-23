@@ -1,7 +1,8 @@
 #ifndef DIAGOCUSOLVER_H
 #define DIAGOCUSOLVER_H
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hsolver/kernels/cuda/diag_cusolver.cuh"
 // #include "module_hsolver/kernels/cuda/dngvd_op.cu"
