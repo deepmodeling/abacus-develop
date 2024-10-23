@@ -1204,7 +1204,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         ModuleBase::matrix occ_number_ks(this->pelec->wg);
         for(int ik=0; ik < occ_number_ks.nr; ++ik)
         {
-            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+            for(int inb=0; inb < occ_number_ks.nc; ++inb) { occ_number_ks(ik, inb) /= this->kv.wk[ik];
+}
         } 
         this->update_elec_rdmft(occ_number_ks, *(this->psi));
 
