@@ -360,7 +360,6 @@ template struct scal_op<float, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemv_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct gemm_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
@@ -375,7 +374,6 @@ template struct scal_op<double, base_device::DEVICE_CPU>;
 template struct axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct gemm_op<std::complex<double>, base_device::DEVICE_CPU>;
-template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -397,5 +395,9 @@ template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
+#endif
+#ifdef __DSP
+template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
 } // namespace hsolver
