@@ -26,26 +26,26 @@
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:158:9: note: declared private here
   158 |     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
       |         ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:246:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
-  246 |             Vxc_fromRI_d->cal_exx_ions();
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:235:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  235 |             Vxc_fromRI_d->cal_exx_ions();
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
    83 |         void cal_exx_ions(const bool write_cv = false);
       |              ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:250:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
-  250 |             Vxc_fromRI_c->cal_exx_ions();
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:239:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  239 |             Vxc_fromRI_c->cal_exx_ions();
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
    83 |         void cal_exx_ions(const bool write_cv = false);
       |              ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:675:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
-  675 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:664:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  664 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
    84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
       |          ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:703:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
-  703 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:692:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  692 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
    84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
@@ -68,35 +68,44 @@ In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmf
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_cell/klist.h:158:9: note: declared private here
   158 |     int nks;         // number of symmetry-reduced k points in this pool(processor, up+dw)
       |         ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:246:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
-  246 |             Vxc_fromRI_d->cal_exx_ions();
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:235:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  235 |             Vxc_fromRI_d->cal_exx_ions();
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
    83 |         void cal_exx_ions(const bool write_cv = false);
       |              ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:250:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
-  250 |             Vxc_fromRI_c->cal_exx_ions();
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:239:27: warning: 'cal_exx_ions' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  239 |             Vxc_fromRI_c->cal_exx_ions();
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:83:7: note: declared private here
    83 |         void cal_exx_ions(const bool write_cv = false);
       |              ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:675:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
-  675 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:664:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<double>' [-Wintel-compat]
+  664 |             Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
    84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
       |          ^
-/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:703:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
-  703 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_rdmft/rdmft.cpp:692:27: warning: 'cal_exx_elec' is a private member of 'Exx_LRI<std::complex<double>>' [-Wintel-compat]
+  692 |             Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
       |                           ^
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Exx_LRI.h:84:10: note: declared private here
    84 |     void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
       |          ^
+/public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_esolver/esolver_ks_lcao.cpp:1213:18: error: use of undeclared identifier 'T'
+ 1213 |         psi::Psi<T> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+      |                  ^
 In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/exx_opt_orb.cpp:11:
 In file included from /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.h:120:
 /public1/home/t6s000394/jghan/software/abacus-develop/rdmft-abacus/source/module_ri/Matrix_Orbs22.hpp:221:21: warning: 24 enumeration values not handled in switch: 'A1A2B1B2', 'A1A2B2B1', 'A1B1A2B2'... [-Wswitch]
   221 |                                                                                                         switch(matrix_order)
       |                                                                                                                ^~~~~~~~~~~~
+1 error generated.
+gmake[2]: *** [source/module_esolver/CMakeFiles/esolver.dir/esolver_ks_lcao.cpp.o] Error 1
+gmake[2]: *** Waiting for unfinished jobs....
 1 warning generated.
+gmake[1]: *** [source/module_esolver/CMakeFiles/esolver.dir/all] Error 2
+gmake[1]: *** Waiting for unfinished jobs....
 6 warnings generated.
 6 warnings generated.
+gmake: *** [all] Error 2

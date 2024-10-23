@@ -1210,7 +1210,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
         //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
         ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
-        psi::Psi<T> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+        psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
         dE_dWfc.zero_out();
 
         double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
