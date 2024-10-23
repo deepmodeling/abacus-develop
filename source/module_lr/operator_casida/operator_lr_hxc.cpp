@@ -17,7 +17,7 @@ inline std::complex<double> conj(std::complex<double> a) { return std::conj(a); 
 namespace LR
 {
     template<typename T, typename Device>
-    void OperatorLRHxc<T, Device>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik)const
+    void OperatorLRHxc<T, Device>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLRHxc", "act");
         const int& sl = ispin_ks[0];
