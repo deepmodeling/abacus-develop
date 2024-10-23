@@ -261,7 +261,7 @@ template <typename T, typename Device> struct gemm_op {
   void operator()(const Device *d, const char &transa, const char &transb,
                   const int &m, const int &n, const int &k, const T *alpha,
                   const T *a, const int &lda, const T *b, const int &ldb,
-                  const T *beta, T *c, const int &ldc);
+                  const T *beta, T *c, const int &ldc, bool usd_dsp = false);
 };
 
 template <typename T, typename Device> struct matrixTranspose_op {
