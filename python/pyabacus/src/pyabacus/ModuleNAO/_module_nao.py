@@ -11,7 +11,7 @@ from typing import overload, List, Protocol
 
 from ._nao_pack import RadialCollection as _RadialCollection, TwoCenterIntegrator as _TwoCenterIntegrator, NumericalRadial as _NumericalRadial
 
-class RadialCollectionProtocol(Protocol):
+class RadialCollection(_RadialCollection):
     def __init__(self) -> None: 
         """
         A class that holds all numerical radial functions of the same kind. 
@@ -20,7 +20,7 @@ class RadialCollectionProtocol(Protocol):
         of numerical atomic orbitals, or all Kleinman-Bylander beta functions from 
         all elements involved in a calculation.
         """
-        pass
+        super().__init__()
     
     def build(
         self, 
@@ -31,7 +31,7 @@ class RadialCollectionProtocol(Protocol):
         """
         Builds the collection from (orbital) files.
         """
-        pass
+        super().build(nfile, file_list, ftype)
     
     def set_transformer(
         self, 
@@ -41,7 +41,7 @@ class RadialCollectionProtocol(Protocol):
         """
         Sets a spherical Bessel transformers for all RadialSet objects.
         """
-        pass
+        super().set_transformer(sbt, update)
     
     def set_uniform_grid(
         self, 
@@ -54,7 +54,7 @@ class RadialCollectionProtocol(Protocol):
         """
         Sets a common uniform grid for all RadialSet objects.
         """
-        pass
+        super().set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft)
     
     def set_grid(
         self, 
@@ -66,37 +66,57 @@ class RadialCollectionProtocol(Protocol):
         """
         Sets a common grid for all RadialSet objects
         """
-        pass
+        super().set_grid(for_r_space, ngrid, grid, mode)
     
-    def __call__(self, itype: int, l: int, izeta: int) -> 'NumericalRadial': ...
-    def symbol(self, itype: int) -> str: ...
+    def __call__(
+        self, 
+        itype: int, 
+        l: int, 
+        izeta: int
+    ) -> 'NumericalRadial': 
+        return super().__call__(itype, l, izeta)
+        
+    def symbol(self, itype: int) -> str: 
+        return super().symbol(itype)
     
     @property
-    def ntype(self) -> int: ...
+    def ntype(self) -> int: 
+        return super().ntype
     
-    @overload
-    def lmax(self, itype: int) -> int: ...
+    def lmax(self, itype: int) -> int: 
+        return super().lmax(itype)
+    
     @property
-    def lmax(self) -> int: ...
+    def lmax(self) -> int: 
+        return super().lmax
     
-    @overload
-    def rcut_max(self, itype: int) -> float: ...
+    def rcut_max(self, itype: int) -> float: 
+        return super().rcut_max(itype)
+
     @property
-    def rcut_max(self) -> float: ...
+    def rcut_max(self) -> float: 
+        return super().rcut_max
     
-    def nzeta(self, itype: int, l: int) -> int: ...
+    def nzeta(self, itype: int, l: int) -> int: 
+        return super().nzeta(itype, l)
     
     @overload
     def nzeta_max(self, itype: int) -> int: ...
     @overload
     def nzeta_max(self) -> int: ...
     
+    def nzeta_max(self, *args, **kwargs): 
+        return super().nzeta_max(*args, **kwargs)
+    
     @overload
     def nchi(self, itype: int) -> int: ...
     @overload
     def nchi(self) -> int: ...
     
-class TwoCenterIntegratorProtocol(Protocol):
+    def nchi(self, *args, **kwargs):
+        return super().nchi(*args, **kwargs)
+    
+class TwoCenterIntegrator(_TwoCenterIntegrator):
     def __init__(self) -> None: 
         """
         A class to compute two-center integrals.
@@ -120,7 +140,7 @@ class TwoCenterIntegratorProtocol(Protocol):
         Kleinman-Bylander nonlocal projectors, the overlap & kinetic integrals between all numerical atomic orbitals, etc.
         This is done by tabulating the radial part of the integrals on an r-space grid and the real Gaunt coefficients in advance.
         """
-        pass
+        super().__init__()
     
     def tabulate(
         self, 
@@ -140,7 +160,7 @@ class TwoCenterIntegratorProtocol(Protocol):
         nr (int): Number of r-space grid points.
         cutoff (float): r-space cutoff radius.
         """
-        pass
+        super().tabulate(bra, ket, op, nr, cutoff)
     
     def calculate(
         self, 
@@ -196,7 +216,7 @@ class TwoCenterIntegratorProtocol(Protocol):
         grad_out_array : array_like
             Gradient of the two-center integral.
         """
-        pass
+        return super().calculate(itype1, l1, izeta1, m1, itype2, l2, izeta2, m2, pvR, cal_grad)
     
     def snap(
         self, 
@@ -214,9 +234,9 @@ class TwoCenterIntegratorProtocol(Protocol):
         This function calculates the two-center integrals (and optionally their gradients)
         between one orbital and all orbitals of a certain type from the other collection.
         """
-        pass
+        return super().snap(itype1, l1, izeta1, m1, itype2, pvR, deriv)
 
-class NumericalRadialProtocol(Protocol):
+class NumericalRadial(_NumericalRadial):
     def __init__(self) -> None: 
         """
         A class that represents a numerical radial function.
@@ -226,7 +246,7 @@ class NumericalRadialProtocol(Protocol):
         A NumericalRadial object can be initialized by "build", which requires the angular momentum, the number of grid points, the grid and the corresponding values. Grid does not have to be uniform. One can initialize the object in either r or k space. After initialization, one can set the
         grid in the other space via set_grid or set_uniform_grid. Values in the other space are automatically computed by a spherical Bessel transform.
         """
-        pass
+        super().__init__()
     
     def build(
         self, 
@@ -271,7 +291,7 @@ class NumericalRadialProtocol(Protocol):
         -----
         init_sbt is only useful when the internal SphericalBesselTransformer (sbt_) is null-initialized; The function will NOT reset sbt_ if it is already usable.
         """
-        pass
+        super().build(l, for_r_space, ngrid, grid, value, p, izeta, symbol, itype, init_sbt)
     
     def set_transformer(
         self, 
@@ -294,7 +314,7 @@ class NumericalRadialProtocol(Protocol):
             *  1: calls a forward transform;
             * -1: calls a backward transform.
         """
-        pass
+        super().set_transformer(sbt, update)
     
     def set_grid(
         self, 
@@ -325,7 +345,7 @@ class NumericalRadialProtocol(Protocol):
                 With this option, it is an error if the other space does not
                 have a grid.
         """
-        pass
+        super().set_grid(for_r_space, ngrid, grid, mode)
     
     def set_uniform_grid(
         self, 
@@ -355,7 +375,7 @@ class NumericalRadialProtocol(Protocol):
         mode : char
             Specifies how values are updated, could be 'i' or 't'.
         """
-        pass
+        super().set_uniform_grid(for_r_space, ngrid, cutoff, mode, enable_fft)
     
     def set_value(
         self, 
@@ -372,9 +392,15 @@ class NumericalRadialProtocol(Protocol):
         -------
         This function does not check the index bound; use with care!
         """
-        pass
+        super().set_value(for_r_space, value, p)
     
-    def wipe(self, r_space: bool = True, k_space: bool = True) -> None: ...
+    def wipe(
+        self, 
+        r_space: bool = True, 
+        k_space: bool = True
+    ) -> None: 
+        super().wipe(r_space, k_space)
+        
     def normalize(self, for_r_space: bool = True) -> None: 
         """
         Normalizes the radial function.
@@ -385,48 +411,63 @@ class NumericalRadialProtocol(Protocol):
 
         where x is r or k. The integral is evaluated with Simpson's rule. Values in the other space are updated automatically via a spherical Bessel transform.
         """
-        pass
+        super().normalize(for_r_space)
     
     @property
-    def symbol(self) -> str: ...
+    def symbol(self) -> str: 
+        return super().symbol
     @property
-    def itype(self) -> int: ...
+    def itype(self) -> int: 
+        return super().itype
     @property
-    def izeta(self) -> int: ...
+    def izeta(self) -> int: 
+        return super().izeta
     @property
-    def l(self) -> int: ...
+    def l(self) -> int: 
+        return super().l
     @property
-    def nr(self) -> int: ...
+    def nr(self) -> int: 
+        return super().nr
     @property
-    def nk(self) -> int: ...
+    def nk(self) -> int: 
+        return super().nk
     @property
-    def rcut(self) -> float: ...
+    def rcut(self) -> float: 
+        return super().rcut
     @property
-    def kcut(self) -> float: ...
+    def kcut(self) -> float: 
+        return super().kcut
     @property
-    def rmax(self) -> float: ...
+    def rmax(self) -> float: 
+        return super().rmax
     @property
-    def kmax(self) -> float: ...
+    def kmax(self) -> float: 
+        return super().kmax
     @property
-    def pr(self) -> float: ...
+    def pr(self) -> float: 
+        return super().pr
     @property
-    def pk(self) -> float: ...
+    def pk(self) -> float: 
+        return super().pk
     @property
-    def sbt(self) -> SphericalBesselTransformer: ...
+    def sbt(self) -> SphericalBesselTransformer: 
+        return super().sbt
     @property
-    def rgrid(self) -> NDArray[np.float64]: ...
+    def rgrid(self) -> NDArray[np.float64]: 
+        return super().rgrid
     @property
-    def kgrid(self) -> NDArray[np.float64]: ...
+    def kgrid(self) -> NDArray[np.float64]: 
+        return super().kgrid
     @property
-    def rvalue(self) -> NDArray[np.float64]: ...
+    def rvalue(self) -> NDArray[np.float64]: 
+        return super().rvalue
     @property
-    def kvalue(self) -> NDArray[np.float64]: ...
+    def kvalue(self) -> NDArray[np.float64]: 
+        return super().kvalue
     @property
-    def is_fft_compliant(self) -> bool: ...
+    def is_fft_compliant(self) -> bool: 
+        return super().is_fft_compliant
 
-RadialCollection: RadialCollectionProtocol = _RadialCollection 
-TwoCenterIntegrator: TwoCenterIntegratorProtocol = _TwoCenterIntegrator  
-NumericalRadial: NumericalRadialProtocol = _NumericalRadial  
 
     
     

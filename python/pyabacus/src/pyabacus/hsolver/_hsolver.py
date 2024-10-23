@@ -11,16 +11,17 @@ from typing import Tuple, List, Union, Callable, Protocol
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
 from ._hsolver_pack import diago_dav_subspace, diago_david
 
-class Diag_Comm_Info_Protocol(Protocol):
-    def __init__(self, rank: int, nproc: int) -> None: ...
+class diag_comm_info(_diag_comm_info):
+    def __init__(self, rank: int, nproc: int):
+        super().__init__(rank, nproc)
     
     @property
-    def rank(self) -> int: ...
+    def rank(self) -> int:
+        return super().rank
     
     @property
-    def nproc(self) -> int: ...
-
-diag_comm_info: Diag_Comm_Info_Protocol = _diag_comm_info
+    def nproc(self) -> int:
+        return super().nproc
 
 def dav_subspace(
     mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],

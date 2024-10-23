@@ -219,7 +219,7 @@ void bind_base_math(py::module& m)
                                                                     static_cast<double*>(w_info.ptr));
         });
     py::class_<ModuleBase::SphericalBesselTransformer>(m, "SphericalBesselTransformer")
-    .def(py::init<>());
+        .def(py::init<>());
 }
 
 PYBIND11_MODULE(_base_pack, m)

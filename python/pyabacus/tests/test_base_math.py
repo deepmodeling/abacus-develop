@@ -11,6 +11,7 @@ def test_sphbes():
     # test for sphbesj
     assert s.sphbesj(1, 0.0) == 0.0
     assert s.sphbesj(0, 0.0) == 1.0
+    assert s.sphbesj(1, np.array([0.0]), 1, 1, np.zeros(1)) == None
 
 def test_sbt():
     sbt = base.SphericalBesselTransformer()

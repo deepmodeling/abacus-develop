@@ -15,7 +15,6 @@ set(ABACUS_SOURCE_DIR "${PROJECT_SOURCE_DIR}/../../source")
 set(BASE_PATH "${ABACUS_SOURCE_DIR}/module_base")
 set(NAO_PATH "${ABACUS_SOURCE_DIR}/module_basis/module_nao")
 set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/module_hsolver")
-set(HAMILT_PATH "${ABACUS_SOURCE_DIR}/module_hamilt_general")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/module_psi")
 set(ENABLE_LCAO ON)
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
@@ -86,31 +85,19 @@ set(ORB_BINARY_DIR "${PROJECT_SOURCE_DIR}/build/orb")
 add_subdirectory(${ABACUS_SOURCE_DIR}/module_basis/module_ao ${ORB_BINARY_DIR})
 # set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-
-# list(APPEND _sources
-#     ${PROJECT_SOURCE_DIR}/src/py_abacus.cpp
-#     # ${PROJECT_SOURCE_DIR}/src/py_base_math.cpp
-#     # ${PROJECT_SOURCE_DIR}/src/py_m_nao.cpp
-#     # ${PROJECT_SOURCE_DIR}/src/py_hsolver.cpp
-#     )
-# pybind11_add_module(_core MODULE ${_sources})
-# target_link_libraries(_core PRIVATE pybind11::headers)
-# target_compile_definitions(_core PRIVATE VERSION_INFO=${PROJECT_VERSION})
-
 # set RPATH
 execute_process(
   COMMAND "${PYTHON_EXECUTABLE}" -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())"
   OUTPUT_VARIABLE PYTHON_SITE_PACKAGES
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+
 # set package name to pyabacus
 set(TARGET_PACK pyabacus)
 set(CMAKE_INSTALL_RPATH "${PYTHON_SITE_PACKAGES}/${TARGET_PACK}")
 
+# add subdirectories for submodules
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/hsolver)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleBase)
 add_subdirectory(${PROJECT_SOURCE_DIR}/src/ModuleNAO)
-
-# set_target_properties(_core PROPERTIES INSTALL_RPATH "$ORIGIN")
-# install(TARGETS _core DESTINATION ${TARGET_PACK})
 

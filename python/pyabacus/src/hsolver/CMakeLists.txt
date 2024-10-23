@@ -11,8 +11,7 @@ list(APPEND _diago
     ${BASE_PATH}/kernels/math_op.cpp
     ${BASE_PATH}/module_device/device.cpp
     ${BASE_PATH}/module_device/memory_op.cpp
-
-    # ${HAMILT_PATH}/operator.cpp
+    
     ${PSI_PATH}/psi.cpp
   )
 add_library(diagopack SHARED 
