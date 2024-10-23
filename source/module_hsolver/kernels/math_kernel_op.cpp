@@ -275,7 +275,7 @@ struct gemm_op<T, base_device::DEVICE_CPU>
                     const int& ldb,
                     const T* beta,
                     T* c,
-                    const int& ldc,)
+                    const int& ldc)
     {
         BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc);
     }
