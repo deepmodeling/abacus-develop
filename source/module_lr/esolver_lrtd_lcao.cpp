@@ -8,7 +8,7 @@
 #include <memory>
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/print_info.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_lr/utils/lr_util_print.h"
@@ -245,7 +245,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     }
     this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-    Print_Info::setup_parameters(ucell, this->kv);
+    ModuleIO::setup_parameters(ucell, this->kv);
 
     this->parameter_check();
 
@@ -313,6 +313,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         PARAM.inp.test_atom_input);
     this->set_gint();
     this->gint_->gridt = &this->gt_;
+    this->gint_->reset_DMRGint(1);
 
     // (3) Periodic condition search for each grid.
     double dr_uniform = 0.001;
@@ -372,7 +373,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->startz_current,
         &ucell,
         &orb);
-    this->gint_->initialize_pvpR(ucell, &GlobalC::GridD);
+    this->gint_->initialize_pvpR(ucell, &GlobalC::GridD, 1);    // always use nspin=1 for transition density
 
     // if EXX from scratch, init 2-center integral and calculate Cs, Vs 
 #ifdef __EXX
@@ -595,13 +596,11 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
-        if (ModuleIO::read_rho(
+        if (ModuleIO::read_cube(
 #ifdef __MPI
             & (GlobalC::Pgrid),
 #endif
             GlobalV::MY_RANK,
-            PARAM.inp.esolver_type,
-            GlobalV::RANK_IN_STOGROUP,
             is,
             GlobalV::ofs_running,
             this->nspin,

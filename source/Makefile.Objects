@@ -121,6 +121,7 @@ OBJS_MAIN=main.o\
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
+    blas_connector.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
@@ -483,7 +484,6 @@ OBJS_IO=input_conv.o\
     output.o\
     print_info.o\
     read_cube.o\
-    read_rho.o\
     rhog_io.o\
     read_exit_file.o\
     read_wfc_pw.o\
@@ -568,12 +568,9 @@ OBJS_LCAO=evolve_elec.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
 	  FORCE_k.o\
-	  fvl_dphi_gamma.o\
-	  fvl_dphi_k.o\
-	  fedm_gamma.o\
-	  fedm_k.o\
-	  ftvnl_dphi_gamma.o\
-	  ftvnl_dphi_k.o\
+      stress_tools.o\
+      edm.o\
+      pulay_force_stress_center2.o\
 	  fvnl_dbeta_gamma.o\
 	  fvnl_dbeta_k.o\
 	  grid_init.o\

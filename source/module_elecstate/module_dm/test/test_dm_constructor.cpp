@@ -127,7 +127,7 @@ TEST_F(DMTest, DMConstructor_nspin1)
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
     int nspin = 1;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // compare
     EXPECT_EQ(DM.get_DMK_nks(), kv->get_nks());
     EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);
@@ -196,7 +196,7 @@ TEST_F(DMTest, DMConstructor_nspin2)
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     // compare
     EXPECT_EQ(DM.get_DMK_nks(), kv->get_nks());
     EXPECT_EQ(DM.get_DMK_nrow(), paraV->nrow);

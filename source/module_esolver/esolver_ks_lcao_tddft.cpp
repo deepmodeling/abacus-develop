@@ -2,7 +2,6 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dipole_io.h"
-#include "module_io/rho_io.h"
 #include "module_io/td_current_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
@@ -233,7 +232,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
 void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
-    if (this->conv_elec)
+    if (this->conv_esolver)
     {
         if (!PARAM.globalv.gamma_only_local)
         {
@@ -282,8 +281,8 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
     }
 
-    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao && (this->conv_elec || iter == PARAM.inp.scf_nmax)
-        && (istep % PARAM.inp.out_interval == 0))
+    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao
+        && (this->conv_esolver || iter == PARAM.inp.scf_nmax) && (istep % PARAM.inp.out_interval == 0))
     {
         ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
                                 this->psi[0],
@@ -295,7 +294,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     // Calculate new potential according to new Charge Density
-    if (!this->conv_elec)
+    if (!this->conv_esolver)
     {
         if (PARAM.inp.nspin == 4)
         {
@@ -316,7 +315,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
-    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_elec)
+    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_esolver)
     {
         if (this->psi_laststep == nullptr)
         {
@@ -378,7 +377,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 
     // print "eigen value" for tddft
-    if (this->conv_elec)
+    if (this->conv_esolver)
     {
         GlobalV::ofs_running << "---------------------------------------------------------------"
                                 "---------------------------------"

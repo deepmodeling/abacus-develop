@@ -84,6 +84,7 @@ class TestHSolverPW : public ::testing::Test {
 TEST_F(TestHSolverPW, solve) {
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
+    elecstate_test.pot = new elecstate::Potential;
     this->ekb_f.resize(2);
     psi_test_cf.resize(1, 2, 3);
     psi_test_cd.resize(1, 2, 3);
@@ -93,13 +94,10 @@ TEST_F(TestHSolverPW, solve) {
     EXPECT_EQ(this->hs_f.initialed_psi, false);
     EXPECT_EQ(this->hs_d.initialed_psi, false);
 
-    std::vector<bool> is_occupied(1 * 2, true);
-
     this->hs_f.solve(&hamilt_test_f,
                      psi_test_cf,
                      &elecstate_test,
                      elecstate_test.ekb.c,
-                     is_occupied,
 
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
@@ -118,7 +116,6 @@ TEST_F(TestHSolverPW, solve) {
                      psi_test_cd,
                      &elecstate_test,
                      elecstate_test.ekb.c,
-                     is_occupied,
                      
                      GlobalV::RANK_IN_POOL,
                      GlobalV::NPROC_IN_POOL,
@@ -220,6 +217,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     pwbk.nks = 1;
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
+    elecstate_test.pot = new elecstate::Potential;
     // 1 kpt, 2 bands, 3 basis
     psi_test_cf.resize(1, 2, 3);
     psi_test_cd.resize(1, 2, 3);

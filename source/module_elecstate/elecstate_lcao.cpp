@@ -62,7 +62,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
@@ -113,7 +113,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
 
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
 
     this->gint_gamma->cal_gint(&inout);
 
@@ -131,7 +131,8 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 template <typename TK>
 void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
 {
-    this->DM = new DensityMatrix<TK, double>(kv, paraV, nspin);
+    const int nspin_dm = nspin == 2 ? 2 : 1;
+    this->DM = new DensityMatrix<TK, double>(paraV, nspin_dm, kv->kvec_d, kv->get_nks() / nspin_dm);
 }
 
 template <>
@@ -177,7 +178,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho);
+    Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {

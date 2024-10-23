@@ -154,7 +154,7 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 
 template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
-                                const std::function<void(T*, T*, const int, const int, const int)>& spsi_func,
+                                const std::function<void(T*, T*, const int, const int)>& spsi_func,
                                 const int ld_psi,
                                 T *psi_in,
                                 Real* eigenvalue_in,

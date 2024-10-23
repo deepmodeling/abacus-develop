@@ -73,12 +73,7 @@ class ESolver_KS : public ESolver_FP
 		virtual void update_pot(const int istep, const int iter) {};
 
     protected:
-
-		// Print the headline on the screen:
-		// ITER   ETOT(eV)       EDIFF(eV)      DRHO    TIME(s) 
-		void print_head();
-
-		// Print inforamtion in each iter
+        // Print inforamtion in each iter
 		// G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
 		// for metaGGA
 		// ITER   ETOT(eV)       EDIFF(eV)      DRHO       DKIN       TIME(s) 
@@ -89,13 +84,6 @@ class ESolver_KS : public ESolver_FP
 				const double dkin, 
 				const double duration, 
 				const double ethr);
-
-		// Write the headline in the running_log file
-		// "PW/LCAO" ALGORITHM --------------- ION=   1  ELEC=   1--------------------------------
-		void write_head(
-				std::ofstream& ofs_running, 
-				const int istep, 
-				const int iter);
 
         //! Hamiltonian
 		hamilt::Hamilt<T, Device>* p_hamilt = nullptr;

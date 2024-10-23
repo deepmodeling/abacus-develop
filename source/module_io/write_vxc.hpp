@@ -238,13 +238,7 @@ void write_Vxc(const int nspin,
     for (int is = 0; is < nspin0; ++is)
     {
         vxcs_op_ao[is] = new hamilt::Veff<hamilt::OperatorLCAO<TK, TR>>(gint,
-                                                                        &vxc_k_ao,
-                                                                        kv.kvec_d,
-                                                                        potxc,
-                                                                        &vxcs_R_ao[is],
-                                                                        &ucell,
-                                                                        orb_cutoff,
-                                                                        &gd);
+            &vxc_k_ao, kv.kvec_d, potxc, &vxcs_R_ao[is], &ucell, orb_cutoff, &gd, nspin);
 
         vxcs_op_ao[is]->contributeHR();
     }
@@ -284,10 +278,10 @@ void write_Vxc(const int nspin,
             vexxonly_op_ao.contributeHk(ik);
             std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
+            // ======test=======
+            // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
+            // ======test=======
         }
-        // ======test=======
-        // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
-        // ======test=======
 #endif
         if (PARAM.inp.dft_plus_u)
         {

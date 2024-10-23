@@ -24,7 +24,7 @@ namespace hsolver {
  * @tparam Device The device used for calculations (e.g., cpu or gpu).
  */
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
-class DiagoBPCG : public DiagH<T, Device>
+class DiagoBPCG
 {
   private:
     // Note GetTypeReal<T>::type will 
@@ -56,15 +56,15 @@ class DiagoBPCG : public DiagH<T, Device>
     void init_iter(const psi::Psi<T, Device> &psi_in);
 
     /**
-     * @brief Diagonalize the Hamiltonian using the CG method.
+     * @brief Diagonalize the Hamiltonian using the BPCG method.
      *
-     * This function is an override function for the CG method. It is called by the HsolverPW::solve() function.
+     * This function is called by the HsolverPW::solve() function.
      *
      * @param phm_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in);
 
 
   private:

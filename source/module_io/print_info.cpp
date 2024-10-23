@@ -3,14 +3,12 @@
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
 
-Print_Info::Print_Info(){}
-
-Print_Info::~Print_Info(){}
-
-
-void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
+namespace ModuleIO
 {
-	ModuleBase::TITLE("Print_Info","setup_parameters");
+
+void setup_parameters(UnitCell& ucell, K_Vectors& kv)
+{
+    ModuleBase::TITLE("ModuleIO", "setup_parameters");
 
     if(PARAM.inp.calculation=="scf" || PARAM.inp.calculation=="relax" || PARAM.inp.calculation=="cell-relax" || PARAM.inp.calculation=="nscf"
 	        || PARAM.inp.calculation=="get_pchg" || PARAM.inp.calculation=="get_wf" || PARAM.inp.calculation=="md")
@@ -168,7 +166,7 @@ void Print_Info::setup_parameters(UnitCell &ucell, K_Vectors &kv)
 	return;
 }
 
-void Print_Info::print_time(time_t &time_start, time_t &time_finish)
+void print_time(time_t& time_start, time_t& time_finish)
 {
     // print out information before ABACUS ends
 	std::cout << "\n START  Time  : " << ctime(&time_start);
@@ -189,7 +187,7 @@ void Print_Info::print_time(time_t &time_start, time_t &time_finish)
 }
 
 /*
-void Print_Info::print_scf(const int &istep, const int &iter)
+void ModuleIO::print_scf(const int &istep, const int &iter)
 {
     if(PARAM.inp.basis_type=="pw")
     {
@@ -205,21 +203,21 @@ void Print_Info::print_scf(const int &istep, const int &iter)
         GlobalV::ofs_running << "ELEC = " << std::setw(4) << unsigned(iter);
     }
     else if(PARAM.inp.calculation=="relax" || PARAM.inp.calculation=="cell-relax")
-	{
-		GlobalV::ofs_running << "ION = " << std::setw(4) << unsigned(istep+1)
-		    				 << "  ELEC = " << std::setw(4) << unsigned(iter);
-	}
-	else if(PARAM.inp.calculation=="md")
-	{
-		GlobalV::ofs_running << "MD = " << std::setw(4) << unsigned(istep+1)
-		    				 << "  ELEC = " << std::setw(4) << unsigned(iter);
-	}
+    {
+        GlobalV::ofs_running << "ION = " << std::setw(4) << unsigned(istep+1)
+                             << "  ELEC = " << std::setw(4) << unsigned(iter);
+    }
+    else if(PARAM.inp.calculation=="md")
+    {
+        GlobalV::ofs_running << "MD = " << std::setw(4) << unsigned(istep+1)
+                             << "  ELEC = " << std::setw(4) << unsigned(iter);
+    }
 
     GlobalV::ofs_running << " --------------------------------\n";
 }
 */
 
-void Print_Info::print_screen(const int &stress_step, const int &force_step, const int &istep)
+void print_screen(const int& stress_step, const int& force_step, const int& istep)
 {
     std::cout << " -------------------------------------------" << std::endl;
 	GlobalV::ofs_running << "\n -------------------------------------------" << std::endl;
@@ -263,3 +261,5 @@ void Print_Info::print_screen(const int &stress_step, const int &force_step, con
     std::cout << " -------------------------------------------" << std::endl;
     GlobalV::ofs_running << " -------------------------------------------" << std::endl;
 }
+
+} // namespace ModuleIO

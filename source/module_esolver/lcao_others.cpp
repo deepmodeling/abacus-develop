@@ -27,7 +27,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX
@@ -110,13 +109,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big->nbz,
                       PARAM.globalv.gamma_only_local,
                       PARAM.inp.nbands_istate,
-                      PARAM.inp.bands_to_print,
+                      PARAM.inp.out_pchg,
                       PARAM.inp.nbands,
                       PARAM.inp.nelec,
                       PARAM.inp.nspin,
                       PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
-                      GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
                       &GlobalC::GridD,
@@ -140,13 +138,12 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->pw_big->nbz,
                       PARAM.globalv.gamma_only_local,
                       PARAM.inp.nbands_istate,
-                      PARAM.inp.bands_to_print,
+                      PARAM.inp.out_pchg,
                       PARAM.inp.nbands,
                       PARAM.inp.nelec,
                       PARAM.inp.nspin,
                       PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
-                      GlobalV::MY_RANK,
                       GlobalV::ofs_warning,
                       &GlobalC::ucell,
                       &GlobalC::GridD,
@@ -174,7 +171,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,
-                      PARAM.inp.bands_to_print,
+                      PARAM.inp.out_wfc_norm,
+                      PARAM.inp.out_wfc_re_im,
                       PARAM.inp.nbands,
                       PARAM.inp.nspin,
                       PARAM.globalv.nlocal,
@@ -193,7 +191,8 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       this->kv,
                       PARAM.inp.nelec,
                       PARAM.inp.nbands_istate,
-                      PARAM.inp.bands_to_print,
+                      PARAM.inp.out_wfc_norm,
+                      PARAM.inp.out_wfc_re_im,
                       PARAM.inp.nbands,
                       PARAM.inp.nspin,
                       PARAM.globalv.nlocal,

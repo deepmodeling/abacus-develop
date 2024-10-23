@@ -90,9 +90,9 @@ TEST(OutputEfermiTest, TestConvergence) {
 TEST(OutputAfterRelaxTest, TestConvergence)
 {
     bool conv_ion = true;
-    bool conv_elec = false;
+    bool conv_esolver = false;
     std::ofstream ofs_running("test_output_after_relax.txt");
-    ModuleIO::output_after_relax(conv_ion, conv_elec, ofs_running);
+    ModuleIO::output_after_relax(conv_ion, conv_esolver, ofs_running);
     ofs_running.close();
 
     std::ifstream ifs_running("test_output_after_relax.txt");

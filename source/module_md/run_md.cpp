@@ -55,7 +55,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         }
         else
         {
-            Print_Info::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
+            ModuleIO::print_screen(0, 0, mdrun->step_ + mdrun->step_rst_);
             mdrun->first_half(GlobalV::ofs_running);
 
             /// update force and virial due to the update of atom positions
