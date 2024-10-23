@@ -50,8 +50,6 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
             this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);
         }
 
-        stoiter.stohchi.current_ik = ik;
-
 #ifdef __MPI
         if (nbands > 0)
         {
@@ -72,7 +70,6 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         {
             pHamilt->updateHk(ik);
         }
-        stoiter.stohchi.current_ik = ik;
         stoiter.calPn(ik, stowf);
     }
 

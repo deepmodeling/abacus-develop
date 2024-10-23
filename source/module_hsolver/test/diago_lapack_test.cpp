@@ -127,7 +127,6 @@ class DiagoLapackPrepare
     std::vector<T> h;
     std::vector<T> s;
     HamiltTEST<T> hmtest;
-    // hsolver::DiagH<T>* dh = nullptr;
     psi::Psi<T> psi;
     std::vector<double> e_solver;
     std::vector<double> e_lapack;

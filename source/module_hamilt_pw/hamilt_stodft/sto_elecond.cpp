@@ -25,10 +25,10 @@ Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in,
     : EleCond(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(p_hamilt_in);
     this->p_stowf = p_stowf_in;
     this->nbands_ks = p_psi_in->get_nbands();
     this->nbands_sto = p_stowf_in->nchi;
-    this->stohchi.init(p_wfcpw_in, p_kv_in, &stoche.emin_sto, &stoche.emax_sto);
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
 }
 
@@ -91,15 +91,14 @@ void Sto_EleCond::decide_nche(const double dt,
 
     int nche_new = 0;
 loop:
-    // re-set Emin & Emax both in stohchi & stofunc
+    // re-set Emin & Emax both in p_hamilt_sto & stofunc
     check_che(std::max(nche_old * 2, fd_nche),
               try_emin,
               try_emax,
               this->nbands_sto,
               this->p_kv,
               this->p_stowf,
-              this->p_hamilt,
-              this->stohchi);
+              this->p_hamilt_sto);
 
     // second try to find nche with new Emin & Emax
     getnche(nche_new);
@@ -107,8 +106,8 @@ loop:
     if (nche_new > nche_old * 2)
     {
         nche_old = nche_new;
-        try_emin = *stohchi.Emin;
-        try_emax = *stohchi.Emax;
+        try_emin = *p_hamilt_sto->emin;
+        try_emax = *p_hamilt_sto->emax;
         goto loop;
     }
 
@@ -177,8 +176,8 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     psi::Psi<std::complex<float>> f_rightchi(1, perbands_sto, npwx, p_kv->ngk.data());
     psi::Psi<std::complex<float>> f_right_hchi(1, perbands_sto, npwx, p_kv->ngk.data());
 
-    this->stohchi.hchi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
-    this->stohchi.hchi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
+    this->p_hamilt_sto->hPsi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
+    this->p_hamilt_sto->hPsi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
     convert_psi(rightchi, f_rightchi);
     convert_psi(right_hchi, f_right_hchi);
     right_hchi.resize(1, 1, 1);
@@ -387,8 +386,9 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
 
         remain -= tmpnb;
         startnb += tmpnb;
-        if (remain == 0)
+        if (remain == 0) {
             break;
+}
     }
 
     for (int id = 0; id < ndim; ++id)
@@ -589,7 +589,6 @@ void Sto_EleCond::sKG(const int& smear_type,
         {
             this->p_hamilt->updateHk(ik);
         }
-        this->stohchi.current_ik = ik;
         const int npw = p_kv->ngk[ik];
 
         // get allbands_ks
@@ -733,8 +732,8 @@ void Sto_EleCond::sKG(const int& smear_type,
 
         auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
         che.calcoef_real(nroot_fd);
-        auto hchi_norm = std::bind(&Stochastic_hchi::hchi_norm,
-                                   &stohchi,
+        auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
+                                   p_hamilt_sto,
                                    std::placeholders::_1,
                                    std::placeholders::_2,
                                    std::placeholders::_3);
