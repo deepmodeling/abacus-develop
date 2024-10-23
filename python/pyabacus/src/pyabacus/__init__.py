@@ -14,3 +14,5 @@ def __getattr__(attr):
     elif attr == "hsolver":
         import pyabacus.hsolver as hsolver
         return hsolver
+    else:
+        raise AttributeError(f"module {__name__} has no attribute {attr}")
