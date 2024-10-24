@@ -48,7 +48,6 @@ void Matrix_Orbs22::init(const int mode, const LCAO_Orbitals& orb, const double 
     this->MGT.init_Gaunt(2 * Lmax + 1);
 
     ModuleBase::timer::tick("Matrix_Orbs22", "init");
-    std::cout << "Matrix_Orbs22::init()::done" << std::endl;
 }
 
 void Matrix_Orbs22::init_radial(const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A1,
@@ -113,7 +112,7 @@ void Matrix_Orbs22::init_radial(const LCAO_Orbitals& orb_A1,
 
 void Matrix_Orbs22::init_radial_table()
 {
-    ModuleBase::TITLE("Matrix_Orbs22", "init_radial");
+    ModuleBase::TITLE("Matrix_Orbs22", "init_radial_table");
     ModuleBase::timer::tick("Matrix_Orbs22", "init_radial_table");
     for (auto& coA: center2_orb22_s)
         for (auto& coB: coA.second)
@@ -132,7 +131,7 @@ void Matrix_Orbs22::init_radial_table()
 void Matrix_Orbs22::init_radial_table(const std::map<size_t, std::map<size_t, std::set<double>>>& Rs)
 {
     ModuleBase::TITLE("Matrix_Orbs22", "init_radial_table_Rs");
-    ModuleBase::timer::tick("Matrix_Orbs22", "init_radial_table");
+    ModuleBase::timer::tick("Matrix_Orbs22", "init_radial_table_Rs");
     for (const auto& RsA: Rs)
         for (const auto& RsB: RsA.second)
         {
@@ -168,5 +167,5 @@ void Matrix_Orbs22::init_radial_table(const std::map<size_t, std::map<size_t, st
                                                 coJ.second.init_radial_table();
             }
         }
-    ModuleBase::timer::tick("Matrix_Orbs22", "init_radial_table");
+    ModuleBase::timer::tick("Matrix_Orbs22", "init_radial_table_Rs");
 }
