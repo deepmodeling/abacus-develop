@@ -508,6 +508,7 @@ OBJS_IO=input_conv.o\
     write_dipole.o\
     td_current_io.o\
     write_wfc_r.o\
+    write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
     para_json.o\

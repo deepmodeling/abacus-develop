@@ -314,6 +314,7 @@ struct Input_para
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
     std::vector<int> out_chg = {0, 3};    ///< output charge density. 0: no; 1: yes
+    std::vector<int> out_xc_r = {-1, 3};  ///< output xc(r). -1: no; >=0: output the order of xc(r)
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     bool out_wfc_r = false;               ///< 0: no; 1: yes

@@ -75,22 +75,30 @@ void read_cube_core_mismatch(
     const int ny_read,
     const int nz_read);
 
+#ifdef __MPI
 // when MPI:
-//      write data[ixy*nplane+iz] to file as order (ixy,iz)
-// when serial:
-//      write data[iz*nxy+ixy] to file as order (ixy,iz)
+//      write data[ixy*nplane+iz*nld] to file as order (ixy,iz)
 void write_cube_core(
     std::ofstream &ofs_cube,
-#ifdef __MPI
     const int bz,
     const int nbz,
     const int nplane,
     const int startz_current,
-#endif
+    const double*const data,
+    const int nxy,
+    const int nz,
+    const int nld,
+    const int n_data_newline);
+#else
+// when serial:
+//      write data[iz*nxy+ixy] to file as order (ixy,iz)
+void write_cube_core(
+    std::ofstream &ofs_cube,
     const double*const data,
     const int nxy,
     const int nz,
     const int n_data_newline);
+#endif
 
     /**
      * @brief The trilinear interpolation method

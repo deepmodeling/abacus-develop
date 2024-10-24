@@ -128,7 +128,7 @@ void ModuleIO::write_cube(
     }
 
 #ifdef __MPI
-    ModuleIO::write_cube_core(ofs_cube, bz, nbz, nplane, startz_current, data, nx*ny, nz, 6);
+    ModuleIO::write_cube_core(ofs_cube, bz, nbz, nplane, startz_current, data, nx*ny, nz, 1, 6);
 #else
     ModuleIO::write_cube_core(ofs_cube, data, nx*ny, nz, 6);
 #endif
@@ -141,27 +141,24 @@ void ModuleIO::write_cube(
         /// for cube file
         ofs_cube.close();
     }
-
-    return;
 }
 
 
+#ifdef __MPI
+
 void ModuleIO::write_cube_core(
     std::ofstream &ofs_cube,
-#ifdef __MPI
     const int bz,
     const int nbz,
     const int nplane,
     const int startz_current,
-#endif
     const double*const data,
     const int nxy,
     const int nz,
+    const int nld,
     const int n_data_newline)
 {
     ModuleBase::TITLE("ModuleIO", "write_cube_core");
-
-#ifdef __MPI
 
     const int my_rank = GlobalV::MY_RANK;
     const int my_pool = GlobalV::MY_POOL;
@@ -177,7 +174,6 @@ void ModuleIO::write_cube_core(
 
         // num_z: how many planes on processor 'ip'
         std::vector<int> num_z(nproc_in_pool, 0);
-
         for (int iz = 0; iz < nbz; iz++)
         {
             const int ip = iz % nproc_in_pool;
@@ -231,7 +227,7 @@ void ModuleIO::write_cube_core(
                     // mohan change to rho_save on 2012-02-10
                     // because this can make our next restart calculation lead
                     // to the same scf_thr as the one saved.
-                    zpiece[ixy] = data[ixy * nplane + iz - startz_current];
+                    zpiece[ixy] = data[ixy * nplane + (iz - startz_current) * nld];
                 }
             }
             // case 2: > first part rho: send the rho to
@@ -240,7 +236,7 @@ void ModuleIO::write_cube_core(
             {
                 for (int ixy = 0; ixy < nxy; ixy++)
                 {
-                    zpiece[ixy] = data[ixy * nplane + iz - startz_current];
+                    zpiece[ixy] = data[ixy * nplane + (iz - startz_current) * nld];
                 }
                 MPI_Send(zpiece.data(), nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
             }
@@ -282,7 +278,18 @@ void ModuleIO::write_cube_core(
         /// for cube file
     }
     MPI_Barrier(MPI_COMM_WORLD);
-#else
+}
+
+#else   // #ifdef __MPI
+
+void ModuleIO::write_cube_core(
+    std::ofstream &ofs_cube,
+    const double*const data,
+    const int nxy,
+    const int nz,
+    const int n_data_newline)
+{
+    ModuleBase::TITLE("ModuleIO", "write_cube_core");
     for (int ixy = 0; ixy < nxy; ixy++)
     {
         for (int iz = 0; iz < nz; iz++)
@@ -296,5 +303,6 @@ void ModuleIO::write_cube_core(
         }
         ofs_cube << "\n";
     }
-#endif
 }
+
+#endif  // #ifdef __MPI
