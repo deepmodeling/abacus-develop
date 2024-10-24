@@ -55,6 +55,12 @@
 #include "module_io/write_dmr.h"
 #include "module_io/write_wfc_nao.h"
 
+// test RDMFT
+#include "module_rdmft/rdmft.h"
+#include "module_rdmft/rdmft_tools.h"
+#include "module_rdmft/rdmft_test.h"
+#include <iostream>
+
 namespace ModuleESolver
 {
 
@@ -252,6 +258,17 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     if (PARAM.inp.ocp)
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
+    }
+
+
+    // add by jghan for rdmft calculation
+    if( PARAM.inp.ab_initio_type == "rdmft" )
+    {
+        rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
+                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
+
+        // the initialization and necessary calculations of these quantities have been completed in init()
+        // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
     }
 
     // 15) if kpar is not divisible by nks, print a warning
@@ -900,6 +917,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
     {
         this->pelec->cal_converged();
     }
+
 }
 
 //------------------------------------------------------------------------------
@@ -1178,6 +1196,30 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 #endif
 
+    /******** test RDMFT *********/
+
+    // rdmft, added by jghan, 2024-10-17
+    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    {
+        ModuleBase::matrix occ_number_ks(this->pelec->wg);
+        for(int ik=0; ik < occ_number_ks.nr; ++ik)
+        {
+            for(int inb=0; inb < occ_number_ks.nc; ++inb) { occ_number_ks(ik, inb) /= this->kv.wk[ik];
+}
+        } 
+        this->update_elec_rdmft(occ_number_ks, *(this->psi));
+
+        //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
+        ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+        psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+        dE_dWfc.zero_out();
+
+        double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+    }
+
+    /******** test RDMFT *********/
+
+
 #ifdef __EXX
     // 11) write rpa information
     if (PARAM.inp.rpa)
@@ -1302,6 +1344,20 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         delete ekinetic;
     }
 }
+
+
+template <typename TK, typename TR>
+double ESolver_KS_LCAO<TK, TR>::run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
+{
+    return rdmft_solver.run(E_gradient_occNum, E_gradient_wfc);
+}
+
+template <typename TK, typename TR>
+void ESolver_KS_LCAO<TK, TR>::update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
+{
+    rdmft_solver.update_elec(occ_number_in, wfc_in);
+}
+
 
 //------------------------------------------------------------------------------
 //! the 20th,21th,22th functions of ESolver_KS_LCAO

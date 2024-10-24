@@ -12,6 +12,9 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_io/output_mat_sparse.h"
 
+// add by jghan for rdmft calculation
+#include "module_rdmft/rdmft.h"
+
 #include <memory>
 
 namespace LR
@@ -45,6 +48,10 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void cal_mag(const int istep, const bool print = false);
 
+    virtual double run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc) override;     // add by jghan for rdmft calculation, 2024-03-16
+
+    virtual void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in) override;   // add by jghan for rdmft calculation, 2024-03-16
+
   protected:
     virtual void before_scf(const int istep) override;
 
@@ -77,6 +84,8 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     Grid_Technique GridT;
 
     TwoCenterBundle two_center_bundle_;
+
+    rdmft::RDMFT<TK, TR> rdmft_solver;  // add by jghan for rdmft calculation
 
     // temporary introduced during removing GlobalC::ORB
     LCAO_Orbitals orb_;

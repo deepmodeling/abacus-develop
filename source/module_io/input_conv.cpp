@@ -319,7 +319,15 @@ void Input_Conv::Convert()
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
-        } else {
+        }
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
+            || dft_functional_lower == "wp22" 
+            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
+        {
+            GlobalC::restart.info_save.save_charge = true;
+            GlobalC::restart.info_save.save_H = true;
+        }
+        else {
             GlobalC::restart.info_save.save_charge = true;
         }
     }
@@ -337,7 +345,15 @@ void Input_Conv::Convert()
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
-        } else {
+        }
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
+            || dft_functional_lower == "wp22" 
+            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
+        {
+            GlobalC::restart.info_load.load_charge = true;
+            GlobalC::restart.info_load.load_H = true;
+        } 
+        else {
             GlobalC::restart.info_load.load_charge = true;
         }
     }
@@ -365,7 +381,24 @@ void Input_Conv::Convert()
     } else if (dft_functional_lower == "opt_orb") {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
-    } else {
+    }
+    // muller, power, wp22, cwp22 added by jghan, 2024-07-07
+    else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
+    else if ( dft_functional_lower == "wp22" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::erf; // use the error function erf(w|r-r'|), exx just has the long-range part
+    }
+    else if ( dft_functional_lower == "cwp22" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse; // use the erfc(w|r-r'|), exx just has the short-range part
+    }
+    else {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 

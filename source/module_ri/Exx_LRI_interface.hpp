@@ -53,6 +53,12 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
             {
                 XC_Functional::set_xc_type("scan");
             }
+            // added by jghan, 2024-07-07
+            else if ( ucell.atoms[0].ncpp.xc_func == "MULLER" || ucell.atoms[0].ncpp.xc_func == "POWER" 
+                || ucell.atoms[0].ncpp.xc_func == "WP22" || ucell.atoms[0].ncpp.xc_func == "CWP22" )
+            {
+                XC_Functional::set_xc_type("pbe");
+            }
         }
         // initialize the rotation matrix in AO representation
         this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);

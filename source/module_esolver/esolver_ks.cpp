@@ -28,6 +28,9 @@
 
 #include "print_funcs.h" // mohan add 2024-07-27
 
+// test by jghan
+#include "module_rdmft/rdmft_tools.h"
+
 namespace ModuleESolver
 {
 
@@ -593,6 +596,10 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         // this->phamilt->update(conv_esolver);
         this->update_pot(istep, iter);
 
+        // 9.5) rdmft, add by jghan 2024-10-09
+        bool one_step_exx = false;
+        if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
+
         // 10) finish scf iterations
         this->iter_finish(iter);
 #ifdef __MPI
@@ -622,6 +629,36 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                                  drho,
                                  duration);
 #endif //__RAPIDJSON
+
+        // 12.5) rdmft, add by jghan 2024-04-08/2024-10-09
+        if ( PARAM.inp.ab_initio_type == "rdmft" )
+        {
+            ModuleBase::TITLE("RDMFT", "E & Egradient");
+            ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
+            // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
+            if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
+            {
+                ModuleBase::matrix occ_number_ks(this->pelec->wg);
+                for(int ik=0; ik < occ_number_ks.nr; ++ik)
+                {
+                    for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+                }
+
+                this->update_elec_rdmft(occ_number_ks, *(this->psi));
+
+                //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
+                ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+                psi::Psi<T> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+                dE_dWfc.zero_out();
+
+                double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+
+                ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
+                // break;
+            }
+        }
 
         // 13) check convergence
         if (this->conv_esolver)

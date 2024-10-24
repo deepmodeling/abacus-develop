@@ -41,6 +41,20 @@ namespace Conv_Coulomb_Pot_K
 		return psik2_ccp;
 	}
 
+	// added by jghan, 2024-07-06
+	// for using the long-range part of exx = hf - hse(i.e. exx_short-range)
+	std::vector<double> cal_psi_erf(
+		const std::vector<double> & psif,
+		const std::vector<double> & k_radial,
+		const double hse_omega,
+		const double hf_Rcut)
+	{
+		std::vector<double> psik2_ccp(psif.size());
+		for( size_t ik=0; ik<psif.size(); ++ik )
+			psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) - std::cos(k_radial[ik] * hf_Rcut) );
+			// psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) );
+		return psik2_ccp;
+	}
 
 
 	template<>
@@ -59,6 +73,8 @@ namespace Conv_Coulomb_Pot_K
 				psik2_ccp = cal_psi_hf( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hf_Rcut"));      break;
 			case Ccp_Type::Hse:
 				psik2_ccp = cal_psi_hse( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hse_omega") );		break;
+			case Ccp_Type::erf:
+				psik2_ccp = cal_psi_erf( orbs.get_psif(), orbs.get_k_radial(), parameter.at("hse_omega"), parameter.at("hf_Rcut") );	break;
 			default:
 				throw( ModuleBase::GlobalFunc::TO_STRING(__FILE__)+" line "+ModuleBase::GlobalFunc::TO_STRING(__LINE__) );		break;
 		}

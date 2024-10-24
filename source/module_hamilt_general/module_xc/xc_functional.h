@@ -20,6 +20,8 @@
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/unitcell.h"
 
+#include <map> // added by jghan, 2024-10-10
+
 class XC_Functional
 {
 	public:
@@ -79,6 +81,10 @@ class XC_Functional
 
 	//exx_hybrid_alpha for mixing exx in hybrid functional:
 	static double hybrid_alpha;
+
+	// added by jghan, 2024-07-07
+	// as a scaling factor for different xc-functionals
+	static std::map<int, double> scaling_factor_xc;
 
 	public:
 	static std::vector<int> get_func_id() { return func_id; }
@@ -162,7 +168,7 @@ class XC_Functional
                          ModulePW::PW_Basis* rhopw,
                          const UnitCell* ucell,
                          std::vector<double>& stress_gga,
-                         const bool is_stress = 0);
+                         const bool is_stress = false);
 	template <typename T, typename Device,
           typename Real = typename GetTypeReal<T>::type>
 	static void grad_wfc(

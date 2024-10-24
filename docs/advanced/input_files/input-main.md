@@ -427,6 +427,9 @@
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims_nbasis](#aims_nbasis)
+  - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
+    - [ab\_initio\_type](#ab_initio_type)
+    - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
 [back to top](#full-list-of-input-keywords)
 ## System variables
@@ -3998,5 +4001,21 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 - **Availability**: `ri_hartree_benchmark` = `aims`
 - **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
+
+## Reduced Density Matrix Functional Theory
+
+ab-initio methods and the xc-functional parameters used in RDMFT.
+
+### ab_initio_type
+
+- **Type**: String
+- **Description**: Determine the ab-initio method, ksdft or rdmft (reduced density matrix funcional theory)
+- **Default**: ksdft
+
+### rdmft_power_alpha
+
+- **Type**: Real
+- **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
+- **Default**: 0.656
 
 [back to top](#full-list-of-input-keywords)

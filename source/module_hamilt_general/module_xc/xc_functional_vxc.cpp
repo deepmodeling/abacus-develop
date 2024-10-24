@@ -25,7 +25,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     if(use_libxc)
     {
 #ifdef USE_LIBXC
-        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(), nrxx, ucell->omega, ucell->tpiba, chr);
+        return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(), nrxx, ucell->omega, ucell->tpiba, chr, &(scaling_factor_xc));
 #else
         ModuleBase::WARNING_QUIT("v_xc","compile with LIBXC");
 #endif
