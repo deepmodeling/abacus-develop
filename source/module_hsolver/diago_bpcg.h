@@ -1,8 +1,7 @@
 #ifndef DIAGO_BPCG_H_
 #define DIAGO_BPCG_H_
 
-#include "diagh.h"
-#include "module_base/complexmatrix.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 #include "module_base/module_device/types.h"

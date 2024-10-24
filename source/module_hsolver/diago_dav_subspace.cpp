@@ -181,7 +181,12 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             // updata eigenvectors of Hamiltonian
             setmem_complex_op()(this->ctx, psi_in, 0, n_band * psi_in_dmax);
 
-            gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif
+                                (this->ctx,
                                  'N',
                                  'N',
                                  this->dim,
@@ -262,7 +267,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
     }
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif
+                        (this->ctx,
                          'N',
                          'N',
                          this->dim,
@@ -302,7 +312,12 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         delmem_real_op()(this->ctx, e_temp_hd);
     }
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif                  
+                        (this->ctx,
                          'N',
                          'N',
                          this->dim,
@@ -386,7 +401,12 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "cal_elem");
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif 
+                        (this->ctx,
                          'C',
                          'N',
                          nbase + notconv,
@@ -401,7 +421,12 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                          &hcc[nbase * this->nbase_x],
                          this->nbase_x);
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif
+                        (this->ctx,
                          'C',
                          'N',
                          nbase + notconv,
@@ -603,7 +628,12 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "refresh");
 
-    gemm_op<T, Device>()(this->ctx,
+#ifdef __DSP
+    gemm_op_mt<T, Device>()
+#else
+    gemm_op<T, Device>()
+#endif
+                        (this->ctx,
                          'N',
                          'N',
                          this->dim,

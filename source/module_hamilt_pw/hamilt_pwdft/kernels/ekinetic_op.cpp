@@ -9,20 +9,45 @@ struct ekinetic_pw_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& nband,
                     const int& npw,
                     const int& max_npw,
+                    const bool& is_first_node,
                     const FPTYPE& tpiba2,
                     const FPTYPE* gk2_ik,
                     std::complex<FPTYPE>* tmhpsi,
                     const std::complex<FPTYPE>* tmpsi_in)
     {
+        if (is_first_node)
+        {
 #ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static, 4096/sizeof(FPTYPE))
+#pragma omp parallel for
 #endif
-    for (int ib = 0; ib < nband; ++ib) {
-      for (int ig = 0; ig < npw; ++ig) {
-        tmhpsi[ib * max_npw + ig] += gk2_ik[ig] * tpiba2 * tmpsi_in[ib * max_npw + ig];
-      }
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                const int ig0 = ib * max_npw;
+                for (int ig = 0; ig < npw; ++ig)
+                {
+                    tmhpsi[ig + ig0] = gk2_ik[ig] * tpiba2 * tmpsi_in[ig + ig0];
+                }
+                for (int ig = npw; ig < max_npw; ++ig)
+                {
+                    tmhpsi[ig + ig0] = 0.0;
+                }
+            }
+        }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int ib = 0; ib < nband; ++ib)
+            {
+                const int ig0 = ib * max_npw;
+                for (int ig = 0; ig < npw; ++ig)
+                {
+                    tmhpsi[ig + ig0] += gk2_ik[ig] * tpiba2 * tmpsi_in[ig + ig0];
+                }
+            }
+        }
     }
-  }
 };
 
 template struct ekinetic_pw_op<float, base_device::DEVICE_CPU>;

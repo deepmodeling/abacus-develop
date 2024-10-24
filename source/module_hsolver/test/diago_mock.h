@@ -87,33 +87,36 @@ namespace DIAGOTEST
 
         if(mypnum == 0)
         {                
-            for(int j=0;j<npw_local[0];j++) psi_local[j] = psi[j];
+            for(int j=0;j<npw_local[0];j++) { psi_local[j] = psi[j];
+}
 #ifdef __MPI                                        
             int start_point = npw_local[0];
             for(int j=1;j<nprocs;j++)
             {
-                if (std::is_same<T, double>::value) 
+                if (std::is_same<T, double>::value) { 
                     MPI_Send(&(psi[start_point]),npw_local[j],MPI_DOUBLE,j,0,MPI_COMM_WORLD);
-                else if(std::is_same<T, std::complex<double>>::value) 
+                } else if(std::is_same<T, std::complex<double>>::value) { 
                     MPI_Send(&(psi[start_point]),npw_local[j],MPI_DOUBLE_COMPLEX,j,0,MPI_COMM_WORLD);
-                else if (std::is_same<T, float>::value)
+                } else if (std::is_same<T, float>::value) {
                     MPI_Send(&(psi[start_point]), npw_local[j], MPI_FLOAT, j, 0, MPI_COMM_WORLD);
-                else if (std::is_same<T, std::complex<float>>::value)
+                } else if (std::is_same<T, std::complex<float>>::value) {
                     MPI_Send(&(psi[start_point]), npw_local[j], MPI_C_FLOAT_COMPLEX, j, 0, MPI_COMM_WORLD);
+}
                 start_point += npw_local[j];
             }
         }
         else
         {
             int recv_len = mypnum < (npw%nprocs) ? npw/nprocs + 1  : npw/nprocs;
-            if (std::is_same<T, double>::value) 
+            if (std::is_same<T, double>::value) { 
                 MPI_Recv(psi_local, npw_local[mypnum],MPI_DOUBLE,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            else if(std::is_same<T, std::complex<double>>::value)
+            } else if(std::is_same<T, std::complex<double>>::value) {
                 MPI_Recv(psi_local, npw_local[mypnum], MPI_DOUBLE_COMPLEX, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            else if (std::is_same<T, float>::value)
+            } else if (std::is_same<T, float>::value) {
                 MPI_Recv(psi_local, npw_local[mypnum], MPI_FLOAT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-            else if (std::is_same<T, std::complex<float>>::value)
+            } else if (std::is_same<T, std::complex<float>>::value) {
                 MPI_Recv(psi_local, npw_local[mypnum], MPI_C_FLOAT_COMPLEX, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+}
 #endif                 
         }     
     }
@@ -128,8 +131,9 @@ namespace DIAGOTEST
         MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
         for(int i=0;i<nprocs;i++)
         {
-            if(i<npw%nprocs) npw_local[i] = npw/nprocs + 1;
-            else npw_local[i] = npw/nprocs;
+            if(i<npw%nprocs) { npw_local[i] = npw/nprocs + 1;
+            } else { npw_local[i] = npw/nprocs;
+}
         }
     }
 
@@ -213,7 +217,8 @@ class HPsi
         psi::Psi<T> psitmp(1, nband, npw, ngk);
         for(int i=0;i<nband;i++)
 	    {
-		    for(int j=0;j<npw;j++) psitmp(0,i,j) = psimatrix[i * npw + j];
+		    for(int j=0;j<npw;j++) { psitmp(0,i,j) = psimatrix[i * npw + j];
+}
 	    }   
         return psitmp;
     };
@@ -255,19 +260,23 @@ void HPsi<double>::genhmatrix()
     DIAGOTEST::h_nc = npw;
     std::default_random_engine e(100);
     std::uniform_int_distribution<unsigned> u(min, max);
-    if (sparsity < 0) sparsity = 0;
-    if (sparsity > 10) sparsity = 10;
+    if (sparsity < 0) { sparsity = 0;
+}
+    if (sparsity > 10) { sparsity = 10;
+}
     for (int i = 0;i < npw;i++)
     {
         for (int j = 0;j <= i;j++)
         {
             double mincoef = 0.0;
             double realp = pow(-1.0, u(e) % 2) * static_cast<double>(u(e)) / max;
-            if (int(u(e) % 10) > int(sparsity - 1)) mincoef = 1.0;
-            if (i == j)
+            if (int(u(e) % 10) > int(sparsity - 1)) { mincoef = 1.0;
+}
+            if (i == j) {
                 hmatrix[i * npw + j] = realp;
-            else
+            } else {
                 hmatrix[j * npw + i] = hmatrix[i * npw + j] = mincoef * realp;
+}
         }
     }
 }
@@ -279,8 +288,10 @@ void HPsi<std::complex<double>>::genhmatrix()
     DIAGOTEST::h_nc = npw;
     std::default_random_engine e(100);
     std::uniform_int_distribution<unsigned> u(min, max);
-    if (sparsity < 0) sparsity = 0;
-    if (sparsity > 10) sparsity = 10;
+    if (sparsity < 0) { sparsity = 0;
+}
+    if (sparsity > 10) { sparsity = 10;
+}
     for (int i = 0;i < npw;i++)
     {
         for (int j = 0;j <= i;j++)
@@ -288,7 +299,8 @@ void HPsi<std::complex<double>>::genhmatrix()
             double mincoef = 0.0;
             double realp = pow(-1.0, u(e) % 2) * static_cast<double>(u(e)) / max;
             //double imagp= pow(-1.0,u(e)%2) * static_cast<double>(u(e))/max;
-            if (int(u(e) % 10) > int(sparsity - 1)) mincoef = 1.0;
+            if (int(u(e) % 10) > int(sparsity - 1)) { mincoef = 1.0;
+}
             if (i == j)
             {
                 hmatrix[i * npw + j] = std::complex<double>{ realp,0.0 };
@@ -310,15 +322,18 @@ void HPsi<std::complex<float>>::genhmatrix()
     DIAGOTEST::h_nc = npw;
     std::default_random_engine e(100);
     std::uniform_int_distribution<unsigned> u(min, max);
-    if (sparsity < 0) sparsity = 0;
-    if (sparsity > 10) sparsity = 10;
+    if (sparsity < 0) { sparsity = 0;
+}
+    if (sparsity > 10) { sparsity = 10;
+}
     for (int i = 0;i < npw;i++)
     {
         for (int j = 0;j <= i;j++)
         {
             float mincoef = 0.0;
             float realp = pow(-1.0, u(e) % 2) * static_cast<float>(u(e)) / max;
-            if (int(u(e) % 10) > int(sparsity - 1)) mincoef = 1.0;
+            if (int(u(e) % 10) > int(sparsity - 1)) { mincoef = 1.0;
+}
             if (i == j)
             {
                 hmatrix[i * npw + j] = std::complex<float>{ realp,0.0 };
@@ -339,9 +354,11 @@ void HPsi<double>::genpsi()
         psimatrix.resize(nband * npw);
         std::default_random_engine e(10);
         std::uniform_int_distribution<unsigned> u(min, max);
-        for (int i = 0;i < nband;i++)
-            for (int j = 0;j < npw;j++)
+        for (int i = 0;i < nband;i++) {
+            for (int j = 0;j < npw;j++) {
                 psimatrix[i * npw + j] = pow(-1.0, u(e) % 2) * static_cast<double>(u(e)) / max;
+}
+}
     }
 }
 template<>
@@ -447,7 +464,8 @@ class OperatorMock : public hamilt::Operator<T>
         const int npol,
         const T* tmpsi_in,
         T* tmhpsi,
-        const int ngk_ik = 0)const;
+        const int ngk_ik = 0,
+        const bool is_first_node = false)const;
 };
 template<>
 void OperatorMock<double>::act(
@@ -456,7 +474,8 @@ void OperatorMock<double>::act(
     const int npol,
     const double* tmpsi_in,
     double* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    
@@ -489,7 +508,8 @@ void OperatorMock<std::complex<double>>::act(
     const int npol,
     const std::complex<double>* tmpsi_in,
     std::complex<double>* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    
@@ -522,7 +542,8 @@ void OperatorMock<std::complex<float>>::act(
     const int npol,
     const std::complex<float>* tmpsi_in,
     std::complex<float>* tmhpsi,
-    const int ngk_ik)const
+    const int ngk_ik,
+    const bool is_first_node)const
 {
     int nprocs = 1, mypnum = 0;
 #ifdef __MPI    

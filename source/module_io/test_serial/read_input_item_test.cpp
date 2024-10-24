@@ -820,6 +820,14 @@ TEST_F(InputTest, Item_test)
         ifs.close();
         EXPECT_EQ(line, "K_POINTS");
 
+        param.input.basis_type = "lcao";
+        param.input.gamma_only = true;
+        param.input.nspin = 4;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
     }
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
