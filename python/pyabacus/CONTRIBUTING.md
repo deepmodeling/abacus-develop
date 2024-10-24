@@ -4,6 +4,27 @@
 
 Welcome to the `pyabacus` project! This document provides guidelines and instructions for developers who want to contribute to this project.
 
+`pyabacus` is a Python interface for the ABACUS package. It provides a high-level Python API for interacting with the ABACUS library, allowing users to perform electronic structure calculations and analyze the results using Python.
+
+<!-- toc -->
+
+- [Project structure](#project-structure)
+  * [Root CMake Configuration](#root-cmake-configuration)
+  * [Module CMake Configuration](#module-cmake-configuration)
+- [Development Process](#development-process)
+
+<!-- tocstop -->
+
+If you are new to the project, please refer to the [README.md](../README.md) file for an overview of the project and its goals.
+
+If you are already familiar with the project and want to contribute, this guide will help you understand the project structure, development process, and best practices for contributing code.
+
+If you have any questions or need help, feel free to reach out to the maintainers or create an issue in the repository.
+
+Please feel free to contribute to this guide by submitting a pull request with any improvements or additional information.
+
+Let's get started!
+
 ## Project Structure
 
 The project is organized as follows:
@@ -12,7 +33,12 @@ The project is organized as follows:
 pyabacus/
 ├── CMakeLists.txt
 └── src
+    ├── pyabacus
+    │   └── {your_module}
+    │       ├── {interface}.py
+    │       └── __init__.py
     └── {your_module}
+        ├── {your_code}.cpp
         └── CMakeLists.txt
 ```
 
