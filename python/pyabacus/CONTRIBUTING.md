@@ -15,13 +15,13 @@ Welcome to the `pyabacus` project! This document provides guidelines and instruc
 
 <!-- tocstop -->
 
-If you are new to the project, please refer to the [README.md](./README.md) file for an overview of the project and its goals.
+**If you are new to the project**, please refer to the [README.md](./README.md) file for an overview of the project and its goals.
 
-If you are already familiar with the project and want to contribute, this guide will help you understand the project structure, development process, and best practices for contributing code.
+**If you are already familiar with the project and want to contribute**, this guide will help you understand the project structure, development process, and best practices for contributing code.
 
-If you have any questions or need help, feel free to reach out to the maintainers or create an issue in the repository.
+**If you have any questions or need help**, feel free to reach out to the maintainers or create an issue in the repository.
 
-Please feel free to contribute to this guide by submitting a pull request with any improvements or additional information.
+**Please feel free to contribute to this guide** by submitting a pull request with any improvements or additional information.
 
 Let's get started!
 
