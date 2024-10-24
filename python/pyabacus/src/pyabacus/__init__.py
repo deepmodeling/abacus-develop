@@ -13,7 +13,7 @@ def __getattr__(attr):
     elif attr == "hsolver":
         import pyabacus.hsolver as hsolver
         return hsolver
-        elif attr == "Cell":
+    elif attr == "Cell":
         from .cell import Cell
         return Cell
     elif attr == "io":
