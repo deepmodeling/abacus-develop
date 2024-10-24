@@ -42,6 +42,8 @@ pyabacus/
         └── CMakeLists.txt
 ```
 
+Our project is built using [pybind11](http://github.com/pybind/pybind11) and [scikit-build-core](https://scikit-build-core.readthedocs.io/) for facilitating the `CMake` build toolchain. So the `CMakeLists.txt` configuration is the key to thoroughly understanding the project structure.
+
 ### Root CMake Configuration
 
 The `CMakeLists.txt` in root directory is the main configuration file for the pyabacus project. It sets up the project, finds necessary dependencies, configures build options, and includes subdirectories for different modules. Below is a detailed explanation of each section of the file:
