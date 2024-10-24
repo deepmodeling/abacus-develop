@@ -41,26 +41,26 @@ class TestCell(unittest.TestCase):
         self.assertEqual(cell.precision, 1e-8)
         np.testing.assert_array_equal(cell.lattice, np.eye(3))
 
-    # TODO: fix the test
-    # def test_from_stru_file(self):
-    #     """Test loading structure from STRU file."""
-    #     cell = Cell.from_file(self.stru_file)
-    #     self.assertTrue(cell._built)
+    
+    def test_from_stru_file(self):
+        """Test loading structure from STRU file."""
+        cell = Cell.from_file(self.stru_file)
+        self.assertTrue(cell._built)
         
-    #     # Verify basic structure information
-    #     self.assertEqual(len(cell.species), 2)
-    #     self.assertEqual(cell.species, ['Zn', 'O'])
+        # Verify basic structure information
+        self.assertEqual(len(cell.species), 2)
+        self.assertEqual(cell.species, ['Zn', 'O'])
         
-    #     # Check lattice parameters and vectors from the actual STRU file
-    #     self.assertEqual(cell.lattice_constant, 6.1416)  # From STRU file
+        # Check lattice parameters and vectors from the actual STRU file
+        self.assertEqual(cell.lattice_constant, 6.1416)  # From STRU file
         
-    #     scaled_lattice = cell.lattice * cell.lattice_constant
-    #     expected_lattice = np.array([
-    #         [6.1416, 0.0, 0.0],
-    #         [-3.0708, 5.31902656, 0.0],
-    #         [0.0, 0.0, 9.82656]
-    #     ])
-    #     np.testing.assert_array_almost_equal(scaled_lattice, expected_lattice)
+        scaled_lattice = cell.lattice * cell.lattice_constant
+        expected_lattice = np.array([
+            [6.1416, 0.0, 0.0],
+            [-3.0708, 5.3186256, 0.0],
+            [0.0, 0.0, 9.82656]
+        ])
+        np.testing.assert_array_almost_equal(scaled_lattice, expected_lattice)
 
     def test_from_xyz_file(self):
         """Test loading structure from XYZ file."""
