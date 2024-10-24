@@ -193,7 +193,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                  this->dim,
                                  this->vcc,
                                  this->nbase_x,
-                                 this->zero,
+                                 *this->zero,
                                  psi_in,
                                  psi_in_dmax);
 
@@ -279,7 +279,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim,
                          vcc,
                          this->nbase_x,
-                         this->zero,
+                         *this->zero,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
 
@@ -413,7 +413,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                          this->dim,
                          &hphi[nbase * this->dim],
                          this->dim,
-                         this->zero,
+                         *this->zero,
                          &hcc[nbase * this->nbase_x],
                          this->nbase_x);
 
@@ -433,7 +433,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                          this->dim,
                          psi_iter + nbase * this->dim,
                          this->dim,
-                         this->zero,
+                         *this->zero,
                          &scc[nbase * this->nbase_x],
                          this->nbase_x);
 
@@ -640,7 +640,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
                          this->dim,
                          this->vcc,
                          this->nbase_x,
-                         this->zero,
+                         *this->zero,
                          psi_iter + nband * this->dim,
                          this->dim);
 
