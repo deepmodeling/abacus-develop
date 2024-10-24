@@ -7,7 +7,7 @@ Module for Numerical Atomic Orbitals (NAO) in ABACUS
 import numpy as np
 from numpy.typing import NDArray
 from pyabacus.ModuleBase import SphericalBesselTransformer
-from typing import overload, List, Protocol
+from typing import overload, List, Tuple
 
 from ._nao_pack import RadialCollection as _RadialCollection, TwoCenterIntegrator as _TwoCenterIntegrator, NumericalRadial as _NumericalRadial
 
@@ -174,7 +174,7 @@ class TwoCenterIntegrator(_TwoCenterIntegrator):
         m2: int, 
         pvR: NDArray[np.float64], 
         cal_grad: bool = False
-    ) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    ) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
         """
         Compute the two-center integrals.
 

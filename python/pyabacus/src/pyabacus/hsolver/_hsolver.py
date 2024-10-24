@@ -6,7 +6,7 @@ Module for Solver for Hamiltonian in ABACUS
 
 import numpy as np
 from numpy.typing import NDArray
-from typing import Tuple, List, Union, Callable, Protocol
+from typing import Tuple, List, Union, Callable
 
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
 from ._hsolver_pack import diago_dav_subspace, diago_david

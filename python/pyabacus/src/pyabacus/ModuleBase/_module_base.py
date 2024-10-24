@@ -5,7 +5,7 @@ Basic math functions and integrals.
 """
 
 import numpy as np
-from typing import Protocol, overload
+from typing import overload
 from numpy.typing import NDArray
 
 from ._base_pack import Sphbes as _Sphbes, Integral as _Integral, SphericalBesselTransformer as _SphericalBesselTransformer
