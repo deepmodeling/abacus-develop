@@ -1,5 +1,4 @@
 # pyabacus: a Python interface for the ABACUS package
-==================================================
 
 `pyabacus` is a Python interface for the ABACUS package, which provides a high-level Python API for interacting with the `ABACUS` library.
 
@@ -22,14 +21,12 @@ Now, `pyabacus` provides the following modules:
 <!-- tocstop -->
 
 ## Installation
-------------
 
 - Create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
 - Clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
 - Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -v .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
 
 ## CI Examples
------------
 
 There are examples for CI in `.github/workflows`. A simple way to produces
 binary "wheels" for all platforms is illustrated in the "wheels.yml" file,
@@ -88,14 +85,12 @@ eigenvalues difference:
 ```
 
 ## License
--------
 
 pybind11 is provided under a BSD-style license that can be found in the LICENSE
 file. By using, distributing, or contributing to this project, you agree to the
 terms and conditions of this license.
 
 ## Test call
----------
 
 ```python
 import pyabacus as m
