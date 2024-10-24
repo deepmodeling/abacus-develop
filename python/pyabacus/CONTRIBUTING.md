@@ -9,8 +9,8 @@ Welcome to the `pyabacus` project! This document provides guidelines and instruc
 <!-- toc -->
 
 - [Project structure](#project-structure)
-  * [Root CMake Configuration](#root-cmake-configuration)
-  * [Module CMake Configuration](#module-cmake-configuration)
+    - [Root CMake Configuration](#root-cmake-configuration)
+    - [Module CMake Configuration](#module-cmake-configuration)
 - [Development Process](#development-process)
 
 <!-- tocstop -->
