@@ -25,9 +25,9 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
 
-    this->one = this->cs.one;
-    this->zero = this->cs.zero;
-    this->neg_one = this->cs.neg_one;
+    this->one = &one_;
+    this->zero = &zero_;
+    this->neg_one = &neg_one_;
 
     assert(david_ndim_in > 1);
     assert(david_ndim_in * nband_in < nbasis_in * this->diag_comm.nproc);
@@ -559,8 +559,8 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
         }
         else
         {
-            std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, cs.zero[0]));
-            std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, cs.zero[0]));
+            std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
+            std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
 
             for (size_t i = 0; i < nbase; i++)
             {
@@ -589,10 +589,10 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 
                 for (size_t j = nbase; j < this->nbase_x; j++)
                 {
-                    hcc[i * this->nbase_x + j] = cs.zero[0];
-                    hcc[j * this->nbase_x + i] = cs.zero[0];
-                    scc[i * this->nbase_x + j] = cs.zero[0];
-                    scc[j * this->nbase_x + i] = cs.zero[0];
+                    hcc[i * this->nbase_x + j] = *this->zero;
+                    hcc[j * this->nbase_x + i] = *this->zero;
+                    scc[i * this->nbase_x + j] = *this->zero;
+                    scc[j * this->nbase_x + i] = *this->zero;
                 }
             }
         }
