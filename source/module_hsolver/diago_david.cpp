@@ -99,8 +99,8 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     setmem_complex_op()(this->ctx, this->hcc, 0, nbase_x * nbase_x);
 
     // scc(nbase_x, nbase_x); // Overlap on the reduced basis
-    resmem_complex_op()(this->ctx, this->scc, nbase_x * nbase_x, "DAV::scc");
-    setmem_complex_op()(this->ctx, this->scc, 0, nbase_x * nbase_x);
+    // resmem_complex_op()(this->ctx, this->scc, nbase_x * nbase_x, "DAV::scc");
+    // setmem_complex_op()(this->ctx, this->scc, 0, nbase_x * nbase_x);
 
     // vcc(nbase_x, nbase_x); // Eigenvectors of hcc
     resmem_complex_op()(this->ctx, this->vcc, nbase_x * nbase_x, "DAV::vcc");
@@ -135,7 +135,7 @@ DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->hpsi);
     delmem_complex_op()(this->ctx, this->spsi);
     delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
+    // delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
@@ -661,27 +661,27 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
                               hcc + nbase,        // notconv * (nbase + notconv)
                               nbase_x);
     // scc[nbase] = basis[nbase]' * spsi
-    gemm_op<T, Device>()(this->ctx,
-                              'C',
-                              'N',
-                              notconv,
-                              nbase + notconv,
-                              dim,
-                              this->one,
-                              basis + dim*nbase, // dim * notconv
-                              dim,
-                              spsi,               // dim * (nbase + notconv)
-                              dim,
-                              this->zero,
-                              scc + nbase,        // notconv * (nbase + notconv)
-                              nbase_x);
+    // gemm_op<T, Device>()(this->ctx,
+    //                           'C',
+    //                           'N',
+    //                           notconv,
+    //                           nbase + notconv,
+    //                           dim,
+    //                           this->one,
+    //                           basis + dim*nbase, // dim * notconv
+    //                           dim,
+    //                           spsi,               // dim * (nbase + notconv)
+    //                           dim,
+    //                           this->zero,
+    //                           scc + nbase,        // notconv * (nbase + notconv)
+    //                           nbase_x);
 
 
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
         matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
+        // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
 
         auto* swap = new T[notconv * nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * nbase_x, notconv * nbase_x);
@@ -697,12 +697,12 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
             else {
                 MPI_Reduce(swap, hcc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
-            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * nbase_x, notconv * nbase_x);
+            // syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * nbase_x, notconv * nbase_x);
             if (base_device::get_current_precision(swap) == "single") {
-                MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                // MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
             else {
-                MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
+                // MPI_Reduce(swap, scc + nbase * nbase_x, notconv * nbase_x, MPI_DOUBLE_COMPLEX, MPI_SUM, 0, diag_comm.comm);
             }
         }
         delete[] swap;
@@ -711,7 +711,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * nbase_x, notconv * nbase_x );
 
         matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
-        matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
+        // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
     }
 #endif
 
@@ -881,44 +881,44 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
     setmem_complex_op()(this->ctx, hcc, 0, nbase_x * nbase_x);
 
-    setmem_complex_op()(this->ctx, scc, 0, nbase_x * nbase_x);
+    // setmem_complex_op()(this->ctx, scc, 0, nbase_x * nbase_x);
 
     if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
         T* hcc_cpu = nullptr;
-        T* scc_cpu = nullptr;
+        // T* scc_cpu = nullptr;
         T* vcc_cpu = nullptr;
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
                                                                             hcc_cpu,
                                                                             nbase_x * nbase_x,
                                                                             "DAV::hcc");
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
-                                                                            scc_cpu,
-                                                                            nbase_x * nbase_x,
-                                                                            "DAV::scc");
+        // base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+        //                                                                     scc_cpu,
+        //                                                                     nbase_x * nbase_x,
+        //                                                                     "DAV::scc");
         base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
                                                                             vcc_cpu,
                                                                             nbase_x * nbase_x,
                                                                             "DAV::vcc");
 
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, hcc_cpu, hcc, nbase_x * nbase_x);
-        syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, nbase_x * nbase_x);
+        // syncmem_d2h_op()(this->cpu_ctx, this->ctx, scc_cpu, scc, nbase_x * nbase_x);
         syncmem_d2h_op()(this->cpu_ctx, this->ctx, vcc_cpu, vcc, nbase_x * nbase_x);
 
         for (int i = 0; i < nbase; i++)
         {
             hcc_cpu[i * nbase_x + i] = eigenvalue_in[i];
-            scc_cpu[i * nbase_x + i] = this->one[0];
+            // scc_cpu[i * nbase_x + i] = this->one[0];
             vcc_cpu[i * nbase_x + i] = this->one[0];
         }
 
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, hcc, hcc_cpu, nbase_x * nbase_x);
-        syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, nbase_x * nbase_x);
+        // syncmem_h2d_op()(this->ctx, this->cpu_ctx, scc, scc_cpu, nbase_x * nbase_x);
         syncmem_h2d_op()(this->ctx, this->cpu_ctx, vcc, vcc_cpu, nbase_x * nbase_x);
 
         base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, hcc_cpu);
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
+        // base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, scc_cpu);
         base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx, vcc_cpu);
 #endif
     }
@@ -928,7 +928,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
         {
             hcc[i * nbase_x + i] = eigenvalue_in[i];
             // sc(i, i) = this->one;
-            scc[i * nbase_x + i] = this->one[0];
+            // scc[i * nbase_x + i] = this->one[0];
             // vc(i, i) = this->one;
             vcc[i * nbase_x + i] = this->one[0];
         }

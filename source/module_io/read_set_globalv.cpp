@@ -63,6 +63,7 @@ void ReadInput::set_globalv(Parameter& para)
         {
             para.sys.deepks_setorb = true;
         }
+        /// set the noncolin and lspinorb from nspin
         switch (para.input.nspin)
         {
         case 4:
@@ -94,7 +95,7 @@ void ReadInput::set_globalv(Parameter& para)
 
 void ReadInput::set_globalv_bcast()
 {
-    add_int_bcast(sys.myrank);
+    // add_int_bcast(sys.myrank);
     add_bool_bcast(sys.two_fermi);
     add_bool_bcast(sys.use_uspp);
     add_bool_bcast(sys.dos_setemin);
