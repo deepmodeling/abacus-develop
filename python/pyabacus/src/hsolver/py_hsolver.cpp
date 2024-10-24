@@ -57,9 +57,8 @@ void bind_hsolver(py::module& m)
                 The maximum number of iterations.
             need_subspace : bool
                 Whether to use the subspace function.
-            is_occupied : list[bool]
-                A list of boolean values indicating whether the band is occupied,
-                meaning that the corresponding eigenvalue is to be calculated.
+            diag_ethr : List[float] | None, optional
+                The list of thresholds of bands, by default None.
             scf_type : bool
                 Whether to use the SCF type, which is used to determine the
                 convergence criterion.
