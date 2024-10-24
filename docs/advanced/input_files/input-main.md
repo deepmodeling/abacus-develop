@@ -1187,7 +1187,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Real
 - **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
-- **Default**: -1.0. If the user does not set this parameter, it will not take effect.
+- **Default**: 1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 
 ### scf_thr_type

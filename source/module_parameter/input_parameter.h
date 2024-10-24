@@ -112,7 +112,7 @@ struct Input_para
     bool gamma_only = false;   ///< for plane wave.
     int scf_nmax = 100;        ///< number of max elec iter
     double scf_thr = -1.0;     ///< \sum |rhog_out - rhog_in |^2
-    double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
+    double scf_ene_thr = 1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
     bool final_scf = false;    ///< whether to do final scf
 
