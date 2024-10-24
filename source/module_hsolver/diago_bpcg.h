@@ -67,10 +67,14 @@ class DiagoBPCG
 
 
   private:
+    /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
+    Device * ctx = {};
     /// the number of rows of the input psi
     int n_band = 0;
-    /// the number of cols of the input psi
+    /// the number of cols of the input psi, leading dimension
     int n_basis = 0;
+    /// the real-time column size of the input psi
+    int n_dim = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
     /// cg convergence thr
