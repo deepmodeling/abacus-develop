@@ -4005,6 +4005,7 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 ## Reduced Density Matrix Functional Theory
 
 ab-initio methods and the xc-functional parameters used in RDMFT.
+The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 
 ### ab_initio_type
 
