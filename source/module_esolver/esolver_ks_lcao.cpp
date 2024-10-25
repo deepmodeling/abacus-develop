@@ -952,11 +952,27 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         }
     }
 
-    // 2.5) determine whether to update exx, added by jghan, 2024-10-25
+    // 2.5) determine whether rdmft needs to get the initial value, added by jghan, 2024-10-25
     bool one_step_exx = false;
-    if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
+    bool get_init_value_rdmft = false;
+    // the case without hybrid functionals
+    if( iter == 1 ) get_init_value_rdmft = true;
 
 #ifdef __EXX
+    if( GlobalC::exx_info.info_global.cal_exx )
+    {
+        if( this->conv_esolver ) one_step_exx = true;
+
+        // the case with hybrid functionals
+        if( one_step_exx && iter==1 ) get_init_value_rdmft = true;
+        else get_init_value_rdmft = false;
+    }
+#endif
+
+#ifdef __EXX
+
+    if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
+
     // 3) save exx matrix
     int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
 
@@ -1111,7 +1127,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
         // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
-        if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
+        // if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
+        if( get_init_value_rdmft )
         {
             ModuleBase::matrix occ_number_ks(this->pelec->wg);
             for(int ik=0; ik < occ_number_ks.nr; ++ik)
@@ -1131,7 +1148,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
             // break;
-            one_step_exx = false;
         }
     }
 

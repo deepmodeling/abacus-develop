@@ -850,26 +850,18 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         E_RDMFT[1] = getEnergy(Ehartree_n_k);
 
         // for Exc
+#ifdef __EXX
         if( GlobalC::exx_info.info_global.cal_exx )
         {
-            // E_RDMFT[2] = 0.0;
             ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
             // because we have got wk_fun_occNum, we can use symbol=1 realize it
             occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_exx_XC, Exc_n_k, 1);
             E_RDMFT[2] = getEnergy(Exc_n_k);
             Parallel_Reduce::reduce_all(E_RDMFT[2]);
-
-            // // test
-            // std::cout << "\n\n\n******\nE_exx-type in rdmft: " << E_RDMFT[2] << "\n******\n\n" << std::endl;
-            // std::cout << "\n\n\n******\nE_dft-xc in rdmft: " << etxc << "\n******\n\n" << std::endl;
-
-            // if E_XC is hybrid functional
-            E_RDMFT[2] += etxc;
         }
-        else
-        {
-            E_RDMFT[2] = etxc;
-        }
+#endif
+        // the initial value of E_RDMFT[2] is 0.0
+        E_RDMFT[2] += etxc;
 
         // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
         Parallel_Reduce::reduce_all(E_RDMFT[0]);
@@ -902,8 +894,9 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 
     // print results
     std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
+#ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx ) std::cout << "alpha_power: " << alpha_power << std::endl;
-
+#endif
     std::cout << std::fixed << std::setprecision(10) 
                 << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
                 << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 
