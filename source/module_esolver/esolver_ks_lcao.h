@@ -48,10 +48,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void cal_mag(const int istep, const bool print = false);
 
-    double run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc);     // added by jghan for rdmft calculation, 2024-03-16
-
-    void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in);   // added by jghan for rdmft calculation, 2024-03-16
-
   protected:
     virtual void before_scf(const int istep) override;
 
@@ -85,7 +81,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     TwoCenterBundle two_center_bundle_;
 
-    rdmft::RDMFT<TK, TR> rdmft_solver;  // added by jghan for rdmft calculation
+    rdmft::RDMFT<TK, TR> rdmft_solver;  // added by jghan for rdmft calculation, 2024-03-16
 
     // temporary introduced during removing GlobalC::ORB
     LCAO_Orbitals orb_;

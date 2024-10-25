@@ -204,9 +204,6 @@ class RDMFT
     // // update occ_number for optimization algorithms that depend on Hamilton
     // void update_wg(const ModuleBase::matrix& wg_in);
 
-    // get the total Hamilton in k-space
-    void cal_Hk_Hpsi();
-
     // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
     double run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
 
@@ -231,13 +228,11 @@ class RDMFT
 
 
   private:
+
+    // get the total Hamilton in k-space
+    void cal_Hk_Hpsi();
     
     void update_charge();
-
-
-
-
-
 
 
 

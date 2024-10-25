@@ -136,12 +136,14 @@ void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wf
     const char N_char = 'N';
     const char C_char = 'C';    // Using 'C' is consistent with the formula
 
+#ifdef __MPI
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
     pzgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_complex, &HK, &one_int, &one_int, ParaV->desc,
         &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+#endif
 }
 
 
@@ -158,14 +160,16 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, c
     const char N_char = 'N';
     const char C_char = 'C';
 
-    const int nbasis = ParaV->desc[2];
-    const int nbands = ParaV->desc_wfc[3];
-
     const int nrow_bands = para_Eij_in.get_row_size();
     const int ncol_bands = para_Eij_in.get_col_size();
 
+#ifdef __MPI
+    const int nbasis = ParaV->desc[2];
+    const int nbands = ParaV->desc_wfc[3];
+
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+#endif
 
     for(int i=0; i<nrow_bands; ++i)
     {
@@ -196,8 +200,8 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
     const int nbands_local = wfc.get_nbands();
     const int nbasis_local = wfc.get_nbasis();
 
-    const int nbasis = ParaV->desc[2];      // need to be deleted
-    const int nbands = ParaV->desc_wfc[3];
+    // const int nbasis = ParaV->desc[2];      // need to be deleted
+    // const int nbands = ParaV->desc_wfc[3];
 
     for (int ik = 0; ik < nk_local; ++ik)
     {
@@ -224,8 +228,8 @@ void add_psi(const Parallel_Orbitals* ParaV, const K_Vectors* kv, const ModuleBa
     occNum_MulPsi(ParaV, occ_number, psi_dft_XC);
     occNum_MulPsi(ParaV, occ_number, psi_exx_XC, 2, XC_func_rdmft, alpha);
 
-    const int nbasis = ParaV->desc[2];
-    const int nbands = ParaV->desc_wfc[3];
+    // const int nbasis = ParaV->desc[2];
+    // const int nbands = ParaV->desc_wfc[3];
 
     for(int ik=0; ik<nk; ++ik)
     {
