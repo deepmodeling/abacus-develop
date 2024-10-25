@@ -920,32 +920,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         GlobalV::ofs_running << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
-<<<<<<< HEAD
         if( GlobalC::exx_info.info_global.cal_exx ) GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
 #endif
-=======
-    if( GlobalC::exx_info.info_global.cal_exx ) { std::cout << "alpha_power: " << alpha_power << std::endl;
-}
-#endif
-    std::cout << std::fixed << std::setprecision(10) 
-                << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
-                << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 
-                << "\nE_hartree_RDMFT: " << E_RDMFT[1] 
-                << "\nExc_" << XC_func_rdmft << "_RDMFT:    " << E_RDMFT[2] 
-                << "\nE_Ewald:         " << E_Ewald
-                << "\nE_entropy(-TS):  " << E_entropy 
-                << "\nE_descf:         " << E_descf
-                << "\n\nEtotal_RDMFT:    " << Etotal 
-                << "\n\nExc_ksdft:       " << E_xc_KS 
-                << "\nE_exx_ksdft:     " << E_exx_KS 
-                <<"\n******\n\n" << std::endl;
-
-    std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
-    std::cout << "\nE_deband_KS:  " << E_deband_KS << "\nE_deband_harris_KS:  " << E_deband_harris_KS << "\n\n" << std::endl;
-
-    if( true )
-    {
->>>>>>> b90f546a585302ec9060e3a318d10f80e069dd1e
         // GlobalV::ofs_running << std::setprecision(12);
         // GlobalV::ofs_running << std::setiosflags(std::ios::right);
         GlobalV::ofs_running << std::fixed << std::setprecision(10)
