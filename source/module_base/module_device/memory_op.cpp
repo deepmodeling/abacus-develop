@@ -22,17 +22,9 @@ struct resize_memory_op<FPTYPE, base_device::DEVICE_CPU>
     {
         if (arr != nullptr)
         {
-#ifdef __DSP
-            free_ht(arr);
-#else
             free(arr);
-#endif
         }
-#ifdef __DSP
-        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
-#else
         arr = (FPTYPE*)malloc(sizeof(FPTYPE) * size);
-#endif
         std::string record_string;
         if (record_in != nullptr)
         {
@@ -104,11 +96,7 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_CPU>
 {
     void operator()(const base_device::DEVICE_CPU* dev, FPTYPE* arr)
     {
-#ifdef __DSP
-        free_ht(arr);
-#else
         free(arr);
-#endif
     }
 };
 
