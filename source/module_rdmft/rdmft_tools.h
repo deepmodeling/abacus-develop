@@ -60,7 +60,8 @@ void printMatrix_pointer(int M, int N, const TK* matrixA, std::string nameA)
     {
         for(int j=0; j<N; ++j)
         {
-            if( j%5 == 0 ) std::cout << "\n";
+            if( j%5 == 0 ) { std::cout << "\n";
+}
             std::cout << *(matrixA+i*N+j) << " ";
         }
         std::cout << "\n";
@@ -77,7 +78,8 @@ void printMatrix_vector(int M, int N, const std::vector<TK>& matrixA, std::strin
     {
         for(int j=0; j<N; ++j)
         {
-            if( j%5 == 0 ) std::cout << "\n";
+            if( j%5 == 0 ) { std::cout << "\n";
+}
             std::cout << matrixA[i*N+j] << " ";
         }
         std::cout << "\n\n";
@@ -94,7 +96,8 @@ double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft =
 template <typename TK>
 void set_zero_vector(std::vector<TK>& HK)
 {
-    for(int i=0; i<HK.size(); ++i) HK[i] = 0.0;
+    for(int i=0; i<HK.size(); ++i) { HK[i] = 0.0;
+}
 }
 
 
@@ -115,7 +118,8 @@ template <typename TK>
 void conj_psi(psi::Psi<TK>& wfc)
 {
     TK* pwfc = &wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) pwfc[i] = std::conj( pwfc[i] );
+    for(int i=0; i<wfc.size(); ++i) { pwfc[i] = std::conj( pwfc[i] );
+}
 }
 
 

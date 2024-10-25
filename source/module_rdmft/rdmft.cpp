@@ -269,7 +269,8 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
     // update wfc
     TK* pwfc_in = &wfc_in(0, 0, 0);
     TK* pwfc = &wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) pwfc[i] = pwfc_in[i];
+    for(int i=0; i<wfc.size(); ++i) { pwfc[i] = pwfc_in[i];
+}
 
     // update charge
     this->update_charge();
@@ -574,7 +575,8 @@ void RDMFT<TK, TR>::cal_V_XC()
 
     std::vector< std::vector<TK> > DM_XC(nk_total, std::vector<TK>(ParaV->nloc));
     std::vector< const std::vector<TK>* > DM_XC_pointer(nk_total);
-    for(int ik=0; ik<nk_total; ++ik) DM_XC_pointer[ik] = &DM_XC[ik];
+    for(int ik=0; ik<nk_total; ++ik) { DM_XC_pointer[ik] = &DM_XC[ik];
+}
     
     get_DM_XC(DM_XC);
 
@@ -895,7 +897,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     // print results
     std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx ) std::cout << "alpha_power: " << alpha_power << std::endl;
+    if( GlobalC::exx_info.info_global.cal_exx ) { std::cout << "alpha_power: " << alpha_power << std::endl;
+}
 #endif
     std::cout << std::fixed << std::setprecision(10) 
                 << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
@@ -913,7 +916,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
     std::cout << "\nE_deband_KS:  " << E_deband_KS << "\nE_deband_harris_KS:  " << E_deband_harris_KS << "\n\n" << std::endl;
 
-    if( 1 )
+    if( true )
     {
         // GlobalV::ofs_running << std::setprecision(12);
         // GlobalV::ofs_running << std::setiosflags(std::ios::right);
@@ -950,7 +953,8 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     
     TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) pwfc_out[i] = pwfc[i];
+    for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i];
+}
 
     // test
     // rdmft::printMatrix_pointer(E_gradient_occNum.nr, E_gradient_occNum.nc, &E_gradient_occNum(0, 0), "E_gradient_occNum");
