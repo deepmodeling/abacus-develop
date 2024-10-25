@@ -4,6 +4,7 @@
 #include "module_base/tool_threading.h"
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
+#include "module_base/global_variable.h"
 #endif
 
 #include <complex>
@@ -28,7 +29,7 @@ struct resize_memory_op<FPTYPE, base_device::DEVICE_CPU>
 #endif
         }
 #ifdef __DSP
-        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size);
+        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
 #else
         arr = (FPTYPE*)malloc(sizeof(FPTYPE) * size);
 #endif

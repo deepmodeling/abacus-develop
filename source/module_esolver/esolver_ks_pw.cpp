@@ -73,7 +73,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #endif
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    dspInitHandle(GlobalV::MY_RANK % 4);
+    dspInitHandle(GlobalV::MY_RANK);
 #endif
 }
 
@@ -102,7 +102,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     }
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    dspDestoryHandle();
+    dspDestoryHandle(GlobalV::MY_RANK);
 #endif
     if (PARAM.inp.precision == "single")
     {

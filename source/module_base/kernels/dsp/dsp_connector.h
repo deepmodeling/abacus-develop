@@ -4,8 +4,8 @@
 
 // Base dsp functions
 void dspInitHandle(int id);
-void dspDestoryHandle();
-void *malloc_ht(size_t bytes);
+void dspDestoryHandle(int id);
+void *malloc_ht(size_t bytes, int cluster_id);
 void free_ht(void* ptr);
 
 
