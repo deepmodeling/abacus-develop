@@ -57,8 +57,6 @@
 
 // test RDMFT
 #include "module_rdmft/rdmft.h"
-#include "module_rdmft/rdmft_tools.h"
-#include "module_rdmft/rdmft_test.h"
 #include <iostream>
 
 namespace ModuleESolver
@@ -261,17 +259,14 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     }
 
 
-    // add by jghan for rdmft calculation
+    // 15) initialize rdmft, added by jghan
     if( PARAM.inp.ab_initio_type == "rdmft" )
     {
         rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
                                 this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
-
-        // the initialization and necessary calculations of these quantities have been completed in init()
-        // rdmft_solver.update_ion(ucell, LM, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac, this->LOC);
     }
 
-    // 15) if kpar is not divisible by nks, print a warning
+    // 16) if kpar is not divisible by nks, print a warning
     if (GlobalV::KPAR_LCAO > 1)
     {
         if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
@@ -955,6 +950,10 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
         }
     }
 
+    // 2.5) determine whether to update exx, added by jghan, 2024-10-25
+    bool one_step_exx = false;
+    if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
+
 #ifdef __EXX
     // 3) save exx matrix
     int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
@@ -1102,6 +1101,38 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     {
         GlobalC::dftu.initialed_locale = true;
     }
+
+    // 7) rdmft, added by jghan, 2024-10-25
+    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    {
+        ModuleBase::TITLE("RDMFT", "E & Egradient");
+        ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
+        // if ( (!GlobalC::exx_info.info_global.cal_exx && iter == 1) || one_step_exx )
+        if ( !GlobalC::exx_info.info_global.cal_exx || (GlobalC::exx_info.info_global.cal_exx && one_step_exx) )
+        {
+            ModuleBase::matrix occ_number_ks(this->pelec->wg);
+            for(int ik=0; ik < occ_number_ks.nr; ++ik)
+            {
+                for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
+            }
+
+            this->update_elec_rdmft(occ_number_ks, *(this->psi));
+
+            //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
+            ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+            psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+            dE_dWfc.zero_out();
+
+            double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+
+            ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
+            // break;
+            one_step_exx = false;
+        }
+    }
+
 }
 
 //------------------------------------------------------------------------------
@@ -1348,13 +1379,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 template <typename TK, typename TR>
 double ESolver_KS_LCAO<TK, TR>::run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
-    return rdmft_solver.run(E_gradient_occNum, E_gradient_wfc);
+    return this->rdmft_solver.run(E_gradient_occNum, E_gradient_wfc);
 }
 
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
 {
-    rdmft_solver.update_elec(occ_number_in, wfc_in);
+    this->rdmft_solver.update_elec(occ_number_in, wfc_in);
 }
 
 

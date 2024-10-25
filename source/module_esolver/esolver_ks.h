@@ -71,10 +71,6 @@ class ESolver_KS : public ESolver_FP
         //! <Temporary> It should be replaced by a function in Hamilt Class
 		virtual void update_pot(const int istep, const int iter) {};
 
-        virtual double run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<T>& E_gradient_wfc) { return 0.0; };   // add by jghan, 2024-03-16
-
-        virtual void update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<T>& wfc_in) {};   // add by jghan, 2024-03-16
-
     protected:
         // Print inforamtion in each iter
 		// G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01

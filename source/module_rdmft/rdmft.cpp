@@ -65,8 +65,10 @@ RDMFT<TK, TR>::~RDMFT()
     // delete HR_local;
     delete HR_dft_XC;
 
+#ifdef __EXX
     delete Vxc_fromRI_d;
     delete Vxc_fromRI_c;
+#endif
 
     delete V_ekinetic_potential;
     delete V_nonlocal;
@@ -97,7 +99,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // if (ModuleSymmetry::Symmetry::symm_flag == -1) nk_total = kv->nkstot_full;
     // else nk_total = kv->nks;
 
-    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->nkstot_full: kv->nks;
+    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
     nbands_total = PARAM.inp.nbands;
     // nbands_total = GlobalV::NBANDS;
     nspin = PARAM.inp.nspin;
@@ -187,6 +189,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     HR_dft_XC->set_zero();
     // HR_local->set_zero();
 
+#ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         if (GlobalC::exx_info.info_ri.real_number)
@@ -200,6 +203,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
             Vxc_fromRI_c->init(MPI_COMM_WORLD, *kv, *orb);
         }
     }
+#endif
 
     if( PARAM.inp.gamma_only )
     {
@@ -228,6 +232,7 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
     HR_TV->set_zero();
     this->cal_V_TV();
 
+#ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx )
     {
         if (GlobalC::exx_info.info_ri.real_number)
@@ -239,6 +244,7 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
             Vxc_fromRI_c->cal_exx_ions();
         }
     }
+#endif
 
     std::cout << "\n\n\n******\ndo rdmft_esolver.update_ion() successfully\n******\n\n\n" << std::endl;
 }
@@ -648,7 +654,8 @@ void RDMFT<TK, TR>::cal_V_XC()
         }
         V_dft_XC->contributeHR();
     }
-    
+
+#ifdef __EXX
     if(GlobalC::exx_info.info_global.cal_exx)
     {
         if (GlobalC::exx_info.info_ri.real_number)
@@ -704,6 +711,8 @@ void RDMFT<TK, TR>::cal_V_XC()
         // use hamilt::Add_Hexx_Type::k, not R, contributeHR() should be skipped
         // V_exx_XC->contributeHR();
     }
+#endif
+
 }
 
 
@@ -736,6 +745,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_TV(ik, 0, 0), Eij_TV, &(wfcHwfc_TV(ik, 0)) );
         psiDotPsi( ParaV, para_Eij, wfc(ik, 0, 0), H_wfc_hartree(ik, 0, 0), Eij_hartree, &(wfcHwfc_hartree(ik, 0)) );
 
+#ifdef __EXX
         if(GlobalC::exx_info.info_global.cal_exx)
         {
             // set_zero_vector(HK_exx_XC);
@@ -747,6 +757,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
             
             for(int iloc=0; iloc<HK_XC.size(); ++iloc) HK_XC[iloc] += hsk_exx_XC->get_hk()[iloc];
         }
+#endif
 
         if( !only_exx_type )
         {
@@ -900,7 +911,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
                 << "\nExc_" << XC_func_rdmft << "_RDMFT:    " << E_RDMFT[2] 
                 << "\nE_Ewald:         " << E_Ewald
                 << "\nE_entropy(-TS):  " << E_entropy 
-                << "\nE_descf:         " << E_descf 
+                << "\nE_descf:         " << E_descf
                 << "\n\nEtotal_RDMFT:    " << Etotal 
                 << "\n\nExc_ksdft:       " << E_xc_KS 
                 << "\nE_exx_ksdft:     " << E_exx_KS 
@@ -927,7 +938,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
                 <<"\n******\n" << std::endl;
     }
 
-    ModuleBase::timer::tick("rdmftTest", "RDMFT_E&Egradient");
+    std::cout << std::defaultfloat;
 
 }
 

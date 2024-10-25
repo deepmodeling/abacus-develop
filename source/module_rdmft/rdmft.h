@@ -23,6 +23,7 @@
 #include "module_base/parallel_reduce.h"
 // #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_nao/two_center_bundle.h"
@@ -30,18 +31,17 @@
 #include "module_hamilt_general/operator.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-
-// #include "module_directmin/manifold/stiefel.h"
 
 // used by Exx&LRI
-#include "module_ri/RI_2D_Comm.h"
+#ifdef __EXX
 #include "module_ri/Exx_LRI.h"
+#include "module_ri/RI_2D_Comm.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#endif
 
 // there are some operator reload to print data in different formats
 #include "module_ri/test_code/test_function.h"
@@ -176,8 +176,10 @@ class RDMFT
     hamilt::OperatorLCAO<TK, TR>* V_hartree_XC = nullptr;
     // bool get_V_local_temp = true;
 
+#ifdef __EXX
     Exx_LRI<double>* Vxc_fromRI_d = nullptr;
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
+#endif
 
     double Etotal = 0.0;
     double etxc = 0.0;
