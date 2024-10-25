@@ -67,9 +67,10 @@ namespace ModuleSymmetry
         TCdouble get_return_lattice(const Symmetry& symm,
             const ModuleBase::Matrix3& gmatd, const TCdouble gtransd,
             const TCdouble& posd_a1, const TCdouble& posd_a2)const;
-        void get_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st);
 
     protected:
+        void cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st);
+
         //--------------------------------------------------------------------------------
         /// The sub functions to find irreducible sector: {abR}
 

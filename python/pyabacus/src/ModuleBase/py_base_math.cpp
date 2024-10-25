@@ -12,10 +12,8 @@ using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
 void bind_base_math(py::module& m)
 {
-    py::module module_base = m.def_submodule("ModuleBase");
-
     // python binding for class Sphbes
-    py::class_<ModuleBase::Sphbes>(module_base, "Sphbes")
+    py::class_<ModuleBase::Sphbes>(m, "Sphbes")
         .def(py::init<>())
         .def_static("sphbesj", overload_cast_<const int, const double>()(&ModuleBase::Sphbes::sphbesj), "l"_a, "x"_a)
         .def_static("dsphbesj", overload_cast_<const int, const double>()(&ModuleBase::Sphbes::dsphbesj), "l"_a, "x"_a)
@@ -65,7 +63,7 @@ void bind_base_math(py::module& m)
         });
 
     // python binding for class Integral
-    py::class_<ModuleBase::Integral>(module_base, "Integral")
+    py::class_<ModuleBase::Integral>(m, "Integral")
         .def(py::init<>())
         .def_static("Simpson_Integral", [](const int mesh, py::array_t<double> func, py::array_t<double> rab, double asum) {
             py::buffer_info func_info = func.request();
@@ -220,6 +218,13 @@ void bind_base_math(py::module& m)
                                                                     static_cast<double*>(x_info.ptr),
                                                                     static_cast<double*>(w_info.ptr));
         });
-    py::class_<ModuleBase::SphericalBesselTransformer>(module_base, "SphericalBesselTransformer")
-    .def(py::init<>());
+    py::class_<ModuleBase::SphericalBesselTransformer>(m, "SphericalBesselTransformer")
+        .def(py::init<>());
+}
+
+PYBIND11_MODULE(_base_pack, m)
+{
+    m.doc() = "Submodule for pyabacus: ModuleBase";
+
+    bind_base_math(m);
 }
