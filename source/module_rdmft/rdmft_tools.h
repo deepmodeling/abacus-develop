@@ -31,8 +31,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 // used by Exx&LRI
+#ifdef __EXX
 #include "module_ri/RI_2D_Comm.h"
 #include "module_ri/Exx_LRI.h"
+#endif
 
 // there are some operator reload to print data in different formats
 #include "module_ri/test_code/test_function.h"

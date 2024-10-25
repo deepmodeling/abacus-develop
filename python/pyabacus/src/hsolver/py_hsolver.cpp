@@ -17,14 +17,12 @@ using namespace pybind11::literals;
 
 void bind_hsolver(py::module& m)
 {
-    py::module hsolver = m.def_submodule("hsolver");
-
-    py::class_<hsolver::diag_comm_info>(hsolver, "diag_comm_info")
+    py::class_<hsolver::diag_comm_info>(m, "diag_comm_info")
         .def(py::init<const int, const int>(), "rank"_a, "nproc"_a)
         .def_readonly("rank", &hsolver::diag_comm_info::rank)
         .def_readonly("nproc", &hsolver::diag_comm_info::nproc);
 
-    py::class_<py_hsolver::PyDiagoDavSubspace>(hsolver, "diago_dav_subspace")
+    py::class_<py_hsolver::PyDiagoDavSubspace>(m, "diago_dav_subspace")
         .def(py::init<int, int>(), R"pbdoc(
             Constructor of diago_dav_subspace, a class for diagonalizing 
             a linear operator using the Davidson-Subspace Method.
@@ -59,9 +57,8 @@ void bind_hsolver(py::module& m)
                 The maximum number of iterations.
             need_subspace : bool
                 Whether to use the subspace function.
-            diag_ethr : list[float]
-                A list of float values indicating the thresholds of each band for the diagonalization,
-                meaning that the corresponding eigenvalue is to be calculated.
+            diag_ethr : List[float] | None, optional
+                The list of thresholds of bands, by default None.
             scf_type : bool
                 Whether to use the SCF type, which is used to determine the
                 convergence criterion.
@@ -92,7 +89,7 @@ void bind_hsolver(py::module& m)
             Get the eigenvalues.        
         )pbdoc");
 
-    py::class_<py_hsolver::PyDiagoDavid>(hsolver, "diago_david")
+    py::class_<py_hsolver::PyDiagoDavid>(m, "diago_david")
         .def(py::init<int, int>(), R"pbdoc(
             Constructor of diago_david, a class for diagonalizing 
             a linear operator using the Davidson Method.
@@ -147,4 +144,11 @@ void bind_hsolver(py::module& m)
         .def("get_eigenvalue", &py_hsolver::PyDiagoDavid::get_eigenvalue, R"pbdoc(
             Get the eigenvalues.        
         )pbdoc");
+}
+
+PYBIND11_MODULE(_hsolver_pack, m)
+{
+    m.doc() = "Submodule for pyabacus: hsolver";
+
+    bind_hsolver(m);
 }
