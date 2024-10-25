@@ -955,9 +955,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     // 2.5) determine whether rdmft needs to get the initial value, added by jghan, 2024-10-25
     bool one_step_exx = false;
     bool get_init_value_rdmft = false;
-    // the case without hybrid functionals
-    if( iter == 1 ) get_init_value_rdmft = true;
-
+    if( iter == 1 ) get_init_value_rdmft = true; // the case without hybrid functionals
 #ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx )
     {
@@ -1136,14 +1134,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
             }
 
-            this->update_elec_rdmft(occ_number_ks, *(this->psi));
+            // this->update_elec_rdmft(occ_number_ks, *(this->psi));
+            this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
 
             //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
             ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
             psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
             dE_dWfc.zero_out();
 
-            double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+            // double Etotal_RDMFT = this->run_rdmft(dE_dOccNum, dE_dWfc);
+            double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);
 
             ModuleBase::timer::tick("RDMFT", "E & Egradient");
 
@@ -1394,17 +1394,17 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 }
 
 
-template <typename TK, typename TR>
-double ESolver_KS_LCAO<TK, TR>::run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
-{
-    return this->rdmft_solver.run(E_gradient_occNum, E_gradient_wfc);
-}
+// template <typename TK, typename TR>
+// double ESolver_KS_LCAO<TK, TR>::run_rdmft(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
+// {
+//     return this->rdmft_solver.run(E_gradient_occNum, E_gradient_wfc);
+// }
 
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
-{
-    this->rdmft_solver.update_elec(occ_number_in, wfc_in);
-}
+// template <typename TK, typename TR>
+// void ESolver_KS_LCAO<TK, TR>::update_elec_rdmft(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in)
+// {
+//     this->rdmft_solver.update_elec(occ_number_in, wfc_in);
+// }
 
 
 //------------------------------------------------------------------------------

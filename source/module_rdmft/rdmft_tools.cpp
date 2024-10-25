@@ -60,12 +60,14 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
     const char N_char = 'N';
     const char C_char = 'C';
 
+#ifdef __MPI
     const int nbasis = ParaV->desc[2];
     const int nbands = ParaV->desc_wfc[3];
 
     //because wfc(bands, basis'), H(basis, basis'), we do wfc*H^T(in the perspective of cpp, not in fortran). And get H_wfc(bands, basis) is correct.
     pdgemm_( &C_char, &N_char, &nbasis, &nbands, &nbasis, &one_double, &HK, &one_int, &one_int, ParaV->desc,
         &wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &H_wfc, &one_int, &one_int, ParaV->desc_wfc );
+#endif
 
 }
 
@@ -80,14 +82,16 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
     const char N_char = 'N';
     const char T_char = 'T';
 
-    const int nbasis = ParaV->desc[2];
-    const int nbands = ParaV->desc_wfc[3];
-
     const int nrow_bands = para_Eij_in.get_row_size();
     const int ncol_bands = para_Eij_in.get_col_size();
 
+#ifdef __MPI
+    const int nbasis = ParaV->desc[2];
+    const int nbands = ParaV->desc_wfc[3];
+
     pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+#endif
 
     for(int i=0; i<nrow_bands; ++i)
     {
