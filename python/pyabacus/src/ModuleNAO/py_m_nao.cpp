@@ -13,12 +13,8 @@ using overload_cast_ = pybind11::detail::overload_cast_impl<Args...>;
 
 void bind_m_nao(py::module& m)
 {
-    // Create the submodule for Module NAO
-    py::module m_nao = m.def_submodule("ModuleNAO");
-    m_nao.doc() = "Module for Numerical Atomic Orbitals (NAO) in ABACUS";
-
     // Bind the RadialCollection class
-    py::class_<RadialCollection>(m_nao, "RadialCollection")
+    py::class_<RadialCollection>(m, "RadialCollection")
         .def(py::init<>(), R"pbdoc(
             A class that holds all numerical radial functions of the same kind. 
             
@@ -95,7 +91,7 @@ void bind_m_nao(py::module& m)
         .def("nchi", overload_cast_<const int>()(&RadialCollection::nchi, py::const_), "itype"_a)
         .def("nchi", overload_cast_<>()(&RadialCollection::nchi, py::const_));
     // Bind the TwoCenterIntegrator class
-    py::class_<TwoCenterIntegrator>(m_nao, "TwoCenterIntegrator")
+    py::class_<TwoCenterIntegrator>(m, "TwoCenterIntegrator")
         .def(py::init<>(), R"pbdoc(
     A class to compute two-center integrals.
 
@@ -261,7 +257,7 @@ void bind_m_nao(py::module& m)
             "pvR"_a,
             "deriv"_a = false);
     // Bind the NumericalRadial class
-    py::class_<NumericalRadial>(m_nao, "NumericalRadial")
+    py::class_<NumericalRadial>(m, "NumericalRadial")
         .def(py::init<>(), R"pbdoc(
     A class that represents a numerical radial function.
 
@@ -493,4 +489,11 @@ void bind_m_nao(py::module& m)
                                    return py::array_t<double>(self.nk(), kvalue);
                                })
         .def_property_readonly("is_fft_compliant", overload_cast_<>()(&NumericalRadial::is_fft_compliant, py::const_));
+}
+
+PYBIND11_MODULE(_nao_pack, m)
+{
+    m.doc() = "Module for Numerical Atomic Orbitals (NAO) in ABACUS";
+
+    bind_m_nao(m);
 }

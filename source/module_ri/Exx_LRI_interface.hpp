@@ -37,7 +37,22 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv, const LCAO_Orbitals& orb)
+void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+{
+    // initialize the rotation matrix in AO representation
+    this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    if (this->exx_spacegroup_symmetry)
+    {
+        const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
+        this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+        // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+        this->symrot_.cal_Ms(kv, ucell, pv);
+    }
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
@@ -54,17 +69,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
                 XC_Functional::set_xc_type("scan");
             }
         }
-        // initialize the rotation matrix in AO representation
-        this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
-        if (this->exx_spacegroup_symmetry)
-        {
-            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
-            this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
-                RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-            // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
-            this->symrot_.cal_Ms(kv, ucell, pv);
-        }
-
         this->exx_ptr->cal_exx_ions(PARAM.inp.out_ri_cv);
     }
 

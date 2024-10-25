@@ -203,10 +203,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exd->exx_before_all_runners(this->kv, GlobalC::ucell, this->pv);
             }
             else
             {
                 this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exc->exx_before_all_runners(this->kv, GlobalC::ucell, this->pv);
             }
         }
     }
