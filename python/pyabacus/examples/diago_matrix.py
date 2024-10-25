@@ -50,7 +50,7 @@ def calc_eig_scipy(mat_file):
 
 if __name__ == '__main__':
     mat_file = './Si2.mat'
-    method = ['davidson', 'dav_subspace']
+    method = ['dav_subspace', 'davidson']
     
     for m in method:
         print(f'\n====== Calculating eigenvalues using {m} method... ======')

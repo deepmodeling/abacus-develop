@@ -95,8 +95,7 @@ namespace ModuleSymmetry
         auto  vec_conj = [](const std::vector<std::complex<double>>& z, const double scal = 1.0) -> std::vector<std::complex<double>>
             {
                 std::vector<std::complex<double>> z_conj(z.size());
-                for (int i = 0;i < z.size();++i) { z_conj[i] = std::conj(z[i]) * scal;
-}
+                for (int i = 0;i < z.size();++i) { z_conj[i] = std::conj(z[i]) * scal; }
                 return z_conj;
             };
         std::vector<std::vector<std::complex<double>>> dm_k_full;
@@ -110,8 +109,7 @@ namespace ModuleSymmetry
                     {
                         double factor = 1.0 / static_cast<double>(kv.kstars[ik_ibz].size());
                         std::vector<std::complex<double>> dm_scaled(pv.get_local_size());
-                        for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i];
-}
+                        for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i]; }
                         dm_k_full.push_back(dm_scaled);
                     }
                     else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_) {

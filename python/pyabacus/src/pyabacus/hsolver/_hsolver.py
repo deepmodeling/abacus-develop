@@ -1,20 +1,28 @@
-# pyabacus.hsolver
+"""
+pyabacus.hsolver
+==================
+Module for Solver for Hamiltonian in ABACUS
+"""
 
 import numpy as np
 from numpy.typing import NDArray
 from typing import Tuple, List, Union, Callable
 
-from .._core import hsolver
+from ._hsolver_pack import diag_comm_info as _diag_comm_info
+from ._hsolver_pack import diago_dav_subspace, diago_david
 
-class diag_comm_info:
-    def __init__(self, rank: int, nproc: int) -> None: ...
+class diag_comm_info(_diag_comm_info):
+    def __init__(self, rank: int, nproc: int):
+        super().__init__(rank, nproc)
     
     @property
-    def rank(self) -> int: ...
+    def rank(self) -> int:
+        return super().rank
     
     @property
-    def nproc(self) -> int: ...
-    
+    def nproc(self) -> int:
+        return super().nproc
+
 def dav_subspace(
     mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
     init_v: NDArray[np.complex128],
@@ -76,11 +84,11 @@ def dav_subspace(
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         init_v = init_v.flatten().astype(np.complex128, order='C')
     
-    _diago_obj_dav_subspace = hsolver.diago_dav_subspace(dim, num_eigs)
+    _diago_obj_dav_subspace = diago_dav_subspace(dim, num_eigs)
     _diago_obj_dav_subspace.set_psi(init_v)
     _diago_obj_dav_subspace.init_eigenvalue()
     
-    comm_info = hsolver.diag_comm_info(0, 1)
+    comm_info = diag_comm_info(0, 1)
     assert dav_ndim > 1, "dav_ndim must be greater than 1."
     assert dav_ndim * num_eigs < dim * comm_info.nproc, "dav_ndim * num_eigs must be less than dim * comm_info.nproc."
    
@@ -151,13 +159,13 @@ def davidson(
     if init_v.ndim != 1 or init_v.dtype != np.complex128:
         init_v = init_v.flatten().astype(np.complex128, order='C')
     
-    _diago_obj_dav_subspace = hsolver.diago_david(dim, num_eigs)
-    _diago_obj_dav_subspace.set_psi(init_v)
-    _diago_obj_dav_subspace.init_eigenvalue()
+    _diago_obj_david = diago_david(dim, num_eigs)
+    _diago_obj_david.set_psi(init_v)
+    _diago_obj_david.init_eigenvalue()
     
-    comm_info = hsolver.diag_comm_info(0, 1)
+    comm_info = diag_comm_info(0, 1)
     
-    _ = _diago_obj_dav_subspace.diag(
+    _ = _diago_obj_david.diag(
         mvv_op,
         pre_condition,
         dav_ndim,
@@ -167,8 +175,8 @@ def davidson(
         comm_info
     )
     
-    e = _diago_obj_dav_subspace.get_eigenvalue()
-    v = _diago_obj_dav_subspace.get_psi()
+    e = _diago_obj_david.get_eigenvalue()
+    v = _diago_obj_david.get_psi()
     
     return e, v
     

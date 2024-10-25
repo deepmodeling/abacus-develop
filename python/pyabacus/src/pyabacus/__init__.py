@@ -5,10 +5,10 @@ __all__ = list(__submodules__)
 
 def __getattr__(attr):
     if attr == "ModuleBase":
-        from ._core import ModuleBase
+        import pyabacus.ModuleBase as ModuleBase
         return ModuleBase
     elif attr == "ModuleNAO":
-        from ._core import ModuleNAO
+        import pyabacus.ModuleNAO as ModuleNAO
         return ModuleNAO
     elif attr == "hsolver":
         import pyabacus.hsolver as hsolver

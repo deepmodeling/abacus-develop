@@ -86,9 +86,9 @@ namespace ModuleSymmetry
         return TCdouble(std::round(return_lattice_double.x), std::round(return_lattice_double.y), std::round(return_lattice_double.z));
     }
 
-    void Irreducible_Sector::get_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
+    void Irreducible_Sector::cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
     {
-        ModuleBase::TITLE("Symmetry_rotation", "get_return_lattice_all");
+        ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
         this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk));
         for (int iat1 = 0;iat1 < st.nat;++iat1)
         {
@@ -163,7 +163,7 @@ namespace ModuleSymmetry
         this->irreducible_sector_.clear();
         this->sector_stars_.clear();
 
-        if (this->return_lattice_.empty()) this->get_return_lattice_all(symm, atoms, st);
+        if (this->return_lattice_.empty()) this->cal_return_lattice_all(symm, atoms, st);
         // if (this->atompair_stars_.empty()) this->find_irreducible_atom_pairs(symm);
 
         // contruct {atom pair, R} set
