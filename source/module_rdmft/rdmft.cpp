@@ -850,6 +850,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         E_RDMFT[1] = getEnergy(Ehartree_n_k);
 
         // for Exc
+        E_RDMFT[2] = 0.0;
 #ifdef __EXX
         if( GlobalC::exx_info.info_global.cal_exx )
         {
@@ -860,7 +861,6 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
             Parallel_Reduce::reduce_all(E_RDMFT[2]);
         }
 #endif
-        // the initial value of E_RDMFT[2] is 0.0
         E_RDMFT[2] += etxc;
 
         // add up the results obtained by all processors, or we can do reduce_all(wfcHwfc_) before add_wg() used for Etotal to replace it
