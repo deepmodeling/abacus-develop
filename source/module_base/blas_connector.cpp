@@ -2,6 +2,7 @@
 
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
+#include "module_base/global_variable.h"
 #endif
 
 void BlasConnector::axpy( const int n, const float alpha, const float *X, const int incX, float *Y, const int incY, base_device::AbacusDevice_t device_type)
@@ -94,7 +95,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		sgemm_mt_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc);
+		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
 	#endif
 }
@@ -112,7 +113,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
 		dgemm_mt_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc);
+		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
 	#endif
 }
@@ -130,7 +131,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
     	cgemm_mt_(&transb, &transa, &n, &m, &k,
         &alpha, b, &ldb, a, &lda,
-        &beta, c, &ldc);
+        &beta, c, &ldc, GlobalV::MY_RANK);
 	}
 	#endif
 }
@@ -148,7 +149,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
     	zgemm_mt_(&transb, &transa, &n, &m, &k,
         &alpha, b, &ldb, a, &lda,
-        &beta, c, &ldc);
+        &beta, c, &ldc, GlobalV::MY_RANK);
 	}
 	#endif
 }

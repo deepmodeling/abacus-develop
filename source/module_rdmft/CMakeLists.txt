@@ -1,10 +1,12 @@
-add_library(
-    rdmft
-    OBJECT
-    rdmft.cpp
-    rdmft_tools.cpp
-    rdmft_test.cpp
-)
+if(ENABLE_LCAO)
+    add_library(
+        rdmft
+        OBJECT
+        rdmft.cpp
+        rdmft_tools.cpp
+        rdmft_test.cpp
+    )
+endif()
 
 # if(ENABLE_COVERAGE)
 #   add_coverage(psi)
