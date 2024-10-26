@@ -82,6 +82,6 @@ cat << EOF
 ========================== usage =========================
 Done!
 To use the installed ABACUS version
-You need to source $(pwd)/abacus_env.sh first !
+You need to source ${TOOL}/abacus_env.sh first !
 """
 EOF
