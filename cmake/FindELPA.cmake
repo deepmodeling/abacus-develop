@@ -20,7 +20,7 @@ endif()
 find_path(ELPA_INCLUDE_DIRS
     elpa/elpa.h
     HINTS ${ELPA_DIR}
-    PATH_SUFFIXES "include" "include/elpa" "include/elpa_openmp-2021.11.001"
+    PATH_SUFFIXES "include" "include/elpa"
     )
 # Fix #3589
 # First if judges if ELPA dir specified
