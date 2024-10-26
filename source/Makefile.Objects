@@ -114,7 +114,7 @@ ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
-${OBJS_RDMFT}\
+${OBJS_RDMFT}
 
 OBJS_MAIN=main.o\
     driver.o\
