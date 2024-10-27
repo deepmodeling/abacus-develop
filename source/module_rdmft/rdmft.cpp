@@ -840,6 +840,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     double E_deband_KS = pelec->f_en.deband;
     double E_deband_harris_KS = pelec->f_en.deband_harris;
 
+    double E_exxType_rdmft = 0.0; // delete in the future
+
     if( cal_type == 1 )
     {
         // for E_TV
@@ -862,6 +864,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
             occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_exx_XC, Exc_n_k, 1);
             E_RDMFT[2] = getEnergy(Exc_n_k);
             Parallel_Reduce::reduce_all(E_RDMFT[2]);
+            E_exxType_rdmft = E_RDMFT[2];
         }
 #endif
         E_RDMFT[2] += etxc;
@@ -934,7 +937,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
                 << "\nE_descf:         " << E_descf 
                 << "\n\nEtotal_RDMFT:    " << Etotal 
                 << "\n\nExc_ksdft:       " << E_xc_KS 
-                << "\nE_exx_ksdft:     " << E_exx_KS 
+                << "\nE_exx_ksdft:     " << E_exx_KS
+                << "\nE_exxType_rdmft: " << E_exxType_rdmft
                 <<"\n******\n" << std::endl;
     }
     std::cout << std::defaultfloat;

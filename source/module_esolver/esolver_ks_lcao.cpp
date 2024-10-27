@@ -1245,11 +1245,23 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // rdmft, added by jghan, 2024-10-17
     if ( PARAM.inp.ab_initio_type == "rdmft" )
     {
+    // void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    //     const Parallel_Orbitals& pv,
+    //     const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
+#ifdef __EXX
+        elecstate::DensityMatrix<TK, double> DM_test(&this->pv, PARAM.inp.nspin, this->kv.kvec_d, this->rdmft_solver.nk_total);
+        elecstate::cal_dm_psi(&this->pv, this->pelec->wg, *(this->psi), DM_test);
+        DM_test.init_DMR(&GlobalC::GridD, &GlobalC::ucell);
+        DM_test.cal_DMR();
+        //update exx
+
+
+        // this->exx_lri_complex->upda        
+#endif
         ModuleBase::matrix occ_number_ks(this->pelec->wg);
         for(int ik=0; ik < occ_number_ks.nr; ++ik)
         {
-            for(int inb=0; inb < occ_number_ks.nc; ++inb) { occ_number_ks(ik, inb) /= this->kv.wk[ik];
-}
+            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
         } 
         this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
 
