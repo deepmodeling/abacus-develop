@@ -736,4 +736,3 @@ OBJS_TENSOR=tensor.o\
 
 OBJS_RDMFT=rdmft.o\
         rdmft_tools.o\
-        rdmft_test.o\

@@ -4,7 +4,7 @@ suffix           autotest
 calculation      scf
                  
 #nbands			 8
-symmetry         -1
+symmetry         1
                  
 #Parameters (2.Iteration)
 ecutwfc          50
