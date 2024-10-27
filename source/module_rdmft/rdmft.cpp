@@ -191,17 +191,17 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // HR_local->set_zero();
 
 #ifdef __EXX
-    exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
-    if (exx_spacegroup_symmetry)
-    {
-        const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(*kv);
-        this->symrot_exx.find_irreducible_sector(ucell->symm, ucell->atoms, ucell->st,
-                RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat);
-        this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV);
-    }
-
     if( GlobalC::exx_info.info_global.cal_exx )
     {
+        exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+        if (exx_spacegroup_symmetry)
+        {
+            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(*kv);
+            this->symrot_exx.find_irreducible_sector(ucell->symm, ucell->atoms, ucell->st,
+                    RI_Util::get_Born_von_Karmen_cells(period), period, ucell->lat);
+            this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV);
+        }
+
         if (GlobalC::exx_info.info_ri.real_number)
         {
             Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
@@ -580,11 +580,6 @@ void RDMFT<TK, TR>::cal_V_hartree()
 template <typename TK, typename TR>
 void RDMFT<TK, TR>::cal_V_XC()
 {
-    
-    
-
-
-
     // // //test
     // DM_XC_pass = DM_XC;
 
@@ -710,7 +705,7 @@ void RDMFT<TK, TR>::cal_V_XC()
         {
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> 
-                Ds_XC_c = PARAM.inp.gamma_only
+                Ds_XC_c = std::is_same<TK, double>::value //gamma_only_local
                 ? RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV, nspin)
                 : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
 

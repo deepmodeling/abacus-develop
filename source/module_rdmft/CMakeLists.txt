@@ -4,7 +4,6 @@ if(ENABLE_LCAO)
         OBJECT
         rdmft.cpp
         rdmft_tools.cpp
-        rdmft_test.cpp
     )
 endif()
 
