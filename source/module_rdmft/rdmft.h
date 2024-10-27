@@ -41,6 +41,7 @@
 #include "module_ri/Exx_LRI.h"
 #include "module_ri/RI_2D_Comm.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#include "module_ri/module_exx_symmetry/symmetry_rotation.h"
 #endif
 
 // there are some operator reload to print data in different formats
@@ -179,6 +180,8 @@ class RDMFT
 #ifdef __EXX
     Exx_LRI<double>* Vxc_fromRI_d = nullptr;
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
+    ModuleSymmetry::Symmetry_rotation symrot_exx;
+    bool exx_spacegroup_symmetry = false;
 #endif
 
     double Etotal = 0.0;
