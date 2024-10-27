@@ -231,6 +231,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
         }
 #endif
     }
+    MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 }
 
 double ESolver_SDFT_PW::cal_energy()
