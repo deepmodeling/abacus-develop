@@ -11,8 +11,9 @@ namespace Conv_Coulomb_Pot_K
 		const std::vector<double> & psif)
 	{
 		std::vector<double> psik2_ccp(psif.size());
-		for( size_t ik=0; ik<psif.size(); ++ik )
+		for( size_t ik=0; ik<psif.size(); ++ik ) {
 			psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik];
+}
 		return psik2_ccp;
 	}
 
@@ -24,8 +25,9 @@ namespace Conv_Coulomb_Pot_K
 		const double hf_Rcut)
 	{
 		std::vector<double> psik2_ccp(psif.size());
-		for (size_t ik = 0; ik < psif.size(); ++ik)
+		for (size_t ik = 0; ik < psif.size(); ++ik) {
 			psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1 - std::cos(k_radial[ik] * hf_Rcut));
+}
 		return psik2_ccp;
 	}
 
@@ -36,8 +38,9 @@ namespace Conv_Coulomb_Pot_K
 		const double hse_omega)
 	{
 		std::vector<double> psik2_ccp(psif.size());
-		for( size_t ik=0; ik<psif.size(); ++ik )
+		for( size_t ik=0; ik<psif.size(); ++ik ) {
 			psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * (1-std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)));
+}
 		return psik2_ccp;
 	}
 
@@ -50,8 +53,9 @@ namespace Conv_Coulomb_Pot_K
 		const double hf_Rcut)
 	{
 		std::vector<double> psik2_ccp(psif.size());
-		for( size_t ik=0; ik<psif.size(); ++ik )
+		for( size_t ik=0; ik<psif.size(); ++ik ) {
 			psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) - std::cos(k_radial[ik] * hf_Rcut) );
+}
 			// psik2_ccp[ik] = ModuleBase::FOUR_PI * psif[ik] * ( std::exp(-(k_radial[ik]*k_radial[ik])/(4*hse_omega*hse_omega)) );
 		return psik2_ccp;
 	}
@@ -82,15 +86,19 @@ namespace Conv_Coulomb_Pot_K
 		const double dr = orbs.get_rab().back();
 		const int Nr = (static_cast<int>(orbs.getNr()*rmesh_times)) | 1;
 		std::vector<double> rab(Nr);
-		for( size_t ir=0; ir<std::min(orbs.getNr(),Nr); ++ir )
+		for( size_t ir=0; ir<std::min(orbs.getNr(),Nr); ++ir ) {
 			rab[ir] = orbs.getRab(ir);
-		for( size_t ir=orbs.getNr(); ir<Nr; ++ir )
+}
+		for( size_t ir=orbs.getNr(); ir<Nr; ++ir ) {
 			rab[ir] = dr;
+}
 		std::vector<double> r_radial(Nr);
-		for( size_t ir=0; ir<std::min(orbs.getNr(),Nr); ++ir )
+		for( size_t ir=0; ir<std::min(orbs.getNr(),Nr); ++ir ) {
 			r_radial[ir] = orbs.getRadial(ir);
-		for( size_t ir=orbs.getNr(); ir<Nr; ++ir )
+}
+		for( size_t ir=orbs.getNr(); ir<Nr; ++ir ) {
 			r_radial[ir] = orbs.get_r_radial().back() + (ir - orbs.getNr() + 1) * dr;
+}
 
 		Numerical_Orbital_Lm orbs_ccp;
 		orbs_ccp.set_orbital_info(
@@ -118,8 +126,9 @@ namespace Conv_Coulomb_Pot_K
 	{
 		for(int ir=orbs.getNr()-1; ir>=0; --ir)
 		{
-			if(std::abs(orbs.getPsi(ir))>=psi_threshold)
+			if(std::abs(orbs.getPsi(ir))>=psi_threshold) {
 				return static_cast<double>(ir)/orbs.getNr();
+}
 		}
 		return 0.0;
 	}
