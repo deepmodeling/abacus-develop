@@ -6,8 +6,10 @@
 #define PRINT_INFO
 
 #include "module_base/timer.h"
+#include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
+#include "module_parameter/input_parameter.h"
 
 namespace ModuleIO
 {
@@ -21,6 +23,7 @@ void print_rhofft(ModulePW::PW_Basis* pw_rhod,
                   ModulePW::PW_Basis* pw_rho,
                   ModulePW::PW_Basis_Big* pw_big,
                   std::ofstream& ofs);
+void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs);
 
 } // namespace ModuleIO
 
