@@ -151,6 +151,11 @@ TEST_F(InputTest, Item_test)
         param.input.qo_switch = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.symmetry, "-1");
+
+        param.input.symmetry = "default";
+        param.input.berry_phase = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.symmetry, "-1");
     }
     { // nelec
         auto it = find_label("nelec", readinput.input_lists);
