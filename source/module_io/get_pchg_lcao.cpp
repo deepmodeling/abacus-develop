@@ -131,12 +131,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 // const double ef_tmp = pelec->eferm.get_efval(is);
                 double ef_spin = ef_all_spin[is];
                 ModuleIO::write_cube(
-#ifdef __MPI
-                    bigpw_bz,
-                    bigpw_nbz,
-                    rhopw_nplane,
-                    rhopw_startz_current,
-#endif
                     rho_save[is].data(),
                     is,
                     nspin,
@@ -266,12 +260,6 @@ void IState_Charge::begin(Gint_k& gk,
 
                         double ef_spin = ef_all_spin[is];
                         ModuleIO::write_cube(
-#ifdef __MPI
-                            bigpw_bz,
-                            bigpw_nbz,
-                            rhopw_nplane,
-                            rhopw_startz_current,
-#endif
                             rho_save[is].data(),
                             is,
                             nspin,
@@ -334,12 +322,6 @@ void IState_Charge::begin(Gint_k& gk,
 
                     double ef_spin = ef_all_spin[is];
                     ModuleIO::write_cube(
-#ifdef __MPI
-                        bigpw_bz,
-                        bigpw_nbz,
-                        rhopw_nplane,
-                        rhopw_startz_current,
-#endif
                         rho_save[is].data(),
                         is,
                         nspin,

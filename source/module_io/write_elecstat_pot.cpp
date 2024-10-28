@@ -94,12 +94,6 @@ void write_elecstat_pot(
     int out_fermi = 0;
 
     ModuleIO::write_cube(
-#ifdef __MPI
-        bz,
-        nbz,
-        rho_basis->nplane,
-        rho_basis->startz_current,
-#endif
         v_elecstat.data(),
         is,
         nspin,

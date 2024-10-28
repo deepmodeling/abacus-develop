@@ -119,12 +119,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                     << "_CHG.cube";
 
                 ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big_bz,
-                    pw_big_nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
                     rho_band[spin_index].data(),
                     spin_index,
                     nspin,
@@ -196,12 +190,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                 ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                 ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big_bz,
-                    pw_big_nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
                     rho_band[is].data(),
                     is,
                     nspin,

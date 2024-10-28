@@ -89,12 +89,6 @@ void write_elf(
 
         int is = -1;
         ModuleIO::write_cube(
-    #ifdef __MPI
-            bz,
-            nbz,
-            rho_basis->nplane,
-            rho_basis->startz_current,
-    #endif
             elf[0].data(),
             is,
             nspin,
@@ -116,12 +110,6 @@ void write_elf(
             int ispin = is + 1;
 
             ModuleIO::write_cube(
-        #ifdef __MPI
-                bz,
-                nbz,
-                rho_basis->nplane,
-                rho_basis->startz_current,
-        #endif
                 elf[is].data(),
                 ispin,
                 nspin,
@@ -146,12 +134,6 @@ void write_elf(
 
         int is = -1;
         ModuleIO::write_cube(
-    #ifdef __MPI
-            bz,
-            nbz,
-            rho_basis->nplane,
-            rho_basis->startz_current,
-    #endif
             elf_tot.data(),
             is,
             nspin,

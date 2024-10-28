@@ -240,12 +240,6 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
@@ -267,12 +261,6 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,
@@ -481,12 +469,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 }
                 std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
                 ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
                     data,
                     is,
                     PARAM.inp.nspin,
@@ -503,12 +485,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 {
                     fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
                     ModuleIO::write_cube(
-#ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rhod->nplane,
-                        this->pw_rhod->startz_current,
-#endif
                         this->pelec->charge->kin_r_save[is],
                         is,
                         PARAM.inp.nspin,

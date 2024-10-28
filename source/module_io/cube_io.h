@@ -22,12 +22,6 @@ bool read_cube(
     const int nat);
 
 void write_cube(
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
     const double*const data,
     const int is,
     const int nspin,
@@ -75,13 +69,7 @@ void read_cube_core_mismatch(
 // when serial:
 //      write data[iz*nxy+ixy] to file as order (ixy,iz)
 void write_cube_core(
-    std::ofstream &ofs_cube,
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
+    std::ofstream& ofs_cube,
     const double*const data,
     const int nxy,
     const int nz,

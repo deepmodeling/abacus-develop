@@ -323,7 +323,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	return;	
 
 }
-void Parallel_Grid::reduce_to_fullrho(double *rhotot, double *rhoin)
+void Parallel_Grid::reduce_to_fullrho(double* rhotot, const double* const rhoin)
 {
 	//ModuleBase::TITLE("Parallel_Grid","reduce_to_fullrho");
 
@@ -374,13 +374,9 @@ void Parallel_Grid::reduce_to_fullrho(double *rhotot, double *rhoin)
 
 		if(GlobalV::MY_RANK==0)
 		{
-			for(int ix=0; ix<this->ncx; ix++)
-			{
-				for(int iy=0; iy<this->ncy; iy++)
-				{
-					const int ir = ix * this->ncy + iy;
-					rhotot[ix * ncy * ncz + iy * ncz + iz] = zpiece[ir];
-				}
+            for (int ixy = 0; ixy < this->ncxy;++ixy)
+            {
+                rhotot[ixy * ncz + iz] = zpiece[ixy];
 			}	
 		}
 	}

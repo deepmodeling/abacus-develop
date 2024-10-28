@@ -44,8 +44,6 @@ bool ModuleIO::read_cube(
     ifs >> nz_read;
     ifs >> temp >> temp >> temp;
 
-    std::cout << "xyzread:" << nx_read << " " << ny_read << " " << nz_read << std::endl;
-
     // skip this line and the next natom lines
     for (int i = 0;i < natom + 1;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
 

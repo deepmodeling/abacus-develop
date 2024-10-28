@@ -24,7 +24,7 @@ class Parallel_Grid
 	void zpiece_to_all(double *zpiece, const int &iz, double *rho) const;
 	void zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const; //qainrui add for sto-dft 2021-7-21
 	
-	void reduce_to_fullrho(double *rhotot, double *rhoin);
+    void reduce_to_fullrho(double* rhotot, const double* constrhoin);
 #endif
 	
 	private:
@@ -41,7 +41,7 @@ class Parallel_Grid
 	int ncz;
 	int ncxy;
 	int ncxyz;
-	int nczp; // different processors have different values.
+    int nczp; // number of z-layers (xy-planes) in each processor
 	int nrxx;
 	int nbz;
 	int bz;
