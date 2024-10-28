@@ -659,17 +659,13 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
             & (GlobalC::Pgrid),
 #endif
             GlobalV::MY_RANK,
-            is,
             GlobalV::ofs_running,
-            this->nspin,
             ssc.str(),
             chg_gs.rho[is],
             this->pw_rho->nx,
             this->pw_rho->ny,
             this->pw_rho->nz,
-            ef,
-            &(GlobalC::ucell),
-            chg_gs.prenspin)) {
+            ucell.nat)) {
             GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
         } else {    // prenspin for nspin=4 is not supported currently
             ModuleBase::WARNING_QUIT(

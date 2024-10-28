@@ -91,8 +91,7 @@ TEST_F(RhoIOTest, Read)
     double ef;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
-    ModuleIO::read_cube(my_rank, is, ofs_running, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
-    EXPECT_DOUBLE_EQ(ef, 0.461002);
+    ModuleIO::read_cube(my_rank, ofs_running, fn, rho[is], nx, ny, nz, ucell->nat);
     EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
     EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);
 }

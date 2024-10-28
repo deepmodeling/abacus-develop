@@ -1,25 +1,21 @@
 #include "module_io/cube_io.h"
+#include <limits>
 // #include "module_base/global_variable.h" // GlobalV reference removed
 
 bool ModuleIO::read_cube(
 #ifdef __MPI
-    const Parallel_Grid*const Pgrid,
+    const Parallel_Grid* const Pgrid,
 #endif
     const int my_rank,
-    const int is,
     std::ofstream& ofs_running,
-    const int nspin,
     const std::string& fn,
-    double*const data,
+    double* const data,
     const int nx,
     const int ny,
     const int nz,
-    double& ef,
-    const UnitCell*const ucell,
-    int& prenspin,
-    const bool warning_flag)
+    const int natom)
 {
-    ModuleBase::TITLE("ModuleIO","read_cube");
+    ModuleBase::TITLE("ModuleIO", "read_cube");
     std::ifstream ifs(fn.c_str());
     if (!ifs)
     {
@@ -33,82 +29,25 @@ bool ModuleIO::read_cube(
         ofs_running << " Find the file, try to read charge from file." << std::endl;
     }
 
-    bool quit=false;
-
-    ifs.ignore(300, '\n'); // skip the header
-
-    if(nspin != 4)
-    {
-        int v_in;
-        ifs >> v_in;
-        if (v_in != nspin)
-        {
-            std::cout << " WARNING: nspin mismatch:  " << nspin << " in INPUT parameters but " << v_in << " in " << fn << std::endl;
-            return false;
-        }
-    }
-    else
-    {
-        ifs >> prenspin;
-    }
-    ifs.ignore(150, ')');
-
-    ifs >> ef;
-    ofs_running << " read in fermi energy = " << ef << std::endl;
-
-    ifs.ignore(150, '\n');
-
-    ModuleBase::CHECK_INT(ifs, ucell->nat);
-    ifs.ignore(150, '\n');
+    // skip the first 3 lines
+    for (int i = 0;i < 3;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
 
     int nx_read = 0;
     int ny_read = 0;
     int nz_read = 0;
-    double fac = ucell->lat0;
     std::string temp;
-    if (warning_flag)
-    {
-        ifs >> nx_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e11 / double(nx), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e12 / double(nx), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e13 / double(nx), quit);
-        ifs >> ny_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e21 / double(ny), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e22 / double(ny), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e23 / double(ny), quit);
-        ifs >> nz_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e31 / double(nz), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e32 / double(nz), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e33 / double(nz), quit);
-    }
-    else
-    {
-        ifs >> nx_read;
-        ifs >> temp >> temp >> temp;
-        ifs >> ny_read;
-        ifs >> temp >> temp >> temp;
-        ifs >> nz_read;
-        ifs >> temp >> temp >> temp;
-    }
 
-    for (int it = 0; it < ucell->ntype; it++)
-    {
-        for (int ia = 0; ia < ucell->atoms[it].na; ia++)
-        {
-            ifs >> temp; // skip atomic number
-            ifs >> temp; // skip Z valance
-            if (warning_flag)
-            {
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].x, quit);
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].y, quit);
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].z, quit);
-            }
-            else
-            {
-                ifs >> temp >> temp >> temp;
-            }
-        }
-    }
+    ifs >> nx_read;
+    ifs >> temp >> temp >> temp;
+    ifs >> ny_read;
+    ifs >> temp >> temp >> temp;
+    ifs >> nz_read;
+    ifs >> temp >> temp >> temp;
+
+    std::cout << "xyzread:" << nx_read << " " << ny_read << " " << nz_read << std::endl;
+
+    // skip this line and the next natom lines
+    for (int i = 0;i < natom + 1;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
 
 #ifdef __MPI
     if(nx == nx_read && ny == ny_read && nz == nz_read)
@@ -116,7 +55,7 @@ bool ModuleIO::read_cube(
     else
         ModuleIO::read_cube_core_mismatch(ifs, Pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
 #else
-    ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
+
     if(nx == nx_read && ny == ny_read && nz == nz_read)
         ModuleIO::read_cube_core_match(ifs, data, nx*ny, nz);
     else

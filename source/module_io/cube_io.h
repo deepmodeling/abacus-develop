@@ -13,18 +13,13 @@ bool read_cube(
     const Parallel_Grid*const Pgrid,
 #endif
     const int my_rank,
-    const int is,
     std::ofstream& ofs_running,
-    const int nspin,
     const std::string& fn,
     double*const data,
     const int nx,
     const int ny,
     const int nz,
-    double& ef,
-    const UnitCell*const ucell,
-    int& prenspin,
-    const bool warning_flag = true);
+    const int nat);
 
 void write_cube(
 #ifdef __MPI
