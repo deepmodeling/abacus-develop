@@ -202,9 +202,6 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
                 PARAM.inp.nspin,
                 0,
                 fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 0.0, // efermi
                 &(GlobalC::ucell),
                 3,  // precision

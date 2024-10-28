@@ -161,9 +161,6 @@ void ESolver_FP::after_scf(const int istep)
                     PARAM.inp.nspin,
                     istep,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell),
                     PARAM.inp.out_chg[1],
@@ -177,9 +174,6 @@ void ESolver_FP::after_scf(const int istep)
                         PARAM.inp.nspin,
                         istep,
                         fn,
-                        this->pw_rhod->nx,
-                        this->pw_rhod->ny,
-                        this->pw_rhod->nz,
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }
@@ -217,9 +211,6 @@ void ESolver_FP::after_scf(const int istep)
                     PARAM.inp.nspin,
                     istep,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     0.0, // efermi
                     &(GlobalC::ucell),
                     3,  // precision

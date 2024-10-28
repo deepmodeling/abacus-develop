@@ -245,9 +245,6 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
                 &(GlobalC::ucell));
         }
@@ -266,9 +263,6 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 0.0, // efermi
                 &(GlobalC::ucell),
                 11, // precsion
@@ -474,9 +468,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell),
                     3,
@@ -490,9 +481,6 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                         PARAM.inp.nspin,
                         0,
                         fn,
-                        this->pw_rhod->nx,
-                        this->pw_rhod->ny,
-                        this->pw_rhod->nz,
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }

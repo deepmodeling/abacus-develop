@@ -136,9 +136,6 @@ void IState_Charge::begin(Gint_Gamma& gg,
                     nspin,
                     0,
                     ssc.str(),
-                    rhopw_nx,
-                    rhopw_ny,
-                    rhopw_nz,
                     ef_spin,
                     ucell_in);
             }
@@ -265,9 +262,6 @@ void IState_Charge::begin(Gint_k& gk,
                             nspin,
                             0,
                             ssc.str(),
-                            rhopw_nx,
-                            rhopw_ny,
-                            rhopw_nz,
                             ef_spin,
                             ucell_in);
                     }
@@ -327,9 +321,6 @@ void IState_Charge::begin(Gint_k& gk,
                         nspin,
                         0,
                         ssc.str(),
-                        rhopw_nx,
-                        rhopw_ny,
-                        rhopw_nz,
                         ef_spin,
                         ucell_in);
                 }

@@ -58,9 +58,6 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],
-                    this->rhopw->nx,
-                    this->rhopw->ny,
-                    this->rhopw->nz,
                     GlobalC::ucell.nat))
                 {
                     GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
@@ -111,9 +108,6 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                         GlobalV::ofs_running,
                         ssc.str(),
                         this->kin_r[is],
-                        this->rhopw->nx,
-                        this->rhopw->ny,
-                        this->rhopw->nz,
                         GlobalC::ucell.nat))
                     {
                         GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;

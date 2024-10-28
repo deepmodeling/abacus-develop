@@ -9,9 +9,6 @@ bool ModuleIO::read_cube(
     std::ofstream& ofs_running,
     const std::string& fn,
     double* const data,
-    const int nx,
-    const int ny,
-    const int nz,
     const int natom)
 {
     ModuleBase::TITLE("ModuleIO", "read_cube");
@@ -43,6 +40,10 @@ bool ModuleIO::read_cube(
     ifs >> nz_read;
     ifs >> temp >> temp >> temp;
 
+    const int& nx = pgrid.nx;
+    const int& ny = pgrid.ny;
+    const int& nz = pgrid.nz;
+
     // skip this line and the next natom lines
     for (int i = 0;i < natom + 1;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
 
@@ -54,9 +55,9 @@ bool ModuleIO::read_cube(
 #else
 
     if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, data, nx*ny, nz);
+        ModuleIO::read_cube_core_match(ifs, pgrid, (my_rank == 0), data, nx * ny, nz);
     else
-        ModuleIO::read_cube_core_mismatch(ifs, data, nx, ny, nz, nx_read, ny_read, nz_read);
+        ModuleIO::read_cube_core_mismatch(ifs, pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
 #endif
 
     return true;

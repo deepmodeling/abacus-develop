@@ -32,7 +32,11 @@ class Parallel_Grid
 	
     void reduce_to_fullrho(double* rhotot, const double* constrhoin)const;
 #endif
-	
+
+    const int& nx = this->ncx;
+    const int& ny = this->ncy;
+    const int& nz = this->ncz;
+
 	private:
 
 	void z_distribution(void);

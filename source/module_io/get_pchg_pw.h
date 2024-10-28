@@ -124,9 +124,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                     nspin,
                     0,
                     ssc.str(),
-                    nx,
-                    ny,
-                    nz,
                     0.0,
                     ucell);
 
@@ -195,9 +192,6 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                     nspin,
                     0,
                     ssc.str(),
-                    nx,
-                    ny,
-                    nz,
                     0.0,
                     ucell);
             }

@@ -1035,9 +1035,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 PARAM.inp.nspin,
                 0,
                 fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.get_efval(is),
                 &(GlobalC::ucell),
                 3,
@@ -1051,9 +1048,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell));
             }

@@ -31,6 +31,7 @@ Magnetism::~Magnetism()
 {
     delete[] this->start_magnetization;
 }
+Parallel_Grid::~Parallel_Grid() {}
 
 #define private public
 #include "module_parameter/parameter.h"
@@ -93,7 +94,7 @@ TEST_F(RhoIOTest, Read)
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
-    ModuleIO::read_cube(pgrid, my_rank, ofs_running, fn, rho[is], nx, ny, nz, ucell->nat);
+    ModuleIO::read_cube(pgrid, my_rank, ofs_running, fn, rho[is], ucell->nat);
     EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
     EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);
 }

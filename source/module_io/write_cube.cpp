@@ -11,9 +11,6 @@ void ModuleIO::write_cube(
     const int nspin,
     const int iter,
     const std::string& fn,
-    const int nx,
-    const int ny,
-    const int nz,
     const double ef,
     const UnitCell*const ucell,
     const int precision,
@@ -26,6 +23,10 @@ void ModuleIO::write_cube(
     time_t start;
     time_t end;
     std::ofstream ofs_cube;
+
+    const int& nx = pgrid.nx;
+    const int& ny = pgrid.ny;
+    const int& nz = pgrid.nz;
 
     if (my_rank == 0)
     {

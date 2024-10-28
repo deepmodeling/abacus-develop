@@ -11,10 +11,7 @@ bool read_cube(
     const int my_rank,
     std::ofstream& ofs_running,
     const std::string& fn,
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
+    double* const data,
     const int nat);
 
 void write_cube(
@@ -24,9 +21,6 @@ void write_cube(
     const int nspin,
     const int iter,
     const std::string& fn,
-    const int nx,
-    const int ny,
-    const int nz,
     const double ef,
     const UnitCell*const ucell,
     const int precision = 11,
