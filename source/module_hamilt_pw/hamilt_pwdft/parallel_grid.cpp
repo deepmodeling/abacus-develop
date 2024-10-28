@@ -35,10 +35,6 @@ void Parallel_Grid::init(
 	const int &bz_in)
 {
 
-#ifndef __MPI
-	return;
-#endif
-
 	ModuleBase::TITLE("Parallel_Grid","init");
 	
 	this->ncx = ncx_in;
@@ -47,7 +43,7 @@ void Parallel_Grid::init(
 	this->nczp = nczp_in;
 	this->nrxx = nrxx_in;
 	this->nbz = nbz_in;
-	this->bz = bz_in;
+    this->bz = bz_in;
 
 	if(nczp<0)
 	{
@@ -60,7 +56,11 @@ void Parallel_Grid::init(
 	assert(ncz > 0);
 
 	this->ncxy = ncx * ncy;
-	this->ncxyz = ncxy * ncz;
+    this->ncxyz = ncxy * ncz;
+
+#ifndef __MPI
+    return;
+#endif
 
     // enable to call this function again liuyu 2023-03-10
     if(this->allocate)
@@ -323,7 +323,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	return;	
 
 }
-void Parallel_Grid::reduce_to_fullrho(double* rhotot, const double* const rhoin)
+void Parallel_Grid::reduce_to_fullrho(double* rhotot, const double* const rhoin)const
 {
 	//ModuleBase::TITLE("Parallel_Grid","reduce_to_fullrho");
 
@@ -393,10 +393,6 @@ void Parallel_Grid::init_final_scf(const int &ncx_in, const int &ncy_in, const i
 const int &nrxx_in, const int &nbz_in, const int &bz_in)
 {
 
-#ifndef __MPI
-	return;
-#endif
-
 	ModuleBase::TITLE("Parallel_Grid","init");
 	
 	this->ncx = ncx_in;
@@ -405,7 +401,7 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 	this->nczp = nczp_in;
 	this->nrxx = nrxx_in;
 	this->nbz = nbz_in;
-	this->bz = bz_in;
+    this->bz = bz_in;
 
 	if(nczp<0)
 	{
@@ -418,7 +414,11 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 	assert(ncz > 0);
 
 	this->ncxy = ncx * ncy;
-	this->ncxyz = ncxy * ncz;
+    this->ncxyz = ncxy * ncz;
+
+#ifndef __MPI
+    return;
+#endif
 
 	// (2)
 	assert(allocate_final_scf==false);

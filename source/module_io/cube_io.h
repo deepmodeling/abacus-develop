@@ -2,16 +2,12 @@
 #define CUBE_IO_H
 #include <string>
 #include "module_cell/unitcell.h"
-#ifdef __MPI
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#endif
+class Parallel_Grid;
 
 namespace ModuleIO
 {
 bool read_cube(
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-#endif
+    const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
     const std::string& fn,
@@ -22,7 +18,8 @@ bool read_cube(
     const int nat);
 
 void write_cube(
-    const double*const data,
+    const Parallel_Grid& pgrid,
+    const double* const data,
     const int is,
     const int nspin,
     const int iter,
@@ -42,20 +39,16 @@ void write_cube(
 //      read file as order (ixy,iz) to data[iz*nxy+ixy]
 void read_cube_core_match(
     std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
+    const Parallel_Grid& pgrid,
     const bool flag_read_rank,
-#endif
     double*const data,
     const int nxy,
     const int nz);
 
 void read_cube_core_mismatch(
     std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
+    const Parallel_Grid& pgrid,
     const bool flag_read_rank,
-#endif
     double*const data,
     const int nx,
     const int ny,
@@ -69,6 +62,7 @@ void read_cube_core_mismatch(
 // when serial:
 //      write data[iz*nxy+ixy] to file as order (ixy,iz)
 void write_cube_core(
+    const Parallel_Grid& pgrid,
     std::ofstream& ofs_cube,
     const double*const data,
     const int nxy,

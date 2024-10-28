@@ -1,11 +1,10 @@
 #include "module_io/cube_io.h"
 #include <limits>
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 // #include "module_base/global_variable.h" // GlobalV reference removed
 
 bool ModuleIO::read_cube(
-#ifdef __MPI
-    const Parallel_Grid* const Pgrid,
-#endif
+    const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
     const std::string& fn,
@@ -49,9 +48,9 @@ bool ModuleIO::read_cube(
 
 #ifdef __MPI
     if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, Pgrid, (my_rank == 0), data, nx * ny, nz);
+        ModuleIO::read_cube_core_match(ifs, pgrid, (my_rank == 0), data, nx * ny, nz);
     else
-        ModuleIO::read_cube_core_mismatch(ifs, Pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
+        ModuleIO::read_cube_core_mismatch(ifs, pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
 #else
 
     if(nx == nx_read && ny == ny_read && nz == nz_read)
@@ -64,11 +63,9 @@ bool ModuleIO::read_cube(
 }
 
 void ModuleIO::read_cube_core_match(
-    std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
+    std::ifstream& ifs,
+    const Parallel_Grid& pgrid,
     const bool flag_read_rank,
-#endif
     double*const data,
     const int nxy,
     const int nz)
@@ -81,13 +78,13 @@ void ModuleIO::read_cube_core_match(
             for (int iz = 0; iz < nz; iz++)
                 ifs >> read_rho[iz][ixy];
         for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
+            pgrid.zpiece_to_all(read_rho[iz].data(), iz, data);
     }
     else
     {
         std::vector<double> zpiece(nxy);
         for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
+            pgrid.zpiece_to_all(zpiece.data(), iz, data);
     }
 #else
     for (int ixy = 0; ixy < nxy; ixy++)
@@ -98,10 +95,8 @@ void ModuleIO::read_cube_core_match(
 
 void ModuleIO::read_cube_core_mismatch(
     std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
+    const Parallel_Grid& pgrid,
     const bool flag_read_rank,
-#endif
     double*const data,
     const int nx,
     const int ny,
@@ -117,13 +112,13 @@ void ModuleIO::read_cube_core_mismatch(
         std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
         ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, read_rho);
         for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
+            pgrid.zpiece_to_all(read_rho[iz].data(), iz, data);
     }
     else
     {
         std::vector<double> zpiece(nxy);
         for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
+            pgrid.zpiece_to_all(zpiece.data(), iz, data);
     }
 #else
     ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);

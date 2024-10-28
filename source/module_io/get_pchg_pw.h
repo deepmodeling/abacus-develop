@@ -118,7 +118,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                 ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik % (nks / nspin) + 1 << "_SPIN" << spin_index + 1
                     << "_CHG.cube";
 
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     rho_band[spin_index].data(),
                     spin_index,
                     nspin,
@@ -189,7 +189,7 @@ void get_pchg_pw(const std::vector<int>& bands_to_print,
                 std::stringstream ssc;
                 ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     rho_band[is].data(),
                     is,
                     nspin,

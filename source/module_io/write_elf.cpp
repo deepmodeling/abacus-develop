@@ -1,5 +1,6 @@
 #include "write_elf.h"
 #include "module_io/cube_io.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleIO
 {
@@ -88,7 +89,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_cube(
+        ModuleIO::write_cube(GlobalC::Pgrid,
             elf[0].data(),
             is,
             nspin,
@@ -109,7 +110,7 @@ void write_elf(
             std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is + 1) + ".cube";
             int ispin = is + 1;
 
-            ModuleIO::write_cube(
+            ModuleIO::write_cube(GlobalC::Pgrid,
                 elf[is].data(),
                 ispin,
                 nspin,
@@ -133,7 +134,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_cube(
+        ModuleIO::write_cube(GlobalC::Pgrid,
             elf_tot.data(),
             is,
             nspin,

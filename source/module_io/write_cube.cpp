@@ -2,10 +2,11 @@
 #include "module_io/cube_io.h"
 #include "module_parameter/parameter.h"
 #include<vector>
-#include "module_hamilt_pw/hamilt_pwdft/global.h"   // tmp, for Pgrid
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
 void ModuleIO::write_cube(
-    const double*const data,
+    const Parallel_Grid& pgrid,
+    const double* const data,
     const int is,
     const int nspin,
     const int iter,
@@ -122,7 +123,7 @@ void ModuleIO::write_cube(
         ofs_cube << std::scientific;
     }
 
-    ModuleIO::write_cube_core(ofs_cube, data, nx * ny, nz, 6);
+    ModuleIO::write_cube_core(pgrid, ofs_cube, data, nx * ny, nz, 6);
 
     if (my_rank == 0)
     {
@@ -138,6 +139,7 @@ void ModuleIO::write_cube(
 
 
 void ModuleIO::write_cube_core(
+    const Parallel_Grid& pgrid,
     std::ofstream& ofs_cube,
     const double*const data,
     const int nxy,
@@ -158,7 +160,7 @@ void ModuleIO::write_cube_core(
         const int nxyz = nxy * nz;
         std::vector<double> data_cube(nxyz, 0.0);
 
-        GlobalC::Pgrid.reduce_to_fullrho(data_cube.data(), data);
+        pgrid.reduce_to_fullrho(data_cube.data(), data);
 
         // for cube file
         if (my_rank == 0)

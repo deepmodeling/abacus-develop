@@ -121,7 +121,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 ss << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_ENV.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     pes_->charge->rho_save[is],
                     is,
                     nspin,
@@ -206,7 +206,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     wfc_real.data(),
                     is,
                     nspin,
@@ -221,7 +221,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     wfc_imag.data(),
                     is,
                     nspin,
@@ -363,7 +363,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1 << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
-                ModuleIO::write_cube(
+                ModuleIO::write_cube(GlobalC::Pgrid,
                     pes_->charge->rho[ispin],
                     ispin,
                     nspin,
@@ -434,7 +434,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     ss_real << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_REAL.cube";
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_cube(
+                    ModuleIO::write_cube(GlobalC::Pgrid,
                         wfc_real.data(),
                         ispin,
                         nspin,
@@ -450,7 +450,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
-                    ModuleIO::write_cube(
+                    ModuleIO::write_cube(GlobalC::Pgrid,
                         wfc_imag.data(),
                         ispin,
                         nspin,

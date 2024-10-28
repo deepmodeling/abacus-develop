@@ -165,7 +165,7 @@ void ESolver_KS_PW<T, Device>::nscf() {
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
-            ModuleIO::write_cube(
+            ModuleIO::write_cube(GlobalC::Pgrid,
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,

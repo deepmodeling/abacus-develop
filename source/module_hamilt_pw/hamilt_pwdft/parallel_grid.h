@@ -11,8 +11,14 @@ class Parallel_Grid
 	friend class Efield;
 	friend class Symmetry_rho;
 
-	Parallel_Grid();
-	~Parallel_Grid();
+    Parallel_Grid();
+    Parallel_Grid(const int ncx_in, const int ncy_in, const int ncz_in, const int nczp_in, const int nrxx_in, const int nbz_in, const int bz_in)
+        :ncx(ncx_in), ncy(ncy_in), ncz(ncz_in), nczp(nczp_in), nrxx(nrxx_in), nbz(nbz_in), bz(bz_in),
+        ncxy(ncx_in* ncy_in), ncxyz(ncx_in* ncy_in* ncz_in)
+    {
+        assert(ncx > 0 && ncy > 0 && ncz > 0 && nczp >= 0 && nrxx > 0 && nbz > 0 && bz > 0);
+    }
+    ~Parallel_Grid();
 	
 	void init(const int &ncx, const int &ncy, const int &ncz, 
 		const int &nczp, const int &nrxx, const int &nbz, const int &bz);
@@ -24,7 +30,7 @@ class Parallel_Grid
 	void zpiece_to_all(double *zpiece, const int &iz, double *rho) const;
 	void zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const; //qainrui add for sto-dft 2021-7-21
 	
-    void reduce_to_fullrho(double* rhotot, const double* constrhoin);
+    void reduce_to_fullrho(double* rhotot, const double* constrhoin)const;
 #endif
 	
 	private:
@@ -46,8 +52,8 @@ class Parallel_Grid
 	int nbz;
 	int bz;
 
-	bool allocate;
-    bool allocate_final_scf; //LiuXh add 20180619
+    bool allocate = false;
+    bool allocate_final_scf = false; //LiuXh add 20180619
 };
 
 #endif
