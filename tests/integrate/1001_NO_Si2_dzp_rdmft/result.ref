@@ -1,18 +1,18 @@
-etotref -207.1958885866771709
-etotperatomref -103.5979442933
-pointgroupref T_d
-spacegroupref O_h
-nksibzref 4
+etotref -201.4138882681562848
+etotperatomref -100.7069441341
+pointgroupref BvK
+spacegroupref BvK
+nksibzref 3
 
 The following energy units are in Rydberg:
-E_TV_RDMFT_ref 4.8778919898
-E_hartree_RDMFT_ref 1.2469125524
-Exc_cwp22_RDMFT_ref -4.4536562666
-E_Ewald_ref -16.8997586085
+E_TV_RDMFT_ref 5.2788851446
+E_hartree_RDMFT_ref 1.3622516604
+Exc_cwp22_RDMFT_ref -4.5448173113
+E_Ewald_ref -16.8997585734
 E_entropy_ref -0.0000000000
 E_descf_ref 0.0000000000
-Etotal_RDMFT_ref -15.2286103330
-Exc_ksdft_ref -2.4587890515
-E_exx_ksdft_ref -1.9948670726
+Etotal_RDMFT_ref -14.8034390797
+Exc_ksdft_ref -2.4788985117
+E_exx_ksdft_ref -2.0657389944
 
-totaltimeref 152.65
+totaltimeref 84.45
