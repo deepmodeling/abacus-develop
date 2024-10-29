@@ -191,13 +191,6 @@ void RDMFT<TK, TR>::update_occNumber(const ModuleBase::matrix& occ_number_in)
 
 
 
-
-
-
-
-
-
-
 }
 
 
