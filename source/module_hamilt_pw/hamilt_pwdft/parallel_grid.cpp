@@ -326,9 +326,9 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	return;	
 
 }
-void Parallel_Grid::reduce_to_fullrho(double* rhotot, const double* const rhoin)const
+void Parallel_Grid::reduce(double* rhotot, const double* const rhoin)const
 {
-	//ModuleBase::TITLE("Parallel_Grid","reduce_to_fullrho");
+    //ModuleBase::TITLE("Parallel_Grid","reduce");
 
 	// if not the first pool, wait here until processpr 0
 	// send the Barrier command.

@@ -161,7 +161,7 @@ void ModuleIO::write_cube_core(
         const int nxyz = nxy * nz;
         std::vector<double> data_cube(nxyz, 0.0);
 
-        pgrid.reduce_to_fullrho(data_cube.data(), data);
+        pgrid.reduce(data_cube.data(), data);
 
         // for cube file
         if (my_rank == 0)

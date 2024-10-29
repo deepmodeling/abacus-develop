@@ -30,7 +30,7 @@ class Parallel_Grid
 	void zpiece_to_all(double *zpiece, const int &iz, double *rho) const;
 	void zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const; //qainrui add for sto-dft 2021-7-21
 	
-    void reduce_to_fullrho(double* rhotot, const double* constrhoin)const;
+    void reduce(double* rhotot, const double* constrhoin)const;
 #endif
 
     const int& nx = this->ncx;
