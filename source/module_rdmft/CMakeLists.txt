@@ -4,6 +4,8 @@ if(ENABLE_LCAO)
         OBJECT
         rdmft.cpp
         rdmft_tools.cpp
+        cal_V_rdmft.cpp
+        update_state_rdmft.cpp
     )
 endif()
 
