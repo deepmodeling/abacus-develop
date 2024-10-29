@@ -221,6 +221,7 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
             srho.begin(is, *(this->pelec->charge), pw_rho, GlobalC::ucell.symm);
         }
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+        MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
     }
     else
     {

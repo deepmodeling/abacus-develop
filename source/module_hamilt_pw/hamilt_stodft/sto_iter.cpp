@@ -414,7 +414,6 @@ void Stochastic_Iter::calHsqrtchi(Stochastic_WF& stowf)
     p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
-        p_hamilt_sto->updateHk(ik);
         this->calTnchi_ik(ik, stowf);
     }
 }
@@ -481,7 +480,7 @@ void Stochastic_Iter::sum_stoband(Stochastic_WF& stowf,
             const int nchip_ik = nchip[ik];
             if (this->pkv->get_nks() > 1)
             {
-                pHamilt->updateHk(ik);
+                pHamilt->updateHk(ik); //can be merged with calTnchi_ik, but it does not nearly cost time.
                 stowf.shchi->fix_k(ik);
             }
             const int npw = this->pkv->ngk[ik];
@@ -632,6 +631,10 @@ void Stochastic_Iter::calTnchi_ik(const int& ik, Stochastic_WF& stowf)
     }
     else
     {
+        if (this->pkv->get_nks() > 1)
+        {
+            p_hamilt_sto->updateHk(ik); //necessary, because itermu should be called before this function
+        }
         auto hchi_norm = std::bind(&hamilt::HamiltSdftPW<std::complex<double>>::hPsi_norm,
                                    p_hamilt_sto,
                                    std::placeholders::_1,

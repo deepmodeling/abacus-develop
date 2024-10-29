@@ -68,12 +68,15 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         // init k
         if (nks > 1)
         {
-            pHamilt->updateHk(ik);
+            pHamilt->updateHk(ik); // necessary , because emax and emin should be decided first
         }
         stoiter.calPn(ik, stowf);
     }
 
+    // iterate to get mu
     stoiter.itermu(iter, pes);
+
+    // prepare sqrt{f(\hat{H})}|\chi> to calculate density, force and stress
     stoiter.calHsqrtchi(stowf);
     if (skip_charge)
     {
