@@ -67,11 +67,6 @@ namespace ModuleESolver
 
         //! Charge extrapolation
         Charge_Extra CE;
-
-      private:
-       
-        //! Print charge density using FFT
-        void print_rhofft(const Input_para& inp, std::ofstream &ofs);
     };
 }
 
