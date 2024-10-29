@@ -9,15 +9,15 @@
 
 namespace hsolver
 {
-
-void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
-                           psi::Psi<std::complex<double>>& psi,
-                           elecstate::ElecState* pes,
-                           ModulePW::PW_Basis_K* wfc_basis,
-                           Stochastic_WF& stowf,
-                           const int istep,
-                           const int iter,
-                           const bool skip_charge)
+template <typename Device>
+void HSolverPW_SDFT<Device>::solve(hamilt::Hamilt<std::complex<double>, Device>* pHamilt,
+                                   psi::Psi<std::complex<double>, Device>& psi,
+                                   elecstate::ElecState* pes,
+                                   ModulePW::PW_Basis_K* wfc_basis,
+                                   Stochastic_WF& stowf,
+                                   const int istep,
+                                   const int iter,
+                                   const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
@@ -107,4 +107,5 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     return;
 }
 
+template class HSolverPW_SDFT<base_device::DEVICE_CPU>;
 } // namespace hsolver

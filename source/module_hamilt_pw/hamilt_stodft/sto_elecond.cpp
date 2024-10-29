@@ -1013,8 +1013,3 @@ void Sto_EleCond::sKG(const int& smear_type,
     }
     ModuleBase::timer::tick("Sto_EleCond", "sKG");
 }
-
-namespace GlobalTemp
-{
-const ModuleBase::matrix* veff;
-}
