@@ -22,7 +22,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
 // #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_elecstate/module_dm/density_matrix.h"
+// #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 #include "module_basis/module_ao/ORB_read.h"
@@ -204,9 +204,6 @@ class RDMFT
     // update occ_number for optimization algorithms that depend on Hamilton
     void update_occNumber(const ModuleBase::matrix& occ_number_in);
 
-    // // update occ_number for optimization algorithms that depend on Hamilton
-    // void update_wg(const ModuleBase::matrix& wg_in);
-
     // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
     double run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>&E_gradient_wfc);
 
@@ -214,12 +211,12 @@ class RDMFT
 
   protected:
 
+    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+    void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
+
     void cal_V_TV();
 
     void cal_V_hartree();
-
-    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
-    void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
 
     // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void cal_V_XC();

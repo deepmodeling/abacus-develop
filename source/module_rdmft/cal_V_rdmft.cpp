@@ -3,29 +3,22 @@
 // DATE : 2024-10-30
 //==========================================================
 
+#include "rdmft.h"
 
-
-#include "module_hamilt_general/operator.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
-
-
-// used by Exx&LRI
-#ifdef __EXX
-#include "module_ri/RI_2D_Comm.h"
-#include "module_ri/Exx_LRI.h"
-#endif
-
-
-
+// #ifdef __EXX
+// #include "module_ri/RI_2D_Comm.h"
+// #include "module_ri/Exx_LRI.h"
+// #endif
+// #include "module_hamilt_general/operator.h"
+// #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
+// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
 namespace rdmft
 {
-
 
 
 template <typename TK, typename TR>
