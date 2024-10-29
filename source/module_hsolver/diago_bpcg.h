@@ -80,6 +80,10 @@ class DiagoBPCG
     /// cg convergence thr
     Real all_band_cg_thr = 1E-5;
 
+    // Pointer to objects of 1 and 0 for gemm 
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
+
     ct::DataType r_type  = ct::DataType::DT_INVALID;
     ct::DataType t_type  = ct::DataType::DT_INVALID;
     ct::DeviceType device_type = ct::DeviceType::UnKnown;
@@ -334,6 +338,7 @@ class DiagoBPCG
 
     using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
     using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
+    using gemm_op = hsolver::gemm_op<T, Device>;
 
 };
 
