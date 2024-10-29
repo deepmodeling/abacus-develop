@@ -26,42 +26,46 @@ void write_cube(
     const int precision = 11,
     const int out_fermi = 1); // mohan add 2007-10-17
 
+struct CubeInfo
+{
+    CubeInfo(
+        const std::vector<std::string>& comment,
+        const int natom,
+        const std::vector<double>& cel_pos,
+        const std::vector<int>& nvoxel,
+        const std::vector<std::vector<double>>& axis_vecs,
+        const std::vector<int>& atom_type,
+        const std::vector<double>& atom_charge,
+        const std::vector<std::vector<double>>& atom_pos,
+        const std::vector<double>& data,
+        const bool valid)
+        : comment(comment), natom(natom), cel_pos(cel_pos),
+        nvoxel(nvoxel), axis_vecs(axis_vecs),
+        atom_type(atom_type), atom_charge(atom_charge), atom_pos(atom_pos),
+        data(data), valid(valid)
+    {
+    };
 
-// when MPI:
-//      read file as order (ixy,iz) to data[ixy*nz+iz]
-// when serial:
-//      read file as order (ixy,iz) to data[iz*nxy+ixy]
-void read_cube_core_match(
-    std::ifstream &ifs,
-    const Parallel_Grid& pgrid,
-    const bool flag_read_rank,
-    double*const data,
-    const int nxy,
-    const int nz);
+    const std::vector<std::string> comment = {};
+    const int natom = 0;
+    const std::vector<double> cel_pos = {};
+    const std::vector<int> nvoxel = {};
+    const std::vector<std::vector<double>> axis_vecs = {};
+    const std::vector<int> atom_type = {};
+    const std::vector<double> atom_charge = {};
+    const std::vector<std::vector<double>> atom_pos = {};
+    const std::vector<double> data = {};
+    const bool valid = false;
+};
 
-void read_cube_core_mismatch(
-    std::ifstream &ifs,
-    const Parallel_Grid& pgrid,
-    const bool flag_read_rank,
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    const int nx_read,
-    const int ny_read,
-    const int nz_read);
-
-// when MPI:
-//      write data[ixy*nplane+iz] to file as order (ixy,iz)
-// when serial:
-//      write data[iz*nxy+ixy] to file as order (ixy,iz)
-void write_cube_core(
-    const Parallel_Grid& pgrid,
-    std::ofstream& ofs_cube,
-    const double*const data,
-    const int nxy,
-    const int nz,
-    const int n_data_newline);
+/// read the full data from a cube file 
+CubeInfo read_cube(const std::string& file);
+/// write a cube file
+void write_cube(const std::string& file, const CubeInfo& info, const int precision, const int ndata_line = 6);
+/// change the index order: [x][y][z] (.cube file) -> [z][x][y] (ABACUS)
+void xyz2zxy(const double* const xyz, const int nx, const int ny, const int nz, double* const zxy);
+/// change the index order: [z][x][y] (ABACUS) -> [x][y][z] (.cube file)
+void zxy2xyz(const double* const zxy, const int nx, const int ny, const int nz, double* const xyz);
 
     /**
      * @brief The trilinear interpolation method
@@ -84,28 +88,23 @@ void write_cube_core(
      * directions, divided by the grid spacing. Here, it is assumed that the grid spacing is equal and can be
      * omitted during computation.
      *
-     * @param ifs the ifstream used to read charge density
+     * @param data_in the input data of size nxyz_read
      * @param nx_read nx read from file
      * @param ny_read ny read from file
      * @param nz_read nz read from file
      * @param nx the dimension of grids along x
      * @param ny the dimension of grids along y
      * @param nz the dimension of grids along z
-     * @param data the interpolated results
+     * @param data_out the interpolated results of size nxyz
      */
-    void trilinear_interpolate(std::ifstream& ifs,
-                               const int& nx_read,
-                               const int& ny_read,
-                               const int& nz_read,
-                               const int& nx,
-                               const int& ny,
-                               const int& nz,
-#ifdef __MPI
-                               std::vector<std::vector<double>> &data
-#else
-                               double* data
-#endif
-    );
+void trilinear_interpolate(const double* const data_in,
+    const int& nx_read,
+    const int& ny_read,
+    const int& nz_read,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double* data_out);
 }
 
 #endif

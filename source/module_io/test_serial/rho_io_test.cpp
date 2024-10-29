@@ -101,7 +101,6 @@ TEST_F(RhoIOTest, Read)
 
 TEST_F(RhoIOTest, TrilinearInterpolate)
 {
-    double data[36 * 40 * 44];
     int nx = 36;
     int ny = 40;
     int nz = 44;
@@ -113,7 +112,22 @@ TEST_F(RhoIOTest, TrilinearInterpolate)
     {
         ifs.ignore(300, '\n');
     }
-    ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);
+    std::vector<double> data_read(nx_read * ny_read * nz_read);
+    for (int ix = 0; ix < nx_read; ix++)
+    {
+        for (int iy = 0; iy < ny_read; iy++)
+        {
+            for (int iz = 0; iz < nz_read; iz++)
+            {
+                ifs >> data_read[(ix * ny_read + iy) * nz_read + iz];
+            }
+        }
+    }
+    const int nxyz = nx * ny * nz;
+    std::vector<double> data_xyz(nxyz);
+    std::vector<double> data(nxyz); // z > x > y
+    ModuleIO::trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz.data());
+    ModuleIO::xyz2zxy(data_xyz.data(), nx, ny, nz, data.data());
     EXPECT_DOUBLE_EQ(data[0], 0.0010824725010374092);
     EXPECT_DOUBLE_EQ(data[10], 0.058649850374240906);
     EXPECT_DOUBLE_EQ(data[100], 0.018931708073604996);

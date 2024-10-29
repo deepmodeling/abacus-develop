@@ -4,6 +4,20 @@
 #include<vector>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
+void ModuleIO::zxy2xyz(const double* const zxy, const int nx, const int ny, const int nz, double* const xyz)
+{
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            for (int iz = 0; iz < nz; iz++)
+            {
+                xyz[(ix * ny + iy) * nz + iz] = zxy[(iz * nx + ix) * ny + iy];
+            }
+        }
+    }
+}
+
 void ModuleIO::write_cube(
     const Parallel_Grid& pgrid,
     const double* const data,
@@ -19,72 +33,82 @@ void ModuleIO::write_cube(
     ModuleBase::TITLE("ModuleIO", "write_cube");
 
     const int my_rank = GlobalV::MY_RANK;
+    const int my_pool = GlobalV::MY_POOL;
 
     time_t start;
     time_t end;
-    std::ofstream ofs_cube;
+    std::stringstream ss;
 
     const int& nx = pgrid.nx;
     const int& ny = pgrid.ny;
     const int& nz = pgrid.nz;
+    const int& nxyz = nx * ny * nz;
 
+    start = time(NULL);
+
+    // reduce
+    std::vector<double> data_xyz_full(nxyz);    // data to be written
+#ifdef __MPI    // reduce to rank 0
+    if (my_pool == 0)
+    {
+        std::vector<double> data_zxy_full(nxyz, 0.0);   //tmp
+        pgrid.reduce(data_zxy_full.data(), data);
+        if (my_rank == 0) { ModuleIO::zxy2xyz(data_zxy_full.data(), nx, ny, nz, data_xyz_full.data()); }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
+    ModuleIO::zxy2xyz(data, nx, ny, nz, data_xyz_full.data());
+#endif
+
+    // build the info structure
     if (my_rank == 0)
     {
-        start = time(NULL);
 
-        if (iter == 0)
-        {
-            ofs_cube.open(fn.c_str());
-        }
-        else
-        {
-            ofs_cube.open(fn.c_str(), std::ios::app);
-        }
-
-        if (!ofs_cube)
-        {
-            ModuleBase::WARNING("ModuleIO::write_cube", "Can't create Output File!");
-        }
 
         /// output header for cube file
-        ofs_cube << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
-        ofs_cube << nspin << " (nspin) ";
+        ss << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 
-        ofs_cube << std::fixed;
-        ofs_cube << std::setprecision(6);
+        ss << nspin << " (nspin) ";
+        ss << std::fixed;
+        ss << std::setprecision(6);
         if (out_fermi == 1)
         {
             if (PARAM.globalv.two_fermi)
             {
                 if (is == 0)
                 {
-                    ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+                    ss << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
                 }
                 else if (is == 1)
                 {
-                    ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+                    ss << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
                 }
             }
             else
             {
-                ofs_cube << ef << " (fermi energy, in Ry)" << std::endl;
+                ss << ef << " (fermi energy, in Ry)" << std::endl;
             }
         }
         else
         {
-            ofs_cube << std::endl;
+            ss << std::endl;
         }
 
-        ofs_cube << ucell->nat << " 0.0 0.0 0.0 " << std::endl;
+        std::vector<std::string> comment(2);
+        for (int i = 0;i < 2;++i) { std::getline(ss, comment[i]); }
+
         double fac = ucell->lat0;
-        ofs_cube << nx << " " << fac * ucell->latvec.e11 / double(nx) << " " << fac * ucell->latvec.e12 / double(nx)
-                 << " " << fac * ucell->latvec.e13 / double(nx) << std::endl;
-        ofs_cube << ny << " " << fac * ucell->latvec.e21 / double(ny) << " " << fac * ucell->latvec.e22 / double(ny)
-                 << " " << fac * ucell->latvec.e23 / double(ny) << std::endl;
-        ofs_cube << nz << " " << fac * ucell->latvec.e31 / double(nz) << " " << fac * ucell->latvec.e32 / double(nz)
-                 << " " << fac * ucell->latvec.e33 / double(nz) << std::endl;
+        std::vector<std::vector<double>> axis_vecs =
+        {
+            {fac * ucell->latvec.e11 / double(nx), fac * ucell->latvec.e12 / double(nx), fac * ucell->latvec.e13 / double(nx)},
+            {fac * ucell->latvec.e21 / double(ny), fac * ucell->latvec.e22 / double(ny), fac * ucell->latvec.e23 / double(ny)},
+            {fac * ucell->latvec.e31 / double(nz), fac * ucell->latvec.e32 / double(nz), fac * ucell->latvec.e33 / double(nz)}
+        };
 
         std::string element = "";
+        std::vector<int> atom_type;
+        std::vector<double> atom_charge;
+        std::vector<std::vector<double>> atom_pos;
         for (int it = 0; it < ucell->ntype; it++)
         {
             // erase the number in label, such as Fe1.
@@ -114,87 +138,56 @@ void ModuleIO::write_cube(
                         break;
                     }
                 }
-                ofs_cube << " " << z << " " << ucell->atoms[it].ncpp.zv << " " << fac * ucell->atoms[it].tau[ia].x
-                         << " " << fac * ucell->atoms[it].tau[ia].y << " " << fac * ucell->atoms[it].tau[ia].z
-                         << std::endl;
+                atom_type.push_back(z);
+                atom_charge.push_back(ucell->atoms[it].ncpp.zv);
+                atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, fac * ucell->atoms[it].tau[ia].y, fac * ucell->atoms[it].tau[ia].z });
             }
         }
-        ofs_cube.unsetf(std::ostream::fixed);
-        ofs_cube << std::setprecision(precision);
-        ofs_cube << std::scientific;
-    }
-
-    ModuleIO::write_cube_core(pgrid, ofs_cube, data, nx * ny, nz, 6);
-
-    if (my_rank == 0)
-    {
+        auto cube_info = CubeInfo(comment, ucell->nat, { 0.0, 0.0, 0.0 }, { nx, ny, nz }, axis_vecs, atom_type, atom_charge, atom_pos, data_xyz_full, true);
+        write_cube(fn, cube_info, precision);
         end = time(NULL);
         ModuleBase::GlobalFunc::OUT_TIME("write_cube", start, end);
-
-        /// for cube file
-        ofs_cube.close();
     }
 
     return;
 }
 
-
-void ModuleIO::write_cube_core(
-    const Parallel_Grid& pgrid,
-    std::ofstream& ofs_cube,
-    const double*const data,
-    const int nxy,
-    const int nz,
-    const int n_data_newline)
+void ModuleIO::write_cube(const std::string& file, const ModuleIO::CubeInfo& info, const int precision, const int ndata_line)
 {
-    ModuleBase::TITLE("ModuleIO", "write_cube_core");
+    if (!info.valid) { return; }
 
-#ifdef __MPI
+    std::ofstream ofs(file);
 
-    const int my_rank = GlobalV::MY_RANK;
-    const int my_pool = GlobalV::MY_POOL;
+    for (int i = 0;i < 2;++i) { ofs << info.comment[i] << "\n"; }
 
-    // only do in the first pool.
-    if (my_pool == 0)
+    ofs << std::fixed;
+    ofs << std::setprecision(1);    // as before
+    ofs << info.natom << " " << info.cel_pos[0] << " " << info.cel_pos[1] << " " << info.cel_pos[2] << " \n";
+
+    ofs << std::setprecision(6);    //as before
+    for (int i = 0;i < 3;++i)
     {
-        /// for cube file
-        const int nxyz = nxy * nz;
-        std::vector<double> data_cube(nxyz, 0.0);
-
-        pgrid.reduce(data_cube.data(), data);
-
-        // for cube file
-        if (my_rank == 0)
-        {
-            for (int ixy = 0; ixy < nxy; ixy++)
-            {
-                for (int iz = 0; iz < nz; iz++)
-                {
-                    ofs_cube << " " << data_cube[ixy * nz + iz];
-                    if ((iz % n_data_newline == n_data_newline-1) && (iz != nz - 1))
-                    {
-                        ofs_cube << "\n";
-                    }
-                }
-                ofs_cube << "\n";
-            }
-        }
-        /// for cube file
+        ofs << info.nvoxel[i] << " " << info.axis_vecs[i][0] << " " << info.axis_vecs[i][1] << " " << info.axis_vecs[i][2] << "\n";
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-#else
-    for (int ixy = 0; ixy < nxy; ixy++)
+
+    for (int i = 0;i < info.natom;++i)
     {
-        for (int iz = 0; iz < nz; iz++)
-        {
-            ofs_cube << " " << data[iz * nxy + ixy];
-            // ++count_cube;
-            if ((iz % n_data_newline == n_data_newline-1) && (iz != nz - 1))
-            {
-                ofs_cube << "\n";
-            }
-        }
-        ofs_cube << "\n";
+        ofs << " " << info.atom_type[i] << " " << info.atom_charge[i] << " " << info.atom_pos[i][0] << " " << info.atom_pos[i][1] << " " << info.atom_pos[i][2] << "\n";
     }
-#endif
+
+    ofs.unsetf(std::ofstream::fixed);
+    ofs << std::setprecision(precision);
+    ofs << std::scientific;
+    const int nxy = info.nvoxel[0] * info.nvoxel[1];
+    const int nz = info.nvoxel[2];
+    for (int ixy = 0; ixy < nxy; ++ixy)
+    {
+        for (int iz = 0;iz < nz;++iz)
+        {
+            ofs << " " << info.data[ixy * nz + iz];
+            if ((iz + 1) % ndata_line == 0 && iz != nz - 1) { ofs << "\n"; }
+        }
+        ofs << "\n";
+    }
+    ofs.close();
 }

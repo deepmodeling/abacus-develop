@@ -2,6 +2,19 @@
 #include <limits>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 // #include "module_base/global_variable.h" // GlobalV reference removed
+void ModuleIO::xyz2zxy(const double* const xyz, const int nx, const int ny, const int nz, double* const zxy)
+{
+    for (int ix = 0; ix < nx; ix++)
+    {
+        for (int iy = 0; iy < ny; iy++)
+        {
+            for (int iz = 0; iz < nz; iz++)
+            {
+                zxy[(iz * nx + ix) * ny + iy] = xyz[(ix * ny + iy) * nz + iz];
+            }
+        }
+    }
+}
 
 bool ModuleIO::read_cube(
     const Parallel_Grid& pgrid,
@@ -12,133 +25,66 @@ bool ModuleIO::read_cube(
     const int natom)
 {
     ModuleBase::TITLE("ModuleIO", "read_cube");
+
+    // check if the file exists
     std::ifstream ifs(fn.c_str());
     if (!ifs)
     {
-        std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
-        tmp_warning_info += fn;
+        std::string tmp_warning_info = "!!! Couldn't find the file: " + fn;
         ofs_running << tmp_warning_info << std::endl;
         return false;
     }
     else
     {
-        ofs_running << " Find the file, try to read charge from file." << std::endl;
+        ofs_running << " Find the file " << fn << " , try to read it." << std::endl;
     }
 
-    // skip the first 3 lines
-    for (int i = 0;i < 3;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
-
-    int nx_read = 0;
-    int ny_read = 0;
-    int nz_read = 0;
-    std::string temp;
-
-    ifs >> nx_read;
-    ifs >> temp >> temp >> temp;
-    ifs >> ny_read;
-    ifs >> temp >> temp >> temp;
-    ifs >> nz_read;
-    ifs >> temp >> temp >> temp;
-
+    // read the full grid data
     const int& nx = pgrid.nx;
     const int& ny = pgrid.ny;
     const int& nz = pgrid.nz;
+    const int& nxyz = nx * ny * nz;
+    std::vector<double> data_zxy_full(nxyz, 0.0);    // [iz][ix][iy]
+    if (my_rank == 0)
+    {
+        const CubeInfo& cube_info = ModuleIO::read_cube(fn);
 
-    // skip this line and the next natom lines
-    for (int i = 0;i < natom + 1;++i) { ifs.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); }
+        const int& nx_read = cube_info.nvoxel[0];
+        const int& ny_read = cube_info.nvoxel[1];
+        const int& nz_read = cube_info.nvoxel[2];
 
-#ifdef __MPI
-    if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, pgrid, (my_rank == 0), data, nx * ny, nz);
-    else
-        ModuleIO::read_cube_core_mismatch(ifs, pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
+        // if mismatch, trilinear interpolate
+        if (nx == nx_read && ny == ny_read && nz == nz_read)
+        {
+            ModuleIO::xyz2zxy(cube_info.data.data(), nx, ny, nz, data_zxy_full.data());
+        }
+        else
+        {
+            std::vector<double> data_xyz_full(nxyz, 0.0);
+            trilinear_interpolate(cube_info.data.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz_full.data());
+            ModuleIO::xyz2zxy(data_xyz_full.data(), nx, ny, nz, data_zxy_full.data());
+        }
+    }
+
+    // distribute
+#ifdef __MPI 
+    const int nxy = nx * ny;
+    for (int iz = 0;iz < nz;++iz) { pgrid.zpiece_to_all(data_zxy_full.data() + iz * nxy, iz, data); }
 #else
-
-    if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, pgrid, (my_rank == 0), data, nx * ny, nz);
-    else
-        ModuleIO::read_cube_core_mismatch(ifs, pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
+    std::memcpy(data, data_zxy_full.data(), nxyz * sizeof(double));
 #endif
-
     return true;
 }
 
-void ModuleIO::read_cube_core_match(
-    std::ifstream& ifs,
-    const Parallel_Grid& pgrid,
-    const bool flag_read_rank,
-    double*const data,
-    const int nxy,
-    const int nz)
-{
-#ifdef __MPI
-    if (flag_read_rank)
-    {
-        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
-        for (int ixy = 0; ixy < nxy; ixy++)
-            for (int iz = 0; iz < nz; iz++)
-                ifs >> read_rho[iz][ixy];
-        for (int iz = 0; iz < nz; iz++)
-            pgrid.zpiece_to_all(read_rho[iz].data(), iz, data);
-    }
-    else
-    {
-        std::vector<double> zpiece(nxy);
-        for (int iz = 0; iz < nz; iz++)
-            pgrid.zpiece_to_all(zpiece.data(), iz, data);
-    }
-#else
-    for (int ixy = 0; ixy < nxy; ixy++)
-        for (int iz = 0; iz < nz; iz++)
-            ifs >> data[iz * nxy + ixy];
-#endif
-}
-
-void ModuleIO::read_cube_core_mismatch(
-    std::ifstream &ifs,
-    const Parallel_Grid& pgrid,
-    const bool flag_read_rank,
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    const int nx_read,
-    const int ny_read,
-    const int nz_read)
-{
-#ifdef __MPI
-    const int nxy = nx * ny;
-    if (flag_read_rank)
-    {
-        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
-        ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, read_rho);
-        for (int iz = 0; iz < nz; iz++)
-            pgrid.zpiece_to_all(read_rho[iz].data(), iz, data);
-    }
-    else
-    {
-        std::vector<double> zpiece(nxy);
-        for (int iz = 0; iz < nz; iz++)
-            pgrid.zpiece_to_all(zpiece.data(), iz, data);
-    }
-#else
-    ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);
-#endif
-}
-
-void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
-                                     const int& nx_read,
-                                     const int& ny_read,
-                                     const int& nz_read,
-                                     const int& nx,
-                                     const int& ny,
-                                     const int& nz,
-#ifdef __MPI
-                                     std::vector<std::vector<double>> &data
-#else
-                                     double* data
-#endif
-)
+void ModuleIO::trilinear_interpolate(
+    const double* const data_in,
+    const int& nx_read,
+    const int& ny_read,
+    const int& nz_read,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double* data_out)
 {
     ModuleBase::TITLE("ModuleIO", "trilinear_interpolate");
 
@@ -153,7 +99,7 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
         {
             for (int iz = 0; iz < nz_read; iz++)
             {
-                ifs >> read_rho[iz][ix * ny_read + iy];
+                read_rho[iz][ix * ny_read + iy] = data_in[(ix * ny_read + iy) * nz_read + iz];
             }
         }
     }
@@ -189,11 +135,7 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
                                 + read_rho[highz][lowx * ny_read + highy] * (1 - dx) * dy * dz
                                 + read_rho[highz][highx * ny_read + highy] * dx * dy * dz;
 
-#ifdef __MPI
-                data[iz][ix * ny + iy] = result;
-#else
-                data[iz * nx * ny + ix * ny + iy] = result;
-#endif
+                data_out[(ix * ny + iy) * nz + iz] = result;    // x > y > z order, consistent with the cube file
             }
         }
     }
@@ -203,4 +145,45 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
         delete[] read_rho[iz];
     }
     delete[] read_rho;
+}
+
+ModuleIO::CubeInfo ModuleIO::read_cube(const std::string& file)
+{
+    std::ifstream ifs(file);
+
+    if (!ifs) { return ModuleIO::CubeInfo({}, 0, {}, {}, {}, {}, {}, {}, {}, false); }
+
+    std::vector<std::string> comment(2);
+    for (auto& c : comment) { std::getline(ifs, c); }
+
+    int natom;
+    ifs >> natom;
+    std::vector<double> cell_pos(3);
+    for (auto& cp : cell_pos) { ifs >> cp; }
+
+    std::vector<int> nvoxel(3);
+    std::vector<std::vector<double>> axis_vecs(3);
+    for (int i = 0;i < 3;++i)
+    {
+        std::vector<double> vec(3);
+        ifs >> nvoxel[i] >> vec[0] >> vec[1] >> vec[2];
+        axis_vecs.push_back(vec);
+    }
+
+    std::vector<int> itype(natom);
+    std::vector<double> charge(natom);
+    std::vector<std::vector<double>> atom_pos(natom);
+    for (int i = 0;i < natom;++i)
+    {
+        std::vector<double> apos(3);
+        ifs >> itype[i] >> charge[i] >> apos[0] >> apos[1] >> apos[2];
+        atom_pos.push_back(apos);
+    }
+
+    const int nxyz = nvoxel[0] * nvoxel[1] * nvoxel[2];
+    std::vector<double> data(nxyz);
+    for (int i = 0;i < nxyz;++i) { ifs >> data[i]; }
+
+    ifs.close();
+    return ModuleIO::CubeInfo(comment, natom, cell_pos, nvoxel, axis_vecs, itype, charge, atom_pos, std::move(data), true);
 }
