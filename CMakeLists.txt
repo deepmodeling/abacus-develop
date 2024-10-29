@@ -39,6 +39,7 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage." OFF)
 option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
+option(USE_DSP "Enable DSP usage." OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -117,6 +118,12 @@ elseif(NOT ENABLE_LCAO AND NOT ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_pw_serial)
 elseif(ENABLE_LCAO AND NOT ENABLE_MPI)
   set(ABACUS_BIN_NAME abacus_serial)
+endif()
+
+if (USE_DSP)
+  set(USE_ELPA OFF)
+  set(ENABLE_LCAO OFF)
+  set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -238,6 +245,11 @@ if(ENABLE_MPI)
   target_link_libraries(${ABACUS_BIN_NAME} MPI::MPI_CXX)
   add_compile_definitions(__MPI)
   list(APPEND math_libs MPI::MPI_CXX)
+endif()
+
+if (USE_DSP)
+  target_link_libraries(${ABACUS_BIN_NAME} ${DIR_MTBLAS_LIBRARY})
+  add_compile_definitions(__DSP)
 endif()
 
 find_package(Threads REQUIRED)

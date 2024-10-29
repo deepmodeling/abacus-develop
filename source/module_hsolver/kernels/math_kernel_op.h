@@ -264,6 +264,36 @@ template <typename T, typename Device> struct gemm_op {
                   const T *beta, T *c, const int &ldc);
 };
 
+#ifdef __DSP
+// compute C = alpha * op(A) * op(B) + beta * C on DSP Hardware
+template <typename T, typename Device> struct gemm_op_mt {
+  /// @brief C = alpha * op(A) * op(B) + beta * C
+  ///
+  /// Input Parameters
+  /// \param d : the type of computing device
+  /// \param transa : whether to transpose matrix A
+  /// \param transb : whether to transpose matrix B
+  /// \param m : first dimension of matrix mulplication
+  /// \param n : second dimension of matrix mulplication
+  /// \param k : third dimension of matrix mulplication
+  /// \param alpha : input constant alpha
+  /// \param a : input matrix A
+  /// \param lda : leading dimention of A
+  /// \param b : input matrix B
+  /// \param ldb : leading dimention of A
+  /// \param beta : input constant beta
+  /// \param c : input matrix C
+  /// \param ldc : leading dimention of C
+  ///
+  /// Output Parameters
+  /// \param c : output matrix C
+  void operator()(const Device *d, const char &transa, const char &transb,
+                  const int &m, const int &n, const int &k, const T *alpha,
+                  const T *a, const int &lda, const T *b, const int &ldb,
+                  const T *beta, T *c, const int &ldc);
+};
+#endif
+
 template <typename T, typename Device> struct matrixTranspose_op {
   /// @brief transpose the input matrix
   ///

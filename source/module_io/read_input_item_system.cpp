@@ -156,6 +156,10 @@ void ReadInput::item_system()
             {
                 para.input.symmetry = "-1"; // disable kpoint reduce
             }
+            if (para.input.berry_phase)
+            {
+                para.input.symmetry = "-1"; // disable kpoint reduce
+            }
         };
         this->add_item(item);
     }

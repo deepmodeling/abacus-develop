@@ -55,14 +55,17 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     const Real emax = *this->emax;
     const Real Ebar = (emin + emax) / 2;
     const Real DeltaE = (emax - emin) / 2;
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
     for (int ib = 0; ib < nbands; ++ib)
     {
+        const int ig0 = ib * npwk_max;
         for (int ig = 0; ig < npwk; ++ig)
         {
-            hpsi_norm[ig] = (hpsi_norm[ig] - Ebar * psi_in[ig]) / DeltaE;
+            hpsi_norm[ig + ig0] = (hpsi_norm[ig + ig0] - Ebar * psi_in[ig + ig0]) / DeltaE;
         }
-        hpsi_norm += npwk_max;
-        psi_in += npwk_max;
     }
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi_norm");
 }

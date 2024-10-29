@@ -281,6 +281,30 @@ struct gemm_op<T, base_device::DEVICE_CPU>
     }
 };
 
+#ifdef __DSP
+template <typename T>
+struct gemm_op_mt<T, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
+                    const char& transa,
+                    const char& transb,
+                    const int& m,
+                    const int& n,
+                    const int& k,
+                    const T* alpha,
+                    const T* a,
+                    const int& lda,
+                    const T* b,
+                    const int& ldb,
+                    const T* beta,
+                    T* c,
+                    const int& ldc)
+    {
+        BlasConnector::gemm(transb, transa, n, m, k, *alpha, b, ldb, a, lda, *beta, c, ldc, base_device::AbacusDevice_t::DspDevice);
+    }
+};
+#endif
+
 template <typename T>
 struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 {
@@ -371,5 +395,9 @@ template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
+#endif
+#ifdef __DSP
+template struct gemm_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct gemm_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
 } // namespace hsolver
