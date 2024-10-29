@@ -109,19 +109,9 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // alpha_power = 0.525;
 
     // // create desc[] and something about MPI to Eij(nbands*nbands)
-    // std::ofstream ofs_running;
-    // std::ofstream ofs_warning;
-    // para_Eij.set_block_size(GlobalV::NB2D);
-    // para_Eij.set_proc_dim(GlobalV::DSIZE);
-    // para_Eij.comm_2D = ParaV->comm_2D;
-    // para_Eij.blacs_ctxt = ParaV->blacs_ctxt;
-    // para_Eij.set_local2global( GlobalV::NBANDS, GlobalV::NBANDS, ofs_running, ofs_warning );
-    // para_Eij.set_desc( GlobalV::NBANDS, GlobalV::NBANDS, para_Eij.get_row_size(), false );
 #ifdef __MPI
     para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
 #endif
-    // para_Eij.init(nbands_total, nbands_total, PARAM.inp.nb2d, MPI_COMM_WORLD);
-    // // learn from "module_hamilt_lcao/hamilt_lcaodft/LCAO_init_basis.cpp"
 
     // 
     occ_number.create(nk_total, nbands_total);
@@ -193,6 +183,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
 #ifdef __EXX
     if( GlobalC::exx_info.info_global.cal_exx )
     {
+        // if the irreducible k-points can change with symmetry during cell-relax, it should be moved back to update_ion()
         exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
         if (exx_spacegroup_symmetry)
         {
