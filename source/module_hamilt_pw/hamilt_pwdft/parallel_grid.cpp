@@ -84,14 +84,16 @@ void Parallel_Grid::init(
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
-	if(PARAM.inp.esolver_type == "sdft")		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
-	else											nprocgroup = GlobalV::NPROC;
+	if(PARAM.inp.esolver_type == "sdft") {		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
+	} else {											nprocgroup = GlobalV::NPROC;
+}
 
 	const int remain_pro = nprocgroup%GlobalV::KPAR;
 	for(int i=0; i<GlobalV::KPAR; i++)
 	{
 		nproc_in_pool[i] = nprocgroup/GlobalV::KPAR;
-		if(i<remain_pro) this->nproc_in_pool[i]++;
+		if(i<remain_pro) { this->nproc_in_pool[i]++;
+}
 	}
 
 	this->numz = new int*[GlobalV::KPAR];
@@ -115,7 +117,7 @@ void Parallel_Grid::init(
 	return;
 }
 
-void Parallel_Grid::z_distribution(void)
+void Parallel_Grid::z_distribution()
 {
 	assert(allocate);	
 
@@ -126,7 +128,8 @@ void Parallel_Grid::z_distribution(void)
 //		GlobalV::ofs_running << "\n now POOL=" << ip;
 		const int nproc = nproc_in_pool[ip];
 		
-		if(ip>0) startp[ip] = startp[ip-1] + nproc_in_pool[ip-1];
+		if(ip>0) { startp[ip] = startp[ip-1] + nproc_in_pool[ip-1];
+}
 		
 		// (1) how many z on each 'proc' in each 'pool'
 		for(int iz=0; iz<nbz; iz++)
@@ -429,7 +432,8 @@ const int &nrxx_in, const int &nbz_in, const int &bz_in)
 	for(int i=0; i<GlobalV::KPAR; i++)
 	{
 		nproc_in_pool[i] = GlobalV::NPROC/GlobalV::KPAR;
-		if(i<remain_pro) this->nproc_in_pool[i]++;
+		if(i<remain_pro) { this->nproc_in_pool[i]++;
+}
 	}	
 
 	this->numz = new int*[GlobalV::KPAR];
