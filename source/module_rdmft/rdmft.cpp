@@ -407,7 +407,8 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         GlobalV::ofs_running << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
-        if( GlobalC::exx_info.info_global.cal_exx ) GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
+        if( GlobalC::exx_info.info_global.cal_exx ) { GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
+}
 #endif
         // GlobalV::ofs_running << std::setprecision(12);
         // GlobalV::ofs_running << std::setiosflags(std::ios::right);
