@@ -26,8 +26,6 @@
 #endif
 #include "module_io/json_output/output_info.h"
 
-#include "print_funcs.h" // mohan add 2024-07-27
-
 namespace ModuleESolver
 {
 
@@ -265,7 +263,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
-    Print_functions::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
+    ModuleIO::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
 
     //! 10) initialize the real-space uniform grid for FFT and parallel
     //! distribution of plane waves
