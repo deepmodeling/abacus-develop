@@ -4,21 +4,38 @@
 //==========================================================
 
 #include "rdmft.h"
+#include "module_rdmft/rdmft_tools.h"
 
-// #ifdef __EXX
-// #include "module_ri/RI_2D_Comm.h"
-// #include "module_ri/Exx_LRI.h"
-// #endif
-// #include "module_hamilt_general/operator.h"
-// #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
+#include "module_psi/psi.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 
 namespace rdmft
 {
+
+
+
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::get_DM_XC(std::vector< std::vector<TK> >& DM_XC)
+{
+    // get wk_funEta_wfc = wk*g(eta)*conj(wfc)
+    psi::Psi<TK> wk_funEta_wfc(wfc);
+    conj_psi(wk_funEta_wfc);
+    occNum_MulPsi(ParaV, wk_fun_occNum, wk_funEta_wfc, 0);
+
+    // get the special DM_XC used in constructing V_exx_XC
+    for(int ik=0; ik<wfc.get_nk(); ++ik)
+    {
+        // after this, be careful with wfc.get_pointer(), we can use &wfc(ik,inbn,inbs) instead
+        wfc.fix_k(ik);
+        wk_funEta_wfc.fix_k(ik);
+        TK* DM_Kpointer = DM_XC[ik].data();
+#ifdef __MPI
+        elecstate::psiMulPsiMpi(wk_funEta_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
+#else
+        elecstate::psiMulPsi(wk_funEta_wfc, wfc, DM_Kpointer);
+#endif            
+    }
+}
 
 
 template <typename TK, typename TR>
@@ -315,22 +332,8 @@ void RDMFT<TK, TR>::cal_V_XC()
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+template class RDMFT<double, double>;
+template class RDMFT<std::complex<double>, double>;
+template class RDMFT<std::complex<double>, std::complex<double>>;
 
 }

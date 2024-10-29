@@ -8,7 +8,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
-#include "module_psi/psi.h"
+// #include "module_psi/psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // #include "module_elecstate/module_dm/cal_dm_psi.h"
@@ -206,30 +206,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
         HR_dft_XC->fix_gamma();
     }
 
-}
-
-
-template <typename TK, typename TR>
-void RDMFT<TK, TR>::get_DM_XC(std::vector< std::vector<TK> >& DM_XC)
-{
-    // get wk_funEta_wfc = wk*g(eta)*conj(wfc)
-    psi::Psi<TK> wk_funEta_wfc(wfc);
-    conj_psi(wk_funEta_wfc);
-    occNum_MulPsi(ParaV, wk_fun_occNum, wk_funEta_wfc, 0);
-
-    // get the special DM_XC used in constructing V_exx_XC
-    for(int ik=0; ik<wfc.get_nk(); ++ik)
-    {
-        // after this, be careful with wfc.get_pointer(), we can use &wfc(ik,inbn,inbs) instead
-        wfc.fix_k(ik);
-        wk_funEta_wfc.fix_k(ik);
-        TK* DM_Kpointer = DM_XC[ik].data();
-#ifdef __MPI
-        elecstate::psiMulPsiMpi(wk_funEta_wfc, wfc, DM_Kpointer, ParaV->desc_wfc, ParaV->desc);
-#else
-        elecstate::psiMulPsi(wk_funEta_wfc, wfc, DM_Kpointer);
-#endif            
-    }
 }
 
 

@@ -9,6 +9,7 @@
 
 #include "module_parameter/parameter.h"
 
+#include "module_psi/psi.h"
 #include "module_base/matrix.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
