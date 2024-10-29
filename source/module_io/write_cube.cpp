@@ -18,7 +18,7 @@ void ModuleIO::zxy2xyz(const double* const zxy, const int nx, const int ny, cons
     }
 }
 
-void ModuleIO::write_cube(
+void ModuleIO::write_grid(
     const Parallel_Grid& pgrid,
     const double* const data,
     const int is,
@@ -30,7 +30,7 @@ void ModuleIO::write_cube(
     const int precision,
     const int out_fermi)
 {
-    ModuleBase::TITLE("ModuleIO", "write_cube");
+    ModuleBase::TITLE("ModuleIO", "write_grid");
 
     const int my_rank = GlobalV::MY_RANK;
     const int my_pool = GlobalV::MY_POOL;
@@ -63,8 +63,6 @@ void ModuleIO::write_cube(
     // build the info structure
     if (my_rank == 0)
     {
-
-
         /// output header for cube file
         ss << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 
@@ -146,7 +144,7 @@ void ModuleIO::write_cube(
         auto cube_info = CubeInfo(comment, ucell->nat, { 0.0, 0.0, 0.0 }, { nx, ny, nz }, axis_vecs, atom_type, atom_charge, atom_pos, data_xyz_full, true);
         write_cube(fn, cube_info, precision);
         end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("write_cube", start, end);
+        ModuleBase::GlobalFunc::OUT_TIME("write_grid", start, end);
     }
 
     return;

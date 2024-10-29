@@ -1029,7 +1029,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 data = this->pelec->charge->rho_save[is];
             }
             std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(GlobalC::Pgrid,
+            ModuleIO::write_grid(GlobalC::Pgrid,
                 data,
                 is,
                 PARAM.inp.nspin,
@@ -1042,7 +1042,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_cube(GlobalC::Pgrid,
+                ModuleIO::write_grid(GlobalC::Pgrid,
                     this->pelec->charge->kin_r_save[is],
                     is,
                     PARAM.inp.nspin,

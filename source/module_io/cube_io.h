@@ -6,7 +6,7 @@ class Parallel_Grid;
 
 namespace ModuleIO
 {
-bool read_cube(
+    bool read_grid(
     const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
@@ -14,7 +14,7 @@ bool read_cube(
     double* const data,
     const int nat);
 
-void write_cube(
+    void write_grid(
     const Parallel_Grid& pgrid,
     const double* const data,
     const int is,

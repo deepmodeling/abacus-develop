@@ -16,7 +16,7 @@ void ModuleIO::xyz2zxy(const double* const xyz, const int nx, const int ny, cons
     }
 }
 
-bool ModuleIO::read_cube(
+bool ModuleIO::read_grid(
     const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
@@ -24,7 +24,7 @@ bool ModuleIO::read_cube(
     double* const data,
     const int natom)
 {
-    ModuleBase::TITLE("ModuleIO", "read_cube");
+    ModuleBase::TITLE("ModuleIO", "read_grid");
 
     // check if the file exists
     std::ifstream ifs(fn.c_str());
