@@ -1,15 +1,16 @@
 #include "esolver_fp.h"
 
 #include "module_base/global_variable.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
 #include "module_io/output_log.h"
+#include "module_io/print_info.h"
+#include "module_io/rhog_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_elf.h"
 #include "module_parameter/parameter.h"
-#include "module_io/rhog_io.h"
-#include "module_io/cif_io.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
 
 namespace ModuleESolver
 {
@@ -116,7 +117,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
                                "data_?");
 
     //! 4) print some information
-    this->print_rhofft(inp, GlobalV::ofs_running);
+    ModuleIO::print_rhofft(this->pw_rhod, this->pw_rho, this->pw_big, GlobalV::ofs_running);
 
     //! 5) initialize the charge extrapolation method if necessary
     this->CE.Init_CE(PARAM.inp.nspin, GlobalC::ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
@@ -355,137 +356,6 @@ void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     return;
-}
-
-void ESolver_FP::print_rhofft(const Input_para& inp, std::ofstream& ofs)
-{
-    std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
-    std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
-              << std::endl;
-    if ( PARAM.globalv.double_grid)
-    {
-        std::cout << " UNIFORM GRID DIM(DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
-                  << std::endl;
-    }
-
-    ofs << "\n\n\n\n";
-    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-           ">>>>"
-        << std::endl;
-    ofs << " |                                                                 "
-           "   |"
-        << std::endl;
-    ofs << " | Setup plane waves of charge/potential:                          "
-           "   |"
-        << std::endl;
-    ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
-           "   |"
-        << std::endl;
-    ofs << " | dimensions of FFT grid. The number of FFT grid on each "
-           "processor   |"
-        << std::endl;
-    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
-           "is   |"
-        << std::endl;
-    ofs << " | different for charege/potential and wave functions. We also set "
-           "   |"
-        << std::endl;
-    ofs << " | the 'sticks' for the parallel of FFT. The number of plane waves "
-           "   |"
-        << std::endl;
-    ofs << " | is 'npw' in each processor.                                     "
-           "   |"
-        << std::endl;
-    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
-           "<<<<"
-        << std::endl;
-    ofs << "\n\n\n\n";
-    ofs << "\n SETUP THE PLANE WAVE BASIS" << std::endl;
-
-    double ecut = 4 * PARAM.inp.ecutwfc;
-    if (inp.nx * inp.ny * inp.nz > 0)
-    {
-        ecut = this->pw_rho->gridecut_lat * this->pw_rho->tpiba2;
-        ofs << "use input fft dimensions for wave functions." << std::endl;
-        ofs << "calculate energy cutoff from nx, ny, nz:" << std::endl;
-    }
-
-    ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for charge/potential (unit:Ry)", ecut);
-
-    ModuleBase::GlobalFunc::OUT(ofs,
-                                "fft grid for charge/potential",
-                                this->pw_rho->nx,
-                                this->pw_rho->ny,
-                                this->pw_rho->nz);
-    ModuleBase::GlobalFunc::OUT(ofs, "fft grid division", pw_big->bx, pw_big->by, pw_big->bz);
-    ModuleBase::GlobalFunc::OUT(ofs, "big fft grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
-    ModuleBase::GlobalFunc::OUT(ofs, "nbxx", pw_big->nbxx);
-    ModuleBase::GlobalFunc::OUT(ofs, "nrxx", this->pw_rho->nrxx);
-
-    ofs << "\n SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
-    ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", this->pw_rho->npwtot);
-    ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", this->pw_rho->nstot);
-
-    ofs << "\n PARALLEL PW FOR CHARGE/POTENTIAL" << std::endl;
-    ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
-
-    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-    {
-        ofs << " " << std::setw(8) << i + 1 << std::setw(15) << this->pw_rho->nst_per[i] << std::setw(15)
-            << this->pw_rho->npw_per[i] << std::endl;
-    }
-    ofs << " --------------- sum -------------------" << std::endl;
-    ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << this->pw_rho->nstot << std::setw(15)
-        << this->pw_rho->npwtot << std::endl;
-
-    ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", this->pw_rho->ngg);
-    ModuleBase::GlobalFunc::OUT(ofs, "max |g|", this->pw_rho->gg_uniq[this->pw_rho->ngg - 1]);
-    ModuleBase::GlobalFunc::OUT(ofs, "min |g|", this->pw_rho->gg_uniq[0]);
-
-    if ( PARAM.globalv.double_grid)
-    {
-        ofs << std::endl;
-        ofs << std::endl;
-        ofs << std::endl;
-        double ecut = PARAM.inp.ecutrho;
-        if (inp.ndx * inp.ndy * inp.ndz > 0)
-        {
-            ecut = this->pw_rhod->gridecut_lat * this->pw_rhod->tpiba2;
-            ofs << "use input fft dimensions for the dense part of charge "
-                   "density."
-                << std::endl;
-            ofs << "calculate energy cutoff from ndx, ndy, ndz:" << std::endl;
-        }
-        ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for dense charge/potential (unit:Ry)", ecut);
-
-        ModuleBase::GlobalFunc::OUT(ofs,
-                                    "fft grid for dense charge/potential",
-                                    this->pw_rhod->nx,
-                                    this->pw_rhod->ny,
-                                    this->pw_rhod->nz);
-
-        ModuleBase::GlobalFunc::OUT(ofs, "nrxx", this->pw_rhod->nrxx);
-
-        ofs << "\n SETUP PLANE WAVES FOR dense CHARGE/POTENTIAL" << std::endl;
-        ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", this->pw_rhod->npwtot);
-        ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", this->pw_rhod->nstot);
-
-        ofs << "\n PARALLEL PW FOR dense CHARGE/POTENTIAL" << std::endl;
-        ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
-
-        for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
-        {
-            ofs << " " << std::setw(8) << i + 1 << std::setw(15) << this->pw_rhod->nst_per[i] << std::setw(15)
-                << this->pw_rhod->npw_per[i] << std::endl;
-        }
-        ofs << " --------------- sum -------------------" << std::endl;
-        ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << this->pw_rhod->nstot << std::setw(15)
-            << this->pw_rhod->npwtot << std::endl;
-
-        ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", this->pw_rhod->ngg);
-        ModuleBase::GlobalFunc::OUT(ofs, "max |g|", this->pw_rhod->gg_uniq[this->pw_rhod->ngg - 1]);
-        ModuleBase::GlobalFunc::OUT(ofs, "min |g|", this->pw_rhod->gg_uniq[0]);
-    }
 }
 
 } // namespace ModuleESolver
