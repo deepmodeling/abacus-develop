@@ -185,13 +185,13 @@ void Parallel_Grid::z_distribution()
 
 
 #ifdef __MPI
-void Parallel_Grid::bcast(const double* const data_global, double* data_local)const
+void Parallel_Grid::bcast(const double* const data_global, double* data_local, const int& rank)const
 {
     std::vector<double> zpiece(ncxy);
     for (int iz = 0; iz < this->ncz; ++iz)
     {
         ModuleBase::GlobalFunc::ZEROS(zpiece.data(), ncxy);
-        if (GlobalV::MY_RANK == 0)
+        if (rank == 0)
         {
             for (int ix = 0; ix < ncx; ix++)
             {

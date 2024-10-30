@@ -66,7 +66,7 @@ bool ModuleIO::read_vdata_palgrid(
 
     // distribute
 #ifdef __MPI 
-    pgrid.bcast(data_xyz_full.data(), data);
+    pgrid.bcast(data_xyz_full.data(), data, my_rank);
 #else
     std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif

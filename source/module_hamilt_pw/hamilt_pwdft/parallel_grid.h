@@ -31,7 +31,7 @@ class Parallel_Grid
     void zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const; //qainrui add for sto-dft 2021-7-21
 
     /// @brief  Broadcast data from root to all processors. The index order is [x][y][z].
-    void bcast(const double* const data_global, double* data_local)const;
+    void bcast(const double* const data_global, double* data_local, const int& rank)const;
     /// @brief  Reduce data from all processors to root. The index order is [x][y][z].
     void reduce(double* rhotot, const double* constrhoin)const;
 #endif
