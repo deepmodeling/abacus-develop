@@ -4,7 +4,7 @@
 #include<vector>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
-void ModuleIO::write_grid(
+void ModuleIO::write_vdata_palgrid(
     const Parallel_Grid& pgrid,
     const double* const data,
     const int is,
@@ -16,7 +16,7 @@ void ModuleIO::write_grid(
     const int precision,
     const int out_fermi)
 {
-    ModuleBase::TITLE("ModuleIO", "write_grid");
+    ModuleBase::TITLE("ModuleIO", "write_vdata_palgrid");
 
     const int my_rank = GlobalV::MY_RANK;
     const int my_pool = GlobalV::MY_POOL;
@@ -124,7 +124,7 @@ void ModuleIO::write_grid(
         }
         write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, nx, ny, nz, dx, dy, dz, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
         end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("write_grid", start, end);
+        ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
     }
 
     return;

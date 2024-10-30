@@ -654,7 +654,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
-        if (ModuleIO::read_grid(GlobalC::Pgrid,
+        if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
             GlobalV::MY_RANK,
             GlobalV::ofs_running,
             ssc.str(),

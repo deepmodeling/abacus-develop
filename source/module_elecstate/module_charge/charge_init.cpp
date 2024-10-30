@@ -53,7 +53,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-                if (ModuleIO::read_grid(GlobalC::Pgrid,
+                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),
@@ -103,7 +103,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_grid(GlobalC::Pgrid,
+                    if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
                         (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
                         GlobalV::ofs_running,
                         ssc.str(),

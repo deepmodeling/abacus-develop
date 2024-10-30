@@ -3,7 +3,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 // #include "module_base/global_variable.h" // GlobalV reference removed
 
-bool ModuleIO::read_grid(
+bool ModuleIO::read_vdata_palgrid(
     const Parallel_Grid& pgrid,
     const int my_rank,
     std::ofstream& ofs_running,
@@ -11,7 +11,7 @@ bool ModuleIO::read_grid(
     double* const data,
     const int natom)
 {
-    ModuleBase::TITLE("ModuleIO", "read_grid");
+    ModuleBase::TITLE("ModuleIO", "read_vdata_palgrid");
 
     // check if the file exists
     std::ifstream ifs(fn.c_str());

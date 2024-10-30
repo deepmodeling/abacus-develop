@@ -227,7 +227,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_grid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
@@ -245,7 +245,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_grid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,
@@ -291,7 +291,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         for (int is = 0; is < nspin0; is++)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_grid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,

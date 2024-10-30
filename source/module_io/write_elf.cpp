@@ -89,7 +89,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_grid(GlobalC::Pgrid,
+        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
             elf[0].data(),
             is,
             nspin,
@@ -107,7 +107,7 @@ void write_elf(
             std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is + 1) + ".cube";
             int ispin = is + 1;
 
-            ModuleIO::write_grid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 elf[is].data(),
                 ispin,
                 nspin,
@@ -128,7 +128,7 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_grid(GlobalC::Pgrid,
+        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
             elf_tot.data(),
             is,
             nspin,

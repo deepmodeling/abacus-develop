@@ -94,7 +94,7 @@ TEST_F(RhoIOTest, Read)
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
-    ModuleIO::read_grid(pgrid, my_rank, ofs_running, fn, rho[is], ucell->nat);
+    ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, fn, rho[is], ucell->nat);
     EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
     EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);
 }

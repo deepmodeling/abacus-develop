@@ -155,7 +155,7 @@ void ESolver_FP::after_scf(const int istep)
                     this->pw_rhod->real2recip(this->pelec->charge->rho_save[is], this->pelec->charge->rhog_save[is]);
                 }
                 std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-                ModuleIO::write_grid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     data,
                     is,
                     PARAM.inp.nspin,
@@ -168,7 +168,7 @@ void ESolver_FP::after_scf(const int istep)
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
                     fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                    ModuleIO::write_grid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         this->pelec->charge->kin_r_save[is],
                         is,
                         PARAM.inp.nspin,
@@ -205,7 +205,7 @@ void ESolver_FP::after_scf(const int istep)
             {
                 std::string fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_POT.cube";
 
-                ModuleIO::write_grid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     this->pelec->pot->get_effective_v(is),
                     is,
                     PARAM.inp.nspin,
