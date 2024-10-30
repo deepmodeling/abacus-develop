@@ -12,7 +12,7 @@ namespace hsolver
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW
 {
-  private:
+  protected:
     // Note GetTypeReal<T>::type will
     // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
@@ -84,12 +84,12 @@ class HSolverPW
     const bool need_subspace; // for cg or dav_subspace
     const bool initialed_psi; 
 
-  private:
+  protected:
     Device* ctx = {};
 
     int rank_in_pool = 0;
     int nproc_in_pool = 1;
-
+  private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
     void cal_ethr_band(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
