@@ -146,6 +146,58 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
+#ifdef __DSP
+// Partially specialize operator for base_device::GpuDevice.
+template <typename FPTYPE>
+struct resize_memory_op<FPTYPE, base_device::DEVICE_DSP>
+{
+    void operator()(const base_device::DEVICE_CPU* dev,
+                    FPTYPE*& arr,
+                    const size_t size,
+                    const char* record_in = nullptr);
+};
+
+template <typename FPTYPE>
+struct set_memory_op<FPTYPE, base_device::DEVICE_DSP>
+{
+    void operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr, const int var, const size_t size);
+};
+
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_DSP>
+{
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_DSP, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+template <typename FPTYPE>
+struct synchronize_memory_op<FPTYPE, base_device::DEVICE_DSP, base_device::DEVICE_DSP>
+{
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
+                    FPTYPE* arr_out,
+                    const FPTYPE* arr_in,
+                    const size_t size);
+};
+
+template <typename FPTYPE>
+struct delete_memory_op<FPTYPE, base_device::DEVICE_DSP>
+{
+    void operator()(const base_device::DEVICE_CPU* dev, FPTYPE* arr);
+};
+#endif // __DSP
+
 } // end of namespace memory
 } // end of namespace base_device
 
@@ -233,5 +285,6 @@ using castmem_z2c_d2h_op = base_device::memory::
 
 static base_device::DEVICE_CPU* cpu_ctx = {};
 static base_device::DEVICE_GPU* gpu_ctx = {};
+static base_device::DEVICE_DSP* gpu_ctx = {};
 
 #endif // MODULE_DEVICE_MEMORY_H_
