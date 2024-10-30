@@ -351,13 +351,13 @@ template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
 template <typename FPTYPE>
 struct resize_memory_op<FPTYPE, base_device::DEVICE_DSP>
 {
-    void operator()(const base_device::DEVICE_DSP* dev, FPTYPE*& arr, const size_t size, const char* record_in)
+    void operator()(const base_device::DEVICE_CPU* dev, FPTYPE*& arr, const size_t size, const char* record_in)
     {
         if (arr != nullptr)
         {
             free_ht(arr);
         }
-        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size);
+        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
         std::string record_string;
         if (record_in != nullptr)
         {
@@ -378,7 +378,7 @@ struct resize_memory_op<FPTYPE, base_device::DEVICE_DSP>
 template <typename FPTYPE>
 struct synchronize_memory_op<FPTYPE, base_device::DEVICE_DSP, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_DSP* dev_out,
+    void operator()(const base_device::DEVICE_CPU* dev_out,
                     const base_device::DEVICE_CPU* dev_in,
                     FPTYPE* arr_out,
                     const FPTYPE* arr_in,
@@ -396,7 +396,7 @@ template <typename FPTYPE>
 struct synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_DSP>
 {
     void operator()(const base_device::DEVICE_CPU* dev_out,
-                    const base_device::DEVICE_DSP* dev_in,
+                    const base_device::DEVICE_CPU* dev_in,
                     FPTYPE* arr_out,
                     const FPTYPE* arr_in,
                     const size_t size)
@@ -412,8 +412,8 @@ struct synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVIC
 template <typename FPTYPE>
 struct synchronize_memory_op<FPTYPE, base_device::DEVICE_DSP, base_device::DEVICE_DSP>
 {
-    void operator()(const base_device::DEVICE_DSP* dev_out,
-                    const base_device::DEVICE_DSP* dev_in,
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
                     FPTYPE* arr_out,
                     const FPTYPE* arr_in,
                     const size_t size)
@@ -431,7 +431,7 @@ template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_DSP>
 {
     void operator()(const base_device::DEVICE_CPU* dev_out,
-                    const base_device::DEVICE_DSP* dev_in,
+                    const base_device::DEVICE_CPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size)
@@ -449,8 +449,8 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_DSP, base_device::DEVICE_DSP>
 {
-    void operator()(const base_device::DEVICE_DSP* dev_out,
-                    const base_device::DEVICE_DSP* dev_in,
+    void operator()(const base_device::DEVICE_CPU* dev_out,
+                    const base_device::DEVICE_CPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size)
@@ -468,7 +468,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_DSP, base_devic
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_DSP, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_DSP* dev_out,
+    void operator()(const base_device::DEVICE_CPU* dev_out,
                     const base_device::DEVICE_CPU* dev_in,
                     FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
@@ -487,7 +487,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_DSP, base_devic
 template <typename FPTYPE>
 struct delete_memory_op<FPTYPE, base_device::DEVICE_DSP>
 {
-    void operator()(const base_device::DEVICE_DSP* dev, FPTYPE* arr)
+    void operator()(const base_device::DEVICE_CPU* dev, FPTYPE* arr)
     {
         free_ht(arr);
     }
