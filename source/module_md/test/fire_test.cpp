@@ -209,7 +209,7 @@ TEST_F(FIREtest, PrintMD)
     {
         getline(ifs, output_str);
     }
-    EXPECT_THAT(output_str, testing::HasSubstr(" LARGEST GRAD (eV/A)  : 0.049479926"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" Largest gradient in force is 0.049479926 eV/A"));
     ifs.close();
     remove("running.log");
 }

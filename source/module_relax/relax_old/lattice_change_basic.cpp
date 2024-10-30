@@ -215,7 +215,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         else
         {
             GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << ")" << std::endl;
+                                 << " kbar)" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }
@@ -236,7 +236,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         else
         {
             GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << ")" << std::endl;
+                                 << " kbar)" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }
