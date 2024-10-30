@@ -2,15 +2,15 @@
 #define ESOLVER_SDFT_PW_H
 
 #include "esolver_ks_pw.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_che.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_che.h"
-#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 
 namespace ModuleESolver
 {
 
-template <typename T, typename Device>
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 {
   public:
@@ -26,7 +26,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
     void cal_stress(ModuleBase::matrix& stress) override;
 
   public:
-    Stochastic_WF stowf;
+    Stochastic_WF<T, Device> stowf;
     StoChe<double> stoche;
     hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
 

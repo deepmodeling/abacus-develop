@@ -11,13 +11,13 @@ namespace hsolver
 {
 template <typename T, typename Device>
 void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
-                                   psi::Psi<T, Device>& psi,
-                                   elecstate::ElecState* pes,
-                                   ModulePW::PW_Basis_K* wfc_basis,
-                                   Stochastic_WF& stowf,
-                                   const int istep,
-                                   const int iter,
-                                   const bool skip_charge)
+                                      psi::Psi<T, Device>& psi,
+                                      elecstate::ElecState* pes,
+                                      ModulePW::PW_Basis_K* wfc_basis,
+                                      Stochastic_WF<T, Device>& stowf,
+                                      const int istep,
+                                      const int iter,
+                                      const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");

@@ -54,13 +54,13 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(const Input_para& inp, UnitC
 
     // 3) initialize the pointer for electronic states of SDFT
     this->pelec = new elecstate::ElecStatePW_SDFT<T, Device>(this->pw_wfc,
-                                                          &(this->chr),
-                                                          &(this->kv),
-                                                          &ucell,
-                                                          &(GlobalC::ppcell),
-                                                          this->pw_rhod,
-                                                          this->pw_rho,
-                                                          this->pw_big);
+                                                             &(this->chr),
+                                                             &(this->kv),
+                                                             &ucell,
+                                                             &(GlobalC::ppcell),
+                                                             this->pw_rhod,
+                                                             this->pw_rho,
+                                                             this->pw_big);
 
     // 4) inititlize the charge density.
     this->pelec->charge->allocate(PARAM.inp.nspin);
@@ -80,11 +80,11 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(const Input_para& inp, UnitC
 
     // 6) prepare some parameters for electronic wave functions initilization
     this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
-                                                                    PARAM.inp.ks_solver,
-                                                                    PARAM.inp.basis_type,
-                                                                    PARAM.inp.psi_initializer,
-                                                                    &this->wf,
-                                                                    this->pw_wfc);
+                                                 PARAM.inp.ks_solver,
+                                                 PARAM.inp.basis_type,
+                                                 PARAM.inp.psi_initializer,
+                                                 &this->wf,
+                                                 this->pw_wfc);
     // 7) set occupatio, redundant?
     if (PARAM.inp.ocp)
     {
@@ -95,42 +95,38 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(const Input_para& inp, UnitC
     this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
 
     // 9) initialize the stochastic wave functions
-    stowf.init(&this->kv, this->pw_wfc->npwk_max);
+    this->stowf.init(&this->kv, this->pw_wfc->npwk_max);
     if (inp.nbands_sto != 0)
     {
         if (inp.initsto_ecut < inp.ecutwfc)
         {
-            Init_Sto_Orbitals(this->stowf, inp.seed_sto);
+            this->stowf.init_sto_orbitals(inp.seed_sto);
         }
         else
         {
-            Init_Sto_Orbitals_Ecut(this->stowf, inp.seed_sto, this->kv, *this->pw_wfc, inp.initsto_ecut);
+            this->stowf.init_sto_orbitals_Ecut(inp.seed_sto, this->kv, *this->pw_wfc, inp.initsto_ecut);
         }
     }
     else
     {
-        Init_Com_Orbitals(this->stowf);
+        this->stowf.init_com_orbitals();
     }
     if (this->method_sto == 2)
     {
-        stowf.allocate_chiallorder(this->nche_sto);
+        this->stowf.allocate_chiallorder(this->nche_sto);
     }
+    this->stowf.sync_chi0();
 
+    // 10) allocate spaces for \sqrt(f(H))|chi> and |\tilde{chi}>
     size_t size = stowf.chi0->size();
-
-    this->stowf.shchi = new psi::Psi<T>(this->kv.get_nks(),
-                                                           this->stowf.nchip_max,
-                                                           this->wf.npwx,
-                                                           this->kv.ngk.data());
-
+    this->stowf.shchi
+        = new psi::Psi<T, Device>(this->kv.get_nks(), this->stowf.nchip_max, this->wf.npwx, this->kv.ngk.data());
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
     if (PARAM.inp.nbands > 0)
     {
-        this->stowf.chiortho = new psi::Psi<T>(this->kv.get_nks(),
-                                                                  this->stowf.nchip_max,
-                                                                  this->wf.npwx,
-                                                                  this->kv.ngk.data());
+        this->stowf.chiortho
+            = new psi::Psi<T, Device>(this->kv.get_nks(), this->stowf.nchip_max, this->wf.npwx, this->kv.ngk.data());
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(T));
     }
 
@@ -143,16 +139,16 @@ void ESolver_SDFT_PW<T, Device>::before_scf(const int istep)
     ESolver_KS_PW<T, Device>::before_scf(istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
     this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
-                                                                            this->pw_wfc,
-                                                                            &this->kv,
-                                                                            PARAM.globalv.npol,
-                                                                            &this->stoche.emin_sto,
-                                                                            &this->stoche.emax_sto);
+                                                         this->pw_wfc,
+                                                         &this->kv,
+                                                         PARAM.globalv.npol,
+                                                         &this->stoche.emin_sto,
+                                                         &this->stoche.emax_sto);
     this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<T, Device>*>(this->p_hamilt);
 
     if (istep > 0 && PARAM.inp.nbands_sto != 0 && PARAM.inp.initsto_freq > 0 && istep % PARAM.inp.initsto_freq == 0)
     {
-        Update_Sto_Orbitals(this->stowf, PARAM.inp.seed_sto);
+        this->stowf.update_sto_orbitals(PARAM.inp.seed_sto);
     }
 }
 
@@ -192,24 +188,23 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density(int istep, int iter, double ethr
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(
-        &this->kv,
-        this->pw_wfc,
-        &this->wf,
-        this->stowf,
-        this->stoche,
-        this->p_hamilt_sto,
-        PARAM.inp.calculation,
-        PARAM.inp.basis_type,
-        PARAM.inp.ks_solver,
-        PARAM.inp.use_paw,
-        PARAM.globalv.use_uspp,
-        PARAM.inp.nspin,
-        hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-        hsolver::DiagoIterAssist<T, Device>::need_subspace,
-        this->init_psi);
+    hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
+                                                           this->pw_wfc,
+                                                           &this->wf,
+                                                           this->stowf,
+                                                           this->stoche,
+                                                           this->p_hamilt_sto,
+                                                           PARAM.inp.calculation,
+                                                           PARAM.inp.basis_type,
+                                                           PARAM.inp.ks_solver,
+                                                           PARAM.inp.use_paw,
+                                                           PARAM.globalv.use_uspp,
+                                                           PARAM.inp.nspin,
+                                                           hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                           hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                           this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->pw_wfc, this->stowf, istep, iter, false);
     this->init_psi = true;
