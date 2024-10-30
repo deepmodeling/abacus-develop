@@ -235,7 +235,9 @@ void ESolver_SDFT_PW<Device>::hamilt2density(int istep, int iter, double ethr)
         }
 #endif
     }
+#ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
 }
 
 template <typename Device>

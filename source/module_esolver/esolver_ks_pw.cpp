@@ -441,7 +441,9 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
+#ifdef __MPI
         MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
     }
     else
     {
