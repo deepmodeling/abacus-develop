@@ -27,9 +27,12 @@ class Parallel_Grid
 		const int &nczp, const int &nrxx, const int &nbz, const int &bz); //LiuXh add 20180606
 
 #ifdef __MPI	
-	void zpiece_to_all(double *zpiece, const int &iz, double *rho) const;
-	void zpiece_to_stogroup(double *zpiece, const int &iz, double *rho) const; //qainrui add for sto-dft 2021-7-21
-	
+    void zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const; //qainrui add for sto-dft 2021-7-21
+    void zpiece_to_all(double* zpiece, const int& iz, double* rho) const;
+
+    /// @brief  Broadcast data from root to all processors. The index order is [x][y][z].
+    void bcast(const double* const data_global, double* data_local)const;
+    /// @brief  Reduce data from all processors to root. The index order is [x][y][z].
     void reduce(double* rhotot, const double* constrhoin)const;
 #endif
 

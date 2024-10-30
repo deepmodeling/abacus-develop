@@ -127,24 +127,8 @@ void Symmetry_rho::psymm(double* rho_part,
     }
 
     // (3)
-    const int ncxy = rho_basis->nx * rho_basis->ny;
-    std::vector<double> zpiece(ncxy);
-    for (int iz = 0; iz < rho_basis->nz; iz++)
-    {
-        ModuleBase::GlobalFunc::ZEROS(zpiece.data(), ncxy);
-        if (GlobalV::MY_RANK == 0)
-        {
-            for (int ix = 0; ix < rho_basis->nx; ix++)
-            {
-                for (int iy = 0; iy < rho_basis->ny; iy++)
-                {
-                    const int ir = ix * rho_basis->ny + iy;
-                    zpiece[ir] = rhotot[ix * rho_basis->ny * rho_basis->nz + iy * rho_basis->nz + iz];
-                }
-            }
-        }
-        Pgrid.zpiece_to_all(zpiece.data(), iz, rho_part);
-    }
+Pgrid.bcast(rhotot.data(), rho_part);
+
 #endif
     return;
 }

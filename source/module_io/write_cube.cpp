@@ -4,20 +4,6 @@
 #include<vector>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
-void ModuleIO::zxy2xyz(const double* const zxy, const int nx, const int ny, const int nz, double* const xyz)
-{
-    for (int ix = 0; ix < nx; ix++)
-    {
-        for (int iy = 0; iy < ny; iy++)
-        {
-            for (int iz = 0; iz < nz; iz++)
-            {
-                xyz[(ix * ny + iy) * nz + iz] = zxy[(iz * nx + ix) * ny + iy];
-            }
-        }
-    }
-}
-
 void ModuleIO::write_grid(
     const Parallel_Grid& pgrid,
     const double* const data,
@@ -51,13 +37,11 @@ void ModuleIO::write_grid(
 #ifdef __MPI    // reduce to rank 0
     if (my_pool == 0)
     {
-        std::vector<double> data_zxy_full(nxyz, 0.0);   //tmp
-        pgrid.reduce(data_zxy_full.data(), data);
-        if (my_rank == 0) { ModuleIO::zxy2xyz(data_zxy_full.data(), nx, ny, nz, data_xyz_full.data()); }
+        pgrid.reduce(data_xyz_full.data(), data);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 #else
-    ModuleIO::zxy2xyz(data, nx, ny, nz, data_xyz_full.data());
+    std::memcpy(data_xyz_full.data(), data, nxyz * sizeof(double));
 #endif
 
     // build the info structure
@@ -141,8 +125,7 @@ void ModuleIO::write_grid(
                 atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, fac * ucell->atoms[it].tau[ia].y, fac * ucell->atoms[it].tau[ia].z });
             }
         }
-        auto cube_info = CubeInfo(comment, ucell->nat, { 0.0, 0.0, 0.0 }, { nx, ny, nz }, axis_vecs, atom_type, atom_charge, atom_pos, data_xyz_full, true);
-        write_cube(fn, cube_info, precision);
+        write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, { nx, ny, nz }, axis_vecs, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
         end = time(NULL);
         ModuleBase::GlobalFunc::OUT_TIME("write_grid", start, end);
     }
@@ -150,39 +133,48 @@ void ModuleIO::write_grid(
     return;
 }
 
-void ModuleIO::write_cube(const std::string& file, const ModuleIO::CubeInfo& info, const int precision, const int ndata_line)
+void ModuleIO::write_cube(const std::string& file,
+    const std::vector<std::string>& comment,
+    const int natom,
+    const std::vector<double>& cel_pos,
+    const std::vector<int>& nvoxel,
+    const std::vector<std::vector<double>>& axis_vecs,
+    const std::vector<int>& atom_type,
+    const std::vector<double>& atom_charge,
+    const std::vector<std::vector<double>>& atom_pos,
+    const std::vector<double>& data,
+    const int precision,
+    const int ndata_line)
 {
-    if (!info.valid) { return; }
-
     std::ofstream ofs(file);
 
-    for (int i = 0;i < 2;++i) { ofs << info.comment[i] << "\n"; }
+    for (int i = 0;i < 2;++i) { ofs << comment[i] << "\n"; }
 
     ofs << std::fixed;
     ofs << std::setprecision(1);    // as before
-    ofs << info.natom << " " << info.cel_pos[0] << " " << info.cel_pos[1] << " " << info.cel_pos[2] << " \n";
+    ofs << natom << " " << cel_pos[0] << " " << cel_pos[1] << " " << cel_pos[2] << " \n";
 
     ofs << std::setprecision(6);    //as before
     for (int i = 0;i < 3;++i)
     {
-        ofs << info.nvoxel[i] << " " << info.axis_vecs[i][0] << " " << info.axis_vecs[i][1] << " " << info.axis_vecs[i][2] << "\n";
+        ofs << nvoxel[i] << " " << axis_vecs[i][0] << " " << axis_vecs[i][1] << " " << axis_vecs[i][2] << "\n";
     }
 
-    for (int i = 0;i < info.natom;++i)
+    for (int i = 0;i < natom;++i)
     {
-        ofs << " " << info.atom_type[i] << " " << info.atom_charge[i] << " " << info.atom_pos[i][0] << " " << info.atom_pos[i][1] << " " << info.atom_pos[i][2] << "\n";
+        ofs << " " << atom_type[i] << " " << atom_charge[i] << " " << atom_pos[i][0] << " " << atom_pos[i][1] << " " << atom_pos[i][2] << "\n";
     }
 
     ofs.unsetf(std::ofstream::fixed);
     ofs << std::setprecision(precision);
     ofs << std::scientific;
-    const int nxy = info.nvoxel[0] * info.nvoxel[1];
-    const int nz = info.nvoxel[2];
+    const int nxy = nvoxel[0] * nvoxel[1];
+    const int nz = nvoxel[2];
     for (int ixy = 0; ixy < nxy; ++ixy)
     {
         for (int iz = 0;iz < nz;++iz)
         {
-            ofs << " " << info.data[ixy * nz + iz];
+            ofs << " " << data[ixy * nz + iz];
             if ((iz + 1) % ndata_line == 0 && iz != nz - 1) { ofs << "\n"; }
         }
         ofs << "\n";

@@ -185,7 +185,28 @@ void Parallel_Grid::z_distribution()
 
 
 #ifdef __MPI
-void Parallel_Grid::zpiece_to_all(double *zpiece, const int &iz, double *rho) const
+void Parallel_Grid::bcast(const double* const data_global, double* data_local)const
+{
+    std::vector<double> zpiece(ncxy);
+    for (int iz = 0; iz < this->ncz; ++iz)
+    {
+        ModuleBase::GlobalFunc::ZEROS(zpiece.data(), ncxy);
+        if (GlobalV::MY_RANK == 0)
+        {
+            for (int ix = 0; ix < ncx; ix++)
+            {
+                for (int iy = 0; iy < ncy; iy++)
+                {
+                    const int ixy = ix * ncy + iy;
+                    zpiece[ixy] = data_global[ixy * ncz + iz];
+                }
+            }
+        }
+        this->zpiece_to_all(zpiece.data(), iz, data_local);
+    }
+}
+
+void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) const
 {
 	if(PARAM.inp.esolver_type == "sdft")
 	{

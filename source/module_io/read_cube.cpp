@@ -2,19 +2,6 @@
 #include <limits>
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 // #include "module_base/global_variable.h" // GlobalV reference removed
-void ModuleIO::xyz2zxy(const double* const xyz, const int nx, const int ny, const int nz, double* const zxy)
-{
-    for (int ix = 0; ix < nx; ix++)
-    {
-        for (int iy = 0; iy < ny; iy++)
-        {
-            for (int iz = 0; iz < nz; iz++)
-            {
-                zxy[(iz * nx + ix) * ny + iy] = xyz[(ix * ny + iy) * nz + iz];
-            }
-        }
-    }
-}
 
 bool ModuleIO::read_grid(
     const Parallel_Grid& pgrid,
@@ -44,34 +31,40 @@ bool ModuleIO::read_grid(
     const int& ny = pgrid.ny;
     const int& nz = pgrid.nz;
     const int& nxyz = nx * ny * nz;
-    std::vector<double> data_zxy_full(nxyz, 0.0);    // [iz][ix][iy]
+    std::vector<double> data_xyz_full(nxyz, 0.0);
     if (my_rank == 0)
     {
-        const CubeInfo& cube_info = ModuleIO::read_cube(fn);
+        std::vector<std::string> comment;
+        int natom = 0;
+        std::vector<double> cel_pos;
+        std::vector<int> nvoxel;
+        std::vector<std::vector<double>> axis_vecs;
+        std::vector<int> atom_type;
+        std::vector<double> atom_charge;
+        std::vector<std::vector<double>> atom_pos;
+        std::vector<double> data_read;
+        bool valid = ModuleIO::read_cube(fn, comment, natom, cel_pos, nvoxel, axis_vecs, atom_type, atom_charge, atom_pos, data_read);
 
-        const int& nx_read = cube_info.nvoxel[0];
-        const int& ny_read = cube_info.nvoxel[1];
-        const int& nz_read = cube_info.nvoxel[2];
+        const int& nx_read = nvoxel[0];
+        const int& ny_read = nvoxel[1];
+        const int& nz_read = nvoxel[2];
 
         // if mismatch, trilinear interpolate
         if (nx == nx_read && ny == ny_read && nz == nz_read)
         {
-            ModuleIO::xyz2zxy(cube_info.data.data(), nx, ny, nz, data_zxy_full.data());
+            std::memcpy(data_xyz_full.data(), data_read.data(), nxyz * sizeof(double));
         }
         else
         {
-            std::vector<double> data_xyz_full(nxyz, 0.0);
-            trilinear_interpolate(cube_info.data.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz_full.data());
-            ModuleIO::xyz2zxy(data_xyz_full.data(), nx, ny, nz, data_zxy_full.data());
+            trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz_full.data());
         }
     }
 
     // distribute
 #ifdef __MPI 
-    const int nxy = nx * ny;
-    for (int iz = 0;iz < nz;++iz) { pgrid.zpiece_to_all(data_zxy_full.data() + iz * nxy, iz, data); }
+    pgrid.bcast(data_xyz_full.data(), data);
 #else
-    std::memcpy(data, data_zxy_full.data(), nxyz * sizeof(double));
+    std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif
     return true;
 }
@@ -147,22 +140,30 @@ void ModuleIO::trilinear_interpolate(
     delete[] read_rho;
 }
 
-ModuleIO::CubeInfo ModuleIO::read_cube(const std::string& file)
+bool ModuleIO::read_cube(const std::string& file,
+    std::vector<std::string>& comment,
+    int& natom,
+    std::vector<double>& cell_pos,
+    std::vector<int>& nvoxel,
+    std::vector<std::vector<double>>& axis_vecs,
+    std::vector<int>& atom_type,
+    std::vector<double>& atom_charge,
+    std::vector<std::vector<double>>& atom_pos,
+    std::vector<double>& data)
 {
     std::ifstream ifs(file);
 
-    if (!ifs) { return ModuleIO::CubeInfo({}, 0, {}, {}, {}, {}, {}, {}, {}, false); }
+    if (!ifs) { return false; }
 
-    std::vector<std::string> comment(2);
+    comment.resize(2);
     for (auto& c : comment) { std::getline(ifs, c); }
 
-    int natom;
     ifs >> natom;
-    std::vector<double> cell_pos(3);
+    cell_pos.resize(3);
     for (auto& cp : cell_pos) { ifs >> cp; }
 
-    std::vector<int> nvoxel(3);
-    std::vector<std::vector<double>> axis_vecs(3);
+    nvoxel.resize(3);
+    axis_vecs.resize(0);
     for (int i = 0;i < 3;++i)
     {
         std::vector<double> vec(3);
@@ -170,20 +171,20 @@ ModuleIO::CubeInfo ModuleIO::read_cube(const std::string& file)
         axis_vecs.push_back(vec);
     }
 
-    std::vector<int> itype(natom);
-    std::vector<double> charge(natom);
-    std::vector<std::vector<double>> atom_pos(natom);
+    atom_type.resize(natom);
+    atom_charge.resize(natom);
+    atom_pos.resize(0);
     for (int i = 0;i < natom;++i)
     {
         std::vector<double> apos(3);
-        ifs >> itype[i] >> charge[i] >> apos[0] >> apos[1] >> apos[2];
+        ifs >> atom_type[i] >> atom_charge[i] >> apos[0] >> apos[1] >> apos[2];
         atom_pos.push_back(apos);
     }
 
     const int nxyz = nvoxel[0] * nvoxel[1] * nvoxel[2];
-    std::vector<double> data(nxyz);
+    data.resize(nxyz);
     for (int i = 0;i < nxyz;++i) { ifs >> data[i]; }
 
     ifs.close();
-    return ModuleIO::CubeInfo(comment, natom, cell_pos, nvoxel, axis_vecs, itype, charge, atom_pos, std::move(data), true);
+    return true;
 }

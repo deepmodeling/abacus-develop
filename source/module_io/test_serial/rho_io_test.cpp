@@ -123,11 +123,27 @@ TEST_F(RhoIOTest, TrilinearInterpolate)
             }
         }
     }
+
+    // The old implementation is inconsistent: ifdef MPI, [x][y][z]; else, [z][x][y].
+    // Now we use [x][y][z] for both MPI and non-MPI, so here we need to chage the index order.
+    auto permute_xyz2zxy = [&](const double* const xyz, double* const zxy) -> void
+        {
+            for (int ix = 0; ix < nx; ix++)
+            {
+                for (int iy = 0; iy < ny; iy++)
+                {
+                    for (int iz = 0; iz < nz; iz++)
+                    {
+                        zxy[(iz * nx + ix) * ny + iy] = xyz[(ix * ny + iy) * nz + iz];
+                    }
+                }
+            }
+        };
     const int nxyz = nx * ny * nz;
     std::vector<double> data_xyz(nxyz);
     std::vector<double> data(nxyz); // z > x > y
     ModuleIO::trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz.data());
-    ModuleIO::xyz2zxy(data_xyz.data(), nx, ny, nz, data.data());
+    permute_xyz2zxy(data_xyz.data(), data.data());
     EXPECT_DOUBLE_EQ(data[0], 0.0010824725010374092);
     EXPECT_DOUBLE_EQ(data[10], 0.058649850374240906);
     EXPECT_DOUBLE_EQ(data[100], 0.018931708073604996);

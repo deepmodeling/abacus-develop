@@ -26,9 +26,20 @@ namespace ModuleIO
     const int precision = 11,
     const int out_fermi = 1); // mohan add 2007-10-17
 
-struct CubeInfo
-{
-    CubeInfo(
+    /// read the full data from a cube file 
+    bool read_cube(const std::string& file,
+        std::vector<std::string>& comment,
+        int& natom,
+        std::vector<double>& cel_pos,
+        std::vector<int>& nvoxel,
+        std::vector<std::vector<double>>& axis_vecs,
+        std::vector<int>& atom_type,
+        std::vector<double>& atom_charge,
+        std::vector<std::vector<double>>& atom_pos,
+        std::vector<double>& data);
+
+    /// write a cube file
+    void write_cube(const std::string& file,
         const std::vector<std::string>& comment,
         const int natom,
         const std::vector<double>& cel_pos,
@@ -38,34 +49,8 @@ struct CubeInfo
         const std::vector<double>& atom_charge,
         const std::vector<std::vector<double>>& atom_pos,
         const std::vector<double>& data,
-        const bool valid)
-        : comment(comment), natom(natom), cel_pos(cel_pos),
-        nvoxel(nvoxel), axis_vecs(axis_vecs),
-        atom_type(atom_type), atom_charge(atom_charge), atom_pos(atom_pos),
-        data(data), valid(valid)
-    {
-    };
-
-    const std::vector<std::string> comment = {};
-    const int natom = 0;
-    const std::vector<double> cel_pos = {};
-    const std::vector<int> nvoxel = {};
-    const std::vector<std::vector<double>> axis_vecs = {};
-    const std::vector<int> atom_type = {};
-    const std::vector<double> atom_charge = {};
-    const std::vector<std::vector<double>> atom_pos = {};
-    const std::vector<double> data = {};
-    const bool valid = false;
-};
-
-/// read the full data from a cube file 
-CubeInfo read_cube(const std::string& file);
-/// write a cube file
-void write_cube(const std::string& file, const CubeInfo& info, const int precision, const int ndata_line = 6);
-/// change the index order: [x][y][z] (.cube file) -> [z][x][y] (ABACUS)
-void xyz2zxy(const double* const xyz, const int nx, const int ny, const int nz, double* const zxy);
-/// change the index order: [z][x][y] (ABACUS) -> [x][y][z] (.cube file)
-void zxy2xyz(const double* const zxy, const int nx, const int ny, const int nz, double* const xyz);
+        const int precision,
+        const int ndata_line = 6);
 
     /**
      * @brief The trilinear interpolation method
