@@ -139,12 +139,22 @@ class Diago_DavSubspace
 
     bool test_exit_cond(const int& ntry, const int& notconv, const bool& scf);
 
+#ifdef __DSP
+    using resmem_complex_op = base_device::memory::resize_memory_op_mt<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op_mt<T, Device>;
+#else
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+#endif
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
+#ifdef __DSP
+    using resmem_real_op = base_device::memory::resize_memory_op_mt<Real, Device>;
+    using delmem_real_op = base_device::memory::delete_memory_op_mt<Real, Device>;
+#else
     using resmem_real_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_real_op = base_device::memory::delete_memory_op<Real, Device>;
+#endif
     using setmem_real_op = base_device::memory::set_memory_op<Real, Device>;
 
     using resmem_real_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
