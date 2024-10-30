@@ -207,7 +207,8 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
@@ -227,7 +228,8 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
