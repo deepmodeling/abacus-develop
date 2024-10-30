@@ -446,7 +446,6 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     {
         auto* swap = new T[notconv * this->nbase_x];
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-
         if (std::is_same<T, double>::value)
         {
             Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
