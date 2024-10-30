@@ -10,8 +10,8 @@
 namespace ModuleESolver
 {
 
-template <typename Device>
-class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>, Device>
+template <typename T, typename Device>
+class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 {
   public:
     ESolver_SDFT_PW();
@@ -28,7 +28,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<std::complex<double>, Device>
   public:
     Stochastic_WF stowf;
     StoChe<double> stoche;
-    hamilt::HamiltSdftPW<std::complex<double>, Device>* p_hamilt_sto = nullptr;
+    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
 
   protected:
     virtual void before_scf(const int istep) override;

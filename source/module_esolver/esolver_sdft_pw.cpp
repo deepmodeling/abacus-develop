@@ -29,31 +29,31 @@
 namespace ModuleESolver
 {
 
-template <typename Device>
-ESolver_SDFT_PW<Device>::ESolver_SDFT_PW()
+template <typename T, typename Device>
+ESolver_SDFT_PW<T, Device>::ESolver_SDFT_PW()
     : stoche(PARAM.inp.nche_sto, PARAM.inp.method_sto, PARAM.inp.emax_sto, PARAM.inp.emin_sto)
 {
     this->classname = "ESolver_SDFT_PW";
     this->basisname = "PW";
 }
 
-template <typename Device>
-ESolver_SDFT_PW<Device>::~ESolver_SDFT_PW()
+template <typename T, typename Device>
+ESolver_SDFT_PW<T, Device>::~ESolver_SDFT_PW()
 {
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
     // 1) initialize parameters from int Input class
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
 
     // 2) run "before_all_runners" in ESolver_KS
-    ESolver_KS<std::complex<double>, Device>::before_all_runners(inp, ucell);
+    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
 
     // 3) initialize the pointer for electronic states of SDFT
-    this->pelec = new elecstate::ElecStatePW_SDFT<Device>(this->pw_wfc,
+    this->pelec = new elecstate::ElecStatePW_SDFT<T, Device>(this->pw_wfc,
                                                           &(this->chr),
                                                           &(this->kv),
                                                           &ucell,
@@ -79,7 +79,7 @@ void ESolver_SDFT_PW<Device>::before_all_runners(const Input_para& inp, UnitCell
     }
 
     // 6) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<std::complex<double>, Device>(PARAM.inp.init_wfc,
+    this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
                                                                     PARAM.inp.ks_solver,
                                                                     PARAM.inp.basis_type,
                                                                     PARAM.inp.psi_initializer,
@@ -118,37 +118,37 @@ void ESolver_SDFT_PW<Device>::before_all_runners(const Input_para& inp, UnitCell
 
     size_t size = stowf.chi0->size();
 
-    this->stowf.shchi = new psi::Psi<std::complex<double>>(this->kv.get_nks(),
+    this->stowf.shchi = new psi::Psi<T>(this->kv.get_nks(),
                                                            this->stowf.nchip_max,
                                                            this->wf.npwx,
                                                            this->kv.ngk.data());
 
-    ModuleBase::Memory::record("SDFT::shchi", size * sizeof(std::complex<double>));
+    ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
     if (PARAM.inp.nbands > 0)
     {
-        this->stowf.chiortho = new psi::Psi<std::complex<double>>(this->kv.get_nks(),
+        this->stowf.chiortho = new psi::Psi<T>(this->kv.get_nks(),
                                                                   this->stowf.nchip_max,
                                                                   this->wf.npwx,
                                                                   this->kv.ngk.data());
-        ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(std::complex<double>));
+        ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(T));
     }
 
     return;
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::before_scf(const int istep)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::before_scf(const int istep)
 {
-    ESolver_KS_PW<std::complex<double>, Device>::before_scf(istep);
+    ESolver_KS_PW<T, Device>::before_scf(istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
-    this->p_hamilt = new hamilt::HamiltSdftPW<std::complex<double>, Device>(this->pelec->pot,
+    this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
                                                                             this->pw_wfc,
                                                                             &this->kv,
                                                                             PARAM.globalv.npol,
                                                                             &this->stoche.emin_sto,
                                                                             &this->stoche.emax_sto);
-    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>, Device>*>(this->p_hamilt);
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<T, Device>*>(this->p_hamilt);
 
     if (istep > 0 && PARAM.inp.nbands_sto != 0 && PARAM.inp.initsto_freq > 0 && istep % PARAM.inp.initsto_freq == 0)
     {
@@ -156,22 +156,22 @@ void ESolver_SDFT_PW<Device>::before_scf(const int istep)
     }
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::iter_finish(int& iter)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::iter_finish(int& iter)
 {
     // call iter_finish() of ESolver_KS
-    ESolver_KS<std::complex<double>, Device>::iter_finish(iter);
+    ESolver_KS<T, Device>::iter_finish(iter);
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::after_scf(const int istep)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::after_scf(const int istep)
 {
     // 1) call after_scf() of ESolver_KS_PW
-    ESolver_KS_PW<std::complex<double>, Device>::after_scf(istep);
+    ESolver_KS_PW<T, Device>::after_scf(istep);
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::hamilt2density(int istep, int iter, double ethr)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::hamilt2density(int istep, int iter, double ethr)
 {
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -180,19 +180,19 @@ void ESolver_SDFT_PW<Device>::hamilt2density(int istep, int iter, double ethr)
     // be careful that istep start from 0 and iter start from 1
     if (istep == 0 && iter == 1)
     {
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::need_subspace = false;
+        hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
     }
     else
     {
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::need_subspace = true;
+        hsolver::DiagoIterAssist<T, Device>::need_subspace = true;
     }
 
-    hsolver::DiagoIterAssist<std::complex<double>, Device>::PW_DIAG_THR = ethr;
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
 
-    hsolver::DiagoIterAssist<std::complex<double>, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
-    hsolver::HSolverPW_SDFT<Device> hsolver_pw_sdft_obj(
+    hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(
         &this->kv,
         this->pw_wfc,
         &this->wf,
@@ -205,10 +205,10 @@ void ESolver_SDFT_PW<Device>::hamilt2density(int istep, int iter, double ethr)
         PARAM.inp.use_paw,
         PARAM.globalv.use_uspp,
         PARAM.inp.nspin,
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::SCF_ITER,
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::PW_DIAG_NMAX,
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::PW_DIAG_THR,
-        hsolver::DiagoIterAssist<std::complex<double>, Device>::need_subspace,
+        hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+        hsolver::DiagoIterAssist<T, Device>::need_subspace,
         this->init_psi);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->pw_wfc, this->stowf, istep, iter, false);
@@ -240,14 +240,14 @@ void ESolver_SDFT_PW<Device>::hamilt2density(int istep, int iter, double ethr)
 #endif
 }
 
-template <typename Device>
-double ESolver_SDFT_PW<Device>::cal_energy()
+template <typename T, typename Device>
+double ESolver_SDFT_PW<T, Device>::cal_energy()
 {
     return this->pelec->f_en.etot;
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::cal_force(ModuleBase::matrix& force)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
     Sto_Forces ff(GlobalC::ucell.nat);
 
@@ -262,8 +262,8 @@ void ESolver_SDFT_PW<Device>::cal_force(ModuleBase::matrix& force)
                     this->stowf);
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::cal_stress(ModuleBase::matrix& stress)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
     Sto_Stress_PW ss;
     ss.cal_stress(stress,
@@ -280,8 +280,8 @@ void ESolver_SDFT_PW<Device>::cal_stress(ModuleBase::matrix& stress)
                   GlobalC::ucell);
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::after_all_runners()
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::after_all_runners()
 {
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
@@ -291,7 +291,7 @@ void ESolver_SDFT_PW<Device>::after_all_runners()
 }
 
 template <>
-void ESolver_SDFT_PW<base_device::DEVICE_CPU>::after_all_runners()
+void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners()
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -341,8 +341,8 @@ void ESolver_SDFT_PW<base_device::DEVICE_CPU>::after_all_runners()
     }
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::others(const int istep)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
 
@@ -352,14 +352,14 @@ void ESolver_SDFT_PW<Device>::others(const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<Device>::others", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
     }
 
     return;
 }
 
-template <typename Device>
-void ESolver_SDFT_PW<Device>::nscf()
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::nscf()
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "nscf");
     ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
@@ -382,5 +382,6 @@ void ESolver_SDFT_PW<Device>::nscf()
     return;
 }
 
-template class ESolver_SDFT_PW<base_device::DEVICE_CPU>;
+// template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>;
+template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>;
 } // namespace ModuleESolver

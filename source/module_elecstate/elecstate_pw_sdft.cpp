@@ -8,8 +8,8 @@
 namespace elecstate
 {
 
-template <typename Device>
-void ElecStatePW_SDFT<Device>::psiToRho(const psi::Psi<std::complex<double>>& psi)
+template <typename T, typename Device>
+void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T>& psi)
 {
     ModuleBase::TITLE(this->classname, "psiToRho");
     ModuleBase::timer::tick(this->classname, "psiToRho");
@@ -42,5 +42,6 @@ void ElecStatePW_SDFT<Device>::psiToRho(const psi::Psi<std::complex<double>>& ps
     return;
 }
 
-template class ElecStatePW_SDFT<base_device::DEVICE_CPU>;
+// template class ElecStatePW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
+template class ElecStatePW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
 } // namespace elecstate

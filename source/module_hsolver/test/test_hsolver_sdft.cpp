@@ -138,24 +138,25 @@ class TestHSolverPW_SDFT : public ::testing::Test
     wavefunc wf;
     StoChe<double> stoche;
     hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
-    hsolver::HSolverPW_SDFT<base_device::DEVICE_CPU> hs_d = hsolver::HSolverPW_SDFT<base_device::DEVICE_CPU>(
-        &kv,
-        &pwbk,
-        &wf,
-        stowf,
-        stoche,
-        p_hamilt_sto,
-        "scf",
-        "pw",
-        "cg",
-        false,
-        PARAM.sys.use_uspp,
-        PARAM.input.nspin,
-        hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
-        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
-        hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-        hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-        false);
+    hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> hs_d
+        = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>(
+            &kv,
+            &pwbk,
+            &wf,
+            stowf,
+            stoche,
+            p_hamilt_sto,
+            "scf",
+            "pw",
+            "cg",
+            false,
+            PARAM.sys.use_uspp,
+            PARAM.input.nspin,
+            hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
+            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
+            hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
+            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+            false);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

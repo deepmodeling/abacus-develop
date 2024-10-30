@@ -9,9 +9,9 @@
 
 namespace hsolver
 {
-template <typename Device>
-void HSolverPW_SDFT<Device>::solve(hamilt::Hamilt<std::complex<double>, Device>* pHamilt,
-                                   psi::Psi<std::complex<double>, Device>& psi,
+template <typename T, typename Device>
+void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
+                                   psi::Psi<T, Device>& psi,
                                    elecstate::ElecState* pes,
                                    ModulePW::PW_Basis_K* wfc_basis,
                                    Stochastic_WF& stowf,
@@ -107,5 +107,6 @@ void HSolverPW_SDFT<Device>::solve(hamilt::Hamilt<std::complex<double>, Device>*
     return;
 }
 
-template class HSolverPW_SDFT<base_device::DEVICE_CPU>;
+// template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
+template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
 } // namespace hsolver

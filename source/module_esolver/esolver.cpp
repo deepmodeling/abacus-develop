@@ -155,7 +155,14 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 	}
     else if (esolver_type == "sdft_pw")
 	{
-		return new ESolver_SDFT_PW<base_device::DEVICE_CPU>();
+        // if (PARAM.inp.precision == "single")
+		// {
+		// 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
+		// }
+		// else
+		// {
+			return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>();
+		// }
 	}
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
