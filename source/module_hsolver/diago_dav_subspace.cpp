@@ -445,7 +445,10 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     if (this->diag_comm.nproc > 1)
     {
         auto* swap = new T[notconv * this->nbase_x];
+        auto* target = new T[notconv * this->nbase_x];
+
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+
         if (std::is_same<T, double>::value)
         {
             Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
@@ -455,8 +458,15 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         {
             if (base_device::get_current_precision(swap) == "single")
             {
+                // MPI_Reduce(swap,
+                //            hcc + nbase * this->nbase_x,
+                //            notconv * this->nbase_x,
+                //            MPI_COMPLEX,
+                //            MPI_SUM,
+                //            0,
+                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
+                           target,
                            notconv * this->nbase_x,
                            MPI_COMPLEX,
                            MPI_SUM,
@@ -465,8 +475,15 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
             else
             {
+                // MPI_Reduce(swap,
+                //            hcc + nbase * this->nbase_x,
+                //            notconv * this->nbase_x,
+                //            MPI_DOUBLE_COMPLEX,
+                //            MPI_SUM,
+                //            0,
+                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
-                           hcc + nbase * this->nbase_x,
+                           target,
                            notconv * this->nbase_x,
                            MPI_DOUBLE_COMPLEX,
                            MPI_SUM,
@@ -474,12 +491,20 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                            this->diag_comm.comm);
             }
 
+            syncmem_complex_op()(this->ctx, this->ctx, hcc + nbase * this->nbase_x, target, notconv * this->nbase_x);
             syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
 
             if (base_device::get_current_precision(swap) == "single")
             {
+                // MPI_Reduce(swap,
+                //            scc + nbase * this->nbase_x,
+                //            notconv * this->nbase_x,
+                //            MPI_COMPLEX,
+                //            MPI_SUM,
+                //            0,
+                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
+                           target,
                            notconv * this->nbase_x,
                            MPI_COMPLEX,
                            MPI_SUM,
@@ -488,8 +513,15 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
             else
             {
+                // MPI_Reduce(swap,
+                //            scc + nbase * this->nbase_x,
+                //            notconv * this->nbase_x,
+                //            MPI_DOUBLE_COMPLEX,
+                //            MPI_SUM,
+                //            0,
+                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
-                           scc + nbase * this->nbase_x,
+                           target,
                            notconv * this->nbase_x,
                            MPI_DOUBLE_COMPLEX,
                            MPI_SUM,
@@ -497,7 +529,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
                            this->diag_comm.comm);
             }
         }
+        syncmem_complex_op()(this->ctx, this->ctx, scc + nbase * this->nbase_x, target, notconv * this->nbase_x);
         delete[] swap;
+        delete[] target;
     }
 #endif
 
