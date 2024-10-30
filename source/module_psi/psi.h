@@ -143,10 +143,17 @@ class Psi
 
     bool allocate_inside = true;  ///<whether allocate psi inside Psi class
 
+#ifdef __DSP
+    using set_memory_op = base_device::memory::set_memory_op<T, base_device::DEVICE_DSP>;
+    using delete_memory_op = base_device::memory::delete_memory_op<T, base_device::DEVICE_DSP>;
+    using resize_memory_op = base_device::memory::resize_memory_op<T, base_device::DEVICE_DSP>;
+    using synchronize_memory_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_DSP, base_device::DEVICE_DSP>;
+#else
     using set_memory_op = base_device::memory::set_memory_op<T, Device>;
     using delete_memory_op = base_device::memory::delete_memory_op<T, Device>;
     using resize_memory_op = base_device::memory::resize_memory_op<T, Device>;
     using synchronize_memory_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
+#endif
 };
 
 } // end of namespace psi
