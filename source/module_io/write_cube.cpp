@@ -80,12 +80,9 @@ void ModuleIO::write_grid(
         for (int i = 0;i < 2;++i) { std::getline(ss, comment[i]); }
 
         double fac = ucell->lat0;
-        std::vector<std::vector<double>> axis_vecs =
-        {
-            {fac * ucell->latvec.e11 / double(nx), fac * ucell->latvec.e12 / double(nx), fac * ucell->latvec.e13 / double(nx)},
-            {fac * ucell->latvec.e21 / double(ny), fac * ucell->latvec.e22 / double(ny), fac * ucell->latvec.e23 / double(ny)},
-            {fac * ucell->latvec.e31 / double(nz), fac * ucell->latvec.e32 / double(nz), fac * ucell->latvec.e33 / double(nz)}
-        };
+        std::vector<double> dx = { fac * ucell->latvec.e11 / double(nx), fac * ucell->latvec.e12 / double(nx), fac * ucell->latvec.e13 / double(nx) };
+        std::vector<double> dy = { fac * ucell->latvec.e21 / double(ny), fac * ucell->latvec.e22 / double(ny), fac * ucell->latvec.e23 / double(ny) };
+        std::vector<double> dz = { fac * ucell->latvec.e31 / double(nz), fac * ucell->latvec.e32 / double(nz), fac * ucell->latvec.e33 / double(nz) };
 
         std::string element = "";
         std::vector<int> atom_type;
@@ -125,7 +122,7 @@ void ModuleIO::write_grid(
                 atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, fac * ucell->atoms[it].tau[ia].y, fac * ucell->atoms[it].tau[ia].z });
             }
         }
-        write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, { nx, ny, nz }, axis_vecs, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
+        write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, nx, ny, nz, dx, dy, dz, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
         end = time(NULL);
         ModuleBase::GlobalFunc::OUT_TIME("write_grid", start, end);
     }
@@ -135,10 +132,14 @@ void ModuleIO::write_grid(
 
 void ModuleIO::write_cube(const std::string& file,
     const std::vector<std::string>& comment,
-    const int natom,
-    const std::vector<double>& cel_pos,
-    const std::vector<int>& nvoxel,
-    const std::vector<std::vector<double>>& axis_vecs,
+    const int& natom,
+    const std::vector<double>& origin,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    const std::vector<double>& dx,
+    const std::vector<double>& dy,
+    const std::vector<double>& dz,
     const std::vector<int>& atom_type,
     const std::vector<double>& atom_charge,
     const std::vector<std::vector<double>>& atom_pos,
@@ -146,19 +147,31 @@ void ModuleIO::write_cube(const std::string& file,
     const int precision,
     const int ndata_line)
 {
+    assert(comment.size() >= 2);
+    for (int i = 0;i < 2;++i) { assert(comment[i].find("\n") == std::string::npos); }
+    assert(origin.size() >= 3);
+    assert(dx.size() >= 3);
+    assert(dy.size() >= 3);
+    assert(dz.size() >= 3);
+    assert(atom_type.size() >= natom);
+    assert(atom_charge.size() >= natom);
+    assert(atom_pos.size() >= natom);
+    for (int i = 0;i < natom;++i) { assert(atom_pos[i].size() >= 3); }
+    assert(data.size() >= nx * ny * nz);
+
     std::ofstream ofs(file);
 
     for (int i = 0;i < 2;++i) { ofs << comment[i] << "\n"; }
 
     ofs << std::fixed;
     ofs << std::setprecision(1);    // as before
-    ofs << natom << " " << cel_pos[0] << " " << cel_pos[1] << " " << cel_pos[2] << " \n";
+
+    ofs << natom << " " << origin[0] << " " << origin[1] << " " << origin[2] << " \n";
 
     ofs << std::setprecision(6);    //as before
-    for (int i = 0;i < 3;++i)
-    {
-        ofs << nvoxel[i] << " " << axis_vecs[i][0] << " " << axis_vecs[i][1] << " " << axis_vecs[i][2] << "\n";
-    }
+    ofs << nx << " " << dx[0] << " " << dx[1] << " " << dx[2] << "\n";
+    ofs << ny << " " << dy[0] << " " << dy[1] << " " << dy[2] << "\n";
+    ofs << nz << " " << dz[0] << " " << dz[1] << " " << dz[2] << "\n";
 
     for (int i = 0;i < natom;++i)
     {
@@ -168,8 +181,7 @@ void ModuleIO::write_cube(const std::string& file,
     ofs.unsetf(std::ofstream::fixed);
     ofs << std::setprecision(precision);
     ofs << std::scientific;
-    const int nxy = nvoxel[0] * nvoxel[1];
-    const int nz = nvoxel[2];
+    const int nxy = nx * ny;
     for (int ixy = 0; ixy < nxy; ++ixy)
     {
         for (int iz = 0;iz < nz;++iz)

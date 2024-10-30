@@ -36,18 +36,22 @@ bool ModuleIO::read_grid(
     {
         std::vector<std::string> comment;
         int natom = 0;
-        std::vector<double> cel_pos;
+        std::vector<double> origin;
         std::vector<int> nvoxel;
+        int nx_read = 0;
+        int ny_read = 0;
+        int nz_read = 0;
+        std::vector<double> dx(3);
+        std::vector<double> dy(3);
+        std::vector<double> dz(3);
         std::vector<std::vector<double>> axis_vecs;
         std::vector<int> atom_type;
         std::vector<double> atom_charge;
         std::vector<std::vector<double>> atom_pos;
         std::vector<double> data_read;
-        bool valid = ModuleIO::read_cube(fn, comment, natom, cel_pos, nvoxel, axis_vecs, atom_type, atom_charge, atom_pos, data_read);
 
-        const int& nx_read = nvoxel[0];
-        const int& ny_read = nvoxel[1];
-        const int& nz_read = nvoxel[2];
+        // we've already checked the file existence, so we don't need the returned value here
+        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
 
         // if mismatch, trilinear interpolate
         if (nx == nx_read && ny == ny_read && nz == nz_read)
@@ -143,9 +147,13 @@ void ModuleIO::trilinear_interpolate(
 bool ModuleIO::read_cube(const std::string& file,
     std::vector<std::string>& comment,
     int& natom,
-    std::vector<double>& cell_pos,
-    std::vector<int>& nvoxel,
-    std::vector<std::vector<double>>& axis_vecs,
+    std::vector<double>& origin,
+    int& nx,
+    int& ny,
+    int& nz,
+    std::vector<double>& dx,
+    std::vector<double>& dy,
+    std::vector<double>& dz,
     std::vector<int>& atom_type,
     std::vector<double>& atom_charge,
     std::vector<std::vector<double>>& atom_pos,
@@ -159,29 +167,25 @@ bool ModuleIO::read_cube(const std::string& file,
     for (auto& c : comment) { std::getline(ifs, c); }
 
     ifs >> natom;
-    cell_pos.resize(3);
-    for (auto& cp : cell_pos) { ifs >> cp; }
+    origin.resize(3);
+    for (auto& cp : origin) { ifs >> cp; }
 
-    nvoxel.resize(3);
-    axis_vecs.resize(0);
-    for (int i = 0;i < 3;++i)
-    {
-        std::vector<double> vec(3);
-        ifs >> nvoxel[i] >> vec[0] >> vec[1] >> vec[2];
-        axis_vecs.push_back(vec);
-    }
+    dx.resize(3);
+    dy.resize(3);
+    dz.resize(3);
+    ifs >> nx >> dx[0] >> dx[1] >> dx[2];
+    ifs >> ny >> dy[0] >> dy[1] >> dy[2];
+    ifs >> nz >> dz[0] >> dz[1] >> dz[2];
 
     atom_type.resize(natom);
     atom_charge.resize(natom);
-    atom_pos.resize(0);
+    atom_pos.resize(natom, std::vector<double>(3));
     for (int i = 0;i < natom;++i)
     {
-        std::vector<double> apos(3);
-        ifs >> atom_type[i] >> atom_charge[i] >> apos[0] >> apos[1] >> apos[2];
-        atom_pos.push_back(apos);
+        ifs >> atom_type[i] >> atom_charge[i] >> atom_pos[i][0] >> atom_pos[i][1] >> atom_pos[i][2];
     }
 
-    const int nxyz = nvoxel[0] * nvoxel[1] * nvoxel[2];
+    const int nxyz = nx * ny * nz;
     data.resize(nxyz);
     for (int i = 0;i < nxyz;++i) { ifs >> data[i]; }
 
