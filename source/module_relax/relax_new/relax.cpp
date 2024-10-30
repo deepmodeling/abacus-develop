@@ -139,7 +139,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
 		std::cout << " LARGEST GRAD (eV/A)  : " << max_grad << std::endl;
         GlobalV::ofs_running << "\n Largest gradient in force is " << max_grad << " eV/A." << std::endl;
-        GlobalV::ofs_running << "\n Threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
+        GlobalV::ofs_running << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
         etot_p = etot;
 	}
 //=========================================
@@ -226,7 +226,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         }
 
         GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
-        GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
+        GlobalV::ofs_running << " Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
     }
 
 	if(force_converged)

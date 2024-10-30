@@ -150,7 +150,7 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
 
         GlobalV::ofs_running << "\n Largest gradient in force is " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
                              << " eV/A." << std::endl;
-        GlobalV::ofs_running << "\n Threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
+        GlobalV::ofs_running << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A" << std::endl;
     }
 
     const double etot_diff = std::abs(Ions_Move_Basic::ediff);

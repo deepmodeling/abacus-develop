@@ -208,7 +208,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
             GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
-            GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
+            GlobalV::ofs_running << " Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
@@ -229,7 +229,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
             GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
-            GlobalV::ofs_running << "\n Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
+            GlobalV::ofs_running << " Threshold is = " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
