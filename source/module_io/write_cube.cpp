@@ -30,7 +30,7 @@ void ModuleIO::write_vdata_palgrid(
     const int& nz = pgrid.nz;
     const int& nxyz = nx * ny * nz;
 
-    start = time(NULL);
+    start = time(nullptr);
 
     // reduce
     std::vector<double> data_xyz_full(nxyz);    // data to be written
@@ -123,7 +123,7 @@ void ModuleIO::write_vdata_palgrid(
             }
         }
         write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, nx, ny, nz, dx, dy, dz, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
-        end = time(NULL);
+        end = time(nullptr);
         ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
     }
 
