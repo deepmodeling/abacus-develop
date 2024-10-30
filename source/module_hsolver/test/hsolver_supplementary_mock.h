@@ -1,5 +1,6 @@
 #pragma once
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
 
 namespace elecstate
 {
