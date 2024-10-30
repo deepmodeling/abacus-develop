@@ -115,7 +115,7 @@ class ReadWfcRhoTest : public ::testing::Test
         wfcpw = new ModulePW::PW_Basis_K;
         rhopw = new ModulePW::PW_Basis;
         kv = new K_Vectors;
-        GlobalV::NBANDS = 4;
+        PARAM.input.nbands = 4;
         PARAM.input.nspin = 1;
         PARAM.input.out_wfc_pw = 2;
     }
@@ -132,7 +132,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
 {
     // Init K_Vectors
     const int my_pool = GlobalV::MY_POOL;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.input.nbands;
     const int nks = 2;
     const int nkstot = GlobalV::KPAR * nks;
     kv->set_nkstot(nkstot);

@@ -7,6 +7,7 @@ list(APPEND depend_files
   ../../../module_base/math_ylmreal.cpp
   ../../../module_base/ylm.cpp
   ../../../module_base/memory.cpp
+  ../../../module_base/blas_connector.cpp
   ../../../module_base/complexarray.cpp
   ../../../module_base/complexmatrix.cpp
   ../../../module_base/matrix.cpp

@@ -86,7 +86,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
     // 7) set occupatio, redundant?
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, GlobalV::NBANDS, GlobalV::nelec);
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 
     // 8) initialize the global classes
@@ -120,7 +120,7 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(std::complex<double>));
 
-    if (GlobalV::NBANDS > 0)
+    if (PARAM.inp.nbands > 0)
     {
         this->stowf.chiortho
             = new psi::Psi<std::complex<double>>(kv.get_nks(), stowf.nchip_max, wf.npwx, kv.ngk.data());
@@ -133,6 +133,15 @@ void ESolver_SDFT_PW::before_all_runners(const Input_para& inp, UnitCell& ucell)
 void ESolver_SDFT_PW::before_scf(const int istep)
 {
     ESolver_KS_PW::before_scf(istep);
+    delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
+    this->p_hamilt = new hamilt::HamiltSdftPW<std::complex<double>>(this->pelec->pot,
+                                                                    this->pw_wfc,
+                                                                    &this->kv,
+                                                                    PARAM.globalv.npol,
+                                                                    &this->stoche.emin_sto,
+                                                                    &this->stoche.emax_sto);
+    this->p_hamilt_sto = static_cast<hamilt::HamiltSdftPW<std::complex<double>>*>(this->p_hamilt);
+
     if (istep > 0 && PARAM.inp.nbands_sto != 0 && PARAM.inp.initsto_freq > 0 && istep % PARAM.inp.initsto_freq == 0)
     {
         Update_Sto_Orbitals(this->stowf, PARAM.inp.seed_sto);
@@ -177,12 +186,13 @@ void ESolver_SDFT_PW::hamilt2density(int istep, int iter, double ethr)
                     this->pw_wfc, 
                     &this->wf, 
                     this->stowf, 
-                    this->stoche, 
+                    this->stoche,
+                    this->p_hamilt_sto,
                     PARAM.inp.calculation,
                     PARAM.inp.basis_type,
                     PARAM.inp.ks_solver,
                     PARAM.inp.use_paw,
-                    GlobalV::use_uspp,
+                    PARAM.globalv.use_uspp,
                     PARAM.inp.nspin,
                     hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
@@ -333,7 +343,7 @@ void ESolver_SDFT_PW::nscf()
 
     const int iter = 1;
 
-    const double diag_thr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, GlobalV::nelec)), 1e-12);
+    const double diag_thr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
 
     std::cout << " DIGA_THR          : " << diag_thr << std::endl;
 

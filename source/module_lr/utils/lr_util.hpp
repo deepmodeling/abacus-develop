@@ -27,8 +27,6 @@ namespace LR_Util
     }
 
     //====== newers and deleters========
-    //(arbitrary dimention will be supported in the future)
-
     /// @brief  new 2d pointer
     /// @tparam T
     /// @param size1
@@ -43,21 +41,6 @@ namespace LR_Util
         }
     };
 
-    /// @brief  new 3d pointer
-    /// @tparam T
-    /// @param size1
-    /// @param size2
-    /// @param size3
-    template <typename T>
-    void new_p3(T***& p3, size_t size1, size_t size2, size_t size3)
-    {
-        p3 = new T * *[size1];
-        for (size_t i = 0; i < size1; ++i)
-        {
-            new_p2(p3[i], size2, size3);
-        }
-    };
-
     /// @brief  delete 2d pointer 
     /// @tparam T 
     /// @param p2 
@@ -69,28 +52,9 @@ namespace LR_Util
         {
             for (size_t i = 0; i < size; ++i)
             {
-                if (p2[i] != nullptr) { delete[] p2[i];
-}
+                if (p2[i] != nullptr) { delete[] p2[i]; }
             }
             delete[] p2;
-        }
-    };
-
-    /// @brief  delete 3d pointer 
-    /// @tparam T 
-    /// @param p2 
-    /// @param size1
-    /// @param size2
-    template <typename T>
-    void delete_p3(T*** p3, size_t size1, size_t size2)
-    {
-        if (p3 != nullptr)
-        {
-            for (size_t i = 0; i < size1; ++i)
-            {
-                delete_p2(p3[i], size2);
-            }
-            delete[] p3;
         }
     };
 
@@ -129,6 +93,13 @@ namespace LR_Util
                 inout[j * n + i] = get_conj(inout[i * n + j]);
             }
 }
+    }
+
+    /// get the Psi wrapper of the selected spin from the Psi object
+    template<typename T>
+    psi::Psi<T> get_psi_spin(const psi::Psi<T>& psi_in, const int& is, const int& nk)
+    {
+        return psi::Psi<T>(&psi_in(is * nk, 0, 0), psi_in, nk, psi_in.get_nbands());
     }
 
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy

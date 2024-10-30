@@ -1,5 +1,8 @@
 #include "module_io/read_wfc_pw.h"
 
+#define private public
+#include "module_parameter/parameter.h"
+#undef private
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #ifdef __MPI
@@ -49,9 +52,9 @@ TEST_F(ReadWfcPwTest, ReadWfcPw)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    GlobalV::NBANDS = 8;
+    PARAM.input.nbands = 8;
     const int nbasis = wfcpw->npwk[0];
-    ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
     ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
 
     if (GlobalV::NPROC_IN_POOL == 1)
@@ -116,7 +119,7 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
     wfcpw->setuptransform();
     wfcpw->collect_local_pw();
 
-    ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, wfcpw->npwk[0]);
+    ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, wfcpw->npwk[0]);
 
     if(GlobalV::RANK_IN_POOL == 0)
     {
@@ -159,9 +162,9 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 4;
+        PARAM.input.nbands = 4;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -170,7 +173,7 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         EXPECT_THAT(
             output,
             testing::HasSubstr(
-                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != GlobalV::NBANDS"));
+                "ikstot_in != ikstot || nkstot_in != nkstot || npwtot_in != npwtot || nbands_in != PARAM.inp.nbands"));
     }
 }
 
@@ -191,9 +194,9 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -219,9 +222,9 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();
@@ -247,9 +250,9 @@ TEST_F(ReadWfcPwTest, InconsistentG)
         wfcpw->setuptransform();
         wfcpw->collect_local_pw();
 
-        GlobalV::NBANDS = 8;
+        PARAM.input.nbands = 8;
         const int nbasis = wfcpw->npwk[0];
-        ModuleBase::ComplexMatrix wfcatom(GlobalV::NBANDS, nbasis);
+        ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(0), "");
         std::string output = testing::internal::GetCapturedStdout();

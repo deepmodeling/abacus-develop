@@ -23,7 +23,7 @@ pseudo_dir      ../../../tests/PP_ORB  //the path to locate the pesudopotential 
 orbital_dir     ../../../tests/PP_ORB  //the path to locate the numerical orbital files
 ntype         3
 ecutwfc       50 // Ry
-symmetry      0 // turn off symmetry
+symmetry      -1 // turn off symmetry
 calculation   nscf // non-self-consistent calculation
 basis_type    lcao // atomic basis
 init_chg  file // read charge from files
@@ -70,4 +70,6 @@ The results are shown as follows:
  P =    0.8906925  (mod    2.1748536)  (   0.0000000,   0.0000000,   0.8906925) C/m^2
 ```
 
-The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~. Note: the values in parentheses are the components of the **P** along the c axis in the x, y, z Cartesian coordinates when set gdir = 3 in INPUT file.
+The electric polarization **P** is multivalued, which modulo a quantum e**R**/V~cell~. 
+
+Note: The vectors R1, R2, and R3 refer to the three lattice vectors of the unit cell. When gdir=3, the calculated polarization is along the R3 direction. The three values in parentheses represent the re-projection of the polarization along the R3 direction onto the Cartesian coordinate system (i.e., the xyz coordinate system). To obtain the full polarization components in the Cartesian system, you need to calculate the polarization for R1, R2, and R3 separately, and then sum their respective x, y, and z components.

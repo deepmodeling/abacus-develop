@@ -130,6 +130,10 @@ void ReadInput::item_postprocess()
                 {
                     ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set gdir = 1 or 2 or 3");
                 }
+                if (para.input.symmetry != "-1")
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "calculate berry phase, please set symmetry = -1");
+                }
             }
         };
         this->add_item(item);

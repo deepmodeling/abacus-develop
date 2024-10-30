@@ -1,4 +1,4 @@
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -59,8 +59,6 @@ class RhoIOTest : public ::testing::Test
     UnitCell* ucell;
 
     int my_rank = 0;
-    std::string esolver_type = "ksdft";
-    int rank_in_stogroup = 0;
     std::ofstream ofs_running = std::ofstream("unittest.log");
 
     void SetUp()
@@ -93,7 +91,7 @@ TEST_F(RhoIOTest, Read)
     double ef;
     UcellTestPrepare utp = UcellTestLib["Si"];
     ucell = utp.SetUcellInfo();
-    ModuleIO::read_rho(my_rank, esolver_type, rank_in_stogroup, is, ofs_running, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
+    ModuleIO::read_cube(my_rank, is, ofs_running, nspin, fn, rho[is], nx, ny, nz, ef, ucell, prenspin);
     EXPECT_DOUBLE_EQ(ef, 0.461002);
     EXPECT_DOUBLE_EQ(rho[0][0], 1.27020863940e-03);
     EXPECT_DOUBLE_EQ(rho[0][46655], 1.33581335706e-02);

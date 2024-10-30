@@ -142,7 +142,7 @@ TEST_F(DMTest, DMConstructor1)
     int nspin = 1;
     // construct DM
     std::cout << paraV->nrow << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks());
     // read DMK
     std::string directory = "./support/";
     for (int is = 1; is <= nspin; ++is)
@@ -162,7 +162,7 @@ TEST_F(DMTest, DMConstructor1)
         }
     }
     // construct a new DM
-    elecstate::DensityMatrix<double, double> DM1(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM1(paraV, nspin, kv->kvec_d, kv->get_nks());
     directory = "./support/output";
     for (int is = 1; is <= nspin; ++is)
     {

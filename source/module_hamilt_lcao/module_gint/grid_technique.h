@@ -177,6 +177,7 @@ class Grid_Technique : public Grid_MeshBall {
     double* rcut_g;
     double*mcell_pos_g;
 
+    int dev_id = 0;
     int nstreams = 4;
     // streams[nstreams]
     // TODO it needs to be implemented through configuration files

@@ -272,7 +272,7 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.spgname = "O_h";
     ucell.atoms = atomlist;
     ucell.ntype = 3;
-    GlobalV::NBANDS = 10;
+    PARAM.input.nbands = 10;
 
     ucell.atoms[0].label = "Si";
     ucell.atoms[0].ncpp.zv = 3;

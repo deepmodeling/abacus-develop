@@ -1,6 +1,5 @@
 #include "module_cell/klist.h"
-#include "module_hamilt_general/hamilt.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_hchi.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 #include "module_psi/psi.h"
 /**
@@ -17,8 +16,7 @@ void check_che(const int& nche_in,
                const int& nbands_sto,
                K_Vectors* p_kv,
                Stochastic_WF* p_stowf,
-               hamilt::Hamilt<std::complex<double>>* p_hamilt,
-               Stochastic_hchi& stohchi);
+               hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
 
 #ifndef PARALLEL_DISTRIBUTION
 #define PARALLEL_DISTRIBUTION

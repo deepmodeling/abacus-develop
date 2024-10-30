@@ -1,5 +1,6 @@
 #ifndef SRC_PW_STRESS_MULTI_DEVICE_H
 #define SRC_PW_STRESS_MULTI_DEVICE_H
+#include "module_parameter/parameter.h"
 
 #include "module_psi/psi.h"
 
@@ -76,8 +77,8 @@ struct cal_stress_nl_op
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
-    /// @param becp - intermediate matrix with GlobalV::NBANDS * nkb
-    /// @param dbecp - intermediate matrix with 3 * GlobalV::NBANDS * nkb
+    /// @param becp - intermediate matrix with PARAM.inp.nbands * nkb
+    /// @param dbecp - intermediate matrix with 3 * PARAM.inp.nbands * nkb
     ///
     /// Output Parameters
     /// @param stress - output stresses

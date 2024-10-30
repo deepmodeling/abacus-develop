@@ -14,20 +14,17 @@ namespace LR
         const Parallel_2D& pmat,
         const psi::Psi<double>& c,
         const Parallel_2D& pc,
-        int naos,
-        int nocc,
-        int nvirt,
-        Parallel_2D& pX,
-        psi::Psi<double>& AX_istate,
+        const int& naos,
+        const int& nocc,
+        const int& nvirt,
+        const Parallel_2D& pX,
+        double* AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_pblas");
-        assert(pmat.comm() == pc.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-
-        if (pX.comm() != pmat.comm() || pX.blacs_ctxt != pmat.blacs_ctxt)
-            LR_Util::setup_2d_division(pX, pmat.get_block_size(), nvirt, nocc, pmat.blacs_ctxt);
-        else assert(pX.get_local_size() > 0 && AX_istate.get_nbasis() == pX.get_local_size());
+        assert(pmat.comm() == pc.comm() && pmat.comm() == pX.comm());
+        assert(pmat.blacs_ctxt == pc.blacs_ctxt && pmat.blacs_ctxt == pX.blacs_ctxt);
+        assert(pX.get_local_size() > 0);
 
         const int nks = V_istate.size();
 
@@ -35,7 +32,7 @@ namespace LR
         LR_Util::setup_2d_division(pVc, pmat.get_block_size(), naos, nocc, pmat.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * pX.get_local_size();
             c.fix_k(isk);
 
             //Vc
@@ -60,7 +57,7 @@ namespace LR
             pdgemm_(&transa, &transb, &nvirt, &nocc, &naos,
                 &alpha, c.get_pointer(), &i1, &ivirt, pc.desc,
                 Vc.data<double>(), &i1, &i1, pVc.desc,
-                &beta, AX_istate.get_pointer(), &i1, &i1, pX.desc);
+                &beta, AX_istate + ax_start, &i1, &i1, pX.desc);
 
         }
     }
@@ -70,20 +67,17 @@ namespace LR
         const Parallel_2D& pmat,
         const psi::Psi<std::complex<double>>& c,
         const Parallel_2D& pc,
-        int naos,
-        int nocc,
-        int nvirt,
-        Parallel_2D& pX,
-        psi::Psi<std::complex<double>>& AX_istate,
+        const int& naos,
+        const int& nocc,
+        const int& nvirt,
+        const Parallel_2D& pX,
+        std::complex<double>* AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_plas");
-        assert(pmat.comm() == pc.comm());
-        assert(pmat.blacs_ctxt == pc.blacs_ctxt);
-
-        if (pX.comm() != pmat.comm() || pX.blacs_ctxt != pmat.blacs_ctxt)
-            LR_Util::setup_2d_division(pX, pmat.get_block_size(), nvirt, nocc, pmat.blacs_ctxt);
-        else assert(pX.get_local_size() > 0 && AX_istate.get_nbasis() == pX.get_local_size());
+        assert(pmat.comm() == pc.comm() && pmat.comm() == pX.comm());
+        assert(pmat.blacs_ctxt == pc.blacs_ctxt && pmat.blacs_ctxt == pX.blacs_ctxt);
+        assert(pX.get_local_size() > 0);
 
         const int nks = V_istate.size();
 
@@ -91,7 +85,7 @@ namespace LR
         LR_Util::setup_2d_division(pVc, pmat.get_block_size(), naos, nocc, pmat.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
-            AX_istate.fix_k(isk);
+            const int ax_start = isk * pX.get_local_size();
             c.fix_k(isk);
 
             //Vc
@@ -116,7 +110,7 @@ namespace LR
             pzgemm_(&transa, &transb, &nvirt, &nocc, &naos,
                 &alpha, c.get_pointer(), &i1, &ivirt, pc.desc,
                 Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc,
-                &beta, AX_istate.get_pointer(), &i1, &i1, pX.desc);
+                &beta, AX_istate + ax_start, &i1, &i1, pX.desc);
         }
     }
 }

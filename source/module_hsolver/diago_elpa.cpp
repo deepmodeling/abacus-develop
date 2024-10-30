@@ -1,5 +1,6 @@
 #include "diago_elpa.h"
 
+#include "module_parameter/parameter.h"
 #include "genelpa/elpa_solver.h"
 #include "module_base/blacs_connector.h"
 #include "module_base/global_variable.h"
@@ -74,13 +75,13 @@ void DiagoElpa<std::complex<double>>::diag(
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = false;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
     ELPA_Solver es((const bool)isReal,
                    COMM_DIAG,
-                   (const int)GlobalV::NBANDS,
+                   (const int)PARAM.inp.nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -96,7 +97,7 @@ void DiagoElpa<std::complex<double>>::diag(
     es.exit();
 
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 #else
     ModuleBase::WARNING_QUIT("DiagoElpa",
                              "DiagoElpa only can be used with macro __MPI");
@@ -112,15 +113,15 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
 
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = true;
     MPI_Comm COMM_DIAG = setmpicomm(); // set mpi_comm needed
-    // ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col,
+    // ELPA_Solver es(isReal, COMM_DIAG, PARAM.inp.nbands, h_mat.row, h_mat.col,
     // h_mat.desc);
     ELPA_Solver es((const bool)isReal,
                    COMM_DIAG,
-                   (const int)GlobalV::NBANDS,
+                   (const int)PARAM.inp.nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -136,7 +137,7 @@ void DiagoElpa<double>::diag(hamilt::Hamilt<double>* phm_in,
     const int inc = 1;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                 "K-S equation was solved by genelpa2");
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                 "eigenvalues were copied to ekb");
 #else
@@ -154,11 +155,11 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     bool isReal = false;
     ELPA_Solver es((const bool)isReal,
                    comm,
-                   (const int)GlobalV::NBANDS,
+                   (const int)PARAM.inp.nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -173,7 +174,7 @@ void DiagoElpa<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex
     ModuleBase::timer::tick("DiagoElpa", "elpa_solve");
     es.exit();
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 template <>
@@ -183,14 +184,14 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     Real* eigenvalue_in,
     MPI_Comm& comm)
 {
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
 
     bool isReal = true;
-    // ELPA_Solver es(isReal, COMM_DIAG, GlobalV::NBANDS, h_mat.row, h_mat.col,
+    // ELPA_Solver es(isReal, COMM_DIAG, PARAM.inp.nbands, h_mat.row, h_mat.col,
     // h_mat.desc);
     ELPA_Solver es((const bool)isReal,
                    comm,
-                   (const int)GlobalV::NBANDS,
+                   (const int)PARAM.inp.nbands,
                    (const int)h_mat.row,
                    (const int)h_mat.col,
                    (const int*)h_mat.desc);
@@ -206,7 +207,7 @@ void DiagoElpa<double>::diag_pool(hamilt::MatrixBlock<double>& h_mat,
     const int inc = 1;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                 "K-S equation was solved by genelpa2");
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
                                 "eigenvalues were copied to ekb");
 }

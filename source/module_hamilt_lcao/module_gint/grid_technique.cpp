@@ -13,7 +13,7 @@
 Grid_Technique::Grid_Technique() {
     allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         is_malloced = false;
     }
 #endif
@@ -22,7 +22,7 @@ Grid_Technique::Grid_Technique() {
 Grid_Technique::~Grid_Technique() {
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         free_gpu_gint_variables(this->nat);
     }
 #endif
@@ -118,7 +118,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-    if (PARAM.globalv.device_flag == "gpu") {
+    if (PARAM.inp.device == "gpu") {
         this->init_gpu_gint_variables(ucell, num_stream);
     }
 #endif
@@ -485,8 +485,8 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     // save the atom information in trace_lo,
     // in fact the trace_lo dimension can be reduced
     // to ucell.nat, but I think this is another way.
-    this->trace_lo = std::vector<int>(GlobalV::NLOCAL, -1);
-    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * GlobalV::NLOCAL);
+    this->trace_lo = std::vector<int>(PARAM.globalv.nlocal, -1);
+    ModuleBase::Memory::record("GT::trace_lo", sizeof(int) * PARAM.globalv.nlocal);
 
     this->lnat = 0;
     this->lgd = 0;
@@ -533,7 +533,7 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     }
 
     assert(iw_local == lgd);
-    assert(iw_all == GlobalV::NLOCAL);
+    assert(iw_all == PARAM.globalv.nlocal);
     return;
 }
 
@@ -562,7 +562,7 @@ int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, co
 void Grid_Technique::init_gpu_gint_variables(const UnitCell& ucell,
                                              const int num_stream) {
 #ifdef __MPI
-    base_device::information::set_device_by_rank();
+    dev_id = base_device::information::set_device_by_rank();
 #endif
     if (is_malloced) {
         free_gpu_gint_variables(this->nat);

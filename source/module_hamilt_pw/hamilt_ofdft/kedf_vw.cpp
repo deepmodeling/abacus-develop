@@ -129,9 +129,9 @@ void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
     {
         std::vector<std::vector<double>> nabla_rho(3, std::vector<double>(pw_rho->nrxx, 0.));
 
-        std::complex<double> *recip_rho = new std::complex<double>[pw_rho->npw];
-        std::complex<double> *recip_nabla_rho = new std::complex<double>[pw_rho->npw];
-        pw_rho->real2recip(prho[is], recip_rho);
+        std::vector<std::complex<double>> recip_rho(pw_rho->npw, 0.);
+        std::vector<std::complex<double>> recip_nabla_rho(pw_rho->npw, 0.);
+        pw_rho->real2recip(prho[is], recip_rho.data());
         
         std::complex<double> img(0.0, 1.0);
         for (int j = 0; j < 3; ++j)
@@ -141,7 +141,7 @@ void KEDF_vW::tau_vw(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
                 recip_nabla_rho[ip] = img * pw_rho->gcar[ip][j] * recip_rho[ip] * pw_rho->tpiba;
             }
 
-            pw_rho->recip2real(recip_nabla_rho, nabla_rho[j].data());
+            pw_rho->recip2real(recip_nabla_rho.data(), nabla_rho[j].data());
 
             for (int ir = 0; ir < pw_rho->nrxx; ++ir)
             {

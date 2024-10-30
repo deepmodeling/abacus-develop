@@ -16,7 +16,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
 {
     ModuleBase::timer::tick("psi_initializer", "allocate");
     /*
-        WARNING: when basis_type = "pw", the variable GlobalV::NLOCAL will also be set, in this case, it is set to
+        WARNING: when basis_type = "pw", the variable PARAM.globalv.nlocal will also be set, in this case, it is set to
         9 = 1 + 3 + 5, which is the maximal number of orbitals spd, I don't think it is reasonable
         The way of calculating this->p_ucell_->natomwfc is, for each atom, read pswfc and for s, it is 1, for p, it is 3
         , then multiplied by the number of atoms, and then add them together.
@@ -24,20 +24,20 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
     int nbands_actual = 0;
     if(this->method_ == "random") 
     {
-        nbands_actual = GlobalV::NBANDS;
+        nbands_actual = PARAM.inp.nbands;
         this->nbands_complem_ = 0;
     }
     else
     {
         if(this->method_.substr(0, 6) == "atomic")
         {
-            nbands_actual = std::max(this->p_ucell_->natomwfc, GlobalV::NBANDS);
+            nbands_actual = std::max(this->p_ucell_->natomwfc, PARAM.inp.nbands);
             this->nbands_complem_ = nbands_actual - this->p_ucell_->natomwfc;
         }
         else if(this->method_.substr(0, 3) == "nao")
         {
             /*
-                previously GlobalV::NLOCAL is used here, however it is wrong. GlobalV::NLOCAL is fixed to 9*nat.
+                previously PARAM.globalv.nlocal is used here, however it is wrong. PARAM.globalv.nlocal is fixed to 9*nat.
             */
             int nbands_local = 0;
             for(int it = 0; it < this->p_ucell_->ntype; it++)
@@ -58,7 +58,7 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
                     */
                 }
             }
-            nbands_actual = std::max(nbands_local, GlobalV::NBANDS);
+            nbands_actual = std::max(nbands_local, PARAM.inp.nbands);
             this->nbands_complem_ = nbands_actual - nbands_local;
         }
     }
@@ -70,10 +70,10 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
     if(!only_psig)
     {
         psi_out = new psi::Psi<std::complex<double>>(nks_psi, 
-                                                     GlobalV::NBANDS, // because no matter what, the wavefunction finally needed has GlobalV::NBANDS bands
+                                                     PARAM.inp.nbands, // because no matter what, the wavefunction finally needed has PARAM.inp.nbands bands
                                                      nbasis_actual, 
                                                      this->pw_wfc_->npwk);
-        double memory_cost_psi = nks_psi * GlobalV::NBANDS * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
+        double memory_cost_psi = nks_psi * PARAM.inp.nbands * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
                         sizeof(std::complex<double>);
 #ifdef __MPI
         // get the correct memory cost for psi by all-reduce sum
@@ -100,11 +100,11 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
 
     GlobalV::ofs_running << "Allocate memory for psi and psig done.\n"
                          << "Print detailed information of dimension of psi and psig:\n"
-                         << "psi: (" << nks_psi << ", " << GlobalV::NBANDS << ", " << nbasis_actual << ")\n"
+                         << "psi: (" << nks_psi << ", " << PARAM.inp.nbands << ", " << nbasis_actual << ")\n"
                          << "psig: (" << nks_psig << ", " << nbands_actual << ", " << nbasis_actual << ")\n"
                          << "nks (psi) = " << nks_psi << "\n"
                          << "nks (psig) = " << nks_psig << "\n"
-                         << "GlobalV::NBANDS = " << GlobalV::NBANDS << "\n"
+                         << "PARAM.inp.nbands = " << PARAM.inp.nbands << "\n"
                          << "nbands_actual = " << nbands_actual << "\n"
                          << "nbands_complem = " << this->nbands_complem_ << "\n"
                          << "nbasis_actual = " << nbasis_actual << "\n"

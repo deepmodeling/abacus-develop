@@ -11,7 +11,7 @@ namespace elecstate
         ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
         for (int is = 1; is <= this->_nspin; ++is)
         {
-            int ik_begin = this->_nks * (is - 1); // jump this->_nks for spin_down if nspin==2
+            int ik_begin = this->_nk * (is - 1); // jump this->_nk for spin_down if nspin==2
             hamilt::HContainer<std::complex<double>>* tmp_DMR = this->_DMR[is - 1];
             // set zero since this function is called in every scf step
             tmp_DMR->set_zero();
@@ -42,13 +42,13 @@ namespace elecstate
                     }
 #endif
                     // loop over k-points
-                    if (PARAM.inp.nspin != 4)
-                        for (int ik = 0; ik < this->_nks; ++ik)
+                    if (PARAM.inp.nspin != 4) {
+                        for (int ik = 0; ik < this->_nk; ++ik)
                         {
                             // cal k_phase
                             // if TK==std::complex<double>, kphase is e^{ikR}
                             const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                            const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                            const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                             double sinp, cosp;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
                             std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -70,9 +70,11 @@ namespace elecstate
                                 tmp_DMR_pointer += this->_paraV->get_col_size(iat2);
                             }
                         }
+}
                     // treat DMR as pauli matrix when NSPIN=4
-                    if (PARAM.inp.nspin == 4)
+                    if (PARAM.inp.nspin == 4) {
                         throw std::runtime_error("complex DM(R) with NSPIN=4 is not implemented yet");
+}
                 }
             }
         }

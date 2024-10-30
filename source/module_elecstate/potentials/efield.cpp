@@ -159,7 +159,7 @@ double Efield::cal_ion_dipole(const UnitCell &cell, const double &bmod)
         {
             ion_charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;
         }
-        ion_dipole += (GlobalV::nelec - ion_charge) * saw_function(efield_pos_max, efield_pos_dec, Gatefield::zgate);
+        ion_dipole += (PARAM.inp.nelec - ion_charge) * saw_function(efield_pos_max, efield_pos_dec, Gatefield::zgate);
     }
 
     ion_dipole *= cell.lat0 / bmod * ModuleBase::FOUR_PI / cell.omega;

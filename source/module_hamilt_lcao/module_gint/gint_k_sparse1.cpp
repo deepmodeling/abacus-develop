@@ -58,7 +58,7 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
     // Parallel_Reduce::reduce_pool(minus_nonzero_num, total_R_num);
 
     double* tmp = nullptr;
-    tmp = new double[GlobalV::NLOCAL];
+    tmp = new double[PARAM.globalv.nlocal];
 
     count = 0;
     for (auto& R_coor: HS_Arrays.all_R_coor)
@@ -67,9 +67,9 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
         {
             auto minus_R_coor = -1 * R_coor;
 
-            for (int row = 0; row < GlobalV::NLOCAL; ++row)
+            for (int row = 0; row < PARAM.globalv.nlocal; ++row)
             {
-                ModuleBase::GlobalFunc::ZEROS(tmp, GlobalV::NLOCAL);
+                ModuleBase::GlobalFunc::ZEROS(tmp, PARAM.globalv.nlocal);
 
                 auto iter = pvdpR_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_sparseMatrix.end())
@@ -108,11 +108,11 @@ void Gint_k::distribute_pvdpR_sparseMatrix(
                     }
                 }
 
-                Parallel_Reduce::reduce_pool(tmp, GlobalV::NLOCAL);
+                Parallel_Reduce::reduce_pool(tmp, PARAM.globalv.nlocal);
 
                 if (pv->global2local_row(row) >= 0)
                 {
-                    for (int col = 0; col < GlobalV::NLOCAL; ++col)
+                    for (int col = 0; col < PARAM.globalv.nlocal; ++col)
                     {
                         if (pv->global2local_col(col) >= 0)
                         {
@@ -212,7 +212,7 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
     // Parallel_Reduce::reduce_pool(minus_nonzero_num, total_R_num);
 
     std::complex<double>* tmp_soc = nullptr;
-    tmp_soc = new std::complex<double>[GlobalV::NLOCAL];
+    tmp_soc = new std::complex<double>[PARAM.globalv.nlocal];
 
     count = 0;
     for (auto& R_coor: HS_Arrays.all_R_coor)
@@ -221,9 +221,9 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
         {
             auto minus_R_coor = -1 * R_coor;
 
-            for (int row = 0; row < GlobalV::NLOCAL; ++row)
+            for (int row = 0; row < PARAM.globalv.nlocal; ++row)
             {
-                ModuleBase::GlobalFunc::ZEROS(tmp_soc, GlobalV::NLOCAL);
+                ModuleBase::GlobalFunc::ZEROS(tmp_soc, PARAM.globalv.nlocal);
 
                 auto iter = pvdpR_soc_sparseMatrix.find(R_coor);
                 if (iter != pvdpR_soc_sparseMatrix.end())
@@ -261,11 +261,11 @@ void Gint_k::distribute_pvdpR_soc_sparseMatrix(
                     }
                 }
 
-                Parallel_Reduce::reduce_pool(tmp_soc, GlobalV::NLOCAL);
+                Parallel_Reduce::reduce_pool(tmp_soc, PARAM.globalv.nlocal);
 
                 if (pv->global2local_row(row) >= 0)
                 {
-                    for (int col = 0; col < GlobalV::NLOCAL; ++col)
+                    for (int col = 0; col < PARAM.globalv.nlocal; ++col)
                     {
                         if (pv->global2local_col(col) >= 0)
                         {

@@ -99,7 +99,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
 
     // add US term from augmentation charge derivatives
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->stress_us(sigmanl, rho_basis, &GlobalC::ppcell, ucell);
     }

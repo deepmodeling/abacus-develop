@@ -84,27 +84,3 @@ public:
 // 	double test_diagethr_d = hs_d.set_diagethr(0.0, 0, 0, 0.0);
 // 	EXPECT_EQ(test_diagethr_d, 0.0);
 // }
-namespace hsolver
-{
-template <typename T, typename Device = base_device::DEVICE_CPU>
-class DiagH_mock : public DiagH<T, Device>
-{
-  private:
-    using Real = typename GetTypeReal<T>::type;
-
-  public:
-    DiagH_mock()
-    {
-    }
-    ~DiagH_mock()
-    {
-    }
-
-    void diag(hamilt::Hamilt<T, Device>* phm_in, psi::Psi<T, Device>& psi, Real* eigenvalue_in)
-    {
-        return;
-    }
-	};
-	template class DiagH_mock<std::complex<float>>;
-	template class DiagH_mock<std::complex<double>>;
-}

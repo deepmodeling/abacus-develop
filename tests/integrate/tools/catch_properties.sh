@@ -539,7 +539,7 @@ if [ $is_lr == 1 ]; then
 	lr_path=OUT.autotest/running_lr.log
 	lrns=$(get_input_key_value "lr_nstates" "INPUT")
 	lrns1=`echo "$lrns + 1" |bc`
-	grep -A$lrns1 "Excitation Energy" $lr_path | tail -$lrns | awk '{print $2}' > lr_eig.txt
+	grep -A$lrns1 "Excitation Energy" $lr_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
 	lreig_tot=`sum_file lr_eig.txt`
 	echo "totexcitationenergyref $lreig_tot" >>$1
 fi

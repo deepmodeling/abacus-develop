@@ -31,9 +31,6 @@ StoChe<REAL>::~StoChe(){}
 
 template class StoChe<double>;
 
-Stochastic_hchi::Stochastic_hchi(){};
-Stochastic_hchi::~Stochastic_hchi(){};
-
 Stochastic_Iter::Stochastic_Iter()
 {
     change = false;
@@ -43,7 +40,11 @@ Stochastic_Iter::Stochastic_Iter()
 
 Stochastic_Iter::~Stochastic_Iter(){};
 
-void Stochastic_Iter::init(K_Vectors* pkv, ModulePW::PW_Basis_K *wfc_basis, Stochastic_WF &stowf, StoChe<double> &stoche)
+void Stochastic_Iter::init(K_Vectors* pkv_in,
+              ModulePW::PW_Basis_K* wfc_basis,
+              Stochastic_WF& stowf,
+              StoChe<double>& stoche,
+              hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;;
     this->targetne = 1;
@@ -136,17 +137,18 @@ class TestHSolverPW_SDFT : public ::testing::Test
     K_Vectors kv;
     wavefunc wf;
     StoChe<double> stoche;
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
     hsolver::HSolverPW_SDFT hs_d = hsolver::HSolverPW_SDFT(&kv, 
                                                            &pwbk, 
                                                            &wf, 
                                                            stowf, 
                                                            stoche, 
-                                                           
+                                                           p_hamilt_sto,
                                                            "scf",
                                                            "pw",
                                                            "cg",
                                                            false,
-                                                           GlobalV::use_uspp,
+                                                           PARAM.sys.use_uspp,
                                                            PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
@@ -170,13 +172,14 @@ TEST_F(TestHSolverPW_SDFT, solve)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;
     stowf.nchi = 0;
     stowf.nchip_max = 0;
 	psi_test_cd.resize(1, 2, 3);
-	GlobalV::nelec = 1.0;
+	PARAM.input.nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     int istep = 0;
     int iter = 0;
@@ -213,6 +216,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
 {
 	//initial memory and data
 	elecstate_test.ekb.create(1,2);
+    elecstate_test.pot = new elecstate::Potential;
     elecstate_test.f_en.eband = 0.0;
     stowf.nbands_diag = 0;
     stowf.nbands_total = 0;
@@ -221,7 +225,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     psi_test_no.nk = 2;
     psi_test_no.nbands = 0;
     psi_test_no.nbasis = 0;
-	GlobalV::nelec = 1.0;
+	PARAM.input.nelec = 1.0;
     GlobalV::MY_STOGROUP = 0.0;
     PARAM.input.nspin = 1;
     elecstate_test.charge = new Charge;

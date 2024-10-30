@@ -12,24 +12,6 @@
 #include <vector>
 namespace GlobalV
 {
-
-//----------------------------------------------------------
-// EXPLAIN : Basic Global Variables
-// In practice calculation, these values are set in
-// input.cpp.
-//----------------------------------------------------------
-int NBANDS = 0;
-int NLOCAL = 0;        // total number of local basis.
-
-double nupdown = 0.0;
-
-bool use_uspp = false;
-std::string KS_SOLVER = "cg";  // xiaohui add 2013-09-01
-double SEARCH_RADIUS = -1.0;
-
-int NB2D = 1;
-
-
 //----------------------------------------------------------
 // EXPLAIN : Parallel information
 //----------------------------------------------------------
@@ -52,21 +34,11 @@ int GRANK = MY_RANK;
 int GSIZE = DSIZE;
 
 //----------------------------------------------------------
-// EXPLAIN : The input file name and directory
+// EXPLAIN : ofstream for output
 //----------------------------------------------------------
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
 std::ofstream ofs_info;   // output math lib info
 std::ofstream ofs_device; // output device info
 
-
-//==========================================================
-// device flags added by denghui
-//==========================================================
-std::string device_flag = "unknown";
-
-double nelec = 0;
-
-
-// on-site orbitals
 } // namespace GlobalV

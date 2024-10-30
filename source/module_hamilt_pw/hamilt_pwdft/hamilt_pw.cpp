@@ -225,7 +225,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
     }
 
     syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         T* becp = nullptr;
         T* ps = nullptr;

@@ -2,14 +2,6 @@
 
 #include <cmath>
 
-namespace {
-
-const double pi = std::acos(-1.0);
-const double inv_ln2 = 1.0 / std::log(2.0);
-
-} // end of anonymous namespace
-
-
 namespace Grid {
 namespace Radial {
 
@@ -43,6 +35,9 @@ void murray(int n, double R, double* r, double* w) {
 
 
 void treutler_m4(int n, double R, double* r, double* w, double alpha) {
+    const double pi = std::acos(-1.0);
+    const double inv_ln2 = 1.0 / std::log(2.0);
+
     for (int i = 1; i <= n; ++i) {
         double x = std::cos(i * pi / (n + 1));
         double beta = std::sqrt((1.0 + x) / (1.0 - x));

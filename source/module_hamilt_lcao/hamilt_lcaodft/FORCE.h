@@ -94,7 +94,7 @@ class Force_LCAO
                   const bool isstress,
                   ForceStressArrays& fsr,
                   const UnitCell& ucell,
-                  const elecstate::DensityMatrix<T, double>* dm,
+                  const elecstate::DensityMatrix<T, double>& dm,
                   const psi::Psi<T>* psi,
                   const Parallel_Orbitals& pv,
                   const elecstate::ElecState* pelec,
@@ -136,12 +136,16 @@ class Force_LCAO
                       typename TGint<T>::type& gint,
                       ModuleBase::matrix& fvl_dphi,
                       ModuleBase::matrix& svl_dphi);
+
+    elecstate::DensityMatrix<T, double> cal_edm(const elecstate::ElecState* pelec,
+        const psi::Psi<T>& psi,
+        const elecstate::DensityMatrix<T, double>& dm,
+        const K_Vectors& kv,
+        const Parallel_Orbitals& pv,
+        const int& nspin, 
+        const int& nbands,
+        const UnitCell& ucell,
+        Record_adj& ra) const;
 };
 
-// this namespace used to store global function for some stress operation
-namespace StressTools
-{
-// set upper matrix to whole matrix
-void stress_fill(const double& lat0_, const double& omega_, ModuleBase::matrix& stress_matrix);
-} // namespace StressTools
 #endif

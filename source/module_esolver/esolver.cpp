@@ -100,7 +100,7 @@ std::string determine_type()
 
     GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
 
-    auto device_info = PARAM.globalv.device_flag;
+    auto device_info = PARAM.inp.device;
 
 	for (char &c : device_info)
 	{
@@ -112,11 +112,11 @@ std::string determine_type()
 	if (GlobalV::MY_RANK == 0)
 	{
 		std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
-			<< base_device::information::get_device_info(PARAM.globalv.device_flag) << std::endl;
+			<< base_device::information::get_device_info(PARAM.inp.device) << std::endl;
 	}
 
     GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.globalv.device_flag) << std::endl;
+                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
 
     return esolver_type;
 }
@@ -132,7 +132,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     if (esolver_type == "ksdft_pw")
     {
 #if ((defined __CUDA) || (defined __ROCM))
-		if (PARAM.globalv.device_flag == "gpu")
+		if (PARAM.inp.device == "gpu")
 		{
 			if (PARAM.inp.precision == "single")
 			{
@@ -187,13 +187,8 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (PARAM.globalv.gamma_only_local){
-            return new LR::ESolver_LR<double, double>(inp, ucell);
-        } else if (PARAM.inp.nspin < 2) {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
-        } else {
-            throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
-}
+        if (PARAM.globalv.gamma_only_local) { return new LR::ESolver_LR<double, double>(inp, ucell); }
+        else { return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell); }
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {

@@ -11,6 +11,7 @@ add_library(
     base
     OBJECT
     assoc_laguerre.cpp
+    blas_connector.cpp
     clebsch_gordan_coeff.cpp
     complexarray.cpp
     complexmatrix.cpp

@@ -575,6 +575,7 @@ bool Chebyshev<REAL>::checkconverge(
     std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
     std::complex<REAL>* wavein,
     const int N,
+    const int LDA,
     REAL& tmax,
     REAL& tmin,
     REAL stept)
@@ -584,9 +585,9 @@ bool Chebyshev<REAL>::checkconverge(
     std::complex<REAL>* arrayn;
     std::complex<REAL>* arrayn_1;
 
-    arraynp1 = new std::complex<REAL>[N];
-    arrayn = new std::complex<REAL>[N];
-    arrayn_1 = new std::complex<REAL>[N];
+    arraynp1 = new std::complex<REAL>[LDA];
+    arrayn = new std::complex<REAL>[LDA];
+    arrayn_1 = new std::complex<REAL>[LDA];
 
     ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, N);
 

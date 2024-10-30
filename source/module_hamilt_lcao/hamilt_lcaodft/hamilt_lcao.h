@@ -2,6 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_cell/klist.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"

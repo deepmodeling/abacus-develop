@@ -452,7 +452,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 			delete[] sk;
 		} // end for ia
 	} // end for it
-	assert(iwall == GlobalV::NLOCAL);
+	assert(iwall == PARAM.globalv.nlocal);
 	delete[] flq;
 	delete[] aux;
 	delete[] chiaux;

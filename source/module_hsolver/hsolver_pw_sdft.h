@@ -2,6 +2,7 @@
 #define HSOLVERPW_SDFT_H
 #include "hsolver_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_iter.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 namespace hsolver
 {
 class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
@@ -12,6 +13,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                    wavefunc* pwf_in,
                    Stochastic_WF& stowf,
                    StoChe<double>& stoche,
+                   hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto,
                    const std::string calculation_type_in,
                    const std::string basis_type_in,
                    const std::string method_in,
@@ -37,7 +39,7 @@ class HSolverPW_SDFT : public HSolverPW<std::complex<double>>
                     need_subspace_in,
                     initialed_psi_in)
     {
-        stoiter.init(pkv, wfc_basis_in, stowf, stoche);
+        stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
 
     void solve(hamilt::Hamilt<std::complex<double>>* pHamilt,

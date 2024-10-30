@@ -2,7 +2,6 @@
 
 #include "module_io/cal_r_overlap_R.h"
 #include "module_io/dipole_io.h"
-#include "module_io/rho_io.h"
 #include "module_io/td_current_io.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
@@ -42,7 +41,7 @@ namespace ModuleESolver
 void ESolver_KS_LCAO_TDDFT::cal_edm_tddft()
 {
     // mohan add 2024-03-27
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
     assert(nlocal >= 0);
 
     dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)

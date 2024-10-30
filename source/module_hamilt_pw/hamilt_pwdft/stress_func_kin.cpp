@@ -1,5 +1,6 @@
 #include "stress_func.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
 //calculate the kinetic stress in PW base
@@ -69,7 +70,7 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
         {
             for (int m = 0; m < l + 1; m++)
             {
-                for (int ibnd = 0; ibnd < GlobalV::NBANDS; ibnd++)
+                for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
                 {
                     if (std::fabs(wg(ik, ibnd)) < ModuleBase::threshold_wg * wg(ik, 0))
                         continue;

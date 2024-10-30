@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include "module_cell/klist.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
@@ -45,16 +44,20 @@ class DensityMatrix
 
     /**
      * @brief Constructor of class DensityMatrix for multi-k calculation
-     * @param _kv pointer of K_Vectors object
      * @param _paraV pointer of Parallel_Orbitals object
-     * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
+     * @param nspin number of spin of the density matrix, set by user according to global nspin
+     *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
+     * @param kvec_d direct coordinates of kpoints
+     * @param nk number of k-points, not always equal to K_Vectors::get_nks()/nspin_dm.
+     *               it will be set to kvec_d.size() if the value is invalid
      */
-    DensityMatrix(const K_Vectors* _kv, const Parallel_Orbitals* _paraV, const int nspin);
+    DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin, const std::vector<ModuleBase::Vector3<double>>& kvec_d, const int nk);
 
     /**
      * @brief Constructor of class DensityMatrix for gamma-only calculation, where kvector is not required
      * @param _paraV pointer of Parallel_Orbitals object
-     * @param nspin spin setting (1 - none spin; 2 - spin; 4 - SOC)
+     * @param nspin number of spin of the density matrix, set by user according to global nspin
+     *  (usually {nspin_global -> nspin_dm} = {1->1, 2->2, 4->1}, but sometimes 2->1 like in LR-TDDFT)
      */
     DensityMatrix(const Parallel_Orbitals* _paraV, const int nspin);
 
@@ -169,7 +172,7 @@ class DensityMatrix
      */
     const Parallel_Orbitals* get_paraV_pointer() const {return this->_paraV;}
 
-    const K_Vectors* get_kv_pointer() const {return this->_kv;}
+    const std::vector<ModuleBase::Vector3<double>>& get_kvec_d() const { return this->_kvec_d; }
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
@@ -240,8 +243,8 @@ class DensityMatrix
 
     /**
      * @brief density matrix in k space, which is a vector[ik]
-     * DMK should be a [_nspin][_nks][i][j] matrix,
-     * whose size is _nspin * _nks * _paraV->get_nrow() * _paraV->get_ncol()
+     * DMK should be a [_nspin][_nk][i][j] matrix,
+     * whose size is _nspin * _nk * _paraV->get_nrow() * _paraV->get_ncol()
      */
     // std::vector<ModuleBase::ComplexMatrix> _DMK;
     std::vector<std::vector<TK>> _DMK;
@@ -249,7 +252,7 @@ class DensityMatrix
     /**
      * @brief K_Vectors object, which is used to get k-point information
      */
-    const K_Vectors* _kv;
+    const std::vector<ModuleBase::Vector3<double>> _kvec_d;
 
     /**
      * @brief Parallel_Orbitals object, which contain all information of 2D block cyclic distribution
@@ -265,10 +268,10 @@ class DensityMatrix
 
     /**
      * @brief real number of k-points
-     * _nks is not equal to _kv->get_nks() when spin-polarization is considered
-     * _nks = kv->_nks / nspin
+     * _nk is not equal to _kv->get_nks() when spin-polarization is considered
+     * _nk = kv->get_nks() / nspin when nspin=2
      */
-    int _nks = 0;
+    int _nk = 0;
 
 
 };

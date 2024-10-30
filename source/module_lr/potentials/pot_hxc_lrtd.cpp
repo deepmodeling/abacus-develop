@@ -6,11 +6,13 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include <set>
 #include "module_lr/utils/lr_util.h"
+
+#define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {
     // constructor for exchange-correlation kernel
     PotHxcLR::PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in,
-        const Charge* chg_gs/*ground state*/, SpinType st_in)
+        const Charge* chg_gs/*ground state*/, const SpinType& st_in)
         :xc_kernel(xc_kernel_in), tpiba_(ucell_in->tpiba), spin_type_(st_in)
     {
         this->rho_basis_ = rho_basis_in;
@@ -32,29 +34,28 @@ namespace LR
         }
     }
 
-    void PotHxcLR::cal_v_eff(double** rho, const UnitCell* ucell, ModuleBase::matrix& v_eff)
+    void PotHxcLR::cal_v_eff(double** rho, const UnitCell* ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op)
     {
         ModuleBase::TITLE("PotHxcLR", "cal_v_eff");
         ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
         auto& fxc = this->xc_kernel_components_;
 
-        const int& nspin_solve = v_eff.nr;
-        assert(nspin_solve == 1);
         // Hartree
         switch (this->spin_type_)
         {
-        case SpinType::S1:   // check the coefficient:  does S1 already include the factor 2?
-            v_eff += elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), nspin_solve, rho);
+        case SpinType::S1: case SpinType::S2_updown:
+            v_eff += elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), 1, rho);
             break;
         case SpinType::S2_singlet:
-            v_eff += 2 * elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), nspin_solve, rho);
+            v_eff += 2 * elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), 1, rho);
+            break;
         default:
             break;
         }
         // XC
         if (xc_kernel == "rpa" || xc_kernel == "hf") { return; }    // no xc
 #ifdef USE_LIBXC
-        this->kernel_to_potential_[spin_type_](rho[0], v_eff);
+        this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else
         throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())
             + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
@@ -70,13 +71,13 @@ namespace LR
         if (xc == XCType::LDA) switch (s)
         {
         case SpinType::S1:
-            funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                 {
                     for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.get_kernel("v2rho2").at(ir) * rho[ir]; }
                 };
             break;
         case SpinType::S2_singlet:
-            funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                 {
                     for (int ir = 0;ir < nrxx;++ir)
                     {
@@ -87,7 +88,7 @@ namespace LR
                 };
             break;
         case SpinType::S2_triplet:
-            funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                 {
                     for (int ir = 0;ir < nrxx;++ir)
                     {
@@ -95,6 +96,14 @@ namespace LR
                         const int irs1 = irs0 + 1;
                         v_eff(0, ir) += ModuleBase::e2 * (fxc.get_kernel("v2rho2").at(irs0) - fxc.get_kernel("v2rho2").at(irs1)) * rho[ir];
                     }
+                };
+            break;
+        case SpinType::S2_updown:
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
+                {
+                    assert(ispin_op.size() >= 2);
+                    const int is = ispin_op[0] + ispin_op[1];
+                    for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.get_kernel("v2rho2").at(3 * ir + is) * rho[ir]; }
                 };
             break;
         default:
@@ -105,7 +114,7 @@ namespace LR
         else if (xc == XCType::GGA || xc == XCType::HYB_GGA) switch (s)
         {
         case SpinType::S1:
-            funcs[s] = [this, &fxc](const double* const rho, ModuleBase::matrix& v_eff)->void
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                 {
                     // test: output drho
                     // double thr = 1e-1;

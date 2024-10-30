@@ -51,6 +51,9 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.nbands_sto, 256);
     EXPECT_EQ(param.inp.nbands_istate, 5);
     EXPECT_EQ(param.inp.bands_to_print.size(), 0);
+    EXPECT_EQ(param.inp.out_pchg.size(), 0);
+    EXPECT_EQ(param.inp.out_wfc_norm.size(), 0);
+    EXPECT_EQ(param.inp.out_wfc_re_im.size(), 0);
     EXPECT_FALSE(param.inp.if_separate_k);
     EXPECT_EQ(param.inp.pw_seed, 1);
     EXPECT_EQ(param.inp.emin_sto, 0.0);
@@ -416,6 +419,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.xc_kernel, "LDA");
     EXPECT_EQ(param.inp.lr_solver, "dav");
     EXPECT_DOUBLE_EQ(param.inp.lr_thr, 1e-2);
+    EXPECT_FALSE(param.inp.lr_unrestricted);
     EXPECT_FALSE(param.inp.out_wfc_lr);
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
     EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);

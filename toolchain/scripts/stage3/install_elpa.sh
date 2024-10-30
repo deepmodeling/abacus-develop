@@ -60,7 +60,7 @@ case "$with_elpa" in
     else
       require_env MATH_LIBS
       elpa_pkg="elpa-${elpa_ver}.tar.gz"
-      url=f"https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
+      url="https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/${elpa_ver}/${elpa_pkg}"
       if [ -f ${elpa_pkg} ]; then
         echo "${elpa_pkg} is found"
       else

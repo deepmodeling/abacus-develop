@@ -6,6 +6,7 @@ orbital_dir                 ../../../tests/PP_ORB
 calculation             scf
 nbands                6
 symmetry               	-1
+nspin                   2
 
 #Parameters (2.Iteration)
 ecutwfc                 20
@@ -26,12 +27,12 @@ mixing_beta             0.4
 
 lr_nstates 2 # for test/debug, you can try a smaller one like 2
 xc_kernel lda
-lr_solver dav
+lr_solver dav_subspace
 lr_thr 1e-2
 pw_diag_ndim 4
 
 esolver_type ks-lr
 
 nvirt 2
-abs_wavelen_range  100 175
+abs_wavelen_range  200 600
 

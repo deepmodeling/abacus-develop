@@ -32,7 +32,7 @@ FS_Nonlocal_tools<FPTYPE, Device>::FS_Nonlocal_tools(const pseudopot_cell_vnl* n
 
     // There is a contribution for jh<>ih in US case or multi projectors case
     // Actually, the judge of nondiagonal should be done on every atom type
-    this->nondiagonal = (GlobalV::use_uspp || this->nlpp_->multi_proj) ? true : false;
+    this->nondiagonal = (PARAM.globalv.use_uspp || this->nlpp_->multi_proj) ? true : false;
 
     // allocate memory
     this->allocate_memory(wg, ekb);

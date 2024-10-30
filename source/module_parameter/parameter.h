@@ -27,8 +27,9 @@ class Parameter
     // We can only read the value of globalv parameters, but cannot modify it.
     const System_para& globalv = sys;
 
-    // Set the rank & nproc
-    void set_rank_nproc(const int& myrank, const int& nproc);
+    // Set the rank & nproc & nthreads_per_proc
+    // changed from set_rank_nproc in 2024-1018
+    void set_pal_param(const int& myrank, const int& nproc, const int& nthread_per_proc);
     // Set the start time
     void set_start_time(const std::time_t& start_time);
 

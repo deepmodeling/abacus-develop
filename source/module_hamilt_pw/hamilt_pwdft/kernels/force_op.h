@@ -1,5 +1,6 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_KERNELS_FORCE_OP_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_KERNELS_FORCE_OP_H
+#include "module_parameter/parameter.h"
 
 #include "module_psi/psi.h"
 
@@ -64,8 +65,8 @@ struct cal_force_nl_op
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
-    /// @param becp - intermediate matrix with GlobalV::NBANDS * nkb
-    /// @param dbecp - intermediate matrix with 3 * GlobalV::NBANDS * nkb
+    /// @param becp - intermediate matrix with PARAM.inp.nbands * nkb
+    /// @param dbecp - intermediate matrix with 3 * PARAM.inp.nbands * nkb
     ///
     /// Output Parameters
     /// @param force - output forces

@@ -15,15 +15,12 @@ if(ENABLE_LCAO)
         operator_lcao/td_nonlocal_lcao.cpp
         operator_lcao/sc_lambda_lcao.cpp
         operator_lcao/dftu_lcao.cpp
+        pulay_force_stress_center2.cpp
         FORCE_STRESS.cpp
         FORCE_gamma.cpp
         FORCE_k.cpp
-        fvl_dphi_gamma.cpp
-        fvl_dphi_k.cpp
-        fedm_gamma.cpp
-        fedm_k.cpp
-        ftvnl_dphi_gamma.cpp
-        ftvnl_dphi_k.cpp
+        stress_tools.cpp
+        edm.cpp
         fvnl_dbeta_gamma.cpp
         fvnl_dbeta_k.cpp
         grid_init.cpp

@@ -120,8 +120,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         for (xc_func_type& func : funcs)
         {
-            constexpr double rho_threshold = 1E-6;
-            constexpr double grho_threshold = 1E-10;
+            const double rho_threshold = 1E-6;
+            const double grho_threshold = 1E-10;
 
             xc_func_set_dens_threshold(&func, rho_threshold);
 

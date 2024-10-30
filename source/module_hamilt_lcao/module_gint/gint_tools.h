@@ -39,6 +39,7 @@ class Gint_inout
     bool isforce;
     bool isstress;
     int ispin;
+    int nspin_rho;  // usually, but not always, equal to global nspin
     bool if_symm = false; // if true, use dsymv in gint_kernel_rho; if false, use dgemv.
 
     // output
@@ -48,10 +49,11 @@ class Gint_inout
     Gint_Tools::job_type job;
 
     // electron density and kin_r, multi-k
-    Gint_inout(double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
+    Gint_inout(double** rho_in, Gint_Tools::job_type job_in, const int& nspin_rho_in, bool if_symm_in = true)
     {
         rho = rho_in;
         job = job_in;
+        nspin_rho = nspin_rho_in;
         if_symm = if_symm_in;
     }
 
@@ -108,15 +110,6 @@ class Gint_inout
         vofk = vofk_in;
         ispin = ispin_in;
         job = job_in;
-    }
-
-    // electron density and kin_r, gamma point
-    Gint_inout(double*** DM_in, double** rho_in, Gint_Tools::job_type job_in, bool if_symm_in = true)
-    {
-        DM = DM_in;
-        rho = rho_in;
-        job = job_in;
-        if_symm = if_symm_in;
     }
 
     // vlocal, gamma point

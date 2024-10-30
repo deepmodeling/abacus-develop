@@ -81,7 +81,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
     ModuleBase::TITLE("DFTU", "force_stress");
     ModuleBase::timer::tick("DFTU", "force_stress");
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
 
     if (PARAM.inp.cal_force)
     {
@@ -272,9 +272,9 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
 #ifdef __MPI
         pzgemm_(&transN,
                 &transC,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
                 &one,
                 &dSm_k[0],
                 &one_int,
@@ -310,9 +310,9 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
 #ifdef __MPI
         pzgemm_(&transN,
                 &transN,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
                 &one,
                 &dSm_k[0],
                 &one_int,
@@ -384,7 +384,7 @@ void DFTU::cal_stress_k(ForceStressArrays& fsr,
     ModuleBase::TITLE("DFTU", "cal_stress_k");
     ModuleBase::timer::tick("DFTU", "cal_stress_k");
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
 
     const char transN = 'N';
     const int one_int = 1;
@@ -483,9 +483,9 @@ void DFTU::cal_force_gamma(const double* rho_VU,
 #ifdef __MPI
         pdgemm_(&transN,
                 &transT,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
                 &one,
                 tmp_ptr,
                 &one_int,
@@ -521,9 +521,9 @@ void DFTU::cal_force_gamma(const double* rho_VU,
 #ifdef __MPI
         pdgemm_(&transN,
                 &transT,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
-                &GlobalV::NLOCAL,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
+                &PARAM.globalv.nlocal,
                 &one,
                 tmp_ptr,
                 &one_int,
@@ -610,7 +610,7 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
     std::vector<double> dSR_gamma(pv.nloc);
     std::vector<double> dm_VU_sover(pv.nloc);
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {

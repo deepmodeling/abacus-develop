@@ -194,11 +194,11 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const LCAO_Orbitals& orb)
         }
     }
 
-    iw2it.resize(GlobalV::NLOCAL);
-    iw2ia.resize(GlobalV::NLOCAL);
-    iw2iL.resize(GlobalV::NLOCAL);
-    iw2iN.resize(GlobalV::NLOCAL);
-    iw2im.resize(GlobalV::NLOCAL);
+    iw2it.resize(PARAM.globalv.nlocal);
+    iw2ia.resize(PARAM.globalv.nlocal);
+    iw2iL.resize(PARAM.globalv.nlocal);
+    iw2iN.resize(PARAM.globalv.nlocal);
+    iw2im.resize(PARAM.globalv.nlocal);
 
     int iw = 0;
     for (int it = 0; it < GlobalC::ucell.ntype; it++)
@@ -299,12 +299,12 @@ void cal_r_overlap_R::out_rR(const int& istep)
         ModuleBase::Vector3<double> R_car = ModuleBase::Vector3<double>(dRx, dRy, dRz) * GlobalC::ucell.latvec;
 
         int ir, ic;
-        for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)
@@ -460,6 +460,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
         if (binary)
         {
             ofs_tem1.close();
+            int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
@@ -469,7 +470,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
 
             ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
@@ -489,7 +490,7 @@ void cal_r_overlap_R::out_rR(const int& istep)
                 out_r.open(ssr.str().c_str());
             }
             out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL << std::endl;
+            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
 
             ifs_tem1.open(tem1.str().c_str());
@@ -533,6 +534,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
     {
         if (binary)
         {
+            int nlocal = PARAM.globalv.nlocal;
             if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
             {
                 out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
@@ -542,7 +544,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                 out_r.open(ssr.str().c_str(), std::ios::binary);
             }
             out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&GlobalV::NLOCAL), sizeof(int));
+            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
             out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
         }
         else
@@ -556,7 +558,7 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
                 out_r.open(ssr.str().c_str());
             }
             out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << GlobalV::NLOCAL << std::endl;
+            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
             out_r << "Matrix number of r(R): " << output_R_number << std::endl;
         }
     }
@@ -573,12 +575,12 @@ void cal_r_overlap_R::out_rR_other(const int& istep, const std::set<Abfs::Vector
 
         int ir = 0;
         int ic = 0;
-        for (int iw1 = 0; iw1 < GlobalV::NLOCAL; iw1++)
+        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
         {
             ir = this->ParaV->global2local_row(iw1);
             if (ir >= 0)
             {
-                for (int iw2 = 0; iw2 < GlobalV::NLOCAL; iw2++)
+                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
                 {
                     ic = this->ParaV->global2local_col(iw2);
                     if (ic >= 0)

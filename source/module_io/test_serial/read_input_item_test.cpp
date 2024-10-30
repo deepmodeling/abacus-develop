@@ -151,6 +151,11 @@ TEST_F(InputTest, Item_test)
         param.input.qo_switch = true;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.symmetry, "-1");
+
+        param.input.symmetry = "default";
+        param.input.berry_phase = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.symmetry, "-1");
     }
     { // nelec
         auto it = find_label("nelec", readinput.input_lists);
@@ -819,6 +824,14 @@ TEST_F(InputTest, Item_test)
         std::getline(ifs, line);
         ifs.close();
         EXPECT_EQ(line, "K_POINTS");
+
+        param.input.basis_type = "lcao";
+        param.input.gamma_only = true;
+        param.input.nspin = 4;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.reset_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
     }
     { // out_mat_r

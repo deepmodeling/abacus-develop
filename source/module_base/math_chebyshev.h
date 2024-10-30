@@ -191,6 +191,7 @@ class Chebyshev
     bool checkconverge(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
                        std::complex<REAL>* wavein,
                        const int N,
+                       const int LDA,
                        REAL& tmax,  // trial number for upper bound
                        REAL& tmin,  // trial number for lower bound
                        REAL stept); // tmax = max() + stept, tmin = min() - stept

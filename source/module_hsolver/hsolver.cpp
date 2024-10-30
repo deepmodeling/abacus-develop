@@ -1,5 +1,6 @@
 #include "hsolver.h"
 
+#include "module_parameter/parameter.h"
 namespace hsolver
 {
 
@@ -110,7 +111,7 @@ double set_diagethr_sdft(const std::string basis_type,
         }
         else
         {
-            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6
+            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //PARAM.inp.nbands > 0 && this->stoiter.KS_ne > 1e-6
             {
                 res_diag_ethr = std::min(res_diag_ethr, 0.1 * drho / std::max(1.0, stoiter_ks_ne_in));
             }

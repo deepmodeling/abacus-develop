@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "../lr_util.h"
+#include "../lr_util_print.h"
 
 TEST(LR_Util, PsiWrapper)
 {
@@ -128,6 +129,27 @@ TEST(LR_Util, MatSymComplex)
         EXPECT_DOUBLE_EQ(din_local[i].real(), dout_local[i].real());
         EXPECT_DOUBLE_EQ(din_local[i].imag(), dout_local[i].imag());
     }
+}
+
+TEST(LR_Util, RWValue)
+{
+    const std::string file = "RWValue.txt";
+    std::ofstream ofs(file);
+    std::vector<int> vec(2 * 3 * 4 * 5, 0);
+    for (int i = 0;i < vec.size();++i) vec[i] = i;
+    LR_Util::write_value(ofs, vec.data(), 2, 3, 4, 5);
+    ofs.close();
+
+    std::vector<int> vec1(2 * 3 * 4 * 5, 0);
+    std::ifstream ifs1(file);
+    EXPECT_EQ(LR_Util::read_value(ifs1, vec1.data(), 2, 3, 4, 5), 120);
+    ifs1.close();
+    for (int i = 0;i < vec1.size();++i) { EXPECT_EQ(vec1[i], vec[i]); };
+    std::vector<int> vec2(2 * 3 * 4 * 5, 0);
+    std::ifstream ifs2(file);
+    EXPECT_EQ(LR_Util::read_value(ifs2, vec2.data(), 2 * 3, 4 * 5), 120);
+    ifs2.close();
+    for (int i = 0;i < vec2.size();++i) { EXPECT_EQ(vec2[i], vec[i]); };
 }
 
 int main(int argc, char** argv)

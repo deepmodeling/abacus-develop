@@ -183,7 +183,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
 TEST_F(ElecStatePrintTest, PrintBand)
 {
     PARAM.input.nspin = 1;
-    GlobalV::NBANDS = 2;
+    PARAM.input.nbands = 2;
     GlobalV::MY_RANK = 0;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue

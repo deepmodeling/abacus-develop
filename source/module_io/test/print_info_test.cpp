@@ -60,11 +60,6 @@ protected:
 	}
 };
 
-TEST_F(PrintInfoTest, Constructor)
-{
-	EXPECT_NO_THROW(Print_Info pinfo);
-}
-
 TEST_F(PrintInfoTest, SetupParameters)
 {
 	UcellTestPrepare utp = UcellTestLib["Si"];
@@ -83,8 +78,8 @@ TEST_F(PrintInfoTest, SetupParameters)
 			PARAM.sys.gamma_only_local = false;
 			PARAM.input.calculation = cal_type[i];
 			testing::internal::CaptureStdout();
-			EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-			output = testing::internal::GetCapturedStdout();
+            EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+            output = testing::internal::GetCapturedStdout();
 			if(PARAM.input.calculation == "scf")
 			{
 				EXPECT_THAT(output,testing::HasSubstr("Self-consistent calculations"));
@@ -106,7 +101,7 @@ TEST_F(PrintInfoTest, SetupParameters)
 			{
                 PARAM.input.mdp.md_type = md_types[j];
                 testing::internal::CaptureStdout();
-                EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
+                EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
                 output = testing::internal::GetCapturedStdout();
                 EXPECT_THAT(output,testing::HasSubstr("Molecular Dynamics simulations"));
                 if (PARAM.mdp.md_type == "fire")
@@ -141,8 +136,8 @@ TEST_F(PrintInfoTest, SetupParameters)
 	{
 		PARAM.input.basis_type = basis_type[i];
 		testing::internal::CaptureStdout();
-		EXPECT_NO_THROW(Print_Info::setup_parameters(*ucell,*kv));
-		output = testing::internal::GetCapturedStdout();
+        EXPECT_NO_THROW(ModuleIO::setup_parameters(*ucell, *kv));
+        output = testing::internal::GetCapturedStdout();
 		if(PARAM.input.basis_type == "lcao")
 		{
 			EXPECT_THAT(output,testing::HasSubstr("Use Systematically Improvable Atomic bases"));
@@ -170,22 +165,22 @@ TEST_F(PrintInfoTest, PrintScreen)
 		if(PARAM.input.calculation=="scf")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("SELF-CONSISTENT"));
 		}
 		else if(PARAM.input.calculation=="nscf")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("NONSELF-CONSISTENT"));
 		}
 		else if(PARAM.input.calculation=="md")
 		{
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("STEP OF MOLECULAR DYNAMICS"));
 		}
 		else
@@ -194,22 +189,22 @@ TEST_F(PrintInfoTest, PrintScreen)
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
-				Print_Info::print_screen(stress_step,force_step,istep);
-				output = testing::internal::GetCapturedStdout();
+                ModuleIO::print_screen(stress_step, force_step, istep);
+                output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("STEP OF ION RELAXATION"));
 			}
 			else if(PARAM.input.calculation=="cell-relax")
 			{
 				testing::internal::CaptureStdout();
-				Print_Info::print_screen(stress_step,force_step,istep);
-				output = testing::internal::GetCapturedStdout();
+                ModuleIO::print_screen(stress_step, force_step, istep);
+                output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("RELAX CELL"));
 				EXPECT_THAT(output,testing::HasSubstr("RELAX IONS"));
 			}
 			PARAM.input.relax_new = true;
 			testing::internal::CaptureStdout();
-			Print_Info::print_screen(stress_step,force_step,istep);
-			output = testing::internal::GetCapturedStdout();
+            ModuleIO::print_screen(stress_step, force_step, istep);
+            output = testing::internal::GetCapturedStdout();
 			EXPECT_THAT(output,testing::HasSubstr("STEP OF RELAXATION"));
 		}
 	}
@@ -220,8 +215,8 @@ TEST_F(PrintInfoTest, PrintTime)
 	time_t time_start = std::time(nullptr);
 	time_t time_finish = std::time(nullptr);
 	testing::internal::CaptureStdout();
-	EXPECT_NO_THROW(Print_Info::print_time(time_start,time_finish));
-	output = testing::internal::GetCapturedStdout();
+    EXPECT_NO_THROW(ModuleIO::print_time(time_start, time_finish));
+    output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("START  Time"));
 	EXPECT_THAT(output,testing::HasSubstr("FINISH Time"));
 	EXPECT_THAT(output,testing::HasSubstr("TOTAL  Time"));

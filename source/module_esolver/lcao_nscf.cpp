@@ -29,7 +29,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/read_wfc_nao.h"
-#include "module_io/rho_io.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX
@@ -62,7 +61,7 @@ void ESolver_KS_LCAO<TK, TR>::nscf() {
     GlobalV::ofs_running << " band eigenvalue in this processor (eV) :" << std::endl;
 
     const int nspin = PARAM.inp.nspin;
-    const int nbands = GlobalV::NBANDS;
+    const int nbands = PARAM.inp.nbands;
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {

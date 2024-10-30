@@ -479,31 +479,31 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
 
     nnkp_read.close();
 
-    if (GlobalV::NBANDS <= num_exclude_bands)
+    if (PARAM.inp.nbands <= num_exclude_bands)
     {
         ModuleBase::WARNING_QUIT("toWannier90::read_nnkp",
                                  "you set the band numer is not enough, please add bands number.");
     }
 
-    // tag_cal_band = new bool[GlobalV::NBANDS];
-    // for (int ib = 0; ib < GlobalV::NBANDS; ib++) tag_cal_band[ib] = true;
+    // tag_cal_band = new bool[PARAM.inp.nbands];
+    // for (int ib = 0; ib < PARAM.inp.nbands; ib++) tag_cal_band[ib] = true;
     // for (int ib = 0; ib < num_exclude_bands; ib++) tag_cal_band[ib] = false;
 
     if (num_exclude_bands == 0)
     {
-        num_bands = GlobalV::NBANDS;
+        num_bands = PARAM.inp.nbands;
         cal_band_index = new int[num_bands];
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             cal_band_index[ib] = ib;
         }
     }
     else
     {
-        num_bands = GlobalV::NBANDS - num_exclude_bands;
+        num_bands = PARAM.inp.nbands - num_exclude_bands;
         cal_band_index = new int[num_bands];
         int count = 0;
-        for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
         {
             if (exclude_bands.count(ib) != 1)
             {

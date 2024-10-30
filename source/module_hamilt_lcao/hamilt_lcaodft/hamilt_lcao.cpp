@@ -174,13 +174,14 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 pot_in->pot_register(pot_register_in);
                 // effective potential term
                 Operator<TK>* veff = new Veff<OperatorLCAO<TK, TR>>(GG_in,
-                                                                    this->hsk,
-                                                                    this->kv->kvec_d,
-                                                                    pot_in,
-                                                                    this->hR, // no explicit call yet
-                                                                    &GlobalC::ucell,
-                                                                    orb.cutoffs(),
-                                                                    &GlobalC::GridD
+                    this->hsk,
+                    this->kv->kvec_d,
+                    pot_in,
+                    this->hR, // no explicit call yet
+                    &GlobalC::ucell,
+                    orb.cutoffs(),
+                    &GlobalC::GridD,
+                    PARAM.inp.nspin
                 );
                 this->getOperator()->add(veff);
             }
@@ -242,13 +243,14 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                 pot_in->pot_register(pot_register_in);
                 // Veff term
                 this->getOperator() = new Veff<OperatorLCAO<TK, TR>>(GK_in,
-                                                                     this->hsk,
-                                                                     kv->kvec_d,
-                                                                     pot_in,
-                                                                     this->hR,
-                                                                     &GlobalC::ucell,
-                                                                     orb.cutoffs(),
-                                                                     &GlobalC::GridD);
+                    this->hsk,
+                    kv->kvec_d,
+                    pot_in,
+                    this->hR,
+                    &GlobalC::ucell,
+                    orb.cutoffs(),
+                    &GlobalC::GridD,
+                    PARAM.inp.nspin);
                 // reset spin index and real space Hamiltonian matrix
                 int start_spin = -1;
                 GK_in->reset_spin(start_spin);

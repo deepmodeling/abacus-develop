@@ -21,9 +21,9 @@ void output_convergence_after_scf(bool& convergence, double& energy, std::ofstre
     }
 }
 
-void output_after_relax(bool conv_ion, bool conv_elec, std::ofstream& ofs_running)
+void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_running)
 {
-    if (conv_ion && !conv_elec)
+    if (conv_ion && !conv_esolver)
     {
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
         std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
@@ -246,7 +246,8 @@ void print_force(std::ofstream& ofs_running,
     fmt << atom_label << force_x << force_y << force_z;
     table = fmt.str();
     ofs_running << table << std::endl;
-    if (PARAM.inp.test_force) std::cout << table << std::endl;
+    if (PARAM.inp.test_force) { std::cout << table << std::endl;
+}
 }
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, const bool screen, const bool ry)
 {
@@ -302,6 +303,12 @@ void print_stress(const std::string& name, const ModuleBase::matrix& scs, const 
         }
     }
     return;
+}
+
+void write_head(std::ofstream& ofs_running, const int& istep, const int& iter, const std::string& basisname)
+{
+    ofs_running << "\n " << basisname << " ALGORITHM --------------- ION=" << std::setw(4) << istep + 1
+                << "  ELEC=" << std::setw(4) << iter << "--------------------------------\n";
 }
 
 }// namespace ModuleIO

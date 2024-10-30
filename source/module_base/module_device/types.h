@@ -12,6 +12,7 @@ enum AbacusDevice_t
     UnKnown,
     CpuDevice,
     GpuDevice,
+    DspDevice
 };
 
 } // namespace base_device
