@@ -250,6 +250,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     delete[] totnpw;
 }
 #else
+template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init_com_orbitals()
 {
     const int npwx = this->npwx;
