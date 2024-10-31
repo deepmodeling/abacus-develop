@@ -30,16 +30,12 @@ void Vdwd3Parameters::initial_parameters(const Input_para &input)
                                                              {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
                                                              {"op", "op"}};
     std::vector<double> param;
-    std::cout << " VDW: search for DFT-D3 parameters for " << xc << " with " << vdw_method << std::endl;
+    // std::cout << " VDW: search for DFT-D3 parameters for " << xc << " with " << vdw_method << std::endl;
     DFTD3::search(xc, dftd3_method.at(vdw_method), param);
     s6_ = param[0];  // s6
     s18_ = param[3]; // s8
     rs6_ = param[1]; // rs6 or a1
     rs18_ = param[5];// rs8 or a2
-    std::cout << "s6 from search: " << s6_ << " s6 from default: " << input.vdw_s6 << std::endl;
-    std::cout << "rs6 from search: " << rs6_ << " rs6 from default: " << input.vdw_a1 << std::endl;
-    std::cout << "s18 from search: " << s18_ << " s18 from default: " << input.vdw_s8 << std::endl;
-    std::cout << "rs18 from search: " << rs18_ << " rs18 from default: " << input.vdw_a2 << std::endl;
     abc_ = input.vdw_abc;
     version_ = input.vdw_method;
     model_ = input.vdw_cutoff_type;
