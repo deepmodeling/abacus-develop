@@ -153,6 +153,17 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 			return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
 		}
 	}
+    else if (esolver_type == "sdft_pw")
+	{
+        // if (PARAM.inp.precision == "single")
+		// {
+		// 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
+		// }
+		// else
+		// {
+			return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>();
+		// }
+	}
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
     {
@@ -230,10 +241,6 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         return p_esolver_lr;
     }
 #endif
-	else if (esolver_type == "sdft_pw")
-	{
-		return new ESolver_SDFT_PW();
-	}
 	else if(esolver_type == "ofdft")
 	{
 		return new ESolver_OF();
