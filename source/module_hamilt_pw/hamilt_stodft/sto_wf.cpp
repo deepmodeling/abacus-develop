@@ -248,6 +248,16 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         delete[] npwip;
     }
     delete[] totnpw;
+    // allocate chi0
+    Device* ctx = {};
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    {
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+    }
+    else
+    {
+        this->chi0 = reinterpret_cast<psi::Psi<T, Device>*>(this->chi0_cpu);
+    }
 }
 #else
 template <typename T, typename Device>
@@ -268,6 +278,17 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         {
             this->chi0_cpu->operator()(ik, ichi, ichi) = 1;
         }
+    }
+
+    // allocate chi0
+    Device* ctx = {};
+    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    {
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+    }
+    else
+    {
+        this->chi0 = reinterpret_cast<psi::Psi<T, Device>*>(this->chi0_cpu);
     }
 }
 #endif
