@@ -89,7 +89,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0 eV/A.\n Threshold is -1 eV/A\n"
+    std::string expected_output = "\n Largest gradient in force is 0 eV/A.\n Threshold is -1 eV/A.\n"
                                   " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
@@ -123,7 +123,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -161,7 +161,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -198,7 +198,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -237,7 +237,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -275,7 +275,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -314,7 +314,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A\n\n"
+    std::string expected_output = "\n Largest gradient in force is 0.0257111 eV/A.\n Threshold is -1 eV/A.\n\n"
                                   " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

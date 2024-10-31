@@ -316,7 +316,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output = "\n Lattice relaxation is converged!\n\n Largest gradient in stress is 0.147105 kbar.\n Threshold is = 10 kbar.\n";
+    std::string expected_output = "\n Lattice relaxation is converged!\n\n Largest gradient in stress is 0.147105 kbar.\n Threshold is 10 kbar.\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
@@ -428,7 +428,7 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 
     // Check the results
     std::ifstream ifs("log");
-    std::string expected_output = "\n Lattice relaxation is converged!\n\n Largest gradient in stress is 0.147105 kbar.\n Threshold is = 10 kbar.\n";
+    std::string expected_output = "\n Lattice relaxation is converged!\n\n Largest gradient in stress is 0.147105 kbar.\n Threshold is 10 kbar.\n";
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_EQ(output, expected_output);
     EXPECT_EQ(Lattice_Change_Basic::update_iter, 1);
