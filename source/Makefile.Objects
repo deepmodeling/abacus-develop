@@ -571,8 +571,6 @@ OBJS_LCAO=evolve_elec.o\
       stress_tools.o\
       edm.o\
       pulay_force_stress_center2.o\
-	  fvnl_dbeta_gamma.o\
-	  fvnl_dbeta_k.o\
 	  grid_init.o\
       spar_dh.o\
       spar_exx.o\

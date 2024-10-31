@@ -319,17 +319,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     // vl_dphi
     PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
-    /*this->cal_fvnl_dbeta(dm,
-                         pv,
-                         ucell,
-                         orb,
-                         *(two_center_bundle.overlap_orb_beta),
-                         GlobalC::GridD,
-                         isforce,
-                         isstress,
-                         fvnl_dbeta,
-                         svnl_dbeta);*/
-
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
     {
