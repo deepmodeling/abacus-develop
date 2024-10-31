@@ -547,13 +547,15 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             this->conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
 
+            // calculate energy of output charge density
+            this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
+            // now, etot_old is the energy of input density, while etot is the energy of output density
+            this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
+            // output etot_delta
+            GlobalV::ofs_running << " DeltaE_womix = " << this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
             // add energy threshold for SCF convergence
             if (this->scf_ene_thr > 0.0 && iter > 1 && this->conv_esolver == 1) // only check when density is converged
             {
-                // only calculate energy when density is converged to reduce the time cost
-                this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
-                // now, etot_old is the energy of input density, while etot is the energy of output density
-                this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
                 // update the convergence flag
                 this->conv_esolver
                     = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
