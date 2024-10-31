@@ -681,13 +681,6 @@ void ESolver_KS<T, Device>::iter_finish(int& iter)
     }
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
-
-    // add a energy threshold for SCF convergence
-    if (this->scf_ene_thr > 0.0 && this->conv_esolver == 1) // only check when density is converged
-    {
-        this->conv_esolver
-            = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
-    }
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
