@@ -95,7 +95,7 @@ void Vdwd3::cal_energy()
             for (int jat = iat + 1; jat != ucell_.nat; jat++)
             {
                 get_c6(iz_[iat], iz_[jat], cn[iat], cn[jat], c6);
-                if (para_.abc())
+                if (para_.abc()) // three-body term
                 {
                     ij = lin(iat, jat);
                     cc6ab[ij] = std::sqrt(c6);
@@ -106,8 +106,8 @@ void Vdwd3::cal_energy()
                         {
                             tau = static_cast<double>(taux) * lat_[0] + static_cast<double>(tauy) * lat_[1]
                                   + static_cast<double>(tauz) * lat_[2];
-                            r2 = (xyz_[iat] - xyz_[jat] + tau).norm2();
-                            if (r2 > para_.rthr2())
+                            r2 = (xyz_[iat] - xyz_[jat] + tau).norm2(); // |r+T|^2
+                            if (r2 > para_.rthr2()) // neglect the distance larger than rthr2
                                 continue;
                             rr = para_.r0ab()[iz_[iat]][iz_[jat]] / std::sqrt(r2);
                             // zero-damping function
