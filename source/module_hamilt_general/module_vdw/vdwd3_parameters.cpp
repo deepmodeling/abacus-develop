@@ -5,14 +5,16 @@
 //==========================================================
 
 #include "vdwd3_parameters.h"
-
 #include "module_base/constants.h"
+#include <map>
+#include "dftd3.h"
 
 namespace vdw
 {
 
 void Vdwd3Parameters::initial_parameters(const Input_para &input)
 {
+    // initialize the dftd3 parameters
     mxc_.resize(max_elem_, 1);
     r0ab_.resize(max_elem_, std::vector<double>(max_elem_, 0.0));
 
@@ -22,11 +24,18 @@ void Vdwd3Parameters::initial_parameters(const Input_para &input)
                      std::vector<std::vector<std::vector<double>>>(
                          5,
                          std::vector<std::vector<double>>(max_elem_, std::vector<double>(max_elem_, 0.0)))));
-
-    s6_ = std::stod(input.vdw_s6);
-    s18_ = std::stod(input.vdw_s8);
-    rs6_ = std::stod(input.vdw_a1);
-    rs18_ = std::stod(input.vdw_a2);
+    const std::string xc = input.dft_functional;
+    const std::string vdw_method = input.vdw_method;
+    const std::map<std::string, std::string> dftd3_method = {{"d3_bj", "bj"}, {"d3_0", "zero"},
+                                                             {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
+                                                             {"op", "op"}};
+    std::vector<double> param;
+    std::cout << " VDW: search for DFTD3 parameters for " << xc << " with " << vdw_method << std::endl;
+    DFTD3::search(xc, dftd3_method.at(vdw_method), param);
+    s6_ = param[0];
+    s18_ = param[3];
+    rs6_ = param[1];
+    rs18_ = param[5];
     abc_ = input.vdw_abc;
     version_ = input.vdw_method;
     model_ = input.vdw_cutoff_type;
