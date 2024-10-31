@@ -171,25 +171,26 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                         pv,
                         kv);
     // calculate force and stress for Nonlocal part
-    if(GlobalV::NSPIN!=4)
+    if(PARAM.inp.nspin != 4)
     {
         hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
                     nullptr,
                     kv.kvec_d,
                     nullptr,
                     &GlobalC::ucell,
+                    orb.cutoffs(),
                     &GlobalC::GridD,
                     two_center_bundle.overlap_orb_beta.get()
             );
 
         const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(pelec)->get_DM();
-        if(GlobalV::NSPIN==2)
+        if(PARAM.inp.nspin == 2)
         {
             const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(1);
         }
         const hamilt::HContainer<double>* dmr = dm_p->get_DMR_pointer(1);
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmr, fvnl_dbeta, svnl_dbeta);
-        if(GlobalV::NSPIN==2)
+        if(PARAM.inp.nspin == 2)
         {
             const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(0);
         }
@@ -201,6 +202,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     kv.kvec_d,
                     nullptr,
                     &GlobalC::ucell,
+                    orb.cutoffs(),
                     &GlobalC::GridD,
                     two_center_bundle.overlap_orb_beta.get()
             );

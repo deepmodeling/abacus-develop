@@ -197,6 +197,12 @@ class DensityMatrix
     void sum_DMR_spin();
 
     /**
+     * @brief (Only nspin=2) switch DMR to total density matrix or magnetization density matrix
+     * @param mode 0 - original density matrix; 1 - total density matrix; 2 - magnetization density matrix
+     */
+    void switch_dmr(const int mode);
+
+    /**
      * @brief write density matrix dm(ik) into *.dmk
      * @param directory directory of *.dmk files
      * @param ispin spin index (1 - spin up (support SOC) or 2 - spin down)
@@ -275,6 +281,9 @@ class DensityMatrix
      */
     int _nk = 0;
 
+    /// temporary pointers for switch DMR, only used with nspin=2
+    std::vector<TR> dmr_origin_;
+    TR* dmr_tmp_ = nullptr;
 
 };
 

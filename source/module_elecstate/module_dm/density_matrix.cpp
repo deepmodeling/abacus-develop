@@ -22,6 +22,7 @@ DensityMatrix<TK, TR>::~DensityMatrix()
     {
         delete it;
     }
+    delete[] this->dmr_tmp_;
 }
 
 template <typename TK, typename TR>
@@ -627,12 +628,12 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR_full(hamilt::HContaine
 #endif
             // loop over k-points
             // calculate full matrix for complex density matrix
-            for (int ik = 0; ik < this->_nks; ++ik)
+            for (int ik = 0; ik < this->_nk; ++ik)
             {
                 // cal k_phase
                 // if TK==std::complex<double>, kphase is e^{ikR}
                 const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
-                const double arg = (this->_kv->kvec_d[ik] * dR) * ModuleBase::TWO_PI;
+                const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                 double sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
                 std::complex<double> kphase = std::complex<double>(cosp, sinp);
@@ -981,6 +982,82 @@ void DensityMatrix<std::complex<double>, double>::write_DMK(const std::string di
     }
 
     ofs.close();
+}
+
+// switch_dmr
+template <typename TK, typename TR>
+void DensityMatrix<TK, TR>::switch_dmr(const int mode)
+{
+    ModuleBase::TITLE("DensityMatrix", "switch_dmr");
+    if (this->_nspin != 2)
+    {
+        return;
+    }
+    else
+    {
+        ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
+        switch(mode)
+        {
+        case 0:
+            // switch to original density matrix
+            if (this->dmr_tmp_ != nullptr && this->dmr_origin_.size() != 0) 
+            {
+                this->_DMR[0]->allocate(this->dmr_origin_.data(), false);
+                delete[] this->dmr_tmp_;
+                this->dmr_tmp_ = nullptr;
+            }
+            // else: do nothing
+            break;
+        case 1:
+            // switch to total magnetization density matrix, dmr_up + dmr_down
+            if(this->dmr_tmp_ == nullptr)
+            {
+                const size_t size = this->_DMR[0]->get_nnr();
+                this->dmr_tmp_ = new TR[size];
+                this->dmr_origin_.resize(size);
+                for (int i = 0; i < size; ++i)
+                {
+                    this->dmr_tmp_[i] = this->dmr_origin_[i] + this->_DMR[1]->get_wrapper()[i];
+                }
+                this->_DMR[0]->allocate(this->dmr_tmp_, false);
+            }
+            else
+            {
+                const size_t size = this->_DMR[0]->get_nnr();
+                for (int i = 0; i < size; ++i)
+                {
+                    this->dmr_tmp_[i] = this->dmr_origin_[i] - this->_DMR[1]->get_wrapper()[i];
+                }
+            }
+            break;
+        case 2:
+            // switch to magnetization density matrix, dmr_up - dmr_down
+            if(this->dmr_tmp_ == nullptr)
+            {
+                const size_t size = this->_DMR[0]->get_nnr();
+                this->dmr_tmp_ = new TR[size];
+                this->dmr_origin_.resize(size);
+                for (int i = 0; i < size; ++i)
+                {
+                    this->dmr_origin_[i] = this->_DMR[0]->get_wrapper()[i];
+                    this->dmr_tmp_[i] = this->dmr_origin_[i] - this->_DMR[1]->get_wrapper()[i];
+                }
+                this->_DMR[0]->allocate(this->dmr_tmp_, false);
+            }
+            else
+            {
+                const size_t size = this->_DMR[0]->get_nnr();
+                for (int i = 0; i < size; ++i)
+                {
+                    this->dmr_tmp_[i] = this->dmr_origin_[i] - this->_DMR[1]->get_wrapper()[i];
+                }
+            }
+            break;
+        default:
+            throw std::string("Unknown mode in switch_dmr");
+        }
+        ModuleBase::timer::tick("DensityMatrix", "switch_dmr");
+    }
 }
 
 // T of HContainer can be double or complex<double>
