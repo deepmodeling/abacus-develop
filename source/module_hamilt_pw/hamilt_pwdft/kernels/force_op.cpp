@@ -42,7 +42,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
     void operator()(const base_device::DEVICE_CPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& spin,
                     const int& deeq_2,
@@ -50,7 +49,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -71,7 +69,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
             int sum0 = 0;
             for (int it = 0; it < ntype; it++)
             {
-                const int Nprojs = atom_nh[it];
+                const int nproj = atom_nh[it];
 #ifdef _OPENMP
 #pragma omp for collapse(2)
 #endif
@@ -80,11 +78,11 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         FPTYPE local_force[3] = {0, 0, 0};
-                        FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
-                        FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+                        FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
+                        FPTYPE ekb_now = d_ekb[ib];
                         int iat = iat0 + ia;
-                        int sum = sum0 + ia * Nprojs;
-                        for (int ip = 0; ip < Nprojs; ip++)
+                        int sum = sum0 + ia * nproj;
+                        for (int ip = 0; ip < nproj; ip++)
                         {
                             // Effective values of the D-eS coefficients
                             FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
@@ -102,7 +100,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             }
                             if (nondiagonal)
                             {
-                                for (int ip2 = 0; ip2 < Nprojs; ip2++)
+                                for (int ip2 = 0; ip2 < nproj; ip2++)
                                 {
                                     if (ip != ip2)
                                     {
@@ -141,7 +139,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     }
                 } // end ia
                 iat0 += atom_na[it];
-                sum0 += atom_na[it] * Nprojs;
+                sum0 += atom_na[it] * nproj;
             } // end it
 #ifdef _OPENMP
         }
@@ -150,14 +148,12 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
 
     void operator()(const base_device::DEVICE_CPU* ctx,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -188,8 +184,8 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     {
                         const int ib2 = ib*2;
                         FPTYPE local_force[3] = {0, 0, 0};
-                        FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
-                        FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+                        FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
+                        FPTYPE ekb_now = d_ekb[ib];
                         int iat = iat0 + ia;
                         int sum = sum0 + ia * nprojs;
                         for (int ip = 0; ip < nprojs; ip++)

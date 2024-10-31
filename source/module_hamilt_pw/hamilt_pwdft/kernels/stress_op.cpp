@@ -77,8 +77,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& nbands_occ,
                     const int& ntype,
                     const int& spin,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
@@ -97,10 +95,11 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
 #pragma omp parallel reduction(+ : local_stress)
         {
 #endif
-            int iat = 0, sum = 0;
+            int iat = 0;
+            int sum = 0;
             for (int it = 0; it < ntype; it++)
             {
-                const int Nprojs = atom_nh[it];
+                const int nproj = atom_nh[it];
 #ifdef _OPENMP
 #pragma omp for collapse(4)
 #endif
@@ -108,20 +107,20 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 {
                     for (int ia = 0; ia < atom_na[it]; ia++)
                     {
-                        for (int ip1 = 0; ip1 < Nprojs; ip1++)
+                        for (int ip1 = 0; ip1 < nproj; ip1++)
                         {
-                            for (int ip2 = 0; ip2 < Nprojs; ip2++)
+                            for (int ip2 = 0; ip2 < nproj; ip2++)
                             {
                                 if (!nondiagonal && ip1 != ip2)
                                 {
                                     continue;
                                 }
-                                FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
-                                FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+                                FPTYPE fac = d_wg[ib] * 1.0;
+                                FPTYPE ekb_now = d_ekb[ib];
                                 FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2]
                                             - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
-                                const int inkb1 = sum + ia * Nprojs + ip1;
-                                const int inkb2 = sum + ia * Nprojs + ip2;
+                                const int inkb1 = sum + ia * nproj + ip1;
+                                const int inkb2 = sum + ia * nproj + ip2;
                                 // out<<"\n ps = "<<ps;
 
                                 const FPTYPE dbb = (conj(dbecp[ib * nkb + inkb1]) * becp[ib * nkb + inkb2]).real();
@@ -130,7 +129,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         } // end ip
                     }     // ia
                 }
-                sum += atom_na[it] * Nprojs;
+                sum += atom_na[it] * nproj;
                 iat += atom_na[it];
             } // end it
 #ifdef _OPENMP
@@ -145,8 +144,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int& nkb,
                     const int& nbands_occ,
                     const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
@@ -168,7 +165,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             int iat = 0, sum = 0;
             for (int it = 0; it < ntype; it++)
             {
-                const int Nprojs = atom_nh[it];
+                const int nproj = atom_nh[it];
 #ifdef _OPENMP
 #pragma omp for collapse(4)
 #endif
@@ -176,20 +173,20 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 {
                     for (int ia = 0; ia < atom_na[it]; ia++)
                     {
-                        for (int ip1 = 0; ip1 < Nprojs; ip1++)
+                        for (int ip1 = 0; ip1 < nproj; ip1++)
                         {
-                            for (int ip2 = 0; ip2 < Nprojs; ip2++)
+                            for (int ip2 = 0; ip2 < nproj; ip2++)
                             {
                                 const int ib2 = ib*2;
-                                FPTYPE fac = d_wg[ik * wg_nc + ib] * 1.0;
-                                FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+                                FPTYPE fac = d_wg[ib] * 1.0;
+                                FPTYPE ekb_now = d_ekb[ib];
                                 std::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
                                 std::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 std::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
                                 std::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
                                 std::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
-                                const int inkb1 = sum + ia * Nprojs + ip1;
-                                const int inkb2 = sum + ia * Nprojs + ip2;
+                                const int inkb1 = sum + ia * nproj + ip1;
+                                const int inkb2 = sum + ia * nproj + ip2;
                                 // out<<"\n ps = "<<ps;
 
                                 const std::complex<FPTYPE> dbb0 = conj(dbecp[ib2 * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
@@ -201,7 +198,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         } // end ip
                     }     // ia
                 }
-                sum += atom_na[it] * Nprojs;
+                sum += atom_na[it] * nproj;
                 iat += atom_na[it];
             } // end it
 #ifdef _OPENMP

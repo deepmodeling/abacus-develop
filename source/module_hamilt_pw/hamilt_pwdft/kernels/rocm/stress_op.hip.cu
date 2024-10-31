@@ -102,8 +102,6 @@ __global__ void cal_stress_nl(
         const int nkb,
         const int ntype,
         const int spin,
-        const int wg_nc,
-        const int ik,
         const int deeq_2,
         const int deeq_3,
         const int deeq_4,
@@ -120,18 +118,21 @@ __global__ void cal_stress_nl(
     int ib = blockIdx.x / ntype;
     int it = blockIdx.x % ntype;
 
-    int iat = 0, sum = 0;
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
     }
 
-    FPTYPE stress_var = 0, fac = d_wg[ik * wg_nc + ib] * 1.0, ekb_now = d_ekb[ik * wg_nc + ib];
-    const int Nprojs = atom_nh[it];
+    FPTYPE stress_var = 0;
+    FPTYPE fac = d_wg[ib];
+    FPTYPE ekb_now = d_ekb[ib];
+    const int nproj = atom_nh[it];
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
-        for (int ii = threadIdx.x; ii < Nprojs * Nprojs; ii += blockDim.x) {
-            int ip1 = ii / Nprojs, ip2 = ii % Nprojs;
+        for (int ii = threadIdx.x; ii < nproj * nproj; ii += blockDim.x) {
+            int ip1 = ii / nproj, ip2 = ii % nproj;
             if(!nondiagonal && ip1 != ip2) {
                 continue;
             }
@@ -144,7 +145,7 @@ __global__ void cal_stress_nl(
             stress_var -= ps * fac * dbb;
         }
         ++iat;
-        sum+=Nprojs;
+        sum+=nproj;
     }//ia
     warp_reduce(stress_var);
     if (threadIdx.x % WARP_SIZE == 0) {
@@ -198,8 +199,6 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int& nbands_occ,
                                                                    const int& ntype,
                                                                    const int& spin,
-                                                                   const int& wg_nc,
-                                                                   const int& ik,
                                                                    const int& deeq_2,
                                                                    const int& deeq_3,
                                                                    const int& deeq_4,
@@ -220,8 +219,6 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              nkb,
              ntype,
              spin,
-             wg_nc,
-             ik,
              deeq_2,
              deeq_3,
              deeq_4,
@@ -244,8 +241,6 @@ __global__ void cal_stress_nl(
         const int jpol,
         const int nkb,
         const int ntype,
-        const int wg_nc,
-        const int ik,
         const int deeq_2,
         const int deeq_3,
         const int deeq_4,
@@ -263,18 +258,22 @@ __global__ void cal_stress_nl(
     const int ib2  = ib * 2;
     int it = blockIdx.x % ntype;
 
-    int iat = 0, sum = 0;
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
     }
 
-    FPTYPE stress_var = 0, fac = d_wg[ik * wg_nc + ib] * 1.0, ekb_now = d_ekb[ik * wg_nc + ib];
-    const int Nprojs = atom_nh[it];
+    FPTYPE stress_var = 0;
+    FPTYPE fac = d_wg[ib];
+    FPTYPE ekb_now = d_ekb[ib];
+    const int nproj = atom_nh[it];
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
-        for (int ii = threadIdx.x; ii < Nprojs * Nprojs; ii += blockDim.x) {
-            int ip1 = ii / Nprojs, ip2 = ii % Nprojs;
+        for (int ii = threadIdx.x; ii < nproj * nproj; ii += blockDim.x) {
+            const int ip1 = ii / nproj;
+            const int ip2 = ii % nproj;
             const thrust::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
             const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
             const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
@@ -290,7 +289,7 @@ __global__ void cal_stress_nl(
             stress_var -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
         }
         ++iat;
-        sum+=Nprojs;
+        sum+=nproj;
     }//ia
     __syncwarp();
     warp_reduce(stress_var);
@@ -306,8 +305,6 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int& nkb,
                                                                    const int& nbands_occ,
                                                                    const int& ntype,
-                                                                   const int& wg_nc,
-                                                                   const int& ik,
                                                                    const int& deeq_2,
                                                                    const int& deeq_3,
                                                                    const int& deeq_4,
@@ -326,8 +323,6 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              jpol,
              nkb,
              ntype,
-             wg_nc,
-             ik,
              deeq_2,
              deeq_3,
              deeq_4,

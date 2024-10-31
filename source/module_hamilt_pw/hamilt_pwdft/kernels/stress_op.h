@@ -66,8 +66,6 @@ struct cal_stress_nl_op
     /// @param nbands_occ - number of occupied bands
     /// @param ntype - total atomic type
     /// @param spin - current spin
-    /// @param wg_nc - the second dimension of matrix wg
-    /// @param ik - current k point
     /// @param deeq_2 - the second dimension of deeq
     /// @param deeq_3 - the third dimension of deeq
     /// @param deeq_4 - the forth dimension of deeq
@@ -90,8 +88,6 @@ struct cal_stress_nl_op
                     const int& nbands_occ,
                     const int& ntype,
                     const int& spin,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
@@ -111,8 +107,6 @@ struct cal_stress_nl_op
                     const int& nkb,
                     const int& nbands_occ,
                     const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
@@ -258,8 +252,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& nbands_occ,
                     const int& ntype,
                     const int& spin,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
@@ -279,8 +271,6 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& nkb,
                     const int& nbands_occ,
                     const int& ntype,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,

@@ -31,7 +31,6 @@ __global__ void cal_vkb1_nl(
 template <typename FPTYPE>
 __global__ void cal_force_nl(
         const bool nondiagonal,
-        const int wg_nc,
         const int ntype,
         const int spin,
         const int deeq_2,
@@ -39,7 +38,6 @@ __global__ void cal_force_nl(
         const int deeq_4,
         const int forcenl_nc,
         const int nbands,
-        const int ik,
         const int nkb,
         const int *atom_nh,
         const int *atom_na,
@@ -55,17 +53,18 @@ __global__ void cal_force_nl(
     const int ib = blockIdx.x / ntype;
     const int it = blockIdx.x % ntype;
 
-    int iat = 0, sum = 0;
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
     }
 
-    int Nprojs = atom_nh[it];
-    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
-    FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+    int nproj = atom_nh[it];
+    FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
+    FPTYPE ekb_now = d_ekb[ib];
     for (int ia = 0; ia < atom_na[it]; ia++) {
-        for (int ip = threadIdx.x; ip < Nprojs; ip += blockDim.x) {
+        for (int ip = threadIdx.x; ip < nproj; ip += blockDim.x) {
             // FPTYPE ps = GlobalC::ppcell.deeq[spin, iat, ip, ip];
             FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
                         - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
@@ -81,8 +80,8 @@ __global__ void cal_force_nl(
             }
 
             if (nondiagonal) {
-                //for (int ip2=0; ip2<Nprojs; ip2++)
-                for (int ip2 = 0; ip2 < Nprojs; ip2++) {
+                //for (int ip2=0; ip2<nproj; ip2++)
+                for (int ip2 = 0; ip2 < nproj; ip2++) {
                     if (ip != ip2) {
                         const int jnkb = sum + ip2;
                         ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2]
@@ -97,7 +96,7 @@ __global__ void cal_force_nl(
             }
         }
         iat += 1;
-        sum += Nprojs;
+        sum += nproj;
     }
 }
 
@@ -130,7 +129,6 @@ template <typename FPTYPE>
 void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                                                                   const bool& nondiagonal,
                                                                   const int& nbands_occ,
-                                                                  const int& wg_nc,
                                                                   const int& ntype,
                                                                   const int& spin,
                                                                   const int& deeq_2,
@@ -138,7 +136,6 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const int& deeq_4,
                                                                   const int& forcenl_nc,
                                                                   const int& nbands,
-                                                                  const int& ik,
                                                                   const int& nkb,
                                                                   const int* atom_nh,
                                                                   const int* atom_na,
@@ -153,9 +150,9 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 {
     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0,
             nondiagonal,
-            wg_nc, ntype, spin,
+            ntype, spin,
             deeq_2, deeq_3, deeq_4,
-            forcenl_nc, nbands, ik, nkb,
+            forcenl_nc, nbands, nkb,
             atom_nh, atom_na,
             tpiba,
             d_wg, d_ekb, qq_nt, deeq,
@@ -168,14 +165,12 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 
 template <typename FPTYPE>
 __global__ void cal_force_nl(
-        const int wg_nc,
         const int ntype,
         const int deeq_2,
         const int deeq_3,
         const int deeq_4,
         const int forcenl_nc,
         const int nbands,
-        const int ik,
         const int nkb,
         const int *atom_nh,
         const int *atom_na,
@@ -192,19 +187,20 @@ __global__ void cal_force_nl(
     const int ib2 = ib * 2;
     const int it = blockIdx.x % ntype;
 
-    int iat = 0, sum = 0;
+    int iat = 0;
+    int sum = 0;
     for (int ii = 0; ii < it; ii++) {
         iat += atom_na[ii];
         sum += atom_na[ii] * atom_nh[ii];
     }
 
-    int Nprojs = atom_nh[it];
-    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
-    FPTYPE ekb_now = d_ekb[ik * wg_nc + ib];
+    int nproj = atom_nh[it];
+    FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
+    FPTYPE ekb_now = d_ekb[ib];
     for (int ia = 0; ia < atom_na[it]; ia++) {
-        for (int ip = threadIdx.x; ip < Nprojs; ip += blockDim.x) {
+        for (int ip = threadIdx.x; ip < nproj; ip += blockDim.x) {
             const int inkb = sum + ip;
-            for (int ip2 = 0; ip2 < Nprojs; ip2++) 
+            for (int ip2 = 0; ip2 < nproj; ip2++) 
             {
                 // Effective values of the D-eS coefficients
                 const thrust::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
@@ -227,7 +223,7 @@ __global__ void cal_force_nl(
             }
         }
         iat += 1;
-        sum += Nprojs;
+        sum += nproj;
     }
 }
 
@@ -235,14 +231,12 @@ __global__ void cal_force_nl(
 template <typename FPTYPE>
 void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* ctx,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -256,9 +250,9 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                     FPTYPE* force)
 {
     hipLaunchKernelGGL(HIP_KERNEL_NAME(cal_force_nl<FPTYPE>), dim3(nbands_occ * ntype), dim3(THREADS_PER_BLOCK), 0, 0,
-            wg_nc, ntype,
+            ntype,
             deeq_2, deeq_3, deeq_4,
-            forcenl_nc, nbands, ik, nkb,
+            forcenl_nc, nbands, nkb,
             atom_nh, atom_na,
             tpiba,
             d_wg, d_ekb, qq_nt, 

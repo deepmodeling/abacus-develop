@@ -48,7 +48,6 @@ struct cal_force_nl_op
     /// @param ctx - which device this function runs on
     /// @param nondiagonal - control flag
     /// @param nbands_occ - number of occupied bands
-    /// @param wg_nc - the second dimension of matrix wg
     /// @param ntype - total atomic type
     /// @param spin - current spin
     /// @param deeq_2 - the second dimension of deeq
@@ -56,7 +55,6 @@ struct cal_force_nl_op
     /// @param deeq_4 - the forth dimension of deeq
     /// @param forcenl_nc - the second dimension of matrix forcenl
     /// @param nbands - NBANDS
-    /// @param ik - current k point
     /// @param nkb - number of k point
     /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
@@ -73,7 +71,6 @@ struct cal_force_nl_op
     void operator()(const base_device::DEVICE_CPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& spin,
                     const int& deeq_2,
@@ -81,7 +78,6 @@ struct cal_force_nl_op
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -96,14 +92,12 @@ struct cal_force_nl_op
     // interface for nspin=4 only
     void operator()(const base_device::DEVICE_CPU* ctx,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -139,7 +133,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const bool& nondiagonal,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& spin,
                     const int& deeq_2,
@@ -147,7 +140,6 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
@@ -162,14 +154,12 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
     // interface for nspin=4 only
     void operator()(const base_device::DEVICE_GPU* ctx,
                     const int& nbands_occ,
-                    const int& wg_nc,
                     const int& ntype,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int& forcenl_nc,
                     const int& nbands,
-                    const int& ik,
                     const int& nkb,
                     const int* atom_nh,
                     const int* atom_na,
