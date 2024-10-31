@@ -182,7 +182,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             setmem_complex_op()(this->ctx, psi_in, 0, n_band * psi_in_dmax);
 
 #ifdef __DSP
-    gemm_op_mt<T, Device>()
+    gemm_op_mt<T, Device>()  // In order to not coding another whole template, using this method to minimize the code change.
 #else
     gemm_op<T, Device>()
 #endif
@@ -444,6 +444,9 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
     {
+#ifdef __DSP
+        // Only on dsp hardware need an extra space to reduce data
+
         auto* swap = new T[notconv * this->nbase_x];
         auto* target = new T[notconv * this->nbase_x];
 
@@ -458,13 +461,6 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         {
             if (base_device::get_current_precision(swap) == "single")
             {
-                // MPI_Reduce(swap,
-                //            hcc + nbase * this->nbase_x,
-                //            notconv * this->nbase_x,
-                //            MPI_COMPLEX,
-                //            MPI_SUM,
-                //            0,
-                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
                            target,
                            notconv * this->nbase_x,
@@ -475,13 +471,6 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
             else
             {
-                // MPI_Reduce(swap,
-                //            hcc + nbase * this->nbase_x,
-                //            notconv * this->nbase_x,
-                //            MPI_DOUBLE_COMPLEX,
-                //            MPI_SUM,
-                //            0,
-                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
                            target,
                            notconv * this->nbase_x,
@@ -496,13 +485,6 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 
             if (base_device::get_current_precision(swap) == "single")
             {
-                // MPI_Reduce(swap,
-                //            scc + nbase * this->nbase_x,
-                //            notconv * this->nbase_x,
-                //            MPI_COMPLEX,
-                //            MPI_SUM,
-                //            0,
-                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
                            target,
                            notconv * this->nbase_x,
@@ -513,13 +495,6 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
             else
             {
-                // MPI_Reduce(swap,
-                //            scc + nbase * this->nbase_x,
-                //            notconv * this->nbase_x,
-                //            MPI_DOUBLE_COMPLEX,
-                //            MPI_SUM,
-                //            0,
-                //            this->diag_comm.comm);
                 MPI_Reduce(swap,
                            target,
                            notconv * this->nbase_x,
@@ -532,6 +507,64 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         syncmem_complex_op()(this->ctx, this->ctx, scc + nbase * this->nbase_x, target, notconv * this->nbase_x);
         delete[] swap;
         delete[] target;
+#else
+        auto* swap = new T[notconv * this->nbase_x];
+
+        syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+
+        if (std::is_same<T, double>::value)
+        {
+            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+            Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
+        }
+        else
+        {
+            if (base_device::get_current_precision(swap) == "single")
+            {
+                MPI_Reduce(swap,
+                           hcc + nbase * this->nbase_x,
+                           notconv * this->nbase_x,
+                           MPI_COMPLEX,
+                           MPI_SUM,
+                           0,
+                           this->diag_comm.comm);
+            }
+            else
+            {
+                MPI_Reduce(swap,
+                           hcc + nbase * this->nbase_x,
+                           notconv * this->nbase_x,
+                           MPI_DOUBLE_COMPLEX,
+                           MPI_SUM,
+                           0,
+                           this->diag_comm.comm);
+            }
+
+            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
+
+            if (base_device::get_current_precision(swap) == "single")
+            {
+                MPI_Reduce(swap,
+                           scc + nbase * this->nbase_x,
+                           notconv * this->nbase_x,
+                           MPI_COMPLEX,
+                           MPI_SUM,
+                           0,
+                           this->diag_comm.comm);
+            }
+            else
+            {
+                MPI_Reduce(swap,
+                           scc + nbase * this->nbase_x,
+                           notconv * this->nbase_x,
+                           MPI_DOUBLE_COMPLEX,
+                           MPI_SUM,
+                           0,
+                           this->diag_comm.comm);
+            }
+        }
+        delete[] swap;
+#endif
     }
 #endif
 
