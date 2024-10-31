@@ -410,22 +410,21 @@ def complete(vdw_method, value):
         'op': {'s9': 1.0, 'alp': 14.0}
     }
     ALL_KEYS = {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
+    EQUIVALENT = {'rs6': 'a1', 'a1': 'rs6', 'rs8': 'a2', 'a2': 'rs8'}
     out = value.copy()
+    for k in ALL_KEYS:
+        equilk = EQUIVALENT.get(k, k)
+        val = [out.get(k), out.get(equilk), 
+               DEFAULT[vdw_method].get(k), DEFAULT[vdw_method].get(equilk)]
+        val = [v for v in val if v is not None]
+        val = [0.0] if not val else val
+        out[k] = val[0]
+        out[equilk] = out[k]
     # equivalent? 
     # according to 
     # abacus-develop/source/module_hamilt_general/module_vdw/vdwd3_parameters.cpp
     # https://abacus.deepmodeling.com/en/latest/advanced/input_files/input-main.html
-    if 'rs6' in out:
-        out['a1'] = out['rs6']
-    if 'a1' in out:
-        out['rs6'] = out['a1']
-    if 'rs8' in out:
-        out['a2'] = out['rs8']
-    if 'a2' in out:
-        out['rs8'] = out['a2']
-    for k in ALL_KEYS:
-        if k not in out:
-            out[k] = DEFAULT[vdw_method].get(k, 0.0)
+
     return out
 
 def make_stdmap(data):
