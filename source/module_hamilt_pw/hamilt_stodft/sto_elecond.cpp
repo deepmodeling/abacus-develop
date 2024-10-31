@@ -1,11 +1,11 @@
 #include "sto_elecond.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/constants.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
+#include "module_parameter/parameter.h"
 #include "sto_tool.h"
 
 #include <chrono>
@@ -21,7 +21,7 @@ Sto_EleCond::Sto_EleCond(UnitCell* p_ucell_in,
                          pseudopot_cell_vnl* p_ppcell_in,
                          hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
                          StoChe<double>& stoche,
-                         Stochastic_WF* p_stowf_in)
+                         Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
     : EleCond(p_ucell_in, p_kv_in, p_elec_in, p_wfcpw_in, p_psi_in, p_ppcell_in)
 {
     this->p_hamilt = p_hamilt_in;
@@ -386,9 +386,10 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
 
         remain -= tmpnb;
         startnb += tmpnb;
-        if (remain == 0) {
+        if (remain == 0)
+        {
             break;
-}
+        }
     }
 
     for (int id = 0; id < ndim; ++id)
@@ -1012,9 +1013,4 @@ void Sto_EleCond::sKG(const int& smear_type,
         calcondw(nt, dt, smear_type, fwhmin, wcut, dw_in, ct11.data(), ct12.data(), ct22.data());
     }
     ModuleBase::timer::tick("Sto_EleCond", "sKG");
-}
-
-namespace GlobalTemp
-{
-const ModuleBase::matrix* veff;
 }

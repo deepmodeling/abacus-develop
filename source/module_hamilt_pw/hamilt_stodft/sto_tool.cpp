@@ -1,8 +1,8 @@
 #include "sto_tool.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/math_chebyshev.h"
 #include "module_base/timer.h"
+#include "module_parameter/parameter.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -13,7 +13,7 @@ void check_che(const int& nche_in,
                const double& try_emax,
                const int& nbands_sto,
                K_Vectors* p_kv,
-               Stochastic_WF* p_stowf,
+               Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf,
                hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto)
 {
     //------------------------------
@@ -74,7 +74,13 @@ void check_che(const int& nche_in,
                                            std::placeholders::_1,
                                            std::placeholders::_2,
                                            std::placeholders::_3);
-                converge = chetest.checkconverge(hchi_norm, pchi, npw, p_stowf->npwx, *p_hamilt_sto->emax, *p_hamilt_sto->emin, 2.0);
+                converge = chetest.checkconverge(hchi_norm,
+                                                 pchi,
+                                                 npw,
+                                                 p_stowf->npwx,
+                                                 *p_hamilt_sto->emax,
+                                                 *p_hamilt_sto->emin,
+                                                 2.0);
 
                 if (!converge)
                 {
