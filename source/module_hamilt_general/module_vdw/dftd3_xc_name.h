@@ -299,7 +299,7 @@ namespace DFTD3 {
         {"XC_GGA_X_B88+XC_GGA_C_OP_B88", "bop"}
     };
 
-    void search_xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname)
+    void _xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname)
     {
         std::vector<std::string> xc_words = FmtCore::split(xcpattern, "+");
         assert(xc_words.size() == 2);
@@ -315,7 +315,7 @@ namespace DFTD3 {
         }
     }
 
-    void search_xcname_libxc_xc(const std::string& xcpattern, std::string& xname)
+    void _xcname_libxc_xc(const std::string& xcpattern, std::string& xname)
     {
         std::vector<std::string> words = FmtCore::split(xcpattern, "_");
         if (xcname_libxc_xc_.find(xcpattern) != xcname_libxc_xc_.end()) {
@@ -326,22 +326,22 @@ namespace DFTD3 {
         }
     }
 
-    void search_xcname_libxc(const std::string& xcpattern, std::string& xname)
+    void _xcname_libxc(const std::string& xcpattern, std::string& xname)
     {
         if (xcpattern.find("+") != std::string::npos) {
-            search_xcname_libxc_xplusc(xcpattern, xname);
+            _xcname_libxc_xplusc(xcpattern, xname);
         } else {
-            search_xcname_libxc_xc(xcpattern, xname);
+            _xcname_libxc_xc(xcpattern, xname);
         }
     }
 
-    std::string search_xcname(const std::string& xcpattern)
+    std::string _xcname(const std::string& xcpattern)
     {
         std::string xcname = xcpattern;
         const std::regex pattern("XC_(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
         // as long as there is piece in xcpattern that can match, we can search for the corresponding name
         if (std::regex_match(xcpattern, pattern)) {
-            search_xcname_libxc(xcpattern, xcname);
+            _xcname_libxc(xcpattern, xcname);
         }
         return xcname;
     }

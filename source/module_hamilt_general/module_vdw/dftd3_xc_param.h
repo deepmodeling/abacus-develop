@@ -32,6 +32,7 @@
 #include <iostream>
 #include <cassert>
 #include <algorithm>
+#include "dftd3_xc_name.h"
 // 's6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'
 namespace DFTD3 {
     // DFT-D3(BJ)
@@ -316,7 +317,7 @@ namespace DFTD3 {
         {"ms2h", {1.0, 0.65, 0.65, 1.69464, 4.75, 4.75, 1.0, 14.0, 0.0}},
     };
     // a declaration
-    std::string lowercase(const std::string& s);
+    std::string _lowercase(const std::string& s);
     /**
      * @brief Get the dftd3 params object. 
      * dftd3 method fall back: xc-bjm -> xc-bj -> pbe-bj
@@ -326,11 +327,11 @@ namespace DFTD3 {
      * @param d3method the d3 method, can be "bj", "zero-damping", "bj-modified", "zero-damping-modified", "op"
      * @param param the dftd3 parameters, ALL_KEYS = {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
      */
-    void search(const std::string& xc, 
+    void _search(const std::string& xc, 
                 const std::string& method, 
                 std::vector<double>& param)
     {
-        const std::string xc_lowercase = lowercase(xc);
+        const std::string xc_lowercase = _lowercase(xc);
         const std::vector<std::string> allowed_ = { "bj", "zero", "bjm", "zerom", "op" };
         assert(std::find(allowed_.begin(), allowed_.end(), method) != allowed_.end());
         if (method == "op")
@@ -342,7 +343,7 @@ namespace DFTD3 {
             else
             {
                 std::cout << " WARNING: DFT-D3 (Optimized-Power) parameter for XC `" << xc << "` not found, fall back to PBE-D3(0) " << std::endl;
-                search("PBE", "zero", param);
+                _search("PBE", "zero", param);
             }
         }
         else if (method == "bjm")
@@ -354,7 +355,7 @@ namespace DFTD3 {
             else
             {
                 std::cout << " WARNING: DFT-D3M(BJ) parameter for XC `" << xc << "` not found, fall back to DFT-D3(BJ)" << std::endl;
-                search(xc, "bj", param);
+                _search(xc, "bj", param);
             }
         }
         else if (method == "bj")
@@ -366,7 +367,7 @@ namespace DFTD3 {
             else
             {
                 std::cout << " WARNING: DFT-D3(BJ) parameter for XC `" << xc << "` not found, fall back to DFT-D3(0)" << std::endl;
-                search("pbe", "bj", param);
+                _search("pbe", "bj", param);
             }
         }
         else if (method == "zerom")
@@ -378,7 +379,7 @@ namespace DFTD3 {
             else
             {
                 std::cout << " WARNING: DFT-D3M(0) parameter for XC `" << xc << "` not found, fall back to DFT-D3(0)" << std::endl;
-                search(xc, "zero", param);
+                _search(xc, "zero", param);
             }
         }
         else // zero
@@ -390,16 +391,76 @@ namespace DFTD3 {
             else
             {
                 std::cout << " WARNING: DFT-D3(0) parameter for XC `" << xc << "` not found, fall back to PBE-D3(0)" << std::endl;
-                search("PBE", "zero", param);
+                _search("PBE", "zero", param);
             }
         }
     }
 
-    std::string lowercase(const std::string& s)
+    std::string _lowercase(const std::string& s)
     {
         std::string result = s;
         std::transform(s.begin(), s.end(), result.begin(), ::tolower);
         return result;
+    }
+
+    /**
+     * @brief Get DFT-D3 parameters. If if there are parameters defined,
+     * then it will overwrite the search result. If all parameters are
+     * defined already by user, then search will not performed. 
+     * 
+     * @param xc XC functional name
+     * @param d3method can be "d3_0" or "d3_bj"
+     * @param s6_in user defined s6, default is "default"
+     * @param s8_in user defined s8, default is "default"
+     * @param a1_in user defined a1, default is "default"
+     * @param a2_in user defined a2, default is "default"
+     * @param s6 [out] s6 parameter
+     * @param s8 [out] s8 parameter
+     * @param a1 [out] a1 parameter
+     * @param a2 [out] a2 parameter
+     */
+    void dftd3_params(const std::string& xc_in,
+                      const std::string& d3method,
+                      const std::string& s6_in,
+                      const std::string& s8_in,
+                      const std::string& a1_in,
+                      const std::string& a2_in,
+                      double& s6,
+                      double& s8,
+                      double& a1,
+                      double& a2)
+    {
+        bool search = true;
+        const std::vector<std::string> flag = {s6_in, s8_in, a1_in, a2_in};
+        const std::map<std::string, std::string> param_map = {
+            {"d3_bj", "bj"}, {"d3_0", "zero"}, {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
+            {"op", "op"}};
+        for (const auto& f : flag)
+        {
+            if (f != "default")
+            {
+                search = false;
+                break;
+            }
+        }
+        if (!search)
+        {
+            s6 = std::stod(s6_in);
+            s8 = std::stod(s8_in);
+            a1 = std::stod(a1_in);
+            a2 = std::stod(a2_in);
+        }
+        else
+        {
+            std::cout << " VDW: DFTD3 parameters are not provided, search based on XC " << std::endl;
+            std::vector<double> param;
+            const std::string xc = DFTD3::_xcname(xc_in);
+            _search(xc, param_map.at(d3method), param);
+            s6 = param[0];
+            s8 = param[3];
+            a1 = param[1];
+            a2 = param[5];
+        }
     }
 }
 

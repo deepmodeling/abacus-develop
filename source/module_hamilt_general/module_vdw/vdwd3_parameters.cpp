@@ -8,7 +8,6 @@
 #include "module_base/constants.h"
 #include <map>
 #include "dftd3_xc_param.h"
-#include "dftd3_xc_name.h"
 namespace vdw
 {
 
@@ -24,17 +23,10 @@ void Vdwd3Parameters::initial_parameters(const Input_para &input)
                      std::vector<std::vector<std::vector<double>>>(
                          5,
                          std::vector<std::vector<double>>(max_elem_, std::vector<double>(max_elem_, 0.0)))));
-    const std::string xc = DFTD3::search_xcname(input.dft_functional);
-    const std::string vdw_method = input.vdw_method;
-    const std::map<std::string, std::string> dftd3_method = {{"d3_bj", "bj"}, {"d3_0", "zero"},
-                                                             {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
-                                                             {"op", "op"}};
-    std::vector<double> param;
-    DFTD3::search(xc, dftd3_method.at(vdw_method), param);
-    s6_ = param[0];  // s6
-    s18_ = param[3]; // s8
-    rs6_ = param[1]; // rs6 or a1
-    rs18_ = param[5];// rs8 or a2
+    
+    DFTD3::dftd3_params(input.dft_functional, input.vdw_method,
+                        input.vdw_s6, input.vdw_s8, input.vdw_a1, input.vdw_a2,
+                        s6_, s18_, rs6_, rs18_); /* rs6: a1, rs18: a2 */
     abc_ = input.vdw_abc;
     version_ = input.vdw_method;
     model_ = input.vdw_cutoff_type;
