@@ -26,7 +26,7 @@ The following references are required to be cited when using ABACUS. Specificall
 
 - **If DeePKS is used:**
 
-    Wenfei Li, Qi Ou, et al. "DeePKS+ABACUS as a Bridge between Expensive Quantum Mechanical Models and Machine Learning Potentials." <https://arxiv.org/abs/2206.10093>.
+    Wenfei Li, Qi Ou, et al. "DeePKS+ABACUS as a Bridge between Expensive Quantum Mechanical Models and Machine Learning Potentials." J. Phys. Chem. A 126.49 (2022): 9154-9164.
 
 - **If hybrid functional is used:**
 

@@ -2,92 +2,92 @@
 #include "module_io/cube_io.h"
 #include "module_parameter/parameter.h"
 #include<vector>
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
-void ModuleIO::write_cube(
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
-    const double*const data,
+void ModuleIO::write_vdata_palgrid(
+    const Parallel_Grid& pgrid,
+    const double* const data,
     const int is,
     const int nspin,
     const int iter,
     const std::string& fn,
-    const int nx,
-    const int ny,
-    const int nz,
     const double ef,
     const UnitCell*const ucell,
     const int precision,
     const int out_fermi)
 {
-    ModuleBase::TITLE("ModuleIO", "write_cube");
+    ModuleBase::TITLE("ModuleIO", "write_vdata_palgrid");
 
     const int my_rank = GlobalV::MY_RANK;
+    const int my_pool = GlobalV::MY_POOL;
 
     time_t start;
     time_t end;
-    std::ofstream ofs_cube;
+    std::stringstream ss;
 
+    const int& nx = pgrid.nx;
+    const int& ny = pgrid.ny;
+    const int& nz = pgrid.nz;
+    const int& nxyz = nx * ny * nz;
+
+    start = time(nullptr);
+
+    // reduce
+    std::vector<double> data_xyz_full(nxyz);    // data to be written
+#ifdef __MPI    // reduce to rank 0
+    if (my_pool == 0)
+    {
+        pgrid.reduce(data_xyz_full.data(), data);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
+    std::memcpy(data_xyz_full.data(), data, nxyz * sizeof(double));
+#endif
+
+    // build the info structure
     if (my_rank == 0)
     {
-        start = time(NULL);
-
-        if (iter == 0)
-        {
-            ofs_cube.open(fn.c_str());
-        }
-        else
-        {
-            ofs_cube.open(fn.c_str(), std::ios::app);
-        }
-
-        if (!ofs_cube)
-        {
-            ModuleBase::WARNING("ModuleIO::write_cube", "Can't create Output File!");
-        }
-
         /// output header for cube file
-        ofs_cube << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
-        ofs_cube << nspin << " (nspin) ";
+        ss << "STEP: " << iter << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 
-        ofs_cube << std::fixed;
-        ofs_cube << std::setprecision(6);
+        ss << nspin << " (nspin) ";
+        ss << std::fixed;
+        ss << std::setprecision(6);
         if (out_fermi == 1)
         {
             if (PARAM.globalv.two_fermi)
             {
                 if (is == 0)
                 {
-                    ofs_cube << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
+                    ss << ef << " (fermi energy for spin=1, in Ry)" << std::endl;
                 }
                 else if (is == 1)
                 {
-                    ofs_cube << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
+                    ss << ef << " (fermi energy for spin=2, in Ry)" << std::endl;
                 }
             }
             else
             {
-                ofs_cube << ef << " (fermi energy, in Ry)" << std::endl;
+                ss << ef << " (fermi energy, in Ry)" << std::endl;
             }
         }
         else
         {
-            ofs_cube << std::endl;
+            ss << std::endl;
         }
 
-        ofs_cube << ucell->nat << " 0.0 0.0 0.0 " << std::endl;
+        std::vector<std::string> comment(2);
+        for (int i = 0;i < 2;++i) { std::getline(ss, comment[i]); }
+
         double fac = ucell->lat0;
-        ofs_cube << nx << " " << fac * ucell->latvec.e11 / double(nx) << " " << fac * ucell->latvec.e12 / double(nx)
-                 << " " << fac * ucell->latvec.e13 / double(nx) << std::endl;
-        ofs_cube << ny << " " << fac * ucell->latvec.e21 / double(ny) << " " << fac * ucell->latvec.e22 / double(ny)
-                 << " " << fac * ucell->latvec.e23 / double(ny) << std::endl;
-        ofs_cube << nz << " " << fac * ucell->latvec.e31 / double(nz) << " " << fac * ucell->latvec.e32 / double(nz)
-                 << " " << fac * ucell->latvec.e33 / double(nz) << std::endl;
+        std::vector<double> dx = { fac * ucell->latvec.e11 / double(nx), fac * ucell->latvec.e12 / double(nx), fac * ucell->latvec.e13 / double(nx) };
+        std::vector<double> dy = { fac * ucell->latvec.e21 / double(ny), fac * ucell->latvec.e22 / double(ny), fac * ucell->latvec.e23 / double(ny) };
+        std::vector<double> dz = { fac * ucell->latvec.e31 / double(nz), fac * ucell->latvec.e32 / double(nz), fac * ucell->latvec.e33 / double(nz) };
 
         std::string element = "";
+        std::vector<int> atom_type;
+        std::vector<double> atom_charge;
+        std::vector<std::vector<double>> atom_pos;
         for (int it = 0; it < ucell->ntype; it++)
         {
             // erase the number in label, such as Fe1.
@@ -117,184 +117,79 @@ void ModuleIO::write_cube(
                         break;
                     }
                 }
-                ofs_cube << " " << z << " " << ucell->atoms[it].ncpp.zv << " " << fac * ucell->atoms[it].tau[ia].x
-                         << " " << fac * ucell->atoms[it].tau[ia].y << " " << fac * ucell->atoms[it].tau[ia].z
-                         << std::endl;
+                atom_type.push_back(z);
+                atom_charge.push_back(ucell->atoms[it].ncpp.zv);
+                atom_pos.push_back({ fac * ucell->atoms[it].tau[ia].x, fac * ucell->atoms[it].tau[ia].y, fac * ucell->atoms[it].tau[ia].z });
             }
         }
-        ofs_cube.unsetf(std::ostream::fixed);
-        ofs_cube << std::setprecision(precision);
-        ofs_cube << std::scientific;
-    }
-
-#ifdef __MPI
-    ModuleIO::write_cube_core(ofs_cube, bz, nbz, nplane, startz_current, data, nx*ny, nz, 6);
-#else
-    ModuleIO::write_cube_core(ofs_cube, data, nx*ny, nz, 6);
-#endif
-
-    if (my_rank == 0)
-    {
-        end = time(NULL);
-        ModuleBase::GlobalFunc::OUT_TIME("write_cube", start, end);
-
-        /// for cube file
-        ofs_cube.close();
+        write_cube(fn, comment, ucell->nat, { 0.0, 0.0, 0.0 }, nx, ny, nz, dx, dy, dz, atom_type, atom_charge, atom_pos, data_xyz_full, precision);
+        end = time(nullptr);
+        ModuleBase::GlobalFunc::OUT_TIME("write_vdata_palgrid", start, end);
     }
 
     return;
 }
 
-
-void ModuleIO::write_cube_core(
-    std::ofstream &ofs_cube,
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
-    const double*const data,
-    const int nxy,
-    const int nz,
-    const int n_data_newline)
+void ModuleIO::write_cube(const std::string& file,
+    const std::vector<std::string>& comment,
+    const int& natom,
+    const std::vector<double>& origin,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    const std::vector<double>& dx,
+    const std::vector<double>& dy,
+    const std::vector<double>& dz,
+    const std::vector<int>& atom_type,
+    const std::vector<double>& atom_charge,
+    const std::vector<std::vector<double>>& atom_pos,
+    const std::vector<double>& data,
+    const int precision,
+    const int ndata_line)
 {
-    ModuleBase::TITLE("ModuleIO", "write_cube_core");
+    assert(comment.size() >= 2);
+    for (int i = 0;i < 2;++i) { assert(comment[i].find("\n") == std::string::npos); }
+    assert(origin.size() >= 3);
+    assert(dx.size() >= 3);
+    assert(dy.size() >= 3);
+    assert(dz.size() >= 3);
+    assert(atom_type.size() >= natom);
+    assert(atom_charge.size() >= natom);
+    assert(atom_pos.size() >= natom);
+    for (int i = 0;i < natom;++i) { assert(atom_pos[i].size() >= 3); }
+    assert(data.size() >= nx * ny * nz);
 
-#ifdef __MPI
+    std::ofstream ofs(file);
 
-    const int my_rank = GlobalV::MY_RANK;
-    const int my_pool = GlobalV::MY_POOL;
-    const int rank_in_pool = GlobalV::RANK_IN_POOL;
-    const int nproc_in_pool = GlobalV::NPROC_IN_POOL;
+    for (int i = 0;i < 2;++i) { ofs << comment[i] << "\n"; }
 
-    // only do in the first pool.
-    if (my_pool == 0)
+    ofs << std::fixed;
+    ofs << std::setprecision(1);    // as before
+
+    ofs << natom << " " << origin[0] << " " << origin[1] << " " << origin[2] << " \n";
+
+    ofs << std::setprecision(6);    //as before
+    ofs << nx << " " << dx[0] << " " << dx[1] << " " << dx[2] << "\n";
+    ofs << ny << " " << dy[0] << " " << dy[1] << " " << dy[2] << "\n";
+    ofs << nz << " " << dz[0] << " " << dz[1] << " " << dz[2] << "\n";
+
+    for (int i = 0;i < natom;++i)
     {
-        /// for cube file
-        const int nxyz = nxy * nz;
-        std::vector<double> data_cube(nxyz, 0.0);
-
-        // num_z: how many planes on processor 'ip'
-        std::vector<int> num_z(nproc_in_pool, 0);
-
-        for (int iz = 0; iz < nbz; iz++)
-        {
-            const int ip = iz % nproc_in_pool;
-            num_z[ip] += bz;
-        }
-
-        // start_z: start position of z in
-        // processor ip.
-        std::vector<int> start_z(nproc_in_pool, 0);
-        for (int ip = 1; ip < nproc_in_pool; ip++)
-        {
-            start_z[ip] = start_z[ip - 1] + num_z[ip - 1];
-        }
-
-        // which_ip: found iz belongs to which ip.
-        std::vector<int> which_ip(nz, 0);
-        for (int iz = 0; iz < nz; iz++)
-        {
-            for (int ip = 0; ip < nproc_in_pool; ip++)
-            {
-                if (iz >= start_z[nproc_in_pool - 1])
-                {
-                    which_ip[iz] = nproc_in_pool - 1;
-                    break;
-                }
-                else if (iz >= start_z[ip] && iz < start_z[ip + 1])
-                {
-                    which_ip[iz] = ip;
-                    break;
-                }
-            }
-        }
-
-        int count = 0;
-        std::vector<double> zpiece(nxy, 0.0);
-
-        // save the rho one z by one z.
-        for (int iz = 0; iz < nz; iz++)
-        {
-            zpiece.assign(nxy, 0.0);
-
-            // tag must be different for different iz.
-            const int tag = iz;
-            MPI_Status ierror;
-
-            // case 1: the first part of rho in processor 0.
-            if (which_ip[iz] == 0 && rank_in_pool == 0)
-            {
-                for (int ixy = 0; ixy < nxy; ixy++)
-                {
-                    // mohan change to rho_save on 2012-02-10
-                    // because this can make our next restart calculation lead
-                    // to the same scf_thr as the one saved.
-                    zpiece[ixy] = data[ixy * nplane + iz - startz_current];
-                }
-            }
-            // case 2: > first part rho: send the rho to
-            // processor 0.
-            else if (which_ip[iz] == rank_in_pool)
-            {
-                for (int ixy = 0; ixy < nxy; ixy++)
-                {
-                    zpiece[ixy] = data[ixy * nplane + iz - startz_current];
-                }
-                MPI_Send(zpiece.data(), nxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
-            }
-
-            // case 2: > first part rho: processor 0 receive the rho
-            // from other processors
-            else if (rank_in_pool == 0)
-            {
-                MPI_Recv(zpiece.data(), nxy, MPI_DOUBLE, which_ip[iz], tag, POOL_WORLD, &ierror);
-            }
-
-            if (my_rank == 0)
-            {
-                /// for cube file
-                for (int ixy = 0; ixy < nxy; ixy++)
-                {
-                    data_cube[ixy * nz + iz] = zpiece[ixy];
-                }
-                /// for cube file
-            }
-        } // end iz
-
-        // for cube file
-        if (my_rank == 0)
-        {
-            for (int ixy = 0; ixy < nxy; ixy++)
-            {
-                for (int iz = 0; iz < nz; iz++)
-                {
-                    ofs_cube << " " << data_cube[ixy * nz + iz];
-                    if ((iz % n_data_newline == n_data_newline-1) && (iz != nz - 1))
-                    {
-                        ofs_cube << "\n";
-                    }
-                }
-                ofs_cube << "\n";
-            }
-        }
-        /// for cube file
+        ofs << " " << atom_type[i] << " " << atom_charge[i] << " " << atom_pos[i][0] << " " << atom_pos[i][1] << " " << atom_pos[i][2] << "\n";
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-#else
-    for (int ixy = 0; ixy < nxy; ixy++)
+
+    ofs.unsetf(std::ofstream::fixed);
+    ofs << std::setprecision(precision);
+    ofs << std::scientific;
+    const int nxy = nx * ny;
+    for (int ixy = 0; ixy < nxy; ++ixy)
     {
-        for (int iz = 0; iz < nz; iz++)
+        for (int iz = 0;iz < nz;++iz)
         {
-            ofs_cube << " " << data[iz * nxy + ixy];
-            // ++count_cube;
-            if ((iz % n_data_newline == n_data_newline-1) && (iz != nz - 1))
-            {
-                ofs_cube << "\n";
-            }
+            ofs << " " << data[ixy * nz + iz];
+            if ((iz + 1) % ndata_line == 0 && iz != nz - 1) { ofs << "\n"; }
         }
-        ofs_cube << "\n";
+        ofs << "\n";
     }
-#endif
+    ofs.close();
 }
