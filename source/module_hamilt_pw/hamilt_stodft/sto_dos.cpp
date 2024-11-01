@@ -1,8 +1,8 @@
 #include "sto_dos.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_parameter/parameter.h"
 #include "sto_tool.h"
 Sto_DOS::~Sto_DOS()
 {
@@ -14,7 +14,7 @@ Sto_DOS::Sto_DOS(ModulePW::PW_Basis_K* p_wfcpw_in,
                  psi::Psi<std::complex<double>>* p_psi_in,
                  hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
                  StoChe<double>& stoche,
-                 Stochastic_WF* p_stowf_in)
+                 Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in)
 {
     this->p_wfcpw = p_wfcpw_in;
     this->p_kv = p_kv_in;
@@ -38,13 +38,7 @@ void Sto_DOS::decide_param(const int& dos_nche,
                            const double& dos_scale)
 {
     this->dos_nche = dos_nche;
-    check_che(this->dos_nche,
-              emin_sto,
-              emax_sto,
-              this->nbands_sto,
-              this->p_kv,
-              this->p_stowf,
-              this->p_hamilt_sto);
+    check_che(this->dos_nche, emin_sto, emax_sto, this->nbands_sto, this->p_kv, this->p_stowf, this->p_hamilt_sto);
     if (dos_setemax)
     {
         this->emax = dos_emax_ev;
@@ -147,12 +141,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
                 }
                 ModuleBase::GlobalFunc::ZEROS(allorderchi.data(), nchipk_new * npwx * dos_nche);
                 std::complex<double>* tmpchi = pchi + start_nchipk * npwx;
-                che.calpolyvec_complex(hchi_norm,
-                                       tmpchi,
-                                       allorderchi.data(),
-                                       npw,
-                                       npwx,
-                                       nchipk_new);
+                che.calpolyvec_complex(hchi_norm, tmpchi, allorderchi.data(), npw, npwx, nchipk_new);
                 double* vec_all = (double*)allorderchi.data();
                 int LDA = npwx * nchipk_new * 2;
                 int M = npwx * nchipk_new * 2;

@@ -9,15 +9,15 @@
 
 namespace hsolver
 {
-
-void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
-                           psi::Psi<std::complex<double>>& psi,
-                           elecstate::ElecState* pes,
-                           ModulePW::PW_Basis_K* wfc_basis,
-                           Stochastic_WF& stowf,
-                           const int istep,
-                           const int iter,
-                           const bool skip_charge)
+template <typename T, typename Device>
+void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
+                                      psi::Psi<T, Device>& psi,
+                                      elecstate::ElecState* pes,
+                                      ModulePW::PW_Basis_K* wfc_basis,
+                                      Stochastic_WF<T, Device>& stowf,
+                                      const int istep,
+                                      const int iter,
+                                      const bool skip_charge)
 {
     ModuleBase::TITLE("HSolverPW_SDFT", "solve");
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
@@ -44,7 +44,7 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         {
             this->updatePsiK(pHamilt, psi, ik);
             // template add precondition calculating here
-            update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
+            this->update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
             this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);
@@ -68,12 +68,15 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
         // init k
         if (nks > 1)
         {
-            pHamilt->updateHk(ik);
+            pHamilt->updateHk(ik); // necessary , because emax and emin should be decided first
         }
         stoiter.calPn(ik, stowf);
     }
 
+    // iterate to get mu
     stoiter.itermu(iter, pes);
+
+    // prepare sqrt{f(\hat{H})}|\chi> to calculate density, force and stress
     stoiter.calHsqrtchi(stowf);
     if (skip_charge)
     {
@@ -104,4 +107,6 @@ void HSolverPW_SDFT::solve(hamilt::Hamilt<std::complex<double>>* pHamilt,
     return;
 }
 
+// template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
+template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
 } // namespace hsolver
