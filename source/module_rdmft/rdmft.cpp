@@ -435,7 +435,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
 {
     // this->cal_V_hartree();
     // this->cal_V_XC();
-    // this->cal_Hk_Hpsi();
+    this->cal_Hk_Hpsi();
     this->cal_E_gradient();
     this->cal_Energy(this->cal_E_type);
     // this->cal_Energy(2);

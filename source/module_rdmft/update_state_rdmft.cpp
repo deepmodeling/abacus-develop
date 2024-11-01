@@ -79,7 +79,7 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
 
     this->cal_V_hartree();
     this->cal_V_XC();
-    this->cal_Hk_Hpsi();
+    // this->cal_Hk_Hpsi();
 }
 
 
