@@ -263,7 +263,7 @@ void ReadInput::item_system()
         item.annotation = "energy cutoff for wave functions";
         read_sync_double(input.ecutwfc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ecutwfc == 0){
+            if (para.input.ecutwfc == 0){ // 0 means no input value
                 if (para.input.basis_type == "lcao")
                 {
                     para.input.ecutwfc = 100;
