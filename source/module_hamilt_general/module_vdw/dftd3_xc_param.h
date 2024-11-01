@@ -25,7 +25,8 @@
  * 
  * Please always look the warnning message to check the fall-back.
  */
-
+#ifndef DFTD3_XC_PARAM_H_
+#define DFTD3_XC_PARAM_H_
 #include <map>
 #include <string>
 #include <vector>
@@ -403,6 +404,13 @@ namespace DFTD3 {
         return result;
     }
 
+    std::string _uppercase(const std::string& s)
+    {
+        std::string result = s;
+        std::transform(s.begin(), s.end(), result.begin(), ::toupper);
+        return result;
+    }
+
     /**
      * @brief Get DFT-D3 parameters. If if there are parameters defined,
      * then it will overwrite the search result. If all parameters are
@@ -452,9 +460,10 @@ namespace DFTD3 {
         }
         else
         {
-            std::cout << " VDW: DFTD3 parameters are not provided, search based on XC " << std::endl;
             std::vector<double> param;
             const std::string xc = DFTD3::_xcname(xc_in);
+            std::cout << " VDW: DFTD3 parameters are not provided, search based on XC (" 
+                      << _uppercase(xc) << ")" << std::endl;
             _search(xc, param_map.at(d3method), param);
             s6 = param[0];
             s8 = param[3];
@@ -463,7 +472,7 @@ namespace DFTD3 {
         }
     }
 }
-
+#endif // DFTD3_XC_PARAM_H
 /*
 '''
 dftd3 parameters from 

@@ -1,3 +1,5 @@
+#ifndef DFTD3_XC_NAME_H
+#define DFTD3_XC_NAME_H
 /**
  * This file stores the mapping from XC names in LibXC format
  * to conventional names in DFTD3.
@@ -346,7 +348,7 @@ namespace DFTD3 {
         return xcname;
     }
 }
-
+#endif // DFTD3_XCNAME_H_
 /**
 import os
 import re
