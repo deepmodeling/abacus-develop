@@ -7,8 +7,8 @@
 #include "vdwd3_parameters.h"
 #include "module_base/constants.h"
 #include <map>
-#include "dftd3.h"
-
+#include "dftd3_xc_param.h"
+#include "dftd3_xc_name.h"
 namespace vdw
 {
 
@@ -24,13 +24,12 @@ void Vdwd3Parameters::initial_parameters(const Input_para &input)
                      std::vector<std::vector<std::vector<double>>>(
                          5,
                          std::vector<std::vector<double>>(max_elem_, std::vector<double>(max_elem_, 0.0)))));
-    const std::string xc = input.dft_functional;
+    const std::string xc = DFTD3::search_xcname(input.dft_functional);
     const std::string vdw_method = input.vdw_method;
     const std::map<std::string, std::string> dftd3_method = {{"d3_bj", "bj"}, {"d3_0", "zero"},
                                                              {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
                                                              {"op", "op"}};
     std::vector<double> param;
-    // std::cout << " VDW: search for DFT-D3 parameters for " << xc << " with " << vdw_method << std::endl;
     DFTD3::search(xc, dftd3_method.at(vdw_method), param);
     s6_ = param[0];  // s6
     s18_ = param[3]; // s8

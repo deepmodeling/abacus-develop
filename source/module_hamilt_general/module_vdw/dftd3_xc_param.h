@@ -1,3 +1,31 @@
+/**
+ * This file stores XC dependent DFT-D3 parameters for Grimme-D3
+ * dispersion correction.
+ * 
+ * Supported forms:
+ * 
+ * DFT-D3(0): zero-damping
+ * DFT-D3(BJ): Becke-Johnson damping
+ * DFT-D3M(0): zero-damping with modified damping function
+ * DFT-D3M(BJ): Becke-Johnson damping with modified damping function
+ * 
+ * Usage
+ * -----
+ * call function DFTD3::search(xc, method, param) to get the DFT-D3 parameters
+ * for the given XC functional. The obtained param should be a std::vector<double>,
+ * in which the first 9 elements are the DFT-D3 parameters:
+ * 's6', 'sr6', 'a1', 's8', 'sr8', 'a2', 's9', 'alp', 'bet'
+ * 
+ * Fall-back
+ * ---------
+ * If the DFT-D3 parameters are not found:
+ * 
+ * DFT-D3M(BJ) -> DFT-D3(BJ) -> PBE-D3(BJ)
+ * DFT-D3M(0) -> DFT-D3(0) -> PBE-D3(0)
+ * 
+ * Please always look the warnning message to check the fall-back.
+ */
+
 #include <map>
 #include <string>
 #include <vector>
