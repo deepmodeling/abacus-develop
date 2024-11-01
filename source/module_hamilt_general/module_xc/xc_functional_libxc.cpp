@@ -12,10 +12,32 @@
 
 #include <vector>
 
+std::string uppercase(const std::string& str)
+{
+	std::string result = str;
+	std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+	return result;
+}
+
+bool XC_Functional_Libxc::xc_with_nonlocal_vdw(const std::string& xc_func_in)
+{
+	const std::string xc_func = uppercase(xc_func_in);
+	if(xc_func.find("VDW") != std::string::npos) { return true; }
+	if(xc_func.find("RVV10") != std::string::npos) { return true; }
+	const std::vector<std::string> not_supported = {"C09X", "VCML"};
+	for(const std::string& str : not_supported)
+	{
+		if(xc_func.find(str) != std::string::npos) { return true; }
+	}
+	return false;
+}
+
 std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::string xc_func_in)
 {
     // determine the type (lda/gga/mgga)
 	int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
+	if(XC_Functional_Libxc::xc_with_nonlocal_vdw(xc_func_in))
+	{ ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functionals with non-local dispersion are not supported."); }
     func_type = 1;
     if(xc_func_in.find("GGA") != std::string::npos) { func_type = 2; }
     if(xc_func_in.find("MGGA") != std::string::npos) { func_type = 3; }
