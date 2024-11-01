@@ -36,7 +36,6 @@ namespace LR_Util
     std::pair<ModuleBase::matrix, std::vector<std::pair<int, int>>>
         set_ix_map_diagonal(bool mode, int nc, int nv);
 
-#ifdef  USE_LIBXC
     /// operators to calculate XC kernels
     void grad(const double* rhor,
         ModuleBase::Vector3<double>* gdr,
@@ -46,7 +45,6 @@ namespace LR_Util
         double* lapn,
         const ModulePW::PW_Basis& rho_basis,
         const double& tpiba2);
-#endif
     /// =================ALGORITHM====================
 
     //====== newers and deleters========

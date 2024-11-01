@@ -724,6 +724,7 @@ OBJS_TENSOR=tensor.o\
 
     OBJS_LR=lr_util.o\
     lr_util_hcontainer.o\
+    lr_util_xc.o\
     AX_parallel.o\
     AX_serial.o\
     dm_trans_parallel.o\
