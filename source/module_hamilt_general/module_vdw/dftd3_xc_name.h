@@ -346,3 +346,217 @@ namespace DFTD3 {
         return xcname;
     }
 }
+
+/**
+import os
+import re
+def read_xc_func_h(fn):
+    with open(fn) as f:
+        lines = f.readlines()
+    out = {}
+    for line in lines:
+        words = line.strip().split()
+        xc, xcid = words[1], int(words[2])
+        xc_annos = ' '.join(words[4:-1])
+        out[xc] = {'id': xcid, 'annos': xc_annos}
+    return out
+
+def sort_xc(xc_data):
+    '''Sort the xc functionals into x, c, xc, k functionals.
+    
+    Parameters
+    ----------
+    xc_data : dict
+        from function read_xc_func_h
+    
+    Returns
+    -------
+    dict, dict, dict, dict
+        The dictionaries of x, c, xc, k functionals, whose keys are the
+        like LDA, GGA, MGGA, HYB, HYB_LDA, HYB_GGA, HYB_MGGA, values are
+        the dictionaries of the functionals, whose keys are the conventional
+        xc name, values include approx, annos, id, full.
+    '''
+    x, c, xc, k = {}, {}, {}, {}
+    dictmap = {'X': x, 'C': c, 'XC': xc, 'K': k}
+    xcpat = r'XC_(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)'
+    for xc_name, data in xc_data.items():
+        m = re.match(xcpat, xc_name)
+        if m is None:
+            print('Warning: cannot match', xc_name)
+            continue
+        approx, type_, name = m.groups()
+        dictmap[type_][name] = {'approx': approx, 'annos': data['annos'],
+                                'id': data['id'], 'full': xc_name}
+    return x, c, xc, k
+
+def pair_xc(x, c):
+    '''
+    Pair the x and c functionals.
+    
+    Parameters
+    ----------
+    x : dict
+        The dictionary of x functionals, whose keys are the conventional
+        xc name, values include approx, annos, id, full.
+    
+    c : dict
+        the same as x
+    
+    Returns
+    -------
+    dict, dict
+        The dictionary of paired and unpaired x and c functionals, whose keys are the
+        conventional xc name, values are the dictionary of x and c functionals.
+    '''
+    paired, unpaired = {}, {}
+    for xc_name, data in x.items():
+        if xc_name in c:
+            paired[xc_name] = {'x': data, 'c': c[xc_name]}
+        else:
+            unpaired[xc_name] = data
+    return paired, unpaired
+
+def xc_to_stdmap(xc, conventional_lower=True):
+    '''print the xc in the way of c++ std::map<std::string, std::string>.
+    
+    Parameters
+    ----------
+    xc : dict
+        The dictionary of xc functionals, whose keys are the conventional
+        xc name, values include approx, annos, id, full.
+    conventional_lower : bool
+        Whether to convert the conventional name to lower case.
+    
+    Returns
+    -------
+    str
+        The string of c++ code, std::map<std::string, std::string> mapping
+        the full name of xc to its conventional name.
+    '''
+    out = 'const std::map<std::string, std::string> xcname_libxc_xc_ = {\n'
+    for name, data in xc.items():
+        name = name.lower() if conventional_lower else name
+        out += '    {"%s", "%s"},\n' % (data['full'], name)
+    out += '};\n'
+    return out
+    
+def paired_xc_to_stdmap(pairs, conventional_lower=True):
+    '''print the xc in the way of c++ std::map<std::string, std::string>.
+    
+    Parameters
+    ----------
+    pairs : dict
+        The dictionary of xc functionals, whose keys are the conventional
+        xc name, values include approx, annos, id, full.
+    conventional_lower : bool
+        Whether to convert the conventional name to lower case.
+    
+    Returns
+    -------
+    str
+        The string of c++ code, std::map<std::string, std::string> mapping
+        the full name of xc to its conventional name.
+    '''
+    out = 'const std::map<std::string, std::string> xcname_libxc_xplusc_ = {\n'
+    for name, data in pairs.items():
+        name = name.lower() if conventional_lower else name
+        plus = f'{data["x"]["full"]}+{data["c"]["full"]}'
+        out += '    {"%s", "%s"},\n' % (plus, name)
+        # sulp = f'{data["c"]["full"]}+{data["x"]["full"]}'
+        # out += '    {"%s", "%s"},\n' % (sulp, name)
+    out += '};\n'
+    return out
+
+def special_x_and_c(x, c):
+    '''Special pairings of x and c functionals. The following data sheet is 
+    from Pyscf: 
+    https://github.com/pyscf/pyscf/blob/master/pyscf/dft/xcfun.py
+    Thanks for pointing out the bug by @QuantumMiska and the help from wsr (@hebrewsnabla)
+    
+    
+    Parameters
+    ----------
+    x : dict
+        The dictionary of x functionals, whose keys are the conventional
+        xc name, values include approx, annos, id, full.
+    
+    c : dict
+        the same as x
+    
+    Returns
+    -------
+    dict
+        The dictionary of special pairings of x and c functionals.
+    '''
+    DATA = {
+        'BLYP'     : 'B88,LYP',
+        'BP86'     : 'B88,P86',
+        'PW91'     : 'PW91,PW91',
+        'PBE'      : 'PBE,PBE',
+        'REVPBE'   : 'REVPBE,PBE',
+        'PBESOL'   : 'PBE_SOL,PBE_SOL',
+        'PKZB'     : 'PKZB,PKZB',
+        'TPSS'     : 'TPSS,TPSS',
+        'REVTPSS'  : 'REVTPSS,REVTPSS',
+        'SCAN'     : 'SCAN,SCAN',
+        'SOGGA'    : 'SOGGA,PBE',
+        'BLOC'     : 'BLOC,TPSSLOC',
+        'OLYP'     : 'OPTX,LYP',
+        'RPBE'     : 'RPBE,PBE',
+        'BPBE'     : 'B88,PBE',
+        'MPW91'    : 'MPW91,PW91',
+        'HFLYP'    : 'HF,LYP',
+        'HFPW92'   : 'HF,PWMOD',
+        'SPW92'    : 'SLATER,PWMOD',
+        'SVWN'     : 'SLATER,VWN',
+        'MS0'      : 'MS0,REGTPSS',
+        'MS1'      : 'MS1,REGTPSS',
+        'MS2'      : 'MS2,REGTPSS',
+        'MS2H'     : 'MS2H,REGTPSS',
+        'MVS'      : 'MVS,REGTPSS',
+        'MVSH'     : 'MVSH,REGTPSS',
+        'SOGGA11'  : 'SOGGA11,SOGGA11',
+        'SOGGA11-X': 'SOGGA11_X,SOGGA11_X',
+        'KT1'      : 'KT1X,VWN',
+        'DLDF'     : 'DLDF,DLDF',
+        'GAM'      : 'GAM,GAM',
+        'M06-L'    : 'M06_L,M06_L',
+        'M11-L'    : 'M11_L,M11_L',
+        'MN12-L'   : 'MN12_L,MN12_L',
+        'MN15-L'   : 'MN15_L,MN15_L',
+        'N12'      : 'N12,N12',
+        'N12-SX'   : 'N12_SX,N12_SX',
+        'MN12-SX'  : 'MN12_SX,MN12_SX',
+        'MN15'     : 'MN15,MN15',
+        'MBEEF'    : 'MBEEF,PBE_SOL',
+        'SCAN0'    : 'SCAN0,SCAN',
+        'PBEOP'    : 'PBE,OP_PBE',
+        'BOP'      : 'B88,OP_B88',
+    }
+    paired = {}
+    for name, data in DATA.items():
+        xname, cname = data.split(',')
+        if xname in x and cname in c:
+            paired[name] = {'x': x[xname], 'c': c[cname]}
+        else:
+            print(f'Warning: {name} not found in x or c: {xname}, {cname}')
+    return paired
+
+def print_xc(xc):
+    print(f'{"Name":20s} {"Full":30s} {"Appr":10s} {"Annos"}')
+    for name, data in xc.items():
+        print(f'{name:20s} {data["full"]:30s} {data["approx"]:10s} {data["annos"]}')
+
+if __name__ == '__main__':
+    libxc = '/root/soft/libxc/libxc-6.2.2'
+    f = 'src/xc_funcs.h'
+    xc_data = read_xc_func_h(os.path.join(libxc, f))
+    x, c, xc, k = sort_xc(xc_data)
+    pairs, others = pair_xc(x, c)
+    special = special_x_and_c(x, c)
+    # print(xc_to_stdmap(xc))
+    # print(paired_xc_to_stdmap(pairs))
+    # print_xc(others)
+    print(paired_xc_to_stdmap(special))
+ */
