@@ -26,8 +26,6 @@
 #endif
 #include "module_io/json_output/output_info.h"
 
-#include "print_funcs.h" // mohan add 2024-07-27
-
 namespace ModuleESolver
 {
 
@@ -265,7 +263,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 
     this->pw_wfc->collect_local_pw(inp.erf_ecut, inp.erf_height, inp.erf_sigma);
 
-    Print_functions::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
+    ModuleIO::print_wfcfft(inp, *this->pw_wfc, GlobalV::ofs_running);
 
     //! 10) initialize the real-space uniform grid for FFT and parallel
     //! distribution of plane waves
@@ -549,6 +547,24 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             this->conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
 
+            // add energy threshold for SCF convergence
+            if (this->scf_ene_thr > 0.0)
+            {
+                // calculate energy of output charge density
+                this->update_pot(istep, iter);
+                this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
+                // now, etot_old is the energy of input density, while etot is the energy of output density
+                this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
+                // output etot_delta
+                GlobalV::ofs_running << " DeltaE_womix = " << this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+                if (iter > 1 && this->conv_esolver == 1) // only check when density is converged
+                {
+                    // update the convergence flag
+                    this->conv_esolver
+                        = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
+                }
+            }
+
             // If drho < hsolver_error in the first iter or drho < scf_thr, we
             // do not change rho.
             if (drho < hsolver_error || this->conv_esolver)
@@ -671,13 +687,6 @@ void ESolver_KS<T, Device>::iter_finish(int& iter)
     }
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
-
-    // add a energy threshold for SCF convergence
-    if (this->conv_esolver == 0) // only check when density is not converged
-    {
-        this->conv_esolver
-            = (iter != 1 && std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
-    }
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.

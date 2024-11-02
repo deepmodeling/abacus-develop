@@ -184,7 +184,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}
 
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
-		h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
+		if(!is_stress) h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 
 		XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);

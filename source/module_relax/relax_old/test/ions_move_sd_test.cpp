@@ -84,7 +84,8 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = " largest force is 0, no movement is possible.\n it may converged, otherwise no "
+    std::string expected_output = "\n Largest gradient in force is 0 eV/A.\n Threshold is -1 eV/A.\n"
+                                  " largest force is 0, no movement is possible.\n it may converged, otherwise no "
                                   "movement of atom is allowed.\n end of geometry optimization\n                       "
                                   "             istep = 1\n                         update iteration = 5\n";
     std::ifstream ifs("log");
@@ -122,7 +123,8 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Ion relaxation is not converged yet (threshold is 0.0257111)\n";
+    std::string expected_output = "\n Largest gradient in force is 25.7111 eV/A.\n Threshold is -1 eV/A.\n\n"
+                                  " Ion relaxation is not converged yet (threshold is 0.0257111)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ifs.close();
