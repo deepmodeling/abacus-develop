@@ -3946,9 +3946,9 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 ### init_fxc
 
 - **Type**: String
-- **Description**:  The method to initalize the xc kernel. 
-  - "gs": Calculate fxc from the ground-state charge density.
-  - "file_fxc": Read the xc kernel $f_\text{xc}$ on grid from the provided files. The following worlds should be the paths of ".cube" files, where the first 3 (spin-aa, spin-ab and spin-bb) will be read in. The parameter [xc_kernel](#xc_kernel) will be invalid. Now only LDA-type kernel is supproted as the potential will be calculated by directly multiplying the transition density.
+- **Description**: The method to initalize the xc kernel. 
+  - "gs": Calculate xc kerenel ($f_\text{xc}$) from the ground-state charge density.
+  - "file_fxc": Read the xc kernel $f_\text{xc}$ on grid from the provided files. The following words should be the paths of ".cube" files, where the first 3 (spin-aa, spin-ab and spin-bb) will be read in. The parameter [xc_kernel](#xc_kernel) will be invalid. Now only LDA-type kernel is supproted as the potential will be calculated by directly multiplying the transition density.
   - "file_chg": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
 - **Default**: "gs"
 

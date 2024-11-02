@@ -43,7 +43,7 @@ namespace LR
                     double ef = 0.0;
                     int prenspin = 1;
                     std::vector<double> v2rho2_tmp(nrxx);
-                    ModuleIO::read_vdata_palgrid(GlobalC::Pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, init_fxc[is + 1],
+                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, init_fxc[is + 1],
                         v2rho2_tmp.data(), ucell_in->nat);
                     for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * spinsize + is] = v2rho2_tmp[ir]; }
                 }
