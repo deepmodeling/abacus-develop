@@ -493,12 +493,12 @@ namespace DFTD3 {
             s8 = (s8_in == "default") ? param[3] : std::stod(s8_in);
             a1 = (a1_in == "default") ? param[2] : std::stod(a1_in);
             a2 = (a2_in == "default") ? param[5] : std::stod(a2_in);
-            param = {s6, s8, a1, a2};
-            FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
-            const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
-            vdwd3tab << items << flag << param;
-            std::cout << "DFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
-                      << std::flush;
+            // param = {s6, s8, a1, a2};
+            // FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
+            // const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
+            // vdwd3tab << items << flag << param;
+            // std::cout << "DFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
+            //           << std::flush;
         }
     }
 }
