@@ -732,7 +732,7 @@ OBJS_TENSOR=tensor.o\
     dmr_complex.o\
     operator_lr_hxc.o\
     operator_lr_exx.o\
-    kernel_xc.o\
+    xc_kernel.o\
     pot_hxc_lrtd.o\
     lr_spectrum.o\
     hamilt_casida.o\

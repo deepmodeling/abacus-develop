@@ -22,7 +22,7 @@ if(ENABLE_LCAO)
 
     if(ENABLE_LIBXC)
       list(APPEND objects
-        potentials/kernel_xc.cpp
+        potentials/xc_kernel.cpp
       )
     endif()
 

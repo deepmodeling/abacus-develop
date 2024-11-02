@@ -1,7 +1,7 @@
 #pragma once
 #include "module_elecstate/potentials/pot_base.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "kernel.h"
+#include "xc_kernel.h"
 #include <unordered_map>
 #include <memory>
 
