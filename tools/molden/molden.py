@@ -905,7 +905,8 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
     import numpy as np
 
     files = os.listdir(folder)
-    assert ("STRU" in files) and ("INPUT" in files) and ("KPT" in files)
+    assert ("STRU" in files) and ("INPUT" in files) and ("KPT" in files),\
+        "STRU, INPUT, KPT files are required in the folder."
     cwd = os.path.abspath(os.getcwd())
     os.chdir(folder)
     ####################
@@ -938,7 +939,8 @@ def moldengen(folder: str, ndigits=3, ngto=7, rel_r=2, fmolden="ABACUS.molden"):
     elif stru['coord_type'] == "Direct": # in fractional coordinates
         vec = np.array(stru['lat']['vec']) * stru['lat']['const']
         coords = np.dot(coords, vec)
-    elif stru['coord_type'] == "Cartesian_Angstrom":
+    elif stru['coord_type'].startswith("Cartesian_angstrom"):
+        # including *_center_xy, *_center_z, *_center_xyz, ... cases
         coords *= 0.529177249
     else:
         raise NotImplementedError(f"Unknown coordinate type {stru['coord_type']}")
