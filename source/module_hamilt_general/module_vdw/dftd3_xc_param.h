@@ -1,4 +1,8 @@
+#ifndef DFTD3_XC_PARAM_H_
+#define DFTD3_XC_PARAM_H_
 /**
+ * Intro
+ * -----
  * This file stores XC dependent DFT-D3 parameters for Grimme-D3
  * dispersion correction.
  * 
@@ -9,6 +13,15 @@
  * DFT-D3M(0): zero-damping with modified damping function
  * DFT-D3M(BJ): Becke-Johnson damping with modified damping function
  * 
+ * A detailed introduction of undamped, and BJ damping, the modified 
+ * damping can be found in DFT-D3 software manual, see:
+ * https://www.chemie.uni-bonn.de/grimme/de/software/dft-d3/man.pdf
+ *
+ * Other excellent learning materials (where you can find expression
+ * of both DFT-D2 and DFT-D3):
+ * DFT-D2: https://www.vasp.at/wiki/index.php/DFT-D2
+ * DFT-D3: https://www.vasp.at/wiki/index.php/DFT-D3
+ * 
  * Usage
  * -----
  * call function DFTD3::search(xc, method, param) to get the DFT-D3 parameters
@@ -16,17 +29,36 @@
  * in which the first 9 elements are the DFT-D3 parameters:
  * 's6', 'sr6', 'a1', 's8', 'sr8', 'a2', 's9', 'alp', 'bet'
  * 
- * Fall-back
- * ---------
- * If the DFT-D3 parameters are not found:
+ * ParamNotFoundError
+ * ------------------
+ * If the requested D3 parameters of XC are not found, then the ABACUS will 
+ * WARNING_QUIT with the message "DFT-D3 parameters for XC not found".
  * 
- * DFT-D3M(BJ) -> DFT-D3(BJ) -> PBE-D3(BJ)
- * DFT-D3M(0) -> DFT-D3(0) -> PBE-D3(0)
+ * Other dispersion correction
+ * ---------------------------
+ * there are other kinds of dispersion correction, such as the xc VV09, VV10,
+ * and rVV10, and the vdw-DF family nonlocal dispersion correction. They will
+ * be mixed directly with the correlation and exchange part, which act 
+ * differently from the DFT-D2 and D3 methods.
  * 
- * Please always look the warnning message to check the fall-back.
+ * Special: Omega-B97 family
+ * -------------------------
+ * (thanks for help and discussion with @hhebrewsnabla and @moolawooda)
+ * wB97 XC family is special, their DFT-D3 supports are quite complicated.
+ * 
+ * wB97          long-range exx with B97
+ * wB97X         wB97 with additional short-range exx
+ * wB97X-D       wB97X_D from libXC with DFTD2, not in DFTD3 framework
+ * wB97X-D3      wB97X_D3 from libXC with DFTD3(0)
+ * wB97X-D3(BJ)  wB97X_V from libXC with DFTD3(BJ)
+ * wB97X-V       with VV10, not in DFTD3 framework
+ * wB97M-V       with VV10, not in DFTD3 framework
+ * 
+ * Recommended: http://bbs.keinsci.com/thread-19076-1-1.html
+ * Related information from Pyscf Github repo: 
+ * https://github.com/pyscf/pyscf/issues/2069
+ * 
  */
-#ifndef DFTD3_XC_PARAM_H_
-#define DFTD3_XC_PARAM_H_
 #include <map>
 #include <string>
 #include <vector>
@@ -42,7 +74,7 @@ namespace DFTD3 {
         {"blyp", {1.0, 0.4298, 0.4298, 2.6996, 4.2359, 4.2359, 1.0, 14.0, 0.0}},
         {"revpbe", {1.0, 0.5238, 0.5238, 2.355, 3.5016, 3.5016, 1.0, 14.0, 0.0}},
         {"rpbe", {1.0, 0.182, 0.182, 0.8318, 4.0094, 4.0094, 1.0, 14.0, 0.0}},
-        {"b97d", {1.0, 0.5545, 0.5545, 2.2609, 3.2297, 3.2297, 1.0, 14.0, 0.0}},
+        {"b97_d", {1.0, 0.5545, 0.5545, 2.2609, 3.2297, 3.2297, 1.0, 14.0, 0.0}},
         {"b973c", {1.0, 0.37, 0.37, 1.5, 4.1, 4.1, 1.0, 14.0, 0.0}},
         {"pbe", {1.0, 0.4289, 0.4289, 0.7875, 4.4407, 4.4407, 1.0, 14.0, 0.0}},
         {"rpw86pbe", {1.0, 0.4613, 0.4613, 1.3845, 4.5062, 4.5062, 1.0, 14.0, 0.0}},
@@ -201,7 +233,7 @@ namespace DFTD3 {
         {"blyp", {1.0, 1.094, 1.094, 1.682, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"revpbe", {1.0, 0.923, 0.923, 1.01, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"rpbe", {1.0, 0.872, 0.872, 0.514, 1.0, 1.0, 1.0, 14.0, 0.0}},
-        {"b97d", {1.0, 0.892, 0.892, 0.909, 1.0, 1.0, 1.0, 14.0, 0.0}},
+        {"b97_d", {1.0, 0.892, 0.892, 0.909, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"b973c", {1.0, 1.06, 1.06, 1.5, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"pbe", {1.0, 1.217, 1.217, 0.722, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"rpw86pbe", {1.0, 1.224, 1.224, 0.901, 1.0, 1.0, 1.0, 14.0, 0.0}},
@@ -238,8 +270,7 @@ namespace DFTD3 {
         {"pw1pw", {1.0, 1.4968, 1.4968, 1.1786, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"scan", {1.0, 1.324, 1.324, 0.0, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"wb97x", {1.0, 1.281, 1.281, 1.0, 1.094, 1.094, 1.0, 14.0, 0.0}},
-        {"wb97xd3", {1.0, 1.281, 1.281, 1.0, 1.094, 1.094, 1.0, 14.0, 0.0}},
-        // wb97x_d3 is special, thanks for review from @hebrewsnabla
+        {"wb97x_d3", {1.0, 1.281, 1.281, 1.0, 1.094, 1.094, 1.0, 14.0, 0.0}}, 
         {"pbehpbe", {1.0, 1.5703, 1.5703, 1.401, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"xlyp", {1.0, 0.9384, 0.9384, 0.7447, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"mpwpw", {1.0, 1.3725, 1.3725, 1.9467, 1.0, 1.0, 1.0, 14.0, 0.0}},
@@ -284,7 +315,7 @@ namespace DFTD3 {
     std::map<std::string, std::vector<double>> bjm = {
         {"bp", {1.0, 0.82185, 0.82185, 3.140281, 2.728151, 2.728151, 1.0, 14.0, 0.0}},
         {"blyp", {1.0, 0.448486, 0.448486, 1.875007, 3.610679, 3.610679, 1.0, 14.0, 0.0}},
-        {"b97d", {1.0, 0.240184, 0.240184, 1.206988, 3.864426, 3.864426, 1.0, 14.0, 0.0}},
+        {"b97_d", {1.0, 0.240184, 0.240184, 1.206988, 3.864426, 3.864426, 1.0, 14.0, 0.0}},
         {"pbe", {1.0, 0.012092, 0.012092, 0.35894, 5.938951, 5.938951, 1.0, 14.0, 0.0}},
         {"b3lyp", {1.0, 0.278672, 0.278672, 1.466677, 4.606311, 4.606311, 1.0, 14.0, 0.0}},
         {"pbe0", {1.0, 0.007912, 0.007912, 0.528823, 6.162326, 6.162326, 1.0, 14.0, 0.0}},
@@ -295,7 +326,7 @@ namespace DFTD3 {
     std::map<std::string, std::vector<double>> zerom = {
         {"bp", {1.0, 1.23346, 1.23346, 1.945174, 1.0, 1.0, 1.0, 14.0, 0.0}},
         {"blyp", {1.0, 1.279637, 1.279637, 1.841686, 1.0, 1.0, 1.0, 14.0, 0.01437}},
-        {"b97d", {1.0, 1.151808, 1.151808, 1.020078, 1.0, 1.0, 1.0, 14.0, 0.035964}},
+        {"b97_d", {1.0, 1.151808, 1.151808, 1.020078, 1.0, 1.0, 1.0, 14.0, 0.035964}},
         {"pbe", {1.0, 2.340218, 2.340218, 0.0, 1.0, 1.0, 1.0, 14.0, 0.129434}},
         {"b3lyp", {1.0, 1.338153, 1.338153, 1.532981, 1.0, 1.0, 1.0, 14.0, 0.013988}},
         {"pbe0", {1.0, 2.077949, 2.077949, 8.1e-05, 1.0, 1.0, 1.0, 14.0, 0.116755}},
@@ -306,7 +337,7 @@ namespace DFTD3 {
     std::map<std::string, std::vector<double>> op = {
         {"blyp", {1.0, 0.425, 0.425, 1.31867, 3.5, 3.5, 1.0, 14.0, 2.0}},
         {"revpbe", {1.0, 0.6, 0.6, 1.44765, 2.5, 2.5, 1.0, 14.0, 0.0}},
-        {"b97d", {1.0, 0.6, 0.6, 1.46861, 2.5, 2.5, 1.0, 14.0, 0.0}},
+        {"b97_d", {1.0, 0.6, 0.6, 1.46861, 2.5, 2.5, 1.0, 14.0, 0.0}},
         {"pbe", {0.91826, 0.2, 0.2, 0.0, 4.75, 4.75, 1.0, 14.0, 6.0}},
         {"b3lyp", {1.0, 0.3, 0.3, 0.78311, 4.25, 4.25, 1.0, 14.0, 4.0}},
         {"tpss", {1.0, 0.575, 0.575, 0.51581, 3.0, 3.0, 1.0, 14.0, 8.0}},
@@ -331,8 +362,8 @@ namespace DFTD3 {
      * @param param the dftd3 parameters, ALL_KEYS = {'s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'}
      */
     void _search(const std::string& xc, 
-                const std::string& method, 
-                std::vector<double>& param)
+                 const std::string& method, 
+                 std::vector<double>& param)
     {
         const std::string xc_lowercase = _lowercase(xc);
         const std::vector<std::string> allowed_ = { "bj", "zero", "bjm", "zerom", "op" };
@@ -345,8 +376,8 @@ namespace DFTD3 {
             }
             else
             {
-                std::cout << " WARNING: DFT-D3 (Optimized-Power) parameter for XC `" << xc << "` not found, fall back to PBE-D3(0) " << std::endl;
-                _search("PBE", "zero", param);
+                ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                         "XC (`" + xc + "`)'s DFT-D3(OP) parameters not found");
             }
         }
         else if (method == "bjm")
@@ -357,8 +388,8 @@ namespace DFTD3 {
             }
             else
             {
-                std::cout << " WARNING: DFT-D3M(BJ) parameter for XC `" << xc << "` not found, fall back to DFT-D3(BJ)" << std::endl;
-                _search(xc, "bj", param);
+                ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                         "XC (`" + xc + "`)'s DFT-D3M(BJ) parameters not found");
             }
         }
         else if (method == "bj")
@@ -369,8 +400,8 @@ namespace DFTD3 {
             }
             else
             {
-                std::cout << " WARNING: DFT-D3(BJ) parameter for XC `" << xc << "` not found, fall back to DFT-D3(0)" << std::endl;
-                _search("pbe", "bj", param);
+                ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                         "XC (`" + xc + "`)'s DFT-D3(BJ) parameters not found");
             }
         }
         else if (method == "zerom")
@@ -381,8 +412,8 @@ namespace DFTD3 {
             }
             else
             {
-                std::cout << " WARNING: DFT-D3M(0) parameter for XC `" << xc << "` not found, fall back to DFT-D3(0)" << std::endl;
-                _search(xc, "zero", param);
+                ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                         "XC (`" + xc + "`)'s DFT-D3M(0) parameters not found");
             }
         }
         else // zero
@@ -393,8 +424,8 @@ namespace DFTD3 {
             }
             else
             {
-                std::cout << " WARNING: DFT-D3(0) parameter for XC `" << xc << "` not found, fall back to PBE-D3(0)" << std::endl;
-                _search("PBE", "zero", param);
+                ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                         "XC (`" + xc + "`)'s DFT-D3(0) parameters not found");
             }
         }
     }
@@ -440,20 +471,13 @@ namespace DFTD3 {
                       double& a1,
                       double& a2)
     {
-        bool search = true;
-        const std::vector<std::string> flag = {s6_in, s8_in, a1_in, a2_in};
         const std::map<std::string, std::string> param_map = {
             {"d3_bj", "bj"}, {"d3_0", "zero"}, {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
             {"op", "op"}};
-        for (const auto& f : flag)
-        {
-            if (f != "default")
-            {
-                search = false;
-                break;
-            }
-        }
-        if (!search)
+
+        const std::vector<std::string> flag = {s6_in, s8_in, a1_in, a2_in};
+        const bool autoset = std::any_of(flag.begin(), flag.end(), [](const std::string& s) { return s == "default"; });
+        if (!autoset) // all parameters are defined
         {
             s6 = std::stod(s6_in);
             s8 = std::stod(s8_in);
@@ -464,17 +488,22 @@ namespace DFTD3 {
         {
             std::vector<double> param;
             const std::string xc = DFTD3::_xcname(xc_in);
-            std::cout << " VDW: DFTD3 parameters are not provided, search based on XC (" 
-                      << _uppercase(xc) << ")" << std::endl;
             _search(xc, param_map.at(d3method), param);
-            s6 = param[0];
-            s8 = param[3];
-            a1 = param[1];
-            a2 = param[5];
+            s6 = (s6_in == "default") ? param[0] : std::stod(s6_in);
+            s8 = (s8_in == "default") ? param[3] : std::stod(s8_in);
+            a1 = (a1_in == "default") ? param[2] : std::stod(a1_in);
+            a2 = (a2_in == "default") ? param[5] : std::stod(a2_in);
+            FmtTable ft({"Parameters", "Original", "Autoset"}, 
+                        4,
+                        {"%10s", "%10s", "%10.4f"});
+            const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
+            ft << items << flag << param;
+            std::cout << "DFT-D3 Dispersion correction parameters autoset\n" << ft.str()
+                      << std::endl;
         }
     }
 }
-#endif // DFTD3_XC_PARAM_H
+
 /*
 '''
 dftd3 parameters from 
@@ -549,3 +578,4 @@ if __name__ == '__main__':
             for k in ['s6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet']}
     make_stdmap(data)
 */
+#endif // DFTD3_XC_PARAM_H

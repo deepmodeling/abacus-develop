@@ -1,8 +1,47 @@
 #ifndef DFTD3_XC_NAME_H
 #define DFTD3_XC_NAME_H
 /**
- * This file stores the mapping from XC names in LibXC format
- * to conventional names in DFTD3.
+ * Intro
+ * -----
+ * This file stores the mapping from LibXC xcname to the "conventional"
+ * 
+ * XCNotSupportedError
+ * -------------------
+ * GGA_X_REVSSB_D
+ * GGA_X_SSB_D
+ * 
+ * in J. Chem. Phys. 131, 094103 2009, a simplified version of PBC (the
+ * correlation part of PBE XC) is used as the correlation part, but libXC
+ * does not directly support one named as
+ * GGA_C_SPBEC.
+ * 
+ * Certainly, those XC with dispersion correction in form of non-local
+ * correlation are not supported. Such as:
+ * 
+ * vdw-DF family nonlocal dispersion correction included are not supported:
+ * GGA_X_OPTB86B_VDW
+ * GGA_X_OPTB88_VDW 
+ * GGA_X_OPTPBE_VDW 
+ * GGA_X_PBEK1_VDW
+ * 
+ * VV09, VV10 and rVV10 nonlocal correlation included are not supported:
+ * GGA_XC_VV10 
+ * HYB_GGA_XC_LC_VV10 
+ * HYB_MGGA_XC_WB97M_V 
+ * HYB_GGA_XC_WB97X_V 
+ * MGGA_X_VCML 
+ * MGGA_C_REVSCAN_VV10 
+ * MGGA_C_SCAN_VV10 
+ * MGGA_C_SCANL_VV10 
+ * MGGA_XC_B97M_V 
+ * MGGA_XC_VCML_RVV10
+ * 
+ * There is also one quite special, the wB97X-D3BJ functional uses the
+ * wB97X-V functionals excluding the VV10 part, then use its own DFT-D3(BJ)
+ * parameters. This seems not recorded in simple-dftd3, so it is not supported
+ * temporarily:
+ * HYB_GGA_XC_WB97X_D3BJ
+ * HYB_GGA_XC_WB97X_V
  */
 #include <map>
 #include <string>
@@ -10,15 +49,16 @@
 #include "module_base/formatter.h"
 #include <iostream>
 #include <regex>
+#include "module_base/tool_quit.h"
 
 namespace DFTD3 {
     const std::map<std::string, std::string> xcname_libxc_xc_ = {
         {"XC_LDA_XC_TETER93", "teter93"},
         {"XC_LDA_XC_ZLP", "zlp"},
-        {"XC_MGGA_XC_OTPSS_D", "otpss_d"},
-        {"XC_GGA_XC_OPBE_D", "opbe_d"},
-        {"XC_GGA_XC_OPWLYP_D", "opwlyp_d"},
-        {"XC_GGA_XC_OBLYP_D", "oblyp_d"},
+        {"XC_MGGA_XC_OTPSS_D", "otpss_d"}, // DFT-D2
+        {"XC_GGA_XC_OPBE_D", "opbe_d"}, // DFT-D2
+        {"XC_GGA_XC_OPWLYP_D", "opwlyp_d"}, // DFT-D2
+        {"XC_GGA_XC_OBLYP_D", "oblyp_d"}, // DFT-D2
         {"XC_GGA_XC_HCTH_407P", "hcth_407p"},
         {"XC_GGA_XC_HCTH_P76", "hcth_p76"},
         {"XC_GGA_XC_HCTH_P14", "hcth_p14"},
@@ -35,7 +75,7 @@ namespace DFTD3 {
         {"XC_GGA_XC_EDF1", "edf1"},
         {"XC_GGA_XC_XLYP", "xlyp"},
         {"XC_GGA_XC_KT1", "kt1"},
-        {"XC_GGA_XC_B97_D", "b97d"},
+        {"XC_GGA_XC_B97_D", "b97_d"}, // DFT-D2?
         {"XC_GGA_XC_PBE1W", "pbe1w"},
         {"XC_GGA_XC_MPWLYP1W", "mpwlyp1w"},
         {"XC_GGA_XC_PBELYP1W", "pbelyp1w"},
@@ -74,7 +114,7 @@ namespace DFTD3 {
         {"XC_HYB_GGA_XC_CAM_O3LYP", "cam_o3lyp"},
         {"XC_HYB_MGGA_XC_TPSS0", "tpss0"},
         {"XC_HYB_MGGA_XC_B94_HYB", "b94_hyb"},
-        {"XC_HYB_GGA_XC_WB97X_D3", "wb97xd3"},
+        {"XC_HYB_GGA_XC_WB97X_D3", "wb97x_d3"}, // DFT-D3(0)
         {"XC_HYB_GGA_XC_LC_BLYP", "lc_blyp"},
         {"XC_HYB_GGA_XC_B3PW91", "b3pw91"},
         {"XC_HYB_GGA_XC_B3LYP", "b3lyp"},
@@ -140,7 +180,7 @@ namespace DFTD3 {
         {"XC_HYB_GGA_XC_LCY_BLYP", "lcy_blyp"},
         {"XC_HYB_GGA_XC_LC_VV10", "lc_vv10"},
         {"XC_HYB_GGA_XC_CAMY_B3LYP", "camy_b3lyp"},
-        {"XC_HYB_GGA_XC_WB97X_D", "wb97x_d"},
+        {"XC_HYB_GGA_XC_WB97X_D", "wb97x_d"}, // DFT-D2
         {"XC_HYB_GGA_XC_HPBEINT", "hpbeint"},
         {"XC_HYB_GGA_XC_LRC_WPBE", "lrc_wpbe"},
         {"XC_HYB_GGA_XC_B3LYP5", "b3lyp5"},
@@ -312,8 +352,8 @@ namespace DFTD3 {
         if (xcname_libxc_xplusc_.find(key) != xcname_libxc_xplusc_.end()) {
             xname = xcname_libxc_xplusc_.at(key);
         } else {
-            std::cout << " WARNING: DFT-D3 parameter for XC `" << key << "` not found, fall back to PBE-D3" << std::endl;
-            xname = "pbe";
+            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xplusc",
+                                     "XC's LibXC-notation on `" + xcpattern + "` not recognized");
         }
     }
 
@@ -323,8 +363,8 @@ namespace DFTD3 {
         if (xcname_libxc_xc_.find(xcpattern) != xcname_libxc_xc_.end()) {
             xname = xcname_libxc_xc_.at(xcpattern);
         } else {
-            std::cout << " WARNING: DFT-D3 parameter for XC `" << xcpattern << "` not found, fall back to PBE-D3" << std::endl;
-            xname = "pbe";
+            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xc",
+                                     "XC's LibXC-notation on `" + xcpattern + "` not recognized");
         }
     }
 
@@ -348,7 +388,7 @@ namespace DFTD3 {
         return xcname;
     }
 }
-#endif // DFTD3_XCNAME_H_
+
 /**
 import os
 import re
@@ -562,3 +602,4 @@ if __name__ == '__main__':
     # print_xc(others)
     print(paired_xc_to_stdmap(special))
  */
+#endif // DFTD3_XCNAME_H_
