@@ -3,8 +3,8 @@
 #include <vector>
 #define protected public
 
-#include "module_hsolver/hsolver.h"
 #include "hsolver_supplementary_mock.h"
+#include "module_hsolver/hsolver.h"
 
 #include <module_base/macros.h>
 
@@ -28,36 +28,36 @@
  *      - diag() for Psi(FPTYPE) case
  *      - destructor of DiagH and HSolver
  *
- * the definition of supplementary functions is added in hsolver_supplementary_mock.h 
+ * the definition of supplementary functions is added in hsolver_supplementary_mock.h
  */
 
 class TestHSolver : public ::testing::Test
 {
-public:
-  // hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU> hs_cf;
-  // hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU> hs_cd;
-  // hsolver::HSolver<float, base_device::DEVICE_CPU> hs_f;
-  // hsolver::HSolver<double, base_device::DEVICE_CPU> hs_d;
+  public:
+    // hsolver::HSolver<std::complex<float>, base_device::DEVICE_CPU> hs_cf;
+    // hsolver::HSolver<std::complex<double>, base_device::DEVICE_CPU> hs_cd;
+    // hsolver::HSolver<float, base_device::DEVICE_CPU> hs_f;
+    // hsolver::HSolver<double, base_device::DEVICE_CPU> hs_d;
 
-  hamilt::Hamilt<std::complex<double>> hamilt_test_cd;
-  hamilt::Hamilt<std::complex<float>> hamilt_test_cf;
-  psi::Psi<std::complex<double>> psi_test_cd;
-  psi::Psi<std::complex<float>> psi_test_cf;
+    hamilt::Hamilt<std::complex<double>> hamilt_test_cd;
+    hamilt::Hamilt<std::complex<float>> hamilt_test_cf;
+    psi::Psi<std::complex<double>> psi_test_cd;
+    psi::Psi<std::complex<float>> psi_test_cf;
 
-  hamilt::Hamilt<double> hamilt_test_d;
-  hamilt::Hamilt<float> hamilt_test_f;
-  psi::Psi<double> psi_test_d;
-  psi::Psi<float> psi_test_f;
+    hamilt::Hamilt<double> hamilt_test_d;
+    hamilt::Hamilt<float> hamilt_test_f;
+    psi::Psi<double> psi_test_d;
+    psi::Psi<float> psi_test_f;
 
-  Stochastic_WF stowf_test;
+    Stochastic_WF<std::complex<double>> stowf_test;
 
-  elecstate::ElecState elecstate_test;
+    elecstate::ElecState elecstate_test;
 
-  ModulePW::PW_Basis_K* wfcpw;
+    ModulePW::PW_Basis_K* wfcpw;
 
-  std::string method_test = "none";
+    std::string method_test = "none";
 
-  std::ofstream temp_ofs;
+    std::ofstream temp_ofs;
 };
 
 // TEST_F(TestHSolver, solve)

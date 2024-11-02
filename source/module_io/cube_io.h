@@ -2,95 +2,65 @@
 #define CUBE_IO_H
 #include <string>
 #include "module_cell/unitcell.h"
-#ifdef __MPI
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#endif
+class Parallel_Grid;
 
 namespace ModuleIO
 {
-bool read_cube(
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-#endif
+    /// read volumetric data from .cube file into the parallel distributed grid.
+    bool read_vdata_palgrid(
+    const Parallel_Grid& pgrid,
     const int my_rank,
-    const int is,
     std::ofstream& ofs_running,
-    const int nspin,
     const std::string& fn,
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    double& ef,
-    const UnitCell*const ucell,
-    int& prenspin,
-    const bool warning_flag = true);
+    double* const data,
+    const int nat);
 
-void write_cube(
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
-    const double*const data,
+    /// write volumetric data on the parallized grid into a .cube file
+    void write_vdata_palgrid(
+    const Parallel_Grid& pgrid,
+    const double* const data,
     const int is,
     const int nspin,
     const int iter,
     const std::string& fn,
-    const int nx,
-    const int ny,
-    const int nz,
     const double ef,
     const UnitCell*const ucell,
     const int precision = 11,
     const int out_fermi = 1); // mohan add 2007-10-17
 
+    /// read the full data from a cube file 
+    bool read_cube(const std::string& file,
+        std::vector<std::string>& comment,
+        int& natom,
+        std::vector<double>& origin,
+        int& nx,
+        int& ny,
+        int& nz,
+        std::vector<double>& dx,
+        std::vector<double>& dy,
+        std::vector<double>& dz,
+        std::vector<int>& atom_type,
+        std::vector<double>& atom_charge,
+        std::vector<std::vector<double>>& atom_pos,
+        std::vector<double>& data);
 
-// when MPI:
-//      read file as order (ixy,iz) to data[ixy*nz+iz]
-// when serial:
-//      read file as order (ixy,iz) to data[iz*nxy+ixy]
-void read_cube_core_match(
-    std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-    const bool flag_read_rank,
-#endif
-    double*const data,
-    const int nxy,
-    const int nz);
-
-void read_cube_core_mismatch(
-    std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-    const bool flag_read_rank,
-#endif
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    const int nx_read,
-    const int ny_read,
-    const int nz_read);
-
-// when MPI:
-//      write data[ixy*nplane+iz] to file as order (ixy,iz)
-// when serial:
-//      write data[iz*nxy+ixy] to file as order (ixy,iz)
-void write_cube_core(
-    std::ofstream &ofs_cube,
-#ifdef __MPI
-    const int bz,
-    const int nbz,
-    const int nplane,
-    const int startz_current,
-#endif
-    const double*const data,
-    const int nxy,
-    const int nz,
-    const int n_data_newline);
+    /// write a cube file
+    void write_cube(const std::string& file,
+        const std::vector<std::string>& comment,
+        const int& natom,
+        const std::vector<double>& origin,
+        const int& nx,
+        const int& ny,
+        const int& nz,
+        const std::vector<double>& dx,
+        const std::vector<double>& dy,
+        const std::vector<double>& dz,
+        const std::vector<int>& atom_type,
+        const std::vector<double>& atom_charge,
+        const std::vector<std::vector<double>>& atom_pos,
+        const std::vector<double>& data,
+        const int precision,
+        const int ndata_line = 6);
 
     /**
      * @brief The trilinear interpolation method
@@ -113,28 +83,23 @@ void write_cube_core(
      * directions, divided by the grid spacing. Here, it is assumed that the grid spacing is equal and can be
      * omitted during computation.
      *
-     * @param ifs the ifstream used to read charge density
+     * @param data_in the input data of size nxyz_read
      * @param nx_read nx read from file
      * @param ny_read ny read from file
      * @param nz_read nz read from file
      * @param nx the dimension of grids along x
      * @param ny the dimension of grids along y
      * @param nz the dimension of grids along z
-     * @param data the interpolated results
+     * @param data_out the interpolated results of size nxyz
      */
-    void trilinear_interpolate(std::ifstream& ifs,
-                               const int& nx_read,
-                               const int& ny_read,
-                               const int& nz_read,
-                               const int& nx,
-                               const int& ny,
-                               const int& nz,
-#ifdef __MPI
-                               std::vector<std::vector<double>> &data
-#else
-                               double* data
-#endif
-    );
+void trilinear_interpolate(const double* const data_in,
+    const int& nx_read,
+    const int& ny_read,
+    const int& nz_read,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double* data_out);
 }
 
 #endif

@@ -243,7 +243,6 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    print_funcs.o\
     pw_fun.o\
     pw_init_after_vc.o\
     pw_init_globalc.o\

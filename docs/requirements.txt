@@ -1,4 +1,4 @@
 urllib3
 myst_parser[linkify]
-sphinx_rtd_theme
-deepmodeling_sphinx
+sphinx-book-theme
+deepmodeling-sphinx>=0.3.0

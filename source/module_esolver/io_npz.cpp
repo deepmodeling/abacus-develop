@@ -73,7 +73,7 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
             const int it = GlobalC::ucell.iat2it[iat];
             const int ia = GlobalC::ucell.iat2ia[iat];
 
-            //get atomic number (copied from write_cube.cpp)
+            //get atomic number (copied from write_vdata_palgrid.cpp)
             std::string element = "";
             element = GlobalC::ucell.atoms[it].label;
 			std::string::iterator temp = element.begin();
@@ -368,7 +368,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
             const int it = GlobalC::ucell.iat2it[iat];
             const int ia = GlobalC::ucell.iat2ia[iat];
 
-            //get atomic number (copied from write_cube.cpp)
+            //get atomic number (copied from write_vdata_palgrid.cpp)
             std::string element = "";
             element = GlobalC::ucell.atoms[it].label;
 			std::string::iterator temp = element.begin();

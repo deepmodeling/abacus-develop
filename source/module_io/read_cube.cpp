@@ -1,211 +1,87 @@
 #include "module_io/cube_io.h"
+#include <limits>
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 // #include "module_base/global_variable.h" // GlobalV reference removed
 
-bool ModuleIO::read_cube(
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-#endif
+bool ModuleIO::read_vdata_palgrid(
+    const Parallel_Grid& pgrid,
     const int my_rank,
-    const int is,
     std::ofstream& ofs_running,
-    const int nspin,
     const std::string& fn,
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    double& ef,
-    const UnitCell*const ucell,
-    int& prenspin,
-    const bool warning_flag)
+    double* const data,
+    const int natom)
 {
-    ModuleBase::TITLE("ModuleIO","read_cube");
+    ModuleBase::TITLE("ModuleIO", "read_vdata_palgrid");
+
+    // check if the file exists
     std::ifstream ifs(fn.c_str());
     if (!ifs)
     {
-        std::string tmp_warning_info = "!!! Couldn't find the charge file of ";
-        tmp_warning_info += fn;
+        std::string tmp_warning_info = "!!! Couldn't find the file: " + fn;
         ofs_running << tmp_warning_info << std::endl;
         return false;
     }
     else
     {
-        ofs_running << " Find the file, try to read charge from file." << std::endl;
+        ofs_running << " Find the file " << fn << " , try to read it." << std::endl;
     }
 
-    bool quit=false;
-
-    ifs.ignore(300, '\n'); // skip the header
-
-    if(nspin != 4)
+    // read the full grid data
+    const int& nx = pgrid.nx;
+    const int& ny = pgrid.ny;
+    const int& nz = pgrid.nz;
+    const int& nxyz = nx * ny * nz;
+    std::vector<double> data_xyz_full(nxyz, 0.0);
+    if (my_rank == 0)
     {
-        int v_in;
-        ifs >> v_in;
-        if (v_in != nspin)
+        std::vector<std::string> comment;
+        int natom = 0;
+        std::vector<double> origin;
+        std::vector<int> nvoxel;
+        int nx_read = 0;
+        int ny_read = 0;
+        int nz_read = 0;
+        std::vector<double> dx(3);
+        std::vector<double> dy(3);
+        std::vector<double> dz(3);
+        std::vector<std::vector<double>> axis_vecs;
+        std::vector<int> atom_type;
+        std::vector<double> atom_charge;
+        std::vector<std::vector<double>> atom_pos;
+        std::vector<double> data_read;
+
+        // we've already checked the file existence, so we don't need the returned value here
+        ModuleIO::read_cube(fn, comment, natom, origin, nx_read, ny_read, nz_read, dx, dy, dz, atom_type, atom_charge, atom_pos, data_read);
+
+        // if mismatch, trilinear interpolate
+        if (nx == nx_read && ny == ny_read && nz == nz_read)
         {
-            std::cout << " WARNING: nspin mismatch:  " << nspin << " in INPUT parameters but " << v_in << " in " << fn << std::endl;
-            return false;
+            std::memcpy(data_xyz_full.data(), data_read.data(), nxyz * sizeof(double));
         }
-    }
-    else
-    {
-        ifs >> prenspin;
-    }
-    ifs.ignore(150, ')');
-
-    ifs >> ef;
-    ofs_running << " read in fermi energy = " << ef << std::endl;
-
-    ifs.ignore(150, '\n');
-
-    ModuleBase::CHECK_INT(ifs, ucell->nat);
-    ifs.ignore(150, '\n');
-
-    int nx_read = 0;
-    int ny_read = 0;
-    int nz_read = 0;
-    double fac = ucell->lat0;
-    std::string temp;
-    if (warning_flag)
-    {
-        ifs >> nx_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e11 / double(nx), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e12 / double(nx), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e13 / double(nx), quit);
-        ifs >> ny_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e21 / double(ny), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e22 / double(ny), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e23 / double(ny), quit);
-        ifs >> nz_read;
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e31 / double(nz), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e32 / double(nz), quit);
-        ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->latvec.e33 / double(nz), quit);
-    }
-    else
-    {
-        ifs >> nx_read;
-        ifs >> temp >> temp >> temp;
-        ifs >> ny_read;
-        ifs >> temp >> temp >> temp;
-        ifs >> nz_read;
-        ifs >> temp >> temp >> temp;
-    }
-
-    for (int it = 0; it < ucell->ntype; it++)
-    {
-        for (int ia = 0; ia < ucell->atoms[it].na; ia++)
+        else
         {
-            ifs >> temp; // skip atomic number
-            ifs >> temp; // skip Z valance
-            if (warning_flag)
-            {
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].x, quit);
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].y, quit);
-                ModuleBase::CHECK_DOUBLE(ifs, fac * ucell->atoms[it].tau[ia].z, quit);
-            }
-            else
-            {
-                ifs >> temp >> temp >> temp;
-            }
+            trilinear_interpolate(data_read.data(), nx_read, ny_read, nz_read, nx, ny, nz, data_xyz_full.data());
         }
     }
 
-#ifdef __MPI
-    if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, Pgrid, (my_rank == 0), data, nx * ny, nz);
-    else
-        ModuleIO::read_cube_core_mismatch(ifs, Pgrid, (my_rank == 0), data, nx, ny, nz, nx_read, ny_read, nz_read);
+    // distribute
+#ifdef __MPI 
+    pgrid.bcast(data_xyz_full.data(), data, my_rank);
 #else
-    ofs_running << " Read SPIN = " << is + 1 << " charge now." << std::endl;
-    if(nx == nx_read && ny == ny_read && nz == nz_read)
-        ModuleIO::read_cube_core_match(ifs, data, nx*ny, nz);
-    else
-        ModuleIO::read_cube_core_mismatch(ifs, data, nx, ny, nz, nx_read, ny_read, nz_read);
+    std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif
-
     return true;
 }
 
-void ModuleIO::read_cube_core_match(
-    std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-    const bool flag_read_rank,
-#endif
-    double*const data,
-    const int nxy,
-    const int nz)
-{
-#ifdef __MPI
-    if (flag_read_rank)
-    {
-        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
-        for (int ixy = 0; ixy < nxy; ixy++)
-            for (int iz = 0; iz < nz; iz++)
-                ifs >> read_rho[iz][ixy];
-        for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
-    }
-    else
-    {
-        std::vector<double> zpiece(nxy);
-        for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
-    }
-#else
-    for (int ixy = 0; ixy < nxy; ixy++)
-        for (int iz = 0; iz < nz; iz++)
-            ifs >> data[iz * nxy + ixy];
-#endif
-}
-
-void ModuleIO::read_cube_core_mismatch(
-    std::ifstream &ifs,
-#ifdef __MPI
-    const Parallel_Grid*const Pgrid,
-    const bool flag_read_rank,
-#endif
-    double*const data,
-    const int nx,
-    const int ny,
-    const int nz,
-    const int nx_read,
-    const int ny_read,
-    const int nz_read)
-{
-#ifdef __MPI
-    const int nxy = nx * ny;
-    if (flag_read_rank)
-    {
-        std::vector<std::vector<double>> read_rho(nz, std::vector<double>(nxy));
-        ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, read_rho);
-        for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(read_rho[iz].data(), iz, data);
-    }
-    else
-    {
-        std::vector<double> zpiece(nxy);
-        for (int iz = 0; iz < nz; iz++)
-            Pgrid->zpiece_to_all(zpiece.data(), iz, data);
-    }
-#else
-    ModuleIO::trilinear_interpolate(ifs, nx_read, ny_read, nz_read, nx, ny, nz, data);
-#endif
-}
-
-void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
-                                     const int& nx_read,
-                                     const int& ny_read,
-                                     const int& nz_read,
-                                     const int& nx,
-                                     const int& ny,
-                                     const int& nz,
-#ifdef __MPI
-                                     std::vector<std::vector<double>> &data
-#else
-                                     double* data
-#endif
-)
+void ModuleIO::trilinear_interpolate(
+    const double* const data_in,
+    const int& nx_read,
+    const int& ny_read,
+    const int& nz_read,
+    const int& nx,
+    const int& ny,
+    const int& nz,
+    double* data_out)
 {
     ModuleBase::TITLE("ModuleIO", "trilinear_interpolate");
 
@@ -220,7 +96,7 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
         {
             for (int iz = 0; iz < nz_read; iz++)
             {
-                ifs >> read_rho[iz][ix * ny_read + iy];
+                read_rho[iz][ix * ny_read + iy] = data_in[(ix * ny_read + iy) * nz_read + iz];
             }
         }
     }
@@ -256,11 +132,7 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
                                 + read_rho[highz][lowx * ny_read + highy] * (1 - dx) * dy * dz
                                 + read_rho[highz][highx * ny_read + highy] * dx * dy * dz;
 
-#ifdef __MPI
-                data[iz][ix * ny + iy] = result;
-#else
-                data[iz * nx * ny + ix * ny + iy] = result;
-#endif
+                data_out[(ix * ny + iy) * nz + iz] = result;    // x > y > z order, consistent with the cube file
             }
         }
     }
@@ -270,4 +142,53 @@ void ModuleIO::trilinear_interpolate(std::ifstream& ifs,
         delete[] read_rho[iz];
     }
     delete[] read_rho;
+}
+
+bool ModuleIO::read_cube(const std::string& file,
+    std::vector<std::string>& comment,
+    int& natom,
+    std::vector<double>& origin,
+    int& nx,
+    int& ny,
+    int& nz,
+    std::vector<double>& dx,
+    std::vector<double>& dy,
+    std::vector<double>& dz,
+    std::vector<int>& atom_type,
+    std::vector<double>& atom_charge,
+    std::vector<std::vector<double>>& atom_pos,
+    std::vector<double>& data)
+{
+    std::ifstream ifs(file);
+
+    if (!ifs) { return false; }
+
+    comment.resize(2);
+    for (auto& c : comment) { std::getline(ifs, c); }
+
+    ifs >> natom;
+    origin.resize(3);
+    for (auto& cp : origin) { ifs >> cp; }
+
+    dx.resize(3);
+    dy.resize(3);
+    dz.resize(3);
+    ifs >> nx >> dx[0] >> dx[1] >> dx[2];
+    ifs >> ny >> dy[0] >> dy[1] >> dy[2];
+    ifs >> nz >> dz[0] >> dz[1] >> dz[2];
+
+    atom_type.resize(natom);
+    atom_charge.resize(natom);
+    atom_pos.resize(natom, std::vector<double>(3));
+    for (int i = 0;i < natom;++i)
+    {
+        ifs >> atom_type[i] >> atom_charge[i] >> atom_pos[i][0] >> atom_pos[i][1] >> atom_pos[i][2];
+    }
+
+    const int nxyz = nx * ny * nz;
+    data.resize(nxyz);
+    for (int i = 0;i < nxyz;++i) { ifs >> data[i]; }
+
+    ifs.close();
+    return true;
 }

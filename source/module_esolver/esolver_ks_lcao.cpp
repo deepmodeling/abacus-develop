@@ -203,10 +203,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
             if (GlobalC::exx_info.info_ri.real_number)
             {
                 this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exd->exx_before_all_runners(this->kv, GlobalC::ucell, this->pv);
             }
             else
             {
                 this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exc->exx_before_all_runners(this->kv, GlobalC::ucell, this->pv);
             }
         }
     }
@@ -1027,21 +1029,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 data = this->pelec->charge->rho_save[is];
             }
             std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 data,
                 is,
                 PARAM.inp.nspin,
                 0,
                 fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.get_efval(is),
                 &(GlobalC::ucell),
                 3,
@@ -1049,21 +1042,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     this->pelec->charge->kin_r_save[is],
                     is,
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell));
             }
