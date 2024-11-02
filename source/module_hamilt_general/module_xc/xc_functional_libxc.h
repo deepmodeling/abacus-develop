@@ -22,8 +22,6 @@ namespace XC_Functional_Libxc
 	// sets functional type, which allows combination of LIBXC keyword connected by "+"
 	//		for example, "XC_LDA_X+XC_LDA_C_PZ"
 	extern std::pair<int,std::vector<int>> set_xc_type_libxc(const std::string xc_func_in);
-	// the following XC are not supported by ABACUS 
-	bool xc_with_nonlocal_vdw(const std::string& xc_func_in);
 
 	// converts func_id into corresponding xc_func_type vector
 	extern std::vector<xc_func_type> init_func(const std::vector<int> &func_id, const int xc_polarized);
