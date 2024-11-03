@@ -160,10 +160,21 @@ void bind_hsolver(py::module& m)
 
             Parameters
             ----------
-            TO BE FILLED
+            mm_op : Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+                The operator to be diagonalized, which is a function that takes a matrix as input
+                and returns a matrix mv_op(X) = H * X as output.
+            max_iter : int
+                The maximum number of iterations.
+            tol : double
+                The tolerance for the convergence.
+            need_subspace : bool
+                Whether to use the subspace function.
+            scf_type : bool
+                Whether to use the SCF type, which is used to determine the
+                convergence criterion.
         )pbdoc",
         "mm_op"_a,
-        "diag_ndim"_a,
+        "max_iter"_a,
         "tol"_a,
         "need_subspace"_a,
         "scf_type"_a,

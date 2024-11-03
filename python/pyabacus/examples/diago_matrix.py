@@ -17,10 +17,13 @@ def gen_dense_mat(dim):
     
     return h_mat
 
-def calc_eig_dav(mat_file, method):
-    algo = {
+def calc_eig_pyabacus(mat_file, method):
+    dav = {
         'dav_subspace': hsolver.dav_subspace,
         'davidson': hsolver.davidson
+    }
+    cg = {
+        'cg': hsolver.cg
     }
     
     h_mat, nbasis, nband = load_mat(mat_file)
@@ -30,43 +33,23 @@ def calc_eig_dav(mat_file, method):
     diag_elem = np.where(np.abs(diag_elem) < 1e-8, 1e-8, diag_elem)
     precond = 1.0 / np.abs(diag_elem)
 
-    def mm_op(x):
+    def mvv_op(x):
         return h_mat.dot(x)
 
-    e, _ = algo[method](
-        mm_op,
-        v0,
-        nbasis,
-        nband,
-        precond,
-        dav_ndim=8,
-        tol=1e-8
-    )
+    if method in dav:
+        algo = dav[method]
+        # args: mvvop, init_v, dim, num_eigs, precondition, dav_ndim, tol, max_iter
+        args = (mvv_op, v0, nbasis, nband, precond, 8, 1e-12, 5000)
+    elif method in cg:
+        algo = cg[method]
+        # args: mvvop, init_v, dim, num_eigs, precondition, tol, max_iter
+        args = (mvv_op, v0, nbasis, nband, precond, 1e-12, 5000)
+    else:
+        raise ValueError(f"Method {method} not available")
+    
+    e, _ = algo(*args)
 
     print(f'eigenvalues calculated by pyabacus-{method} is: \n', e)
-    
-    return e
-
-def calc_eig_cg(h_mat, num_eigs):
-    dim = h_mat.shape[0]
-    v0 = np.random.rand(dim, num_eigs)
-    diag_elem = h_mat.diagonal()
-    diag_elem = np.where(np.abs(diag_elem) < 1e-8, 1e-8, diag_elem)
-    precond = 1.0 / np.abs(diag_elem)
-    
-    def mm_op(x):
-        return h_mat.dot(x)
-    
-    e, _ = hsolver.cg(
-        mm_op,
-        v0,
-        dim,
-        num_eigs,
-        precond,
-        tol=1e-8
-    )
-    
-    print('eigenvalues calculated by pyabacus-cg is: \n', e)
     
     return e
 
@@ -78,31 +61,14 @@ def calc_eigsh(mat_file):
     
     return e
 
-def calc_eigh(h_mat, num_eigs):
-    e, _ = scipy.linalg.eigh(h_mat)
-    e = np.sort(e)
-    print('eigenvalues calculated by scipy is: \n', e[:num_eigs])
-    
-    return e
-
 if __name__ == '__main__':
     mat_file = './Si2.mat'
-    method = ['dav_subspace', 'davidson']
+    method = ['dav_subspace', 'davidson', 'cg']
     
     for m in method:
         print(f'\n====== Calculating eigenvalues using {m} method... ======')
-        e_pyabacus = calc_eig_dav(mat_file, m)
+        e_pyabacus = calc_eig_pyabacus(mat_file, m)
         e_scipy = calc_eigsh(mat_file)
         
         print('eigenvalues difference: \n', e_pyabacus - e_scipy)
         
-    print("\n====== davidson and dav_subspace method Done! ======")
-    print("\n====== CG method ======")
-    
-    h_mat = gen_dense_mat(100)
-    num_eigs = 8
-    e_cg = calc_eig_cg(h_mat, num_eigs)
-    e_scipy = calc_eigh(h_mat, num_eigs)
-    
-    print('eigenvalues difference: \n', e_cg - e_scipy[:num_eigs])
-    print("\n====== CG method Done! ======")
