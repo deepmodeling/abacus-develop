@@ -131,6 +131,8 @@ public:
             const int nvec   = ndim == 1 ? 1 : psi_in.shape().dim_size(0);
             const int ld_psi = ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1);
 
+            // Note: numpy's py::array_t is row-major, and
+            //       our tensor-array is row-major
             py::array_t<std::complex<double>> psi({ld_psi, nvec});
             py::buffer_info psi_buf = psi.request();
             std::complex<double>* psi_ptr = static_cast<std::complex<double>*>(psi_buf.ptr);
@@ -169,7 +171,7 @@ public:
             nproc_in_pool
         );
 
-        return cg->diag(hpsi_func, spsi_func, *psi, *eig, *prec);
+        cg->diag(hpsi_func, spsi_func, *psi, *eig, *prec);
     }
 
 private:
