@@ -12,8 +12,14 @@ def load_mat(mat_file):
 def calc_eig_pyabacus(mat_file, method):
     algo = {
         'dav_subspace': hsolver.dav_subspace,
-        'davidson': hsolver.davidson
+        'davidson': hsolver.davidson,
+        'cg': hsolver.cg
     }
+    
+    if method is not 'cg':
+        ndim = 8
+    else:
+        ndim = 30
     
     h_mat, nbasis, nband = load_mat(mat_file)
     
@@ -31,9 +37,8 @@ def calc_eig_pyabacus(mat_file, method):
         nbasis,
         nband,
         precond,
-        dav_ndim=8,
-        tol=1e-8,
-        max_iter=1000
+        ndim,
+        1e-8     # tol
     )
 
     print(f'eigenvalues calculated by pyabacus-{method} is: \n', e)
@@ -50,7 +55,7 @@ def calc_eig_scipy(mat_file):
 
 if __name__ == '__main__':
     mat_file = './Si2.mat'
-    method = ['dav_subspace', 'davidson']
+    method = ['dav_subspace', 'davidson', 'cg']
     
     for m in method:
         print(f'\n====== Calculating eigenvalues using {m} method... ======')

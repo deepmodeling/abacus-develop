@@ -9,7 +9,7 @@ from numpy.typing import NDArray
 from typing import Tuple, List, Union, Callable
 
 from ._hsolver_pack import diag_comm_info as _diag_comm_info
-from ._hsolver_pack import diago_dav_subspace, diago_david
+from ._hsolver_pack import diago_dav_subspace, diago_david, diago_cg
 
 class diag_comm_info(_diag_comm_info):
     def __init__(self, rank: int, nproc: int):
@@ -180,3 +180,41 @@ def davidson(
     
     return e, v
     
+def cg(
+    mvv_op: Callable[[NDArray[np.complex128]], NDArray[np.complex128]],
+    init_v: NDArray[np.complex128],
+    dim: int,
+    num_eigs: int,
+    pre_condition: NDArray[np.float64],
+    diag_ndim: int = 2,
+    tol: float = 1e-2,
+    need_subspace: bool = False,
+    scf_type: bool = False
+) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
+    if not callable(mvv_op):
+        raise TypeError("mvv_op must be a callable object.")
+    
+    if init_v.ndim != 1 or init_v.dtype != np.complex128:
+        # the shape of init_v is (num_eigs, dim) = (dim, num_eigs).T
+        if init_v.ndim == 2:
+            init_v = init_v.T
+        init_v = init_v.flatten().astype(np.complex128, order='C')
+    
+    _diago_obj_cg = diago_cg(dim, num_eigs)
+    _diago_obj_cg.set_psi(init_v)
+    _diago_obj_cg.init_eig()
+    
+    _diago_obj_cg.set_prec(pre_condition)
+    
+    _ = _diago_obj_cg.diag(
+        mvv_op,
+        diag_ndim, 
+        tol,
+        need_subspace,
+        scf_type,
+    )
+    
+    e = _diago_obj_cg.get_eigenvalue()
+    v = _diago_obj_cg.get_psi()
+    
+    return e, v

@@ -11,6 +11,7 @@
 
 #include "./py_diago_dav_subspace.hpp"
 #include "./py_diago_david.hpp"
+#include "./py_diago_cg.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
@@ -144,6 +145,44 @@ void bind_hsolver(py::module& m)
         .def("get_eigenvalue", &py_hsolver::PyDiagoDavid::get_eigenvalue, R"pbdoc(
             Get the eigenvalues.        
         )pbdoc");
+
+    py::class_<py_hsolver::PyDiagoCG>(m, "diago_cg")
+        .def(py::init<int, int>(), R"pbdoc(
+            Constructor of diago_cg, a class for diagonalizing 
+            a linear operator using the Conjugate Gradient Method.
+
+            This class serves as a backend computation class. The interface 
+            for invoking this class is a function defined in _hsolver.py, 
+            which uses this class to perform the calculations.
+        )pbdoc")
+        .def("diag", &py_hsolver::PyDiagoCG::diag, R"pbdoc(
+            Diagonalize the linear operator using the Conjugate Gradient Method.
+
+            Parameters
+            ----------
+            TO BE FILLED
+        )pbdoc",
+        "mm_op"_a,
+        "diag_ndim"_a,
+        "tol"_a,
+        "need_subspace"_a,
+        "scf_type"_a,
+        "nproc_in_pool"_a)
+        .def("init_eig", &py_hsolver::PyDiagoCG::init_eig, R"pbdoc(
+            Initialize the eigenvalues.
+        )pbdoc")
+        .def("get_eig", &py_hsolver::PyDiagoCG::get_eig, R"pbdoc(
+            Get the eigenvalues.
+        )pbdoc")
+        .def("set_psi", &py_hsolver::PyDiagoCG::set_psi, R"pbdoc(
+            Set the eigenvectors.
+        )pbdoc", "psi_in"_a)
+        .def("get_psi", &py_hsolver::PyDiagoCG::get_psi, R"pbdoc(
+            Get the eigenvectors.
+        )pbdoc")
+        .def("set_prec", &py_hsolver::PyDiagoCG::set_prec, R"pbdoc(
+            Set the preconditioner.
+        )pbdoc", "prec_in"_a);
 }
 
 PYBIND11_MODULE(_hsolver_pack, m)
