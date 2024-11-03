@@ -9,14 +9,6 @@ def load_mat(mat_file):
     
     return h_mat, nbasis, nband
 
-def gen_dense_mat(dim):
-    # generate a random symmetric and positive definite matrix
-    h_mat = np.random.rand(dim, dim)
-    h_mat = h_mat + h_mat.T
-    h_mat = h_mat + dim * np.eye(dim)
-    
-    return h_mat
-
 def calc_eig_pyabacus(mat_file, method):
     dav = {
         'dav_subspace': hsolver.dav_subspace,
