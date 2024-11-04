@@ -10,9 +10,12 @@ def load_mat(mat_file):
     return h_mat, nbasis, nband
 
 def calc_eig_pyabacus(mat_file, method):
-    algo = {
+    dav = {
         'dav_subspace': hsolver.dav_subspace,
         'davidson': hsolver.davidson
+    }
+    cg = {
+        'cg': hsolver.cg
     }
     
     h_mat, nbasis, nband = load_mat(mat_file)
@@ -22,25 +25,27 @@ def calc_eig_pyabacus(mat_file, method):
     diag_elem = np.where(np.abs(diag_elem) < 1e-8, 1e-8, diag_elem)
     precond = 1.0 / np.abs(diag_elem)
 
-    def mm_op(x):
+    def mvv_op(x):
         return h_mat.dot(x)
 
-    e, _ = algo[method](
-        mm_op,
-        v0,
-        nbasis,
-        nband,
-        precond,
-        dav_ndim=8,
-        tol=1e-8,
-        max_iter=1000
-    )
+    if method in dav:
+        algo = dav[method]
+        # args: mvvop, init_v, dim, num_eigs, precondition, dav_ndim, tol, max_iter
+        args = (mvv_op, v0, nbasis, nband, precond, 8, 1e-12, 5000)
+    elif method in cg:
+        algo = cg[method]
+        # args: mvvop, init_v, dim, num_eigs, precondition, tol, max_iter
+        args = (mvv_op, v0, nbasis, nband, precond, 1e-12, 5000)
+    else:
+        raise ValueError(f"Method {method} not available")
+    
+    e, _ = algo(*args)
 
     print(f'eigenvalues calculated by pyabacus-{method} is: \n', e)
     
     return e
 
-def calc_eig_scipy(mat_file):
+def calc_eigsh(mat_file):
     h_mat, _, nband = load_mat(mat_file)
     e, _ = scipy.sparse.linalg.eigsh(h_mat, k=nband, which='SA', maxiter=1000)
     e = np.sort(e)
@@ -50,13 +55,12 @@ def calc_eig_scipy(mat_file):
 
 if __name__ == '__main__':
     mat_file = './Si2.mat'
-    method = ['dav_subspace', 'davidson']
+    method = ['dav_subspace', 'davidson', 'cg']
     
     for m in method:
         print(f'\n====== Calculating eigenvalues using {m} method... ======')
         e_pyabacus = calc_eig_pyabacus(mat_file, m)
-        e_scipy = calc_eig_scipy(mat_file)
+        e_scipy = calc_eigsh(mat_file)
         
         print('eigenvalues difference: \n', e_pyabacus - e_scipy)
-    
-    
+        

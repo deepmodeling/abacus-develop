@@ -86,7 +86,7 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::parameter_check()const
 {
-    std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace" };
+    std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg" };
     std::set<std::string> xc_kernels = { "rpa", "lda", "pbe", "hf" , "hse" };
     if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
