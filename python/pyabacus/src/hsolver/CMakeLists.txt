@@ -2,6 +2,7 @@
 list(APPEND _diago
     ${HSOLVER_PATH}/diago_dav_subspace.cpp
     ${HSOLVER_PATH}/diago_david.cpp
+    ${HSOLVER_PATH}/diago_cg.cpp
     ${HSOLVER_PATH}/diag_const_nums.cpp
     ${HSOLVER_PATH}/diago_iter_assist.cpp
 
