@@ -205,11 +205,13 @@ TEST_F(FIREtest, PrintMD)
         output_str,
         testing::HasSubstr(
             " ------------------------------------------------------------------------------------------------"));
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 11; ++i)
     {
         getline(ifs, output_str);
     }
-    EXPECT_THAT(output_str, testing::HasSubstr(" LARGEST GRAD (eV/A)  : 0.049479926"));
+    EXPECT_THAT(output_str, testing::HasSubstr(" Largest gradient in force is 0.049479926 eV/A"));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr(" Threshold is -1 eV/A."));
     ifs.close();
     remove("running.log");
 }

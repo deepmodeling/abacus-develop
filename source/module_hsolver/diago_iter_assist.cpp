@@ -20,7 +20,7 @@ namespace hsolver
 // Produces on output n_band eigenvectors (n_band <= nstart) in evc.
 //----------------------------------------------------------------------
 template <typename T, typename Device>
-void DiagoIterAssist<T, Device>::diagH_subspace(hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt, // hamiltonian operator carrier
                                                 const psi::Psi<T, Device>& psi,     // [in] wavefunction
                                                 psi::Psi<T, Device>& evc,           // [out] wavefunction
                                                 Real* en,                           // [out] eigenvalues

@@ -72,8 +72,8 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "change_lattice");
 
-    assert(move != NULL);
-    assert(lat != NULL);
+    assert(move != nullptr);
+    assert(lat != nullptr);
 
     /*
         std::cout<<" LATTICE CONSTANT  OLD:"<<std::endl;
@@ -86,11 +86,15 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
     if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
     {
         ModuleBase::matrix move_mat_t(3, 3);
-        for (int i = 0;i < 3;++i)for (int j = 0;j < 3;++j)move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move_mat_t(j, i) = move[i * 3 + j] / ucell.lat0;    //transpose
+}
+}
         ModuleBase::matrix symm_move_mat_t = (move_mat_t * ucell.G.to_matrix());//symmetrize (latvec^{-1} * move_mat)^T
         ucell.symm.symmetrize_mat3(symm_move_mat_t, ucell.lat);
         move_mat_t = symm_move_mat_t * ucell.latvec.Transpose().to_matrix();//G^{-1}=latvec^T
-        for (int i = 0;i < 3;++i)for (int j = 0;j < 3;++j)move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+        for (int i = 0;i < 3;++i) {for (int j = 0;j < 3;++j) {move[i * 3 + j] = move_mat_t(j, i) * ucell.lat0;//transpose back
+}
+}
     }
 
     if (ucell.lc[0] != 0)
@@ -167,8 +171,9 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     {
         for (int i = 0; i < 3; i++)
         {
-            if (stress_ii_max < std::abs(stress(i, i)))
+            if (stress_ii_max < std::abs(stress(i, i))) {
                 stress_ii_max = std::abs(stress(i, i));
+}
             for (int j = 0; j < 3; j++)
             {
                 if (Lattice_Change_Basic::largest_grad < std::abs(stress(i, j)))
@@ -207,14 +212,15 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
             GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << ")" << std::endl;
+                                 << " kbar)" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }
@@ -227,14 +233,15 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         if (Lattice_Change_Basic::largest_grad < 10 * PARAM.inp.stress_thr)
         {
             GlobalV::ofs_running << "\n Lattice relaxation is converged!" << std::endl;
-            GlobalV::ofs_running << "\n Largest gradient is = " << largest_grad << std::endl;
+            GlobalV::ofs_running << "\n Largest gradient in stress is " << largest_grad  << " kbar." << std::endl;
+            GlobalV::ofs_running << " Threshold is " << PARAM.inp.stress_thr << " kbar." << std::endl;
             Lattice_Change_Basic::converged = true;
             ++Lattice_Change_Basic::update_iter;
         }
         else
         {
             GlobalV::ofs_running << "\n Lattice relaxation is not converged yet (threshold is " << PARAM.inp.stress_thr
-                                 << ")" << std::endl;
+                                 << " kbar)" << std::endl;
             Lattice_Change_Basic::converged = false;
         }
     }
@@ -242,7 +249,7 @@ void Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     return;
 }
 
-void Lattice_Change_Basic::terminate(void)
+void Lattice_Change_Basic::terminate()
 {
     ModuleBase::TITLE("Lattice_Change_Basic", "terminate");
     if (Lattice_Change_Basic::converged)

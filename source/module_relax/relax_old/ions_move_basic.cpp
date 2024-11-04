@@ -147,6 +147,10 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
         std::cout << " ETOT DIFF (eV)       : " << Ions_Move_Basic::ediff * ModuleBase::Ry_to_eV << std::endl;
         std::cout << " LARGEST GRAD (eV/A)  : " << Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177
                   << std::endl;
+
+        GlobalV::ofs_running << "\n Largest gradient in force is " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
+                             << " eV/A." << std::endl;
+        GlobalV::ofs_running << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A." << std::endl;
     }
 
     const double etot_diff = std::abs(Ions_Move_Basic::ediff);
@@ -165,8 +169,6 @@ void Ions_Move_Basic::check_converged(const UnitCell &ucell, const double *grad)
     {
         GlobalV::ofs_running << "\n Ion relaxation is converged!" << std::endl;
         GlobalV::ofs_running << "\n Energy difference (Ry) = " << etot_diff << std::endl;
-        GlobalV::ofs_running << "\n Largest gradient is (eV/A) = " << largest_grad * ModuleBase::Ry_to_eV / 0.529177
-                             << std::endl;
 
         Ions_Move_Basic::converged = true;
         ++Ions_Move_Basic::update_iter;

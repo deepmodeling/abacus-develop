@@ -17,6 +17,7 @@
 // rho: charge density
 //----------------------------------------------
 
+template <typename T, typename Device = base_device::DEVICE_CPU>
 class Stochastic_Iter
 {
 
@@ -38,29 +39,29 @@ class Stochastic_Iter
      */
     void init(K_Vectors* pkv_in,
               ModulePW::PW_Basis_K* wfc_basis,
-              Stochastic_WF& stowf,
+              Stochastic_WF<T, Device>& stowf,
               StoChe<double>& stoche,
-              hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
+              hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
 
-    void sum_stoband(Stochastic_WF& stowf,
+    void sum_stoband(Stochastic_WF<T, Device>& stowf,
                      elecstate::ElecState* pes,
-                     hamilt::Hamilt<std::complex<double>>* pHamilt,
+                     hamilt::Hamilt<T, Device>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);
 
     double calne(elecstate::ElecState* pes);
 
     void itermu(const int iter, elecstate::ElecState* pes);
 
-    void orthog(const int& ik, psi::Psi<std::complex<double>>& psi, Stochastic_WF& stowf);
+    void orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf);
 
-    void checkemm(const int& ik, const int istep, const int iter, Stochastic_WF& stowf);
+    void checkemm(const int& ik, const int istep, const int iter, Stochastic_WF<T, Device>& stowf);
 
     void check_precision(const double ref, const double thr, const std::string info);
 
     ModuleBase::Chebyshev<double>* p_che = nullptr;
 
     Sto_Func<double> stofunc;
-    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
+    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
 
     double mu0; // chemical potential; unit in Ry
     bool change;
@@ -76,11 +77,11 @@ class Stochastic_Iter
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
     // cal shchi = \sqrt{f(\hat{H})}|\chi>
-    void calHsqrtchi(Stochastic_WF& stowf);
+    void calHsqrtchi(Stochastic_WF<T, Device>& stowf);
     // cal Pn = \sum_\chi <\chi|Tn(\hat{h})|\chi>
-    void calPn(const int& ik, Stochastic_WF& stowf);
+    void calPn(const int& ik, Stochastic_WF<T, Device>& stowf);
     // cal Tnchi = \sum_n C_n*T_n(\hat{h})|\chi>
-    void calTnchi_ik(const int& ik, Stochastic_WF& stowf);
+    void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
     K_Vectors* pkv;

@@ -239,21 +239,12 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
                 &(GlobalC::ucell));
         }
@@ -266,21 +257,12 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 0.0, // efermi
                 &(GlobalC::ucell),
                 11, // precsion
@@ -441,6 +423,9 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
+#ifdef __MPI
+        MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
     }
     else
     {
@@ -480,21 +465,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                     data = this->pelec->charge->rho_save[is];
                 }
                 std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     data,
                     is,
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell),
                     3,
@@ -502,21 +478,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
                     fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                    ModuleIO::write_cube(
-#ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rhod->nplane,
-                        this->pw_rhod->startz_current,
-#endif
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         this->pelec->charge->kin_r_save[is],
                         is,
                         PARAM.inp.nspin,
                         0,
                         fn,
-                        this->pw_rhod->nx,
-                        this->pw_rhod->ny,
-                        this->pw_rhod->nz,
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }

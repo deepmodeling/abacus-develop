@@ -45,7 +45,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                 break;
             }
         }
-        const int npm = ucell_in.get_npol() * nbands_occ;
+        const int npm = nbands_occ;
         // calculate becp = <psi|beta> for all beta functions
         nl_tools.cal_becp(ik, npm);
         for (int ipol = 0; ipol < 3; ipol++)
