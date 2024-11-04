@@ -6,6 +6,7 @@
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/dsp/dsp_connector.h"
 
 #include <vector>
 
@@ -446,67 +447,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     {
 #ifdef __DSP
         // Only on dsp hardware need an extra space to reduce data
-
-        auto* swap = new T[notconv * this->nbase_x];
-        auto* target = new T[notconv * this->nbase_x];
-
-        syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-        if (std::is_same<T, double>::value)
-        {
-            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-            Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
-        }
-        else
-        {
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           target,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           target,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-
-            syncmem_complex_op()(this->ctx, this->ctx, hcc + nbase * this->nbase_x, target, notconv * this->nbase_x);
-            syncmem_complex_op()(this->ctx, this->ctx, swap, scc + nbase * this->nbase_x, notconv * this->nbase_x);
-
-            if (base_device::get_current_precision(swap) == "single")
-            {
-                MPI_Reduce(swap,
-                           target,
-                           notconv * this->nbase_x,
-                           MPI_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-            else
-            {
-                MPI_Reduce(swap,
-                           target,
-                           notconv * this->nbase_x,
-                           MPI_DOUBLE_COMPLEX,
-                           MPI_SUM,
-                           0,
-                           this->diag_comm.comm);
-            }
-        }
-        syncmem_complex_op()(this->ctx, this->ctx, scc + nbase * this->nbase_x, target, notconv * this->nbase_x);
-        delete[] swap;
-        delete[] target;
+        dsp_dav_subspace_reduce(hcc, scc, this->nbase_x, this->notconv, this->diag_comm);
 #else
         auto* swap = new T[notconv * this->nbase_x];
 
