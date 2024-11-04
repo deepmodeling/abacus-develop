@@ -1116,7 +1116,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             }
 
             this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
-            std::cout << "\n******\n" << "update elec in rdmft successfully" << "\n******\n" << std::endl;
 
             //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
             ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);

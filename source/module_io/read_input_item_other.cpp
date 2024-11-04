@@ -504,7 +504,7 @@ void ReadInput::item_others()
     {
         Input_Item item("rdmft_power_alpha");
         item.annotation = "the alpha parameter of power-functional, g(occ_number) = occ_number^alpha"
-                          "used in exx-type functionals such as muller and power";
+                          " used in exx-type functionals such as muller and power";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )

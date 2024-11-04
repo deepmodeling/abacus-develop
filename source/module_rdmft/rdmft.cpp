@@ -94,9 +94,10 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
-    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
-    nbands_total = PARAM.inp.nbands;
     nspin = PARAM.inp.nspin;
+    nbands_total = PARAM.inp.nbands;
+    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
+    nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
     // // create desc[] and something about MPI to Eij(nbands*nbands)
