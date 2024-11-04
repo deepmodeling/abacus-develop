@@ -2916,6 +2916,8 @@ These variables are used to control vdW-corrected related parameters.
   - `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method (BJ-damping)
   - `none`: no vdW correction
 - **Default**: none
+- **Note**: ABACUS supports automatic setting on DFT-D3 parameters for common functionals after version 3.8.3 (and several develop versions earlier). To benefit from this feature, please specify the parameter `dft_functional` explicitly (for more details on this parameter, please see [dft_functional](#dft_functional)), otherwise the autoset procedure will crash with error message like `cannot find DFT-D3 parameter for XC(***)`. If not satisfied with those in-built parameters, any manually setting on `vdw_s6`, `vdw_s8`, `vdw_a1` and `vdw_a2` will overwrite. 
+- **Special**: There are special cases for functional family wB97 (Omega-B97): if want to use the functional wB97X-D3BJ, one needs to specify the `dft_functional` as `HYB_GGA_WB97X_V` and `vdw_method` as `d3_bj`. If want to use the functional wB97X-D3, specify `dft_functional` as `HYB_GGA_WB97X_D3` and `vdw_method` as `d3_0`.
 
 ### vdw_s6
 
