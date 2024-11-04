@@ -188,6 +188,21 @@ void RDMFT<TK, TR>::update_occNumber(const ModuleBase::matrix& occ_number_in)
 }
 
 
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::update_wg(const ModuleBase::matrix& wg_in)
+{
+    wg = (wg_in);
+    occ_number = (wg);
+    for(int ik=0; ik < wg.nr; ++ik)
+    {
+        for(int inb=0; inb < wg.nc; ++inb)
+        {
+            occ_number(ik, inb) /= kv->wk[ik];
+            wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
+        }
+    }
+}
+
 
 template class RDMFT<double, double>;
 template class RDMFT<std::complex<double>, double>;

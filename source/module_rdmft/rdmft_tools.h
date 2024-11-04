@@ -221,8 +221,16 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
 
 // add psi with eta and g(eta)
 template <typename TK>
-void add_psi(const Parallel_Orbitals* ParaV, const K_Vectors* kv, const ModuleBase::matrix& occ_number, psi::Psi<TK>& psi_TV, psi::Psi<TK>& psi_hartree,
-                psi::Psi<TK>& psi_dft_XC, psi::Psi<TK>& psi_exx_XC, psi::Psi<TK>& occNum_Hpsi, const std::string XC_func_rdmft = "hf", const double alpha = 1.0)
+void add_psi(const Parallel_Orbitals* ParaV, 
+                const K_Vectors* kv, 
+                const ModuleBase::matrix& occ_number, 
+                psi::Psi<TK>& psi_TV, 
+                psi::Psi<TK>& psi_hartree,
+                psi::Psi<TK>& psi_dft_XC, 
+                psi::Psi<TK>& psi_exx_XC, 
+                psi::Psi<TK>& occNum_Hpsi, 
+                const std::string XC_func_rdmft = "hf", 
+                const double alpha = 1.0)
 {
     const int nk = psi_TV.get_nk();
     const int nbn_local = psi_TV.get_nbands();
@@ -255,21 +263,38 @@ void add_psi(const Parallel_Orbitals* ParaV, const K_Vectors* kv, const ModuleBa
 
 // occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
 // When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
-void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& occNum_wfcHwfc,
-                        int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha = 1.0);
+void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, 
+                            const ModuleBase::matrix& wfcHwfc, 
+                            ModuleBase::matrix& occNum_wfcHwfc,
+                            int symbol = 0, 
+                            const std::string XC_func_rdmft = "hf", 
+                            const double alpha = 1.0);
 
 
 // Default symbol = 0 for the gradient of Etotal with respect to occupancy
 // symbol = 1 for the relevant calculation of Etotal
-void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-            const ModuleBase::matrix& wfcHwfc_dft_XC_in, const ModuleBase::matrix& wfcHwfc_exx_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft = "hf", const double alpha = 1.0);
+void add_occNum(const K_Vectors& kv, 
+                    const ModuleBase::matrix& occ_number, 
+                    const ModuleBase::matrix& wfcHwfc_TV_in, 
+                    const ModuleBase::matrix& wfcHwfc_hartree_in,
+                    const ModuleBase::matrix& wfcHwfc_dft_XC_in, 
+                    const ModuleBase::matrix& wfcHwfc_exx_XC_in, 
+                    ModuleBase::matrix& occNum_wfcHwfc, 
+                    const std::string XC_func_rdmft = "hf", 
+                    const double alpha = 1.0);
 
 
 // // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
 // void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
 //                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
-void add_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wk_fun_occNum, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
+void add_wfcHwfc(const ModuleBase::matrix& wg, 
+                    const ModuleBase::matrix& wk_fun_occNum, 
+                    const ModuleBase::matrix& wfcHwfc_TV_in, 
+                    const ModuleBase::matrix& wfcHwfc_hartree_in,
+                    const ModuleBase::matrix& wfcHwfc_XC_in, 
+                    ModuleBase::matrix& occNum_wfcHwfc, 
+                    const std::string XC_func_rdmft, 
+                    const double alpha);
 
 
 //give certain occNum_wfcHwfc, get the corresponding energy
