@@ -26,7 +26,7 @@ mixing_type      broyden
 ks_solver        genelpa
 
 #Parameters (6.rdmft)
-ab_initio_type      rdmft
+rdmft               1
 dft_functional      cwp22
 exx_hse_omega       0.33
 rdmft_power_alpha   0.656

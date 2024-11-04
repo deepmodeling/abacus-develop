@@ -589,7 +589,7 @@ struct Input_para
 
     // ==============   #Parameters (21.RDMFT) =====================
     // RDMFT    jghan added on 2024-07-06
-    std::string ab_initio_type = "ksdft";       // "rdmft", reduced density matrix funcional theory
+    bool rdmft = false;                           // rdmft, reduced density matrix funcional theory
     double rdmft_power_alpha = 0.656;             // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
     // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
 

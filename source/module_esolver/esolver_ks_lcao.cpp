@@ -264,7 +264,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
 
     // 15) initialize rdmft, added by jghan
-    if( PARAM.inp.ab_initio_type == "rdmft" )
+    if( PARAM.inp.rdmft == true )
     {
         rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
                                 this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
@@ -1120,7 +1120,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     }
 
     // 7) rdmft, added by jghan, 2024-10-25
-    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    if ( PARAM.inp.rdmft == true )
     {
         ModuleBase::TITLE("RDMFT", "E & Egradient");
         ModuleBase::timer::tick("RDMFT", "E & Egradient");
@@ -1246,7 +1246,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     /******** test RDMFT *********/
 
     // rdmft, added by jghan, 2024-10-17
-    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    if ( PARAM.inp.rdmft == true )
     {
         ModuleBase::matrix occ_number_ks(this->pelec->wg);
         for(int ik=0; ik < occ_number_ks.nr; ++ik)

@@ -428,7 +428,7 @@
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims_nbasis](#aims_nbasis)
   - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
-    - [ab\_initio\_type](#ab_initio_type)
+    - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
 [back to top](#full-list-of-input-keywords)
@@ -4007,11 +4007,11 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 ab-initio methods and the xc-functional parameters used in RDMFT.
 The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 
-### ab_initio_type
+### rdmft
 
-- **Type**: String
-- **Description**: Determine the ab-initio method, ksdft or rdmft (reduced density matrix funcional theory)
-- **Default**: ksdft
+- **Type**: Boolean
+- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
+- **Default**: false
 
 ### rdmft_power_alpha
 

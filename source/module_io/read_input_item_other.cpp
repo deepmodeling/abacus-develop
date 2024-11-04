@@ -496,9 +496,9 @@ void ReadInput::item_others()
 
     // RDMFT, added by jghan, 2024-10-16
     {
-        Input_Item item("ab_initio_type");
-        item.annotation = "rdmft (reduced density matrix funcional theory) or ksdft, default is ksdft";
-        read_sync_string(input.ab_initio_type);
+        Input_Item item("rdmft");
+        item.annotation = "whether to perform rdmft calculation, default is false";
+        read_sync_bool(input.rdmft);
         this->add_item(item);
     }
     {
