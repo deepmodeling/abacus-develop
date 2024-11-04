@@ -133,18 +133,12 @@ class RDMFT
     hamilt::HContainer<TR>* HR_exx_XC = nullptr;
     // hamilt::HContainer<TR>* HR_local = nullptr;
 
-    std::vector<TK> HK_TV;
-    std::vector<TK> HK_hartree;
-    std::vector<TK> HK_exx_XC;
-    std::vector<TK> HK_dft_XC;
-
     hamilt::HS_Matrix_K<TK>* hsk_TV;
     hamilt::HS_Matrix_K<TK>* hsk_hartree;
     hamilt::HS_Matrix_K<TK>* hsk_dft_XC;
     hamilt::HS_Matrix_K<TK>* hsk_exx_XC;
 
     std::vector<TK> HK_XC;
-    std::vector<TK> HK_local;
     std::vector< std::vector<TK> > DM_XC_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_RDMFT_pass;
     // ModuleDirectMin::ProdStiefelVariable HK_XC_pass;

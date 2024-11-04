@@ -125,11 +125,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
     H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
 
-    // 
-    // HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_exx_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_dft_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
     //
     hsk_TV = new hamilt::HS_Matrix_K<TK>(ParaV, true);
     hsk_hartree = new hamilt::HS_Matrix_K<TK>(ParaV, true);
@@ -137,7 +132,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
     HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_local.resize( ParaV->get_row_size()*ParaV->get_col_size() );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
