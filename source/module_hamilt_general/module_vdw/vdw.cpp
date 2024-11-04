@@ -28,12 +28,13 @@ std::unique_ptr<Vdw> make_vdw(const UnitCell &ucell,
         vdw_ptr->parameter().initial_parameters(input, plog);
         return vdw_ptr;
     }
-    else
+    else if (input.vdw_method != "none")
     {
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::make_vdw", 
         "Unrecognized Van der Waals correction method: " + input.vdw_method);
         return nullptr;
     }
+    return nullptr; // "none" method
 }
 
 } // namespace vdw
