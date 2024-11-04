@@ -416,7 +416,7 @@ namespace DFTD3 {
                                          "XC (`" + xc + "`)'s DFT-D3M(0) parameters not found");
             }
         }
-        else // zero
+        else if (method == "zero")
         {
             if (zero.find(xc_lowercase) != zero.end())
             {
@@ -427,6 +427,11 @@ namespace DFTD3 {
                 ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
                                          "XC (`" + xc + "`)'s DFT-D3(0) parameters not found");
             }
+        }
+        else // should not reach here
+        {
+            ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
+                                     "Unknown DFT-D3 method: " + method);
         }
     }
 
@@ -469,7 +474,8 @@ namespace DFTD3 {
                       double& s6,
                       double& s8,
                       double& a1,
-                      double& a2)
+                      double& a2,
+                      std::ofstream* plog = nullptr)
     {
         const std::map<std::string, std::string> param_map = {
             {"d3_bj", "bj"}, {"d3_0", "zero"}, {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
@@ -493,12 +499,16 @@ namespace DFTD3 {
             s8 = (s8_in == "default") ? param[3] : std::stod(s8_in);
             a1 = (a1_in == "default") ? param[2] : std::stod(a1_in);
             a2 = (a2_in == "default") ? param[5] : std::stod(a2_in);
-            // param = {s6, s8, a1, a2};
-            // FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
-            // const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
-            // vdwd3tab << items << flag << param;
-            // std::cout << "DFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
-            //           << std::flush;
+            if (plog != nullptr) // logging the autoset
+            {
+                param = {s6, s8, a1, a2};
+                FmtTable vdwd3tab({"Parameters", "Original", "Autoset"}, 4, {"%10s", "%10s", "%10.4f"});
+                const std::vector<std::string> items = {"s6", "s8", "a1", "a2"};
+                vdwd3tab << items << flag << param;
+                (*plog) << "\nDFT-D3 Dispersion correction parameters autoset\n" << vdwd3tab.str()
+                        << "XC functional: " << xc_in << std::endl;
+            }
+
         }
     }
 }

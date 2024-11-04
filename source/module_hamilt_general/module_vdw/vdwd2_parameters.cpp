@@ -9,7 +9,7 @@
 namespace vdw
 {
 
-void Vdwd2Parameters::initial_parameters(const Input_para &input)
+void Vdwd2Parameters::initial_parameters(const Input_para &input, std::ofstream* plog)
 {
     scaling_ = std::stod(input.vdw_s6);
     damping_ = input.vdw_d;
