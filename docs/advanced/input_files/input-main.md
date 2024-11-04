@@ -2921,7 +2921,7 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d2`, `d3_0`, or `d3_bj`
-- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
+- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 - **Default**:
   - 0.75: if `vdw_method` is set to `d2`
 
@@ -2929,19 +2929,19 @@ These variables are used to control vdW-corrected related parameters.
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
+- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_a1
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
+- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_a2
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
+- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_d
 
