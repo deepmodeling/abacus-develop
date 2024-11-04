@@ -344,11 +344,14 @@ namespace DFTD3 {
     void _xcname_libxc_xplusc(const std::string& xcpattern, std::string& xname)
     {
         std::vector<std::string> xc_words = FmtCore::split(xcpattern, "+");
+        std::for_each(xc_words.begin(), xc_words.end(), [](std::string& s) {
+             s = (FmtCore::startswith(s, "XC_")? s: "XC_" + s); }); // add XC_ if not present
         assert(xc_words.size() == 2);
 
         std::vector<std::string> words = FmtCore::split(xc_words[0], "_");
-        const std::string key = (words[2] == "X")? xcpattern: xc_words[1] + "+" + xc_words[0];
-        
+        const std::string key = (words[2] == "X")? 
+            xc_words[0] + "+" + xc_words[1]: xc_words[1] + "+" + xc_words[0];
+
         if (xcname_libxc_xplusc_.find(key) != xcname_libxc_xplusc_.end()) {
             xname = xcname_libxc_xplusc_.at(key);
         } else {
@@ -359,9 +362,11 @@ namespace DFTD3 {
 
     void _xcname_libxc_xc(const std::string& xcpattern, std::string& xname)
     {
-        std::vector<std::string> words = FmtCore::split(xcpattern, "_");
-        if (xcname_libxc_xc_.find(xcpattern) != xcname_libxc_xc_.end()) {
-            xname = xcname_libxc_xc_.at(xcpattern);
+        // add XC_ if not present
+        const std::string key = FmtCore::startswith(xcpattern, "XC_")? xcpattern: "XC_" + xcpattern;
+
+        if (xcname_libxc_xc_.find(key) != xcname_libxc_xc_.end()) {
+            xname = xcname_libxc_xc_.at(key);
         } else {
             ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::xcname_libxc_xc",
                                      "XC's LibXC-notation on `" + xcpattern + "` not recognized");
@@ -380,9 +385,9 @@ namespace DFTD3 {
     std::string _xcname(const std::string& xcpattern)
     {
         std::string xcname = xcpattern;
-        const std::regex pattern("XC_(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
+        const std::regex pattern("(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
         // as long as there is piece in xcpattern that can match, we can search for the corresponding name
-        if (std::regex_match(xcpattern, pattern)) {
+        if (std::regex_search(xcpattern, pattern)) {
             _xcname_libxc(xcpattern, xcname);
         }
         return xcname;
