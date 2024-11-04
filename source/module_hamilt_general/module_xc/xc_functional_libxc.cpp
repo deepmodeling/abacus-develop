@@ -11,10 +11,30 @@
 #include <xc.h>
 
 #include <vector>
+bool xc_with_laplacian(const std::string& xc_func_in)
+{
+	// see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
+	// ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
+	const std::vector<std::string> not_supported = {
+		"MGGA_XC_CC06", "MGGA_C_CS", "MGGA_X_BR89", "MGGA_X_MK00"};
+	for (const std::string& s : not_supported)
+	{
+		if (xc_func_in.find(s) != std::string::npos)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 
 std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::string xc_func_in)
 {
     // determine the type (lda/gga/mgga)
+	if (xc_with_laplacian(xc_func_in))
+	{
+		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
+			"XC Functional involving Laplacian of rho is not implemented.");
+	}
 	int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
     func_type = 1;
     if(xc_func_in.find("GGA") != std::string::npos) { func_type = 2; }

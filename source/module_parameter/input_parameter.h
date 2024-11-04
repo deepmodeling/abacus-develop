@@ -33,7 +33,7 @@ struct Input_para
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
     std::string latname = "none";   ///< lattice name
-    double ecutwfc = 50;            ///< energy cutoff for wavefunctions
+    double ecutwfc = 0;            ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
     int nx = 0, ny = 0, nz = 0;    ///< three dimension of FFT wavefunc
@@ -589,7 +589,7 @@ struct Input_para
 
     // ==============   #Parameters (21.RDMFT) =====================
     // RDMFT    jghan added on 2024-07-06
-    std::string ab_initio_type = "ksdft";       // "rdmft", reduced density matrix funcional theory
+    bool rdmft = false;                           // rdmft, reduced density matrix funcional theory
     double rdmft_power_alpha = 0.656;             // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
     // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
 

@@ -86,7 +86,7 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::parameter_check()const
 {
-    std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace" };
+    std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg" };
     std::set<std::string> xc_kernels = { "rpa", "lda", "pbe", "hf" , "hse" };
     if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
@@ -654,22 +654,12 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         double ef;
-        if (ModuleIO::read_cube(
-#ifdef __MPI
-            & (GlobalC::Pgrid),
-#endif
+        if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
             GlobalV::MY_RANK,
-            is,
             GlobalV::ofs_running,
-            this->nspin,
             ssc.str(),
             chg_gs.rho[is],
-            this->pw_rho->nx,
-            this->pw_rho->ny,
-            this->pw_rho->nz,
-            ef,
-            &(GlobalC::ucell),
-            chg_gs.prenspin)) {
+            ucell.nat)) {
             GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
         } else {    // prenspin for nspin=4 is not supported currently
             ModuleBase::WARNING_QUIT(

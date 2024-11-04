@@ -496,15 +496,15 @@ void ReadInput::item_others()
 
     // RDMFT, added by jghan, 2024-10-16
     {
-        Input_Item item("ab_initio_type");
-        item.annotation = "rdmft (reduced density matrix funcional theory) or ksdft, default is ksdft";
-        read_sync_string(input.ab_initio_type);
+        Input_Item item("rdmft");
+        item.annotation = "whether to perform rdmft calculation, default is false";
+        read_sync_bool(input.rdmft);
         this->add_item(item);
     }
     {
         Input_Item item("rdmft_power_alpha");
         item.annotation = "the alpha parameter of power-functional, g(occ_number) = occ_number^alpha"
-                          "used in exx-type functionals such as muller and power";
+                          " used in exx-type functionals such as muller and power";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )

@@ -264,7 +264,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 
 
     // 15) initialize rdmft, added by jghan
-    if( PARAM.inp.ab_initio_type == "rdmft" )
+    if( PARAM.inp.rdmft == true )
     {
         rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
                                 this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
@@ -1061,21 +1061,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                 data = this->pelec->charge->rho_save[is];
             }
             std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 data,
                 is,
                 PARAM.inp.nspin,
                 0,
                 fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.get_efval(is),
                 &(GlobalC::ucell),
                 3,
@@ -1083,21 +1074,12 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     this->pelec->charge->kin_r_save[is],
                     is,
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell));
             }
@@ -1120,21 +1102,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
     }
 
     // 7) rdmft, added by jghan, 2024-10-25
-    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    if ( PARAM.inp.rdmft == true  && get_init_value_rdmft )
     {
-        ModuleBase::TITLE("RDMFT", "E & Egradient");
-        ModuleBase::timer::tick("RDMFT", "E & Egradient");
-
-        if( get_init_value_rdmft )
-        {
             ModuleBase::matrix occ_number_ks(this->pelec->wg);
-            for(int ik=0; ik < occ_number_ks.nr; ++ik)
-            {
-                for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
-            }
-
+            for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik]; }
             this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
-            std::cout << "\n******\n" << "update elec in rdmft successfully" << "\n******\n" << std::endl;
 
             //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
             ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
@@ -1142,11 +1114,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
             dE_dWfc.zero_out();
 
             double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);
-
-            ModuleBase::timer::tick("RDMFT", "E & Egradient");
-
             // break;
-        }
     }
 
 }
@@ -1244,15 +1212,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 #endif
 
     /******** test RDMFT *********/
-
-    // rdmft, added by jghan, 2024-10-17
-    if ( PARAM.inp.ab_initio_type == "rdmft" )
+    if ( PARAM.inp.rdmft == true ) // rdmft, added by jghan, 2024-10-17
     {
         ModuleBase::matrix occ_number_ks(this->pelec->wg);
-        for(int ik=0; ik < occ_number_ks.nr; ++ik)
-        {
-            for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik];
-        } 
+        for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik]; }
         this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
 
         //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
@@ -1262,7 +1225,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
         double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);
     }
-
     /******** test RDMFT *********/
 
 

@@ -110,8 +110,12 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 
 // occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
 // When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
-void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc, ModuleBase::matrix& occNum_wfcHwfc,
-                        int symbol, const std::string XC_func_rdmft, const double alpha)
+void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, 
+                            const ModuleBase::matrix& wfcHwfc, 
+                            ModuleBase::matrix& occNum_wfcHwfc,
+                            int symbol, 
+                            const std::string XC_func_rdmft, 
+                            const double alpha)
 {
     for(int ir=0; ir<occ_number.nr; ++ ir)
     {
@@ -122,8 +126,15 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, const ModuleBase::
 
 
 // for the gradient of Etotal with respect to occupation numbers
-void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_dft_XC_in, const ModuleBase::matrix& wfcHwfc_exx_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+void add_occNum(const K_Vectors& kv, 
+                    const ModuleBase::matrix& occ_number, 
+                    const ModuleBase::matrix& wfcHwfc_TV_in, 
+                    const ModuleBase::matrix& wfcHwfc_hartree_in,
+                    const ModuleBase::matrix& wfcHwfc_dft_XC_in, 
+                    const ModuleBase::matrix& wfcHwfc_exx_XC_in, 
+                    ModuleBase::matrix& occNum_wfcHwfc, 
+                    const std::string XC_func_rdmft, 
+                    const double alpha)
 { 
     occNum_wfcHwfc.zero_out();
     occNum_Mul_wfcHwfc(occ_number, wfcHwfc_exx_XC_in, occNum_wfcHwfc, 4, XC_func_rdmft, alpha);
@@ -141,8 +152,14 @@ void add_occNum(const K_Vectors& kv, const ModuleBase::matrix& occ_number, const
 
 
 // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
-void add_wfcHwfc(const ModuleBase::matrix& wg, const ModuleBase::matrix& wk_fun_occNum, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-                const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha)
+void add_wfcHwfc(const ModuleBase::matrix& wg, 
+                    const ModuleBase::matrix& wk_fun_occNum, 
+                    const ModuleBase::matrix& wfcHwfc_TV_in, 
+                    const ModuleBase::matrix& wfcHwfc_hartree_in,
+                    const ModuleBase::matrix& wfcHwfc_XC_in, 
+                    ModuleBase::matrix& occNum_wfcHwfc, 
+                    const std::string XC_func_rdmft, 
+                    const double alpha)
 {
     occNum_wfcHwfc.zero_out();
     occNum_Mul_wfcHwfc(wg, wfcHwfc_TV_in, occNum_wfcHwfc);
@@ -194,18 +211,6 @@ double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, doub
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 template class Veff_rdmft<double, double>;
 
 template class Veff_rdmft<std::complex<double>, double>;
@@ -228,7 +233,8 @@ void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
     for (int iat1 = 0; iat1 < ucell_in->nat; iat1++)
     {
         auto tau1 = ucell_in->get_tau(iat1);
-        int T1, I1;
+        int T1 = 0;
+        int I1 = 0;
         ucell_in->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell_in, tau1, T1, I1, &adjs);

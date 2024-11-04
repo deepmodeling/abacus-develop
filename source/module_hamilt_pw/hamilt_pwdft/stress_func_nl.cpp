@@ -49,7 +49,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                 break;
             }
         }
-        const int npm = ucell_in.get_npol() * nbands_occ;
+        const int npm = nbands_occ;
 
         // calculate becp = <psi|beta> for all beta functions
         nl_tools.cal_becp(ik, npm);

@@ -22,7 +22,7 @@ class Sto_Stress_PW : public Stress_Func<double>
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
                     const psi::Psi<complex<double>>* psi_in,
-                    Stochastic_WF& stowf,
+                    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
                     const Charge* const chr,
                     pseudopot_cell_vnl* nlpp_in,
                     const UnitCell& ucell_in);
@@ -34,7 +34,7 @@ class Sto_Stress_PW : public Stress_Func<double>
                         K_Vectors* p_kv,
                         ModulePW::PW_Basis_K* wfc_basis,
                         const psi::Psi<complex<double>>* psi_in,
-                        Stochastic_WF& stowf);
+                        Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf);
 
     void sto_stress_nl(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
@@ -43,7 +43,7 @@ class Sto_Stress_PW : public Stress_Func<double>
                        K_Vectors* p_kv,
                        ModulePW::PW_Basis_K* wfc_basis,
                        const psi::Psi<complex<double>>* psi_in,
-                       Stochastic_WF& stowf,
+                       Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
                        pseudopot_cell_vnl* nlpp_in);
 };
 #endif

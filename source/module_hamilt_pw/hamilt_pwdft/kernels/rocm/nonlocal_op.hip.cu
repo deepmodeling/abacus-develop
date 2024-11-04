@@ -54,8 +54,8 @@ __global__ void nonlocal_pw(
     thrust::complex<FPTYPE>* ps,
     const thrust::complex<FPTYPE>* becp)
 {
-  const int ii = blockIdx.x / l2;
-  const int jj = blockIdx.x % l2;
+  const int ii = blockIdx.x * 2 / l2;
+  const int jj = blockIdx.x * 2 % l2;
   for (int kk = threadIdx.x; kk < l3; kk += blockDim.x) {
     thrust::complex<FPTYPE> res1(0.0, 0.0);
     thrust::complex<FPTYPE> res2(0.0, 0.0);
@@ -122,7 +122,7 @@ void hamilt::nonlocal_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
 {
   // denghui implement 20221109
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2), dim3(THREADS_PER_BLOCK), 0, 0,
+  hipLaunchKernelGGL(HIP_KERNEL_NAME(nonlocal_pw<FPTYPE>), dim3(l1 * l2 / 2), dim3(THREADS_PER_BLOCK), 0, 0,
     l1, l2, l3, // loop size
     sum, iat, nkb,   // control params
     deeq_x, deeq_y, deeq_z,

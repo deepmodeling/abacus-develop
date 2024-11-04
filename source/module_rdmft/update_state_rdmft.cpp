@@ -79,7 +79,9 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
 
     this->cal_V_hartree();
     this->cal_V_XC();
-    this->cal_Hk_Hpsi();
+    // this->cal_Hk_Hpsi();
+
+    std::cout << "\n******\n" << "update elec in rdmft successfully" << "\n******\n" << std::endl;
 }
 
 
@@ -148,7 +150,7 @@ void RDMFT<TK, TR>::update_charge()
         charge->renormalize_rho();
     }
 
-    /*********** what's this? When we use PBE-functional, this can't be deleted *************/
+    // charge density symmetrization
     // this->pelec->calculate_weights();
     // this->pelec->calEBand();
     Symmetry_rho srho;
@@ -156,19 +158,16 @@ void RDMFT<TK, TR>::update_charge()
     {
         srho.begin(is, *(this->charge), rho_basis, GlobalC::ucell.symm);
     }
-    /*********** what's this? When we use PBE-functional, this can't be deleted *************/
 
-    // // what this?
-    // if(GlobalV::VL_IN_H)
-    // {
-    //     // update Gint_K
-    //     if (!PARAM.inp.gamma_only)
-    //     {
-    //         this->UHM.GK.renew();
-    //     }
-    //     // update real space Hamiltonian
-    //     // this->p_hamilt->refresh();
-    // }
+    // what this? it seems that it needs to be updated at each iteration
+    if (PARAM.inp.vl_in_h)
+    {
+        // update Gint_K
+        if (!PARAM.globalv.gamma_only_local)
+        {
+            this->GK->renew();
+        }
+    }
 
 }
 
@@ -188,6 +187,21 @@ void RDMFT<TK, TR>::update_occNumber(const ModuleBase::matrix& occ_number_in)
     }
 }
 
+
+template <typename TK, typename TR>
+void RDMFT<TK, TR>::update_wg(const ModuleBase::matrix& wg_in)
+{
+    wg = (wg_in);
+    occ_number = (wg);
+    for(int ik=0; ik < wg.nr; ++ik)
+    {
+        for(int inb=0; inb < wg.nc; ++inb)
+        {
+            occ_number(ik, inb) /= kv->wk[ik];
+            wk_fun_occNum(ik, inb) = kv->wk[ik] * occNum_func(occ_number(ik, inb), 2, XC_func_rdmft, alpha_power);
+        }
+    }
+}
 
 
 template class RDMFT<double, double>;

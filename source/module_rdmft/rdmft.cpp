@@ -94,9 +94,10 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;
 
-    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
-    nbands_total = PARAM.inp.nbands;
     nspin = PARAM.inp.nspin;
+    nbands_total = PARAM.inp.nbands;
+    nk_total = ModuleSymmetry::Symmetry::symm_flag == -1 ? kv->get_nkstot_full(): kv->get_nks();
+    nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
     // // create desc[] and something about MPI to Eij(nbands*nbands)
@@ -125,11 +126,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     H_wfc_exx_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
     H_wfc_dft_XC.resize(nk_total, ParaV->ncol_bands, ParaV->nrow);
 
-    // 
-    // HK_TV.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_hartree.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_exx_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    // HK_dft_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
     //
     hsk_TV = new hamilt::HS_Matrix_K<TK>(ParaV, true);
     hsk_hartree = new hamilt::HS_Matrix_K<TK>(ParaV, true);
@@ -137,7 +133,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     hsk_exx_XC = new hamilt::HS_Matrix_K<TK>(ParaV, true);
 
     HK_XC.resize( ParaV->get_row_size()*ParaV->get_col_size() );
-    HK_local.resize( ParaV->get_row_size()*ParaV->get_col_size() );
     // HK_RDMFT_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
     // HK_XC_pass.resize(nk_total, ParaV->get_row_size(), ParaV->get_col_size());
 
@@ -403,7 +398,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 //     std::cout << "\netxc:  " << etxc << "\nvtxc:  " << vtxc << "\n";
 //     std::cout << "\nE_deband_KS:  " << E_deband_KS << "\nE_deband_harris_KS:  " << E_deband_harris_KS << "\n\n" << std::endl;
 
-    if( PARAM.inp.ab_initio_type == "rdmft" )
+    if( PARAM.inp.rdmft == true )
     {
         GlobalV::ofs_running << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
@@ -433,9 +428,12 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
 template <typename TK, typename TR>
 double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc)
 {
+    ModuleBase::TITLE("RDMFT", "E & Egradient");
+    ModuleBase::timer::tick("RDMFT", "E & Egradient");
+
     // this->cal_V_hartree();
     // this->cal_V_XC();
-    // this->cal_Hk_Hpsi();
+    this->cal_Hk_Hpsi();
     this->cal_E_gradient();
     this->cal_Energy(this->cal_E_type);
     // this->cal_Energy(2);
@@ -444,8 +442,9 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     
     TK* pwfc = &occNum_HamiltWfc(0, 0, 0);
     TK* pwfc_out = &E_gradient_wfc(0, 0, 0);
-    for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i];
-}
+    for(int i=0; i<wfc.size(); ++i) { pwfc_out[i] = pwfc[i]; }
+
+    ModuleBase::timer::tick("RDMFT", "E & Egradient");
     // return E_RDMFT[3];
     return Etotal;
 }

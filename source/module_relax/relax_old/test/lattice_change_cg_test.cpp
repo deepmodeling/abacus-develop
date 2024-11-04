@@ -120,7 +120,7 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -152,7 +152,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -182,7 +182,7 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -213,7 +213,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -247,7 +247,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 
@@ -280,7 +280,7 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
     GlobalV::ofs_running.close();
 
     // Check output
-    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5)\n";
+    std::string expected_output = "\n Lattice relaxation is not converged yet (threshold is 0.5 kbar)\n";
     std::ifstream ifs("log");
     std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
 

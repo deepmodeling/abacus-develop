@@ -69,7 +69,7 @@ has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
-has_rdmft=$(get_input_key_value "ab_initio_type" "INPUT")
+rdmft=$(get_input_key_value "rdmft" "INPUT")
 #echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
@@ -545,7 +545,7 @@ if [ $is_lr == 1 ]; then
 	echo "totexcitationenergyref $lreig_tot" >>$1
 fi
 
-if ! test -z "$has_rdmft" && [[ "$has_rdmft" == "rdmft" ]]; then
+if ! test -z "$rdmft" && [[ $rdmft == 1 ]]; then
 	echo "" >>$1
 	echo "The following energy units are in Rydberg:" >>$1
 

@@ -29,7 +29,7 @@ class DiagoIterAssist
     static int SCF_ITER;
 
     // for psi::Psi structure
-    static void diagH_subspace(hamilt::Hamilt<T, Device>* pHamilt,
+    static void diagH_subspace(const hamilt::Hamilt<T, Device>* const pHamilt,
                                const psi::Psi<T, Device>& psi,
                                psi::Psi<T, Device>& evc,
                                Real* en,
