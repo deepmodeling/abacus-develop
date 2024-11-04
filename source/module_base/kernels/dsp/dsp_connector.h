@@ -68,12 +68,10 @@ void cgemm_mth_(const char *transa, const char *transb,
 
 // The next is dsp utils. It may be moved to other files if this file get too huge
 
-base_device::AbacusDevice_t device = {};
-
 template <typename T>
-void dsp_dav_subspace_reduce(T* hcc, T* scc, nbase, int nbase_x, int notconv, MPI_Comm diag_comm){
+void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv, MPI_Comm diag_comm){
 
-	using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, DEVICE_CPU, DEVICE_CPU>;
+	using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 
 	auto* swap = new T[notconv * nbase_x];
     auto* target = new T[notconv * nbase_x];
