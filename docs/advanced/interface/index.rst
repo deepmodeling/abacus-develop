@@ -9,6 +9,7 @@ Interfaces to Other Softwares
    deepks
    dpgen
    deeph
+   deeptb
    Hefei-NAMD
    phonopy
    Wannier90
