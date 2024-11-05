@@ -57,7 +57,7 @@ namespace LR
             {
                 assert(lr_init_xc_kernel.size() >= 2);
                 double** rho_for_fxc;
-                LR_Util::new_p2(rho_for_fxc, nspin, nrxx);
+                LR_Util::new_pointer_dim2(rho_for_fxc, nspin, nrxx);
                 double ef = 0.0;
                 int prenspin = 1;
                 for (int is = 0;is < nspin;++is)
@@ -67,7 +67,7 @@ namespace LR
                         rho_for_fxc[is], ucell->nat);
                 }
                 this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, rho_for_fxc, chg_gs->rho_core);
-                LR_Util::delete_p2(rho_for_fxc, nspin);
+                LR_Util::delete_pointer_dim2(rho_for_fxc, nspin);
             }
             else { this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, chg_gs->rho, chg_gs->rho_core); }
 #else 
