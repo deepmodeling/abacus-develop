@@ -141,10 +141,61 @@ namespace LR
                     BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
                 };
             break;
-            // case SpinType::S2_singlet:
-            //     break;
-            // case SpinType::S2_triplet:
-            //     break;
+        case SpinType::S2_singlet:
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)-> void
+                {
+                    std::vector<ModuleBase::Vector3<double>> drho(nrxx);    // transition density gradient
+                    LR_Util::grad(rho, drho.data(), this->rho_basis_, this->tpiba_);
+
+                    std::vector<double> vxc_tmp(nrxx, 0.0);
+
+                    // 1. the terms in grad_dot int f_uu
+                    std::vector<ModuleBase::Vector3<double>> gdot_terms(nrxx);
+                    for (int ir = 0;ir < nrxx;++ir)
+                    {
+                        // gdot terms in f_uu
+                        gdot_terms[ir] = -(rho[ir] * fxc.v2rhosigma_drho_singlet.at(ir)
+                            + (fxc.drho_gs.at(ir) * drho.at(ir)) * fxc.v2sigma2_drho_singlet.at(ir)
+                            + drho.at(ir) * (fxc.vsigma.at(ir * 3) * 2. + fxc.vsigma.at(ir * 3 + 1)));
+                    }
+                    XC_Functional::grad_dot(gdot_terms.data(), vxc_tmp.data(), &this->rho_basis_, this->tpiba_);
+
+                    // 2. terms not in grad_dot
+                    for (int ir = 0;ir < nrxx;++ir)
+                    {
+                        vxc_tmp[ir] += rho[ir] * (fxc.v2rho2.at(ir * 3) + fxc.v2rho2.at(ir * 3 + 1))
+                            + drho.at(ir) * fxc.v2rhosigma_drho_singlet.at(ir);
+                    }
+                    BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
+                };
+            break;
+        case SpinType::S2_triplet:
+            funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
+                {
+                    std::vector<ModuleBase::Vector3<double>> drho(nrxx);    // transition density gradient
+                    LR_Util::grad(rho, drho.data(), this->rho_basis_, this->tpiba_);
+
+                    std::vector<double> vxc_tmp(nrxx, 0.0);
+
+                    // 1. the terms in grad_dot int f_uu
+                    std::vector<ModuleBase::Vector3<double>> gdot_terms(nrxx);
+                    for (int ir = 0;ir < nrxx;++ir)
+                    {
+                        // gdot terms in f_uu
+                        gdot_terms[ir] = -(rho[ir] * fxc.v2rhosigma_drho_triplet.at(ir)
+                            + (fxc.drho_gs.at(ir) * drho.at(ir)) * fxc.v2sigma2_drho_triplet.at(ir)
+                            + drho.at(ir) * (fxc.vsigma.at(ir * 3) * 2. - fxc.vsigma.at(ir * 3 + 1)));
+                    }
+
+                    // 2. terms not in grad_dot
+                    for (int ir = 0;ir < nrxx;++ir)
+                    {
+                        vxc_tmp[ir] += rho[ir] * (fxc.v2rho2.at(ir * 3) - fxc.v2rho2.at(ir * 3 + 1))
+                            + drho.at(ir) * fxc.v2rhosigma_drho_triplet.at(ir);
+                    }
+                    BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
+                };
+            break;
         default:
             throw std::domain_error("SpinType =" + std::to_string(static_cast<int>(s)) + "for GGA or HYB_GGA is unfinished in "
                 + std::string(__FILE__) + " line " + std::to_string(__LINE__));

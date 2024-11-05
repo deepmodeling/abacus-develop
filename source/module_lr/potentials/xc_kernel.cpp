@@ -261,6 +261,25 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
             }
         }
+        else if (2 == nspin)    //close-shell
+        {
+            this->drho_gs_ = gradrho[0];
+            this->v2rhosigma_drho_singlet_.resize(nrxx);
+            this->v2sigma2_drho_singlet_.resize(nrxx);
+            this->v2rhosigma_drho_triplet_.resize(nrxx);
+            this->v2sigma2_drho_triplet_.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+            for (int i = 0;i < nrxx;++i)
+            {
+                const int istart = i * 6;
+                this->v2rhosigma_drho_singlet_[i] = gradrho[0][i] * (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
+                this->v2sigma2_drho_singlet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
+                this->v2rhosigma_drho_triplet_[i] = gradrho[0][i] * (v2rs[istart] - v2rs[istart + 2]) * 2.;
+                this->v2sigma2_drho_triplet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
+            }
+        }
         else
         {
             throw std::domain_error("nspin =" + std::to_string(nspin)
