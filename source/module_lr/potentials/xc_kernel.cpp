@@ -144,15 +144,17 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
             if (1 == nspin)
             {
+                using V3 = ModuleBase::Vector3<double>;
                 // 0. drho
-                this->grad_kernel_set_.emplace("drho_gs", std::vector<ModuleBase::Vector3<double>>(nrxx));
-                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["drho_gs"][ir] = gradrho[0][ir];
+                this->grad_kernel_set_.emplace("drho_gs", gradrho[0]);
                 // 1. $2f^{\rho\sigma}*\nabla\rho$
-                this->grad_kernel_set_.emplace("2_v2rhosigma_drho", std::vector<ModuleBase::Vector3<double>>(nrxx));
-                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["2_v2rhosigma_drho"][ir] = gradrho[0][ir] * v2rs.at(ir) * 2.;
+                this->grad_kernel_set_.emplace("2_v2rhosigma_drho", std::vector<V3>(nrxx));
+                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->grad_kernel_set_["2_v2rhosigma_drho"].begin(),
+                    [](const V3& a, const V3& b) {return a * b * 2.; });
                 // 2. $4f^{\sigma\sigma}*\nabla\rho$
-                this->grad_kernel_set_.emplace("4_v2sigma2_drho", std::vector<ModuleBase::Vector3<double>>(nrxx));
-                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["4_v2sigma2_drho"][ir] = sigma.at(ir) * v2s2.at(ir) * 4.;
+                this->grad_kernel_set_.emplace("4_v2sigma2_drho", std::vector<V3>(nrxx));
+                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), this->grad_kernel_set_["4_v2sigma2_drho"].begin(),
+                    [](const V3& a, const V3& b) {return a * b * 4.; });
             }
             // else if (2 == nspin)    // wrong, to be fixed
             // {
