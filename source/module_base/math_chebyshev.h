@@ -215,7 +215,7 @@ class Chebyshev
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated
 
-  private:
+  public:
     // SI.
     // calculate dot product <psi_L|psi_R>
     REAL ddot_real(const std::complex<REAL>* psi_L,

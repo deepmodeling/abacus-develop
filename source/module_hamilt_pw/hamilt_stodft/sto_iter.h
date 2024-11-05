@@ -1,7 +1,7 @@
 #ifndef STO_ITER_H
 #define STO_ITER_H
 #include "module_base/math_chebyshev.h"
-#include "module_elecstate/elecstate.h"
+#include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_psi/psi.h"
@@ -45,7 +45,7 @@ class Stochastic_Iter
               hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
 
     void sum_stoband(Stochastic_WF<T, Device>& stowf,
-                     elecstate::ElecState* pes,
+                     elecstate::ElecStatePW<T, Device>* pes,
                      hamilt::Hamilt<T, Device>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);
 
@@ -103,6 +103,11 @@ class Stochastic_Iter
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using castmem_d2z_op = base_device::memory::cast_memory_op<T, Real, Device, Device>;
+    using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
+    using gemv_op = hsolver::gemv_op<T, Device>;
 };
 
 #endif // Eelectrons_Iter

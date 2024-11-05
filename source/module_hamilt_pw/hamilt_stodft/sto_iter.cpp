@@ -8,6 +8,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_elecstate/kernels/elecstate_op.h"
 
 template <typename T, typename Device>
 Stochastic_Iter<T, Device>::Stochastic_Iter()
@@ -461,7 +462,7 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecState* pes,
+                                             elecstate::ElecStatePW<T, Device>* pes,
                                              hamilt::Hamilt<T, Device>* pHamilt,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
@@ -527,17 +528,18 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
             }
             const int npw = this->pkv->ngk[ik];
             const double kweight = this->pkv->wk[ik];
-            T* hshchi = new T[nchip_ik * npwx];
+            T* hshchi = nullptr;
+            resmem_complex_op()(this->ctx, hshchi, nchip_ik * npwx);
             T* tmpin = stowf.shchi->get_pointer();
             T* tmpout = hshchi;
             p_hamilt_sto->hPsi(tmpin, tmpout, nchip_ik);
             for (int ichi = 0; ichi < nchip_ik; ++ichi)
             {
-                sto_eband += kweight * ModuleBase::GlobalFunc::ddot_real(npw, tmpin, tmpout, false);
+                sto_eband += kweight * p_che->ddot_real(tmpin, tmpout, npw);
                 tmpin += npwx;
                 tmpout += npwx;
             }
-            delete[] hshchi;
+            delmem_complex_op()(this->ctx, hshchi);
         }
     }
 #ifdef __MPI
@@ -553,7 +555,8 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     double sto_ne = 0;
     ModuleBase::GlobalFunc::ZEROS(sto_rho, nrxx);
 
-    T* porter = new T[nrxx];
+    T* porter = nullptr;
+    resmem_complex_op()(this->ctx, porter, nrxx);
     double out2;
 
     double* ksrho = nullptr;
@@ -561,25 +564,38 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     {
         ksrho = new double[nrxx];
         ModuleBase::GlobalFunc::DCOPY(pes->charge->rho[0], ksrho, nrxx);
-        ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
+        setmem_var_op()(this->ctx, pes->rho[0], 0, nrxx);
+        // ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
     }
 
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         const int nchip_ik = nchip[ik];
+        int current_spin = 0;
+        if (PARAM.inp.nspin == 2)
+        {
+            current_spin = this->pkv->isk[ik];
+        }
         stowf.shchi->fix_k(ik);
         T* tmpout = stowf.shchi->get_pointer();
         for (int ichi = 0; ichi < nchip_ik; ++ichi)
         {
-            wfc_basis->recip2real(tmpout, porter, ik);
-            for (int ir = 0; ir < nrxx; ++ir)
-            {
-                pes->charge->rho[0][ir] += norm(porter[ir]) * this->pkv->wk[ik];
-            }
+            wfc_basis->recip_to_real(this->ctx, tmpout, porter, ik);
+            const auto w1 = static_cast<Real>(this->pkv->wk[ik]);
+            elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, w1, pes->rho, porter);
+            // for (int ir = 0; ir < nrxx; ++ir)
+            // {
+            //     pes->charge->rho[0][ir] += norm(porter[ir]) * this->pkv->wk[ik];
+            // }
             tmpout += npwx;
         }
     }
-    delete[] porter;
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
+        for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
+            castmem_var_d2h_op()(this->cpu_ctx, this->ctx, pes->charge->rho[ii], pes->rho[ii], nrxx);
+        }
+    }
+    delmem_complex_op()(this->ctx, porter);
 #ifdef __MPI
     // temporary, rho_mpi should be rewrite as a tool function! Now it only treats pes->charge->rho
     pes->charge->rho_mpi();
@@ -657,20 +673,19 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
     }
     if (this->method == 2)
     {
-        char transa = 'N';
-        T one = 1;
-        int inc = 1;
-        T zero = 0;
-        int LDA = npwx * nchip[ik];
-        int M = npwx * nchip[ik];
-        int N = p_che->norder;
-        T* coef_real = new T[p_che->norder];
-        for (int i = 0; i < p_che->norder; ++i)
-        {
-            coef_real[i] = p_che->coef_real[i];
-        }
-        zgemv_(&transa, &M, &N, &one, stowf.chiallorder[ik].get_pointer(), &LDA, coef_real, &inc, &zero, out, &inc);
-        delete[] coef_real;
+        const char transa = 'N';
+        const T one = 1;
+        const int inc = 1;
+        const T zero = 0;
+        const int LDA = npwx * nchip[ik];
+        const int M = npwx * nchip[ik];
+        const int N = p_che->norder;
+        T* coef_real = nullptr;
+        resmem_complex_op()(this->ctx, coef_real, N);
+        castmem_d2z_op()(this->ctx, this->ctx, coef_real, p_che->coef_real, p_che->norder);
+        gemv_op()(this->ctx, transa, M, N, &one, stowf.chiallorder[ik].get_pointer(), LDA, coef_real, inc, &zero, out, inc);
+        // zgemv_(&transa, &M, &N, &one, stowf.chiallorder[ik].get_pointer(), &LDA, coef_real, &inc, &zero, out, &inc);
+        delmem_complex_op()(this->ctx, coef_real);
     }
     else
     {

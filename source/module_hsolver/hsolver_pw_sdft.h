@@ -57,6 +57,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
     Stochastic_Iter<T, Device> stoiter;
   protected:
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;

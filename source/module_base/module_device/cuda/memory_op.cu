@@ -38,6 +38,18 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FP
     _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(_in[idx]);
 }
 
+template <typename FPTYPE_out, typename FPTYPE_in>
+__global__ void cast_memory(std::complex<FPTYPE_out>* out, const FPTYPE_in* in, const int size)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= size)
+    {
+        return;
+    }
+    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
+    _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(in[idx]);
+}
+
 template <typename FPTYPE>
 void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
                                                                    FPTYPE*& arr,
@@ -223,6 +235,8 @@ template struct cast_memory_op<std::complex<double>,
                                std::complex<float>,
                                base_device::DEVICE_GPU,
                                base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>, float, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>, double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
 template struct cast_memory_op<float, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 template struct cast_memory_op<double, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 template struct cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;

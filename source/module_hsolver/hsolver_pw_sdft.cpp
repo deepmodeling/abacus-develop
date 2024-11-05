@@ -55,7 +55,7 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         if (nbands > 0 && PARAM.inp.bndpar > 1)
         {
             Parallel_Common::bcast_complex(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD);
-            Parallel_Common::bcast_real(this->ctx, &(pes->ekb(ik, 0)), nbands, PARAPW_WORLD);
+            Parallel_Common::bcast_real(&(this->ctx, pes->ekb(ik, 0)), nbands, PARAPW_WORLD);
         }
 #endif
         stoiter.orthog(ik, psi, stowf);
@@ -86,6 +86,8 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     //(5) calculate new charge density
     // calculate KS rho.
+    elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
+    pes_pw->init_rho_data();
     if (nbands > 0)
     {
         pes->psiToRho(psi);
@@ -97,11 +99,11 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     {
         for (int is = 0; is < this->nspin; is++)
         {
-            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[is], pes->charge->nrxx);
+            setmem_var_op()(this->ctx, pes_pw->rho[is], 0,  pes_pw->charge->nrxx);
         }
     }
     // calculate stochastic rho
-    stoiter.sum_stoband(stowf, pes, pHamilt, wfc_basis);
+    stoiter.sum_stoband(stowf, pes_pw, pHamilt, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
