@@ -74,20 +74,6 @@ namespace LR_Util
     template<typename T>
     void matsym(T* inout, const int n, const Parallel_2D& pmat);
 #endif
-    ///======== Tensor - Matrix transformer==========
-    container::Tensor mat2ten_double(ModuleBase::matrix& m);
-    std::vector<container::Tensor> mat2ten_double(std::vector<ModuleBase::matrix>& m);
-    ModuleBase::matrix ten2mat_double(container::Tensor& t);
-    std::vector<ModuleBase::matrix> ten2mat_double(std::vector<container::Tensor>& t);
-    container::Tensor mat2ten_complex(ModuleBase::ComplexMatrix& m);
-    std::vector<container::Tensor> mat2ten_complex(std::vector<ModuleBase::ComplexMatrix>& m);
-    ModuleBase::ComplexMatrix ten2mat_complex(container::Tensor& t);
-    std::vector<ModuleBase::ComplexMatrix> ten2mat_complex(std::vector<container::Tensor>& t);
-
-    ModuleBase::matrix vec2mat(const std::vector<double>& v, const int nr, const int nc);
-    ModuleBase::ComplexMatrix vec2mat(const std::vector<std::complex<double>>& v, const int nr, const int nc);
-    std::vector<ModuleBase::matrix> vec2mat(const std::vector<std::vector<double>>& v, const int nr, const int nc);
-    std::vector<ModuleBase::ComplexMatrix> vec2mat(const std::vector<std::vector<std::complex<double>>>& v, const int nr, const int nc);
 
     ///===================Psi wrapper=================
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
