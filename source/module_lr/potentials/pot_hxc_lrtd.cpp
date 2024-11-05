@@ -6,6 +6,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include <set>
 #include "module_lr/utils/lr_util.h"
+#include "module_lr/utils/lr_util_xc.hpp"
 #include "module_io/cube_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }

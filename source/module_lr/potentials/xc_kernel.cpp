@@ -3,6 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
+#include "module_lr/utils/lr_util_xc.hpp"
 #ifdef USE_LIBXC
 #include <xc.h>
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"
@@ -184,7 +185,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //             + v2s2.at(ir * 6 + 3) * sigma[ir * 3];   //down-down
             //     }
             //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::laplace(v2sigma2_sigma_r.data() + isig * nrxx, v2sigma2_sigma_r.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
+            //         LR_Util::lapl(v2sigma2_sigma_r.data() + isig * nrxx, v2sigma2_sigma_r.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
             //     // 3. $\nabla^2(v^\sigma)$
             //     std::vector<double> lap_vsigma(3 * nrxx);
             //     for (int ir = 0;ir < nrxx;++ir)
@@ -194,7 +195,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //         lap_vsigma[2 * nrxx + ir] = vs.at(ir * 3 + 2) * 2.0;
             //     }
             //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::laplace(lap_vsigma.data() + isig * nrxx, lap_vsigma.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
+            //         LR_Util::lapl(lap_vsigma.data() + isig * nrxx, lap_vsigma.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
             //     // add to v2rho2
             //     BlasConnector::axpy(3 * nrxx, 1.0, v2r2.data(), 1, to_mul_rho_.data(), 1);
             //     BlasConnector::axpy(3 * nrxx, -1.0, div_v2rhosigma_gdrho_r.data(), 1, to_mul_rho_.data(), 1);

@@ -7,7 +7,6 @@ if(ENABLE_LCAO)
   list(APPEND objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
-    utils/lr_util_xc.cpp
     AX/AX_parallel.cpp
     AX/AX_serial.cpp
     dm_trans/dm_trans_parallel.cpp

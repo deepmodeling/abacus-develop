@@ -12,6 +12,15 @@
 using DAT = container::DataType;
 using DEV = container::DeviceType;
 
+#ifndef TO_COMPLEX_H
+#define TO_COMPLEX_H
+template <typename T> struct ToComplex;
+template <> struct ToComplex<double> { using type = std::complex<double>; };
+template <> struct ToComplex<std::complex<double>> { using type = std::complex<double>; };
+template <> struct ToComplex<float> { using type = std::complex<float>; };
+template <> struct ToComplex<std::complex<float>> { using type = std::complex<float>; };
+#endif
+
 namespace LR_Util
 {
     /// =====================PHYSICS====================
@@ -36,15 +45,7 @@ namespace LR_Util
     std::pair<ModuleBase::matrix, std::vector<std::pair<int, int>>>
         set_ix_map_diagonal(bool mode, int nc, int nv);
 
-    /// operators to calculate XC kernels
-    void grad(const double* rhor,
-        ModuleBase::Vector3<double>* gdr,
-        const ModulePW::PW_Basis& rho_basis,
-        const double& tpiba);
-    void laplace(const double* rhor,
-        double* lapn,
-        const ModulePW::PW_Basis& rho_basis,
-        const double& tpiba2);
+    // Operators to calculate xc kernel have been moved into lr_util_xc.hpp.
     /// =================ALGORITHM====================
 
     //====== newers and deleters========
