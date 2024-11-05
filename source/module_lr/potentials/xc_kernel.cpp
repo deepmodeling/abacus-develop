@@ -37,19 +37,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
     // -----------------------------------------------------------------------------------
     // for GGA
-    const bool is_gga = [&funcs]()
-        {
-            for (xc_func_type& func : funcs)
-            {
-                switch (func.info->family)
-                {
-                case XC_FAMILY_GGA:
-                case XC_FAMILY_HYB_GGA:
-                    return true;
-                }
-            }
-            return false;
-        }();
+    const bool is_gga = std::any_of(funcs.begin(), funcs.end(), [](const xc_func_type& f) { f.info->family == XC_FAMILY_GGA || f.info->family == XC_FAMILY_HYB_GGA; });
+
     std::vector<std::vector<ModuleBase::Vector3<double>>> gradrho;  // \nabla \rho
     std::vector<double> sigma;  // |\nabla\rho|^2
     std::vector<double> sgn;        // sgn for threshold mask
