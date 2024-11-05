@@ -89,7 +89,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                intor_->snap(T1, L1, N1, M1, this->current_type, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
+                intor_->snap(T1, L1, N1, M1, this->current_type, dtau * this->ucell->lat0, true /*cal_deri*/, nlm);
                 // select the elements of nlm with target_L
                 const int length = nlm[0].size();
                 std::vector<double> nlm_target(length * 4);

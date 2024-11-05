@@ -107,7 +107,8 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                 {
                     for (int ik = 0; ik < this->_nk; ++ik)
                     {
-                        if(ik_in >= 0 && ik_in != ik) continue;
+                        if(ik_in >= 0 && ik_in != ik) { continue;
+}
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
                         const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
@@ -152,7 +153,8 @@ void DensityMatrix<std::complex<double>, double>::cal_DMR(const int ik_in)
                     tmp_DMR.assign(tmp_ap.get_size(), std::complex<double>(0.0, 0.0));
                     for (int ik = 0; ik < this->_nk; ++ik)
                     {
-                        if(ik_in >= 0 && ik_in != ik) continue;
+                        if(ik_in >= 0 && ik_in != ik) { continue;
+}
                         // cal k_phase
                         // if TK==std::complex<double>, kphase is e^{ikR}
                         const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
