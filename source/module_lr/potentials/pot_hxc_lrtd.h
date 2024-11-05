@@ -18,9 +18,9 @@ namespace LR
         enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3 };
         enum XCType { None = 0, LDA = 1, GGA = 2, HYB_GGA = 4 };
         /// constructor for exchange-correlation kernel
-        PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in,
-            const UnitCell* ucell_in, const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
-            const SpinType& st_in = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "from_chg_groundstate" });
+        PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis* rho_basis,
+            const UnitCell* ucell, const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
+            const SpinType& st = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "from_chg_groundstate" });
         ~PotHxcLR() {}
         void cal_v_eff(const Charge* chg/*excited state*/, const UnitCell* ucell, ModuleBase::matrix& v_eff) override {};
         void cal_v_eff(double** rho, const UnitCell* ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 });
@@ -33,7 +33,7 @@ namespace LR
         /// GGA: v2rho2, v2rhosigma, v2sigma2
         /// meta-GGA: v2rho2, v2rhosigma, v2sigma2, v2rholap, v2rhotau, v2sigmalap, v2sigmatau, v2laptau, v2lap2, v2tau2
         KernelXC xc_kernel_components_;
-        const std::string xc_kernel;
+        const std::string xc_kernel_;
         const double& tpiba_;
         const SpinType spin_type_ = SpinType::S1;
         XCType xc_type_ = XCType::None;

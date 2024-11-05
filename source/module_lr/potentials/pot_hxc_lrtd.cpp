@@ -13,29 +13,29 @@
 namespace LR
 {
     // constructor for exchange-correlation kernel
-    PotHxcLR::PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in,
+    PotHxcLR::PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis* rho_basis, const UnitCell* ucell,
         const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
-        const SpinType& st_in, const std::vector<std::string>& lr_init_xc_kernel)
-        :xc_kernel(xc_kernel_in), tpiba_(ucell_in->tpiba), spin_type_(st_in),
-        xc_kernel_components_(*rho_basis_in)
+        const SpinType& st, const std::vector<std::string>& lr_init_xc_kernel)
+        :xc_kernel_(xc_kernel), tpiba_(ucell->tpiba), spin_type_(st),
+        xc_kernel_components_(*rho_basis)
     {
-        this->rho_basis_ = rho_basis_in;
+        this->rho_basis_ = rho_basis;
         this->nrxx = chg_gs->nrxx;
         this->nspin = (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
 
         this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
 
         const std::set<std::string> local_xc = { "lda", "pwlda", "pbe", "hse" };
-        if (local_xc.find(this->xc_kernel) != local_xc.end())
+        if (local_xc.find(this->xc_kernel_) != local_xc.end())
         {
-            XC_Functional::set_xc_type(this->xc_kernel);    // for hse, (1-alpha) and omega are set here
+            XC_Functional::set_xc_type(this->xc_kernel_);    // for hse, (1-alpha) and omega are set here
             this->xc_type_ = XCType(XC_Functional::get_func_type());
             this->set_integral_func(this->spin_type_, this->xc_type_);
 
             if (lr_init_xc_kernel[0] == "file")
             {
                 const std::set<std::string> lda_xc = { "lda", "pwlda" };
-                assert(lda_xc.count(this->xc_kernel));
+                assert(lda_xc.count(this->xc_kernel_));
                 const int spinsize = (1 == nspin) ? 1 : 3;
                 std::vector<double> v2rho2(spinsize * nrxx);
                 // read fxc adn add to xc_kernel_components
@@ -46,7 +46,7 @@ namespace LR
                     int prenspin = 1;
                     std::vector<double> v2rho2_tmp(nrxx);
                     ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
-                        v2rho2_tmp.data(), ucell_in->nat);
+                        v2rho2_tmp.data(), ucell->nat);
                     for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * spinsize + is] = v2rho2_tmp[ir]; }
                 }
                 this->xc_kernel_components_.set_kernel("v2rho2", std::move(v2rho2));
@@ -65,12 +65,12 @@ namespace LR
                 {
                     const std::string file = lr_init_xc_kernel[lr_init_xc_kernel.size() > nspin ? 1 + is : 1];
                     ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
-                        rho_for_fxc[is], ucell_in->nat);
+                        rho_for_fxc[is], ucell->nat);
                 }
-                this->xc_kernel_components_.f_xc_libxc(nspin, ucell_in->omega, ucell_in->tpiba, rho_for_fxc, chg_gs->rho_core);
+                this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, rho_for_fxc, chg_gs->rho_core);
                 LR_Util::delete_p2(rho_for_fxc, nspin);
             }
-            else { this->xc_kernel_components_.f_xc_libxc(nspin, ucell_in->omega, ucell_in->tpiba, chg_gs->rho, chg_gs->rho_core); }
+            else { this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, chg_gs->rho, chg_gs->rho_core); }
 #else 
             ModuleBase::WARNING_QUIT("KernelXC", "to calculate xc-kernel in LR-TDDFT, compile with LIBXC");
 #endif
@@ -96,7 +96,7 @@ namespace LR
             break;
         }
         // XC
-        if (xc_kernel == "rpa" || xc_kernel == "hf") { return; }    // no xc
+        if (this->xc_kernel_ == "rpa" || this->xc_kernel_ == "hf") { return; }    // no xc
 #ifdef USE_LIBXC
         this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else
