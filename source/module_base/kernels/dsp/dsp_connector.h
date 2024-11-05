@@ -2,6 +2,10 @@
 #define DSP_CONNECTOR_H
 #ifdef __DSP
 
+#include "module_base/module_device/device.h"
+#include "module_base/module_device/memory_op.h"
+#include "module_hsolver/diag_comm_info.h"
+
 // Base dsp functions
 void dspInitHandle(int id);
 void dspDestoryHandle(int id);
@@ -61,6 +65,67 @@ void cgemm_mth_(const char *transa, const char *transb,
 	std::complex<float> *c, const int *ldc, int cluster_id);
 
 //#define zgemm_ zgemm_mt
+
+// The next is dsp utils. It may be moved to other files if this file get too huge
+
+template <typename T>
+void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv, MPI_Comm diag_comm){
+
+	using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+
+	auto* swap = new T[notconv * nbase_x];
+    auto* target = new T[notconv * nbase_x];
+    syncmem_complex_op()(cpu_ctx, cpu_ctx, swap, hcc + nbase * nbase_x, notconv * nbase_x);
+    if (base_device::get_current_precision(swap) == "single")
+    {
+        MPI_Reduce(swap,
+                    target,
+                    notconv * nbase_x,
+                    MPI_COMPLEX,
+                    MPI_SUM,
+                    0,
+                    diag_comm);
+    }
+    else
+    {
+        MPI_Reduce(swap,
+                    target,
+                    notconv * nbase_x,
+                    MPI_DOUBLE_COMPLEX,
+                    MPI_SUM,
+                    0,
+                    diag_comm);
+    }
+
+    syncmem_complex_op()(cpu_ctx, cpu_ctx, hcc + nbase * nbase_x, target, notconv * nbase_x);
+    syncmem_complex_op()(cpu_ctx, cpu_ctx, swap, scc + nbase * nbase_x, notconv * nbase_x);
+
+    if (base_device::get_current_precision(swap) == "single")
+    {
+        MPI_Reduce(swap,
+                    target,
+                    notconv * nbase_x,
+                    MPI_COMPLEX,
+                    MPI_SUM,
+                    0,
+                    diag_comm);
+    }
+    else
+    {
+        MPI_Reduce(swap,
+                    target,
+                    notconv * nbase_x,
+                    MPI_DOUBLE_COMPLEX,
+                    MPI_SUM,
+                    0,
+                    diag_comm);
+    }
+
+    syncmem_complex_op()(cpu_ctx, cpu_ctx, scc + nbase * nbase_x, target, notconv * nbase_x);
+    delete[] swap;
+    delete[] target;
+}
+
 
 #endif
 #endif

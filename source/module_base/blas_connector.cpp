@@ -93,7 +93,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 	#ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		sgemm_mt_(&transb, &transa, &n, &m, &k,
+		sgemm_mth_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
@@ -111,7 +111,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 	#ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		dgemm_mt_(&transb, &transa, &n, &m, &k,
+		dgemm_mth_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
@@ -129,7 +129,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 	#ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	cgemm_mt_(&transb, &transa, &n, &m, &k,
+    	cgemm_mth_(&transb, &transa, &n, &m, &k,
         &alpha, b, &ldb, a, &lda,
         &beta, c, &ldc, GlobalV::MY_RANK);
 	}
@@ -147,7 +147,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 	#ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	zgemm_mt_(&transb, &transa, &n, &m, &k,
+    	zgemm_mth_(&transb, &transa, &n, &m, &k,
         &alpha, b, &ldb, a, &lda,
         &beta, c, &ldc, GlobalV::MY_RANK);
 	}
