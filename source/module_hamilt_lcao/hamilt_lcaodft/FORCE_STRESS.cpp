@@ -171,7 +171,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                         pv,
                         kv);
     // calculate force and stress for Nonlocal part
-    if(PARAM.inp.nspin != 4)
+    if(PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
     {
         hamilt::NonlocalNew<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
                     nullptr,
@@ -195,7 +195,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             const_cast<elecstate::DensityMatrix<T, double>*>(dm_p)->switch_dmr(0);
         }
     }
-    else
+    else if(PARAM.inp.nspin == 4)
     {
         hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>> tmp_nonlocal(
                     nullptr,
@@ -207,6 +207,8 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     two_center_bundle.overlap_orb_beta.get()
             );
 
+        // calculate temporary complex DMR for nonlocal force&stress
+        // In fact, only SOC part need the imaginary part of DMR for correct force&stress
         const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
         hamilt::HContainer<std::complex<double>> tmp_dmr(dm_p->get_DMR_pointer(1)->get_paraV());
         std::vector<int> ijrs = dm_p->get_DMR_pointer(1)->get_ijr_info();
