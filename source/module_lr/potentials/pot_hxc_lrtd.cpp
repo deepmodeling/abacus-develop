@@ -36,18 +36,18 @@ namespace LR
             {
                 const std::set<std::string> lda_xc = { "lda", "pwlda" };
                 assert(lda_xc.count(this->xc_kernel_));
-                const int spinsize = (1 == nspin) ? 1 : 3;
-                std::vector<double> v2rho2(spinsize * nrxx);
+                const int n_component = (1 == nspin) ? 1 : 3;
+                std::vector<double> v2rho2(n_component * nrxx);
                 // read fxc adn add to xc_kernel_components
-                assert(lr_init_xc_kernel.size() >= spinsize + 1);
-                for (int is = 0;is < spinsize;++is)
+                assert(lr_init_xc_kernel.size() >= n_component + 1);
+                for (int is = 0;is < n_component;++is)
                 {
                     double ef = 0.0;
                     int prenspin = 1;
                     std::vector<double> v2rho2_tmp(nrxx);
                     ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
                         v2rho2_tmp.data(), ucell->nat);
-                    for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * spinsize + is] = v2rho2_tmp[ir]; }
+                    for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * n_component + is] = v2rho2_tmp[ir]; }
                 }
                 this->xc_kernel_components_.set_kernel("v2rho2", std::move(v2rho2));
                 return;
