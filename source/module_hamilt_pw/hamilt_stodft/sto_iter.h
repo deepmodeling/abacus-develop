@@ -20,7 +20,8 @@
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class Stochastic_Iter
 {
-
+  private:
+    using Real = typename GetTypeReal<T>::type;
   public:
     // constructor and deconstructor
     Stochastic_Iter();
@@ -40,7 +41,7 @@ class Stochastic_Iter
     void init(K_Vectors* pkv_in,
               ModulePW::PW_Basis_K* wfc_basis,
               Stochastic_WF<T, Device>& stowf,
-              StoChe<double>& stoche,
+              StoChe<Real, Device>& stoche,
               hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
 
     void sum_stoband(Stochastic_WF<T, Device>& stowf,
@@ -66,7 +67,8 @@ class Stochastic_Iter
     double mu0; // chemical potential; unit in Ry
     bool change;
     double targetne;
-    double* spolyv = nullptr;
+    Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
+    Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
@@ -85,7 +87,22 @@ class Stochastic_Iter
 
   private:
     K_Vectors* pkv;
-    using gemm_op = hsolver::gemm_op<T, Device>;
+    /**
+     * @brief return cpu dot result
+     * @param x [Device]
+     * @param y [Device]
+     * @param result [CPU] dot result
+     */
+    void dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy,  Real& result);
+  private:
+    const Device* ctx = {};
+    const base_device::DEVICE_CPU* cpu_ctx = {};
+    using ct_Device = typename container::PsiToContainer<Device>::type;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
 };
 
 #endif // Eelectrons_Iter

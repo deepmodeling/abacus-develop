@@ -204,13 +204,13 @@ class Chebyshev
     int norder;  // order of Chebyshev expansion
     int norder2; // 2 * norder * EXTEND
 
-    REAL* coef_real = nullptr;                  // expansion coefficient of each order
-    std::complex<REAL>* coef_complex = nullptr; // expansion coefficient of each order
-    REAL* coefr_cpu = nullptr;                  // expansion coefficient of each order in CPU
-    std::complex<REAL>* coefc_cpu = nullptr;    // expansion coefficient of each order in CPU
+    REAL* coef_real = nullptr;                  //[Device] expansion coefficient of each order
+    std::complex<REAL>* coef_complex = nullptr; //[Device] expansion coefficient of each order
+    REAL* coefr_cpu = nullptr;                  //[CPU] expansion coefficient of each order
+    std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
 
     FFTW<REAL, Device> fftw;          // use for fftw
-    REAL* polytrace;                  // w_n = \sum_i v^+ * T_n(A) * v, only in CPU
+    REAL* polytrace;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated

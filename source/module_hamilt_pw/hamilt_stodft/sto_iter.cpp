@@ -23,14 +23,25 @@ Stochastic_Iter<T, Device>::~Stochastic_Iter()
 }
 
 template <typename T, typename Device>
+void Stochastic_Iter<T, Device>::dot(const int& n, const Real* x, const int& incx, const Real* y, const int& incy, Real& result)
+{
+    Real* result_device = nullptr;
+    resmem_var_op()(this->ctx, result_device, 1);
+    container::kernels::blas_dot<Real, ct_Device>()(n, p_che->coef_real, 1, spolyv, 1, result_device);
+    syncmem_var_d2h_op()(cpu_ctx, this->ctx, &result, result_device, 1);
+    delmem_var_op()(this->ctx, result_device);
+}
+
+template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
-                                      StoChe<double>& stoche,
+                                      StoChe<Real, Device>& stoche,
                                       hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
 {
     p_che = stoche.p_che;
     spolyv = stoche.spolyv;
+    spolyv_cpu = stoche.spolyv_cpu;
     nchip = stowf.nchip;
     targetne = PARAM.inp.nelec;
     this->pkv = pkv_in;
@@ -61,41 +72,39 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         T* sum = new T[PARAM.inp.nbands * nchipk];
         char transC = 'C';
         char transN = 'N';
-        Device* ctx = {};
-
 
         // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
-        gemm_op()(ctx,
-                  transC,
-                  transN,
-                  PARAM.inp.nbands,
-                  nchipk,
-                  npw,
-                  &ModuleBase::ONE,
-                  &psi(ik, 0, 0),
-                  npwx,
-                  wfgout,
-                  npwx,
-                  &ModuleBase::ZERO,
-                  sum,
-                  PARAM.inp.nbands);
+        hsolver::gemm_op<T, Device>()(ctx,
+                                      transC,
+                                      transN,
+                                      PARAM.inp.nbands,
+                                      nchipk,
+                                      npw,
+                                      &ModuleBase::ONE,
+                                      &psi(ik, 0, 0),
+                                      npwx,
+                                      wfgout,
+                                      npwx,
+                                      &ModuleBase::ZERO,
+                                      sum,
+                                      PARAM.inp.nbands);
         Parallel_Reduce::reduce_pool(sum, PARAM.inp.nbands * nchipk);
 
         // psi -= psi * sum
-        gemm_op()(ctx,
-                  transN,
-                  transN,
-                  npw,
-                  nchipk,
-                  PARAM.inp.nbands,
-                  &ModuleBase::NEG_ONE,
-                  &psi(ik, 0, 0),
-                  npwx,
-                  sum,
-                  PARAM.inp.nbands,
-                  &ModuleBase::ONE,
-                  wfgout,
-                  npwx);
+        hsolver::gemm_op<T, Device>()(ctx,
+                                      transN,
+                                      transN,
+                                      npw,
+                                      nchipk,
+                                      PARAM.inp.nbands,
+                                      &ModuleBase::NEG_ONE,
+                                      &psi(ik, 0, 0),
+                                      npwx,
+                                      sum,
+                                      PARAM.inp.nbands,
+                                      &ModuleBase::ONE,
+                                      wfgout,
+                                      npwx);
         delete[] sum;
     }
 }
@@ -191,17 +200,25 @@ void Stochastic_Iter<T, Device>::check_precision(const double ref, const double 
     double error = 0;
     if (this->method == 1)
     {
-        error = p_che->coef_real[p_che->norder - 1] * spolyv[p_che->norder - 1];
+        Real last_coef = 0;
+        Real last_spolyv = 0;
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, &last_coef, &p_che->coef_real[p_che->norder - 1], 1);
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, &last_spolyv, &spolyv[p_che->norder - 1], 1);
+        error = last_coef * last_spolyv;
     }
     else
     {
         const int norder = p_che->norder;
-        double last_coef = p_che->coef_real[norder - 1];
-        double last_spolyv = spolyv[norder * norder - 1];
-        error = last_coef
-                * (BlasConnector::dot(norder, p_che->coef_real, 1, spolyv + norder * (norder - 1), 1)
-                   + BlasConnector::dot(norder, p_che->coef_real, 1, spolyv + norder - 1, norder)
-                   - last_coef * last_spolyv);
+        // double last_coef = p_che->coef_real[norder - 1];
+        // double last_spolyv = spolyv[norder * norder - 1];
+        Real last_coef = 0;
+        Real last_spolyv = 0;
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, &last_coef, &p_che->coef_real[norder - 1], 1);
+        syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, &last_spolyv, &spolyv[norder * norder - 1], 1);
+        Real dot1 = 0, dot2 = 0;
+        this->dot(norder, p_che->coef_real, 1, spolyv + norder * (norder - 1), 1, dot1);
+        this->dot(norder, p_che->coef_real, 1, spolyv + norder - 1, norder, dot2);
+        error = last_coef * (dot1 + dot2 - last_coef * last_spolyv);
     }
 
 #ifdef __MPI
@@ -334,11 +351,11 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
     {
         if (this->method == 1)
         {
-            ModuleBase::GlobalFunc::ZEROS(spolyv, norder);
+            ModuleBase::GlobalFunc::ZEROS(spolyv_cpu, norder);
         }
         else
         {
-            ModuleBase::GlobalFunc::ZEROS(spolyv, norder * norder);
+            setmem_var_op()(this->ctx, spolyv, 0, norder * norder);
         }
     }
     T* pchi;
@@ -363,21 +380,26 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         p_che->tracepolyA(hchi_norm, pchi, npw, npwx, nchip_ik);
         for (int i = 0; i < norder; ++i)
         {
-            spolyv[i] += p_che->polytrace[i] * this->pkv->wk[ik];
+            spolyv_cpu[i] += p_che->polytrace[i] * this->pkv->wk[ik];
+        }
+        if(ik == this->pkv->get_nks() - 1)
+        {
+            syncmem_var_h2d_op()(this->ctx, cpu_ctx, spolyv, spolyv_cpu, norder);
         }
     }
     else
     {
         p_che->calpolyvec_complex(hchi_norm, pchi, stowf.chiallorder[ik].get_pointer(), npw, npwx, nchip_ik);
-        double* vec_all = (double*)stowf.chiallorder[ik].get_pointer();
-        char trans = 'T';
-        char normal = 'N';
-        double one = 1;
-        int LDA = npwx * nchip_ik * 2;
-        int M = npwx * nchip_ik * 2; // Do not use kv.ngk[ik]
-        int N = norder;
-        double kweight = this->pkv->wk[ik];
-        dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
+        const Real* vec_all = (Real*)stowf.chiallorder[ik].get_pointer();
+        const char trans = 'T';
+        const char normal = 'N';
+        const Real one = 1;
+        const int LDA = npwx * nchip_ik * 2;
+        const int M = npwx * nchip_ik * 2; // Do not use kv.ngk[ik]
+        const int N = norder;
+        const Real kweight = this->pkv->wk[ik];
+        hsolver::gemm_op<Real, Device>()(this->ctx, trans, normal, N, M, norder, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
+        // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");
     return;
@@ -396,13 +418,13 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
         // Note: spolyv contains kv.wk[ik]
         auto nfd = std::bind(&Sto_Func<double>::nfd, &this->stofunc, std::placeholders::_1);
         p_che->calcoef_real(nfd);
-        sto_ne = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
+        this->dot(norder, p_che->coef_real, 1, spolyv, 1, sto_ne);
     }
     else
     {
         auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
         p_che->calcoef_real(nroot_fd);
-        sto_ne = vTMv(p_che->coef_real, spolyv, norder);
+        sto_ne = vTMv<Real, Device>(p_che->coef_real, spolyv, norder);
     }
     if (PARAM.inp.nbands > 0)
     {
@@ -450,18 +472,18 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     const int norder = p_che->norder;
 
     //---------------cal demet-----------------------
-    double stodemet;
+    Real stodemet;
     if (this->method == 1)
     {
         auto nfdlnfd = std::bind(&Sto_Func<double>::nfdlnfd, &this->stofunc, std::placeholders::_1);
         p_che->calcoef_real(nfdlnfd);
-        stodemet = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
+        this->dot(norder, p_che->coef_real, 1, spolyv, 1, stodemet);
     }
     else
     {
         auto nroot_fdlnfd = std::bind(&Sto_Func<double>::n_root_fdlnfd, &this->stofunc, std::placeholders::_1);
         p_che->calcoef_real(nroot_fdlnfd);
-        stodemet = -vTMv(p_che->coef_real, spolyv, norder);
+        stodemet = -vTMv<Real, Device>(p_che->coef_real, spolyv, norder);
     }
 
     if (PARAM.inp.nbands > 0)
@@ -491,7 +513,7 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     {
         auto nxfd = std::bind(&Sto_Func<double>::nxfd, &this->stofunc, std::placeholders::_1);
         p_che->calcoef_real(nxfd);
-        sto_eband = BlasConnector::dot(norder, p_che->coef_real, 1, spolyv, 1);
+        this->dot(norder, p_che->coef_real, 1, spolyv, 1, sto_eband);
     }
     else
     {

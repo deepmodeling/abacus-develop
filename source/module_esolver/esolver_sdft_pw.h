@@ -13,6 +13,8 @@ namespace ModuleESolver
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 {
+  private:
+    using Real = typename GetTypeReal<T>::type;
   public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
@@ -27,7 +29,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
   public:
     Stochastic_WF<T, Device> stowf;
-    StoChe<double> stoche;
+    StoChe<Real, Device> stoche;
     hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
 
   protected:

@@ -155,6 +155,15 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
+    const float alpha, const float* A, const int lda, const float* X, const int incx,
+    const float beta, float* Y, const int incy, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+    	sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
+}
+}
+
+void BlasConnector::gemv(const char trans, const int m, const int n,
     const double alpha, const double* A, const int lda, const double* X, const int incx,
     const double beta, double* Y, const int incy, base_device::AbacusDevice_t device_type)
 {
