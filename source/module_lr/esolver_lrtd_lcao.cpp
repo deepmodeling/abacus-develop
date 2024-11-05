@@ -105,6 +105,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     if (input.ri_hartree_benchmark == "aims" && !input.aims_nbasis.empty())
     {
         this->nbasis = [&]() -> int { int nbas = 0; for (int it = 0;it < ucell.ntype;++it) { nbas += ucell.atoms[it].na * input.aims_nbasis[it]; };return nbas;}();
+        this->nbasis = std::inner_product(input.aims_nbasis.begin(), input.aims_nbasis.end(), ucell.atoms, 0, std::plus<int>(), [](const int& a, const Atom& b) { return a * b.na; });
         std::cout << "nbasis from aims: " << this->nbasis << std::endl;
     }
 }
