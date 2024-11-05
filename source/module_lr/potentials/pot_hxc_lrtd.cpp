@@ -37,7 +37,7 @@ namespace LR
                 const std::set<std::string> lda_xc = { "lda", "pwlda" };
                 assert(lda_xc.count(this->xc_kernel_));
                 const int n_component = (1 == nspin) ? 1 : 3;
-                std::vector<double> v2rho2(n_component * nrxx);
+                this->xc_kernel_components_.v2rho2.resize(n_component * nrxx);
                 // read fxc adn add to xc_kernel_components
                 assert(lr_init_xc_kernel.size() >= n_component + 1);
                 for (int is = 0;is < n_component;++is)
@@ -47,9 +47,8 @@ namespace LR
                     std::vector<double> v2rho2_tmp(nrxx);
                     ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
                         v2rho2_tmp.data(), ucell->nat);
-                    for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * n_component + is] = v2rho2_tmp[ir]; }
+                    for (int ir = 0;ir < nrxx;++ir) { xc_kernel_components_.v2rho2[ir * n_component + is] = v2rho2_tmp[ir]; }
                 }
-                this->xc_kernel_components_.set_kernel("v2rho2", std::move(v2rho2));
                 return;
             }
 
@@ -115,7 +114,7 @@ namespace LR
         case SpinType::S1:
             funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                 {
-                    for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.get_kernel("v2rho2").at(ir) * rho[ir]; }
+                    for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.v2rho2.at(ir) * rho[ir]; }
                 };
             break;
         case SpinType::S2_singlet:
@@ -125,7 +124,7 @@ namespace LR
                     {
                         const int irs0 = 3 * ir;
                         const int irs1 = irs0 + 1;
-                        v_eff(0, ir) += ModuleBase::e2 * (fxc.get_kernel("v2rho2").at(irs0) + fxc.get_kernel("v2rho2").at(irs1)) * rho[ir];
+                        v_eff(0, ir) += ModuleBase::e2 * (fxc.v2rho2.at(irs0) + fxc.v2rho2.at(irs1)) * rho[ir];
                     }
                 };
             break;
@@ -136,7 +135,7 @@ namespace LR
                     {
                         const int irs0 = 3 * ir;
                         const int irs1 = irs0 + 1;
-                        v_eff(0, ir) += ModuleBase::e2 * (fxc.get_kernel("v2rho2").at(irs0) - fxc.get_kernel("v2rho2").at(irs1)) * rho[ir];
+                        v_eff(0, ir) += ModuleBase::e2 * (fxc.v2rho2.at(irs0) - fxc.v2rho2.at(irs1)) * rho[ir];
                     }
                 };
             break;
@@ -145,7 +144,7 @@ namespace LR
                 {
                     assert(ispin_op.size() >= 2);
                     const int is = ispin_op[0] + ispin_op[1];
-                    for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.get_kernel("v2rho2").at(3 * ir + is) * rho[ir]; }
+                    for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.v2rho2.at(3 * ir + is) * rho[ir]; }
                 };
             break;
         default:
@@ -180,17 +179,17 @@ namespace LR
                     std::vector<ModuleBase::Vector3<double>> e_drho(nrxx);
                     for (int ir = 0;ir < nrxx;++ir)
                     {
-                        e_drho[ir] = -(fxc.get_grad_kernel("2_v2rhosigma_drho").at(ir) * rho[ir]
-                            + fxc.get_grad_kernel("4_v2sigma2_drho").at(ir) * (fxc.get_grad_kernel("drho_gs").at(ir) * drho.at(ir))
-                            + drho.at(ir) * fxc.get_kernel("vsigma").at(ir) * 2.);
+                        e_drho[ir] = -(fxc.v2rhosigma_2drho.at(ir) * rho[ir]
+                            + fxc.v2sigma2_4drho.at(ir) * (fxc.drho_gs.at(ir) * drho.at(ir))
+                            + drho.at(ir) * fxc.vsigma.at(ir) * 2.);
                     }
                     XC_Functional::grad_dot(e_drho.data(), vxc_tmp.data(), this->rho_basis_, this->tpiba_);
 
                     // 2. $f^{\rho\rho}\rho_1+2f^{\rho\sigma}\nabla\rho\cdot\nabla\rho_1$
                     for (int ir = 0;ir < nrxx;++ir)
                     {
-                        vxc_tmp[ir] += (fxc.get_kernel("v2rho2").at(ir) * rho[ir]
-                            + fxc.get_grad_kernel("2_v2rhosigma_drho").at(ir) * drho.at(ir));
+                        vxc_tmp[ir] += (fxc.v2rho2.at(ir) * rho[ir]
+                            + fxc.v2rhosigma_2drho.at(ir) * drho.at(ir));
                     }
                     BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
                 };

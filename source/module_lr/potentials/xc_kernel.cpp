@@ -96,13 +96,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     }
     // -----------------------------------------------------------------------------------
     //==================== XC Kernels (f_xc)=============================
-    this->kernel_set_.emplace("vrho", std::vector<double>(nspin * nrxx));
-    this->kernel_set_.emplace("v2rho2", std::vector<double>(((1 == nspin) ? 1 : 3) * nrxx));//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
+    this->vrho.resize(nspin * nrxx);
+    this->v2rho2.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
     if (is_gga)
     {
-        this->kernel_set_.emplace("vsigma", std::vector<double>(((1 == nspin) ? 1 : 3) * nrxx)); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->kernel_set_.emplace("v2rhosigma", std::vector<double>(((1 == nspin) ? 1 : 6) * nrxx)); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->kernel_set_.emplace("v2sigma2", std::vector<double>(((1 == nspin) ? 1 : 6) * nrxx));   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
+        this->vsigma.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2rhosigma.resize(((1 == nspin) ? 1 : 6) * nrxx); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2sigma2.resize(((1 == nspin) ? 1 : 6) * nrxx);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
     }
     //MetaGGA ...
 
@@ -118,15 +118,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         switch (func.info->family)
         {
         case XC_FAMILY_LDA:
-            xc_lda_vxc(&func, nrxx, rho.data(), this->kernel_set_["vrho"].data());
-            xc_lda_fxc(&func, nrxx, rho.data(), this->kernel_set_["v2rho2"].data());
+            xc_lda_vxc(&func, nrxx, rho.data(), vrho.data());
+            xc_lda_fxc(&func, nrxx, rho.data(), v2rho2.data());
             break;
         case XC_FAMILY_GGA:
         case XC_FAMILY_HYB_GGA:
-            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(),
-                this->kernel_set_["vrho"].data(), this->kernel_set_["vsigma"].data());
-            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(),
-                this->kernel_set_["v2rho2"].data(), this->kernel_set_["v2rhosigma"].data(), this->kernel_set_["v2sigma2"].data());
+            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho.data(), vsigma.data());
+            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2.data(), v2rhosigma.data(), v2sigma2.data());
             break;
         default:
             throw std::domain_error("func.info->family =" + std::to_string(func.info->family)
@@ -136,24 +134,24 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         // some formulas for GGA
         if (func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
         {
-            const std::vector<double>& v2r2 = this->kernel_set_["v2rho2"];
-            const std::vector<double>& v2rs = this->kernel_set_["v2rhosigma"];
-            const std::vector<double>& v2s2 = this->kernel_set_["v2sigma2"];
-            const std::vector<double>& vs = this->kernel_set_["vsigma"];
+            const std::vector<double>& v2r2 = this->v2rho2;
+            const std::vector<double>& v2rs = this->v2rhosigma;
+            const std::vector<double>& v2s2 = this->v2sigma2;
+            const std::vector<double>& vs = this->vsigma;
             const double tpiba2 = tpiba * tpiba;
 
             if (1 == nspin)
             {
                 using V3 = ModuleBase::Vector3<double>;
                 // 0. drho
-                this->grad_kernel_set_.emplace("drho_gs", gradrho[0]);
+                this->drho_gs = gradrho[0];
                 // 1. $2f^{\rho\sigma}*\nabla\rho$
-                this->grad_kernel_set_.emplace("2_v2rhosigma_drho", std::vector<V3>(nrxx));
-                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->grad_kernel_set_["2_v2rhosigma_drho"].begin(),
+                this->v2rhosigma_2drho.resize(nrxx);
+                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho.begin(),
                     [](const V3& a, const V3& b) {return a * b * 2.; });
                 // 2. $4f^{\sigma\sigma}*\nabla\rho$
-                this->grad_kernel_set_.emplace("4_v2sigma2_drho", std::vector<V3>(nrxx));
-                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), this->grad_kernel_set_["4_v2sigma2_drho"].begin(),
+                this->v2sigma2_4drho.resize(nrxx);
+                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho.begin(),
                     [](const V3& a, const V3& b) {return a * b * 4.; });
             }
             // else if (2 == nspin)    // wrong, to be fixed
