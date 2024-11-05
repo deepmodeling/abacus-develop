@@ -310,17 +310,17 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
     {
-        Input_Item item("init_fxc");
+        Input_Item item("init_xc_kernel");
         item.annotation = "The method to initalize the xc kernel";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
-            auto& ifxc = para.input.init_fxc;
+            auto& ifxc = para.input.init_xc_kernel;
             for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
             };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.init_fxc.empty()) { para.input.init_fxc.push_back("gs"); }
+            if (para.input.init_xc_kernel.empty()) { para.input.init_xc_kernel.push_back("from_chg_groundstate"); }
             };
-        sync_stringvec(input.init_fxc, para.input.init_fxc.size(), "gs");
+        sync_stringvec(input.init_xc_kernel, para.input.init_xc_kernel.size(), "from_chg_groundstate");
         this->add_item(item);
     }
     {

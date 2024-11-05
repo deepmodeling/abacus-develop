@@ -66,7 +66,7 @@ template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::parameter_check()const
 {
     std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg" };
-    std::set<std::string> xc_kernels = { "rpa", "lda", "pbe", "hf" , "hse" };
+    std::set<std::string> xc_kernels = { "rpa", "lda", "pwlda", "pbe", "hf" , "hse" };
     if (lr_solvers.find(this->input.lr_solver) == lr_solvers.end()) {
         throw std::invalid_argument("ESolver_LR: unknown type of lr_solver");
 }
@@ -592,11 +592,11 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         using ST = PotHxcLR::SpinType;
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, ST::S1, input.init_fxc);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, ST::S1, input.init_xc_kernel);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.init_fxc);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.init_fxc);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.init_xc_kernel);
+        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.init_xc_kernel);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");
