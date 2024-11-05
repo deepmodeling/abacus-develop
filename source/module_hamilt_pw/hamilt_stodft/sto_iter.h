@@ -85,6 +85,7 @@ class Stochastic_Iter
 
   private:
     K_Vectors* pkv;
+    using gemm_op = hsolver::gemm_op<T, Device>;
 };
 
 #endif // Eelectrons_Iter

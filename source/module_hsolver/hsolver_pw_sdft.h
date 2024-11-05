@@ -53,6 +53,13 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                const bool skip_charge);
 
     Stochastic_Iter<T, Device> stoiter;
+  protected:
+    using Real = typename GetTypeReal<T>::type;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 };
 } // namespace hsolver
 #endif

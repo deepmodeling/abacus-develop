@@ -3,6 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
+#include "module_base/parallel_device.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 
 #include <algorithm>
@@ -51,10 +52,10 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         }
 
 #ifdef __MPI
-        if (nbands > 0)
+        if (nbands > 0 && PARAM.inp.bndpar > 1)
         {
-            MPI_Bcast(&psi(ik, 0, 0), npwx * nbands, MPI_DOUBLE_COMPLEX, 0, PARAPW_WORLD);
-            MPI_Bcast(&(pes->ekb(ik, 0)), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
+            Parallel_Common::bcast_complex(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD);
+            Parallel_Common::bcast_real(this->ctx, &(pes->ekb(ik, 0)), nbands, PARAPW_WORLD);
         }
 #endif
         stoiter.orthog(ik, psi, stowf);

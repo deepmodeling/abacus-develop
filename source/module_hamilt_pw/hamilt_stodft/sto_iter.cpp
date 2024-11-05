@@ -7,6 +7,7 @@
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
 
 template <typename T, typename Device>
 Stochastic_Iter<T, Device>::Stochastic_Iter()
@@ -60,37 +61,41 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         T* sum = new T[PARAM.inp.nbands * nchipk];
         char transC = 'C';
         char transN = 'N';
+        Device* ctx = {};
+
 
         // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
-        zgemm_(&transC,
-               &transN,
-               &PARAM.inp.nbands,
-               &nchipk,
-               &npw,
-               &ModuleBase::ONE,
-               &psi(ik, 0, 0),
-               &npwx,
-               wfgout,
-               &npwx,
-               &ModuleBase::ZERO,
-               sum,
-               &PARAM.inp.nbands);
+        gemm_op()(ctx,
+                  transC,
+                  transN,
+                  PARAM.inp.nbands,
+                  nchipk,
+                  npw,
+                  &ModuleBase::ONE,
+                  &psi(ik, 0, 0),
+                  npwx,
+                  wfgout,
+                  npwx,
+                  &ModuleBase::ZERO,
+                  sum,
+                  PARAM.inp.nbands);
         Parallel_Reduce::reduce_pool(sum, PARAM.inp.nbands * nchipk);
 
         // psi -= psi * sum
-        zgemm_(&transN,
-               &transN,
-               &npw,
-               &nchipk,
-               &PARAM.inp.nbands,
-               &ModuleBase::NEG_ONE,
-               &psi(ik, 0, 0),
-               &npwx,
-               sum,
-               &PARAM.inp.nbands,
-               &ModuleBase::ONE,
-               wfgout,
-               &npwx);
+        gemm_op()(ctx,
+                  transN,
+                  transN,
+                  npw,
+                  nchipk,
+                  PARAM.inp.nbands,
+                  &ModuleBase::NEG_ONE,
+                  &psi(ik, 0, 0),
+                  npwx,
+                  sum,
+                  PARAM.inp.nbands,
+                  &ModuleBase::ONE,
+                  wfgout,
+                  npwx);
         delete[] sum;
     }
 }
