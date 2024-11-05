@@ -15,7 +15,7 @@ namespace LR
     // constructor for exchange-correlation kernel
     PotHxcLR::PotHxcLR(const std::string& xc_kernel_in, const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in,
         const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
-        const SpinType& st_in, const std::vector<std::string>& init_xc_kernel)
+        const SpinType& st_in, const std::vector<std::string>& lr_init_xc_kernel)
         :xc_kernel(xc_kernel_in), tpiba_(ucell_in->tpiba), spin_type_(st_in),
         xc_kernel_components_(*rho_basis_in)
     {
@@ -32,20 +32,20 @@ namespace LR
             this->xc_type_ = XCType(XC_Functional::get_func_type());
             this->set_integral_func(this->spin_type_, this->xc_type_);
 
-            if (init_xc_kernel[0] == "file")
+            if (lr_init_xc_kernel[0] == "file")
             {
                 std::set<std::string> lda_xc = { "lda", "pwlda" };
                 assert(lda_xc.count(this->xc_kernel));
                 const int spinsize = (1 == nspin) ? 1 : 3;
                 std::vector<double> v2rho2(spinsize * nrxx);
                 // read fxc adn add to xc_kernel_components
-                assert(init_xc_kernel.size() >= spinsize + 1);
+                assert(lr_init_xc_kernel.size() >= spinsize + 1);
                 for (int is = 0;is < spinsize;++is)
                 {
                     double ef = 0.0;
                     int prenspin = 1;
                     std::vector<double> v2rho2_tmp(nrxx);
-                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, init_xc_kernel[is + 1],
+                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
                         v2rho2_tmp.data(), ucell_in->nat);
                     for (int ir = 0;ir < nrxx;++ir) { v2rho2[ir * spinsize + is] = v2rho2_tmp[ir]; }
                 }
@@ -54,16 +54,16 @@ namespace LR
             }
 
 #ifdef USE_LIBXC
-            if (init_xc_kernel[0] == "from_chg_file")
+            if (lr_init_xc_kernel[0] == "from_chg_file")
             {
-                assert(init_xc_kernel.size() >= 2);
+                assert(lr_init_xc_kernel.size() >= 2);
                 double** rho_for_fxc;
                 LR_Util::new_p2(rho_for_fxc, nspin, nrxx);
                 double ef = 0.0;
                 int prenspin = 1;
                 for (int is = 0;is < nspin;++is)
                 {
-                    const std::string file = init_xc_kernel[init_xc_kernel.size() > nspin ? 1 + is : 1];
+                    const std::string file = lr_init_xc_kernel[lr_init_xc_kernel.size() > nspin ? 1 + is : 1];
                     ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
                         rho_for_fxc[is], ucell_in->nat);
                 }

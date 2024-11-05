@@ -3943,7 +3943,7 @@ These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
 
-### init_xc_kernel
+### lr_init_xc_kernel
 
 - **Type**: String
 - **Description**: The method to initalize the xc kernel. 
