@@ -17,3 +17,4 @@ cal_force                     1
 cal_stress		      1 
 pseudo_dir	              ../../PP_ORB
 orbital_dir	              ../../PP_ORB
+dft_functional                pbe

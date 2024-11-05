@@ -6,9 +6,12 @@ import numpy as np
 import scipy
 
 def diag_pyabacus(h_sparse, nband, method):
-    algo = {
+    dav = {
         'dav_subspace': hsolver.dav_subspace,
         'davidson': hsolver.davidson
+    }
+    cg = {
+        'cg': hsolver.cg
     }
     def mm_op(x):
         return h_sparse.dot(x)
@@ -21,16 +24,16 @@ def diag_pyabacus(h_sparse, nband, method):
     diag_elem = np.where(np.abs(diag_elem) < 1e-8, 1e-8, diag_elem)
     precond = 1.0 / np.abs(diag_elem)
 
-    e, _ = algo[method](
-        mm_op,
-        v0,
-        nbasis,
-        nband,
-        precond,
-        dav_ndim=8,
-        tol=1e-12,
-        max_iter=5000
-    )
+    if method in dav:
+        algo = dav[method]
+        args = (mm_op, v0, nbasis, nband, precond, 8, 1e-12, 5000)
+    elif method in cg:
+        algo = cg[method]
+        args = (mm_op, v0, nbasis, nband, precond, 1e-12, 5000)
+    else:
+        raise ValueError(f"Method {method} not available")
+    
+    e, _ = algo(*args)
     
     return e
 
@@ -40,7 +43,8 @@ def diag_eigsh(h_sparse, nband):
 
 @pytest.mark.parametrize("method", [
     ('dav_subspace'),
-    ('davidson')
+    ('davidson'),
+    ('cg')
 ])
 def test_random_matrix_diag(method):
     np.random.seed(12)
@@ -55,8 +59,10 @@ def test_random_matrix_diag(method):
 @pytest.mark.parametrize("file_name, nband, atol, method", [
     ('./test_diag/Si2.mat', 16, 1e-8, 'dav_subspace'),
     ('./test_diag/Si2.mat', 16, 1e-8, 'davidson'),
+    ('./test_diag/Si2.mat', 16, 1e-8, 'cg'),
     ('./test_diag/Na5.mat', 16, 1e-8, 'dav_subspace'),
     ('./test_diag/Na5.mat', 16, 1e-8, 'davidson'),
+    ('./test_diag/Na5.mat', 16, 1e-8, 'cg'),
 ])
 def test_diag(file_name, nband, atol, method):
     h_sparse = scipy.io.loadmat(file_name)['Problem']['A'][0, 0]

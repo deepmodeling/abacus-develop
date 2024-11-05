@@ -4,8 +4,10 @@
 #include "module_hsolver/diago_dav_subspace.h"
 #include "module_hsolver/diago_cg.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_hsolver/diago_cg.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_print.h"
+#include "module_base/module_container/ATen/core/tensor_map.h"
 
 namespace LR
 {
@@ -68,7 +70,7 @@ namespace LR
                 // 3. set precondition and diagethr
                 for (int i = 0; i < dim; ++i) { precondition[i] = static_cast<Real<T>>(1.0); }
 
-                const int david_maxiter = hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX;
+                const int maxiter = hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX;
 
                 auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {hm.hPsi(psi_in, hpsi, ld_psi, nvec);};
                 auto spsi_func = [&hm](const T* psi_in, T* spsi, const int ld_psi, const int nvec)
@@ -84,7 +86,7 @@ namespace LR
                     // do diag and add davidson iteration counts up to avg_iter
                     hsolver::DiagoDavid<T> david(precondition.data(), nband, dim, PARAM.inp.pw_diag_ndim, PARAM.inp.use_paw, comm_info);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
-                        dim, psi, eigenvalue.data(), diag_ethr, david_maxiter, ntry_max, 0));
+                        dim, psi, eigenvalue.data(), diag_ethr, maxiter, ntry_max, 0));
                 }
                 else if (method == "dav_subspace") //need refactor
                 {
@@ -93,7 +95,7 @@ namespace LR
                         dim,
                         PARAM.inp.pw_diag_ndim,
                         diag_ethr,
-                        david_maxiter,
+                        maxiter,
                         false, //always do the subspace diag (check the implementation)
                         comm_info);
                     std::vector<double> ethr_band(nband, diag_ethr);
@@ -104,6 +106,44 @@ namespace LR
                             eigenvalue.data(),
                             ethr_band.data(),
                             false /*scf*/));
+                }
+                else if (method == "cg")
+                {
+                    ////// `diagH_subspace` needs refactor: 
+                    ////// replace `Hamilt*` with `hpsi_func`
+                    ////// or I cannot use `is_subspace=true` as my `HamiltLR` does not inherit `Hamilt`.
+
+                    // auto subspace_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& psi_out) {
+                    //     const auto ndim = psi_in.shape().ndim();
+                    //     REQUIRES_OK(ndim == 2, "dims of psi_in should be less than or equal to 2");
+                    //     // Convert a Tensor object to a psi::Psi object
+                    //     auto psi_in_wrapper = psi::Psi<T>(psi_in.data<T>(),
+                    //         1,
+                    //         psi_in.shape().dim_size(0),
+                    //         psi_in.shape().dim_size(1));
+                    //     auto psi_out_wrapper = psi::Psi<T>(psi_out.data<T>(),
+                    //         1,
+                    //         psi_out.shape().dim_size(0),
+                    //         psi_out.shape().dim_size(1));
+                    //     auto eigen = ct::Tensor(ct::DataTypeToEnum<Real<T>>::value,
+                    //         ct::DeviceType::CpuDevice,
+                    //         ct::TensorShape({ psi_in.shape().dim_size(0) }));
+                    //     hsolver::DiagoIterAssist<T>::diagH_subspace(hm, psi_in_wrapper, psi_out_wrapper, eigen.data<Real<T>>());
+                    //     };
+
+                    ////// why diago_cg depends on basis_type?
+                    // hsolver::DiagoCG<T> cg("lcao", "nscf", true, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
+
+                    auto subspace_func = [](const ct::Tensor& psi_in, ct::Tensor& psi_out) {};
+                    hsolver::DiagoCG<T> cg("lcao", "nscf", false, subspace_func, diag_ethr, maxiter, GlobalV::NPROC_IN_POOL);
+
+                    auto psi_tensor = ct::TensorMap(psi, ct::DataTypeToEnum<T>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband, dim }));
+                    auto eigen_tensor = ct::TensorMap(eigenvalue.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband }));
+                    auto precon_tensor = ct::TensorMap(precondition.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ dim }));
+                    auto hpsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& hpsi) {hm.hPsi(psi_in.data<T>(), hpsi.data<T>(), psi_in.shape().dim_size(0) /*nbasis_local*/, 1/*band-by-band*/);};
+                    auto spsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& spsi)
+                        { std::memcpy(spsi.data<T>(), psi_in.data<T>(), sizeof(T) * psi_in.NumElements()); };
+                    cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, precon_tensor);
                 }
                 else { throw std::runtime_error("HSolverLR::solve: method not implemented"); }
             }
