@@ -25,7 +25,7 @@ namespace LR
 
         this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
 
-        std::set<std::string> local_xc = { "lda", "pwlda", "pbe", "hse" };
+        const std::set<std::string> local_xc = { "lda", "pwlda", "pbe", "hse" };
         if (local_xc.find(this->xc_kernel) != local_xc.end())
         {
             XC_Functional::set_xc_type(this->xc_kernel);    // for hse, (1-alpha) and omega are set here
@@ -34,7 +34,7 @@ namespace LR
 
             if (lr_init_xc_kernel[0] == "file")
             {
-                std::set<std::string> lda_xc = { "lda", "pwlda" };
+                const std::set<std::string> lda_xc = { "lda", "pwlda" };
                 assert(lda_xc.count(this->xc_kernel));
                 const int spinsize = (1 == nspin) ? 1 : 3;
                 std::vector<double> v2rho2(spinsize * nrxx);
