@@ -4,21 +4,21 @@ namespace LR_Util
 {
     template<typename T>
     void grad(const T* rhor,
-        ModuleBase::Vector3<T>* gdr,
+        ModuleBase::Vector3<T>* gradrho,
         const ModulePW::PW_Basis& rho_basis,
         const double& tpiba)
     {
         std::vector<typename ToComplex<T>::type> rhog(rho_basis.npw);
         rho_basis.real2recip(rhor, rhog.data());
-        XC_Functional::grad_rho(rhog.data(), gdr, &rho_basis, tpiba);
+        XC_Functional::grad_rho(rhog.data(), gradrho, &rho_basis, tpiba);
     }
     template<typename T>
     void grad(const std::vector<T>& rhor,
-        std::vector<ModuleBase::Vector3<T>>& gdr,
+        std::vector<ModuleBase::Vector3<T>>& gradrho,
         const ModulePW::PW_Basis& rho_basis,
         const double& tpiba)
     {
-        grad(rhor.data(), gdr.data(), rho_basis, tpiba);
+        grad(rhor.data(), gradrho.data(), rho_basis, tpiba);
     }
 
     template<typename T>

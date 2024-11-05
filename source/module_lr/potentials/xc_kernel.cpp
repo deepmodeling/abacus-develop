@@ -50,7 +50,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             }
             return false;
         }();
-    std::vector<std::vector<ModuleBase::Vector3<double>>> gdr;  // \nabla \rho
+    std::vector<std::vector<ModuleBase::Vector3<double>>> gradrho;  // \nabla \rho
     std::vector<double> sigma;  // |\nabla\rho|^2
     std::vector<double> sgn;        // sgn for threshold mask
     if (is_gga)
@@ -60,7 +60,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         // a cutoff for grho is required to ensure that libxc gives reasonable results
 
         // 1. \nabla \rho
-        gdr.resize(nspin);
+        gradrho.resize(nspin);
         for (int is = 0; is < nspin; ++is)
         {
             std::vector<double> rhor(nrxx);
@@ -68,8 +68,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #pragma omp parallel for schedule(static, 1024)
 #endif
             for (int ir = 0; ir < nrxx; ++ir) rhor[ir] = rho[ir * nspin + is];
-            gdr[is].resize(nrxx);
-            LR_Util::grad(rhor.data(), gdr[is].data(), rho_basis_, tpiba);
+            gradrho[is].resize(nrxx);
+            LR_Util::grad(rhor.data(), gradrho[is].data(), rho_basis_, tpiba);
         }
         // 2. |\nabla\rho|^2
         sigma.resize(nrxx * ((1 == nspin) ? 1 : 3));
@@ -79,7 +79,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #pragma omp parallel for schedule(static, 1024)
 #endif
             for (int ir = 0; ir < nrxx; ++ir)
-                sigma[ir] = gdr[0][ir] * gdr[0][ir];
+                sigma[ir] = gradrho[0][ir] * gradrho[0][ir];
         }
         else
         {
@@ -88,9 +88,9 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #endif
             for (int ir = 0; ir < nrxx; ++ir)
             {
-                sigma[ir * 3] = gdr[0][ir] * gdr[0][ir];
-                sigma[ir * 3 + 1] = gdr[0][ir] * gdr[1][ir];
-                sigma[ir * 3 + 2] = gdr[1][ir] * gdr[1][ir];
+                sigma[ir * 3] = gradrho[0][ir] * gradrho[0][ir];
+                sigma[ir * 3 + 1] = gradrho[0][ir] * gradrho[1][ir];
+                sigma[ir * 3 + 2] = gradrho[1][ir] * gradrho[1][ir];
             }
         }
     }
@@ -146,10 +146,10 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             {
                 // 0. drho
                 this->grad_kernel_set_.emplace("drho_gs", std::vector<ModuleBase::Vector3<double>>(nrxx));
-                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["drho_gs"][ir] = gdr[0][ir];
+                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["drho_gs"][ir] = gradrho[0][ir];
                 // 1. $2f^{\rho\sigma}*\nabla\rho$
                 this->grad_kernel_set_.emplace("2_v2rhosigma_drho", std::vector<ModuleBase::Vector3<double>>(nrxx));
-                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["2_v2rhosigma_drho"][ir] = gdr[0][ir] * v2rs.at(ir) * 2.;
+                for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["2_v2rhosigma_drho"][ir] = gradrho[0][ir] * v2rs.at(ir) * 2.;
                 // 2. $4f^{\sigma\sigma}*\nabla\rho$
                 this->grad_kernel_set_.emplace("4_v2sigma2_drho", std::vector<ModuleBase::Vector3<double>>(nrxx));
                 for (int ir = 0; ir < nrxx; ++ir)this->grad_kernel_set_["4_v2sigma2_drho"][ir] = sigma.at(ir) * v2s2.at(ir) * 4.;
@@ -161,12 +161,12 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //     std::vector<ModuleBase::Vector3<double>> v2rhosigma_gdrho_r(3 * nrxx);
             //     for (int ir = 0; ir < nrxx; ++ir)
             //     {
-            //         v2rhosigma_gdrho_r[ir] = gdr[0][ir] * v2rs.at(ir * 6) * 4.0
-            //             + gdr[1][ir] * v2rs.at(ir * 6 + 1) * 2.0;   //up-up
-            //         v2rhosigma_gdrho_r[nrxx + ir] = gdr[0][ir] * (v2rs.at(ir * 6 + 3) * 2.0 + v2rs.at(ir * 6 + 1))
-            //             + gdr[1][ir] * (v2rs.at(ir * 6 + 2) * 2.0 + v2rs.at(ir * 6 + 4));   //up-down
-            //         v2rhosigma_gdrho_r[2 * nrxx + ir] = gdr[1][ir] * v2rs.at(ir * 6 + 5) * 4.0
-            //             + gdr[0][ir] * v2rs.at(ir * 6 + 4) * 2.0;   //down-down
+            //         v2rhosigma_gdrho_r[ir] = gradrho[0][ir] * v2rs.at(ir * 6) * 4.0
+            //             + gradrho[1][ir] * v2rs.at(ir * 6 + 1) * 2.0;   //up-up
+            //         v2rhosigma_gdrho_r[nrxx + ir] = gradrho[0][ir] * (v2rs.at(ir * 6 + 3) * 2.0 + v2rs.at(ir * 6 + 1))
+            //             + gradrho[1][ir] * (v2rs.at(ir * 6 + 2) * 2.0 + v2rs.at(ir * 6 + 4));   //up-down
+            //         v2rhosigma_gdrho_r[2 * nrxx + ir] = gradrho[1][ir] * v2rs.at(ir * 6 + 5) * 4.0
+            //             + gradrho[0][ir] * v2rs.at(ir * 6 + 4) * 2.0;   //down-down
             //     }
             //     for (int isig = 0;isig < 3;++isig)
             //         XC_Functional::grad_dot(v2rhosigma_gdrho_r.data() + isig * nrxx, div_v2rhosigma_gdrho_r.data() + isig * nrxx, chg_gs->rhopw, tpiba);
