@@ -538,6 +538,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_os_ndim");
         item.annotation = "number of old iterations used for oscillation detection";
         read_sync_int(input.scf_os_ndim);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.scf_os_ndim <= 0) // default value
+            {
+                para.input.scf_os_ndim = para.input.mixing_ndim;
+            }
+        };
         this->add_item(item);
     }
     {
