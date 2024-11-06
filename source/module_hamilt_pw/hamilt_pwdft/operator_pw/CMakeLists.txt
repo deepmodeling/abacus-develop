@@ -7,12 +7,13 @@ list(APPEND operator_ks_pw_srcs
     velocity_pw.cpp
 )
 
-add_library(
-    operator_ks_pw
-    OBJECT
-    ${operator_ks_pw_srcs}
-)
+# this library is included in hamilt_pwdft now
+#add_library(
+#    operator_ks_pw
+#    OBJECT
+#    ${operator_ks_pw_srcs}
+#)
 
-if(ENABLE_COVERAGE)
-  add_coverage(operator_ks_pw)
-endif()
+#if(ENABLE_COVERAGE)
+#  add_coverage(operator_ks_pw)
+#endif()

@@ -1,5 +1,6 @@
-#INPUT file for applying D3(BJ) correction
-#with default VdW parameters
+#INPUT file for applying D2 correction
+#where I chose to manually set the C6 parameter
+#in file c6.txt
 #in pw basis
 
 INPUT_PARAMETERS
@@ -12,4 +13,5 @@ ecutwfc			50
 scf_nmax		100
 scf_thr                 1e-6
 basis_type		pw
-vdw_method 		d3_bj
+vdw_method 		d2
+vdw_C6_file		c6.txt
