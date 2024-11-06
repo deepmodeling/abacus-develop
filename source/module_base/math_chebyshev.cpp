@@ -11,37 +11,37 @@
 namespace ModuleBase
 {
 
-FFTW<double, base_device::DEVICE_CPU>::FFTW(const int norder2_in)
+FFTW<double>::FFTW(const int norder2_in)
 {
     ccoef = (fftw_complex*)fftw_malloc(sizeof(fftw_complex) * norder2_in);
     dcoef = (double*)fftw_malloc(sizeof(double) * norder2_in);
     coef_plan = fftw_plan_dft_r2c_1d(norder2_in, dcoef, ccoef, FFTW_ESTIMATE);
 }
-FFTW<double, base_device::DEVICE_CPU>::~FFTW()
+FFTW<double>::~FFTW()
 {
     fftw_destroy_plan(coef_plan);
     fftw_free(ccoef);
     fftw_free(dcoef);
 }
-void FFTW<double, base_device::DEVICE_CPU>::execute_fftw()
+void FFTW<double>::execute_fftw()
 {
     fftw_execute(this->coef_plan);
 }
 
 #ifdef __ENABLE_FLOAT_FFTW
-FFTW<float, base_device::DEVICE_CPU>::FFTW(const int norder2_in)
+FFTW<float>::FFTW(const int norder2_in)
 {
     ccoef = (fftwf_complex*)fftw_malloc(sizeof(fftwf_complex) * norder2_in);
     dcoef = (float*)fftw_malloc(sizeof(float) * norder2_in);
     coef_plan = fftwf_plan_dft_r2c_1d(norder2_in, dcoef, ccoef, FFTW_ESTIMATE);
 }
-FFTW<float, base_device::DEVICE_CPU>::~FFTW()
+FFTW<float>::~FFTW()
 {
     fftwf_destroy_plan(coef_plan);
     fftw_free(ccoef);
     fftw_free(dcoef);
 }
-void FFTW<float, base_device::DEVICE_CPU>::execute_fftw()
+void FFTW<float>::execute_fftw()
 {
     fftwf_execute(this->coef_plan);
 }
@@ -764,6 +764,9 @@ bool Chebyshev<REAL, Device>::checkconverge(
 template class Chebyshev<double>;
 #ifdef __ENABLE_FLOAT_FFTW
 template class Chebyshev<float>;
+#endif
+#if ((defined __CUDA) || (defined __ROCM))
+template class Chebyshev<double, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace ModuleBase

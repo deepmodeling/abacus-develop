@@ -703,3 +703,6 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
 }
 
 template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_GPU>;
+#endif

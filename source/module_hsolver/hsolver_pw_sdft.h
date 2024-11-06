@@ -47,6 +47,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
 
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
+               psi::Psi<T>& psi_cpu,
                elecstate::ElecState* pes,
                ModulePW::PW_Basis_K* wfc_basis,
                Stochastic_WF<T, Device>& stowf,

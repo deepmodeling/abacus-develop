@@ -11,7 +11,7 @@
 namespace ModuleBase
 {
 // template class for fftw
-template <typename T, typename Device = base_device::DEVICE_CPU>
+template <typename T>
 class FFTW;
 
 /**
@@ -209,7 +209,7 @@ class Chebyshev
     REAL* coefr_cpu = nullptr;                  //[CPU] expansion coefficient of each order
     std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
 
-    FFTW<REAL, Device> fftw;          // use for fftw
+    FFTW<REAL> fftw;          // use for fftw
     REAL* polytrace;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
@@ -242,7 +242,7 @@ class Chebyshev
 };
 
 template <>
-class FFTW<double, base_device::DEVICE_CPU>
+class FFTW<double>
 {
   public:
     FFTW(const int norder2_in);
@@ -255,7 +255,7 @@ class FFTW<double, base_device::DEVICE_CPU>
 
 #ifdef __ENABLE_FLOAT_FFTW
 template <>
-class FFTW<float, base_device::DEVICE_CPU>
+class FFTW<float>
 {
   public:
     FFTW(const int norder2_in);

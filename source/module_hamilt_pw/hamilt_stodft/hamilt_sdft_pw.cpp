@@ -57,7 +57,7 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     const Real Ebar = (emin + emax) / 2;
     const Real DeltaE = (emax - emin) / 2;
 
-    hspi_norm_op<Real, Device>()(this->ctx, nbands, npwk_max, npwk, Ebar, DeltaE, hpsi_norm, psi_in);
+    hpsi_norm_op<Real, Device>()(this->ctx, nbands, npwk_max, npwk, Ebar, DeltaE, hpsi_norm, psi_in);
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi_norm");
 }
 

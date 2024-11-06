@@ -33,4 +33,6 @@ StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& ema
 }
 
 template class StoChe<double, base_device::DEVICE_CPU>;
-// template class StoChe<float>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class StoChe<double, base_device::DEVICE_GPU>;
+#endif

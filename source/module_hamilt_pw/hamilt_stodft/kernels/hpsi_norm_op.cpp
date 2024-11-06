@@ -4,7 +4,7 @@
 namespace hamilt
 {
 template <typename FPTYPE>
-struct hspi_norm_op<FPTYPE, base_device::DEVICE_CPU>
+struct hpsi_norm_op<FPTYPE, base_device::DEVICE_CPU>
 {
     void operator()(const base_device::DEVICE_CPU* dev,
                     const int& nbands,
@@ -29,7 +29,7 @@ struct hspi_norm_op<FPTYPE, base_device::DEVICE_CPU>
     }
 };
 
-// template struct hspi_norm_op<float, base_device::DEVICE_CPU>;
-template struct hspi_norm_op<double, base_device::DEVICE_CPU>;
+// template struct hpsi_norm_op<float, base_device::DEVICE_CPU>;
+template struct hpsi_norm_op<double, base_device::DEVICE_CPU>;
 
 } // namespace hamilt

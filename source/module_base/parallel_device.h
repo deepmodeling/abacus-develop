@@ -24,13 +24,31 @@ void bcast_real(float* object, const int& n, const MPI_Comm& comm)
 }
 
 template <typename T, typename Device>
-void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& comm)
+/**
+ * @brief bcast complex in Device
+ * 
+ * @param ctx Device ctx
+ * @param object complex arrays in Device
+ * @param n the size of complex arrays
+ * @param comm MPI_Comm
+ * @param tmp_space tmp space in CPU
+ */
+void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
 {
     const base_device::DEVICE_CPU* cpu_ctx = {};
     T* object_cpu = nullptr;
+    bool alloc = false;
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu, n);
+        if(tmp_space == nullptr)
+        {
+            base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu, n);
+            alloc = true;
+        }
+        else
+        {
+            object_cpu = tmp_space;
+        }
         base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(cpu_ctx, ctx, object_cpu, object, n);
     }
     else
@@ -43,19 +61,31 @@ void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& c
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(ctx, cpu_ctx, object, object_cpu, n);
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu);
+        if(alloc)
+        {
+            base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu);
+        }
     }
     return;
 }
 
 template <typename T, typename Device>
-void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm)
+void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
 {
     const base_device::DEVICE_CPU* cpu_ctx = {};
     T* object_cpu = nullptr;
+    bool alloc = false;
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu, n);
+        if(tmp_space == nullptr)
+        {
+            base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu, n);
+            alloc = true;
+        }
+        else
+        {
+            object_cpu = tmp_space;
+        }
         base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(cpu_ctx, ctx, object_cpu, object, n);
     }
     else
@@ -68,7 +98,10 @@ void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
         base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(ctx, cpu_ctx, object, object_cpu, n);
-        base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu);
+        if(alloc)
+        {
+            base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>()(cpu_ctx, object_cpu);
+        }
     }
     return;
 }

@@ -1,10 +1,11 @@
 #ifndef HPSI_NORM_OP_H
 #define HPSI_NORM_OP_H
 #include <complex>
+#include "module_base/module_device/device.h"
 namespace hamilt
 {
 template <typename FPTYPE, typename Device>
-struct hspi_norm_op
+struct hpsi_norm_op
 {
     /// @brief normalize hPsi with emin and emax
     ///
@@ -31,7 +32,7 @@ struct hspi_norm_op
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 // Partially specialize functor for base_device::GpuDevice.
 template <typename FPTYPE>
-struct hspi_norm_op<FPTYPE, base_device::DEVICE_GPU>
+struct hpsi_norm_op<FPTYPE, base_device::DEVICE_GPU>
 {
     void operator()(const base_device::DEVICE_GPU* dev,
                     const int& nbands,

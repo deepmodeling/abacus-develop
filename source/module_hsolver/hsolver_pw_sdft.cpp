@@ -13,6 +13,7 @@ namespace hsolver
 template <typename T, typename Device>
 void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                       psi::Psi<T, Device>& psi,
+                                      psi::Psi<T>& psi_cpu,
                                       elecstate::ElecState* pes,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
@@ -54,8 +55,8 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 #ifdef __MPI
         if (nbands > 0 && PARAM.inp.bndpar > 1)
         {
-            Parallel_Common::bcast_complex(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD);
-            Parallel_Common::bcast_real(&(this->ctx, pes->ekb(ik, 0)), nbands, PARAPW_WORLD);
+            Parallel_Common::bcast_complex(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD, &psi_cpu(ik, 0, 0));
+            MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
         }
 #endif
         stoiter.orthog(ik, psi, stowf);
@@ -90,7 +91,7 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     pes_pw->init_rho_data();
     if (nbands > 0)
     {
-        pes->psiToRho(psi);
+        pes_pw->psiToRho(psi);
 #ifdef __MPI
         MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
@@ -112,4 +113,8 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
 // template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
 template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+// template class HSolverPW_SDFT<std::complex<float>, base_device::DEVICE_GPU>;
+template class HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
 } // namespace hsolver
