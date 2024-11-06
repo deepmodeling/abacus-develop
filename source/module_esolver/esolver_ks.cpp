@@ -9,6 +9,7 @@
 #endif
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
+#include "module_io/json_output/init_info.h"
 #include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
