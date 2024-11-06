@@ -1,3 +1,5 @@
+if(ENABLE_LCAO)
+
 list(APPEND objects
     base_matrix.cpp
     atom_pair.cpp
@@ -22,4 +24,6 @@ IF (BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()
+endif()
+
 endif()

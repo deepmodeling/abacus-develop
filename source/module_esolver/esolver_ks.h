@@ -50,12 +50,6 @@ class ESolver_KS : public ESolver_FP
 		// calculate electron states from a specific Hamiltonian
 		virtual void hamilt2estates(const double ethr){};
 
-		// get current step of Ionic simulation
-		virtual int get_niter() override;
-
-		// get maxniter used in current scf
-		virtual int get_maxniter() override;
-
       protected:
         //! Something to do before SCF iterations.
 		virtual void before_scf(const int istep) {};
@@ -72,19 +66,7 @@ class ESolver_KS : public ESolver_FP
         //! <Temporary> It should be replaced by a function in Hamilt Class
 		virtual void update_pot(const int istep, const int iter) {};
 
-    protected:
-        // Print inforamtion in each iter
-		// G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-		// for metaGGA
-		// ITER   ETOT(eV)       EDIFF(eV)      DRHO       DKIN       TIME(s) 
-		// G1    -3.435545e+03  0.000000e+00   3.607e-01  3.522e-01  2.862e-01
-		void print_iter(
-				const int iter, 
-				const double drho, 
-				const double dkin, 
-				const double duration, 
-				const double ethr);
-
+      protected:
         //! Hamiltonian
 		hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
 

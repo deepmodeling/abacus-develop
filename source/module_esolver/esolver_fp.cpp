@@ -5,6 +5,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
+#include "module_io/json_output/init_info.h"
+#include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/rhog_io.h"
@@ -260,6 +262,14 @@ void ESolver_FP::after_scf(const int istep)
                 PARAM.inp.out_elf[1]);
         }
     }
+
+    // #ifdef __RAPIDJSON
+    //     // add Json of efermi energy converge
+    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
+    //     // add nkstot,nkstot_ibz to output json
+    //     int Jnkstot = this->pelec->klist->get_nkstot();
+    //     Json::add_nkstot(Jnkstot);
+    // #endif //__RAPIDJSON
 }
 
 void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)

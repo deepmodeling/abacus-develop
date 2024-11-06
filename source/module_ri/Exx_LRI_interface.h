@@ -63,6 +63,10 @@ public:
     /// @brief in hamilt2density: calculate Hexx and Eexx
     void exx_hamilt2density(elecstate::ElecState& elec, const Parallel_Orbitals& pv, const int iter);
 
+    /// @brief in iter_finish: write Hexx, do something according to whether SCF is converged
+    void exx_iter_finish(const K_Vectors& kv, const UnitCell& ucell,
+        hamilt::Hamilt<T>& hamilt, elecstate::ElecState& elec, Charge_Mixing& chgmix,
+        const double& scf_ene_thr, int& iter, bool& conv_esolver);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(
         hamilt::Hamilt<T>& hamilt,
