@@ -1,5 +1,4 @@
 #include "pot_hxc_lrtd.h"
-#include "module_elecstate/potentials/pot_base.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_base/timer.h"
@@ -7,76 +6,24 @@
 #include <set>
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_xc.hpp"
-#include "module_io/cube_io.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"    // tmp, for pgrid
 #define FXC_PARA_TYPE const double* const rho, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 }
 namespace LR
 {
     // constructor for exchange-correlation kernel
-    PotHxcLR::PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis* rho_basis, const UnitCell* ucell,
-        const Charge* chg_gs/*ground state*/, const Parallel_Grid& pgrid,
+    PotHxcLR::PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell,
+        const Charge& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
         const SpinType& st, const std::vector<std::string>& lr_init_xc_kernel)
-        :xc_kernel_(xc_kernel), tpiba_(ucell->tpiba), spin_type_(st),
-        xc_kernel_components_(*rho_basis)
+        :xc_kernel_(xc_kernel), tpiba_(ucell.tpiba), spin_type_(st), rho_basis_(rho_basis), nrxx_(chg_gs.nrxx),
+        nspin_(PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z) ? 1 : 2),
+        pot_hartree_(LR_Util::make_unique<elecstate::PotHartree>(&rho_basis)),
+        xc_kernel_components_(rho_basis, ucell, chg_gs, pgrid, nspin_, xc_kernel, lr_init_xc_kernel), //call XC_Functional::set_func_type and libxc
+        xc_type_(XCType(XC_Functional::get_func_type()))
     {
-        this->rho_basis_ = rho_basis;
-        this->nrxx = chg_gs->nrxx;
-        this->nspin = (PARAM.inp.nspin == 1 || (PARAM.inp.nspin == 4 && !PARAM.globalv.domag && !PARAM.globalv.domag_z)) ? 1 : 2;
-
-        this->pot_hartree = LR_Util::make_unique<elecstate::PotHartree>(this->rho_basis_);
-
-        const std::set<std::string> local_xc = { "lda", "pwlda", "pbe", "hse" };
-        if (local_xc.find(this->xc_kernel_) != local_xc.end())
-        {
-            XC_Functional::set_xc_type(this->xc_kernel_);    // for hse, (1-alpha) and omega are set here
-            this->xc_type_ = XCType(XC_Functional::get_func_type());
-            this->set_integral_func(this->spin_type_, this->xc_type_);
-
-            if (lr_init_xc_kernel[0] == "file")
-            {
-                const std::set<std::string> lda_xc = { "lda", "pwlda" };
-                assert(lda_xc.count(this->xc_kernel_));
-                const int n_component = (1 == nspin) ? 1 : 3;   // spin components of fxc: (uu, ud=du, dd) when nspin=2
-                this->xc_kernel_components_.v2rho2.resize(n_component * nrxx);
-                // read fxc adn add to xc_kernel_components
-                assert(lr_init_xc_kernel.size() >= n_component + 1);
-                for (int is = 0;is < n_component;++is)
-                {
-                    double ef = 0.0;
-                    int prenspin = 1;
-                    std::vector<double> v2rho2_tmp(nrxx);
-                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
-                        v2rho2_tmp.data(), ucell->nat);
-                    for (int ir = 0;ir < nrxx;++ir) { xc_kernel_components_.v2rho2[ir * n_component + is] = v2rho2_tmp[ir]; }
-                }
-                return;
-            }
-
-#ifdef USE_LIBXC
-            if (lr_init_xc_kernel[0] == "from_chg_file")
-            {
-                assert(lr_init_xc_kernel.size() >= 2);
-                double** rho_for_fxc;
-                LR_Util::_allocate_2order_nested_ptr(rho_for_fxc, nspin, nrxx);
-                double ef = 0.0;
-                int prenspin = 1;
-                for (int is = 0;is < nspin;++is)
-                {
-                    const std::string file = lr_init_xc_kernel[lr_init_xc_kernel.size() > nspin ? 1 + is : 1];
-                    ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
-                        rho_for_fxc[is], ucell->nat);
-                }
-                this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, rho_for_fxc, chg_gs->rho_core);
-                LR_Util::_deallocate_2order_nested_ptr(rho_for_fxc, nspin);
-            }
-            else { this->xc_kernel_components_.f_xc_libxc(nspin, ucell->omega, ucell->tpiba, chg_gs->rho, chg_gs->rho_core); }
-#else 
-            ModuleBase::WARNING_QUIT("KernelXC", "to calculate xc-kernel in LR-TDDFT, compile with LIBXC");
-#endif
-        }
+        if (std::set<std::string>({ "lda", "pwlda", "pbe", "hse" }).count(xc_kernel)) { this->set_integral_func(this->spin_type_, this->xc_type_); }
     }
 
-    void PotHxcLR::cal_v_eff(double** rho, const UnitCell* ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op)
+    void PotHxcLR::cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op)
     {
         ModuleBase::TITLE("PotHxcLR", "cal_v_eff");
         ModuleBase::timer::tick("PotHxcLR", "cal_v_eff");
@@ -86,10 +33,10 @@ namespace LR
         switch (this->spin_type_)
         {
         case SpinType::S1: case SpinType::S2_updown:
-            v_eff += elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), 1, rho);
+            v_eff += elecstate::H_Hartree_pw::v_hartree(ucell, const_cast<ModulePW::PW_Basis*>(&this->rho_basis_), 1, rho);
             break;
         case SpinType::S2_singlet:
-            v_eff += 2 * elecstate::H_Hartree_pw::v_hartree(*ucell, const_cast<ModulePW::PW_Basis*>(this->rho_basis_), 1, rho);
+            v_eff += 2 * elecstate::H_Hartree_pw::v_hartree(ucell, const_cast<ModulePW::PW_Basis*>(&this->rho_basis_), 1, rho);
             break;
         default:
             break;
@@ -171,7 +118,7 @@ namespace LR
                     //     std::cout << std::endl;};
 
                     std::vector<ModuleBase::Vector3<double>> drho(nrxx);    // transition density gradient
-                    LR_Util::grad(rho, drho.data(), *(this->rho_basis_), this->tpiba_);
+                    LR_Util::grad(rho, drho.data(), this->rho_basis_, this->tpiba_);
 
                     std::vector<double> vxc_tmp(nrxx, 0.0);
 
@@ -183,7 +130,7 @@ namespace LR
                             + fxc.v2sigma2_4drho.at(ir) * (fxc.drho_gs.at(ir) * drho.at(ir))
                             + drho.at(ir) * fxc.vsigma.at(ir) * 2.);
                     }
-                    XC_Functional::grad_dot(e_drho.data(), vxc_tmp.data(), this->rho_basis_, this->tpiba_);
+                    XC_Functional::grad_dot(e_drho.data(), vxc_tmp.data(), &this->rho_basis_, this->tpiba_);
 
                     // 2. $f^{\rho\rho}\rho_1+2f^{\rho\sigma}\nabla\rho\cdot\nabla\rho_1$
                     for (int ir = 0;ir < nrxx;++ir)

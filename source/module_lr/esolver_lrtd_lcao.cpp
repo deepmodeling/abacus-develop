@@ -104,7 +104,6 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     GlobalV::ofs_running << "number of excited states to be solved: " << this->nstates << std::endl;
     if (input.ri_hartree_benchmark == "aims" && !input.aims_nbasis.empty())
     {
-        this->nbasis = [&]() -> int { int nbas = 0; for (int it = 0;it < ucell.ntype;++it) { nbas += ucell.atoms[it].na * input.aims_nbasis[it]; };return nbas;}();
         // calculate total number of basis funcs, see https://en.cppreference.com/w/cpp/algorithm/inner_product
         this->nbasis = std::inner_product(input.aims_nbasis.begin(), /* iterator1.begin */
                                           input.aims_nbasis.end(),  /* iterator1.end */
@@ -599,11 +598,11 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         using ST = PotHxcLR::SpinType;
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, ST::S1, input.lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, GlobalC::Pgrid, ST::S1, input.lr_init_xc_kernel);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, this->pw_rho, &ucell, &chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
+        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, GlobalC::Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");

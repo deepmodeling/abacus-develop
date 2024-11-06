@@ -4,10 +4,69 @@
 #include "module_base/timer.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_xc.hpp"
+#include <set>
+#include "module_io/cube_io.h"
 #ifdef USE_LIBXC
 #include <xc.h>
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+#endif
 
+LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
+    const UnitCell& ucell,
+    const Charge& chg_gs,
+    const Parallel_Grid& pgrid,
+    const int& nspin,
+    const std::string& kernel_name,
+    const std::vector<std::string>& lr_init_xc_kernel) :rho_basis_(rho_basis)
+{
+    if (!std::set<std::string>({ "lda", "pwlda", "pbe", "hse" }).count(kernel_name)) { return; }
+    XC_Functional::set_xc_type(kernel_name);    // for hse, (1-alpha) and omega are set here
+
+    const int& nrxx = rho_basis.nrxx;
+    if (lr_init_xc_kernel[0] == "file")
+    {
+        const std::set<std::string> lda_xc = { "lda", "pwlda" };
+        assert(lda_xc.count(kernel_name));
+        const int n_component = (1 == nspin) ? 1 : 3;   // spin components of fxc: (uu, ud=du, dd) when nspin=2
+        this->v2rho2_.resize(n_component * nrxx);
+        // read fxc adn add to xc_kernel_components
+        assert(lr_init_xc_kernel.size() >= n_component + 1);
+        for (int is = 0;is < n_component;++is)
+        {
+            double ef = 0.0;
+            int prenspin = 1;
+            std::vector<double> v2rho2_tmp(nrxx);
+            ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, lr_init_xc_kernel[is + 1],
+                v2rho2_tmp.data(), ucell.nat);
+            for (int ir = 0;ir < nrxx;++ir) { this->v2rho2_[ir * n_component + is] = v2rho2_tmp[ir]; }
+        }
+        return;
+    }
+
+#ifdef USE_LIBXC
+    if (lr_init_xc_kernel[0] == "from_chg_file")
+    {
+        assert(lr_init_xc_kernel.size() >= 2);
+        double** rho_for_fxc;
+        LR_Util::_allocate_2order_nested_ptr(rho_for_fxc, nspin, nrxx);
+        double ef = 0.0;
+        int prenspin = 1;
+        for (int is = 0;is < nspin;++is)
+        {
+            const std::string file = lr_init_xc_kernel[lr_init_xc_kernel.size() > nspin ? 1 + is : 1];
+            ModuleIO::read_vdata_palgrid(pgrid, GlobalV::MY_RANK, GlobalV::ofs_running, file,
+                rho_for_fxc[is], ucell.nat);
+        }
+        this->f_xc_libxc(nspin, ucell.omega, ucell.tpiba, rho_for_fxc, chg_gs.rho_core);
+        LR_Util::_deallocate_2order_nested_ptr(rho_for_fxc, nspin);
+    }
+    else { this->f_xc_libxc(nspin, ucell.omega, ucell.tpiba, chg_gs.rho, chg_gs.rho_core); }
+#else 
+    ModuleBase::WARNING_QUIT("KernelXC", "to calculate xc-kernel in LR-TDDFT, compile with LIBXC");
+#endif
+}
+
+#ifdef USE_LIBXC
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
 {
     ModuleBase::TITLE("XC_Functional", "f_xc_libxc");
@@ -85,13 +144,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     }
     // -----------------------------------------------------------------------------------
     //==================== XC Kernels (f_xc)=============================
-    this->vrho.resize(nspin * nrxx);
-    this->v2rho2.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
+    this->vrho_.resize(nspin * nrxx);
+    this->v2rho2_.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
     if (is_gga)
     {
-        this->vsigma.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->v2rhosigma.resize(((1 == nspin) ? 1 : 6) * nrxx); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->v2sigma2.resize(((1 == nspin) ? 1 : 6) * nrxx);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
+        this->vsigma_.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2rhosigma_.resize(((1 == nspin) ? 1 : 6) * nrxx); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2sigma2_.resize(((1 == nspin) ? 1 : 6) * nrxx);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
     }
     //MetaGGA ...
 
@@ -107,13 +166,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         switch (func.info->family)
         {
         case XC_FAMILY_LDA:
-            xc_lda_vxc(&func, nrxx, rho.data(), vrho.data());
-            xc_lda_fxc(&func, nrxx, rho.data(), v2rho2.data());
+            xc_lda_vxc(&func, nrxx, rho.data(), vrho_.data());
+            xc_lda_fxc(&func, nrxx, rho.data(), v2rho2_.data());
             break;
         case XC_FAMILY_GGA:
         case XC_FAMILY_HYB_GGA:
-            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho.data(), vsigma.data());
-            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2.data(), v2rhosigma.data(), v2sigma2.data());
+            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho_.data(), vsigma_.data());
+            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_.data(), v2rhosigma_.data(), v2sigma2_.data());
             break;
         default:
             throw std::domain_error("func.info->family =" + std::to_string(func.info->family)
@@ -123,24 +182,24 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         // some formulas for GGA
         if (func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
         {
-            const std::vector<double>& v2r2 = this->v2rho2;
-            const std::vector<double>& v2rs = this->v2rhosigma;
-            const std::vector<double>& v2s2 = this->v2sigma2;
-            const std::vector<double>& vs = this->vsigma;
+            const std::vector<double>& v2r2 = this->v2rho2_;
+            const std::vector<double>& v2rs = this->v2rhosigma_;
+            const std::vector<double>& v2s2 = this->v2sigma2_;
+            const std::vector<double>& vs = this->vsigma_;
             const double tpiba2 = tpiba * tpiba;
 
             if (1 == nspin)
             {
                 using V3 = ModuleBase::Vector3<double>;
                 // 0. drho
-                this->drho_gs = gradrho[0];
+                this->drho_gs_ = gradrho[0];
                 // 1. $2f^{\rho\sigma}*\nabla\rho$
-                this->v2rhosigma_2drho.resize(nrxx);
-                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho.begin(),
+                this->v2rhosigma_2drho_.resize(nrxx);
+                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho_.begin(),
                     [](const V3& a, const V3& b) {return a * b * 2.; });
                 // 2. $4f^{\sigma\sigma}*\nabla\rho$
-                this->v2sigma2_4drho.resize(nrxx);
-                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho.begin(),
+                this->v2sigma2_4drho_.resize(nrxx);
+                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho_.begin(),
                     [](const V3& a, const V3& b) {return a * b * 4.; });
             }
             // else if (2 == nspin)    // wrong, to be fixed
@@ -158,7 +217,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //             + gradrho[0][ir] * v2rs.at(ir * 6 + 4) * 2.0;   //down-down
             //     }
             //     for (int isig = 0;isig < 3;++isig)
-            //         XC_Functional::grad_dot(v2rhosigma_gdrho_r.data() + isig * nrxx, div_v2rhosigma_gdrho_r.data() + isig * nrxx, chg_gs->rhopw, tpiba);
+            //         XC_Functional::grad_dot(v2rhosigma_gdrho_r.data() + isig * nrxx, div_v2rhosigma_gdrho_r.data() + isig * nrxx, chg_gs.rhopw, tpiba);
             //     // 2. $\nabla^2(f^{\sigma\sigma}*\sigma)$
             //     std::vector<double> v2sigma2_sigma_r(3 * nrxx);
             //     for (int ir = 0; ir < nrxx; ++ir)
@@ -174,7 +233,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //             + v2s2.at(ir * 6 + 3) * sigma[ir * 3];   //down-down
             //     }
             //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::lapl(v2sigma2_sigma_r.data() + isig * nrxx, v2sigma2_sigma_r.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
+            //         LR_Util::lapl(v2sigma2_sigma_r.data() + isig * nrxx, v2sigma2_sigma_r.data() + isig * nrxx, *(chg_gs.rhopw), tpiba2);
             //     // 3. $\nabla^2(v^\sigma)$
             //     std::vector<double> lap_vsigma(3 * nrxx);
             //     for (int ir = 0;ir < nrxx;++ir)
@@ -184,8 +243,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             //         lap_vsigma[2 * nrxx + ir] = vs.at(ir * 3 + 2) * 2.0;
             //     }
             //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::lapl(lap_vsigma.data() + isig * nrxx, lap_vsigma.data() + isig * nrxx, *(chg_gs->rhopw), tpiba2);
-            //     // add to v2rho2
+            //         LR_Util::lapl(lap_vsigma.data() + isig * nrxx, lap_vsigma.data() + isig * nrxx, *(chg_gs.rhopw), tpiba2);
+            //     // add to v2rho2_
             //     BlasConnector::axpy(3 * nrxx, 1.0, v2r2.data(), 1, to_mul_rho_.data(), 1);
             //     BlasConnector::axpy(3 * nrxx, -1.0, div_v2rhosigma_gdrho_r.data(), 1, to_mul_rho_.data(), 1);
             //     BlasConnector::axpy(3 * nrxx, 1.0, v2sigma2_sigma_r.data(), 1, to_mul_rho_.data(), 1);
