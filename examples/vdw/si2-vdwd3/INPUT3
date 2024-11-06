@@ -1,0 +1,21 @@
+#INPUT file for applying D3(BJ) correction
+#in lcao basis. This example illustrates 
+#the manually setting on vdw parameters
+
+INPUT_PARAMETERS
+#Parameters    (General)
+pseudo_dir      ../../../tests/PP_ORB
+orbital_dir     ../../../tests/PP_ORB
+ntype           1    
+#Parameters (Accuracy)
+ecutwfc         50
+scf_nmax        100
+scf_thr         1e-6
+basis_type      lcao
+vdw_method      d3_bj
+dft_functional  pbe
+vdw_s6          1.000
+vdw_s8          0.722
+vdw_a1          1.217
+vdw_a2          1.000
+
