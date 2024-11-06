@@ -42,5 +42,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 
 // template class ElecStatePW_SDFT<std::complex<float>, base_device::DEVICE_CPU>;
 template class ElecStatePW_SDFT<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
 template class ElecStatePW_SDFT<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
 } // namespace elecstate

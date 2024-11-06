@@ -12,6 +12,7 @@
 #include "module_base/global_variable.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
+#include "module_elecstate/elecstate_pw.h"
 #undef private
 #undef protected
 
@@ -20,16 +21,20 @@ template <typename REAL>
 Sto_Func<REAL>::Sto_Func()
 {
 }
-
 template class Sto_Func<double>;
 
-template <typename REAL>
-StoChe<REAL>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+template<>
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
+{
+}
+
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
 {
     this->nche = nche;
 }
-template <typename REAL>
-StoChe<REAL>::~StoChe()
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::~StoChe()
 {
 }
 
@@ -51,7 +56,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
-                                      StoChe<double>& stoche,
+                                      StoChe<Real, Device>& stoche,
                                       hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;
@@ -108,7 +113,7 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecStatePW* pes,
+                                             elecstate::ElecStatePW<T, Device>* pes,
                                              hamilt::Hamilt<T, Device>* pHamilt,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
@@ -193,7 +198,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 
-    this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, &pwbk, stowf, istep, iter, false);
+    this->hs_d.solve(&hamilt_test_d, psi_test_cd, psi_test_cd, &elecstate_test, &pwbk, stowf, istep, iter, false);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
@@ -237,7 +242,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     int istep = 0;
     int iter = 0;
 
-    this->hs_d.solve(&hamilt_test_d, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, false);
+    this->hs_d.solve(&hamilt_test_d, psi_test_no, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, false);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_EQ(stowf.nbands_diag, 2);
     EXPECT_EQ(stowf.nbands_total, 1);
@@ -251,7 +256,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 
     // test for skip charge
-    this->hs_d.solve(&hamilt_test_d, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, true);
+    this->hs_d.solve(&hamilt_test_d, psi_test_no, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, true);
     EXPECT_EQ(stowf.nbands_diag, 4);
     EXPECT_EQ(stowf.nbands_total, 1);
     EXPECT_EQ(stowf.nchi, 4);
