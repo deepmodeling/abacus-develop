@@ -89,7 +89,7 @@
     - [scf\_ene\_thr](#scf_ene_thr)
     - [scf\_thr\_type](#scf_thr_type)
     - [scf\_os\_stop](#scf_os_stop)
-    - [scf\_thr\_os](#scf_thr_os)
+    - [scf\_os\_thr](#scf_os_thr)
     - [scf\_os\_ndim](#scf_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
@@ -1211,19 +1211,19 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 ### scf_os_stop
 
 - **Type**: bool
-- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
   - **0**: The SCF will continue to run regardless of whether there is oscillation or not. 
-  - **1**: If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+  - **1**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
 - **Default**: false
 
-### scf_thr_os
+### scf_os_thr
 
 - **Type**: double
-- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
   - **>=0**: The SCF will continue to run regardless of whether there is oscillation or not. 
-  - **<0**: If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+  - **<0**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
 - **Default**: 0
 

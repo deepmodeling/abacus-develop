@@ -534,7 +534,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
             if (PARAM.inp.scf_os_stop) // if oscillation is detected, SCF will stop
             {
-                this->oscillate_esolver = this->p_chgmix->if_scf_oscillate(iter, drho, PARAM.inp.scf_os_ndim, PARAM.inp.scf_thr_os);
+                this->oscillate_esolver = this->p_chgmix->if_scf_oscillate(iter, drho, PARAM.inp.scf_os_ndim, PARAM.inp.scf_os_thr);
             }
 
             // drho will be 0 at this->p_chgmix->mixing_restart step, which is

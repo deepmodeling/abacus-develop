@@ -1030,7 +1030,7 @@ TEST_F(ChargeMixingTest, SCFOscillationTest)
     Charge_Mixing CMtest;
     int scf_nmax = 20;
     int scf_os_ndim = 3;
-    double scf_thr_os = -0.05;
+    double scf_os_thr = -0.05;
     bool scf_oscillate = false;
     std::vector<double> drho(scf_nmax, 0.0);
     std::vector<bool> scf_oscillate_ref(scf_nmax, false);
@@ -1058,7 +1058,7 @@ TEST_F(ChargeMixingTest, SCFOscillationTest)
                         false,false,true,false,false,true,true,true,true,true};
     for (int i = 1; i <= scf_nmax; ++i)
     {
-        scf_oscillate = CMtest.if_scf_oscillate(i,drho[i-1],scf_os_ndim,scf_thr_os);
+        scf_oscillate = CMtest.if_scf_oscillate(i,drho[i-1],scf_os_ndim,scf_os_thr);
         EXPECT_EQ(scf_oscillate, scf_oscillate_ref[i-1]);
     } 
 }

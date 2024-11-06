@@ -535,9 +535,9 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
-        Input_Item item("scf_thr_os");
+        Input_Item item("scf_os_thr");
         item.annotation = "charge density threshold for oscillation";
-        read_sync_double(input.scf_thr_os);
+        read_sync_double(input.scf_os_thr);
         this->add_item(item);
     }
     {
