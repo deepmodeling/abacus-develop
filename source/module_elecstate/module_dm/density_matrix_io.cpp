@@ -65,7 +65,7 @@ void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucel
     ModuleBase::Memory::record("DensityMatrix::DMR", this->_DMR.size() * this->_DMR[0]->get_memory_size());
 }
 
-// initialize density matrix DMR from UnitCell and RA (mainly used in UnitTest)
+/// initialize density matrix DMR from UnitCell and RA (mainly used in UnitTest)
 template <typename TK, typename TR>
 void DensityMatrix<TK, TR>::init_DMR(Record_adj& ra, const UnitCell* ucell)
 {

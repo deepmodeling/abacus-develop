@@ -225,7 +225,6 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
-    double tmp[3];
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
     const std::complex<double>* dm_pointer = dmR_pointer->get_pointer();
@@ -255,20 +254,12 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
             // calculate the force, transfer nlm_tmp to pauli matrix
             for(int i = 0; i < 3; i++)
             {
-                /*tmp[i] = (dm_pointer[step_trace[0]] * (nlm_tmp[i] + nlm_tmp[i+9]).real() 
-                        + dm_pointer[step_trace[1]] * (nlm_tmp[i+3] + nlm_tmp[i+6]).real()
-                        + dm_pointer[step_trace[2]] * (nlm_tmp[i+3] - nlm_tmp[i+6]).imag()
-                        + dm_pointer[step_trace[3]] * (nlm_tmp[i] - nlm_tmp[i+9]).real()) / 2.0;*/
-                /*tmp[i] = ((dm_pointer[step_trace[0]] + dm_pointer[step_trace[3]]) * nlm_tmp[i] 
-                        + (dm_pointer[step_trace[1]] + ModuleBase::NEG_IMAG_UNIT * dm_pointer[step_trace[2]]) * nlm_tmp[i+3]
-                        + (dm_pointer[step_trace[1]] - ModuleBase::NEG_IMAG_UNIT * dm_pointer[step_trace[2]]) * nlm_tmp[i+6]
-                        + (dm_pointer[step_trace[0]] - dm_pointer[step_trace[3]]) * nlm_tmp[i+9]).real() / 2.0;*/
-                tmp[i] = (dm_pointer[step_trace[0]] * nlm_tmp[i] 
+                double tmp = (dm_pointer[step_trace[0]] * nlm_tmp[i] 
                         + dm_pointer[step_trace[1]] * nlm_tmp[i+3]
                         + dm_pointer[step_trace[2]] * nlm_tmp[i+6]
                         + dm_pointer[step_trace[3]] * nlm_tmp[i+9]).real();
-                force1[i] += tmp[i];
-                force2[i] -= tmp[i];
+                force1[i] += tmp;
+                force2[i] -= tmp;
             }
             dm_pointer += npol;
         }
@@ -291,33 +282,33 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
     // 1 for non-magnetic (one Hamiltonian matrix only has spin-up or spin-down),
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
     const int npol = this->ucell->get_npol();
+    const int npol2 = npol * npol;
     // ---------------------------------------------
     // calculate the Nonlocal matrix for each pair of orbitals
     // ---------------------------------------------
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
     // step_trace = 0 for NSPIN=2; ={0, 1, local_col, local_col+1} for NSPIN=4
-    std::vector<int> step_trace(npol * npol, 0);
+    std::vector<int> step_trace(npol2, 0);
     if (npol == 2) {
         step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
-    double tmp[6];
     // calculate the local matrix
     const std::complex<double>* tmp_d = nullptr;
     const std::complex<double>* dm_pointer = dmR_pointer->get_pointer();
     for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
         const std::vector<double>& nlm1 = nlm1_all.find(row_indexes[iw1l])->second;
-        const int length = nlm1.size() / 4;
+        const int length = nlm1.size() / npol2;
         for (int iw2l = 0; iw2l < col_indexes.size(); iw2l += npol)
         {
             const std::vector<double>& nlm2 = nlm2_all.find(col_indexes[iw2l])->second;
 #ifdef __DEBUG
             assert(nlm1.size() == nlm2.size());
 #endif
-            std::vector<std::complex<double>> nlm_tmp(24, ModuleBase::ZERO);
+            std::vector<std::complex<double>> nlm_tmp(npol2 * 6, ModuleBase::ZERO);
             for (int is = 0; is < 4; ++is)
             {
                 for (int no = 0; no < this->ucell->atoms[this->current_type].ncpp.non_zero_count_soc[is]; no++)
@@ -336,14 +327,6 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
             // calculate the force, transfer nlm_tmp to pauli matrix
             for(int i = 0; i < 6; i++)
             {
-                /*tmp[i] = (dm_pointer[step_trace[0]] * (nlm_tmp[i] + nlm_tmp[i+18]).real() 
-                        + dm_pointer[step_trace[1]] * (nlm_tmp[i+6] + nlm_tmp[i+12]).real()
-                        + dm_pointer[step_trace[2]] * (nlm_tmp[i+6] - nlm_tmp[i+12]).imag()
-                        + dm_pointer[step_trace[3]] * (nlm_tmp[i] - nlm_tmp[i+18]).real()) / 2.0;*/
-                /*stress[i] += ((dm_pointer[step_trace[0]] + dm_pointer[step_trace[3]]) * nlm_tmp[i] 
-                        + (dm_pointer[step_trace[1]] + ModuleBase::NEG_IMAG_UNIT * dm_pointer[step_trace[2]]) * nlm_tmp[i+6]
-                        + (dm_pointer[step_trace[1]] - ModuleBase::NEG_IMAG_UNIT * dm_pointer[step_trace[2]]) * nlm_tmp[i+12]
-                        + (dm_pointer[step_trace[0]] - dm_pointer[step_trace[3]]) * nlm_tmp[i+18]).real() / 2.0;*/
                 stress[i] += (dm_pointer[step_trace[0]] * nlm_tmp[i] 
                         + dm_pointer[step_trace[1]] * nlm_tmp[i+6]
                         + dm_pointer[step_trace[2]] * nlm_tmp[i+12]
