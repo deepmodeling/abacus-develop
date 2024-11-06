@@ -23,11 +23,6 @@ extern "C"
 namespace ModuleESolver
 {
 
-void ESolver::printname()
-{
-	std::cout << classname << std::endl;
-}
-
 std::string determine_type()
 {
     std::string esolver_type = "none";

@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
+#include "module_elecstate/elecstate_lcao.h"
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
@@ -141,6 +142,63 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
     {
         elec.f_en.exx = 0.;
     }
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv, const UnitCell& ucell,
+    hamilt::Hamilt<T>& hamilt, elecstate::ElecState& elec, Charge_Mixing& chgmix,
+    const double& scf_ene_thr, int& iter, bool& conv_esolver)
+{
+    if (GlobalC::restart.info_save.save_H && this->two_level_step > 0
+        && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    {
+        ////////// for Add_Hexx_Type::k
+        /*
+        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->pv, 1);
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
+            Hexxk_save.set_zero_hk();
+
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save,
+                                                                         nullptr,
+                                                                         this->kv);
+
+            opexx_save.contributeHk(ik);
+
+            GlobalC::restart.save_disk("Hexx",
+                                       ik,
+                                       this->pv.get_local_size(),
+                                       Hexxk_save.get_hk());
+        }*/
+        ////////// for Add_Hexx_Type:R
+        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->get_Hexxs());
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalC::restart.save_disk("Eexx", 0, 1, &elec.f_en.exx);
+        }
+    }
+
+    if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
+    {
+        // Kerker mixing does not work for the density matrix.
+        // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
+        // In the non-separate loop case where Hexx(DM) is updated in every iteration of the 2nd loop, it should be
+        // closed.
+        if (!GlobalC::exx_info.info_global.separate_loop)
+        {
+            chgmix.close_kerker_gg0();
+        }
+        conv_esolver = this->exx_after_converge(
+            hamilt,
+            *dynamic_cast<const elecstate::ElecStateLCAO<T>*>(&elec)->get_DM(),
+            kv,
+            PARAM.inp.nspin,
+            iter,
+            elec.f_en.etot,
+            scf_ene_thr);
+    }
+    //else if ( PARAM.inp.rdmft && two_level_step ) { conv_esolver = true; }    // for RDMFT in the future to quit after the first iter of the exx-loop
 }
 
 template<typename T, typename Tdata>

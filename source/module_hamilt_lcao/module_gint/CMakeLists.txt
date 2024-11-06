@@ -1,4 +1,5 @@
 #add_subdirectory(kernels/cuda)
+if(ENABLE_LCAO)
 
 list(APPEND objects
     gint.cpp
@@ -69,4 +70,6 @@ IF (BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()
+endif()
+
 endif()
