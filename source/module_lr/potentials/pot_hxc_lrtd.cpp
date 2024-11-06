@@ -36,7 +36,7 @@ namespace LR
             {
                 const std::set<std::string> lda_xc = { "lda", "pwlda" };
                 assert(lda_xc.count(this->xc_kernel_));
-                const int n_component = (1 == nspin) ? 1 : 3;
+                const int n_component = (1 == nspin) ? 1 : 3;   // spin components of fxc: (uu, ud=du, dd) when nspin=2
                 this->xc_kernel_components_.v2rho2.resize(n_component * nrxx);
                 // read fxc adn add to xc_kernel_components
                 assert(lr_init_xc_kernel.size() >= n_component + 1);

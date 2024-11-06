@@ -105,7 +105,13 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     if (input.ri_hartree_benchmark == "aims" && !input.aims_nbasis.empty())
     {
         this->nbasis = [&]() -> int { int nbas = 0; for (int it = 0;it < ucell.ntype;++it) { nbas += ucell.atoms[it].na * input.aims_nbasis[it]; };return nbas;}();
-        this->nbasis = std::inner_product(input.aims_nbasis.begin(), input.aims_nbasis.end(), ucell.atoms, 0, std::plus<int>(), [](const int& a, const Atom& b) { return a * b.na; });
+        // calculate total number of basis funcs, see https://en.cppreference.com/w/cpp/algorithm/inner_product
+        this->nbasis = std::inner_product(input.aims_nbasis.begin(), /* iterator1.begin */
+                                          input.aims_nbasis.end(),  /* iterator1.end */
+                                          ucell.atoms,  /* iterator2.begin */
+                                          0,  /* init value */
+                                          std::plus<int>(), /* iter op1 */
+                                          [](const int& a, const Atom& b) { return a * b.na; }); /* iter op2 */
         std::cout << "nbasis from aims: " << this->nbasis << std::endl;
     }
 }
