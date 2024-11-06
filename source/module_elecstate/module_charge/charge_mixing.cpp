@@ -1731,6 +1731,7 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     double slope = 0.0;
 
     // Least Squares Method
+    // this part is too short, so I do not design it as a free function in principle
     double sumX = 0, sumY = 0, sumXY = 0, sumXX = 0;
     for (int i = iteration - iternum_used; i < iteration; i++)
     {

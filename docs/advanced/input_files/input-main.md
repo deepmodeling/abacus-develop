@@ -88,6 +88,8 @@
     - [scf\_thr](#scf_thr)
     - [scf\_ene\_thr](#scf_ene_thr)
     - [scf\_thr\_type](#scf_thr_type)
+    - [scf\_thr\_os](#scf_thr_os)
+    - [scf\_os\_ndim](#scf_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
@@ -1204,6 +1206,21 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
   Note: This parameter is still under testing and the default setting is usually sufficient.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
+
+### scf_thr_os
+
+- **Type**: double
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+  - **>=0**: The SCF will continue to run regardless of whether there is oscillation or not. 
+  - **<0**: If the calculated slope is larger than `scf_thr_os`, stop the SCF.
+
+- **Default**: 0
+
+### scf_os_ndim
+
+- **Type**: int
+- **Description**: To determine the number of old iterations' `drho` used in slope calculations.
+- **Default**: `mixing_ndim`
 
 ### chg_extrap
 
