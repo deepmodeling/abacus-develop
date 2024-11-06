@@ -1,6 +1,7 @@
 #include "esolver_ks.h"
 
 #include <ctime>
+#include <iostream>
 #ifdef __MPI
 #include <mpi.h>
 #else
@@ -8,13 +9,11 @@
 #endif
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
-#include "module_io/json_output/init_info.h"
+#include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
-
-#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -24,7 +23,6 @@
 #include "module_base/parallel_common.h"
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#include "module_io/json_output/output_info.h"
 
 namespace ModuleESolver
 {
