@@ -146,6 +146,36 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_GPU>
 };
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
+#ifdef __DSP
+
+template <typename FPTYPE, typename Device>
+struct resize_memory_op_mt
+{
+    /// @brief Allocate memory for a given pointer. Note this op will free the pointer first.
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param size : array size
+    /// \param record_string : label for memory record
+    ///
+    /// Output Parameters
+    /// \param arr : allocated array
+    void operator()(const Device* dev, FPTYPE*& arr, const size_t size, const char* record_in = nullptr);
+};
+
+template <typename FPTYPE, typename Device>
+struct delete_memory_op_mt
+{
+    /// @brief free memory for multi-device
+    ///
+    /// Input Parameters
+    /// \param dev : the type of computing device
+    /// \param arr : the input array
+    void operator()(const Device* dev, FPTYPE* arr);
+};
+
+#endif // __DSP
+
 } // end of namespace memory
 } // end of namespace base_device
 
@@ -233,5 +263,4 @@ using castmem_z2c_d2h_op = base_device::memory::
 
 static base_device::DEVICE_CPU* cpu_ctx = {};
 static base_device::DEVICE_GPU* gpu_ctx = {};
-
 #endif // MODULE_DEVICE_MEMORY_H_

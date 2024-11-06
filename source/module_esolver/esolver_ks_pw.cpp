@@ -210,7 +210,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
