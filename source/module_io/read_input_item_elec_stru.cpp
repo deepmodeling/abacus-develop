@@ -538,6 +538,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_os_thr");
         item.annotation = "charge density threshold for oscillation";
         read_sync_double(input.scf_os_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.scf_os_thr >= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "scf_os_thr should be negative");
+            }
+        };
         this->add_item(item);
     }
     {
