@@ -79,7 +79,9 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     try_nb += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {
-        pv.set(nlocal, nlocal, 1, pv.blacs_ctxt);
+        // fall back to the minimum size, 1 or 2 (nspin=4)
+        const int min_size = (PARAM.inp.nspin == 4) ? 2 : 1;
+        pv.set(nlocal, nlocal, min_size, pv.blacs_ctxt);
         try_nb = pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 

@@ -32,7 +32,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     { 
         // skip the atoms without plus-U
         auto tau0 = ucell->get_tau(iat0);
-        int I0;
+        int I0 = 0;
         ucell->iat2iait(iat0, &I0, &this->current_type);
         
         // first step: find the adjacent atoms and filter the real adjacent atoms
