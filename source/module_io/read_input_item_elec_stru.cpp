@@ -529,6 +529,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("scf_thr_os");
+        item.annotation = "charge density threshold for oscillation";
+        read_sync_double(input.scf_thr_os);
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_thr_type");
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";
