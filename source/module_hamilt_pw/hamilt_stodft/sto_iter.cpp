@@ -64,13 +64,15 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         stowf.chi0->fix_k(ik);
         stowf.chiortho->fix_k(ik);
         T *wfgin = stowf.chi0->get_pointer(), *wfgout = stowf.chiortho->get_pointer();
-        for (int ig = 0; ig < npwx * nchipk; ++ig)
-        {
-            wfgout[ig] = wfgin[ig];
-        }
+        cpymem_complex_op()(this->ctx, this->ctx, wfgout, wfgin, npwx * nchipk);
+        // for (int ig = 0; ig < npwx * nchipk; ++ig)
+        // {
+        //     wfgout[ig] = wfgin[ig];
+        // }
 
         // orthogonal part
-        T* sum = new T[PARAM.inp.nbands * nchipk];
+        T* sum = nullptr;
+        resmem_complex_op()(this->ctx, sum, PARAM.inp.nbands * nchipk);
         char transC = 'C';
         char transN = 'N';
 
@@ -106,7 +108,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
                                       &ModuleBase::ONE,
                                       wfgout,
                                       npwx);
-        delete[] sum;
+        delmem_complex_op()(this->ctx, sum);
     }
 }
 

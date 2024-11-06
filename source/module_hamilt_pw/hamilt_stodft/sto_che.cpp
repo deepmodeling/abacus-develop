@@ -17,7 +17,7 @@ StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& ema
 {
     this->nche = nche;
     this->method_sto = method;
-    p_che = new ModuleBase::Chebyshev<REAL>(nche);
+    p_che = new ModuleBase::Chebyshev<REAL, Device>(nche);
     if (method == 1)
     {
         resmem_var_op()(this->ctx, spolyv, nche);

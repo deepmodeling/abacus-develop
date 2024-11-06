@@ -19,7 +19,7 @@ class StoChe
 
     // Chebyshev expansion
     // It stores the plan of FFTW and should be initialized at the beginning of the calculation
-    ModuleBase::Chebyshev<REAL>* p_che = nullptr;
+    ModuleBase::Chebyshev<REAL, Device>* p_che = nullptr;
 
     REAL emax_sto = 0.0; ///< maximum energy for normalization
     REAL emin_sto = 0.0; ///< minimum energy for normalization

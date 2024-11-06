@@ -59,7 +59,7 @@ class Stochastic_Iter
 
     void check_precision(const double ref, const double thr, const std::string info);
 
-    ModuleBase::Chebyshev<double>* p_che = nullptr;
+    ModuleBase::Chebyshev<double, Device>* p_che = nullptr;
 
     Sto_Func<double> stofunc;
     hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto = nullptr;
@@ -101,6 +101,7 @@ class Stochastic_Iter
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
     using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
     using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+    using cpymem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using resmem_var_op = base_device::memory::resize_memory_op<Real, Device>;
     using delmem_var_op = base_device::memory::delete_memory_op<Real, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
