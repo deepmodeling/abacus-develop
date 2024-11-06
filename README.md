@@ -16,3 +16,5 @@ ABACUS (Atomic-orbital Based Ab-initio Computation at UStc) is an open-source pa
 
 # Online Documentation
 For detailed documentation, please refer to [our documentation website](https://abacus.deepmodeling.com/).
+
+See our [Github Pages](https://mcresearch.github.io/abacus-user-guide/) for more tutorials and developer guides.

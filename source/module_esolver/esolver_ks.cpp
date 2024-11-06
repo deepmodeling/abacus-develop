@@ -1,6 +1,7 @@
 #include "esolver_ks.h"
 
 #include <ctime>
+#include <iostream>
 #ifdef __MPI
 #include <mpi.h>
 #else
@@ -9,12 +10,11 @@
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
 #include "module_io/json_output/init_info.h"
+#include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
-
-#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -24,7 +24,6 @@
 #include "module_base/parallel_common.h"
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#include "module_io/json_output/output_info.h"
 
 namespace ModuleESolver
 {
@@ -626,7 +625,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         {
             dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
         }
-        this->print_iter(iter, drho, dkin, duration, diag_ethr);
+        this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
 
         // 12) Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
@@ -653,22 +652,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         }
     } // end scf iterations
     std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
-#ifdef __RAPIDJSON
-    // 14) add Json of efermi energy converge
-    Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
-#endif //__RAPIDJSON
 
     // 15) after scf
     ModuleBase::timer::tick(this->classname, "after_scf");
     this->after_scf(istep);
     ModuleBase::timer::tick(this->classname, "after_scf");
-
-    // 16) Json again
-#ifdef __RAPIDJSON
-    // add nkstot,nkstot_ibz to output json
-    int Jnkstot = this->pelec->klist->get_nkstot();
-    Json::add_nkstot(Jnkstot);
-#endif //__RAPIDJSON
 
     ModuleBase::timer::tick(this->classname, "runner");
     return;
@@ -701,40 +689,13 @@ void ESolver_KS<T, Device>::after_scf(const int istep)
     {
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
-}
-
-//------------------------------------------------------------------------------
-//! the 8th function of ESolver_KS: print_iter
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::print_iter(const int iter,
-                                       const double drho,
-                                       const double dkin,
-                                       const double duration,
-                                       const double ethr)
-{
-    this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, ethr);
-}
-
-//------------------------------------------------------------------------------
-//! the 10th function of ESolver_KS: getnieter
-//! mohan add 2024-05-12
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-int ESolver_KS<T, Device>::get_niter()
-{
-    return this->niter;
-}
-
-//------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS: get_maxniter
-//! tqzhao add 2024-05-15
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-int ESolver_KS<T, Device>::get_maxniter()
-{
-    return this->maxniter;
+    // #ifdef __RAPIDJSON
+    //     // add Json of efermi energy converge
+    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
+    //     // add nkstot,nkstot_ibz to output json
+    //     int Jnkstot = this->pelec->klist->get_nkstot();
+    //     Json::add_nkstot(Jnkstot);
+    // #endif //__RAPIDJSON
 }
 
 //------------------------------------------------------------------------------

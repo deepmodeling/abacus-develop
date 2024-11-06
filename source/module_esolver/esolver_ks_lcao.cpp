@@ -941,76 +941,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
 
 #ifdef __EXX
     // 3) save exx matrix
-    int two_level_step = GlobalC::exx_info.info_ri.real_number ? this->exd->two_level_step : this->exc->two_level_step;
-
-    if (GlobalC::restart.info_save.save_H && two_level_step > 0
-        && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    if (GlobalC::exx_info.info_global.cal_exx)
     {
-        ////////// for Add_Hexx_Type::k
-        /*
-        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->pv, 1);
-        for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
-            Hexxk_save.set_zero_hk();
-
-            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save,
-                                                                         nullptr,
-                                                                         this->kv);
-
-            opexx_save.contributeHk(ik);
-
-            GlobalC::restart.save_disk("Hexx",
-                                       ik,
-                                       this->pv.get_local_size(),
-                                       Hexxk_save.get_hk());
-        }*/
-        ////////// for Add_Hexx_Type:R
-        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exd->get_Hexxs());
-        }
-        else
-        {
-            ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->exc->get_Hexxs());
-        }
-        if (GlobalV::MY_RANK == 0)
-        {
-            GlobalC::restart.save_disk("Eexx", 0, 1, &this->pelec->f_en.exx);
-        }
-    }
-
-    if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
-    {
-        // Kerker mixing does not work for the density matrix.
-        // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
-        // In the non-separate loop case where Hexx(DM) is updated in every iteration of the 2nd loop, it should be
-        // closed.
-        if (!GlobalC::exx_info.info_global.separate_loop)
-        {
-            this->p_chgmix->close_kerker_gg0();
-        }
-        if (GlobalC::exx_info.info_ri.real_number)
-        {
-            this->conv_esolver = this->exd->exx_after_converge(
-                *this->p_hamilt,
-                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                this->kv,
-                PARAM.inp.nspin,
-                iter,
-                this->pelec->f_en.etot,
-                this->scf_ene_thr);
-        }
-        else
-        {
-            this->conv_esolver = this->exc->exx_after_converge(
-                *this->p_hamilt,
-                *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                this->kv,
-                PARAM.inp.nspin,
-                iter,
-                this->pelec->f_en.etot,
-                this->scf_ene_thr);
-        }
+        GlobalC::exx_info.info_ri.real_number ?
+            this->exd->exx_iter_finish(this->kv, GlobalC::ucell, *this->p_hamilt, *this->pelec, *this->p_chgmix, this->scf_ene_thr, iter, this->conv_esolver) :
+            this->exc->exx_iter_finish(this->kv, GlobalC::ucell, *this->p_hamilt, *this->pelec, *this->p_chgmix, this->scf_ene_thr, iter, this->conv_esolver);
     }
 #endif
 
