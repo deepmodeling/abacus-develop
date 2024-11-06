@@ -32,6 +32,7 @@ public:
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
         Add_Hexx_Type add_hexx_type_in = Add_Hexx_Type::R,
+        const int istep_in = 0,
         int* two_level_step_in = nullptr,
         const bool restart_in = false);
 
@@ -53,6 +54,8 @@ public:
       int* two_level_step = nullptr;
       /// @brief if restart, read and save Hexx, and directly use it during the first outer loop.
       bool restart = false;
+
+      const int istep = 0; // the ion step
 
       void add_loaded_Hexx(const int ik);
 

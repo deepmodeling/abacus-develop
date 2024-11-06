@@ -41,7 +41,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
     virtual void others(const int istep) override;
 
-    virtual void iter_finish(int& iter) override;
+    virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
 

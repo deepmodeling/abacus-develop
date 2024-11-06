@@ -37,6 +37,7 @@ class HamiltLCAO : public Hamilt<TK>
           const LCAO_Orbitals& orb,
           elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
+          , const int istep
           , int* exx_two_level_step = nullptr
           , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
           , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
@@ -104,6 +105,8 @@ class HamiltLCAO : public Hamilt<TK>
 
     /// current_spin for NSPIN=2, 0: hamiltonian for spin up, 1: hamiltonian for spin down
     int current_spin = 0;
+
+    const int istep = 0;
 
     // sk and hk will be refactored to HamiltLCAO later
     // std::vector<TK> sk;

@@ -85,13 +85,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 	std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
 	std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
     Add_Hexx_Type add_hexx_type_in,
-	int* two_level_step_in,
+    const int istep,
+    int* two_level_step_in,
 	const bool restart_in)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in),
     kv(kv_in),
     Hexxd(Hexxd_in),
     Hexxc(Hexxc_in),
     add_hexx_type(add_hexx_type_in),
+    istep(istep),
     two_level_step(two_level_step_in),
     restart(restart_in)
 {
@@ -201,7 +203,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("OperatorEXX", "contributeHR");
     // Peize Lin add 2016-12-03
-    if (PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
+    if (this->istep == 0 && PARAM.inp.calculation != "nscf" && this->two_level_step != nullptr && *this->two_level_step == 0 && !this->restart) { return; }  //in the non-exx loop, do nothing 
     if (this->add_hexx_type == Add_Hexx_Type::k) { return; }
 
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
