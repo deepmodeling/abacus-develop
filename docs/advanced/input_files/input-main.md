@@ -1211,7 +1211,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 ### scf_os_stop
 
 - **Type**: bool
-- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+- **Description**: For systems that are difficult to converge, the SCF process may exhibit oscillations in charge density, preventing further progress toward the specified convergence criteria and resulting in continuous oscillation until the maximum number of steps is reached; this greatly wastes computational resources. To address this issue, this function allows ABACUS to terminate the SCF process early upon detecting oscillations, thus reducing subsequent meaningless calculations. The detection of oscillations is based on the slope of the logarithm of historical drho values.. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
   - **0**: The SCF will continue to run regardless of whether there is oscillation or not. 
   - **1**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
@@ -1221,11 +1221,9 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 ### scf_os_thr
 
 - **Type**: double
-- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
-  - **>=0**: The SCF will continue to run regardless of whether there is oscillation or not. 
-  - **<0**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
 
-- **Default**: 0
+- **Default**: -0.01
 
 ### scf_os_ndim
 
