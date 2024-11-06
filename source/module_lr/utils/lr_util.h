@@ -51,10 +51,10 @@ namespace LR_Util
     //====== newers and deleters========
     /// @brief  delete 2d pointer  
     template <typename T>
-    void delete_pointer_dim2(T** p2, size_t size);
+    void _deallocate_2order_nested_ptr(T** p2, size_t size);
     /// @brief  new 2d pointer  
     template <typename T>
-    void new_pointer_dim2(T**& p2, size_t size1, size_t size2);
+    void _allocate_2order_nested_ptr(T**& p2, size_t size1, size_t size2);
 
     template<typename T> ct::Tensor newTensor(const ct::TensorShape& shape)
     {
