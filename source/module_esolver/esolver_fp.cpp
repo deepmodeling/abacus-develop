@@ -263,13 +263,13 @@ void ESolver_FP::after_scf(const int istep)
         }
     }
 
-#ifdef __RAPIDJSON
-    // add Json of efermi energy converge
-    Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
-    // add nkstot,nkstot_ibz to output json
-    int Jnkstot = this->pelec->klist->get_nkstot();
-    Json::add_nkstot(Jnkstot);
-#endif //__RAPIDJSON
+    // #ifdef __RAPIDJSON
+    //     // add Json of efermi energy converge
+    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
+    //     // add nkstot,nkstot_ibz to output json
+    //     int Jnkstot = this->pelec->klist->get_nkstot();
+    //     Json::add_nkstot(Jnkstot);
+    // #endif //__RAPIDJSON
 }
 
 void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)

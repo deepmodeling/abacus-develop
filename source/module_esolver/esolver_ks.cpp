@@ -688,6 +688,13 @@ void ESolver_KS<T, Device>::after_scf(const int istep)
     {
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
+    // #ifdef __RAPIDJSON
+    //     // add Json of efermi energy converge
+    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
+    //     // add nkstot,nkstot_ibz to output json
+    //     int Jnkstot = this->pelec->klist->get_nkstot();
+    //     Json::add_nkstot(Jnkstot);
+    // #endif //__RAPIDJSON
 }
 
 //------------------------------------------------------------------------------
