@@ -529,6 +529,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("scf_os_stop");
+        item.annotation = "whether to stop scf when oscillation is detected";
+        read_sync_bool(input.scf_os_stop);
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_thr_os");
         item.annotation = "charge density threshold for oscillation";
         read_sync_double(input.scf_thr_os);

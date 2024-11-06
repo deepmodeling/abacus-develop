@@ -115,6 +115,7 @@ struct Input_para
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
     bool final_scf = false;    ///< whether to do final scf
+    bool scf_os_stop = false;  ///< whether to stop scf when oscillation is detected
     double scf_thr_os = -0.01;  ///< drho threshold for oscillation
     int scf_os_ndim = 0;       ///< number of old iterations used for oscillation detection
 
