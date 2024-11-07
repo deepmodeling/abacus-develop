@@ -10,8 +10,8 @@
 #include "module_io/cal_test.h"
 #include "module_psi/psi.h"
 
-#include <fstream>
 #include <cstring>
+#include <fstream>
 namespace ModuleESolver
 {
 
@@ -67,14 +67,15 @@ class ESolver_KS : public ESolver_FP
 
     std::string basisname; // PW or LCAO
     double esolver_KS_ne = 0.0;
-    double iter_time;   // the start time of scf iteration
-    double diag_ethr;   // the threshold for diagonalization
-    double scf_thr;     // scf density threshold
-    double scf_ene_thr; // scf energy threshold
-    double drho;        // the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    int maxniter;       // maximum iter steps for scf
-    int niter;          // iter steps actually used in scf
-    int out_freq_elec;  // frequency for output
-};	
-} // end of namespace
+    bool oscillate_esolver = false; // whether esolver is oscillated
+    double iter_time;               // the start time of scf iteration
+    double diag_ethr;               // the threshold for diagonalization
+    double scf_thr;                 // scf density threshold
+    double scf_ene_thr;             // scf energy threshold
+    double drho;                    // the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    int maxniter;                   // maximum iter steps for scf
+    int niter;                      // iter steps actually used in scf
+    int out_freq_elec;              // frequency for output
+};
+} // namespace ModuleESolver
 #endif

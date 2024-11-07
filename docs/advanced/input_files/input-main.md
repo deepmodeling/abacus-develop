@@ -88,6 +88,9 @@
     - [scf\_thr](#scf_thr)
     - [scf\_ene\_thr](#scf_ene_thr)
     - [scf\_thr\_type](#scf_thr_type)
+    - [scf\_os\_stop](#scf_os_stop)
+    - [scf\_os\_thr](#scf_os_thr)
+    - [scf\_os\_ndim](#scf_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
@@ -1204,6 +1207,29 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
   Note: This parameter is still under testing and the default setting is usually sufficient.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
+
+### scf_os_stop
+
+- **Type**: bool
+- **Description**: For systems that are difficult to converge, the SCF process may exhibit oscillations in charge density, preventing further progress toward the specified convergence criteria and resulting in continuous oscillation until the maximum number of steps is reached; this greatly wastes computational resources. To address this issue, this function allows ABACUS to terminate the SCF process early upon detecting oscillations, thus reducing subsequent meaningless calculations. The detection of oscillations is based on the slope of the logarithm of historical drho values.. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+  - **0**: The SCF will continue to run regardless of whether there is oscillation or not. 
+  - **1**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+- **Default**: false
+
+### scf_os_thr
+
+- **Type**: double
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+- **Default**: -0.01
+
+### scf_os_ndim
+
+- **Type**: int
+- **Description**: To determine the number of old iterations' `drho` used in slope calculations.
+- **Default**: `mixing_ndim`
 
 ### chg_extrap
 
