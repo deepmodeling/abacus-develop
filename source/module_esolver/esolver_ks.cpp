@@ -1,12 +1,5 @@
 #include "esolver_ks.h"
 
-#include <ctime>
-#include <iostream>
-#ifdef __MPI
-#include <mpi.h>
-#else
-#include <chrono>
-#endif
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
 #include "module_io/json_output/init_info.h"
@@ -15,6 +8,9 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+
+#include <ctime>
+#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"

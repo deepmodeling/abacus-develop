@@ -10,6 +10,11 @@
 #include "module_io/cal_test.h"
 #include "module_psi/psi.h"
 
+#ifdef __MPI
+#include <mpi.h>
+#else
+#include <chrono>
+#endif
 #include <cstring>
 #include <fstream>
 namespace ModuleESolver
@@ -68,7 +73,11 @@ class ESolver_KS : public ESolver_FP
     std::string basisname; // PW or LCAO
     double esolver_KS_ne = 0.0;
     bool oscillate_esolver = false; // whether esolver is oscillated
+#ifdef __MPI
     double iter_time;               // the start time of scf iteration
+#else
+    std::chrono::system_clock::time_point iter_time;
+#endif
     double diag_ethr;               // the threshold for diagonalization
     double scf_thr;                 // scf density threshold
     double scf_ene_thr;             // scf energy threshold
