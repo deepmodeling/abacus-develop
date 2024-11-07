@@ -3,7 +3,7 @@
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
 
-void Charge_Mixing::allocate_mixing_dmr(int nnr)
+void Charge_Mixing::allocate_mixing_dmr(const int nnr)
 {
     // Note that: we cannot allocate memory for dmr_mdata in set_mixing.
     // since the size of dmr_mdata is given by the size of HContainer.nnr, which is calculated in DensityMatrix::init_DMR().

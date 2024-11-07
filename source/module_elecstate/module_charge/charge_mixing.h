@@ -56,7 +56,7 @@ class Charge_Mixing
      * @brief allocate memory of dmr_mdata
      * @param nnr size of real-space density matrix
      */
-    void allocate_mixing_dmr(int nnr);
+    void allocate_mixing_dmr(const int nnr);
 
     /**
      * @brief charge mixing
