@@ -38,8 +38,8 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<double, double>* DM)
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
-    double* dmr_in;
-    double* dmr_out;
+    double* dmr_in = nullptr;
+    double* dmr_out = nullptr;
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
     {
         dmr_in = dmr_save[0].data();
@@ -137,8 +137,8 @@ void Charge_Mixing::mix_dmr(elecstate::DensityMatrix<std::complex<double>, doubl
     std::vector<std::vector<double>>& dmr_save = DM->get_DMR_save();
     //
     //const int dmr_nspin = (PARAM.inp.nspin == 2) ? 2 : 1;
-    double* dmr_in;
-    double* dmr_out;
+    double* dmr_in = nullptr;
+    double* dmr_out = nullptr;
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
     {
         dmr_in = dmr_save[0].data();
