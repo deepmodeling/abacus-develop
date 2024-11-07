@@ -82,6 +82,7 @@ class ESolver_KS : public ESolver_FP
       protected:
         std::string basisname; // PW or LCAO
         double esolver_KS_ne = 0.0;
+		bool oscillate_esolver = false; // whether esolver is oscillated
 };	
 } // end of namespace
 #endif

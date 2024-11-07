@@ -529,6 +529,36 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("scf_os_stop");
+        item.annotation = "whether to stop scf when oscillation is detected";
+        read_sync_bool(input.scf_os_stop);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_thr");
+        item.annotation = "charge density threshold for oscillation";
+        read_sync_double(input.scf_os_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.scf_os_thr >= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "scf_os_thr should be negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_ndim");
+        item.annotation = "number of old iterations used for oscillation detection";
+        read_sync_int(input.scf_os_ndim);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.scf_os_ndim <= 0) // default value
+            {
+                para.input.scf_os_ndim = para.input.mixing_ndim;
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_thr_type");
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";

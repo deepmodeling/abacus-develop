@@ -531,6 +531,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 this->p_chgmix->mixing_restart_step = iter + 1;
             }
 
+            if (PARAM.inp.scf_os_stop) // if oscillation is detected, SCF will stop
+            {
+                this->oscillate_esolver = this->p_chgmix->if_scf_oscillate(iter, drho, PARAM.inp.scf_os_ndim, PARAM.inp.scf_os_thr);
+            }
+
             // drho will be 0 at this->p_chgmix->mixing_restart step, which is
             // not ground state
             bool not_restart_step = !(iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0);
@@ -639,9 +644,13 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 #endif //__RAPIDJSON
 
         // 13) check convergence
-        if (this->conv_esolver)
+        if (this->conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
+            if (this->oscillate_esolver)
+            {
+                std::cout << " !! Density oscillation is found, STOP HERE !!" << std::endl;
+            }
             break;
         }
 
