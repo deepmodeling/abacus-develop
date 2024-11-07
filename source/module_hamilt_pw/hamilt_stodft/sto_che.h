@@ -62,6 +62,7 @@ REAL vTMv(const REAL* v, const REAL* M, const int n)
                                                                                         dot_device,
                                                                                         1);
     base_device::memory::delete_memory_op<REAL, Device>()(ctx, y);
+    base_device::memory::delete_memory_op<REAL, Device>()(ctx, dot_device);
     return result;
 }
 

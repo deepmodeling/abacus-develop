@@ -401,7 +401,8 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         const int M = npwx * nchip_ik * 2; // Do not use kv.ngk[ik]
         const int N = norder;
         const Real kweight = this->pkv->wk[ik];
-        hsolver::gemm_op<Real, Device>()(this->ctx, trans, normal, N, M, norder, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
+        
+        hsolver::gemm_op<Real, Device>()(this->ctx, trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");
