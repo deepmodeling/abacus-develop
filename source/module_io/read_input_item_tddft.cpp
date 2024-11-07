@@ -318,9 +318,9 @@ void ReadInput::item_lr_tddft()
             for (int i = 0; i < count; i++) { ifxc.push_back(item.str_values[i]); }
             };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("from_chg_groundstate"); }
+            if (para.input.lr_init_xc_kernel.empty()) { para.input.lr_init_xc_kernel.push_back("default"); }
             };
-        sync_stringvec(input.lr_init_xc_kernel, para.input.lr_init_xc_kernel.size(), "from_chg_groundstate");
+        sync_stringvec(input.lr_init_xc_kernel, para.input.lr_init_xc_kernel.size(), "default");
         this->add_item(item);
     }
     {

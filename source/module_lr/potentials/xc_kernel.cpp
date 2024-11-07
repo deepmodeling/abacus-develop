@@ -44,7 +44,7 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     }
 
 #ifdef USE_LIBXC
-    if (lr_init_xc_kernel[0] == "from_chg_file")
+    if (lr_init_xc_kernel[0] == "from_charge_file")
     {
         assert(lr_init_xc_kernel.size() >= 2);
         double** rho_for_fxc;
