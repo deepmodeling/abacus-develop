@@ -27,25 +27,25 @@ class ESolver_KS : public ESolver_FP
 
     virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
-    virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override; // liuyu add 2023-03-09
-
     virtual void runner(const int istep, UnitCell& cell) override;
-
-    // calculate electron density from a specific Hamiltonian
-    virtual void hamilt2density(const int istep, const int iter, const double ethr);
-
-    // calculate electron states from a specific Hamiltonian
-    virtual void hamilt2estates(const double ethr) {};
 
   protected:
     //! Something to do before SCF iterations.
     virtual void before_scf(const int istep) {};
+
+    virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override; // liuyu add 2023-03-09
 
     //! Something to do before hamilt2density function in each iter loop.
     virtual void iter_init(const int istep, const int iter);
 
     //! Something to do after hamilt2density function in each iter loop.
     virtual void iter_finish(const int istep, int& iter);
+
+    // calculate electron density from a specific Hamiltonian
+    virtual void hamilt2density(const int istep, const int iter, const double ethr);
+
+    // calculate electron states from a specific Hamiltonian
+    virtual void hamilt2estates(const double ethr) {};
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(const int istep) override;
