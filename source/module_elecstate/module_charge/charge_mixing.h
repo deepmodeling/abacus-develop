@@ -1,13 +1,10 @@
-
 #ifndef CHARGE_MIXING_H
 #define CHARGE_MIXING_H
 #include "charge.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_base/global_function.h"
-#include "module_base/global_variable.h"
 #include "module_base/module_mixing/mixing.h"
 #include "module_base/module_mixing/plain_mixing.h"
-#include "module_cell/unitcell.h"
+
 class Charge_Mixing
 {
   /// Charge_Mixing class

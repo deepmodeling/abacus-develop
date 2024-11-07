@@ -629,6 +629,11 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mpi.o\
     charge_extra.o\
     charge_mixing.o\
+    charge_mixing_dmr.o\
+    charge_mixing_residual.o\
+    charge_mixing_preconditioner.o\
+    charge_mixing_rho.o\
+    charge_mixing_uspp.o\
     fp_energy.o\
     forces.o\
     forces_us.o\

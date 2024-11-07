@@ -21,6 +21,11 @@ list(APPEND objects
     module_charge/charge_mpi.cpp
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp
+    module_charge/charge_mixing_dmr.cpp
+    module_charge/charge_mixing_residual.cpp
+    module_charge/charge_mixing_preconditioner.cpp
+    module_charge/charge_mixing_rho.cpp
+    module_charge/charge_mixing_uspp.cpp
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp
