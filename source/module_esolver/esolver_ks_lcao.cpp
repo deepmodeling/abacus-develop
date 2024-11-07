@@ -519,6 +519,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_init");
 
+    // call iter_init() of ESolver_KS
+    ESolver_KS<TK>::iter_init(istep, iter);
+
     if (iter == 1)
     {
         this->p_chgmix->init_mixing(); // init mixing
