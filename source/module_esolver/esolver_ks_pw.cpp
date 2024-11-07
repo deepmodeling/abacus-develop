@@ -305,6 +305,9 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
 {
+    // call iter_init() of ESolver_KS
+    ESolver_KS<T, Device>::iter_init(istep, iter);
+
     if (iter == 1)
     {
         this->p_chgmix->init_mixing();

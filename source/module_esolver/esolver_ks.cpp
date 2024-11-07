@@ -1,12 +1,5 @@
 #include "esolver_ks.h"
 
-#include <ctime>
-#include <iostream>
-#ifdef __MPI
-#include <mpi.h>
-#else
-#include <chrono>
-#endif
 #include "module_base/timer.h"
 #include "module_cell/cal_atoms_info.h"
 #include "module_io/json_output/init_info.h"
@@ -15,6 +8,9 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+
+#include <ctime>
+#include <iostream>
 //--------------Temporary----------------
 #include "module_base/global_variable.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -427,49 +423,11 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
     this->niter = this->maxniter;
 
     // 4) SCF iterations
-    double diag_ethr = PARAM.inp.pw_diag_thr;
+    this->diag_ethr = PARAM.inp.pw_diag_thr;
 
     std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
-        // 5) write head
-        ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
-
-#ifdef __MPI
-        auto iterstart = MPI_Wtime();
-#else
-        auto iterstart = std::chrono::system_clock::now();
-#endif
-
-        if (PARAM.inp.esolver_type == "ksdft")
-        {
-            diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type,
-                                                 PARAM.inp.esolver_type,
-                                                 PARAM.inp.calculation,
-                                                 PARAM.inp.init_chg,
-                                                 PARAM.inp.precision,
-                                                 istep,
-                                                 iter,
-                                                 drho,
-                                                 PARAM.inp.pw_diag_thr,
-                                                 diag_ethr,
-                                                 PARAM.inp.nelec);
-        }
-        else if (PARAM.inp.esolver_type == "sdft")
-        {
-            diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type,
-                                                   PARAM.inp.esolver_type,
-                                                   PARAM.inp.calculation,
-                                                   PARAM.inp.init_chg,
-                                                   istep,
-                                                   iter,
-                                                   drho,
-                                                   PARAM.inp.pw_diag_thr,
-                                                   diag_ethr,
-                                                   PARAM.inp.nbands,
-                                                   esolver_KS_ne);
-        }
-
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
 
@@ -615,33 +573,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
         // 10) finish scf iterations
         this->iter_finish(istep, iter);
-#ifdef __MPI
-        double duration = (double)(MPI_Wtime() - iterstart);
-#else
-        double duration
-            = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iterstart))
-                  .count()
-              / static_cast<double>(1e6);
-#endif
-
-        // 11) get mtaGGA related parameters
-        double dkin = 0.0; // for meta-GGA
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-        {
-            dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
-        }
-        this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
-
-        // 12) Json, need to be moved to somewhere else
-#ifdef __RAPIDJSON
-        // add Json of scf mag
-        Json::add_output_scf_mag(GlobalC::ucell.magnet.tot_magnetization,
-                                 GlobalC::ucell.magnet.abs_magnetization,
-                                 this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
-                                 this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
-                                 drho,
-                                 duration);
-#endif //__RAPIDJSON
 
         // 13) check convergence
         if (this->conv_esolver || this->oscillate_esolver)
@@ -652,12 +583,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
                 std::cout << " !! Density oscillation is found, STOP HERE !!" << std::endl;
             }
             break;
-        }
-
-        // notice for restart
-        if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != PARAM.inp.scf_nmax)
-        {
-            std::cout << " SCF restart after this step!" << std::endl;
         }
     } // end scf iterations
     std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
@@ -672,6 +597,47 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 };
 
 template <typename T, typename Device>
+void ESolver_KS<T, Device>::iter_init(const int istep, const int iter)
+{
+    ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
+
+#ifdef __MPI
+    iter_time = MPI_Wtime();
+#else
+    iter_time = std::chrono::system_clock::now();
+#endif
+
+    if (PARAM.inp.esolver_type == "ksdft")
+    {
+        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type,
+                                             PARAM.inp.esolver_type,
+                                             PARAM.inp.calculation,
+                                             PARAM.inp.init_chg,
+                                             PARAM.inp.precision,
+                                             istep,
+                                             iter,
+                                             drho,
+                                             PARAM.inp.pw_diag_thr,
+                                             diag_ethr,
+                                             PARAM.inp.nelec);
+    }
+    else if (PARAM.inp.esolver_type == "sdft")
+    {
+        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type,
+                                               PARAM.inp.esolver_type,
+                                               PARAM.inp.calculation,
+                                               PARAM.inp.init_chg,
+                                               istep,
+                                               iter,
+                                               drho,
+                                               PARAM.inp.pw_diag_thr,
+                                               diag_ethr,
+                                               PARAM.inp.nbands,
+                                               esolver_KS_ne);
+    }
+}
+
+template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_finish(const int istep, int& iter)
 {
     // 1 means Harris-Foulkes functional
@@ -684,6 +650,39 @@ void ESolver_KS<T, Device>::iter_finish(const int istep, int& iter)
     }
     this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
     this->pelec->f_en.etot_old = this->pelec->f_en.etot;
+
+#ifdef __MPI
+    double duration = (double)(MPI_Wtime() - iter_time);
+#else
+    double duration
+        = (std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now() - iter_time)).count()
+          / static_cast<double>(1e6);
+#endif
+
+    // get mtaGGA related parameters
+    double dkin = 0.0; // for meta-GGA
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    {
+        dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
+    }
+    this->pelec->print_etot(this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
+
+    // Json, need to be moved to somewhere else
+#ifdef __RAPIDJSON
+    // add Json of scf mag
+    Json::add_output_scf_mag(GlobalC::ucell.magnet.tot_magnetization,
+                             GlobalC::ucell.magnet.abs_magnetization,
+                             this->pelec->f_en.etot * ModuleBase::Ry_to_eV,
+                             this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV,
+                             drho,
+                             duration);
+#endif //__RAPIDJSON
+
+    // notice for restart
+    if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != PARAM.inp.scf_nmax)
+    {
+        std::cout << " SCF restart after this step!" << std::endl;
+    }
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
@@ -698,13 +697,6 @@ void ESolver_KS<T, Device>::after_scf(const int istep)
     {
         this->pelec->print_eigenvalue(GlobalV::ofs_running);
     }
-    // #ifdef __RAPIDJSON
-    //     // add Json of efermi energy converge
-    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
-    //     // add nkstot,nkstot_ibz to output json
-    //     int Jnkstot = this->pelec->klist->get_nkstot();
-    //     Json::add_nkstot(Jnkstot);
-    // #endif //__RAPIDJSON
 }
 
 //------------------------------------------------------------------------------

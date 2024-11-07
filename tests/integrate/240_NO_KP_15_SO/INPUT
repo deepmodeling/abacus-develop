@@ -21,6 +21,8 @@ scf_nmax               100
 #cal_stress              1
 #noncolin             1
 lspinorb             1
+cal_force            1
+cal_stress           1
 
 #Parameters (LCAO)
 basis_type lcao
