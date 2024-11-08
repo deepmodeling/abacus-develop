@@ -12,7 +12,7 @@
 namespace hsolver
 {
 const int warp_size = 32;
-const unsigned int full_mask = 0xffffffff;
+//const unsigned int full_mask = 0xffffffff;
 const int thread_per_block = 256;
 }
 
