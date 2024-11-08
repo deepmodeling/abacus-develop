@@ -681,6 +681,7 @@ void ESolver_KS<T, Device>::iter_finish(const int istep, int& iter)
     // notice for restart
     if (PARAM.inp.mixing_restart > 0 && iter == this->p_chgmix->mixing_restart_step - 1 && iter != PARAM.inp.scf_nmax)
     {
+        this->p_chgmix->mixing_restart_last = iter;
         std::cout << " SCF restart after this step!" << std::endl;
     }
 }
