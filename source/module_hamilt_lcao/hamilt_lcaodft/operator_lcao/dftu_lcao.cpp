@@ -47,9 +47,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* Grid
     ModuleBase::TITLE("DFTU", "initialize_HR");
     ModuleBase::timer::tick("DFTU", "initialize_HR");
 
-    auto* paraV = this->hR->get_paraV();// get parallel orbitals from HR
-    // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
-
     this->adjs_all.clear();
     this->adjs_all.reserve(this->ucell->nat);
     for (int iat0 = 0; iat0 < ucell->nat; iat0++)
