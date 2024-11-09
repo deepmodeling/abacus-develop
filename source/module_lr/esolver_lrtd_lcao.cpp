@@ -587,8 +587,9 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
             const int is_in_x = openshell ? 0 : is;     // if openshell, spin-up and spin-down are put together
             if (px.in_this_processor(virt_global, occ_global))
             {
+                const int xstart_pair = ik * px.get_local_size();
                 const int ipair_loc = px.global2local_col(occ_global) * px.get_row_size() + px.global2local_row(virt_global);
-                X[is_in_x].data<T>()[xstart_bs + ipair_loc] = (static_cast<T>(1.0) / static_cast<T>(nk));
+                X[is_in_x].data<T>()[xstart_bs + xstart_pair + ipair_loc] = (static_cast<T>(1.0) / static_cast<T>(nk));
             }
         }
     }
