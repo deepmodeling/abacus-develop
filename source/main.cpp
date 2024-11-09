@@ -11,6 +11,7 @@
 #ifdef _OPENMP
 #include <omp.h>
 #endif
+#include <iostream>
 
 int main(int argc, char** argv)
 {
@@ -42,6 +43,11 @@ int main(int argc, char** argv)
     Driver DD;
     DD.init();
 
+    if(true)
+        std::cout<<true<<std::endl;
+
+    for(int i=0; i<10; ++i)
+        std::cout<<i<<std::endl;
     /*
     After running mpi version of abacus, release the mpi resources.
     */
