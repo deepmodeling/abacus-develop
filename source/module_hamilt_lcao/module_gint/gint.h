@@ -13,6 +13,9 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+
+#include <functional>
+
 class Gint {
   public:
     ~Gint();
@@ -63,6 +66,21 @@ class Gint {
 
     const Grid_Technique* gridt = nullptr;
     const UnitCell* ucell;
+
+    // psir_ylm_new = psir_func(psir_ylm)
+    // psir_func==nullptr means psir_ylm_new=psir_ylm
+    using T_psir_func = std::function<
+        const ModuleBase::Array_Pool<double>&(
+            const ModuleBase::Array_Pool<double> &psir_ylm,
+            const Grid_Technique &gt,
+            const int grid_index,
+            const int is,
+            const std::vector<int> &block_iw,
+            const std::vector<int> &block_size,
+            const std::vector<int> &block_index,
+            const ModuleBase::Array_Pool<bool> &cal_flag)>;
+    T_psir_func psir_func_1 = nullptr;
+    T_psir_func psir_func_2 = nullptr;
 
   protected:
     // variables related to FFT grid
@@ -152,17 +170,18 @@ class Gint {
         hamilt::HContainer<double>* hR); // HContainer for storing the <phi_0 |
                                          // V | phi_R> matrix element.
 
-    void cal_meshball_vlocal_k(int na_grid,
-                               const int LD_pool,
-                               int grid_index,
-                               int* block_size,
-                               int* block_index,
-                               int* block_iw,
-                               bool** cal_flag,
-                               double** psir_ylm,
-                               double** psir_vlbr3,
-                               double* pvpR,
-                               const UnitCell& ucell);
+    void cal_meshball_vlocal_k(
+        const int na_grid,
+        const int LD_pool,
+        const int grid_index,
+        const int*const block_size,
+        const int*const block_index,
+        const int*const block_iw,
+        const bool*const*const cal_flag,
+        const double*const*const psir_ylm,
+        const double*const*const psir_vlbr3,
+        double*const pvpR,
+        const UnitCell &ucell);
 
     //------------------------------------------------------
     // in gint_fvl.cpp
@@ -225,11 +244,11 @@ class Gint {
                          Gint_inout* inout);
 
     void cal_meshball_rho(const int na_grid,
-                          int* block_index,
-                          int* vindex,
-                          double** psir_ylm,
-                          double** psir_DMR,
-                          double* rho);
+                          const int*const block_index,
+                          const int*const vindex,
+                          const double*const*const psir_ylm,
+                          const double*const*const psir_DMR,
+                          double*const rho);
 
     void gint_kernel_tau(const int na_grid,
                          const int grid_index,

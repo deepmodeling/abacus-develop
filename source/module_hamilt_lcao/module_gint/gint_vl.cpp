@@ -66,8 +66,7 @@ void Gint::cal_meshball_vlocal_gamma(
                     }
                 }
                 const int ib_length = last_ib-first_ib;
-                if(ib_length<=0) { continue;
-}
+                if(ib_length<=0) { continue; }
 
 				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
 				hamilt::AtomPair<double>* tmp_ap = hR->find_pair(iat1, iat2);
@@ -81,14 +80,13 @@ void Gint::cal_meshball_vlocal_gamma(
                 }
 
                 const int n=block_size[ia2];
-				//std::cout<<__FILE__<<__LINE__<<" "<<n<<" "<<m<<" "<<tmp_ap->get_row_size()<<" "<<tmp_ap->get_col_size()<<std::endl;
                 if(cal_pair_num>ib_length/4)
                 {
                     dgemm_(&transa, &transb, &n, &m, &ib_length, &alpha,
                         &psir_vlbr3[first_ib][block_index[ia2]], &LD_pool,
                         &psir_ylm[first_ib][block_index[ia1]], &LD_pool,
                         &beta, tmp_ap->get_pointer(0), &n);
-						//&GridVlocal[iw1_lo*lgd_now+iw2_lo], &lgd_now);   
+						//&GridVlocal[iw1_lo*lgd_now+iw2_lo], &lgd_now);
                 }
                 else
                 {
@@ -96,32 +94,31 @@ void Gint::cal_meshball_vlocal_gamma(
                     {
                         if(cal_flag[ib][ia1] && cal_flag[ib][ia2])
                         {
-                            int k=1;                            
+                            int k=1;
                             dgemm_(&transa, &transb, &n, &m, &k, &alpha,
                                 &psir_vlbr3[ib][block_index[ia2]], &LD_pool,
                                 &psir_ylm[ib][block_index[ia1]], &LD_pool,
-                                &beta, tmp_ap->get_pointer(0), &n);                          
+                                &beta, tmp_ap->get_pointer(0), &n);
                         }
                     }
                 }
-				//std::cout<<__FILE__<<__LINE__<<" "<<tmp_ap->get_pointer(0)[2]<<std::endl;
 			}
 		}
 	}
 }
 
 void Gint::cal_meshball_vlocal_k(
-	int na_grid,
+	const int na_grid,
 	const int LD_pool,
-	int grid_index, 
-	int* block_size,
-	int* block_index,
-	int* block_iw,
-	bool** cal_flag,  
-	double** psir_ylm,
-	double** psir_vlbr3,
-	double* pvpR,
-	const UnitCell& ucell)
+	const int grid_index,
+	const int*const block_size,
+	const int*const block_index,
+	const int*const block_iw,
+	const bool*const*const cal_flag,
+	const double*const*const psir_ylm,
+	const double*const*const psir_vlbr3,
+	double*const pvpR,
+	const UnitCell &ucell)
 {
     char transa = 'N', transb = 'T';
 	double alpha=1, beta=1;
@@ -151,12 +148,11 @@ void Gint::cal_meshball_vlocal_k(
     			{
     				if(cal_flag[ib][ia1] && cal_flag[ib][ia2]) {
     				    ++cal_num;
-}
+					}
     			}
 
-    			if(cal_num==0) { continue;
-}
-    			
+    			if(cal_num==0) { continue; }
+
                 const int idx2=block_index[ia2];
         		int n=block_size[ia2];
 				//const int I2 = ucell.iat2ia[iat2];
@@ -165,13 +161,13 @@ void Gint::cal_meshball_vlocal_k(
 				int offset;
 				offset=this->gridt->find_offset(id1, id2, iat1, iat2);
 
-				const int iatw = DM_start + this->gridt->find_R2st[iat1][offset];	
+				const int iatw = DM_start + this->gridt->find_R2st[iat1][offset];
 
 			    if(cal_num>this->bxyz/4)
 			    {
 					k=this->bxyz;
 					dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-						&psir_vlbr3[0][idx2], &LD_pool, 
+						&psir_vlbr3[0][idx2], &LD_pool,
 						&psir_ylm[0][idx1], &LD_pool,
 						&beta, &pvpR[iatw], &n);
 				}
@@ -183,9 +179,9 @@ void Gint::cal_meshball_vlocal_k(
 						{
 							k=1;
 							dgemm_(&transa, &transb, &n, &m, &k, &alpha,
-								&psir_vlbr3[ib][idx2], &LD_pool, 
+								&psir_vlbr3[ib][idx2], &LD_pool,
 								&psir_ylm[ib][idx1], &LD_pool,
-								&beta, &pvpR[iatw], &n);	
+								&beta, &pvpR[iatw], &n);
 						}
 					}
     			}

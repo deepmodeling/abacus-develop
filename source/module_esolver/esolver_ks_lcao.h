@@ -56,7 +56,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(int& iter) override;
+    virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
 

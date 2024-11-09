@@ -131,16 +131,6 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               &GlobalC::GridD,
                               nullptr); // delete lm.Hloc_fixedR
 
-    // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    LCAO_domain::build_Nonlocal_mu_new(pv,
-                                       fsr,
-                                       nullptr,
-                                       cal_deri,
-                                       GlobalC::ucell,
-                                       orb,
-                                       *(two_center_bundle.overlap_orb_beta),
-                                       &GlobalC::GridD);
-
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (PARAM.inp.cal_syns)
     {
@@ -328,17 +318,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     // doing on the real space grid.
     // vl_dphi
     PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
-
-    this->cal_fvnl_dbeta(dm,
-                         pv,
-                         ucell,
-                         orb,
-                         *(two_center_bundle.overlap_orb_beta),
-                         GlobalC::GridD,
-                         isforce,
-                         isstress,
-                         fvnl_dbeta,
-                         svnl_dbeta);
 
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
