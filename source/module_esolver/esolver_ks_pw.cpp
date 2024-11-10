@@ -325,9 +325,9 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -343,18 +343,15 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
 
     hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
                                                  &this->wf,
-
                                                  PARAM.inp.calculation,
                                                  PARAM.inp.basis_type,
                                                  PARAM.inp.ks_solver,
                                                  PARAM.inp.use_paw,
                                                  PARAM.globalv.use_uspp,
                                                  PARAM.inp.nspin,
-
                                                  hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-
                                                  hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                  this->init_psi);
 
@@ -379,7 +376,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
     // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 }
 
 // Temporary, it should be rewritten with Hamilt class.

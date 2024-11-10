@@ -111,10 +111,10 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::hamilt2density(const int istep, const int iter, const double ethr)
+    void ESolver_KS_LIP<T>::hamilt2density_single(const int istep, const int iter, const double ethr)
     {
-        ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density");
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
+        ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density_single");
+        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
 
         // reset energy
         this->pelec->f_en.eband = 0.0;
@@ -134,7 +134,7 @@ namespace ModuleESolver
 
         if (psig.expired())
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density_single", "psig lifetime is expired");
         }
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
@@ -159,7 +159,7 @@ namespace ModuleESolver
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
+        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
     }
 
     template <typename T>

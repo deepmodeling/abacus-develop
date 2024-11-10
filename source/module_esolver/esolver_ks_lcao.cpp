@@ -691,7 +691,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 }
 
 //------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS_LCAO: hamilt2density
+//! the 11th function of ESolver_KS_LCAO: hamilt2density_single
 //! mohan add 2024-05-11
 //! 1) save input rho
 //! 2) save density matrix DMR for mixing
@@ -707,9 +707,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 //! 12) calculate delta energy
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
+void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
 
     // reset energy
     this->pelec->f_en.eband = 0.0;

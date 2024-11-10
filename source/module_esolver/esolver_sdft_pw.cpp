@@ -167,7 +167,7 @@ void ESolver_SDFT_PW<T, Device>::after_scf(const int istep)
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::hamilt2density(int istep, int iter, double ethr)
+void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, double ethr)
 {
     // reset energy
     this->pelec->f_en.eband = 0.0;
@@ -381,7 +381,7 @@ void ESolver_SDFT_PW<T, Device>::nscf()
 
     this->before_scf(istep);
 
-    this->hamilt2density(istep, iter, diag_thr);
+    this->hamilt2density_single(istep, iter, diag_thr);
 
     this->pelec->cal_energies(2);
 

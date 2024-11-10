@@ -365,25 +365,25 @@ void ESolver_KS<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell
 }
 
 //------------------------------------------------------------------------------
-//! the 5th function of ESolver_KS: hamilt2density
+//! the 5th function of ESolver_KS: hamilt2density_single
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick(this->classname, "hamilt2density");
+    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
     // Temporarily, before HSolver is constructed, it should be overrided by
     // LCAO, PW, SDFT and TDDFT.
     // After HSolver is constructed, LCAO, PW, SDFT should delete their own
-    // hamilt2density() and use:
-    ModuleBase::timer::tick(this->classname, "hamilt2density");
+    // hamilt2density_single() and use:
+    ModuleBase::timer::tick(this->classname, "hamilt2density_single");
 }
 
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::diag(const int istep, const int iter, const double ethr)
+void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
 {
     // 7) use Hamiltonian to obtain charge density
-    this->hamilt2density(istep, iter, diag_ethr);
+    this->hamilt2density_single(istep, iter, diag_ethr);
 
     // 8) for MPI: STOGROUP? need to rewrite
     //<Temporary> It may be changed when more clever parallel algorithm is
@@ -420,7 +420,7 @@ void ESolver_KS<T, Device>::diag(const int istep, const int iter, const double e
                                                      diag_ethr,
                                                      PARAM.inp.nelec);
 
-                this->hamilt2density(istep, iter, diag_ethr);
+                this->hamilt2density_single(istep, iter, diag_ethr);
 
                 drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
 
@@ -484,7 +484,7 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
         // 6) initialization of SCF iterations
         this->iter_init(istep, iter);
 
-        this->diag(istep, iter, diag_ethr);
+        this->hamilt2density(istep, iter, diag_ethr);
 
         // 10) finish scf iterations
         this->iter_finish(istep, iter);

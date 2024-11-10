@@ -47,13 +47,13 @@ class ESolver_KS : public ESolver_FP
     virtual void iter_finish(const int istep, int& iter);
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2density(const int istep, const int iter, const double ethr);
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr);
 
     // calculate electron states from a specific Hamiltonian
     virtual void hamilt2estates(const double ethr) {};
 
     // calculate electron density from a specific Hamiltonian
-    void diag(const int istep, const int iter, const double ethr);
+    void hamilt2density(const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(const int istep) override;
