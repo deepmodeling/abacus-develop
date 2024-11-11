@@ -21,8 +21,10 @@ namespace LR_Util
                     auto ap_real = dr_real->find_pair(ia, ja);
                     for (int iR = 0;iR < ap->get_R_size();++iR)
                     {
+                        // R index may be different between the two HContainers, find by R value instead of R-index
+                        auto dR = ap->get_R_index(iR);
                         auto ptr = ap->get_HR_values(iR).get_pointer();
-                        auto ptr_real = ap_real->get_HR_values(iR).get_pointer();
+                        auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                         for (int i = 0;i < ap->get_size();++i)  ptr_real[i] = (get_imag ? ptr[i].imag() : ptr[i].real());
                     }
                 }
@@ -42,8 +44,10 @@ namespace LR_Util
                 auto ap_real = HR_real.find_pair(ia, ja);
                 for (int iR = 0;iR < ap->get_R_size();++iR)
                 {
+                    // R index may be different between the two HContainers, find by R value instead of R-index
+                    auto dR = ap->get_R_index(iR);
                     auto ptr = ap->get_HR_values(iR).get_pointer();
-                    auto ptr_real = ap_real->get_HR_values(iR).get_pointer();
+                    auto ptr_real = ap_real->get_HR_values(dR.x, dR.y, dR.z).get_pointer();
                     for (int i = 0;i < ap->get_size();++i)  get_imag ? ptr[i].imag(ptr_real[i]) : ptr[i].real(ptr_real[i]);
                 }
             }
