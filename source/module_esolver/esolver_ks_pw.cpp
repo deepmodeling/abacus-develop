@@ -321,78 +321,49 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
-
-    //(2) save change density as previous charge,
-    // prepared fox mixing.
-    if (GlobalV::MY_STOGROUP == 0)
-    {
-        this->pelec->charge->save_rho_before_sum_band();
-    }
 }
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 
-    {
-        // reset energy
-        this->pelec->f_en.eband = 0.0;
-        this->pelec->f_en.demet = 0.0;
-        // choose if psi should be diag in subspace
-        // be careful that istep start from 0 and iter start from 1
-        // if (iter == 1)
-        hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-        
-        hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-        
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
-                                                     &this->wf, 
-                                                     
-                                                     PARAM.inp.calculation,
-                                                     PARAM.inp.basis_type,
-                                                     PARAM.inp.ks_solver,
-                                                     PARAM.inp.use_paw,
-                                                     PARAM.globalv.use_uspp,
-                                                     PARAM.inp.nspin,
-                                                     
-                                                     hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+    // reset energy
+    this->pelec->f_en.eband = 0.0;
+    this->pelec->f_en.demet = 0.0;
+    // choose if psi should be diag in subspace
+    // be careful that istep start from 0 and iter start from 1
+    // if (iter == 1)
+    hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
 
-                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                     this->init_psi);
-        
-        hsolver_pw_obj.solve(this->p_hamilt,
-                           this->kspw_psi[0],
-                           this->pelec,
-                           this->pelec->ekb.c,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           false);
-      
-        this->init_psi = true;
+    hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
-        if (PARAM.inp.out_bandgap)
-        {
-            if (!PARAM.globalv.two_fermi)
-            {
-                this->pelec->cal_bandgap();
-            }
-            else
-            {
-                this->pelec->cal_bandgap_updw();
-            }
-        }
-    }
+    hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
+                                                 &this->wf,
+                                                 PARAM.inp.calculation,
+                                                 PARAM.inp.basis_type,
+                                                 PARAM.inp.ks_solver,
+                                                 PARAM.inp.use_paw,
+                                                 PARAM.globalv.use_uspp,
+                                                 PARAM.inp.nspin,
+                                                 hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                 this->init_psi);
 
-    // calculate the delta_harris energy
-    // according to new charge density.
-    // mohan add 2009-01-23
-    this->pelec->cal_energies(1);
+    hsolver_pw_obj.solve(this->p_hamilt,
+                         this->kspw_psi[0],
+                         this->pelec,
+                         this->pelec->ekb.c,
+                         GlobalV::RANK_IN_POOL,
+                         GlobalV::NPROC_IN_POOL,
+                         false);
+
+    this->init_psi = true;
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -400,18 +371,12 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
-    // compute magnetization, only for LSDA(spin==2)
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                this->pelec->nelec_spin.data());
-
     // deband is calculated from "output" charge density calculated
     // in sum_band
     // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 }
 
 // Temporary, it should be rewritten with Hamilt class.

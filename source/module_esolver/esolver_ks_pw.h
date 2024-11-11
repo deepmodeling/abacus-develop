@@ -31,7 +31,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     void cal_stress(ModuleBase::matrix& stress) override;
 
-    virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void hamilt2estates(const double ethr) override;
 

@@ -118,10 +118,8 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    pelec->charge->save_rho_before_sum_band();
-
     if (wf.init_wfc == "file")
     {
         if (istep >= 1)
@@ -171,11 +169,23 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
             hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, false);
         }
     }
-    // else
-    // {
-    //     ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "HSolver has not been initialed!");
-    // }
 
+    // symmetrize the charge density only for ground state
+    if (istep <= 1)
+    {
+        Symmetry_rho srho;
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
+        }
+    }
+
+    // (7) calculate delta energy
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+}
+
+void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter)
+{
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
@@ -201,32 +211,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                              << std::endl;
     }
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        this->pelec_td->print_band(ik, PARAM.inp.printe, iter);
-    }
-
-    // using new charge density.
-    this->pelec->cal_energies(1);
-
-    // symmetrize the charge density only for ground state
-    if (istep <= 1)
-    {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
-        }
-    }
-
-    // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                pelec->nelec_spin.data());
-
-    // (7) calculate delta energy
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(istep, iter);
 }
 
 void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)

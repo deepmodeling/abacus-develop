@@ -50,9 +50,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void iter_init(const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
 
