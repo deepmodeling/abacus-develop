@@ -681,10 +681,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter - 1);
     }
+
+    // save density matrix DMR for mixing
+    if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
+    {
+        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        dm->save_DMR();
+    }
 }
 
 //------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS_LCAO: hamilt2density
+//! the 11th function of ESolver_KS_LCAO: hamilt2density_single
 //! mohan add 2024-05-11
 //! 1) save input rho
 //! 2) save density matrix DMR for mixing
@@ -700,47 +707,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 //! 12) calculate delta energy
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
+void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
 
-    // 1) save input rho
-    this->pelec->charge->save_rho_before_sum_band();
+    // reset energy
+    this->pelec->f_en.eband = 0.0;
+    this->pelec->f_en.demet = 0.0;
 
-    // 2) save density matrix DMR for mixing
-    if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
-    {
-        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        dm->save_DMR();
-    }
-
-    // 3) solve the Hamiltonian and output band gap
-    {
-        // reset energy
-        this->pelec->f_en.eband = 0.0;
-        this->pelec->f_en.demet = 0.0;
-
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, false);
-
-        if (PARAM.inp.out_bandgap)
-        {
-            if (!PARAM.globalv.two_fermi)
-            {
-                this->pelec->cal_bandgap();
-            }
-            else
-            {
-                this->pelec->cal_bandgap_updw();
-            }
-        }
-    }
-
-    // 4) print bands for each k-point and each band
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        this->pelec->print_band(ik, PARAM.inp.printe, iter);
-    }
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, false);
 
     // 5) what's the exd used for?
 #ifdef __EXX
@@ -754,58 +730,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 #endif
 
-    // 6) calculate the local occupation number matrix and energy correction in
-    // DFT+U
-    if (PARAM.inp.dft_plus_u)
-    {
-        // only old DFT+U method should calculated energy correction in esolver,
-        // new DFT+U method will calculate energy in calculating Hamiltonian
-        if (PARAM.inp.dft_plus_u == 2)
-        {
-            if (GlobalC::dftu.omc != 2)
-            {
-                const std::vector<std::vector<TK>>& tmp_dm
-                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                this->dftu_cal_occup_m(iter, tmp_dm);
-            }
-            GlobalC::dftu.cal_energy_correction(istep);
-        }
-        GlobalC::dftu.output();
-    }
-
-    // (7) for deepks, calculate delta_e
-#ifdef __DEEPKS
-    if (PARAM.inp.deepks_scf)
-    {
-        const std::vector<std::vector<TK>>& dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-
-        this->dpks_cal_e_delta_band(dm);
-    }
-#endif
-
-    // 8) for delta spin
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
-    }
-
-    // 9) use new charge density to calculate energy
-    this->pelec->cal_energies(1);
-
     // 10) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
-
-    // 11) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                this->pelec->nelec_spin.data());
 
     // 12) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
@@ -922,6 +852,43 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
+
+    // 6) calculate the local occupation number matrix and energy correction in
+    // DFT+U
+    if (PARAM.inp.dft_plus_u)
+    {
+        // only old DFT+U method should calculated energy correction in esolver,
+        // new DFT+U method will calculate energy in calculating Hamiltonian
+        if (PARAM.inp.dft_plus_u == 2)
+        {
+            if (GlobalC::dftu.omc != 2)
+            {
+                const std::vector<std::vector<TK>>& tmp_dm
+                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+                this->dftu_cal_occup_m(iter, tmp_dm);
+            }
+            GlobalC::dftu.cal_energy_correction(istep);
+        }
+        GlobalC::dftu.output();
+    }
+
+    // (7) for deepks, calculate delta_e
+#ifdef __DEEPKS
+    if (PARAM.inp.deepks_scf)
+    {
+        const std::vector<std::vector<TK>>& dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+
+        this->dpks_cal_e_delta_band(dm);
+    }
+#endif
+
+    // 8) for delta spin
+    if (PARAM.inp.sc_mag_switch)
+    {
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(iter, this->p_hamilt);
+    }
 
     // call iter_finish() of ESolver_KS
     ESolver_KS<TK>::iter_finish(istep, iter);

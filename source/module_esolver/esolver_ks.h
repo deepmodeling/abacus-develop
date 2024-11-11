@@ -46,11 +46,14 @@ class ESolver_KS : public ESolver_FP
     //! Something to do after hamilt2density function in each iter loop.
     virtual void iter_finish(const int istep, int& iter);
 
-    // calculate electron density from a specific Hamiltonian
-    virtual void hamilt2density(const int istep, const int iter, const double ethr);
+    // calculate electron density from a specific Hamiltonian with ethr
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr);
 
     // calculate electron states from a specific Hamiltonian
     virtual void hamilt2estates(const double ethr) {};
+
+    // calculate electron density from a specific Hamiltonian
+    void hamilt2density(const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(const int istep) override;
@@ -82,6 +85,7 @@ class ESolver_KS : public ESolver_FP
     double scf_thr;                 // scf density threshold
     double scf_ene_thr;             // scf energy threshold
     double drho;                    // the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;           // the error of HSolver
     int maxniter;                   // maximum iter steps for scf
     int niter;                      // iter steps actually used in scf
     int out_freq_elec;              // frequency for output
