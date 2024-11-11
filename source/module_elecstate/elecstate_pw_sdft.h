@@ -20,7 +20,11 @@ class ElecStatePW_SDFT : public ElecStatePW<T, Device>
     {
         this->classname = "ElecStatePW_SDFT";
     }
-    virtual void psiToRho(const psi::Psi<T>& psi) override;
+    virtual void psiToRho(const psi::Psi<T, Device>& psi) override;
+  private:
+    using Real = typename GetTypeReal<T>::type;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
+    using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
 };
 } // namespace elecstate
 #endif

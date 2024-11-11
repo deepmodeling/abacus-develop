@@ -150,6 +150,19 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 	}
     else if (esolver_type == "sdft_pw")
 	{
+#if ((defined __CUDA) || (defined __ROCM))
+        if (PARAM.inp.device == "gpu")
+        {
+            // if (PARAM.inp.precision == "single")
+            // {
+            //     return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            // }
+            // else
+            // {
+                return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            // }
+        }
+#endif
         // if (PARAM.inp.precision == "single")
 		// {
 		// 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();

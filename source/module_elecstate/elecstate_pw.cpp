@@ -39,6 +39,10 @@ ElecStatePW<T, Device>::~ElecStatePW()
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
     }
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
+        delete[] this->rho;
+        delete[] this->kin_r;
+    }
     delmem_var_op()(this->ctx, becsum);
     delmem_complex_op()(this->ctx, this->wfcr);
     delmem_complex_op()(this->ctx, this->wfcr_another_spin);
@@ -47,6 +51,10 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
+    if(this->init_rho) {
+        return;
+    }
+    
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
@@ -80,9 +88,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
 
-    if (!this->init_rho) {
-        this->init_rho_data();
-    }
+    this->init_rho_data();
     this->calculate_weights();
 
     this->calEBand();
@@ -154,9 +160,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     // if (PARAM.inp.nspin == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
-    if (!this->init_rho) {
-        this->init_rho_data();
-    }
+    this->init_rho_data();
     int ik = psi.get_current_k();
     int npw = psi.get_current_nbas();
     int current_spin = 0;

@@ -1,5 +1,6 @@
 #include "hamilt_sdft_pw.h"
 #include "module_base/timer.h"
+#include "kernels/hpsi_norm_op.h"
 
 namespace hamilt
 {
@@ -56,24 +57,14 @@ void HamiltSdftPW<T, Device>::hPsi_norm(const T* psi_in, T* hpsi_norm, const int
     const Real Ebar = (emin + emax) / 2;
     const Real DeltaE = (emax - emin) / 2;
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int ib = 0; ib < nbands; ++ib)
-    {
-        const int ig0 = ib * npwk_max;
-        for (int ig = 0; ig < npwk; ++ig)
-        {
-            hpsi_norm[ig + ig0] = (hpsi_norm[ig + ig0] - Ebar * psi_in[ig + ig0]) / DeltaE;
-        }
-    }
+    hpsi_norm_op<Real, Device>()(this->ctx, nbands, npwk_max, npwk, Ebar, DeltaE, hpsi_norm, psi_in);
     ModuleBase::timer::tick("HamiltSdftPW", "hPsi_norm");
 }
 
-template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
+// template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_CPU>;
 template class HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
+// template class HamiltSdftPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class HamiltSdftPW<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 

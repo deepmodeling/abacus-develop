@@ -206,7 +206,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density(int istep, int iter, double ethr
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                            this->init_psi);
 
-    hsolver_pw_sdft_obj.solve(this->p_hamilt, this->psi[0], this->pelec, this->pw_wfc, this->stowf, istep, iter, false);
+    hsolver_pw_sdft_obj.solve(this->p_hamilt, this->kspw_psi[0], this->psi[0], this->pelec, this->pw_wfc, this->stowf, istep, iter, false);
     this->init_psi = true;
 
     // set_diagethr need it
@@ -241,8 +241,8 @@ double ESolver_SDFT_PW<T, Device>::cal_energy()
     return this->pelec->f_en.etot;
 }
 
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::cal_force(ModuleBase::matrix& force)
+template <>
+void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_force(ModuleBase::matrix& force)
 {
     Sto_Forces ff(GlobalC::ucell.nat);
 
@@ -257,8 +257,14 @@ void ESolver_SDFT_PW<T, Device>::cal_force(ModuleBase::matrix& force)
                     this->stowf);
 }
 
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
+template <>
+void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>::cal_force(ModuleBase::matrix& force)
+{
+    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::cal_force", "DEVICE_GPU is not supported");
+}
+
+template <>
+void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_stress(ModuleBase::matrix& stress)
 {
     Sto_Stress_PW ss;
     ss.cal_stress(stress,
@@ -273,6 +279,12 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
                   this->pelec->charge,
                   &GlobalC::ppcell,
                   GlobalC::ucell);
+}
+
+template <>
+void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>::cal_stress(ModuleBase::matrix& stress)
+{
+    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::cal_stress", "DEVICE_GPU is not supported");
 }
 
 template <typename T, typename Device>
@@ -379,4 +391,8 @@ void ESolver_SDFT_PW<T, Device>::nscf()
 
 // template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>;
 template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+// template class ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>;
+template class ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
 } // namespace ModuleESolver

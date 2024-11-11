@@ -54,6 +54,12 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     virtual void contributeHR() override;
 
+    void cal_force_stress(const bool cal_force,
+                          const bool cal_stress,
+                          const HContainer<TR>* dmR,
+                          ModuleBase::matrix& force,
+                          ModuleBase::matrix& stress);
+
     virtual void set_HR_fixed(void*) override;
 
   private:
@@ -94,6 +100,32 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     const std::unordered_map<int, std::vector<double>>& nlm1_all,
                     const std::unordered_map<int, std::vector<double>>& nlm2_all,
                     TR* data_pointer);
+
+    Grid_Driver* gridD = nullptr;
+    int current_type = 0;
+    /**
+     * @brief calculate the atomic Force of <I,J,R> atom pair
+     */
+    void cal_force_IJR(const int& iat1,
+                       const int& iat2,
+                       const Parallel_Orbitals* paraV,
+                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                       const hamilt::BaseMatrix<TR>* dmR_pointer,
+                       double* force1,
+                       double* force2);
+    /**
+     * @brief calculate the Stress of <I,J,R> atom pair
+     */
+    void cal_stress_IJR(const int& iat1,
+                        const int& iat2,
+                        const Parallel_Orbitals* paraV,
+                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
+                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
+                        const hamilt::BaseMatrix<TR>* dmR_pointer,
+                        const ModuleBase::Vector3<double>& dis1,
+                        const ModuleBase::Vector3<double>& dis2,
+                        double* stress);
 
     std::vector<AdjacentAtomInfo> adjs_all;
 };
