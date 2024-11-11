@@ -19,11 +19,12 @@ jobs:
       - name: Building
         run: |
           cmake -B build -DENABLE_COVERAGE=ON -DBUILD_TESTING=ON -DENABLE_DEEPKS=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_PAW=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON
-          cmake --build build -j`nproc`
+          cmake --build build -j8
           cmake --install build
       - name: Testing
         env:
-          OMP_NUM_THREADS: 1
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
         run: |
           cmake --build build --target test ARGS="-V --timeout 21600"
       - name: Upload Coverage to Codecov
