@@ -1708,11 +1708,6 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     ModuleBase::TITLE("Charge_Mixing", "if_scf_oscillate");
     ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
 
-    if(threshold >= 0) // close the function
-    {
-        return false;
-    }
-
     if(this->_drho_history.size() == 0)
     {
         this->_drho_history.resize(PARAM.inp.scf_nmax);
@@ -1721,8 +1716,13 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     // add drho into history
     this->_drho_history[iteration - 1] = drho;
 
+    if(threshold >= 0) // close the function
+    {
+        return false;
+    }
+
     // check if the history is long enough
-    if(iteration < iternum_used)
+    if(iteration < iternum_used + this->mixing_restart_last)
     {
         return false;
     }
