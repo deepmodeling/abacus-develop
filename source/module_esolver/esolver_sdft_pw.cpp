@@ -353,39 +353,8 @@ void ESolver_SDFT_PW<T, Device>::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
 
-    if (PARAM.inp.calculation == "nscf")
-    {
-        this->nscf();
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
-    }
+    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
 
-    return;
-}
-
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::nscf()
-{
-    ModuleBase::TITLE("ESolver_SDFT_PW", "nscf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
-
-    const int istep = 0;
-
-    const int iter = 1;
-
-    const double diag_thr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
-
-    std::cout << " DIGA_THR          : " << diag_thr << std::endl;
-
-    this->before_scf(istep);
-
-    this->hamilt2density_single(istep, iter, diag_thr);
-
-    this->pelec->cal_energies(2);
-
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
     return;
 }
 

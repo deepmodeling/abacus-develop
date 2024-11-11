@@ -33,10 +33,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
-    virtual void hamilt2estates(const double ethr) override;
-
-    virtual void nscf() override;
-
     void after_all_runners() override;
 
   protected:

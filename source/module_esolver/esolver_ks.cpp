@@ -472,13 +472,10 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
+    // 4) SCF iterations
     this->conv_esolver = false;
     this->niter = this->maxniter;
-
-    // 4) SCF iterations
     this->diag_ethr = PARAM.inp.pw_diag_thr;
-
-    std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
         // 6) initialization of SCF iterations
@@ -500,7 +497,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             break;
         }
     } // end scf iterations
-    std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
 
     // 15) after scf
     ModuleBase::timer::tick(this->classname, "after_scf");

@@ -37,8 +37,6 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
     virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
-    virtual void nscf() override;
-
     virtual void others(const int istep) override;
 
     virtual void iter_finish(const int istep, int& iter) override;
