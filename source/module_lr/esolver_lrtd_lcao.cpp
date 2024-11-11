@@ -16,6 +16,7 @@
 #include "module_base/scalapack_connector.h"
 #include "module_parameter/parameter.h"
 #include "module_lr/ri_benchmark/ri_benchmark.h"
+#include "module_lr/operator_casida/operator_lr_diag.h" // for precondition
 
 #ifdef __EXX
 template<>
@@ -444,20 +445,29 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
                 if (GlobalV::MY_RANK == 0) { assert(nst == LR_Util::write_value(efile(label), prec, e, nst)); }
                 assert(nst * dim == LR_Util::write_value(vfile(label), prec, v, nst, dim));
             };
+        std::vector<double> precondition(this->input.lr_solver == "lapack" ? 0 : nloc_per_band, 1.0);
         // allocate and initialize A matrix and density matrix
         if (openshell)
         {
+            for (int is : {0, 1})
+            {
+                const int offset_is = is * this->paraX_[0].get_local_size();
+                OperatorLRDiag<double> pre_op(this->eig_ks.c + is * nk * (nocc[0] + nvirt[0]), this->paraX_[is], this->nk, this->nocc[is], this->nvirt[is]);
+                if (input.lr_solver != "lapack") { pre_op.act(1, offset_is, 1, precondition.data() + offset_is, precondition.data() + offset_is); }
+            }
             std::cout << "Solving spin-conserving excitation for open-shell system." << std::endl;
             HamiltULR<T> hulr(xc_kernel, nspin, this->nbasis, this->nocc, this->nvirt, this->ucell, orb_cutoff_, GlobalC::GridD, *this->psi_ks, this->eig_ks,
 #ifdef __EXX
                 this->exx_lri, this->exx_info.info_global.hybrid_alpha,
 #endif
                 this->gint_, this->pot, this->kv, this->paraX_, this->paraC_, this->paraMat_);
-            LR::HSolver::solve(hulr, this->X[0].template data<T>(), nloc_per_band, nstates, this->pelec->ekb.c, this->input.lr_solver, this->input.lr_thr);
+            LR::HSolver::solve(hulr, this->X[0].template data<T>(), nloc_per_band, nstates, this->pelec->ekb.c, this->input.lr_solver, this->input.lr_thr, precondition);
             if (input.out_wfc_lr) { write_states("openshell", this->pelec->ekb.c, this->X[0].template data<T>(), nloc_per_band, nstates); }
         }
         else
         {
+            OperatorLRDiag<double> pre_op(this->eig_ks.c, this->paraX_[0], this->nk, this->nocc[0], this->nvirt[0]);
+            if (input.lr_solver != "lapack") { pre_op.act(1, nloc_per_band, 1, precondition.data(), precondition.data()); }
             auto spin_types = std::vector<std::string>({ "singlet", "triplet" });
             for (int is = 0;is < nspin;++is)
             {
@@ -470,7 +480,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
                     spin_types[is], input.ri_hartree_benchmark, (input.ri_hartree_benchmark == "aims" ? input.aims_nbasis : std::vector<int>({})));
                 // solve the Casida equation
                 LR::HSolver::solve(hlr, this->X[is].template data<T>(), nloc_per_band, nstates,
-                    this->pelec->ekb.c + is * nstates, this->input.lr_solver, this->input.lr_thr/*,
+                    this->pelec->ekb.c + is * nstates, this->input.lr_solver, this->input.lr_thr, precondition/*,
                         !std::set<std::string>({ "hf", "hse" }).count(this->xc_kernel)*/);  //whether the kernel is Hermitian
                 if (input.out_wfc_lr) { write_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_band, nstates); }
             }
