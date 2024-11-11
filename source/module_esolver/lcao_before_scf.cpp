@@ -115,6 +115,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             orb_,
             DM
 #ifdef __EXX
+            , istep
             , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
             , GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr
             , GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
@@ -198,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
@@ -210,11 +211,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
     }
     else
     {
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
     }
 #endif // __EXX
 
@@ -227,21 +228,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz, // bz first, then nbz
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
                 &(GlobalC::ucell));
         }
@@ -254,21 +246,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 0.0, // efermi
                 &(GlobalC::ucell),
                 11, // precsion
@@ -309,21 +292,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         for (int is = 0; is < nspin0; is++)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
                 istep,
                 fn,
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.get_efval(is),
                 &(GlobalC::ucell),
                 3,

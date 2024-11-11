@@ -130,21 +130,12 @@ void IState_Charge::begin(Gint_Gamma& gg,
                 // Use a const vector to store efermi for all spins, replace the original implementation:
                 // const double ef_tmp = pelec->eferm.get_efval(is);
                 double ef_spin = ef_all_spin[is];
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    bigpw_bz,
-                    bigpw_nbz,
-                    rhopw_nplane,
-                    rhopw_startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     rho_save[is].data(),
                     is,
                     nspin,
                     0,
                     ssc.str(),
-                    rhopw_nx,
-                    rhopw_ny,
-                    rhopw_nz,
                     ef_spin,
                     ucell_in);
             }
@@ -265,21 +256,12 @@ void IState_Charge::begin(Gint_k& gk,
                         ssc << global_out_dir << "BAND" << ib + 1 << "_K" << ik + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                         double ef_spin = ef_all_spin[is];
-                        ModuleIO::write_cube(
-#ifdef __MPI
-                            bigpw_bz,
-                            bigpw_nbz,
-                            rhopw_nplane,
-                            rhopw_startz_current,
-#endif
+                        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                             rho_save[is].data(),
                             is,
                             nspin,
                             0,
                             ssc.str(),
-                            rhopw_nx,
-                            rhopw_ny,
-                            rhopw_nz,
                             ef_spin,
                             ucell_in);
                     }
@@ -333,21 +315,12 @@ void IState_Charge::begin(Gint_k& gk,
                     ssc << global_out_dir << "BAND" << ib + 1 << "_SPIN" << is + 1 << "_CHG.cube";
 
                     double ef_spin = ef_all_spin[is];
-                    ModuleIO::write_cube(
-#ifdef __MPI
-                        bigpw_bz,
-                        bigpw_nbz,
-                        rhopw_nplane,
-                        rhopw_startz_current,
-#endif
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         rho_save[is].data(),
                         is,
                         nspin,
                         0,
                         ssc.str(),
-                        rhopw_nx,
-                        rhopw_ny,
-                        rhopw_nz,
                         ef_spin,
                         ucell_in);
                 }

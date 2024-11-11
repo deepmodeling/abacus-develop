@@ -121,21 +121,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 ss << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_ENV.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     pes_->charge->rho_save[is],
                     is,
                     nspin,
                     0,
                     ss.str(),
-                    pw_rhod->nx,
-                    pw_rhod->ny,
-                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
             }
@@ -212,42 +203,24 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     wfc_real.data(),
                     is,
                     nspin,
                     0,
                     ss_real.str(),
-                    pw_rhod->nx,
-                    pw_rhod->ny,
-                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     wfc_imag.data(),
                     is,
                     nspin,
                     0,
                     ss_imag.str(),
-                    pw_rhod->nx,
-                    pw_rhod->ny,
-                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell));
             }
@@ -381,21 +354,12 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1 << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    pw_big->bz,
-                    pw_big->nbz,
-                    pw_rhod->nplane,
-                    pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     pes_->charge->rho[ispin],
                     ispin,
                     nspin,
                     0,
                     ss.str(),
-                    pw_rhod->nx,
-                    pw_rhod->ny,
-                    pw_rhod->nz,
                     ef_tmp,
                     &(GlobalC::ucell),
                     3,
@@ -458,21 +422,12 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     ss_real << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_REAL.cube";
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_cube(
-#ifdef __MPI
-                        pw_big->bz,
-                        pw_big->nbz,
-                        pw_rhod->nplane,
-                        pw_rhod->startz_current,
-#endif
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         wfc_real.data(),
                         ispin,
                         nspin,
                         0,
                         ss_real.str(),
-                        pw_rhod->nx,
-                        pw_rhod->ny,
-                        pw_rhod->nz,
                         ef_tmp,
                         &(GlobalC::ucell));
 
@@ -480,21 +435,12 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
-                    ModuleIO::write_cube(
-#ifdef __MPI
-                        pw_big->bz,
-                        pw_big->nbz,
-                        pw_rhod->nplane,
-                        pw_rhod->startz_current,
-#endif
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         wfc_imag.data(),
                         ispin,
                         nspin,
                         0,
                         ss_imag.str(),
-                        pw_rhod->nx,
-                        pw_rhod->ny,
-                        pw_rhod->nz,
                         ef_tmp,
                         &(GlobalC::ucell));
                 }

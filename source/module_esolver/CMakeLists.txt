@@ -10,7 +10,6 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
-    print_funcs.cpp
     pw_fun.cpp
     pw_init_after_vc.cpp
     pw_init_globalc.cpp

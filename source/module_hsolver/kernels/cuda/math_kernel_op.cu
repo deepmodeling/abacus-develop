@@ -12,7 +12,7 @@
 namespace hsolver
 {
 const int warp_size = 32;
-const unsigned int full_mask = 0xffffffff;
+// const unsigned int full_mask = 0xffffffff;
 const int thread_per_block = 256;
 }
 
@@ -65,11 +65,11 @@ void destoryBLAShandle(){
     }
 }
 
-template <typename FPTYPE>
-__forceinline__ __device__ void warp_reduce(FPTYPE& val) {
-    for (int offset = 16; offset > 0; offset >>= 1)
-        val += __shfl_down_sync(full_mask, val, offset);
-}
+// template <typename FPTYPE>
+// __forceinline__ __device__ void warp_reduce(FPTYPE& val) {
+//     for (int offset = 16; offset > 0; offset >>= 1)
+//         val += __shfl_down_sync(full_mask, val, offset);
+// }
 
 template <typename Real>
 __global__ void line_minimize_with_block(

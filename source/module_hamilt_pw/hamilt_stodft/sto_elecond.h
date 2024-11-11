@@ -17,7 +17,7 @@ class Sto_EleCond : protected EleCond
                 pseudopot_cell_vnl* p_ppcell_in,
                 hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
                 StoChe<double>& stoche,
-                Stochastic_WF* p_stowf_in);
+                Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
     ~Sto_EleCond(){};
     /**
      * @brief Set the N order of Chebyshev expansion for conductivities
@@ -59,8 +59,9 @@ class Sto_EleCond : protected EleCond
     int fd_nche = 0;                                ///< number of Chebyshev orders for Fermi-Dirac function
     int cond_dtbatch = 0;                           ///< number of time steps in a batch
     hamilt::Hamilt<std::complex<double>>* p_hamilt; ///< pointer to the Hamiltonian
-    Stochastic_WF* p_stowf = nullptr;               ///< pointer to the stochastic wavefunctions
-    Sto_Func<double> stofunc;                       ///< functions
+    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf
+        = nullptr;            ///< pointer to the stochastic wavefunctions
+    Sto_Func<double> stofunc; ///< functions
 
     hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 

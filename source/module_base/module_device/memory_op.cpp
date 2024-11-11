@@ -4,6 +4,7 @@
 #include "module_base/tool_threading.h"
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
+#include "module_base/global_variable.h"
 #endif
 
 #include <complex>
@@ -21,17 +22,9 @@ struct resize_memory_op<FPTYPE, base_device::DEVICE_CPU>
     {
         if (arr != nullptr)
         {
-#ifdef __DSP
-            free_ht(arr);
-#else
             free(arr);
-#endif
         }
-#ifdef __DSP
-        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size);
-#else
         arr = (FPTYPE*)malloc(sizeof(FPTYPE) * size);
-#endif
         std::string record_string;
         if (record_in != nullptr)
         {
@@ -103,11 +96,7 @@ struct delete_memory_op<FPTYPE, base_device::DEVICE_CPU>
 {
     void operator()(const base_device::DEVICE_CPU* dev, FPTYPE* arr)
     {
-#ifdef __DSP
-        free_ht(arr);
-#else
         free(arr);
-#endif
     }
 };
 
@@ -149,6 +138,8 @@ template struct cast_memory_op<std::complex<double>,
                                std::complex<float>,
                                base_device::DEVICE_CPU,
                                base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<float>, float, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
+template struct cast_memory_op<std::complex<double>, double, base_device::DEVICE_CPU, base_device::DEVICE_CPU>;
 
 template struct delete_memory_op<int, base_device::DEVICE_CPU>;
 template struct delete_memory_op<float, base_device::DEVICE_CPU>;
@@ -355,6 +346,58 @@ template struct delete_memory_op<float, base_device::DEVICE_GPU>;
 template struct delete_memory_op<double, base_device::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
+
+#ifdef __DSP
+
+template <typename FPTYPE>
+struct resize_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev, FPTYPE*& arr, const size_t size, const char* record_in)
+    {
+        if (arr != nullptr)
+        {
+            free_ht(arr);
+        }
+        arr = (FPTYPE*)malloc_ht(sizeof(FPTYPE) * size, GlobalV::MY_RANK);
+        std::string record_string;
+        if (record_in != nullptr)
+        {
+            record_string = record_in;
+        }
+        else
+        {
+            record_string = "no_record";
+        }
+
+        if (record_string != "no_record")
+        {
+            ModuleBase::Memory::record(record_string, sizeof(FPTYPE) * size);
+        }
+    }
+};
+
+template <typename FPTYPE>
+struct delete_memory_op_mt<FPTYPE, base_device::DEVICE_CPU>
+{
+    void operator()(const base_device::DEVICE_CPU* dev, FPTYPE* arr)
+    {
+        free_ht(arr);
+    }
+};
+
+
+template struct resize_memory_op_mt<int, base_device::DEVICE_CPU>;
+template struct resize_memory_op_mt<float, base_device::DEVICE_CPU>;
+template struct resize_memory_op_mt<double, base_device::DEVICE_CPU>;
+template struct resize_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct resize_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
+
+template struct delete_memory_op_mt<int, base_device::DEVICE_CPU>;
+template struct delete_memory_op_mt<float, base_device::DEVICE_CPU>;
+template struct delete_memory_op_mt<double, base_device::DEVICE_CPU>;
+template struct delete_memory_op_mt<std::complex<float>, base_device::DEVICE_CPU>;
+template struct delete_memory_op_mt<std::complex<double>, base_device::DEVICE_CPU>;
 #endif
 
 } // namespace memory

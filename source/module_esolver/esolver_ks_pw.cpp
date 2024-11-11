@@ -73,7 +73,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #endif
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    dspInitHandle(GlobalV::MY_RANK % 4);
+    dspInitHandle(GlobalV::MY_RANK);
 #endif
 }
 
@@ -102,7 +102,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     }
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    dspDestoryHandle();
+    dspDestoryHandle(GlobalV::MY_RANK);
 #endif
     if (PARAM.inp.precision == "single")
     {
@@ -210,7 +210,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp);
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
@@ -239,21 +239,12 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->charge->rho[is],
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 this->pelec->eferm.ef,
                 &(GlobalC::ucell));
         }
@@ -266,21 +257,12 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_cube(
-#ifdef __MPI
-                this->pw_big->bz,
-                this->pw_big->nbz,
-                this->pw_rhod->nplane,
-                this->pw_rhod->startz_current,
-#endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 this->pelec->pot->get_effective_v(is),
                 is,
                 PARAM.inp.nspin,
                 istep,
                 ss.str(),
-                this->pw_rhod->nx,
-                this->pw_rhod->ny,
-                this->pw_rhod->nz,
                 0.0, // efermi
                 &(GlobalC::ucell),
                 11, // precsion
@@ -323,6 +305,9 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
 {
+    // call iter_init() of ESolver_KS
+    ESolver_KS<T, Device>::iter_init(istep, iter);
+
     if (iter == 1)
     {
         this->p_chgmix->init_mixing();
@@ -441,6 +426,9 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
+#ifdef __MPI
+        MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
     }
     else
     {
@@ -449,10 +437,10 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
+void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter)
 {
     // call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(iter);
+    ESolver_KS<T, Device>::iter_finish(istep, iter);
 
     // liuyu 2023-10-24
     // D in uspp need vloc, thus needs update when veff updated
@@ -480,21 +468,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                     data = this->pelec->charge->rho_save[is];
                 }
                 std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-                ModuleIO::write_cube(
-#ifdef __MPI
-                    this->pw_big->bz,
-                    this->pw_big->nbz,
-                    this->pw_rhod->nplane,
-                    this->pw_rhod->startz_current,
-#endif
+                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                     data,
                     is,
                     PARAM.inp.nspin,
                     0,
                     fn,
-                    this->pw_rhod->nx,
-                    this->pw_rhod->ny,
-                    this->pw_rhod->nz,
                     this->pelec->eferm.get_efval(is),
                     &(GlobalC::ucell),
                     3,
@@ -502,21 +481,12 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
                 {
                     fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                    ModuleIO::write_cube(
-#ifdef __MPI
-                        this->pw_big->bz,
-                        this->pw_big->nbz,
-                        this->pw_rhod->nplane,
-                        this->pw_rhod->startz_current,
-#endif
+                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                         this->pelec->charge->kin_r_save[is],
                         is,
                         PARAM.inp.nspin,
                         0,
                         fn,
-                        this->pw_rhod->nx,
-                        this->pw_rhod->ny,
-                        this->pw_rhod->nz,
                         this->pelec->eferm.get_efval(is),
                         &(GlobalC::ucell));
                 }

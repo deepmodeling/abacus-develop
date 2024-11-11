@@ -1,44 +1,38 @@
 #include "sto_che.h"
 #include "module_base/blas_connector.h"
+#include "module_base/module_device/device.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/module_container/ATen/kernels/blas.h"
 
-template <typename REAL>
-StoChe<REAL>::~StoChe()
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::~StoChe()
 {
     delete p_che;
-    delete[] spolyv;
+    delete[] spolyv_cpu;
+    delmem_var_op()(this->ctx, spolyv);
 }
 
-template <typename REAL>
-StoChe<REAL>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
 {
     this->nche = nche;
     this->method_sto = method;
-    p_che = new ModuleBase::Chebyshev<REAL>(nche);
+    p_che = new ModuleBase::Chebyshev<REAL, Device>(nche);
     if (method == 1)
     {
-        spolyv = new REAL[nche];
+        resmem_var_op()(this->ctx, spolyv, nche);
+        spolyv_cpu = new REAL[nche];
     }
     else
     {
-        spolyv = new REAL[nche * nche];
+        resmem_var_op()(this->ctx, spolyv, nche * nche);
     }
 
     this->emax_sto = emax_sto;
     this->emin_sto = emin_sto;
 }
 
-template class StoChe<double>;
-// template class StoChe<float>;
-
-double vTMv(const double* v, const double* M, const int n)
-{
-    const char normal = 'N';
-    const double one = 1;
-    const int inc = 1;
-    const double zero = 0;
-    double* y = new double[n];
-    dgemv_(&normal, &n, &n, &one, M, &n, v, &inc, &zero, y, &inc);
-    double result = BlasConnector::dot(n, y, 1, v, 1);
-    delete[] y;
-    return result;
-}
+template class StoChe<double, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class StoChe<double, base_device::DEVICE_GPU>;
+#endif

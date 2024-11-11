@@ -189,36 +189,195 @@ void print_time(time_t& time_start, time_t& time_finish)
 	    << unsigned(secs) << " secs "<< std::endl;
 }
 
-/*
-void ModuleIO::print_scf(const int &istep, const int &iter)
+void print_rhofft(ModulePW::PW_Basis* pw_rhod,
+                  ModulePW::PW_Basis* pw_rho,
+                  ModulePW::PW_Basis_Big* pw_big,
+                  std::ofstream& ofs)
 {
-    if(PARAM.inp.basis_type=="pw")
+    std::cout << " UNIFORM GRID DIM        : " << pw_rho->nx << " * " << pw_rho->ny << " * " << pw_rho->nz << std::endl;
+    std::cout << " UNIFORM GRID DIM(BIG)   : " << pw_big->nbx << " * " << pw_big->nby << " * " << pw_big->nbz
+              << std::endl;
+    if (PARAM.globalv.double_grid)
     {
-        GlobalV::ofs_running << "\n PW ALGORITHM ------------- ";
-    }
-    else
-    {
-        GlobalV::ofs_running << "\n LCAO ALGORITHM ------------- ";
-    }
-
-    if(PARAM.inp.calculation=="scf")
-    {
-        GlobalV::ofs_running << "ELEC = " << std::setw(4) << unsigned(iter);
-    }
-    else if(PARAM.inp.calculation=="relax" || PARAM.inp.calculation=="cell-relax")
-    {
-        GlobalV::ofs_running << "ION = " << std::setw(4) << unsigned(istep+1)
-                             << "  ELEC = " << std::setw(4) << unsigned(iter);
-    }
-    else if(PARAM.inp.calculation=="md")
-    {
-        GlobalV::ofs_running << "MD = " << std::setw(4) << unsigned(istep+1)
-                             << "  ELEC = " << std::setw(4) << unsigned(iter);
+        std::cout << " UNIFORM GRID DIM(DENSE) : " << pw_rhod->nx << " * " << pw_rhod->ny << " * " << pw_rhod->nz
+                  << std::endl;
     }
 
-    GlobalV::ofs_running << " --------------------------------\n";
+    ofs << "\n\n\n\n";
+    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+           ">>>>"
+        << std::endl;
+    ofs << " |                                                                 "
+           "   |"
+        << std::endl;
+    ofs << " | Setup plane waves of charge/potential:                          "
+           "   |"
+        << std::endl;
+    ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
+           "   |"
+        << std::endl;
+    ofs << " | dimensions of FFT grid. The number of FFT grid on each "
+           "processor   |"
+        << std::endl;
+    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
+           "is   |"
+        << std::endl;
+    ofs << " | different for charege/potential and wave functions. We also set "
+           "   |"
+        << std::endl;
+    ofs << " | the 'sticks' for the parallel of FFT. The number of plane waves "
+           "   |"
+        << std::endl;
+    ofs << " | is 'npw' in each processor.                                     "
+           "   |"
+        << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+           "<<<<"
+        << std::endl;
+    ofs << "\n\n\n\n";
+    ofs << "\n SETUP THE PLANE WAVE BASIS" << std::endl;
+
+    double ecut = 4 * PARAM.inp.ecutwfc;
+    if (PARAM.inp.nx * PARAM.inp.ny * PARAM.inp.nz > 0)
+    {
+        ecut = pw_rho->gridecut_lat * pw_rho->tpiba2;
+        ofs << "use input fft dimensions for wave functions." << std::endl;
+        ofs << "calculate energy cutoff from nx, ny, nz:" << std::endl;
+    }
+
+    ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for charge/potential (unit:Ry)", ecut);
+
+    ModuleBase::GlobalFunc::OUT(ofs, "fft grid for charge/potential", pw_rho->nx, pw_rho->ny, pw_rho->nz);
+    ModuleBase::GlobalFunc::OUT(ofs, "fft grid division", pw_big->bx, pw_big->by, pw_big->bz);
+    ModuleBase::GlobalFunc::OUT(ofs, "big fft grid for charge/potential", pw_big->nbx, pw_big->nby, pw_big->nbz);
+    ModuleBase::GlobalFunc::OUT(ofs, "nbxx", pw_big->nbxx);
+    ModuleBase::GlobalFunc::OUT(ofs, "nrxx", pw_rho->nrxx);
+
+    ofs << "\n SETUP PLANE WAVES FOR CHARGE/POTENTIAL" << std::endl;
+    ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", pw_rho->npwtot);
+    ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", pw_rho->nstot);
+
+    ofs << "\n PARALLEL PW FOR CHARGE/POTENTIAL" << std::endl;
+    ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
+
+    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
+    {
+        ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_rho->nst_per[i] << std::setw(15)
+            << pw_rho->npw_per[i] << std::endl;
+    }
+    ofs << " --------------- sum -------------------" << std::endl;
+    ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << pw_rho->nstot << std::setw(15)
+        << pw_rho->npwtot << std::endl;
+
+    ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", pw_rho->ngg);
+    ModuleBase::GlobalFunc::OUT(ofs, "max |g|", pw_rho->gg_uniq[pw_rho->ngg - 1]);
+    ModuleBase::GlobalFunc::OUT(ofs, "min |g|", pw_rho->gg_uniq[0]);
+
+    if (PARAM.globalv.double_grid)
+    {
+        ofs << std::endl;
+        ofs << std::endl;
+        ofs << std::endl;
+        double ecut = PARAM.inp.ecutrho;
+        if (PARAM.inp.ndx * PARAM.inp.ndy * PARAM.inp.ndz > 0)
+        {
+            ecut = pw_rhod->gridecut_lat * pw_rhod->tpiba2;
+            ofs << "use input fft dimensions for the dense part of charge "
+                   "density."
+                << std::endl;
+            ofs << "calculate energy cutoff from ndx, ndy, ndz:" << std::endl;
+        }
+        ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for dense charge/potential (unit:Ry)", ecut);
+
+        ModuleBase::GlobalFunc::OUT(ofs, "fft grid for dense charge/potential", pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
+
+        ModuleBase::GlobalFunc::OUT(ofs, "nrxx", pw_rhod->nrxx);
+
+        ofs << "\n SETUP PLANE WAVES FOR dense CHARGE/POTENTIAL" << std::endl;
+        ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", pw_rhod->npwtot);
+        ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", pw_rhod->nstot);
+
+        ofs << "\n PARALLEL PW FOR dense CHARGE/POTENTIAL" << std::endl;
+        ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
+
+        for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
+        {
+            ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_rhod->nst_per[i] << std::setw(15)
+                << pw_rhod->npw_per[i] << std::endl;
+        }
+        ofs << " --------------- sum -------------------" << std::endl;
+        ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << pw_rhod->nstot << std::setw(15)
+            << pw_rhod->npwtot << std::endl;
+
+        ModuleBase::GlobalFunc::OUT(ofs, "number of |g|", pw_rhod->ngg);
+        ModuleBase::GlobalFunc::OUT(ofs, "max |g|", pw_rhod->gg_uniq[pw_rhod->ngg - 1]);
+        ModuleBase::GlobalFunc::OUT(ofs, "min |g|", pw_rhod->gg_uniq[0]);
+    }
 }
-*/
+
+void print_wfcfft(const Input_para& inp, ModulePW::PW_Basis_K& pw_wfc, std::ofstream& ofs)
+{
+    ofs << "\n\n\n\n";
+    ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+           ">>>>"
+        << std::endl;
+    ofs << " |                                                                 "
+           "   |"
+        << std::endl;
+    ofs << " | Setup plane waves of wave functions:                            "
+           "   |"
+        << std::endl;
+    ofs << " | Use the energy cutoff and the lattice vectors to generate the   "
+           "   |"
+        << std::endl;
+    ofs << " | dimensions of FFT grid. The number of FFT grid on each "
+           "processor   |"
+        << std::endl;
+    ofs << " | is 'nrxx'. The number of plane wave basis in reciprocal space "
+           "is   |"
+        << std::endl;
+    ofs << " | different for charege/potential and wave functions. We also set "
+           "   |"
+        << std::endl;
+    ofs << " | the 'sticks' for the parallel of FFT. The number of plane wave "
+           "of  |"
+        << std::endl;
+    ofs << " | each k-point is 'npwk[ik]' in each processor                    "
+           "   |"
+        << std::endl;
+    ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<"
+           "<<<<"
+        << std::endl;
+    ofs << "\n\n\n\n";
+    ofs << "\n SETUP PLANE WAVES FOR WAVE FUNCTIONS" << std::endl;
+
+    double ecut = inp.ecutwfc;
+    if (std::abs(ecut - pw_wfc.gk_ecut * pw_wfc.tpiba2) > 1e-6)
+    {
+        ecut = pw_wfc.gk_ecut * pw_wfc.tpiba2;
+        ofs << "Energy cutoff for wavefunc is incompatible with nx, ny, nz and "
+               "it will be reduced!"
+            << std::endl;
+    }
+    ModuleBase::GlobalFunc::OUT(ofs, "energy cutoff for wavefunc (unit:Ry)", ecut);
+    ModuleBase::GlobalFunc::OUT(ofs, "fft grid for wave functions", pw_wfc.nx, pw_wfc.ny, pw_wfc.nz);
+    ModuleBase::GlobalFunc::OUT(ofs, "number of plane waves", pw_wfc.npwtot);
+    ModuleBase::GlobalFunc::OUT(ofs, "number of sticks", pw_wfc.nstot);
+
+    ofs << "\n PARALLEL PW FOR WAVE FUNCTIONS" << std::endl;
+    ofs << " " << std::setw(8) << "PROC" << std::setw(15) << "COLUMNS(POT)" << std::setw(15) << "PW" << std::endl;
+
+    for (int i = 0; i < GlobalV::NPROC_IN_POOL; ++i)
+    {
+        ofs << " " << std::setw(8) << i + 1 << std::setw(15) << pw_wfc.nst_per[i] << std::setw(15) << pw_wfc.npw_per[i]
+            << std::endl;
+    }
+
+    ofs << " --------------- sum -------------------" << std::endl;
+    ofs << " " << std::setw(8) << GlobalV::NPROC_IN_POOL << std::setw(15) << pw_wfc.nstot << std::setw(15)
+        << pw_wfc.npwtot << std::endl;
+    ModuleBase::GlobalFunc::DONE(ofs, "INIT PLANEWAVE");
+}
 
 void print_screen(const int& stress_step, const int& force_step, const int& istep)
 {

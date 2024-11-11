@@ -191,9 +191,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(const int istep, int& iter)
     {
-        ESolver_KS_PW<T>::iter_finish(iter);
+        ESolver_KS_PW<T>::iter_finish(istep, iter);
 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)

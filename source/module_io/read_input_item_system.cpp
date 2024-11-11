@@ -262,6 +262,24 @@ void ReadInput::item_system()
         Input_Item item("ecutwfc");
         item.annotation = "energy cutoff for wave functions";
         read_sync_double(input.ecutwfc);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.ecutwfc == 0){ // 0 means no input value
+                if (para.input.basis_type == "lcao")
+                {
+                    para.input.ecutwfc = 100;
+                }
+                else
+                {
+                    para.input.ecutwfc = 50;
+                }
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.ecutwfc <= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutwfc should be positive");
+            }
+        };
         this->add_item(item);
     }
     {

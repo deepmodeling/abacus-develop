@@ -21,7 +21,14 @@ class Vdwd3Parameters : public VdwParameters
 
     ~Vdwd3Parameters() = default;
 
-    void initial_parameters(const Input_para &input);
+    /**
+     * @brief initialize the parameter by either input (from user setting) or autoset by dft XC
+     * 
+     * @param input Parameter instance
+     * @param plog optional, for logging the parameter setting process
+     */
+    void initial_parameters(const Input_para &input, 
+                            std::ofstream* plog = nullptr); // for logging the parameter autoset
 
     inline const std::string &version() const { return version_; }
 

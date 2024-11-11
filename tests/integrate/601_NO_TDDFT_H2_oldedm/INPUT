@@ -32,4 +32,4 @@ md_dt			0.05
 init_vel                1
 ocp			1
 ocp_set			1*0.5 1*0.5 3*0 1*0.5 1*0.5 3*0	
-td_edm			0
+td_edm			1

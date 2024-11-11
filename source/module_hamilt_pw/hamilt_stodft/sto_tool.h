@@ -15,7 +15,7 @@ void check_che(const int& nche_in,
                const double& try_emax,
                const int& nbands_sto,
                K_Vectors* p_kv,
-               Stochastic_WF* p_stowf,
+               Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf,
                hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto);
 
 #ifndef PARALLEL_DISTRIBUTION

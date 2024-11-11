@@ -147,10 +147,10 @@ void ReadInput::item_model()
                 {
                     para.input.vdw_s6 = "0.75";
                 }
-                else if (para.input.vdw_method == "d3_0" || para.input.vdw_method == "d3_bj")
-                {
-                    para.input.vdw_s6 = "1.0";
-                }
+                // else if (para.input.vdw_method == "d3_0" || para.input.vdw_method == "d3_bj")
+                // {
+                //     para.input.vdw_s6 = "1.0";
+                // }
             }
         };
         read_sync_string(input.vdw_s6);
@@ -160,17 +160,17 @@ void ReadInput::item_model()
         Input_Item item("vdw_s8");
         item.annotation = "scale parameter of d3_0/d3_bj";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.vdw_s8 == "default")
-            {
-                if (para.input.vdw_method == "d3_0")
-                {
-                    para.input.vdw_s8 = "0.722";
-                }
-                else if (para.input.vdw_method == "d3_bj")
-                {
-                    para.input.vdw_s8 = "0.7875";
-                }
-            }
+            // if (para.input.vdw_s8 == "default")
+            // {
+            //     if (para.input.vdw_method == "d3_0")
+            //     {
+            //         para.input.vdw_s8 = "0.722";
+            //     }
+            //     else if (para.input.vdw_method == "d3_bj")
+            //     {
+            //         para.input.vdw_s8 = "0.7875";
+            //     }
+            // }
         };
         read_sync_string(input.vdw_s8);
         this->add_item(item);
@@ -179,17 +179,17 @@ void ReadInput::item_model()
         Input_Item item("vdw_a1");
         item.annotation = "damping parameter of d3_0/d3_bj";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.vdw_a1 == "default")
-            {
-                if (para.input.vdw_method == "d3_0")
-                {
-                    para.input.vdw_a1 = "1.217";
-                }
-                else if (para.input.vdw_method == "d3_bj")
-                {
-                    para.input.vdw_a1 = "0.4289";
-                }
-            }
+            // if (para.input.vdw_a1 == "default")
+            // {
+            //     if (para.input.vdw_method == "d3_0")
+            //     {
+            //         para.input.vdw_a1 = "1.217";
+            //     }
+            //     else if (para.input.vdw_method == "d3_bj")
+            //     {
+            //         para.input.vdw_a1 = "0.4289";
+            //     }
+            // }
         };
         read_sync_string(input.vdw_a1);
         this->add_item(item);
@@ -198,17 +198,17 @@ void ReadInput::item_model()
         Input_Item item("vdw_a2");
         item.annotation = "damping parameter of d3_bj";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.vdw_a2 == "default")
-            {
-                if (para.input.vdw_method == "d3_0")
-                {
-                    para.input.vdw_a2 = "1.0";
-                }
-                else if (para.input.vdw_method == "d3_bj")
-                {
-                    para.input.vdw_a2 = "4.4407";
-                }
-            }
+            // if (para.input.vdw_a2 == "default")
+            // {
+            //     if (para.input.vdw_method == "d3_0")
+            //     {
+            //         para.input.vdw_a2 = "1.0";
+            //     }
+            //     else if (para.input.vdw_method == "d3_bj")
+            //     {
+            //         para.input.vdw_a2 = "4.4407";
+            //     }
+            // }
         };
         read_sync_string(input.vdw_a2);
         this->add_item(item);

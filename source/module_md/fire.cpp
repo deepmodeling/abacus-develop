@@ -74,7 +74,8 @@ void FIRE::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
     MD_base::print_md(ofs, cal_stress);
 
-    ofs << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
+    ofs << "\n Largest gradient in force is " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << " eV/A." << std::endl;
+    ofs << " Threshold is " << PARAM.inp.force_thr_ev << " eV/A." << std::endl;
     std::cout << " LARGEST GRAD (eV/A)  : " << max * ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU << std::endl;
 
     return;

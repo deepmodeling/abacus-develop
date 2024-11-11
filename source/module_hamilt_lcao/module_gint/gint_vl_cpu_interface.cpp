@@ -73,11 +73,16 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
             this->bxyz, na_grid, grid_index, delta_r,
             block_index.data(), block_size.data(), 
             cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D());
-        
+
+        // psir_ylm_new=psir_func(psir_ylm)
+        // psir_func==nullptr means psir_ylm_new=psir_ylm
+        const ModuleBase::Array_Pool<double> &psir_ylm_1 = (!this->psir_func_1) ? psir_ylm : this->psir_func_1(psir_ylm, *this->gridt, grid_index, 0, block_iw, block_size, block_index, cal_flag);
+        const ModuleBase::Array_Pool<double> &psir_ylm_2 = (!this->psir_func_2) ? psir_ylm : this->psir_func_2(psir_ylm, *this->gridt, grid_index, 0, block_iw, block_size, block_index, cal_flag);
+
 	//calculating f_mu(r) = v(r)*psi_mu(r)*dv
         const ModuleBase::Array_Pool<double> psir_vlbr3 = Gint_Tools::get_psir_vlbr3(
                 this->bxyz, na_grid, LD_pool, block_index.data(), 
-                cal_flag.get_ptr_2D(), vldr3.data(), psir_ylm.get_ptr_2D());
+                cal_flag.get_ptr_2D(), vldr3.data(), psir_ylm_1.get_ptr_2D());
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
@@ -85,14 +90,14 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         {
             this->cal_meshball_vlocal_gamma(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
-                cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
+                cal_flag.get_ptr_2D(), psir_ylm_2.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
                 hRGint_thread);
         }
         else
         {
             this->cal_meshball_vlocal_k(
                 na_grid, LD_pool, grid_index, block_size.data(), block_index.data(), block_iw.data(), 
-                cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
+                cal_flag.get_ptr_2D(), psir_ylm_2.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
                 pvpR_thread,ucell);
         }
 
