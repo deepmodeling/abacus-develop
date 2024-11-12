@@ -504,7 +504,7 @@ while [ $# -ge 1 ]; do
       fi
       ;;
     --with-intel-classic*)
-      intel_classic=$(read_with "${1}" "yes") # default yes
+      intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
     --with-intel*)
       with_intel=$(read_with "${1}" "__SYSTEM__")
