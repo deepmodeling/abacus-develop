@@ -58,7 +58,7 @@ It is recommended to run one of them first to get a fast installation of ABACUS 
 If you are using Intel environments via Intel-OneAPI: please note:
 1. After version 2024.0, Intel classic compilers `icc` and `icpc` are not present, so as `ifort` after version 2025.0. Intel MPI compiler will also be updated to `mpiicx`, `mpiicpx` and `mpiifx`.
 2. toolchain will detect `icx`, `icpx`, `ifx`, `mpiicx`, `mpiicpx` and `mpiifx` as default compiler.
-3. Users can manually specify `--with-intel-classic=yes` to use Intel classic compiler in `toolchain*.sh`, or specify `--with-intelmpi-classic=yes` to use Intel MPI classic compiler in `toolchain*.sh` while keep the CC, CXX and F90 compiler to new version.
+3. Users can manually specify `--with-intel-classic=yes` to use Intel classic compiler in `toolchain*.sh`, or specify `--with-intel-mpi-clas=yes` to use Intel MPI classic compiler in `toolchain*.sh` while keep the CC, CXX and F90 compiler to new version.
 4. Users can manually specify `--with-ifx=no` in `toolchain*.sh` to use `ifort` while keep other compiler to new version. 
 5. More information is in the later part of this README.
 

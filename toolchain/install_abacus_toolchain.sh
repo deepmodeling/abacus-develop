@@ -168,7 +168,7 @@ The --with-PKG options follow the rules:
   --with-intelmpi         Intel MPI, MPI library like OpenMPI. one should
                           use only one of OpenMPI, MPICH or Intel MPI.
                           Default = system
-  --with-intelmpi-classic Use the classic Intelmpi compiler (mpiicc, mpiicpc and mpiifort)
+  --with-intel-mpi-clas   Use the classic Intelmpi compiler (mpiicc, mpiicpc and mpiifort)
                           Default = no
   --with-libxc            libxc, exchange-correlation library. Needed for
                           QuickStep DFT and hybrid calculations.
@@ -511,7 +511,7 @@ while [ $# -ge 1 ]; do
     --with-intel-classic*)
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
-    --with-intelmpi-classic*)
+    --with-intel-mpi-clas*)
       intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
     --with-intel*)
