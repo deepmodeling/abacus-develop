@@ -62,8 +62,11 @@ case "${with_intel}" in
     else
       check_command ${pkg_install_dir}/bin/icx "intel" && CC="${pkg_install_dir}/bin/icx" || exit 1
       check_command ${pkg_install_dir}/bin/icpx "intel" && CXX="${pkg_install_dir}/bin/icpx" || exit 1
-      check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
-      # is ifx needed ?
+      if [ "${with_ifx}" = "yes" ]; then
+        check_command ${pkg_install_dir}/bin/ifx "intel" && FC="${pkg_install_dir}/bin/ifx" || exit 1
+      else
+        check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
+      fi
     fi
     F90="${FC}"
     F77="${FC}"
