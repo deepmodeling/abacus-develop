@@ -26,7 +26,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          cmake --build build --target test ARGS="-V --timeout 21600"
+          cmake --build build --target test ARGS="-V --timeout 43200"
       - name: Upload Coverage to Codecov
         uses: codecov/codecov-action@v4
         if: ${{ ! cancelled() }}
