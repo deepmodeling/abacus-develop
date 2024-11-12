@@ -619,6 +619,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
+    parallel_device.o
       
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\

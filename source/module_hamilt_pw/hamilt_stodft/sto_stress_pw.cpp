@@ -6,18 +6,19 @@
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
 
-void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
-                               const elecstate::ElecState& elec,
-                               ModulePW::PW_Basis* rho_basis,
-                               ModuleSymmetry::Symmetry* p_symm,
-                               Structure_Factor* p_sf,
-                               K_Vectors* p_kv,
-                               ModulePW::PW_Basis_K* wfc_basis,
-                               const psi::Psi<complex<double>>* psi_in,
-                               Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
-                               const Charge* const chr,
-                               pseudopot_cell_vnl* nlpp_in,
-                               const UnitCell& ucell_in)
+template <typename FPTYPE, typename Device>
+void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
+                                               const elecstate::ElecState& elec,
+                                               ModulePW::PW_Basis* rho_basis,
+                                               ModuleSymmetry::Symmetry* p_symm,
+                                               Structure_Factor* p_sf,
+                                               K_Vectors* p_kv,
+                                               ModulePW::PW_Basis_K* wfc_basis,
+                                               const psi::Psi<complex<FPTYPE>, Device>& psi_in,
+                                               const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
+                                               const Charge* const chr,
+                                               pseudopot_cell_vnl* nlpp_in,
+                                               const UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
@@ -33,29 +34,29 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     ModuleBase::matrix sigmaxcc(3, 3);
 
     // kinetic contribution
-    sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
+    this->sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
 
     // hartree contribution
-    stress_har(sigmahar, rho_basis, true, chr);
+    this->stress_har(sigmahar, rho_basis, true, chr);
 
     // ewald contribution
-    stress_ewa(sigmaewa, rho_basis, true);
+    this->stress_ewa(sigmaewa, rho_basis, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    stress_gga(sigmaxc, rho_basis, chr);
+    this->stress_gga(sigmaxc, rho_basis, chr);
 
     // local contribution
-    stress_loc(sigmaloc, rho_basis, p_sf, true, chr);
+    this->stress_loc(sigmaloc, rho_basis, p_sf, true, chr);
 
     // nlcc
-    stress_cc(sigmaxcc, rho_basis, p_sf, true, chr);
+    this->stress_cc(sigmaxcc, rho_basis, p_sf, true, chr);
 
     // nonlocal
-    sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, psi_in, stowf, nlpp_in);
+    this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, psi_in, stowf, nlpp_in);
 
     for (int ipol = 0; ipol < 3; ++ipol)
     {
@@ -77,9 +78,10 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
 
     if (PARAM.inp.test_stress)
     {
+        ry = true;
         GlobalV::ofs_running << "\n PARTS OF STRESS: " << std::endl;
-        GlobalV::ofs_running << setiosflags(std::ios::showpos);
-        GlobalV::ofs_running << setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
+        GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
+        GlobalV::ofs_running << std::setiosflags(std::ios::fixed) << std::setprecision(10) << std::endl;
         ModuleIO::print_stress("KINETIC    STRESS", sigmakin, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("LOCAL    STRESS", sigmaloc, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("HARTREE    STRESS", sigmahar, PARAM.inp.test_stress, ry);
@@ -93,13 +95,14 @@ void Sto_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     return;
 }
 
-void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
-                                   const ModuleBase::matrix& wg,
-                                   ModuleSymmetry::Symmetry* p_symm,
-                                   K_Vectors* p_kv,
-                                   ModulePW::PW_Basis_K* wfc_basis,
-                                   const psi::Psi<complex<double>>* psi_in,
-                                   Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf)
+template <typename FPTYPE, typename Device>
+void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
+                                                   const ModuleBase::matrix& wg,
+                                                   ModuleSymmetry::Symmetry* p_symm,
+                                                   K_Vectors* p_kv,
+                                                   ModulePW::PW_Basis_K* wfc_basis,
+                                                   const psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                                                   const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
@@ -115,7 +118,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     double tpiba = ModuleBase::TWO_PI / this->ucell->lat0;
     double twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
     double* kfac = new double[npwx];
-    int nksbands = psi_in->get_nbands();
+    int nksbands = psi.get_nbands();
     if (GlobalV::MY_STOGROUP != 0)
     {
         nksbands = 0;
@@ -155,7 +158,7 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
                     {
                         for (int i = 0; i < npw; ++i)
                         {
-                            std::complex<double> p = psi_in->operator()(ik, ibnd, i);
+                            std::complex<double> p = psi.operator()(ik, ibnd, i);
                             double np = p.real() * p.real() + p.imag() * p.imag();
                             s_kin(l, m) += wg(ik, ibnd) * gk[l][i] * gk[m][i] * kfac[i] * np;
                         }
@@ -214,15 +217,16 @@ void Sto_Stress_PW::sto_stress_kin(ModuleBase::matrix& sigma,
     return;
 }
 
-void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
-                                  const ModuleBase::matrix& wg,
-                                  Structure_Factor* p_sf,
-                                  ModuleSymmetry::Symmetry* p_symm,
-                                  K_Vectors* p_kv,
-                                  ModulePW::PW_Basis_K* wfc_basis,
-                                  const psi::Psi<complex<double>>* psi_in,
-                                  Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
-                                  pseudopot_cell_vnl* nlpp_in)
+template <typename FPTYPE, typename Device>
+void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
+                                                  const ModuleBase::matrix& wg,
+                                                  Structure_Factor* p_sf,
+                                                  ModuleSymmetry::Symmetry* p_symm,
+                                                  K_Vectors* p_kv,
+                                                  ModulePW::PW_Basis_K* wfc_basis,
+                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
+                                                  pseudopot_cell_vnl* nlpp_in)
 {
     ModuleBase::TITLE("Sto_Stress_Func", "stres_nl");
     ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
@@ -238,7 +242,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
     ModuleBase::matrix sigmanlc(3, 3, true);
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
-    int nksbands = psi_in->get_nbands();
+    int nksbands = psi.get_nbands();
     if (GlobalV::MY_STOGROUP != 0)
     {
         nksbands = 0;
@@ -276,7 +280,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
         becp.zero_out();
         char transa = 'C';
         char transb = 'N';
-        psi_in[0].fix_k(ik);
+        psi.fix_k(ik);
         stowf.shchi->fix_k(ik);
         // KS orbitals
         int npmks = PARAM.globalv.npol * nksbands;
@@ -288,7 +292,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                &ModuleBase::ONE,
                this->nlpp->vkb.c,
                &npwx,
-               psi_in->get_pointer(),
+               psi.get_pointer(),
                &npwx,
                &ModuleBase::ZERO,
                becp.c,
@@ -313,10 +317,10 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
 
         for (int i = 0; i < 3; ++i)
         {
-            get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
+            this->get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
         }
 
-        get_dvnl2(vkb2, ik, p_sf, wfc_basis);
+        this->get_dvnl2(vkb2, ik, p_sf, wfc_basis);
 
         ModuleBase::Vector3<double> qvec;
         double* qvec0[3];
@@ -389,7 +393,7 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
                        &ModuleBase::ONE,
                        dbecp_noevc.c,
                        &npwx,
-                       psi_in->get_pointer(),
+                       psi.get_pointer(),
                        &npwx,
                        &ModuleBase::ZERO,
                        dbecp.c,
@@ -484,3 +488,6 @@ void Sto_Stress_PW::sto_stress_nl(ModuleBase::matrix& sigma,
     ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
     return;
 }
+
+
+template class Sto_Stress_PW<double, base_device::DEVICE_CPU>;

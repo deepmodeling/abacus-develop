@@ -7,7 +7,8 @@
 #include "sto_wf.h"
 // qianrui create 2021-6-4
 
-class Sto_Stress_PW : public Stress_Func<double>
+template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
+class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
 {
   public:
     Sto_Stress_PW(){};
@@ -21,8 +22,8 @@ class Sto_Stress_PW : public Stress_Func<double>
                     Structure_Factor* p_sf,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<double>>* psi_in,
-                    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
+                    const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                     const Charge* const chr,
                     pseudopot_cell_vnl* nlpp_in,
                     const UnitCell& ucell_in);
@@ -33,8 +34,8 @@ class Sto_Stress_PW : public Stress_Func<double>
                         ModuleSymmetry::Symmetry* p_symm,
                         K_Vectors* p_kv,
                         ModulePW::PW_Basis_K* wfc_basis,
-                        const psi::Psi<complex<double>>* psi_in,
-                        Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf);
+                        const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                        const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
 
     void sto_stress_nl(ModuleBase::matrix& sigma,
                        const ModuleBase::matrix& wg,
@@ -42,8 +43,8 @@ class Sto_Stress_PW : public Stress_Func<double>
                        ModuleSymmetry::Symmetry* p_symm,
                        K_Vectors* p_kv,
                        ModulePW::PW_Basis_K* wfc_basis,
-                       const psi::Psi<complex<double>>* psi_in,
-                       Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>& stowf,
+                       const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                       const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                        pseudopot_cell_vnl* nlpp_in);
 };
 #endif

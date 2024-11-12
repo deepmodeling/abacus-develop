@@ -244,7 +244,7 @@ double ESolver_SDFT_PW<T, Device>::cal_energy()
 template <>
 void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_force(ModuleBase::matrix& force)
 {
-    Sto_Forces ff(GlobalC::ucell.nat);
+    Sto_Forces<double, base_device::DEVICE_CPU> ff(GlobalC::ucell.nat);
 
     ff.cal_stoforce(force,
                     *this->pelec,
@@ -253,7 +253,9 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_force(M
                     &this->sf,
                     &this->kv,
                     this->pw_wfc,
-                    this->psi,
+                    GlobalC::ppcell,
+                    GlobalC::ucell,
+                    *this->psi,
                     this->stowf);
 }
 
@@ -266,7 +268,7 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>::cal_force(M
 template <>
 void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_stress(ModuleBase::matrix& stress)
 {
-    Sto_Stress_PW ss;
+    Sto_Stress_PW<double, base_device::DEVICE_CPU> ss;
     ss.cal_stress(stress,
                   *this->pelec,
                   this->pw_rho,
@@ -274,7 +276,7 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_stress(
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  this->psi,
+                  *this->psi,
                   this->stowf,
                   this->pelec->charge,
                   &GlobalC::ppcell,
