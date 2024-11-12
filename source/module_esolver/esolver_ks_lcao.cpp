@@ -3,6 +3,7 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
@@ -51,7 +52,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 // function used by deepks
-#include "module_elecstate/cal_dm.h"
+// #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
@@ -590,6 +591,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
             // and the ncalculate the charge density on grid.
 
             this->pelec->skip_weights = true;
+            this->pelec->calculate_weights();
+            if (!PARAM.inp.dm_to_rho)
+            {
+                auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+                _pelec->calEBand();
+                elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
+                _pelec->DM->cal_DMR();
+            }
             this->pelec->psiToRho(*this->psi);
             this->pelec->skip_weights = false;
 
@@ -718,9 +727,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
     // reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
-
+    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
     hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, false);
+    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
 
     // 5) what's the exd used for?
 #ifdef __EXX

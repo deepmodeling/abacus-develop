@@ -543,6 +543,10 @@ void ReadInput::item_system()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for parallel calculations");
             }
+            if (para.input.dm_to_rho && para.inp.gamma_only)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "dm_to_rho is not available for gamma_only calculations");
+            }
             if (para.input.dm_to_rho)
             {
 #ifndef __USECNPY

@@ -928,6 +928,14 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
+        param.input.dm_to_rho = true;
+        param.input.gamma_only = true;
+        GlobalV::NPROC = 1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
 #ifndef __USECNPY
         param.input.dm_to_rho = true;
         GlobalV::NPROC = 1;

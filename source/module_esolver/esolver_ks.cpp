@@ -402,7 +402,7 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 
         drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
         hsolver_error = 0.0;
-        if (iter == 1)
+        if (iter == 1 && PARAM.inp.calculation != "nscf")
         {
             hsolver_error
                 = hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
@@ -628,7 +628,7 @@ void ESolver_KS<T, Device>::iter_finish(const int istep, int& iter)
 
         // If drho < hsolver_error in the first iter or drho < scf_thr, we
         // do not change rho.
-        if (drho < hsolver_error || this->conv_esolver)
+        if (drho < hsolver_error || this->conv_esolver || PARAM.inp.calculation == "nscf")
         {
             if (drho < hsolver_error)
             {

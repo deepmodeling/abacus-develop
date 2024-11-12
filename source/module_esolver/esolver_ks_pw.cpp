@@ -354,6 +354,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
     hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
+    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
     hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
                                                  &this->wf,
@@ -375,7 +376,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
                          this->pelec->ekb.c,
                          GlobalV::RANK_IN_POOL,
                          GlobalV::NPROC_IN_POOL,
-                         false);
+                         skip_charge);
 
     this->init_psi = true;
 

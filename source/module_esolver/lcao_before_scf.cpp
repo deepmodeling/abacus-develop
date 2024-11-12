@@ -286,6 +286,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
             this->read_mat_npz(zipname, *(dm->get_DMR_pointer(2)));
         }
 
+        this->pelec->calculate_weights();
         this->pelec->psiToRho(*this->psi);
 
         int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
