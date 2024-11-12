@@ -33,9 +33,19 @@ case "${with_intelmpi}" in
     echo "==================== Finding Intel MPI from system paths ===================="
     check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
     if [ "${with_intel}" != "__DONTUSE__" ]; then
-      check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
-      check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
-      check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+        if [ "${intelmpi_classic}" = "yes" ]; then
+            check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
+            check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
+            check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+        else
+            check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
+            check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
+            if [ "${with_ifx}" = "yes" ]; then
+                check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
+            else
+                check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
+            fi
+        fi
     else
       echo "The use of Intel MPI is only supported with the Intel compiler"
       exit 1
@@ -59,9 +69,19 @@ case "${with_intelmpi}" in
     check_dir "${pkg_install_dir}/include"
     check_command ${pkg_install_dir}/bin/mpiexec "intel" && MPIRUN="${pkg_install_dir}/bin/mpiexec" || exit 1
     if [ "${with_intel}" != "__DONTUSE__" ]; then
-      check_command ${pkg_install_dir}/bin/mpiicc "intel" && MPICC="${pkg_install_dir}/bin/mpiicc" || exit 1
-      check_command ${pkg_install_dir}/bin/mpiicpc "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpc" || exit 1
-      check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
+        if [ "${intelmpi_classic}" = "yes" ]; then
+            check_command ${pkg_install_dir}/bin/mpiicc "intel" && MPICC="${pkg_install_dir}/bin/mpiicc" || exit 1
+            check_command ${pkg_install_dir}/bin/mpiicpc "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpc" || exit 1
+            check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
+        else
+            check_command ${pkg_install_dir}/bin/mpiicx "intel" && MPICC="${pkg_install_dir}/bin/mpiicx" || exit 1
+            check_command ${pkg_install_dir}/bin/mpiicpx "intel" && MPICXX="${pkg_install_dir}/bin/mpiicpx" || exit 1
+            if [ "${with_ifx}" = "yes" ]; then
+                check_command ${pkg_install_dir}/bin/mpiifx "intel" && MPIFC="${pkg_install_dir}/bin/mpiifx" || exit 1
+            else
+                check_command ${pkg_install_dir}/bin/mpiifort "intel" && MPIFC="${pkg_install_dir}/bin/mpiifort" || exit 1
+            fi
+        fi
     else
       echo "The use of Intel MPI is only supported with the Intel compiler"
       exit 1

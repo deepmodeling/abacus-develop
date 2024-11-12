@@ -152,8 +152,11 @@ The --with-PKG options follow the rules:
                           Default = system
   --with-intel            Use the Intel compiler to compile ABACUS.
                           Default = system
-  --with-intel-classic    Use the classic Intel compiler (icc and icpc) to compile ABACUS.
-  --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS
+  --with-intel-classic    Use the classic Intel compiler (icc, icpc, ifort) to compile ABACUS.
+                          Default = no
+  --with-intelmpi-classic Use the classic Intelmpi compiler (mpiicc, mpiicpc and mpiifort)
+                          Default = no
+  --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
   --with-cmake            Cmake utilities
                           Default = install
@@ -305,13 +308,15 @@ enable_opencl="__FALSE__"
 enable_cuda="__FALSE__"
 enable_hip="__FALSE__"
 export intel_classic="no" 
-# no, then icc->icx, icpc->icpx, 
+# no, then icc->icx, icpc->icpx
 # which cannot compile elpa in AMD server
 # due to some so-called cross-compile problem
 # and will lead to problem in force calculation
 # but icx is recommended by intel compiler
 # option: --with-intel-classic can change it to yes/no
-# zhaoqing by 2023.08.31
+# zhaoqing by 2023.08
+export intelmpi_classic="no"
+export with_ifx="yes"
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -505,6 +510,9 @@ while [ $# -ge 1 ]; do
       ;;
     --with-intel-classic*)
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
+      ;;
+    --with-intelmpi-classic*)
+      intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
     --with-intel*)
       with_intel=$(read_with "${1}" "__SYSTEM__")
