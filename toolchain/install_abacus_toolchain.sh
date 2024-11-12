@@ -97,11 +97,11 @@ OPTIONS:
                           options to values other than no will also switch --mpi-mode
                           to the respective mode.
 --math-mode               Selects which core math library to use. Available options
-                          are: acml, cray, mkl, and openblas. The option "cray"
+                          are: cray, mkl, and openblas. The option "cray"
                           corresponds to cray libsci, and is the default for CRAY
                           (CLE) systems. For non-CRAY systems, if env variable MKLROOT
                           exists then mkl will be default, otherwise openblas is the
-                          default option. Explicitly setting --with-acml, --with-mkl,
+                          default option. Explicitly setting --with-mkl,
                           or --with-openblas options will switch --math-mode to the
                           respective modes.
 --gpu-ver                 Selects the GPU architecture for which to compile. Available
@@ -152,8 +152,9 @@ The --with-PKG options follow the rules:
                           Default = system
   --with-intel            Use the Intel compiler to compile ABACUS.
                           Default = system
-  --with-intel-classic    Use the classic Intel compiler to compile ABACUS.
-                          Default = no
+  --with-intel-classic    Use the classic Intel compiler (icc and icpc) to compile ABACUS.
+  --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS
+                          Default = yes
   --with-cmake            Cmake utilities
                           Default = install
   --with-openmpi          OpenMPI, important if you want a parallel version of ABACUS.
@@ -231,7 +232,7 @@ EOF
 # ------------------------------------------------------------------------
 tool_list="gcc intel cmake"
 mpi_list="mpich openmpi intelmpi"
-math_list="mkl acml openblas"
+math_list="mkl openblas"
 lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 # ------------------------------------------------------------------------
@@ -262,7 +263,6 @@ if [ "${MKLROOT}" ]; then
 else
   export MATH_MODE="openblas"
 fi
-with_acml="__SYSTEM__"
 with_openblas="__INSTALL__"
 with_elpa="__INSTALL__"
 with_cereal="__INSTALL__"
@@ -406,15 +406,12 @@ while [ $# -ge 1 ]; do
         mkl)
           export MATH_MODE="mkl"
           ;;
-        acml)
-          export MATH_MODE="acml"
-          ;;
         openblas)
           export MATH_MODE="openblas"
           ;;
         *)
           report_error ${LINENO} \
-            "--math-mode currently only supports mkl, acml, and openblas as options"
+            "--math-mode currently only supports mkl, and openblas as options"
           ;;
       esac
       ;;
@@ -512,6 +509,9 @@ while [ $# -ge 1 ]; do
     --with-intel*)
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
+    --with-ifx*)
+      with_ifx=$(read_with "${1}" "yes") # default yes
+      ;;
     --with-libxc*)
       with_libxc=$(read_with "${1}")
       ;;
@@ -522,12 +522,6 @@ while [ $# -ge 1 ]; do
       with_mkl=$(read_with "${1}" "__SYSTEM__")
       if [ "${with_mkl}" != "__DONTUSE__" ]; then
         export MATH_MODE="mkl"
-      fi
-      ;;
-    --with-acml*)
-      with_acml=$(read_with "${1}")
-      if [ "${with_acml}" != "__DONTUSE__" ]; then
-        export MATH_MODE="acml"
       fi
       ;;
     --with-openblas*)

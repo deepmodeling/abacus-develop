@@ -64,9 +64,6 @@ If you have a fresh environments and you have `sudo` permission, you can use *in
 
 **Notice: If your server system already have libraries like `cmake`, `openmpi`, please change related setting in `toolchain*.sh` like `--with-cmake=system`**
 
-```shell
-> ./install_ABACUS_toolchain.sh
-```
 
 All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org/static/downloads). by  `wget` , and will be detailedly compiled and installed in `install` directory by toolchain scripts, despite of:
 
