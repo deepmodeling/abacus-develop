@@ -57,32 +57,55 @@ class FS_Nonlocal_tools
     
     /// @brief mpi_allreduce the becp in the pool
     void reduce_pool_becp(const int& npm);
-    
+
+    /**
+     * @brief calculate vkb_deri
+     * 
+     * @param ik the index of k point
+     * @param nbdall the number of all bands, it decides the size of vkb_deri
+     * @param ipol the i index of the direction
+     * @param jpol the j index of the direction
+     */
+    void cal_vkb_deri_s(const int& ik, const int& nbdall, const int& ipol, const int& jpol);
+
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
      * 
      * @param ik the index of k point
      * @param npm the number of bands
-     * @param ipol the i index of the direction
-     * @param jpol the j index of the direction
      * @param ppsi the wave functions
-     * @param stress [out] the stress tensor
+     * @param nbd0 the start index of the bands
      */
-    void cal_dbecp_s(const int& ik,
-                     const int& npm,
-                     const int& ipol,
-                     const int& jpol,
-                     const std::complex<FPTYPE>* ppsi,
-                     FPTYPE* stress);
+    void cal_dbecp_s(const int& ik, const int& npm, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
+
     /**
-     * @brief calculate vkb_deri
+     * @brief calculate stress
      * 
      * @param ik the index of k point
-     * @param nbdall the number of all bands, it decides the size of vkb_deri
-     * @param ipol the index of the polar
+     * @param npm the number of bands
+     * @param occ if use the occupation of the bands
+     * @param ipol the i index of the direction
+     * @param jpol the j index of the direction
+     * @param stress [out] the stress tensor
+     * @param nbd0 the start index of the bands
      */
-    void cal_vkb_deri(const int& ik, const int& nbdall, const int& ipol);
+    void cal_stress(const int& ik,
+                    const int& npm,
+                    const bool& occ,
+                    const int& ipol,
+                    const int& jpol,
+                    FPTYPE* stress,
+                    const int& nbd0 = 0);
+
+        /**
+         * @brief calculate vkb_deri
+         *
+         * @param ik the index of k point
+         * @param nbdall the number of all bands, it decides the size of vkb_deri
+         * @param ipol the index of the polar
+         */
+        void cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol);
     /**
      * @brief calculate the dbecp_i = <psi|\partial beta/\partial \tau^I_i> for all beta functions
      * 
@@ -104,7 +127,7 @@ class FS_Nonlocal_tools
      * @param occ if use the occupation of the bands
      * @param force [out] the force
      */
-    void cal_force(const int& ik, const int& npm, const int& nbdall, const bool& occ, FPTYPE* force, const int& nbd0 = 0);
+    void cal_force(const int& ik, const int& nbdall, const int& npm, const bool& occ, FPTYPE* force, const int& nbd0 = 0);
 
     /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation
     void revert_vkb(const int& ik, const int& ipol);

@@ -52,7 +52,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
         nl_tools.reduce_pool_becp(npm);
         for (int ipol = 0; ipol < 3; ipol++)
         {
-            nl_tools.cal_vkb_deri(ik, npm, ipol);
+            nl_tools.cal_vkb_deri_f(ik, npm, ipol);
             // calculate dbecp = <psi|\nabla beta> for all beta functions
             nl_tools.cal_dbecp_f(ik, npm, npm, ipol, &psi_in[0](ik,0,0));
             nl_tools.revert_vkb(ik, ipol);

@@ -1,13 +1,13 @@
 #include "fs_nonlocal_tools.h"
 
 #include "module_base/math_polyint.h"
-#include "module_parameter/parameter.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_device.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_base/parallel_device.h"
+#include "module_parameter/parameter.h"
 #include "nonlocal_maths.hpp"
 
 namespace hamilt
@@ -89,7 +89,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
     {
         resmem_var_op()(this->ctx, d_wg, wg.nr * wg.nc);
         syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_wg, wg.c, wg.nr * wg.nc);
-        if(p_ekb != nullptr)
+        if (p_ekb != nullptr)
         {
             resmem_var_op()(this->ctx, d_ekb, p_ekb->nr * p_ekb->nc);
             syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_ekb, p_ekb->c, p_ekb->nr * p_ekb->nc);
@@ -109,7 +109,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::allocate_memory(const ModuleBase::matrix
     else
     {
         this->d_wg = wg.c;
-        if(p_ekb != nullptr)
+        if (p_ekb != nullptr)
         {
             this->d_ekb = p_ekb->c;
         }
@@ -163,7 +163,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::delete_memory()
 
 // cal_vkb
 template <typename FPTYPE, typename Device>
-void  FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb");
     const int npol = this->ucell_->get_npol();
@@ -259,7 +259,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_becp(const int& ik,
                                                  const std::complex<FPTYPE>* ppsi,
                                                  const int& nbd0)
 {
-    if(npm == 0)
+    if (npm == 0)
     {
         return;
     }
@@ -293,7 +293,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::reduce_pool_becp(const int& npm)
     const int size_becp_act = npm * npol * this->nkb;
     // becp calculate is over , now we should broadcast this data.
 #ifdef __MPI
-    if( GlobalV:: NPROC_IN_POOL > 1)
+    if (GlobalV::NPROC_IN_POOL > 1)
     {
         Parallel_Common::reduce_dev(this->ctx, this->becp, size_becp_act, POOL_WORLD);
     }
@@ -302,18 +302,14 @@ void FS_Nonlocal_tools<FPTYPE, Device>::reduce_pool_becp(const int& npm)
 
 // cal_dbecp
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(const int& ik,
-                                                    const int& npm,
-                                                    const int& ipol,
-                                                    const int& jpol,
-                                                    const std::complex<FPTYPE>* ppsi,
-                                                    FPTYPE* stress)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_s(const int& ik,
+                                                       const int& nbdall,
+                                                       const int& ipol,
+                                                       const int& jpol)
 {
-    ModuleBase::TITLE("FS_Nonlocal_tools", "cal_dbecp_s");
-    ModuleBase::timer::tick("FS_Nonlocal_tools", "cal_dbecp_s");
+    ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb_deri_s");
     const int npol = this->ucell_->get_npol();
-    const int size_becp = this->nbands * npol * this->nkb;
-    const int npm_npol = npm * npol;
+    const int size_becp = nbdall * npol * this->nkb;
     if (this->dbecp == nullptr)
     {
         resmem_complex_op()(this->ctx, dbecp, size_becp);
@@ -419,60 +415,98 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(const int& ik,
             vkb_deri_ptr += nh * npw;
         }
     }
+}
+
+// cal_dbecp
+template <typename FPTYPE, typename Device>
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(const int& ik,
+                                                    const int& npm,
+                                                    const std::complex<FPTYPE>* ppsi,
+                                                    const int& nbd0)
+{
+    ModuleBase::TITLE("FS_Nonlocal_tools", "cal_dbecp_s");
+    const int npol = this->ucell_->get_npol();
+    const int npm_npol = npm * npol;
+    const int npw = this->wfc_basis_->npwk[ik];
+    std::complex<FPTYPE>* dbecp_ptr = this->dbecp + nbd0 * npol * this->nkb;
+
     // 2.b calculate dbecp = dbecp_noevc * psi
     const char transa = 'C';
     const char transb = 'N';
-
     gemm_op()(this->ctx,
               transa,
               transb,
-              nkb,
+              this->nkb,
               npm_npol,
               npw,
               &ModuleBase::ONE,
-              ppcell_vkb,
+              this->ppcell_vkb,
               npw,
               ppsi,
               this->max_npw,
               &ModuleBase::ZERO,
-              dbecp,
-              nkb);
+              dbecp_ptr,
+              this->nkb);
+}
+
+template <typename FPTYPE, typename Device>
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_stress(const int& ik,
+                                                   const int& npm,
+                                                   const bool& occ,
+                                                   const int& ipol,
+                                                   const int& jpol,
+                                                   FPTYPE* stress,
+                                                   const int& nbd0)
+{
+    const int npol = this->ucell_->get_npol();
+    const int index0 = nbd0 * npol * this->nkb;
     // calculate stress for target (ipol, jpol)
-    if(npol == 1)
+    if (npol == 1)
     {
         const int current_spin = this->kv_->isk[ik];
         FPTYPE* d_ekb_ik = nullptr;
-        if(d_ekb != nullptr)
+        if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
         }
+        FPTYPE* d_wg_ik = d_wk + ik;
+        if (occ)
+        {
+            d_wg_ik = d_wg + this->nbands * ik;
+        }
         cal_stress_nl_op()(this->ctx,
-                        nondiagonal,
-                        ipol,
-                        jpol,
-                        nkb,
-                        npm,
-                        this->ntype,
-                        current_spin, // uspp only
-                        this->nlpp_->deeq.getBound2(),
-                        this->nlpp_->deeq.getBound3(),
-                        this->nlpp_->deeq.getBound4(),
-                        atom_nh,
-                        atom_na,
-                        d_wg + this->nbands * ik,
-                        d_ekb_ik,
-                        qq_nt,
-                        deeq,
-                        becp,
-                        dbecp,
-                        stress);
+                           nondiagonal,
+                           ipol,
+                           jpol,
+                           nkb,
+                           npm,
+                           this->ntype,
+                           current_spin, // uspp only
+                           this->nlpp_->deeq.getBound2(),
+                           this->nlpp_->deeq.getBound3(),
+                           this->nlpp_->deeq.getBound4(),
+                           atom_nh,
+                           atom_na,
+                           d_wg_ik,
+                           occ,
+                           d_ekb_ik,
+                           qq_nt,
+                           deeq,
+                           becp + index0,
+                           dbecp + index0,
+                           stress);
     }
     else
     {
         FPTYPE* d_ekb_ik = nullptr;
-        if(d_ekb != nullptr)
+        if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
+        }
+        FPTYPE* d_wg_ik = d_wk + ik;
+        if (occ)
+        {
+            d_wg_ik = d_wg + this->nbands * ik;
         }
         cal_stress_nl_op()(this->ctx,
                            ipol,
@@ -485,19 +519,19 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_dbecp_s(const int& ik,
                            this->nlpp_->deeq_nc.getBound4(),
                            atom_nh,
                            atom_na,
-                           d_wg + this->nbands * ik,
+                           d_wg_ik,
+                           occ,
                            d_ekb_ik,
                            qq_nt,
                            this->nlpp_->template get_deeq_nc_data<FPTYPE>(),
-                           becp,
-                           dbecp,
+                           becp + index0,
+                           dbecp + index0,
                            stress);
     }
-    ModuleBase::timer::tick("FS_Nonlocal_tools", "cal_dbecp_s");
 }
 
 template <typename FPTYPE, typename Device>
-void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri(const int& ik, const int& nbdall,  const int& ipol)
+void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol)
 {
     ModuleBase::TITLE("FS_Nonlocal_tools", "cal_vkb_deri");
     const int npol = this->ucell_->get_npol();
@@ -705,8 +739,8 @@ void FS_Nonlocal_tools<FPTYPE, Device>::transfer_gcar(const int& npw, const int&
 // cal_force
 template <typename FPTYPE, typename Device>
 void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(const int& ik,
-                                                  const int& npm,
                                                   const int& nbdall,
+                                                  const int& npm,
                                                   const bool& occ,
                                                   FPTYPE* force,
                                                   const int& nbd0)
@@ -716,10 +750,10 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(const int& ik,
     const int npol = this->ucell_->get_npol();
     const int index0 = nbd0 * npol * this->nkb;
     // calculate the force
-    if(npol == 1)
+    if (npol == 1)
     {
         FPTYPE* d_ekb_ik = nullptr;
-        if(d_ekb != nullptr)
+        if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
         }
@@ -730,32 +764,32 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_force(const int& ik,
         }
         
         cal_force_nl_op<FPTYPE, Device>()(this->ctx,
-                                        nondiagonal,
-                                        npm,
-                                        this->ntype,
-                                        current_spin,
-                                        this->nlpp_->deeq.getBound2(),
-                                        this->nlpp_->deeq.getBound3(),
-                                        this->nlpp_->deeq.getBound4(),
-                                        force_nc,
-                                        nbdall,
-                                        nkb,
-                                        atom_nh,
-                                        atom_na,
-                                        this->ucell_->tpiba,
-                                        d_wg_ik,
-                                        occ,
-                                        d_ekb_ik,
-                                        qq_nt,
-                                        deeq,
-                                        becp + index0,
-                                        dbecp + index0,
-                                        force);
+                                          nondiagonal,
+                                          npm,
+                                          this->ntype,
+                                          current_spin,
+                                          this->nlpp_->deeq.getBound2(),
+                                          this->nlpp_->deeq.getBound3(),
+                                          this->nlpp_->deeq.getBound4(),
+                                          force_nc,
+                                          nbdall,
+                                          nkb,
+                                          atom_nh,
+                                          atom_na,
+                                          this->ucell_->tpiba,
+                                          d_wg_ik,
+                                          occ,
+                                          d_ekb_ik,
+                                          qq_nt,
+                                          deeq,
+                                          becp + index0,
+                                          dbecp + index0,
+                                          force);
     }
     else
     {
         FPTYPE* d_ekb_ik = nullptr;
-        if(d_ekb != nullptr)
+        if (d_ekb != nullptr)
         {
             d_ekb_ik = d_ekb + this->nbands * ik;
         }

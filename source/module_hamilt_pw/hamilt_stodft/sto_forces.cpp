@@ -26,7 +26,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
                                               ModulePW::PW_Basis_K* wfc_basis,
                                               const pseudopot_cell_vnl& nlpp,
                                               UnitCell& ucell,
-                                              const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                                              const psi::Psi<std::complex<FPTYPE>, Device>& psi,
                                               const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::timer::tick("Sto_Forces", "cal_force");
@@ -43,7 +43,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::matrix forcescc(this->nat, 3);
     this->cal_force_loc(forcelc, rho_basis, chr);
     this->cal_force_ew(forceion, rho_basis, p_sf);
-    this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi_in, stowf);
+    this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr, ucell);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, ucell);
 
@@ -237,14 +237,14 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
 
         for (int ipol = 0; ipol < 3; ipol++)
         {
-            nl_tools.cal_vkb_deri(ik, mixbands, ipol); // vkb_deri has dimension of nkb * mixbands * npol
+            nl_tools.cal_vkb_deri_f(ik, mixbands, ipol); // vkb_deri has dimension of nkb * mixbands * npol
             // calculate dbecp = <psi|\nabla beta> for all beta functions
             nl_tools.cal_dbecp_f(ik, mixbands, nksbands, ipol, &psi_in(ik,0,0), 0);
             nl_tools.cal_dbecp_f(ik, mixbands, nstobands, ipol, &stowf.shchi[0](ik, 0, 0), nksbands);
             nl_tools.revert_vkb(ik, ipol);
         }
-        nl_tools.cal_force(ik, nksbands, mixbands, true, force, 0);
-        nl_tools.cal_force(ik, nstobands, mixbands, false, force, nksbands);
+        nl_tools.cal_force(ik, mixbands, nksbands, true, force, 0);
+        nl_tools.cal_force(ik, mixbands, nstobands, false, force, nksbands);
     } // end ik
 
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);

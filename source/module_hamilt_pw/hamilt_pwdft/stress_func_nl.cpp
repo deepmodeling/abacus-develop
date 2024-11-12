@@ -61,7 +61,9 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         {
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
-                nl_tools.cal_dbecp_s(ik, npm, ipol, jpol, &psi_in[0](ik,0,0), stress_device);
+                nl_tools.cal_vkb_deri_s(ik, npm, ipol, jpol);
+                nl_tools.cal_dbecp_s(ik, npm, &psi_in[0](ik,0,0));
+                nl_tools.cal_stress(ik, npm, true, ipol, jpol, stress_device);
             }
         }
     }
@@ -77,23 +79,16 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
             {
                 sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
             }
-            Parallel_Reduce::reduce_all(sigmanlc[l * 3 + m]); // qianrui fix a bug for kpar > 1
         }
     }
-    // rescale the stress with 1/omega
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
-        for (int jpol = 0; jpol < 3; jpol++)
-        {
-            sigmanlc[ipol * 3 + jpol] *= 1.0 / ucell_in.omega;
-        }
-    }
+    // sum up forcenl from all processors
+    Parallel_Reduce::reduce_all(sigmanlc.data(), 9);
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
         for (int jpol = 0; jpol < 3; jpol++)
         {
-            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol];
+            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol] / ucell_in.omega;
         }
     }
     // do symmetry

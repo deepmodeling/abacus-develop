@@ -83,6 +83,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -120,7 +121,16 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 {
                                     continue;
                                 }
-                                FPTYPE fac = d_wg[ib] * 1.0;
+
+                                FPTYPE fac;
+                                if (occ)
+                                {
+                                    fac = d_wg[ib];
+                                }
+                                else
+                                {
+                                    fac = d_wg[0];
+                                }
                                 FPTYPE ps_qq = 0;
                                 if(ekb_now != 0)
                                 {
@@ -158,6 +168,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
@@ -191,7 +202,15 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             for (int ip2 = 0; ip2 < nproj; ip2++)
                             {
                                 const int ib2 = ib*2;
-                                FPTYPE fac = d_wg[ib] * 1.0;
+                                FPTYPE fac;
+                                if (occ)
+                                {
+                                    fac = d_wg[ib];
+                                }
+                                else
+                                {
+                                    fac = d_wg[0];
+                                }
                                 std::complex<FPTYPE> ps_qq = 0;
                                 if(ekb_now != 0)
                                 {

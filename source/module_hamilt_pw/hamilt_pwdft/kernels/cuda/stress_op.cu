@@ -113,6 +113,7 @@ __global__ void cal_stress_nl(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
+        const bool occ,
         const FPTYPE* d_ekb,
         const FPTYPE* qq_nt,
         const FPTYPE *deeq,
@@ -131,7 +132,15 @@ __global__ void cal_stress_nl(
     }
 
     FPTYPE stress_var = 0;
-    const FPTYPE fac = d_wg[ib];
+    FPTYPE fac;
+    if (occ)
+    {
+        fac = d_wg[ib];
+    }
+    else
+    {
+        fac = d_wg[0];
+    }
     FPTYPE ekb_now = 0.0;
     if (d_ekb != nullptr)
     {
@@ -219,6 +228,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int* atom_nh,
                                                                    const int* atom_na,
                                                                    const FPTYPE* d_wg,
+                                                                   const bool& occ,
                                                                    const FPTYPE* d_ekb,
                                                                    const FPTYPE* qq_nt,
                                                                    const FPTYPE* deeq,
@@ -239,6 +249,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              atom_nh,
              atom_na,
              d_wg,
+             occ,
              d_ekb,
              qq_nt,
              deeq,
@@ -261,6 +272,7 @@ __global__ void cal_stress_nl(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
+        const bool occ,
         const FPTYPE* d_ekb,
         const FPTYPE* qq_nt,
         const thrust::complex<FPTYPE> *deeq_nc,
@@ -280,7 +292,15 @@ __global__ void cal_stress_nl(
     }
 
     FPTYPE stress_var = 0;
-    const FPTYPE fac = d_wg[ib];
+    FPTYPE fac;
+    if (occ)
+    {
+        fac = d_wg[ib];
+    }
+    else
+    {
+        fac = d_wg[0];
+    }
     FPTYPE ekb_now = 0.0;
     if (d_ekb != nullptr)
     {
@@ -333,6 +353,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int* atom_nh,
                                                                    const int* atom_na,
                                                                    const FPTYPE* d_wg,
+                                                                   const bool& occ,
                                                                    const FPTYPE* d_ekb,
                                                                    const FPTYPE* qq_nt,
                                                                    const std::complex<FPTYPE>* deeq_nc,
@@ -351,6 +372,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              atom_nh,
              atom_na,
              d_wg,
+             occ,
              d_ekb,
              qq_nt,
              reinterpret_cast<const thrust::complex<FPTYPE>*>(deeq_nc),

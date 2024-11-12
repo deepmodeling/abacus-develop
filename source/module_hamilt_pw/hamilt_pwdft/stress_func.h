@@ -207,10 +207,11 @@ class Stress_Func
                 const ModuleBase::matrix& dylmk0,
                 std::complex<FPTYPE>* dqg);
 
-  private:
+  protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+  private:
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;

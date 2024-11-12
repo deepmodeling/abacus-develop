@@ -72,6 +72,7 @@ struct cal_stress_nl_op
     /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
     /// @param d_wg - input parameter wg
+    /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
@@ -94,6 +95,7 @@ struct cal_stress_nl_op
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -113,6 +115,7 @@ struct cal_stress_nl_op
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,

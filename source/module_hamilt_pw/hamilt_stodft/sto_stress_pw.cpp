@@ -5,6 +5,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
@@ -17,7 +18,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                const psi::Psi<complex<FPTYPE>, Device>& psi_in,
                                                const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                                                const Charge* const chr,
-                                               pseudopot_cell_vnl* nlpp_in,
+                                               pseudopot_cell_vnl* nlpp,
                                                const UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
@@ -56,7 +57,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_cc(sigmaxcc, rho_basis, p_sf, true, chr);
 
     // nonlocal
-    this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, psi_in, stowf, nlpp_in);
+    this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);
 
     for (int ipol = 0; ipol < 3; ++ipol)
     {
@@ -224,267 +225,92 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
                                                   ModuleSymmetry::Symmetry* p_symm,
                                                   K_Vectors* p_kv,
                                                   ModulePW::PW_Basis_K* wfc_basis,
-                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi,
-                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
-                                                  pseudopot_cell_vnl* nlpp_in)
+                                                  const pseudopot_cell_vnl& nlpp,
+                                                  const UnitCell& ucell,
+                                                  const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
+                                                  const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
     ModuleBase::TITLE("Sto_Stress_Func", "stres_nl");
-    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
-
-    this->nlpp = nlpp_in;
-    const int nkb = this->nlpp->nkb;
+    const int nkb = nlpp.nkb;
     if (nkb == 0)
     {
-        ModuleBase::timer::tick("Stress_Func", "stres_nl");
         return;
     }
 
-    ModuleBase::matrix sigmanlc(3, 3, true);
+    ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
+
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
-    int nksbands = psi.get_nbands();
+    int nksbands = psi_in.get_nbands();
     if (GlobalV::MY_STOGROUP != 0)
     {
         nksbands = 0;
     }
 
-    // vkb1: |Beta(nkb,npw)><Beta(nkb,npw)|psi(nbnd,npw)>
-    ModuleBase::ComplexMatrix vkb1(nkb, npwx);
-    ModuleBase::ComplexMatrix vkb0[3];
-    for (int i = 0; i < 3; ++i)
-    {
-        vkb0[i].create(nkb, npwx);
-    }
-    ModuleBase::ComplexMatrix vkb2(nkb, npwx);
+    // allocate memory for the stress
+    FPTYPE* stress_device = nullptr;
+    resmem_var_op()(this->ctx, stress_device, 9);
+    setmem_var_op()(this->ctx, stress_device, 0, 9);
+    std::vector<FPTYPE> sigmanlc(9, 0.0);
+
+    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
 
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
-        const int nstobands = stowf.nchip[ik];
-        const int nbandstot = nstobands + nksbands;
-        const int npw = p_kv->ngk[ik];
-        // dbecp: conj( -iG * <Beta(nkb,npw)|psi(nbnd,npw)> )
-        ModuleBase::ComplexMatrix dbecp(nbandstot, nkb);
-        ModuleBase::ComplexMatrix becp(nbandstot, nkb);
-
-        const int current_spin = p_kv->isk[ik];
-        // generate vkb
-        if (this->nlpp->nkb > 0)
+        const int nstobands = nchip[ik];
+        const int mixbands = nstobands + nksbands;
+        const int npw = wfc_basis->npwk[ik];
+        nl_tools.cal_vkb(ik, mixbands);
+        // calculate becp = <psi|beta> for all beta functions
+        nl_tools.cal_becp(ik, nksbands, &psi_in(ik,0,0), 0);
+        nl_tools.cal_becp(ik, nstobands, &stowf.shchi[0](ik,0,0), nksbands);
+        nl_tools.reduce_pool_becp(mixbands);
+        // calculate dbecp = <psi|d(beta)/dR> for all beta functions
+        // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
+        for (int ipol = 0; ipol < 3; ipol++)
         {
-            this->nlpp->getvnl(ik, this->nlpp->vkb);
-        }
-
-        // get becp according to wave functions and vkb
-        // important here ! becp must set zero!!
-        // vkb: Beta(nkb,npw)
-        // becp(nkb,nbnd): <Beta(nkb,npw)|psi(nbnd,npw)>
-        becp.zero_out();
-        char transa = 'C';
-        char transb = 'N';
-        psi.fix_k(ik);
-        stowf.shchi->fix_k(ik);
-        // KS orbitals
-        int npmks = PARAM.globalv.npol * nksbands;
-        zgemm_(&transa,
-               &transb,
-               &nkb,
-               &npmks,
-               &npw,
-               &ModuleBase::ONE,
-               this->nlpp->vkb.c,
-               &npwx,
-               psi.get_pointer(),
-               &npwx,
-               &ModuleBase::ZERO,
-               becp.c,
-               &nkb);
-        // stochastic orbitals
-        int npmsto = PARAM.globalv.npol * nstobands;
-        zgemm_(&transa,
-               &transb,
-               &nkb,
-               &npmsto,
-               &npw,
-               &ModuleBase::ONE,
-               this->nlpp->vkb.c,
-               &npwx,
-               stowf.shchi->get_pointer(),
-               &npwx,
-               &ModuleBase::ZERO,
-               &becp(nksbands, 0),
-               &nkb);
-
-        Parallel_Reduce::reduce_pool(becp.c, becp.size);
-
-        for (int i = 0; i < 3; ++i)
-        {
-            this->get_dvnl1(vkb0[i], ik, i, p_sf, wfc_basis);
-        }
-
-        this->get_dvnl2(vkb2, ik, p_sf, wfc_basis);
-
-        ModuleBase::Vector3<double> qvec;
-        double* qvec0[3];
-        qvec0[0] = &(qvec.x);
-        qvec0[1] = &(qvec.y);
-        qvec0[2] = &(qvec.z);
-
-        for (int ipol = 0; ipol < 3; ++ipol)
-        {
-            for (int jpol = 0; jpol < ipol + 1; ++jpol)
+            for (int jpol = 0; jpol <= ipol; jpol++)
             {
-                dbecp.zero_out();
-                vkb1.zero_out();
-                for (int i = 0; i < nkb; ++i)
-                {
-                    std::complex<double>* pvkb0i = &vkb0[ipol](i, 0);
-                    std::complex<double>* pvkb0j = &vkb0[jpol](i, 0);
-                    std::complex<double>* pvkb1 = &vkb1(i, 0);
-                    // third term of dbecp_noevc
-                    for (int ig = 0; ig < npw; ++ig)
-                    {
-                        qvec = wfc_basis->getgpluskcar(ik, ig);
-                        pvkb1[ig] += 0.5 * qvec0[ipol][0] * pvkb0j[ig] + 0.5 * qvec0[jpol][0] * pvkb0i[ig];
-                    } // end ig
-                }     // end nkb
+                nl_tools.cal_vkb_deri_s(ik, mixbands, ipol, jpol);
+                nl_tools.cal_dbecp_s(ik, nksbands, &psi_in(ik,0,0), 0);
+                nl_tools.cal_dbecp_s(ik, nstobands, &stowf.shchi[0](ik,0,0), nksbands);
+                nl_tools.cal_stress(ik, nksbands, true, ipol, jpol, stress_device, 0);
+                nl_tools.cal_stress(ik, nstobands, false, ipol, jpol, stress_device, nksbands);
+            }
+        }
 
-                ModuleBase::ComplexMatrix dbecp_noevc(nkb, npwx, true);
-                for (int i = 0; i < nkb; ++i)
-                {
-                    std::complex<double>* pdbecp_noevc = &dbecp_noevc(i, 0);
-                    std::complex<double>* pvkb = &vkb1(i, 0);
-                    // first term
-                    for (int ig = 0; ig < npw; ++ig)
-                    {
-                        pdbecp_noevc[ig] -= 2.0 * pvkb[ig];
-                    }
-                    // second termi
-                    if (ipol == jpol)
-                    {
-                        pvkb = &this->nlpp->vkb(i, 0);
-                        for (int ig = 0; ig < npw; ++ig)
-                        {
-                            pdbecp_noevc[ig] -= pvkb[ig];
-                        }
-                    }
-                    // third term
-                    pvkb = &vkb2(i, 0);
-                    for (int ig = 0; ig < npw; ++ig)
-                    {
-                        qvec = wfc_basis->getgpluskcar(ik, ig);
-                        double qm1;
-                        if (qvec.norm2() > 1e-16)
-                        {
-                            qm1 = 1.0 / qvec.norm();
-                        }
-                        else
-                        {
-                            qm1 = 0;
-                        }
-                        pdbecp_noevc[ig] -= 2.0 * pvkb[ig] * qvec0[ipol][0] * qvec0[jpol][0] * qm1 * this->ucell->tpiba;
-                    } // end ig
-                }     // end i
+    }
 
-                //              //KS orbitals
-                zgemm_(&transa,
-                       &transb,
-                       &nkb,
-                       &npmks,
-                       &npw,
-                       &ModuleBase::ONE,
-                       dbecp_noevc.c,
-                       &npwx,
-                       psi.get_pointer(),
-                       &npwx,
-                       &ModuleBase::ZERO,
-                       dbecp.c,
-                       &nkb);
-                // stochastic orbitals
-                zgemm_(&transa,
-                       &transb,
-                       &nkb,
-                       &npmsto,
-                       &npw,
-                       &ModuleBase::ONE,
-                       dbecp_noevc.c,
-                       &npwx,
-                       stowf.shchi->get_pointer(),
-                       &npwx,
-                       &ModuleBase::ZERO,
-                       &dbecp(nksbands, 0),
-                       &nkb);
-
-                for (int ib = 0; ib < nbandstot; ++ib)
-                {
-                    double fac;
-                    if (ib < nksbands)
-                    {
-                        fac = wg(ik, ib);
-                    }
-                    else
-                    {
-                        fac = p_kv->wk[ik];
-                    }
-                    int iat = 0;
-                    int sum = 0;
-                    for (int it = 0; it < this->ucell->ntype; ++it)
-                    {
-                        const int Nprojs = this->ucell->atoms[it].ncpp.nh;
-                        for (int ia = 0; ia < this->ucell->atoms[it].na; ++ia)
-                        {
-                            for (int ip = 0; ip < Nprojs; ++ip)
-                            {
-                                double ps = this->nlpp->deeq(current_spin, iat, ip, ip);
-                                const int inkb = sum + ip;
-                                // out<<"\n ps = "<<ps;
-
-                                const double dbb = (conj(dbecp(ib, inkb)) * becp(ib, inkb)).real();
-                                sigmanlc(ipol, jpol) -= ps * fac * dbb;
-
-                            } // end ip
-                            ++iat;
-                            sum += Nprojs;
-                        } // ia
-                    }     // end it
-                }         // end band
-            }             // end jpol
-        }                 // end ipol
-    }                     // end ik
-
-    for (int l = 0; l < 3; ++l)
+    // transfer stress from device to host
+    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, sigmanlc.data(), stress_device, 9);
+    delmem_var_op()(this->ctx, stress_device);
+    // sum up forcenl from all processors
+    for (int l = 0; l < 3; l++)
     {
-        for (int m = 0; m < 3; ++m)
+        for (int m = 0; m < 3; m++)
         {
             if (m > l)
             {
-                sigmanlc(l, m) = sigmanlc(m, l);
+                sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
             }
         }
     }
     // sum up forcenl from all processors
-    Parallel_Reduce::reduce_all(sigmanlc.c, 9);
+    Parallel_Reduce::reduce_all(sigmanlc.data(), 9);
 
     for (int ipol = 0; ipol < 3; ++ipol)
     {
         for (int jpol = 0; jpol < 3; ++jpol)
         {
-            sigmanlc(ipol, jpol) *= 1.0 / this->ucell->omega;
-        }
-    }
-
-    for (int ipol = 0; ipol < 3; ++ipol)
-    {
-        for (int jpol = 0; jpol < 3; ++jpol)
-        {
-            sigma(ipol, jpol) = sigmanlc(ipol, jpol);
+            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol] / ucell.omega;
         }
     }
     // do symmetry
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        p_symm->symmetrize_mat3(sigma, this->ucell->lat);
+        p_symm->symmetrize_mat3(sigma, ucell.lat);
     }
 
-    //  this->print(ofs_running, "nonlocal stress", stresnl);
     ModuleBase::timer::tick("Sto_Stress_Func", "stres_nl");
     return;
 }

@@ -43,8 +43,14 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                        ModuleSymmetry::Symmetry* p_symm,
                        K_Vectors* p_kv,
                        ModulePW::PW_Basis_K* wfc_basis,
-                       const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
-                       const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
-                       pseudopot_cell_vnl* nlpp_in);
+                       const pseudopot_cell_vnl& nlpp,
+                       const UnitCell& ucell,
+                       const psi::Psi<std::complex<FPTYPE>, Device>& psi,
+                       const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
+  private:
+    using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<FPTYPE, Device>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, Device>;
 };
 #endif
