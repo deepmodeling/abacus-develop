@@ -32,11 +32,11 @@ case "${with_intelmpi}" in
   __SYSTEM__)
     echo "==================== Finding Intel MPI from system paths ===================="
     check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
+    if [ "${intel_classic}" = "yes" ]; then
+    # if intel compiler used as classic, so as intelmpi
+        export intelmpi_classic="yes"
+    fi
     if [ "${with_intel}" != "__DONTUSE__" ]; then
-        if [ "${intel_classic}" = "yes" ]; then
-        # if intel compiler used as classic, so as intelmpi
-            export ${intel_classic}="yes"
-        fi
         if [ "${intelmpi_classic}" = "yes" ]; then
             check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
             check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
@@ -44,7 +44,7 @@ case "${with_intelmpi}" in
         else
             check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
             check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
-            if [ "${with_ifx}" = "yes" ]; then
+            if [ "${with_ifx}" == "yes" ]; then
                 check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
             else
                 check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
@@ -93,7 +93,7 @@ case "${with_intelmpi}" in
     MPIFORT="${MPIFC}"
     MPIF77="${MPIFC}"
     # include path is already handled by compiler wrapper scripts (can cause wrong mpi.mod with GNU Fortran)
-    #INTELMPI_CFLAGS="-I'${pkg_install_dir}/include'"
+    INTELMPI_CFLAGS="-I'${pkg_install_dir}/include'"
     INTELMPI_LDFLAGS="-L'${pkg_install_dir}/lib' -Wl,-rpath,'${pkg_install_dir}/lib'"
     ;;
 esac
@@ -105,7 +105,11 @@ if [ "${with_intelmpi}" != "__DONTUSE__" ]; then
   else
     I_MPI_CXX="icpx"
     I_MPI_CC="icx"
-    I_MPI_FC="ifort"
+    if [ "${with_ifx}" = "yes" ]; then
+      I_MPI_FC="ifx"
+    else
+      I_MPI_FC="ifort"
+    fi
   fi
   INTELMPI_LIBS="-lmpi -lmpicxx"
   echo "I_MPI_CXX is ${I_MPI_CXX}"

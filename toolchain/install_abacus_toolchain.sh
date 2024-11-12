@@ -154,8 +154,6 @@ The --with-PKG options follow the rules:
                           Default = system
   --with-intel-classic    Use the classic Intel compiler (icc, icpc, ifort) to compile ABACUS.
                           Default = no
-  --with-intelmpi-classic Use the classic Intelmpi compiler (mpiicc, mpiicpc and mpiifort)
-                          Default = no
   --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
   --with-cmake            Cmake utilities
@@ -170,6 +168,8 @@ The --with-PKG options follow the rules:
   --with-intelmpi         Intel MPI, MPI library like OpenMPI. one should
                           use only one of OpenMPI, MPICH or Intel MPI.
                           Default = system
+  --with-intelmpi-classic Use the classic Intelmpi compiler (mpiicc, mpiicpc and mpiifort)
+                          Default = no
   --with-libxc            libxc, exchange-correlation library. Needed for
                           QuickStep DFT and hybrid calculations.
                           Default = install
