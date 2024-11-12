@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 pseudo_dir              ../../../tests/PP_ORB
 orbital_dir             ../../../tests/PP_ORB
 ntype                   1
-ecutwfc                 50
+ecutwfc                  60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 nbands                  12
 calculation             nscf
 scf_nmax                50
@@ -16,3 +16,6 @@ wannier_method 1
 nnkpfile                diamond.nnkp
 basis_type		lcao
 
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

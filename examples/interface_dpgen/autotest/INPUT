@@ -3,19 +3,22 @@ INPUT_PARAMETERS
 calculation         cell-relax
 pseudo_rcut         10.0
 pseudo_mesh         1
-ecutwfc             50
+ecutwfc              60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 basis_type          lcao
 ks_solver           genelpa
 smearing_method     gaussian
-smearing_sigma      0.01
+smearing_sigma      0.015
 mixing_type         broyden
 mixing_beta         0.7
 scf_nmax            100
 scf_thr             1e-08
-kspacing            0.04
+kspacing            0.04 ### Abacus will generate KPT file when kspacing is used.
 relax_nmax          100
 cal_force           1
 force_thr           0.001
 cal_stress          1
 stress_thr          0.01
 out_stru            1
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
