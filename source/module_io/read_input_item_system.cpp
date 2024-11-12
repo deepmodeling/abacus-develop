@@ -107,7 +107,7 @@ void ReadInput::item_system()
     }
     {
         Input_Item item("esolver_type");
-        item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp";
+        item.annotation = "the energy solver: ksdft, sdft, ofdft, tddft, lj, dp, ks-lr, lr";
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
@@ -124,6 +124,12 @@ void ReadInput::item_system()
                 }
             }
         };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.esolver_type == "lr" && para.input.calculation == "scf")
+            {   // for LR-only calculation based on the ground-state, set calculation to "nscf"
+                para.input.calculation = "nscf";
+            }
+            };
         this->add_item(item);
     }
     {

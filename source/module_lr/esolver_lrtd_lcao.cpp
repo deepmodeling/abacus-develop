@@ -46,28 +46,6 @@ void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<d
 template<>void LR::ESolver_LR<double>::set_gint() { this->gint_ = &this->gint_g_;this->gint_g_.gridt = &this->gt_; }
 template<>void LR::ESolver_LR<std::complex<double>>::set_gint() { this->gint_ = &this->gint_k_; this->gint_k_.gridt = &this->gt_; }
 
-inline double getreal(std::complex<double> x) { return x.real(); }
-inline double getreal(double x) { return x; }
-
-inline void redirect_log(const bool& out_alllog)
-{
-    GlobalV::ofs_running.close();
-    std::stringstream   ss;
-    if (out_alllog)
-    {
-        ss << PARAM.globalv.global_out_dir << "running_lr_" << GlobalV::MY_RANK + 1 << ".log";
-        GlobalV::ofs_running.open(ss.str());
-    }
-    else
-    {
-        if (GlobalV::MY_RANK == 0)
-        {
-            ss << PARAM.globalv.global_out_dir << "running_lr.log";
-            GlobalV::ofs_running.open(ss.str());
-        }
-    }
-}
-
 inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 {   // only for nspin=2
     const int& nk = wg.nr / 2;
@@ -155,7 +133,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     , exx_info(GlobalC::exx_info)
 #endif
 {
-    redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
 
     if (this->input.lr_solver == "spectrum") {
@@ -259,7 +236,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 , exx_info(GlobalC::exx_info)
 #endif
 {
-    redirect_log(inp.out_alllog);
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
     this->xc_kernel = inp.xc_kernel;
@@ -431,6 +407,7 @@ template <typename T, typename TR>
 void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 {
     ModuleBase::TITLE("ESolver_LR", "runner");
+    ModuleBase::timer::tick("ESolver_LR", "runner");
     //allocate 2-particle state and setup 2d division
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
@@ -494,6 +471,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
             for (int is = 0;is < nspin;++is) { read_states(spin_types[is], this->pelec->ekb.c + is * nstates, this->X[is].template data<T>(), nloc_per_band, nstates); }
         }
     }
+    ModuleBase::timer::tick("ESolver_LR", "runner");
     return;
 }
 
