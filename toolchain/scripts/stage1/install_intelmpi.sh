@@ -42,8 +42,8 @@ case "${with_intelmpi}" in
             check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
             check_command mpiifort "intelmpi" && MPIFC="$(realpath $(command -v mpiifort))" || exit 1
         else
-            check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
-            check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
+            check_command mpiicx "intelmpi" && MPICC="$(realpath $(command -v mpiicx))" || exit 1
+            check_command mpiicpx "intelmpi" && MPICXX="$(realpath $(command -v mpiicpx))" || exit 1
             if [ "${with_ifx}" == "yes" ]; then
                 check_command mpiifx "intelmpi" && MPIFC="$(realpath $(command -v mpiifx))" || exit 1
             else
