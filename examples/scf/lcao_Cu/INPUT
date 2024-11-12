@@ -4,7 +4,7 @@ orbital_dir                 ../../../tests/PP_ORB
 nbands		10
 
 calculation	scf
-ecutwfc		100
+ecutwfc		100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr		1.0e-8
 scf_nmax	100
 
@@ -16,3 +16,6 @@ mixing_beta	0.4
 
 basis_type	lcao
 gamma_only	0
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

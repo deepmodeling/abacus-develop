@@ -247,7 +247,7 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 #endif
 
     this->pw_wfc->ft.fft_mode = inp.fft_mode;
-
+    this->pw_wfc->fft_bundle.initfftmode(inp.fft_mode);
     this->pw_wfc->setuptransform();
 
     //! 9) initialize the number of plane waves for each k point

@@ -7,7 +7,7 @@ pseudo_dir ../../../tests/PP_ORB
 orbital_dir ../../../tests/PP_ORB
 
 calculation    scf
-ecutwfc    100
+ecutwfc    100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr    1.0e-6
 scf_nmax    200
 
@@ -31,3 +31,6 @@ hubbard_u    5.0 5.0 0.0
 out_bandgap 1
 out_chg 1
 out_mul 1
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

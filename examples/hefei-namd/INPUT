@@ -7,7 +7,7 @@ INPUT_PARAMETERS
  calculation     md
 
  #Parameters (Accuracy)
- ecutwfc			50
+ ecutwfc			 60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
  scf_nmax			20
 
  basis_type		lcao
@@ -29,9 +29,12 @@ INPUT_PARAMETERS
 
  read_file_dir   ./
 
- gamma_only       1
+ gamma_only       1 ### Abacus will generate KPT file when gamma_only=1.
 
  out_wfc_lcao     1
  out_mat_hs           1
  cal_syns	1
  dmax		0.01
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

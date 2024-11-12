@@ -3,14 +3,17 @@ INPUT_PARAMETERS
 pseudo_dir		../../../tests/PP_ORB
 orbital_dir			../../../tests/PP_ORB
 #Parameters (Accuracy)
-ecutwfc			50
+ecutwfc			 60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_nmax		100
 scf_thr                 1e-6
 basis_type		lcao
 
 smearing_method gaussian
-smearing_sigma 0.01
+smearing_sigma 0.015
 mixing_type broyden
 mixing_beta 0.4
 
 out_pot 		2
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

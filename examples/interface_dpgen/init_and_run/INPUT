@@ -6,7 +6,7 @@ symmetry		1
 pseudo_dir      ./
 
 #Parameters (2.Iteration)
-ecutwfc			40
+ecutwfc			 60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr				1e-6
 scf_nmax			100
 
@@ -16,9 +16,14 @@ basis_type		pw
 
 #Parameters (4.Smearing)
 smearing_method		gauss
-smearing_sigma			0.002
+smearing_sigma			0.015
 
 #Parameters (5.Mixing)
 mixing_type	    broyden 
 mixing_beta		0.7
 
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

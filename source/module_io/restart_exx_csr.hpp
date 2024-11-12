@@ -3,6 +3,7 @@
 #include "module_cell/unitcell.h"
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
+#include "module_ri/serialization_cereal.h"
 #include <RI/global/Tensor.h>
 #include <map>
 
@@ -47,6 +48,18 @@ namespace ModuleIO
                 }
             }
         }
+    }
+
+    template<typename Tdata>
+    void read_Hexxs_cereal(const std::string& file_name, 
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
+    {
+        ModuleBase::TITLE("Exx_LRI", "read_Hexxs_cereal");
+        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
+        std::ifstream ifs(file_name, std::ios::binary);
+        cereal::BinaryInputArchive iar(ifs);
+        iar(Hexxs);
+        ModuleBase::timer::tick("Exx_LRI", "read_Hexxs_cereal");
     }
 
     template<typename Tdata>

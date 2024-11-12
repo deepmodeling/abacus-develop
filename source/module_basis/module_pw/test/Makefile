@@ -2,7 +2,7 @@
 # Please set
 # e.g. make CXX=mpiicpc or make CXX=icpc
 #======================================================================
-CXX = mpiicpc
+CXX = mpiicpx
 # mpiicpc:   compile intel parallel version
 # icpc:      compile intel sequential version
 # mpicxx:    compile gnu parallel version
@@ -25,7 +25,7 @@ GTEST_DIR = /home/qianrui/gnucompile/g_gtest
 # Compiler information 
 #==========================
 HONG = -D__NORMAL
-INCLUDES = -I. -I../../../
+INCLUDES = -I. -I../../../ -I../../../module_base/module_container
 LIBS = 
 OPTS = -Ofast -march=native -std=c++11 -m64  ${INCLUDES}
 OBJ_DIR = obj
@@ -103,7 +103,10 @@ GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread
 #==========================
 VPATH=../../../module_base\
 ../../../module_base/module_device\
-:../
+../../../module_base/module_container/ATen/core\
+../../../module_base/module_container/ATen\
+../../../module_parameter\
+../\
 
 MATH_OBJS0=matrix.o\
 matrix3.o\
@@ -123,7 +126,12 @@ pw_basis_sup.o\
 pw_transform_k.o\
 memory.o\
 memory_op.o\
-depend_mock.o
+depend_mock.o\
+parameter.o\
+fft_base.o\
+fft_bundle.o\
+fft_cpu.o\
+
 
 OTHER_OBJS0=
 

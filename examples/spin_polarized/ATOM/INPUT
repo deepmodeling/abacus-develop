@@ -16,18 +16,18 @@ orbital_dir             ../../../tests/PP_ORB
 
 #Parameters (2.Iteration)
 calculation             scf # scf relax cell-relax md
-ecutwfc                 60   # Rydberg, with pseudopot, lcao use pw for inner part
+ecutwfc                 60   # Rydberg, with pseudopot, lcao use pw for inner part ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                 1e-7  # drho, Rydberg
 scf_nmax                100
 
 #Parameters (3.Basis)
 basis_type              lcao  # lcao or pw
-# kspacing              0.25 # replace KPT
+# kspacing              0.25 # replace KPT ### Abacus will generate KPT file when kspacing is used.
 gamma_only            1  # 0/1, replace KPT
 
 #Parameters (4.Smearing)
 smearing_method         gau    # mp/gau/fd/fixed, mp for metal gau for semicon
-smearing_sigma          0.001  # Rydberg, 0.002 for mp 0.001 for gau
+smearing_sigma          0.015
 
 #Parameters (5.Mixing)
 mixing_type             broyden  # pulay/broyden
@@ -53,3 +53,6 @@ out_mul            1  # print Mulliken charge and mag of atom in mulliken.txt
 # restart setting
 # restart_save       auto  # false, auto, other
 # restart_load       false
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

@@ -9,7 +9,7 @@ pseudo_dir          ./
 calculation         relax
 
 #Parameters (3.PW)
-ecutwfc             200
+ecutwfc             200 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                 1e-8
 scf_nmax		    100
 
@@ -27,3 +27,6 @@ smearing_sigma               0.02
 
 cal_stress 1
 stress_thr         1e-6
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

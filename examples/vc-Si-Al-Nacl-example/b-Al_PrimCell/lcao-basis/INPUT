@@ -22,7 +22,7 @@ stress_thr          0.000001
 smearing_method            gaussian
 smearing_sigma             0.02
 #Parameters (3.PW)
-ecutwfc             50
+ecutwfc              60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                 1e-8
 scf_nmax               100
 
@@ -38,3 +38,6 @@ basis_type          lcao
 mixing_beta         0.4
 
 #init_wfc random
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
