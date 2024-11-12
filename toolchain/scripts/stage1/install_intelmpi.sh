@@ -33,6 +33,10 @@ case "${with_intelmpi}" in
     echo "==================== Finding Intel MPI from system paths ===================="
     check_command mpiexec "intelmpi" && MPIRUN="$(realpath $(command -v mpiexec))"
     if [ "${with_intel}" != "__DONTUSE__" ]; then
+        if [ "${intel_classic}" = "yes" ]; then
+        # if intel compiler used as classic, so as intelmpi
+            export ${intel_classic}="yes"
+        fi
         if [ "${intelmpi_classic}" = "yes" ]; then
             check_command mpiicc "intelmpi" && MPICC="$(realpath $(command -v mpiicc))" || exit 1
             check_command mpiicpc "intelmpi" && MPICXX="$(realpath $(command -v mpiicpc))" || exit 1
