@@ -1,4 +1,5 @@
 #include "module_base/module_device/memory_op.h"
+#include "module_base/memory.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
@@ -61,6 +62,20 @@ void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
         delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(dev, arr);
     }
     cudaErrcheck(cudaMalloc((void**)&arr, sizeof(FPTYPE) * size));
+    std::string record_string;
+    if (record_in != nullptr)
+    {
+        record_string = record_in;
+    }
+    else
+    {
+        record_string = "no_record";
+    }
+
+    if (record_string != "no_record")
+    {
+        ModuleBase::Memory::record_gpu(record_string, sizeof(FPTYPE) * size);
+    }
 }
 
 template <typename FPTYPE>
