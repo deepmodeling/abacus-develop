@@ -165,8 +165,9 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int ite
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
+            bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, false);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, skip_charge);
         }
     }
 

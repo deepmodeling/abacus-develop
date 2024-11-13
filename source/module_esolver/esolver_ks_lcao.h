@@ -39,8 +39,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void after_all_runners() override;
 
-    void nscf() override;
-
     void get_S();
 
     void cal_mag(const int istep, const bool print = false);

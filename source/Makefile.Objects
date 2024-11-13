@@ -245,10 +245,8 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    pw_fun.o\
     pw_init_after_vc.o\
     pw_init_globalc.o\
-    pw_nscf.o\
     pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
@@ -259,7 +257,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       set_matrix_grid.o\
       lcao_before_scf.o\
       lcao_gets.o\
-      lcao_nscf.o\
       lcao_others.o\
       lcao_init_after_vc.o\
       lcao_fun.o\

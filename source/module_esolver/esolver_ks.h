@@ -49,9 +49,6 @@ class ESolver_KS : public ESolver_FP
     // calculate electron density from a specific Hamiltonian with ethr
     virtual void hamilt2density_single(const int istep, const int iter, const double ethr);
 
-    // calculate electron states from a specific Hamiltonian
-    virtual void hamilt2estates(const double ethr) {};
-
     // calculate electron density from a specific Hamiltonian
     void hamilt2density(const int istep, const int iter, const double ethr);
 

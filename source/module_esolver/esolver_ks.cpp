@@ -402,7 +402,7 @@ void ESolver_KS<T, Device>::hamilt2density(const int istep, const int iter, cons
 
         drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
         hsolver_error = 0.0;
-        if (iter == 1)
+        if (iter == 1 && PARAM.inp.calculation != "nscf")
         {
             hsolver_error
                 = hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
@@ -472,13 +472,10 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
+    // 4) SCF iterations
     this->conv_esolver = false;
     this->niter = this->maxniter;
-
-    // 4) SCF iterations
     this->diag_ethr = PARAM.inp.pw_diag_thr;
-
-    std::cout << " * * * * * *\n << Start SCF iteration." << std::endl;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
         // 6) initialization of SCF iterations
@@ -500,7 +497,6 @@ void ESolver_KS<T, Device>::runner(const int istep, UnitCell& ucell)
             break;
         }
     } // end scf iterations
-    std::cout << " >> Leave SCF iteration.\n * * * * * *" << std::endl;
 
     // 15) after scf
     ModuleBase::timer::tick(this->classname, "after_scf");
@@ -632,7 +628,7 @@ void ESolver_KS<T, Device>::iter_finish(const int istep, int& iter)
 
         // If drho < hsolver_error in the first iter or drho < scf_thr, we
         // do not change rho.
-        if (drho < hsolver_error || this->conv_esolver)
+        if (drho < hsolver_error || this->conv_esolver || PARAM.inp.calculation == "nscf")
         {
             if (drho < hsolver_error)
             {

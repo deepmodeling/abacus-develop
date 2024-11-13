@@ -391,36 +391,3 @@ TEST_F(ElecStatePrintTest, PrintEtotColorS4)
     GlobalV::MY_RANK = 0;
     elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print);
 }
-
-// TEST_F(ElecStatePrintTest, PrintEtotWarning)
-// {
-//     GlobalV::ofs_running.open("test.dat", std::ios::out);
-//     bool converged = false;
-//     int iter = 1;
-//     double scf_thr = 0.1;
-//     double scf_thr_kin = 0.0;
-//     double duration = 2.0;
-//     int printe = 0;
-//     double pw_diag_thr = 0.1;
-//     int avg_iter = 2;
-//     bool print = true;
-//     elecstate.charge = new Charge;
-//     elecstate.charge->nrxx = 100;
-//     elecstate.charge->nxyz = 1000;
-//     PARAM.input.imp_sol = true;
-//     PARAM.input.efield_flag = true;
-//     PARAM.input.gate_flag = true;
-//     PARAM.sys.two_fermi = false;
-//     PARAM.input.out_bandgap = true;
-//     GlobalV::MY_RANK = 0;
-//     PARAM.input.basis_type = "pw";
-//     PARAM.input.scf_nmax = 100;
-//     elecstate::tmp_ks_solver = "unknown";
-//     testing::internal::CaptureStdout();
-//     EXPECT_EXIT(elecstate.print_etot(converged, iter, scf_thr, scf_thr_kin, duration, printe, pw_diag_thr, avg_iter, print), ::testing::ExitedWithCode(0), "");
-//     output = testing::internal::GetCapturedStdout();
-//     EXPECT_THAT(output, testing::HasSubstr("print_etot found unknown ks_solver_type"));
-//     GlobalV::ofs_running.close();
-//     delete elecstate.charge;
-//     std::remove("test.dat");
-// }

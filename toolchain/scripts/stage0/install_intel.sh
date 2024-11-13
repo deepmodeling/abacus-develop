@@ -3,7 +3,7 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2024-0811
+# Last Update in 2024-1112
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=${0}
 SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_NAME}")/.." && pwd -P)"
@@ -37,7 +37,11 @@ case "${with_intel}" in
     else
       check_command icx "intel" && CC="$(realpath $(command -v icx))" || exit 1
       check_command icpx "intel" && CXX="$(realpath $(command -v icpx))" || exit 1
-      check_command ifort "intel" && FC="$(realpath $(command -v ifort))" || exit 1
+      if [ "${with_ifx}" = "yes" ]; then
+        check_command ifx "intel" && FC="$(realpath $(command -v ifx))" || exit 1
+      else
+        check_command ifort "intel" && FC="$(realpath $(command -v ifort))" || exit 1
+      fi
     fi
     F90="${FC}"
     F77="${FC}"
@@ -58,8 +62,11 @@ case "${with_intel}" in
     else
       check_command ${pkg_install_dir}/bin/icx "intel" && CC="${pkg_install_dir}/bin/icx" || exit 1
       check_command ${pkg_install_dir}/bin/icpx "intel" && CXX="${pkg_install_dir}/bin/icpx" || exit 1
-      check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
-      # is ifx needed ?
+      if [ "${with_ifx}" = "yes" ]; then
+        check_command ${pkg_install_dir}/bin/ifx "intel" && FC="${pkg_install_dir}/bin/ifx" || exit 1
+      else
+        check_command ${pkg_install_dir}/bin/ifort "intel" && FC="${pkg_install_dir}/bin/ifort" || exit 1
+      fi
     fi
     F90="${FC}"
     F77="${FC}"

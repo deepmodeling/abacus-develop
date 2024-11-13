@@ -31,7 +31,6 @@ and give setup files that you can use to compile ABACUS.
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
-- [ ] A better `setup` and toolchain code structure.
 - [ ] Modulefile generation scripts.
 - [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC`
 
@@ -54,9 +53,16 @@ There are also well-modified script to run *install_abacus_toolchain.sh* for `gn
 > ./toolchain_intel-mpich.sh
 ```
 
-It is recommended to run them first to get a fast installation of ABACUS under certain environments.
+It is recommended to run one of them first to get a fast installation of ABACUS under certain environments.
 
-If you have a fresh environments and you have `sudo` permission, you can use *install_requirements.sh* to install system libraries and dependencies needed by toolchain.
+If you are using Intel environments via Intel-OneAPI: please note:
+1. After version 2024.0, Intel classic compilers `icc` and `icpc` are not present, so as `ifort` after version 2025.0. Intel MPI compiler will also be updated to `mpiicx`, `mpiicpx` and `mpiifx`.
+2. toolchain will detect `icx`, `icpx`, `ifx`, `mpiicx`, `mpiicpx` and `mpiifx` as default compiler.
+3. Users can manually specify `--with-intel-classic=yes` to use Intel classic compiler in `toolchain*.sh`, or specify `--with-intel-mpi-clas=yes` to use Intel MPI classic compiler in `toolchain*.sh` while keep the CC, CXX and F90 compiler to new version.
+4. Users can manually specify `--with-ifx=no` in `toolchain*.sh` to use `ifort` while keep other compiler to new version. 
+5. More information is in the later part of this README.
+
+**Notice: You GCC version should be no lower than 5 !!!, larger than 7.3.0 is recommended**
 
 **Notice: You SHOULD `source` or `module load` related environments before use toolchain method for installation, espacially for `gcc` or `intel-oneAPI` !!!! for example, `module load mkl mpi icc compiler`**
 
@@ -64,9 +70,6 @@ If you have a fresh environments and you have `sudo` permission, you can use *in
 
 **Notice: If your server system already have libraries like `cmake`, `openmpi`, please change related setting in `toolchain*.sh` like `--with-cmake=system`**
 
-```shell
-> ./install_ABACUS_toolchain.sh
-```
 
 All packages will be downloaded from [cp2k-static/download](https://www.cp2k.org/static/downloads). by  `wget` , and will be detailedly compiled and installed in `install` directory by toolchain scripts, despite of:
 
@@ -198,6 +201,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 
 Notice: You CANNOT use `icpx` compiler for GPU version of ABACUS for now, see discussion here [#2906](https://github.com/deepmodeling/abacus-develop/issues/2906) and [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
+If you wants to use ABACUS GPU-LCAO by `cusolvermp` or `elpa`, please contact the coresponding developer, toolchain do not fully support them now.
 
 ### Shell problem
 
@@ -238,7 +242,9 @@ When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your
 
 After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
 
-### ELPA problem via Intel-oneAPI toolchain in AMD server
+### Intel-oneAPI problem
+
+#### ELPA problem via Intel-oneAPI toolchain in AMD server
 
 The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
 
@@ -246,7 +252,7 @@ The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually ch
 
 Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in website. See discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
 
-### Intel-oneAPI problem
+#### link problem in early 2023 version oneAPI
 
 Sometimes Intel-oneAPI have problem to link `mpirun`, 
 which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 

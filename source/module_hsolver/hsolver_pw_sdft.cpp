@@ -80,6 +80,12 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // prepare sqrt{f(\hat{H})}|\chi> to calculate density, force and stress
     stoiter.calHsqrtchi(stowf);
+
+    elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
+    if (GlobalV::MY_STOGROUP == 0)
+    {
+        pes_pw->calEBand();
+    }
     if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
@@ -87,7 +93,6 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     }
     //(5) calculate new charge density
     // calculate KS rho.
-    elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
     pes_pw->init_rho_data();
     if (nbands > 0)
     {

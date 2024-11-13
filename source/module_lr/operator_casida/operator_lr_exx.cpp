@@ -27,6 +27,9 @@ namespace LR
     void OperatorLREXX<double>::cal_DM_onebase(const int io, const int iv, const int ik) const
     {
         ModuleBase::TITLE("OperatorLREXX", "cal_DM_onebase");
+        // NOTICE: DM_onebase will be passed into `cal_energy` interface and conjugated by "zdotc". 
+        // So the formula should be the same as RHS. instead of LHS of the A-matrix, 
+        // i.e. c1v · conj(c2o) ·  e^{-ik(R2-R1)}
         assert(ik == 0);
         for (auto cell : this->BvK_cells)
         {
@@ -42,8 +45,12 @@ namespace LR
                             const int nw2 = aims_nbasis.empty() ? ucell.atoms[it2].nw : aims_nbasis[it2];
                             for (int iw1 = 0;iw1 < nw1;++iw1)
                                 for (int iw2 = 0;iw2 < nw2;++iw2)
-                                    if (this->pmat.in_this_processor(ucell.itiaiw2iwt(it1, ia1, iw1), ucell.itiaiw2iwt(it2, ia2, iw2)))
-                                        D2d(iw1, iw2) = this->psi_ks_full(ik, io, ucell.itiaiw2iwt(it1, ia1, iw1)) * this->psi_ks_full(ik, nocc + iv, ucell.itiaiw2iwt(it2, ia2, iw2));
+                                {
+                                    const int iwt1 = ucell.itiaiw2iwt(it1, ia1, iw1);
+                                    const int iwt2 = ucell.itiaiw2iwt(it2, ia2, iw2);
+                                    if (this->pmat.in_this_processor(iwt1, iwt2))
+                                        D2d(iw1, iw2) = this->psi_ks_full(ik, io, iwt1) * this->psi_ks_full(ik, nocc + iv, iwt2);
+                                }
                         }
         }
     }
@@ -52,6 +59,9 @@ namespace LR
     void OperatorLREXX<std::complex<double>>::cal_DM_onebase(const int io, const int iv, const int ik) const
     {
         ModuleBase::TITLE("OperatorLREXX", "cal_DM_onebase");
+        // NOTICE: DM_onebase will be passed into `cal_energy` interface and conjugated by "zdotc". 
+        // So the formula should be the same as RHS. instead of LHS of the A-matrix, 
+        // i.e. c1v · conj(c2o) ·  e^{-ik(R2-R1)}
         for (auto cell : this->BvK_cells)
         {
             std::complex<double> frac = RI::Global_Func::convert<std::complex<double>>(std::exp(
@@ -68,8 +78,12 @@ namespace LR
                             const int nw2 = aims_nbasis.empty() ? ucell.atoms[it2].nw : aims_nbasis[it2];
                             for (int iw1 = 0;iw1 < nw1;++iw1)
                                 for (int iw2 = 0;iw2 < nw2;++iw2)
-                                    if (this->pmat.in_this_processor(ucell.itiaiw2iwt(it1, ia1, iw1), ucell.itiaiw2iwt(it2, ia2, iw2)))
-                                        D2d(iw1, iw2) = frac * std::conj(this->psi_ks_full(ik, io, ucell.itiaiw2iwt(it1, ia1, iw1))) * this->psi_ks_full(ik, nocc + iv, ucell.itiaiw2iwt(it2, ia2, iw2));
+                                {
+                                    const int iwt1 = ucell.itiaiw2iwt(it1, ia1, iw1);
+                                    const int iwt2 = ucell.itiaiw2iwt(it2, ia2, iw2);
+                                    if (this->pmat.in_this_processor(iwt1, iwt2))
+                                        D2d(iw1, iw2) = frac * std::conj(this->psi_ks_full(ik, io, iwt2)) * this->psi_ks_full(ik, nocc + iv, iwt1);
+                                }
                         }
         }
     }
@@ -78,9 +92,6 @@ namespace LR
     void OperatorLREXX<T>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLREXX", "act");
-
-        const int& nk = this->kv.get_nks() / this->nspin;
-
         // convert parallel info to LibRI interfaces
         std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(this->pmat);
 
@@ -120,12 +131,12 @@ namespace LR
                 {
                     const int xstart_bk = ik * pX.get_local_size();
                     this->cal_DM_onebase(io, iv, ik);       //set Ds_onebase for all e-h pairs (not only on this processor)
-                    // LR_Util::print_CV(Ds_onebase[is], "Ds_onebase of occ " + std::to_string(io) + ", virtual " + std::to_string(iv) + " in OperatorLREXX", 1e-10);
+                    // LR_Util::print_CV(Ds_onebase, "Ds_onebase of occ " + std::to_string(io) + ", virtual " + std::to_string(iv) + " in OperatorLREXX", 1e-10);
                     const T& ene = 2 * alpha * //minus for exchange(but here plus is right, why?), 2 for Hartree to Ry
                         lri->exx_lri.post_2D.cal_energy(this->Ds_onebase, lri->Hexxs[0]);
                     if (this->pX.in_this_processor(iv, io))
                     {
-                        hpsi[xstart_bk + ik * pX.get_local_size() + this->pX.global2local_col(io) * this->pX.get_row_size() + this->pX.global2local_row(iv)] += ene;
+                        hpsi[xstart_bk + this->pX.global2local_col(io) * this->pX.get_row_size() + this->pX.global2local_row(iv)] += ene;
                     }
                 }
             }

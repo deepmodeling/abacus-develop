@@ -174,7 +174,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
     this->pelec->f_en.demet = 0.0;
     // choose if psi should be diag in subspace
     // be careful that istep start from 0 and iter start from 1
-    if (istep == 0 && iter == 1)
+    if (istep == 0 && iter == 1 || PARAM.inp.calculation == "nscf")
     {
         hsolver::DiagoIterAssist<T, Device>::need_subspace = false;
     }
@@ -183,8 +183,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
         hsolver::DiagoIterAssist<T, Device>::need_subspace = true;
     }
 
+    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
-
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
     // hsolver only exists in this function
@@ -206,7 +206,15 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace,
                                                            this->init_psi);
 
-    hsolver_pw_sdft_obj.solve(this->p_hamilt, this->kspw_psi[0], this->psi[0], this->pelec, this->pw_wfc, this->stowf, istep, iter, false);
+    hsolver_pw_sdft_obj.solve(this->p_hamilt,
+                              this->kspw_psi[0],
+                              this->psi[0],
+                              this->pelec,
+                              this->pw_wfc,
+                              this->stowf,
+                              istep,
+                              iter,
+                              skip_charge);
     this->init_psi = true;
 
     // set_diagethr need it
@@ -353,39 +361,8 @@ void ESolver_SDFT_PW<T, Device>::others(const int istep)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "others");
 
-    if (PARAM.inp.calculation == "nscf")
-    {
-        this->nscf();
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
-    }
+    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::others", "CALCULATION type not supported");
 
-    return;
-}
-
-template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::nscf()
-{
-    ModuleBase::TITLE("ESolver_SDFT_PW", "nscf");
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
-
-    const int istep = 0;
-
-    const int iter = 1;
-
-    const double diag_thr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
-
-    std::cout << " DIGA_THR          : " << diag_thr << std::endl;
-
-    this->before_scf(istep);
-
-    this->hamilt2density_single(istep, iter, diag_thr);
-
-    this->pelec->cal_energies(2);
-
-    ModuleBase::timer::tick("ESolver_SDFT_PW", "nscf");
     return;
 }
 

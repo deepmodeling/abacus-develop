@@ -126,6 +126,7 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
+        bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
         // It is not a good choice to overload another solve function here, this will spoil the concept of
         // multiple inheritance and polymorphism. But for now, we just do it in this way.
@@ -138,7 +139,7 @@ namespace ModuleESolver
         }
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0], false);
+        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0], skip_charge);
 
         // add exx
 #ifdef __EXX

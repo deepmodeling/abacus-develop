@@ -492,6 +492,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_nmax");
         item.annotation = "number of electron iterations";
         read_sync_int(input.scf_nmax);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "nscf")
+            {
+                para.input.scf_nmax = 1;
+            }
+        };
         this->add_item(item);
     }
     {
