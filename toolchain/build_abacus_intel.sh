@@ -60,7 +60,7 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
 cmake --build $BUILD_DIR -j `nproc` 
 cmake --install $BUILD_DIR 2>/dev/null
 
-# if one want's to include deepmd, your gcc version should be >= 11.3.0
+# if one want's to include deepmd, your system gcc version should be >= 11.3.0 for glibc requirements
 
 # generate abacus_env.sh
 cat << EOF > "${TOOL}/abacus_env.sh"
