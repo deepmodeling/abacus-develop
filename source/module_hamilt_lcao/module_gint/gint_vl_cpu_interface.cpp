@@ -9,55 +9,45 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     const UnitCell& ucell = *this->ucell;
     const int max_size = this->gridt->max_atom;
     const int lgd = this->gridt->lgd;
-    const int nnrg = this->gridt->nnrg;
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    if(PARAM.inp.nspin != 4) {
-        this->hRGint->set_zero();
-    } else {
-        this->hRGint_tmp[inout->ispin]->set_zero();
-    }
+    hamilt::HContainer<double>* hRGint_kernel = PARAM.inp.nspin != 4 ? this->hRGint : this->hRGint_tmp[inout->ispin];
+    hRGint_kernel->set_zero();
 
 #pragma omp parallel 
-{   /**
-     * @brief When in OpenMP, it points to a newly allocated memory,
-    */
-    hamilt::HContainer<double>* hRGint_thread;
-    double* pvpR_thread; 
-    if (PARAM.inp.nspin != 4) {
-        hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
-    } else {
-        hRGint_thread = new hamilt::HContainer<double>(this->hRGint[inout->ispin]);
-    }
-    std::vector<int> block_iw(max_size,0);
-    std::vector<int> block_index(max_size+1,0);
-    std::vector<int> block_size(max_size,0);
-    std::vector<double> vldr3(this->bxyz,0.0);
-    #pragma omp for
-    for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
-        const int na_grid = this->gridt->how_many_atoms[grid_index];
-        if (na_grid == 0) {
-            continue;
-        }
-        /**
-         * @brief Prepare block information
+    {   /**
+        * @brief When in OpenMP, it points to a newly allocated memory,
         */
-        ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
+        hamilt::HContainer<double> hRGint_thread(*hRGint_kernel);
+        std::vector<int> block_iw(max_size,0);
+        std::vector<int> block_index(max_size+1,0);
+        std::vector<int> block_size(max_size,0);
+        std::vector<double> vldr3(this->bxyz,0.0);
+        #pragma omp for
+        for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
+            const int na_grid = this->gridt->how_many_atoms[grid_index];
+            if (na_grid == 0) {
+                continue;
+            }
+            /**
+             * @brief Prepare block information
+            */
+            ModuleBase::Array_Pool<bool> cal_flag(this->bxyz,max_size);
 
-        Gint_Tools::get_gint_vldr3(vldr3.data(),
-                                    inout->vl,
-                                    this->bxyz,
-                                    this->bx,
-                                    this->by,
-                                    this->bz,
-                                    this->nplane,
-                                    this->gridt->start_ind[grid_index],
-                                    ncyz,
-                                    dv);
+            Gint_Tools::get_gint_vldr3(vldr3.data(),
+                                        inout->vl,
+                                        this->bxyz,
+                                        this->bx,
+                                        this->by,
+                                        this->bz,
+                                        this->nplane,
+                                        this->gridt->start_ind[grid_index],
+                                        ncyz,
+                                        dv);
 
-        Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
-                                            block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
+            Gint_Tools::get_block_info(*this->gridt, this->bxyz, na_grid, grid_index, 
+                                                block_iw.data(), block_index.data(), block_size.data(), cal_flag.get_ptr_2D());
 
         /**
          * @brief Evaluate psi and dpsi on grids
@@ -79,39 +69,27 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
                 this->bxyz, na_grid, LD_pool, block_index.data(), 
                 cal_flag.get_ptr_2D(), vldr3.data(), psir_ylm_1.get_ptr_2D());
 
-	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
-	//and accumulates to the corresponding element in Hamiltonian
-    this->cal_meshball_vlocal(
-        na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
-        cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
-        hRGint_thread);
+            //integrate (psi_mu*v(r)*dv) * psi_nu on grid
+            //and accumulates to the corresponding element in Hamiltonian
+            this->cal_meshball_vlocal(
+                na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
+                cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
+                &hRGint_thread);
+        }
 
-    }
-    if (PARAM.inp.nspin != 4) {
+    #pragma omp critical
         {
-        #pragma omp critical
-            BlasConnector::axpy(this->hRGint->get_nnr(),
+            BlasConnector::axpy(hRGint_thread.get_nnr(),
                                 1.0,
-                                hRGint_thread->get_wrapper(),
+                                hRGint_thread.get_wrapper(),
                                 1,
-                                this->hRGint->get_wrapper(),
-                                1);
-        delete hRGint_thread;
-        }
-    } else {
-        {
-        #pragma omp critical
-            BlasConnector::axpy(nnrg,
-                                1.0,
-                                pvpR_thread,
-                                1,
-                                this->hRGint_tmp[inout->ispin]->get_wrapper(),
+                                hRGint_kernel->get_wrapper(),
                                 1);
         }
+
+        ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
+        ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
     }
-    ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
-    ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
-}
 }
 
 void Gint::gint_kernel_dvlocal(Gint_inout* inout) {

@@ -24,8 +24,13 @@ Gint::~Gint() {
 
     delete this->hRGint;
     delete this->hRGintCd;
+    // in gamma_only case, DMRGint.size()=0, 
+    // in multi-k case, DMRGint.size()=nspin
     for (int is = 0; is < this->DMRGint.size(); is++) {
         delete this->DMRGint[is];
+    }
+    for(int is = 0; is < this->hRGint_tmp.size(); is++) {
+        delete this->hRGint_tmp[is];
     }
 #ifdef __MPI
     delete this->DMRGint_full;
@@ -141,6 +146,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
     if (this->DMRGint.size() == 0) {
         this->DMRGint.resize(nspin);
     }
+    hRGint_tmp.resize(nspin);
     if (nspin != 4) {
         if (this->hRGint != nullptr) {
             delete this->hRGint;
@@ -161,9 +167,8 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
                 delete this->hRGint_tmp[is];
             }
             this->DMRGint[is] = new hamilt::HContainer<double>(ucell_in.nat);
+            this->hRGint_tmp[is] = new hamilt::HContainer<double>(ucell_in.nat);
         }
-        this->hRGint_tmp[0]
-                = new hamilt::HContainer<double>(ucell_in.nat);
 #ifdef __MPI
         if (this->DMRGint_full != nullptr) {
             delete this->DMRGint_full;
@@ -177,7 +182,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
     }
     if (npol == 1) {
         this->hRGint->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
-        this->hRGint->allocate(nullptr, false);
+        this->hRGint->allocate(nullptr, true);
         ModuleBase::Memory::record("Gint::hRGint",
                             this->hRGint->get_memory_size());
         // initialize DMRGint with hRGint when NSPIN != 4
@@ -192,11 +197,12 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
                                        * this->DMRGint.size());
     } else {
         this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
+        this->hRGintCd->allocate(nullptr, true);
         for(int is = 0; is < nspin; is++) {
             this->hRGint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
             this->DMRGint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
-            this->hRGint_tmp[is]->allocate(nullptr, false);
-            this->DMRGint[is]->allocate(nullptr, false);
+            this->hRGint_tmp[is]->allocate(nullptr, true);
+            this->DMRGint[is]->allocate(nullptr, true);
         }
         ModuleBase::Memory::record("Gint::hRGint_tmp",
                                        this->hRGint_tmp[0]->get_memory_size()*nspin);
@@ -205,7 +211,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
                                            * this->DMRGint.size()*nspin);
 #ifdef __MPI
         this->DMRGint_full->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
-        this->DMRGint_full->allocate(nullptr, false);
+        this->DMRGint_full->allocate(nullptr, true);
         ModuleBase::Memory::record("Gint::DMRGint_full",
                                    this->DMRGint_full->get_memory_size());
 #endif
