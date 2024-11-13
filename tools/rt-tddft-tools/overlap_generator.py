@@ -9,7 +9,7 @@ import re
 Bohr=0.5291772105638411
 class overlap_R:
     def __init__(self, orb_file_dir, atoms0, atomst):
-        # 从结构中获取轨道信息
+        # get orbital information from the structure
         orb_file_list = list(atoms0.info['basis'].values())
         orb_file_list = [orb_file_dir + orbfile for orbfile in orb_file_list]
         orb_file_num = len(orb_file_list)
@@ -19,37 +19,29 @@ class overlap_R:
         unique_elements = set(symbols)
         assert orb_file_num == len(unique_elements), f"轨道数目{orb_file_num}与元素数目{len(unique_elements)}不一致！"
 
-        # 构建轨道合集
+        # Build orbital collection
         self.orb = nao.RadialCollection()
         self.orb.build(orb_file_num, orb_file_list, 'o')
 
-        # 统一轨道的格点
+        # Standardize the orbital grid
         rmax = self.orb.rcut_max * 2.0
         dr = 0.01
         nr = int(rmax/dr) + 1
         self.orb.set_uniform_grid(True, nr, rmax, 'i', True)
 
-        # 打印轨道基本信息
+        # Print basic orbital information
         ntype = self.orb.ntype
         lmax = self.orb.lmax
-        # print('轨道类型数目 =', ntype)
-        # print('轨道文件中最大的Lmax =', lmax)
-        # for i in range(ntype):
-        #     print(f'第 {i} 轨道信息：', orb_file_list[i])
-        #     print('    symbol =', self.orb.symbol(i))
-        #     print('    lmax =', self.orb.lmax_(i))
-        #     for iL in range(self.orb.lmax_(i)+1):
-        #         print('        L = %d'%(iL), ' zeta轨道数目 =', self.orb.nzeta(i, iL))
 
-        # 初始化求解器
+        # Initialize the integrator
         self.S_intor = nao.TwoCenterIntegrator()
         self.S_intor.tabulate(self.orb, self.orb, 'S', nr, rmax)
 
-        # 从结构中获取轨道指标的排序
-        # 确定基组指标与轨道信息之间的对应关系
-        self.lattice_vector = atoms0.get_cell()[:] / Bohr #晶格矢量的单位是Bohr
-        self.atom_positions_c = atoms0.get_positions() / Bohr # 原子坐标的单位是Bohr
-        self.atom_positions_ct = atomst.get_positions() / Bohr # 原子坐标的单位是Bohr
+        # Retrieve orbital index sorting from the structure
+        # Determine the correspondence between the basis set indices and orbital information
+        self.lattice_vector = atoms0.get_cell()[:] / Bohr 
+        self.atom_positions_c = atoms0.get_positions() / Bohr 
+        self.atom_positions_ct = atomst.get_positions() / Bohr 
         self.cal_R_direct_coor()
 
         self.iw2it = dict()
@@ -78,7 +70,6 @@ class overlap_R:
                             count = count + 1
                 count_atom = count_atom + 1
 
-        # print(self.iw2positions_c)
     def cal_R_direct_coor(self):
         rcut=self.orb.rcut_max*np.ones(len(self.atom_positions_c),dtype=float)
         print(rcut)
