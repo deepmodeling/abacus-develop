@@ -12,11 +12,11 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include <mpi.h>
 
 void Gint_k::allocate_pvpR(void)
 {
     ModuleBase::TITLE("Gint_k", "allocate_pvpR");
-
     if (this->pvpR_alloc_flag)
     {
         return; // Liuxh add, 20181012
@@ -41,7 +41,6 @@ void Gint_k::allocate_pvpR(void)
 void Gint_k::destroy_pvpR(void)
 {
     ModuleBase::TITLE("Gint_k", "destroy_pvpR");
-
     if (!pvpR_alloc_flag)
     {
         return;
@@ -60,113 +59,42 @@ void Gint_k::destroy_pvpR(void)
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 // transfer_pvpR, NSPIN = 1 or 2
-void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in, Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell, Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
 
-    if (!pvpR_alloc_flag || this->hRGint == nullptr)
+    for (int iap = 0; iap < this->hRGint->size_atom_pairs(); iap++)
     {
-        ModuleBase::WARNING_QUIT("Gint_k::destroy_pvpR", "pvpR hasnot been allocated yet!");
-    }
-    this->hRGint->set_zero();
-
-    const int npol = PARAM.globalv.npol;
-    const UnitCell& ucell = *ucell_in;
-    for (int iat = 0; iat < ucell.nat; ++iat)
-    {
-        const int T1 = ucell.iat2it[iat];
-        const int I1 = ucell.iat2ia[iat];
+        auto& ap = this->hRGint->get_atom_pair(iap);
+        const int iat1 = ap.get_atom_i();
+        const int iat2 = ap.get_atom_j();
+        if (iat1 > iat2)
         {
-            // atom in this grid piece.
-            if (this->gridt->in_this_processor[iat])
-            {
-                Atom* atom1 = &ucell.atoms[T1];
-
-                // get the start positions of elements.
-                const int DM_start = this->gridt->nlocstartg[iat];
-
-                // get the coordinates of adjacent atoms.
-                auto& tau1 = ucell.atoms[T1].tau[I1];
-                // gd.Find_atom(tau1);
-                AdjacentAtomInfo adjs;
-                gd->Find_atom(ucell, tau1, T1, I1, &adjs);
-                // search for the adjacent atoms.
-                int nad = 0;
-
-                for (int ad = 0; ad < adjs.adj_num + 1; ad++)
+            // fill lower triangle matrix with upper triangle matrix
+            // the upper <IJR> is <iat2, iat1>
+            const hamilt::AtomPair<double>* upper_ap = this->hRGint->find_pair(iat2, iat1);
+            const hamilt::AtomPair<double>* lower_ap = this->hRGint->find_pair(iat1, iat2);
+#ifdef __DEBUG
+            assert(upper_ap != nullptr);
+#endif
+            for (int ir = 0; ir < ap.get_R_size(); ir++)
+            {   
+                auto R_index = ap.get_R_index(ir);
+                auto upper_matrix = upper_ap->find_matrix(-R_index);
+                auto lower_matrix = lower_ap->find_matrix(R_index);
+                for (int irow = 0; irow < upper_matrix->get_row_size(); ++irow)
                 {
-                    // get iat2
-                    const int T2 = adjs.ntype[ad];
-                    const int I2 = adjs.natom[ad];
-                    const int iat2 = ucell.itia2iat(T2, I2);
-
-                    // adjacent atom is also on the grid.
-                    if (this->gridt->in_this_processor[iat2])
+                    for (int icol = 0; icol < upper_matrix->get_col_size(); ++icol)
                     {
-                        Atom* atom2 = &ucell.atoms[T2];
-                        auto dtau = adjs.adjacent_tau[ad] - tau1;
-                        double distance = dtau.norm() * ucell.lat0;
-                        double rcut = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
-
-                        if (distance < rcut)
-                        {
-                            if (iat > iat2)
-                            { // skip the lower triangle.
-                                nad++;
-                                continue;
-                            }
-                            // calculate the distance between iat1 and iat2.
-                            // ModuleBase::Vector3<double> dR = gd.getAdjacentTau(ad) - tau1;
-                            auto& dR = adjs.box[ad];
-                            // dR.x = adjs.box[ad].x;
-                            // dR.y = adjs.box[ad].y;
-                            // dR.z = adjs.box[ad].z;
-
-                            int ixxx = DM_start + this->gridt->find_R2st[iat][nad];
-
-                            hamilt::BaseMatrix<double>* tmp_matrix = this->hRGint->find_matrix(iat, iat2, dR);
-#ifdef __DEBUG
-                            assert(tmp_matrix != nullptr);
-#endif
-                            double* tmp_pointer = tmp_matrix->get_pointer();
-                            const double* vijR = &pvpR_reduced[0][ixxx];
-                            for (int iw = 0; iw < atom1->nw; iw++)
-                            {
-                                for (int iw2 = 0; iw2 < atom2->nw; ++iw2)
-                                {
-                                    *tmp_pointer++ = *vijR++;
-                                }
-                            }
-                            // save the lower triangle.
-                            if (iat < iat2) // skip iat == iat2
-                            {
-                                hamilt::BaseMatrix<double>* conj_matrix = this->hRGint->find_matrix(iat2, iat, -dR);
-#ifdef __DEBUG
-                                assert(conj_matrix != nullptr);
-#endif
-                                tmp_pointer = tmp_matrix->get_pointer();
-                                for (int iw = 0; iw < atom1->nw; iw++)
-                                {
-                                    for (int iw2 = 0; iw2 < atom2->nw; ++iw2)
-                                    {
-                                        conj_matrix->get_value(iw2, iw) = *tmp_pointer++;
-                                    }
-                                }
-                            }
-                            ++nad;
-                        } // end distane<rcut
+                        lower_matrix->get_value(icol, irow) = upper_ap->get_value(irow, icol);
                     }
-                } // end ad
+                }
             }
-        } // end ia
-    }     // end it
-
-    // ===================================
-    // transfer HR from Gint to Veff<OperatorLCAO<std::complex<double>, double>>
-    // ===================================
+        }
+    }
 #ifdef __MPI
-    int size;
+    int size = 0;
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     if (size == 1)
     {
@@ -180,7 +108,6 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
     hR->add(*this->hRGint);
 #endif
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
-
     return;
 }
 

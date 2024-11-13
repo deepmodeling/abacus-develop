@@ -42,8 +42,8 @@ class Gint_k : public Gint {
         } else if (this->spin_now != -1) {
             int start_spin = -1;
             this->reset_spin(start_spin);
-            this->destroy_pvpR();
-            this->allocate_pvpR();
+            // this->destroy_pvpR();
+            // this->allocate_pvpR();
         }
         return;
     }
@@ -63,8 +63,7 @@ class Gint_k : public Gint {
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
     void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+                       const UnitCell* ucell_in, Grid_Driver* gd);
     void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                        const UnitCell* ucell_in,
                        Grid_Driver* gd);

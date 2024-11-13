@@ -7,6 +7,7 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 #include "kernels/cuda/gemm_selector.cuh"
 
@@ -73,7 +74,7 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<int>> find_R2;
     std::vector<std::vector<int>> find_R2_sorted_index;
     std::vector<std::vector<int>> find_R2st;
-
+    
     int binary_search_find_R2_offset(int val, int iat) const;
 
     // UnitCell and LCAO_Obrbitals
@@ -96,7 +97,7 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<gridIntegral::gridIndex> nnrg_index;
 
     // Determine whether the grid point integration is initialized.
-    bool  init_malloced;
+    bool init_malloced;
 
     bool get_init_malloced() const { return init_malloced; }
 
@@ -116,12 +117,15 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
+                      Grid_Driver& gd,
                       const double& dr_uniform,
                       const std::vector<double>& rcuts,
                       const std::vector<std::vector<double>>& psi_u,
                       const std::vector<std::vector<double>>& dpsi_u,
                       const std::vector<std::vector<double>>& d2psi_u,
                       const int& num_stream);
+
+    const std::vector<int>* get_ijr_info() const { return &ijr_info; }
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
@@ -132,9 +136,12 @@ class Grid_Technique : public Grid_MeshBall {
                        const int& iat2) const;
 
     int find_offset(const int id1, const int id2, const int iat1, const int iat2) const;
-
+    
   private:
 
+    // store the information of atom pairs on this processor, used to initialize hcontainer.
+    // The meaning of ijr can be referred to in the get_ijr_info function in hcontainer.cpp.
+    std::vector<int> ijr_info;
     int maxB1;
     int maxB2;
     int maxB3;
@@ -156,6 +163,7 @@ class Grid_Technique : public Grid_MeshBall {
                             const int& startz_current,
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
+    void init_ijr_info(const UnitCell& ucell, Grid_Driver& gd);
     void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);

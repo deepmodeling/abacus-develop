@@ -401,6 +401,14 @@ class HContainer
     void insert_ijrs(const std::vector<int>* ijrs);
 
     /**
+     * @brief use infomation of IJ pairs to expand HContainer
+     * the number of wavefunctions are stored in UnitCell.
+     * HContainer has not been allocated after this function,
+     * user should call allocate(...) to allocate memory.
+     */
+    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol=1);
+    
+    /**
      * @brief return the wrapper_pointer
      */
     T* get_wrapper() const

@@ -68,6 +68,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
                              GlobalC::ucell,
+                             GlobalC::GridD,
                              dr_uniform,
                              rcuts,
                              psi_u,

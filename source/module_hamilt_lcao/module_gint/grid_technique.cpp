@@ -49,6 +49,7 @@ void Grid_Technique::set_pbc_grid(
     const int& nplane,
     const int& startz_current,
     const UnitCell& ucell,
+    Grid_Driver& gd,
     const double& dr_uniform,
     const std::vector<double>& rcuts,
     const std::vector<std::vector<double>>& psi_u,
@@ -116,6 +117,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
 
+    this->init_ijr_info(ucell, gd);
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
@@ -534,6 +536,80 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
 
     assert(iw_local == lgd);
     assert(iw_all == PARAM.globalv.nlocal);
+    return;
+}
+
+void Grid_Technique::init_ijr_info(const UnitCell& ucell,
+                                   Grid_Driver& gd) {
+    ModuleBase::TITLE("Grid_Technique", "init_ijr_info");
+
+    hamilt::HContainer<double> hRGint_tmp(ucell.nat);
+
+    // prepare the row_index and col_index for construct AtomPairs, they are
+    // same, name as orb_index
+    std::vector<int> orb_index(ucell.nat + 1);
+    orb_index[0] = 0;
+    for (int i = 1; i < orb_index.size(); i++) {
+        int type = ucell.iat2it[i - 1];
+        orb_index[i] = orb_index[i - 1] + ucell.atoms[type].nw;
+    }
+
+    for (int T1 = 0; T1 < ucell.ntype; ++T1) {
+            const Atom* atom1 = &(ucell.atoms[T1]);
+            for (int I1 = 0; I1 < atom1->na; ++I1) {
+                auto& tau1 = atom1->tau[I1];
+
+                gd.Find_atom(ucell, tau1, T1, I1);
+
+                const int iat1 = ucell.itia2iat(T1, I1);
+                // whether this atom is in this processor.
+                if (this->in_this_processor[iat1]) {
+                    for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad) {
+                        const int T2 = gd.getType(ad);
+                        const int I2 = gd.getNatom(ad);
+                        const int iat2 = ucell.itia2iat(T2, I2);
+                        const Atom* atom2 = &(ucell.atoms[T2]);
+
+                        // NOTE: hRGint wil save total number of atom pairs,
+                        // if only upper triangle is saved, the lower triangle will
+                        // be lost in 2D-block parallelization. if the adjacent atom
+                        // is in this processor.
+                        if (this->in_this_processor[iat2]) {
+                            ModuleBase::Vector3<double> dtau
+                                = gd.getAdjacentTau(ad) - tau1;
+                            double distance = dtau.norm() * ucell.lat0;
+                            double rcut
+                                = this->rcuts[T1] + this->rcuts[T2];
+
+                            // if(distance < rcut)
+                            //  mohan reset this 2013-07-02 in Princeton
+                            //  we should make absolutely sure that the distance is
+                            //  smaller than rcuts[it] this should be consistant
+                            //  with LCAO_nnr::cal_nnrg function typical example : 7
+                            //  Bohr cutoff Si orbital in 14 Bohr length of cell.
+                            //  distance = 7.0000000000000000
+                            //  rcuts[it] = 7.0000000000000008
+                            if (distance < rcut - 1.0e-15) {
+                                // calculate R index
+                                auto& R_index = gd.getBox(ad);
+                                // insert this atom-pair into this->hRGint
+                                    hamilt::AtomPair<double> tmp_atom_pair(
+                                        iat1,
+                                        iat2,
+                                        R_index.x,
+                                        R_index.y,
+                                        R_index.z,
+                                        orb_index.data(),
+                                        orb_index.data(),
+                                        ucell.nat);
+                                    hRGint_tmp.insert_pair(tmp_atom_pair);
+                            }
+                        }
+                    }
+                }
+            }
+    }
+    this->ijr_info = hRGint_tmp.get_ijr_info();
     return;
 }
 

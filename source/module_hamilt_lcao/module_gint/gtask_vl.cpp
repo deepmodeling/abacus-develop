@@ -112,13 +112,7 @@ void alloc_mult_vlocal(const bool is_gamma_only,
                 const int rx2 = gridt.ucell_index2x[uc2];
                 const int ry2 = gridt.ucell_index2y[uc2];
                 const int rz2 = gridt.ucell_index2z[uc2];
-                int offset = 0;
-                if(is_gamma_only){
-                    offset = hRGint->find_matrix_offset(iat1, iat2, rx1-rx2, ry1-ry2, rz1-rz2);
-                } else {
-                    offset = vl_start +
-                    gridt.find_R2st[iat1][gridt.find_offset(uc1, uc2, iat1, iat2)];
-                }
+                int offset = hRGint->find_matrix_offset(iat1, iat2, rx1-rx2, ry1-ry2, rz1-rz2);
                 if (offset == -1)
                 {
                     continue;

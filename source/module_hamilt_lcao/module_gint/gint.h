@@ -152,7 +152,7 @@ class Gint {
                                  const UnitCell& ucell,
                                  hamilt::HContainer<double>* hR = nullptr);
 
-    void cal_meshball_vlocal_gamma(
+    void cal_meshball_vlocal(
         const int na_grid, // how many atoms on this (i,j,k) grid
         const int LD_pool,
         const int* const block_iw, // block_iw[na_grid],	index of wave
@@ -275,6 +275,7 @@ class Gint {
         = nullptr; // stores Hamiltonian in reduced format, for multi-l
     hamilt::HContainer<double>* hRGint
         = nullptr; // stores Hamiltonian in sparse format
+    std::vector<hamilt::HContainer<double>*> hRGint_tmp; // size of vec is 4, only used when nspin = 4
     hamilt::HContainer<std::complex<double>>* hRGintCd
         = nullptr; // stores Hamiltonian in sparse format
     std::vector<hamilt::HContainer<double>*>

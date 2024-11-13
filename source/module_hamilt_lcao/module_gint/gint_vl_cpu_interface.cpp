@@ -13,15 +13,11 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     const int ncyz = this->ny * this->nplane;
     const double dv = ucell.omega / this->ncxyz;
     const double delta_r = this->gridt->dr_uniform;
-    if (!PARAM.globalv.gamma_only_local) {
-        if (!pvpR_alloc_flag) {
-            ModuleBase::WARNING_QUIT("Gint_interface::cal_gint",
-                                     "pvpR has not been allocated yet!");
-        } else {
-            ModuleBase::GlobalFunc::ZEROS(this->pvpR_reduced[inout->ispin], nnrg);
-        }
+    if(PARAM.inp.nspin != 4) {
+        this->hRGint->set_zero();
+    } else {
+        this->hRGint_tmp[inout->ispin]->set_zero();
     }
-
 
 #pragma omp parallel 
 {   /**
@@ -29,11 +25,10 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
     */
     hamilt::HContainer<double>* hRGint_thread;
     double* pvpR_thread; 
-    if (PARAM.globalv.gamma_only_local) {
+    if (PARAM.inp.nspin != 4) {
         hRGint_thread = new hamilt::HContainer<double>(*this->hRGint);
     } else {
-        pvpR_thread = new double[nnrg];
-        ModuleBase::GlobalFunc::ZEROS(pvpR_thread, nnrg);
+        hRGint_thread = new hamilt::HContainer<double>(this->hRGint[inout->ispin]);
     }
     std::vector<int> block_iw(max_size,0);
     std::vector<int> block_index(max_size+1,0);
@@ -86,25 +81,15 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
 
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
-        if(PARAM.globalv.gamma_only_local)
-        {
-            this->cal_meshball_vlocal_gamma(
-                na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
-                cal_flag.get_ptr_2D(), psir_ylm_2.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
-                hRGint_thread);
-        }
-        else
-        {
-            this->cal_meshball_vlocal_k(
-                na_grid, LD_pool, grid_index, block_size.data(), block_index.data(), block_iw.data(), 
-                cal_flag.get_ptr_2D(), psir_ylm_2.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
-                pvpR_thread,ucell);
-        }
+    this->cal_meshball_vlocal(
+        na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
+        cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
+        hRGint_thread);
 
     }
-    if (PARAM.globalv.gamma_only_local) {
+    if (PARAM.inp.nspin != 4) {
         {
-        #pragma omp critical(gint_gamma)
+        #pragma omp critical
             BlasConnector::axpy(this->hRGint->get_nnr(),
                                 1.0,
                                 hRGint_thread->get_wrapper(),
@@ -115,20 +100,20 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         }
     } else {
         {
-        #pragma omp critical(gint_k)
+        #pragma omp critical
             BlasConnector::axpy(nnrg,
                                 1.0,
                                 pvpR_thread,
                                 1,
-                                this->pvpR_reduced[inout->ispin],
+                                this->hRGint_tmp[inout->ispin]->get_wrapper(),
                                 1);
         }
-        delete[] pvpR_thread;
     }
     ModuleBase::TITLE("Gint_interface", "cal_gint_vlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_vlocal");
 }
 }
+
 void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     ModuleBase::TITLE("Gint_interface", "cal_gint_dvlocal");
     ModuleBase::timer::tick("Gint_interface", "cal_gint_dvlocal");
@@ -339,18 +324,18 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         {
             //integrate (psi_mu*v(r)*dv) * psi_nu on grid
             //and accumulates to the corresponding element in Hamiltonian
-            this->cal_meshball_vlocal_gamma(
+            this->cal_meshball_vlocal(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
                 psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), hRGint_thread);
             //integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
             //and accumulates to the corresponding element in Hamiltonian
-            this->cal_meshball_vlocal_gamma(
+            this->cal_meshball_vlocal(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), hRGint_thread);
-            this->cal_meshball_vlocal_gamma(
+            this->cal_meshball_vlocal(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), hRGint_thread);
-            this->cal_meshball_vlocal_gamma(
+            this->cal_meshball_vlocal(
                 na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
                 dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), hRGint_thread);
         }

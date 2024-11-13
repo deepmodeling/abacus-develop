@@ -47,7 +47,8 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
         checkCuda(cudaStreamCreate(&streams[i]));
     }
 
-    const int nnrg = is_gamma_only ? hRGint->get_nnr() : gridt.nnrg;
+    const int nnrg = hRGint->get_nnr();
+    hRGint->set_zero();
     Cuda_Mem_Wrapper<double> grid_vlocal_g(nnrg, 1, false);
     grid_vlocal_g.memset_device_sync();
 
@@ -196,7 +197,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
     else
     {
         checkCuda(cudaMemcpy(
-            pvpR,
+            hRGint->get_wrapper(),
             grid_vlocal_g.get_device_pointer(),
             nnrg * sizeof(double),
             cudaMemcpyDeviceToHost));
