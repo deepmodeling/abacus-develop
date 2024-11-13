@@ -3,7 +3,7 @@ suffix         autotest
 #nbands   40 
 
 calculation    scf
-ecutwfc        20
+ecutwfc         60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr            1.0e-8
 scf_nmax          50
 out_chg     0
@@ -15,8 +15,11 @@ ks_solver     pexsi
 pexsi_temp    0.1
 pexsi_npole   80
 basis_type    lcao
-gamma_only    1
+gamma_only    1 ### Abacus will generate KPT file when gamma_only=1.
 symmetry      0
 nspin         2
 pseudo_dir	../../../tests/PP_ORB
 orbital_dir	../../../tests/PP_ORB
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

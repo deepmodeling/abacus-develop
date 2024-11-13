@@ -8,13 +8,13 @@ nbands                4
 symmetry               	0
 
 #Parameters (2.Iteration)
-ecutwfc                 50
+ecutwfc                  60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                     1e-6
 scf_nmax                   100
 
 #Parameters (3.Basis)
 basis_type              lcao 
-gamma_only              1
+gamma_only              1 ### Abacus will generate KPT file when gamma_only=1.
 nspin 2
 
 #Parameters (4.Smearing)
@@ -37,3 +37,6 @@ esolver_type lr
 ri_hartree_benchmark aims
 aims_nbasis 5
 read_file_dir aims-files
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

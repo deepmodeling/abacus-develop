@@ -8,7 +8,7 @@ pseudo_type         upf
 calculation         scf
 
 #Parameters (3.PW)
-ecutwfc             50
+ecutwfc              60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                 1e-8
 scf_nmax		    100
 
@@ -27,3 +27,6 @@ smearing_sigma               0.02
 #cal_stress 1
 #cell_factor         10
 #stress_thr          1e-6
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

@@ -644,10 +644,10 @@ void Charge::atomic_rho(const int spin_number_need,
             double sumrea = 0.0;
             for (int ir = 0; ir < this->rhopw->nrxx; ir++)
             {
-                rea = this->rhopw->ft.get_auxr_data<double>()[ir].real();
+                rea = this->rhopw->fft_bundle.get_auxr_data<double>()[ir].real();
                 sumrea += rea;
                 neg += std::min(0.0, rea);
-                ima += std::abs(this->rhopw->ft.get_auxr_data<double>()[ir].imag());
+                ima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
             }
 
     #ifdef __MPI
