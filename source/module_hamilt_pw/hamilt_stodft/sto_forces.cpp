@@ -227,20 +227,22 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         const int nstobands = nchip[ik];
         const int mixbands = nstobands + nksbands;
         const int npw = wfc_basis->npwk[ik];
+        psi_in.fix_k(ik);
+        stowf.shchi->fix_k(ik);
 
         nl_tools.cal_vkb(ik, mixbands); // vkb has dimension of nkb * mixbands * npol
 
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, nksbands, &psi_in(ik, 0, 0), 0);
-        nl_tools.cal_becp(ik, nstobands, &stowf.shchi[0](ik, 0, 0), nksbands);
+        nl_tools.cal_becp(ik, nksbands, psi_in.get_pointer(), 0);
+        nl_tools.cal_becp(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
         nl_tools.reduce_pool_becp(mixbands);
 
         for (int ipol = 0; ipol < 3; ipol++)
         {
             nl_tools.cal_vkb_deri_f(ik, mixbands, ipol); // vkb_deri has dimension of nkb * mixbands * npol
             // calculate dbecp = <psi|\nabla beta> for all beta functions
-            nl_tools.cal_dbecp_f(ik, mixbands, nksbands, ipol, &psi_in(ik,0,0), 0);
-            nl_tools.cal_dbecp_f(ik, mixbands, nstobands, ipol, &stowf.shchi[0](ik, 0, 0), nksbands);
+            nl_tools.cal_dbecp_f(ik, mixbands, nksbands, ipol, psi_in.get_pointer(), 0);
+            nl_tools.cal_dbecp_f(ik, mixbands, nstobands, ipol, stowf.shchi->get_pointer(), nksbands);
             nl_tools.revert_vkb(ik, ipol);
         }
         nl_tools.cal_force(ik, mixbands, nksbands, true, force, 0);

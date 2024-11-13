@@ -221,6 +221,16 @@ struct cal_force_npw_op{
     );
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_multi_dot_op{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
+
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -261,6 +271,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -280,6 +291,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
@@ -354,6 +366,15 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
                     FPTYPE* vq);
 };
 
+template <typename FPTYPE>
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
 
 /**
  * The operator is used to compute the auxiliary amount of stress /force 

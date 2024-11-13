@@ -638,6 +638,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_cc.o\
     forces_scc.o\
     fs_nonlocal_tools.o\
+    fs_kin_tools.o\
     force_op.o\
     stress_op.o\
     wf_op.o\

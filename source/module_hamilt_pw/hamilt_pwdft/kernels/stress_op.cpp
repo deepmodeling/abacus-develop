@@ -9,7 +9,6 @@
 #include "module_base/libm/libm.h"
 namespace hamilt
 {
-
 template <typename FPTYPE>
 struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_CPU>
 {
@@ -543,6 +542,26 @@ struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
     }
 };
 
+template <typename FPTYPE>
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
+    FPTYPE operator()(const int& npw,
+                      const FPTYPE& fac,
+                      const FPTYPE* gk1,
+                      const FPTYPE* gk2,
+                      const FPTYPE* d_kfac,
+                      const std::complex<FPTYPE>* psi)
+    {
+        FPTYPE sum = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+        for (int i = 0; i < npw; i++)
+        {
+            sum += fac * gk1[i] * gk2[i] * d_kfac[i] * std::norm(psi[i]);
+        }
+    }
+};
+
 // // cpu version first, gpu version later
 // template <typename FPTYPE>
 // struct prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_CPU>{
@@ -620,6 +639,9 @@ template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_force_npw_op<float, base_device::DEVICE_CPU>;
 template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
+
+template struct cal_multi_dot_op<float, base_device::DEVICE_CPU>;
+template struct cal_multi_dot_op<double, base_device::DEVICE_CPU>;
 
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;

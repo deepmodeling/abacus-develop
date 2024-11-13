@@ -66,7 +66,8 @@ class Stress_Func
                     ModuleSymmetry::Symmetry* p_symm,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // electron kinetic part in PW basis
+                    const UnitCell& ucell_in,
+                    const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
     void stress_har(ModuleBase::matrix& sigma,

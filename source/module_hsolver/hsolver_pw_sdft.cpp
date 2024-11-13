@@ -41,6 +41,7 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // part of KSDFT to get KS orbitals
     for (int ik = 0; ik < nks; ++ik)
     {
+        ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
         if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
         {
@@ -59,6 +60,7 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
         }
 #endif
+        ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
         stoiter.orthog(ik, psi, stowf);
         stoiter.checkemm(ik, istep, iter, stowf); // check and reset emax & emin
     }

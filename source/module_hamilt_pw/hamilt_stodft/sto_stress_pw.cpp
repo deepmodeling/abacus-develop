@@ -6,6 +6,7 @@
 #include "module_io/output_log.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/fs_nonlocal_tools.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
 
 template <typename FPTYPE, typename Device>
 void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
@@ -105,115 +106,31 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
                                                    const psi::Psi<std::complex<FPTYPE>, Device>& psi,
                                                    const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf)
 {
-    ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
-    double** gk;
-    gk = new double*[3];
-    ModuleBase::matrix s_kin(3, 3, true);
+    ModuleBase::TITLE("Sto_Stress_PW", "stress_kin");
+    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
 
-    const int npwx = wfc_basis->npwk_max;
-    const int nks = wfc_basis->nks;
-    gk[0] = new double[npwx];
-    gk[1] = new double[npwx];
-    gk[2] = new double[npwx];
-    double tpiba = ModuleBase::TWO_PI / this->ucell->lat0;
-    double twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
-    double* kfac = new double[npwx];
     int nksbands = psi.get_nbands();
     if (GlobalV::MY_STOGROUP != 0)
     {
         nksbands = 0;
     }
+    
+    hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
 
-    for (int ik = 0; ik < nks; ++ik)
+    for (int ik = 0; ik < wfc_basis->nks; ++ik)
     {
-        const int nstobands = stowf.nchip[ik];
-        const int nbandstot = nstobands + nksbands;
-        const int npw = wfc_basis->npwk[ik];
-        for (int i = 0; i < npw; ++i)
-        {
-            gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * tpiba;
-            gk[1][i] = wfc_basis->getgpluskcar(ik, i)[1] * tpiba;
-            gk[2][i] = wfc_basis->getgpluskcar(ik, i)[2] * tpiba;
-            if (wfc_basis->erf_height > 0)
-            {
-                double gk2 = gk[0][i] * gk[0][i] + gk[1][i] * gk[1][i] + gk[2][i] * gk[2][i];
-                double arg = (gk2 - wfc_basis->erf_ecut) / wfc_basis->erf_sigma;
-                kfac[i] = 1.0 + wfc_basis->erf_height / wfc_basis->erf_sigma * twobysqrtpi * std::exp(-arg * arg);
-            }
-            else
-            {
-                kfac[i] = 1.0;
-            }
-        }
+        const int stobands = stowf.nchip[ik];
+        psi.fix_k(ik);
+        stowf.shchi->fix_k(ik);
+        
+        kin_tool.cal_gk(ik);
 
-        // kinetic contribution
-
-        for (int l = 0; l < 3; ++l)
-        {
-            for (int m = 0; m < l + 1; ++m)
-            {
-                for (int ibnd = 0; ibnd < nbandstot; ++ibnd)
-                {
-                    if (ibnd < nksbands)
-                    {
-                        for (int i = 0; i < npw; ++i)
-                        {
-                            std::complex<double> p = psi.operator()(ik, ibnd, i);
-                            double np = p.real() * p.real() + p.imag() * p.imag();
-                            s_kin(l, m) += wg(ik, ibnd) * gk[l][i] * gk[m][i] * kfac[i] * np;
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < npw; ++i)
-                        {
-                            std::complex<double> p = stowf.shchi->operator()(ik, ibnd - nksbands, i);
-                            double np = p.real() * p.real() + p.imag() * p.imag();
-                            s_kin(l, m) += p_kv->wk[ik] * gk[l][i] * gk[m][i] * kfac[i] * np;
-                        }
-                    }
-                }
-            }
-        }
+        kin_tool.cal_stress_kin(ik, nksbands, true, psi.get_pointer());
+        kin_tool.cal_stress_kin(ik, stobands, false, stowf.shchi->get_pointer());
     }
 
-    for (int l = 0; l < 3; ++l)
-    {
-        for (int m = 0; m < l; ++m)
-        {
-            s_kin(m, l) = s_kin(l, m);
-        }
-    }
-
-    for (int l = 0; l < 3; ++l)
-    {
-        for (int m = 0; m < 3; ++m)
-        {
-            s_kin(l, m) *= ModuleBase::e2 / this->ucell->omega;
-        }
-    }
-
-    Parallel_Reduce::reduce_all(s_kin.c, 9);
-
-    for (int l = 0; l < 3; ++l)
-    {
-        for (int m = 0; m < 3; ++m)
-        {
-            sigma(l, m) = s_kin(l, m);
-        }
-    }
-    // do symmetry
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        p_symm->symmetrize_mat3(sigma, this->ucell->lat);
-    }
-    delete[] gk[0];
-    delete[] gk[1];
-    delete[] gk[2];
-    delete[] gk;
-    delete[] kfac;
-    ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
+    kin_tool.symmetrize_stress(p_symm, sigma);
+    ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
 
     return;
 }
@@ -260,10 +177,12 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
         const int nstobands = nchip[ik];
         const int mixbands = nstobands + nksbands;
         const int npw = wfc_basis->npwk[ik];
+        psi_in.fix_k(ik);
+        stowf.shchi->fix_k(ik);
         nl_tools.cal_vkb(ik, mixbands);
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, nksbands, &psi_in(ik,0,0), 0);
-        nl_tools.cal_becp(ik, nstobands, &stowf.shchi[0](ik,0,0), nksbands);
+        nl_tools.cal_becp(ik, nksbands, psi_in.get_pointer(), 0);
+        nl_tools.cal_becp(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
         nl_tools.reduce_pool_becp(mixbands);
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
@@ -272,8 +191,8 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
                 nl_tools.cal_vkb_deri_s(ik, mixbands, ipol, jpol);
-                nl_tools.cal_dbecp_s(ik, nksbands, &psi_in(ik,0,0), 0);
-                nl_tools.cal_dbecp_s(ik, nstobands, &stowf.shchi[0](ik,0,0), nksbands);
+                nl_tools.cal_dbecp_s(ik, nksbands, psi_in.get_pointer(), 0);
+                nl_tools.cal_dbecp_s(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
                 nl_tools.cal_stress(ik, nksbands, true, ipol, jpol, stress_device, 0);
                 nl_tools.cal_stress(ik, nstobands, false, ipol, jpol, stress_device, nksbands);
             }
@@ -317,3 +236,6 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
 
 
 template class Sto_Stress_PW<double, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Sto_Stress_PW<double, base_device::DEVICE_GPU>;
+#endif

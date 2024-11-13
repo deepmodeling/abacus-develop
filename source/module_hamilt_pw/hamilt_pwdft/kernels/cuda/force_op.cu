@@ -240,10 +240,10 @@ __global__ void cal_force_nl(
             for (int ip2 = 0; ip2 < nproj; ip2++) 
             {
                 // Effective values of the D-eS coefficients
-                const thrust::complex<FPTYPE> ps_qq = 0;
+                thrust::complex<FPTYPE> ps_qq = 0;
                 if (ekb_now)
                 {
-                    ps_qq = -ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
+                    ps_qq = thrust::complex<FPTYPE>(-ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2], 0.0);
                 }
                 const int jnkb = sum + ip2;
                 const thrust::complex<FPTYPE> ps0 = deeq_nc[((0 * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2] + ps_qq;
