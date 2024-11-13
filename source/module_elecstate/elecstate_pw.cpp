@@ -89,9 +89,6 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
 
     this->init_rho_data();
-    this->calculate_weights();
-
-    this->calEBand();
 
     for(int is=0; is<PARAM.inp.nspin; is++)
 	{

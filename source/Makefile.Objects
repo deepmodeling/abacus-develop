@@ -27,6 +27,7 @@ VPATH=./src_global:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
+./module_basis/module_pw/module_fft:\
 ./module_esolver:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
@@ -168,7 +169,6 @@ OBJS_BASE=abfs-vector3_order.o\
     memory_op.o\
     device.o\
 
-
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
     pseudo.o\
@@ -245,10 +245,8 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    pw_fun.o\
     pw_init_after_vc.o\
     pw_init_globalc.o\
-    pw_nscf.o\
     pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
@@ -259,7 +257,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       set_matrix_grid.o\
       lcao_before_scf.o\
       lcao_gets.o\
-      lcao_nscf.o\
       lcao_others.o\
       lcao_init_after_vc.o\
       lcao_fun.o\
@@ -414,6 +411,9 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_nao_random.o\
 
 OBJS_PW=fft.o\
+    fft_bundle.o\
+    fft_base.o\
+    fft_cpu.o\
     pw_basis.o\
     pw_basis_k.o\
     pw_basis_sup.o\
@@ -630,6 +630,11 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mpi.o\
     charge_extra.o\
     charge_mixing.o\
+    charge_mixing_dmr.o\
+    charge_mixing_residual.o\
+    charge_mixing_preconditioner.o\
+    charge_mixing_rho.o\
+    charge_mixing_uspp.o\
     fp_energy.o\
     forces.o\
     forces_us.o\

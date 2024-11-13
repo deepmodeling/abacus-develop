@@ -12,7 +12,7 @@
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
 libcomm_ver="0.1.1"
-libcomm_sha256="fa162a197678654f15d91a5a917cce7fb2748bd9b0e344363edea2db87547b72"
+libcomm_sha256="9c47b6ea9573bffa4232c0bef63714d4c3af820c6b7539cfa6e294ca2b8ba4af"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh

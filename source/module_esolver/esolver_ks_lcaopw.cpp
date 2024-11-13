@@ -111,64 +111,43 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::hamilt2density(const int istep, const int iter, const double ethr)
+    void ESolver_KS_LIP<T>::hamilt2density_single(const int istep, const int iter, const double ethr)
     {
-        ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density");
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
+        ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density_single");
+        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
 
+        // reset energy
+        this->pelec->f_en.eband = 0.0;
+        this->pelec->f_en.demet = 0.0;
+        // choose if psi should be diag in subspace
+        // be careful that istep start from 0 and iter start from 1
+        // if (iter == 1)
+        hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
+        hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
+        hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
+        hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
+        bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+
+        // It is not a good choice to overload another solve function here, this will spoil the concept of
+        // multiple inheritance and polymorphism. But for now, we just do it in this way.
+        // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
+        std::weak_ptr<psi::Psi<T>> psig = this->p_wf_init->get_psig();
+
+        if (psig.expired())
         {
-            // reset energy
-            this->pelec->f_en.eband = 0.0;
-            this->pelec->f_en.demet = 0.0;
-            // choose if psi should be diag in subspace
-            // be careful that istep start from 0 and iter start from 1
-            // if (iter == 1)
-            hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-            hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
-            hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
-            hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-
-            // It is not a good choice to overload another solve function here, this will spoil the concept of
-            // multiple inheritance and polymorphism. But for now, we just do it in this way.
-            // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
-            std::weak_ptr<psi::Psi<T>> psig = this->p_wf_init->get_psig();
-
-            if (psig.expired())
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density", "psig lifetime is expired");
-            }
-
-            hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-            hsolver_lip_obj.solve(this->p_hamilt, 
-                                  this->kspw_psi[0], 
-                                  this->pelec, 
-                                  psig.lock().get()[0], 
-                                  false);
-
-            if (PARAM.inp.out_bandgap)
-            {
-                if (!PARAM.globalv.two_fermi)
-                {
-                    this->pelec->cal_bandgap();
-                }
-                else
-                {
-                    this->pelec->cal_bandgap_updw();
-                }
-            }
+            ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density_single", "psig lifetime is expired");
         }
-   
+
+        hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
+        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0], skip_charge);
+
         // add exx
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx) {
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
             this->pelec->set_exx(this->exx_lip->get_exx_energy()); // Peize Lin add 2019-03-09
-}
+        }
 #endif
-
-        // calculate the delta_harris energy
-        // according to new charge density.
-        // mohan add 2009-01-23
-        this->pelec->cal_energies(1);
 
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -176,18 +155,12 @@ namespace ModuleESolver
             srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
         }
 
-        // compute magnetization, only for LSDA(spin==2)
-        GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-            this->pelec->charge->nxyz,
-            this->pelec->charge->rho,
-            this->pelec->nelec_spin.data());
-
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
         this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 
-        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density");
+        ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
     }
 
     template <typename T>

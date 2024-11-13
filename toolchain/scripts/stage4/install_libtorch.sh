@@ -44,7 +44,7 @@ case "${with_libtorch}" in
     filename="${dirname}.zip"
 
     if verify_checksums "${install_lock_file}"; then
-      echo "${filename} is already installed, skipping it."
+      echo "${dirname} is already installed, skipping it."
     else
         if [ -f ${filename} ]; then
             echo "${filename} is found"

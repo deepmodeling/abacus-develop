@@ -30,9 +30,11 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     int td_htype = 1;
 
   protected:
-    virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
+
+    virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
 

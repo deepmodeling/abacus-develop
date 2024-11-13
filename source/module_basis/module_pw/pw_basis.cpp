@@ -17,6 +17,7 @@ PW_Basis::PW_Basis(std::string device_, std::string precision_) : device(std::mo
     classname="PW_Basis";
     this->ft.set_device(this->device);
     this->ft.set_precision(this->precision);
+    this->fft_bundle.setfft("cpu",this->precision);
 }
 
 PW_Basis:: ~PW_Basis()
@@ -57,9 +58,19 @@ void PW_Basis::setuptransform()
     this->distribute_g();
     this->getstartgr();
     this->ft.clear();
-    if(this->xprime)    this->ft.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
-    else                this->ft.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
+    this->fft_bundle.clear();
+    if(this->xprime)    
+    {
+        this->ft.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
+        this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
+    }
+    else                
+    {
+        this->ft.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
+        this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->liy,this->riy,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
+    }
     this->ft.setupFFT();
+    this->fft_bundle.setupFFT();
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 

@@ -39,8 +39,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void after_all_runners() override;
 
-    void nscf() override;
-
     void get_S();
 
     void cal_mag(const int istep, const bool print = false);
@@ -50,9 +48,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void iter_init(const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
 

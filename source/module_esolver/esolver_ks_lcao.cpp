@@ -1,7 +1,10 @@
 #include "esolver_ks_lcao.h"
 
+#include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
 #include "module_io/nscf_band.h"
@@ -10,6 +13,8 @@
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
 #include "module_io/to_qo.h"
+#include "module_io/to_wannier90_lcao.h"
+#include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_elecstat_pot.h"
@@ -47,7 +52,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 // function used by deepks
-#include "module_elecstate/cal_dm.h"
+// #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
 
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
@@ -586,6 +591,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
             // and the ncalculate the charge density on grid.
 
             this->pelec->skip_weights = true;
+            this->pelec->calculate_weights();
+            if (!PARAM.inp.dm_to_rho)
+            {
+                auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
+                _pelec->calEBand();
+                elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
+                _pelec->DM->cal_DMR();
+            }
             this->pelec->psiToRho(*this->psi);
             this->pelec->skip_weights = false;
 
@@ -681,10 +694,17 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
         sc.run_lambda_loop(iter - 1);
     }
+
+    // save density matrix DMR for mixing
+    if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
+    {
+        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        dm->save_DMR();
+    }
 }
 
 //------------------------------------------------------------------------------
-//! the 11th function of ESolver_KS_LCAO: hamilt2density
+//! the 11th function of ESolver_KS_LCAO: hamilt2density_single
 //! mohan add 2024-05-11
 //! 1) save input rho
 //! 2) save density matrix DMR for mixing
@@ -700,47 +720,16 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 //! 12) calculate delta energy
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
+void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double ethr)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
 
-    // 1) save input rho
-    this->pelec->charge->save_rho_before_sum_band();
-
-    // 2) save density matrix DMR for mixing
-    if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
-    {
-        elecstate::DensityMatrix<TK, double>* dm = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        dm->save_DMR();
-    }
-
-    // 3) solve the Hamiltonian and output band gap
-    {
-        // reset energy
-        this->pelec->f_en.eband = 0.0;
-        this->pelec->f_en.demet = 0.0;
-
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, false);
-
-        if (PARAM.inp.out_bandgap)
-        {
-            if (!PARAM.globalv.two_fermi)
-            {
-                this->pelec->cal_bandgap();
-            }
-            else
-            {
-                this->pelec->cal_bandgap_updw();
-            }
-        }
-    }
-
-    // 4) print bands for each k-point and each band
-    for (int ik = 0; ik < this->kv.get_nks(); ++ik)
-    {
-        this->pelec->print_band(ik, PARAM.inp.printe, iter);
-    }
+    // reset energy
+    this->pelec->f_en.eband = 0.0;
+    this->pelec->f_en.demet = 0.0;
+    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
 
     // 5) what's the exd used for?
 #ifdef __EXX
@@ -754,58 +743,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 #endif
 
-    // 6) calculate the local occupation number matrix and energy correction in
-    // DFT+U
-    if (PARAM.inp.dft_plus_u)
-    {
-        // only old DFT+U method should calculated energy correction in esolver,
-        // new DFT+U method will calculate energy in calculating Hamiltonian
-        if (PARAM.inp.dft_plus_u == 2)
-        {
-            if (GlobalC::dftu.omc != 2)
-            {
-                const std::vector<std::vector<TK>>& tmp_dm
-                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                this->dftu_cal_occup_m(iter, tmp_dm);
-            }
-            GlobalC::dftu.cal_energy_correction(istep);
-        }
-        GlobalC::dftu.output();
-    }
-
-    // (7) for deepks, calculate delta_e
-#ifdef __DEEPKS
-    if (PARAM.inp.deepks_scf)
-    {
-        const std::vector<std::vector<TK>>& dm
-            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-
-        this->dpks_cal_e_delta_band(dm);
-    }
-#endif
-
-    // 8) for delta spin
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
-    }
-
-    // 9) use new charge density to calculate energy
-    this->pelec->cal_energies(1);
-
     // 10) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
-
-    // 11) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                this->pelec->nelec_spin.data());
 
     // 12) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
@@ -922,6 +865,43 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
+
+    // 6) calculate the local occupation number matrix and energy correction in
+    // DFT+U
+    if (PARAM.inp.dft_plus_u)
+    {
+        // only old DFT+U method should calculated energy correction in esolver,
+        // new DFT+U method will calculate energy in calculating Hamiltonian
+        if (PARAM.inp.dft_plus_u == 2)
+        {
+            if (GlobalC::dftu.omc != 2)
+            {
+                const std::vector<std::vector<TK>>& tmp_dm
+                    = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+                this->dftu_cal_occup_m(iter, tmp_dm);
+            }
+            GlobalC::dftu.cal_energy_correction(istep);
+        }
+        GlobalC::dftu.output();
+    }
+
+    // (7) for deepks, calculate delta_e
+#ifdef __DEEPKS
+    if (PARAM.inp.deepks_scf)
+    {
+        const std::vector<std::vector<TK>>& dm
+            = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
+
+        this->dpks_cal_e_delta_band(dm);
+    }
+#endif
+
+    // 8) for delta spin
+    if (PARAM.inp.sc_mag_switch)
+    {
+        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
+        sc.cal_MW(iter, this->p_hamilt);
+    }
 
     // call iter_finish() of ESolver_KS
     ESolver_KS<TK>::iter_finish(istep, iter);
@@ -1224,6 +1204,53 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
 
         delete ekinetic;
+    }
+
+    // add by jingan in 2018.11.7
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wave function to Wannier90");
+        if (PARAM.inp.wannier_method == 1)
+        {
+            toWannier90_LCAO_IN_PW myWannier(PARAM.inp.out_wannier_mmn,
+                                             PARAM.inp.out_wannier_amn,
+                                             PARAM.inp.out_wannier_unk,
+                                             PARAM.inp.out_wannier_eig,
+                                             PARAM.inp.out_wannier_wvfn_formatted,
+                                             PARAM.inp.nnkpfile,
+                                             PARAM.inp.wannier_spin);
+
+            myWannier
+                .calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->sf, this->kv, this->psi, &(this->pv));
+        }
+        else if (PARAM.inp.wannier_method == 2)
+        {
+            toWannier90_LCAO myWannier(PARAM.inp.out_wannier_mmn,
+                                       PARAM.inp.out_wannier_amn,
+                                       PARAM.inp.out_wannier_unk,
+                                       PARAM.inp.out_wannier_eig,
+                                       PARAM.inp.out_wannier_wvfn_formatted,
+                                       PARAM.inp.nnkpfile,
+                                       PARAM.inp.wannier_spin,
+                                       orb_);
+
+            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
+        }
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
+    }
+
+    // add by jingan
+    if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
+        berryphase bp(&(this->pv));
+        bp.lcao_init(this->kv,
+                     this->GridT,
+                     orb_); // additional step before calling
+                            // macroscopic_polarization (why capitalize
+                            // the function name?)
+        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 }
 

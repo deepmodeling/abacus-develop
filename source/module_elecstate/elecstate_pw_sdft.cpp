@@ -17,8 +17,6 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 
     if (GlobalV::MY_STOGROUP == 0)
     {
-        this->calEBand();
-
         for (int is = 0; is < nspin; is++)
         {
             setmem_var_op()(this->ctx, this->rho[is], 0, this->charge->nrxx);
