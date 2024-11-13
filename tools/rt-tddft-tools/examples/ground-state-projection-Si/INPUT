@@ -8,7 +8,7 @@ scf_thr         1e-6
 calculation     md
 esolver_type    tddft
 md_type         nve
-md_nstep        10000
+md_nstep        2500
 md_dt           0.002
 md_tfirst       0
 
