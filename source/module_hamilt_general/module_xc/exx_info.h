@@ -23,20 +23,20 @@ struct Exx_Info
 
     struct Exx_Info_Lip
     {
-        const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
-        const double& hse_omega;
+        const Conv_Coulomb_Pot_K::Ccp_Type &ccp_type;
+        const double &hse_omega;
         double lambda = 0.3;
 
         Exx_Info_Lip(const Exx_Info::Exx_Info_Global& info_global)
             :ccp_type(info_global.ccp_type),
-            hse_omega(info_global.hse_omega) {}
+             hse_omega(info_global.hse_omega) {}
     };
     Exx_Info_Lip info_lip;
 
     struct Exx_Info_RI
     {
-        const Conv_Coulomb_Pot_K::Ccp_Type& ccp_type;
-        const double& hse_omega;
+        const Conv_Coulomb_Pot_K::Ccp_Type &ccp_type;
+        const double &hse_omega;
 
         bool real_number = false;
 
@@ -58,15 +58,28 @@ struct Exx_Info
         int abfs_Lmax = 0; // tmp
 
         Exx_Info_RI(const Exx_Info::Exx_Info_Global& info_global)
-            : ccp_type(info_global.ccp_type), hse_omega(info_global.hse_omega)
-        {
-        }
+            :ccp_type(info_global.ccp_type),
+             hse_omega(info_global.hse_omega) {}
     };
     Exx_Info_RI info_ri;
 
-    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global)
+    struct Exx_Info_Opt_ABFs
     {
-    }
+        //const Conv_Coulomb_Pot_K::Ccp_Type &ccp_type;
+        //const double &hse_omega;
+
+        int abfs_Lmax = 0; // tmp
+        double ecut_exx = 60;
+        double tolerence = 1E-2;
+        double kmesh_times = 4;
+
+        //Exx_Info_Opt_ABFs(const Exx_Info::Exx_Info_Global& info_global)
+        //    :ccp_type(info_global.ccp_type),
+        //     hse_omega(info_global.hse_omega) {}
+    };
+    Exx_Info_Opt_ABFs info_opt_abfs;
+
+    Exx_Info() : info_lip(this->info_global), info_ri(this->info_global) {}
 };
 
 #endif

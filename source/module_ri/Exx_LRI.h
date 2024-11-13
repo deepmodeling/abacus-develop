@@ -21,7 +21,7 @@
 #include "module_exx_symmetry/symmetry_rotation.h"
 
 	class Parallel_Orbitals;
-	
+
 	template<typename T, typename Tdata>
 	class RPA_LRI;
 
@@ -59,13 +59,13 @@ public:
 	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const LCAO_Orbitals& orb);
 	void cal_exx_force();
     void cal_exx_stress();
-    std::vector<std::vector<int>> get_abfs_nchis() const;
+    // std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
     double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
-    
+
 
 private:
 	const Exx_Info::Exx_Info_RI &info;

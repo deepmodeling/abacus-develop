@@ -13,30 +13,31 @@
 #include "mpi.h"
 #endif
 
-class LCAO_Orbitals;
+	class LCAO_Orbitals;
 
-class Exx_Abfs::IO
+namespace Exx_Abfs
 {
-public:
-		
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs( 
-		const LCAO_Orbitals &orbs,
-		const std::vector<std::string> &files_abfs,
-		const double kmesh_times=1 );				// close dK, keep Kcut	
-		
-	static std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs( 
-		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_pre, 	
+namespace IO
+{
+	extern std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs(
 		const LCAO_Orbitals &orbs,
 		const std::vector<std::string> &files_abfs,
 		const double kmesh_times=1 );				// close dK, keep Kcut
 
-private:
-	static std::vector<std::vector<Numerical_Orbital_Lm>> construct_abfs_T(
+	extern std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> construct_abfs(
+		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_pre,
+		const LCAO_Orbitals &orbs,
+		const std::vector<std::string> &files_abfs,
+		const double kmesh_times=1 );				// close dK, keep Kcut
+
+  // private:
+	extern std::vector<std::vector<Numerical_Orbital_Lm>> construct_abfs_T(
 		const std::string & file_name,
 		const int &T,
 		const int &nk,
 		const double &dk,
 		const double &dr_uniform);
-};
+}
+}
 
 #endif	// EXX_ABFS_IO_H
