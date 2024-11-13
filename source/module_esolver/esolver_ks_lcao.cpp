@@ -4,9 +4,12 @@
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
+#include "module_io/io_dmk.h"
+#include "module_io/io_npz.h"
 #include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_log.h"
@@ -16,11 +19,13 @@
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
+#include "module_io/write_dmr.h"
 #include "module_io/write_eband_terms.hpp"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_vxc.hpp"
+#include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
 
 //--------------temporary----------------------------
@@ -54,11 +59,6 @@
 // function used by deepks
 // #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
-
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_io/io_dmk.h"
-#include "module_io/write_dmr.h"
-#include "module_io/write_wfc_nao.h"
 
 namespace ModuleESolver
 {
@@ -1105,7 +1105,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
             = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
         std::string zipname = "output_HR0.npz";
-        this->output_mat_npz(zipname, *(p_ham_lcao->getHR()));
+        ModuleIO::output_mat_npz(GlobalC::ucell, zipname, *(p_ham_lcao->getHR()));
 
         if (PARAM.inp.nspin == 2)
         {
@@ -1113,7 +1113,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
             hamilt::HamiltLCAO<std::complex<double>, double>* p_ham_lcao
                 = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(this->p_hamilt);
             zipname = "output_HR1.npz";
-            this->output_mat_npz(zipname, *(p_ham_lcao->getHR()));
+            ModuleIO::output_mat_npz(GlobalC::ucell, zipname, *(p_ham_lcao->getHR()));
         }
     }
 
@@ -1123,12 +1123,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         const elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
         std::string zipname = "output_DM0.npz";
-        this->output_mat_npz(zipname, *(dm->get_DMR_pointer(1)));
+        ModuleIO::output_mat_npz(GlobalC::ucell, zipname, *(dm->get_DMR_pointer(1)));
 
         if (PARAM.inp.nspin == 2)
         {
             zipname = "output_DM1.npz";
-            this->output_mat_npz(zipname, *(dm->get_DMR_pointer(2)));
+            ModuleIO::output_mat_npz(GlobalC::ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
     }
 

@@ -66,6 +66,7 @@ if(ENABLE_LCAO)
       output_sk.cpp
       output_dmk.cpp
       output_mulliken.cpp
+      io_npz.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp
