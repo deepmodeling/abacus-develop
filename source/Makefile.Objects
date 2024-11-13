@@ -253,7 +253,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       dpks_cal_e_delta_band.o\
       dftu_cal_occup_m.o\
-      io_npz.o\
       set_matrix_grid.o\
       lcao_before_scf.o\
       lcao_gets.o\
@@ -557,6 +556,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_mulliken.o\
       output_sk.o\
       output_dmk.o\
+      io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\

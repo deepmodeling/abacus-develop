@@ -10,6 +10,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/get_pchg_lcao.h"
 #include "module_io/get_wf_lcao.h"
+#include "module_io/io_npz.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
@@ -279,11 +280,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->read_mat_npz(zipname, *(dm->get_DMR_pointer(1)));
+        ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(1)));
         if (PARAM.inp.nspin == 2)
         {
             zipname = "output_DM1.npz";
-            this->read_mat_npz(zipname, *(dm->get_DMR_pointer(2)));
+            ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
 
         this->pelec->calculate_weights();
