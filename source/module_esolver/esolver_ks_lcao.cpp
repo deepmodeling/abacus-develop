@@ -66,7 +66,6 @@ namespace ModuleESolver
 
 //------------------------------------------------------------------------------
 //! the 1st function of ESolver_KS_LCAO: constructor
-//! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
@@ -94,7 +93,6 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 
 //------------------------------------------------------------------------------
 //! the 2nd function of ESolver_KS_LCAO: deconstructor
-//! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
@@ -103,21 +101,19 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 
 //------------------------------------------------------------------------------
 //! the 3rd function of ESolver_KS_LCAO: init
-//! mohan add 2024-05-11
 //! 1) calculate overlap matrix S or initialize
 //! 2) init ElecState
 //! 3) init LCAO basis
-//! 4) redundant pv and LM pointers
-//! 5) initialize Density Matrix
-//! 6) initialize Hamilt in LCAO
-//! 7) initialize exx
-//! 8) Quxin added for DFT+U
-//! 9) ppcell
-//! 10) init HSolver
-//! 11) inititlize the charge density.
-//! 12) initialize the potential.
-//! 13) initialize deepks
-//! 14) set occupations?
+//! 4) initialize the density matrix
+//! 5) initialize Hamilt in LCAO
+//! 6) initialize exx
+//! 7) initialize DFT+U
+//! 8) ppcell
+//! 9) inititlize the charge density
+//! 10) initialize the potential.
+//! 11) initialize deepks
+//! 12) set occupations
+//! 13) print a warning if needed
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell& ucell)
@@ -151,8 +147,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     } // end ifnot get_S
 
     // 2) init ElecState
-    // autoset nbands in ElecState, it should before basis_init (for Psi 2d
-    // divid)
+    // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
     if (this->pelec == nullptr)
     {
         // TK stands for double and complex<double>?
@@ -177,27 +172,26 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
                                  ucell,
                                  two_center_bundle_,
                                  orb_);
-    //------------------init Basis_lcao----------------------
 
-    // 5) initialize density matrix
+    // 4) initialize the density matrix
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
 
-    // this function should be removed outside of the function
+    // this function should be removed outside of the function in near future
     if (PARAM.inp.calculation == "get_S")
     {
         ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
         return;
     }
 
-    // 6) initialize Hamilt in LCAO
+    // 5) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
     LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks(), orb_);
 
 #ifdef __EXX
-    // 7) initialize exx
+    // 6) initialize exx
     // PLEASE simplify the Exx_Global interface
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
@@ -220,20 +214,20 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     }
 #endif
 
-    // 8) initialize DFT+U
+    // 7) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), orb_);
     }
 
-    // 9) initialize ppcell
+    // 8) initialize ppcell
     GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rho);
 
-    // 11) inititlize the charge density
+    // 9) inititlize the charge density
     this->pelec->charge->allocate(PARAM.inp.nspin);
     this->pelec->omega = GlobalC::ucell.omega;
 
-    // 12) initialize the potential
+    // 10) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -246,7 +240,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     }
 
 #ifdef __DEEPKS
-    // 13) initialize deepks
+    // 11) initialize deepks
     if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
@@ -256,13 +250,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     }
 #endif
 
-    // 14) set occupations
+    // 12) set occupations
     if (PARAM.inp.ocp)
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 
-    // 15) if kpar is not divisible by nks, print a warning
+    // 13) if kpar is not divisible by nks, print a warning
     if (GlobalV::KPAR_LCAO > 1)
     {
         if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
