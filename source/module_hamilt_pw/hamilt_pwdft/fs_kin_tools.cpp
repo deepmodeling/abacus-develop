@@ -94,7 +94,7 @@ void FS_Kin_tools<FPTYPE, Device>::cal_stress_kin(const int& ik,
     {
         const std::complex<FPTYPE>* ppsi = psi + ib * npwk_max * npol;
         const std::complex<FPTYPE>* ppsi2 = ppsi + npwk_max;
-        FPTYPE fac;
+        FPTYPE fac = 0.0;
         if (occ)
         {
             fac = wg[ik * this->nksbands_ + ib];

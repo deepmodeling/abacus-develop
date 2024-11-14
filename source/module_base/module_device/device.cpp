@@ -194,7 +194,8 @@ else { return "cpu";
 int get_device_kpar(const int& kpar, const int& bndpar)
 {
 #if __MPI && (__CUDA || __ROCM)
-    int temp_nproc = 0, new_kpar = kpar;
+    int temp_nproc = 0;
+    int new_kpar = kpar;
     MPI_Comm_size(MPI_COMM_WORLD, &temp_nproc);
     if (temp_nproc != kpar * bndpar)
     {

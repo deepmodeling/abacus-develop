@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_FS_KIN_TOOLS_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_FS_KIN_TOOLS_H
+#ifndef FS_KIN_TOOLS_H
+#define FS_KIN_TOOLS_H
 #include "module_base/module_device/device.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
