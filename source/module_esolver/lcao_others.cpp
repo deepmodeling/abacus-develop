@@ -55,6 +55,10 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         // return; // use 'return' will cause segmentation fault. by mohan
         // 2024-06-09
     }
+    else if (cal_type == "gen_opt_abfs")
+    {
+        return;
+    }
     else if (cal_type == "test_memory")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
