@@ -225,28 +225,28 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     for (int ik = 0; ik < wfc_basis->nks; ik++)
     {
         const int nstobands = nchip[ik];
-        const int mixbands = nstobands + nksbands;
+        const int max_nbands = stowf.shchi->get_nbands() + nksbands;
         const int npw = wfc_basis->npwk[ik];
         psi_in.fix_k(ik);
         stowf.shchi->fix_k(ik);
 
-        nl_tools.cal_vkb(ik, mixbands); // vkb has dimension of nkb * mixbands * npol
+        nl_tools.cal_vkb(ik, max_nbands); // vkb has dimension of nkb * max_nbands * npol
 
         // calculate becp = <psi|beta> for all beta functions
         nl_tools.cal_becp(ik, nksbands, psi_in.get_pointer(), 0);
         nl_tools.cal_becp(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
-        nl_tools.reduce_pool_becp(mixbands);
+        nl_tools.reduce_pool_becp(max_nbands);
 
         for (int ipol = 0; ipol < 3; ipol++)
         {
-            nl_tools.cal_vkb_deri_f(ik, mixbands, ipol); // vkb_deri has dimension of nkb * mixbands * npol
+            nl_tools.cal_vkb_deri_f(ik, max_nbands, ipol); // vkb_deri has dimension of nkb * max_nbands * npol
             // calculate dbecp = <psi|\nabla beta> for all beta functions
-            nl_tools.cal_dbecp_f(ik, mixbands, nksbands, ipol, psi_in.get_pointer(), 0);
-            nl_tools.cal_dbecp_f(ik, mixbands, nstobands, ipol, stowf.shchi->get_pointer(), nksbands);
+            nl_tools.cal_dbecp_f(ik, max_nbands, nksbands, ipol, psi_in.get_pointer(), 0);
+            nl_tools.cal_dbecp_f(ik, max_nbands, nstobands, ipol, stowf.shchi->get_pointer(), nksbands);
             nl_tools.revert_vkb(ik, ipol);
         }
-        nl_tools.cal_force(ik, mixbands, nksbands, true, force, 0);
-        nl_tools.cal_force(ik, mixbands, nstobands, false, force, nksbands);
+        nl_tools.cal_force(ik, max_nbands, nksbands, true, force, 0);
+        nl_tools.cal_force(ik, max_nbands, nstobands, false, force, nksbands);
     } // end ik
 
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);

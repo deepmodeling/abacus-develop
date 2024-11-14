@@ -1,0 +1,38 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix			autotest
+calculation     scf
+esolver_type    sdft
+method_sto      2
+device          gpu
+
+symmetry		0
+pseudo_dir	../../PP_ORB
+
+kpar            1
+bndpar          2
+
+nbands			10
+nbands_sto		all
+
+nche_sto		120
+seed_sto        20000
+cal_force       1
+cal_stress      1
+
+#Parameters (2.Iteration)
+ecutwfc			30
+scf_thr			1e-6
+scf_nmax		20
+
+
+#Parameters (3.Basis)
+basis_type		pw
+
+#Parameters (4.Smearing)
+smearing_method		fd
+smearing_sigma		0.6
+
+#Parameters (5.Mixing)
+mixing_type		plain
+mixing_beta		0.7

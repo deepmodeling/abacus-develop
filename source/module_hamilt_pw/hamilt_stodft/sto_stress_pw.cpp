@@ -175,22 +175,22 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     for (int ik = 0; ik < p_kv->get_nks(); ik++)
     {
         const int nstobands = nchip[ik];
-        const int mixbands = nstobands + nksbands;
+        const int max_nbands = stowf.shchi->get_nbands() + nksbands;
         const int npw = wfc_basis->npwk[ik];
         psi_in.fix_k(ik);
         stowf.shchi->fix_k(ik);
-        nl_tools.cal_vkb(ik, mixbands);
+        nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
         nl_tools.cal_becp(ik, nksbands, psi_in.get_pointer(), 0);
         nl_tools.cal_becp(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
-        nl_tools.reduce_pool_becp(mixbands);
+        nl_tools.reduce_pool_becp(max_nbands);
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
-                nl_tools.cal_vkb_deri_s(ik, mixbands, ipol, jpol);
+                nl_tools.cal_vkb_deri_s(ik, max_nbands, ipol, jpol);
                 nl_tools.cal_dbecp_s(ik, nksbands, psi_in.get_pointer(), 0);
                 nl_tools.cal_dbecp_s(ik, nstobands, stowf.shchi->get_pointer(), nksbands);
                 nl_tools.cal_stress(ik, nksbands, true, ipol, jpol, stress_device, 0);

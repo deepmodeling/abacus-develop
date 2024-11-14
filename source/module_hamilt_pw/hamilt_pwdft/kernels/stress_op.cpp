@@ -559,6 +559,7 @@ struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
         {
             sum += fac * gk1[i] * gk2[i] * d_kfac[i] * std::norm(psi[i]);
         }
+        return sum;
     }
 };
 
