@@ -1153,13 +1153,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         // mulliken charge analysis
         if (PARAM.inp.out_mul)
         {
-            auto mulp = ModuleIO::Output_Mulliken<TK>(&(this->pv),
-                                                      this->p_hamilt,
-                                                      this->kv,
-                                                      dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec),
-                                                      GlobalC::ucell,
-                                                      PARAM.inp.nspin);
-            mulp.cal_mag(GlobalC::ucell, istep, true);
+            ModuleIO::cal_mag(&(this->pv), this->p_hamilt, this->kv, this->pelec, GlobalC::ucell, istep, true);
         }
     }
 

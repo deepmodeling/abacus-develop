@@ -12,20 +12,16 @@ namespace ModuleIO
 {
 
 template <typename TK>
-Output_Mulliken<TK>::Output_Mulliken(Parallel_Orbitals* pv,
-                                     hamilt::Hamilt<TK>* p_ham,
-                                     const K_Vectors& kv,
-                                     const elecstate::ElecStateLCAO<TK>* pelec,
-                                     const UnitCell& ucell,
-                                     const int nspin)
+Output_Mulliken<TK>::Output_Mulliken(Output_Sk<TK>* output_sk,
+                                     Output_DMK<TK>* output_dmk,
+                                     Parallel_Orbitals* ParaV,
+                                     CellIndex* cell_index,
+                                     const std::vector<int>& isk,
+                                     int nspin)
+    : output_sk_(output_sk), output_dmk_(output_dmk), ParaV_(ParaV), cell_index_(cell_index), isk_(isk), nspin_(nspin)
 {
-    this->cell_index_
-        = new CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
-    this->output_sk_ = new ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
-    this->output_dmk_ = new ModuleIO::Output_DMK<TK>(pelec->get_DM(), pv, PARAM.inp.nspin, kv.get_nks());
-    this->isk_ = kv.isk;
     this->set_nspin(nspin);
-    this->set_ParaV(pv);
+    this->set_ParaV(ParaV);
     this->cal_orbMulP();
 }
 
@@ -63,40 +59,6 @@ void Output_Mulliken<TK>::write(int istep, std::string out_dir)
         ModuleBase::WARNING_QUIT("Output_Mulliken::write", "nspin must be 1, 2 or 4");
     }
     os.close();
-}
-
-template <>
-void Output_Mulliken<std::complex<double>>::cal_mag(UnitCell& ucell, const int istep, const bool print)
-{
-    auto atom_chg = this->get_atom_chg();
-    /// used in updating mag info in STRU file
-    ucell.atom_mulliken = this->get_atom_mulliken(atom_chg);
-    if (print && GlobalV::MY_RANK == 0)
-    {
-        /// write the Orbital file
-        this->cell_index_->write_orb_info(PARAM.globalv.global_out_dir);
-        /// write mulliken.txt
-        this->write(istep, PARAM.globalv.global_out_dir);
-        /// write atomic mag info in running log file
-        this->print_atom_mag(atom_chg, GlobalV::ofs_running);
-    }
-}
-
-template <>
-void Output_Mulliken<double>::cal_mag(UnitCell& ucell, const int istep, const bool print)
-{
-    auto atom_chg = this->get_atom_chg();
-    /// used in updating mag info in STRU file
-    ucell.atom_mulliken = this->get_atom_mulliken(atom_chg);
-    if (print && GlobalV::MY_RANK == 0)
-    {
-        /// write the Orbital file
-        this->cell_index_->write_orb_info(PARAM.globalv.global_out_dir);
-        /// write mulliken.txt
-        this->write(istep, PARAM.globalv.global_out_dir);
-        /// write atomic mag info in running log file
-        this->print_atom_mag(atom_chg, GlobalV::ofs_running);
-    }
 }
 
 template <typename TK>

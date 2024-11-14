@@ -20,13 +20,12 @@ class Output_Mulliken
 {
   public:
     /// constructor of Output_Mulliken
-    Output_Mulliken(Parallel_Orbitals* pv,
-                    hamilt::Hamilt<TK>* p_ham,
-                    const K_Vectors& kv,
-                    const elecstate::ElecStateLCAO<TK>* pelec,
-                    const UnitCell& ucell,
-                    const int nspin);
-    void cal_mag(UnitCell& ucell, const int istep, const bool print);
+    Output_Mulliken(Output_Sk<TK>* output_sk,
+                    Output_DMK<TK>* output_dmk,
+                    Parallel_Orbitals* ParaV,
+                    CellIndex* cell_index,
+                    const std::vector<int>& isk,
+                    int nspin);
     /// the outer interface to write the Mulliken population charges
     void write(int istep, std::string out_dir);
     /// print atom mag to running log file
@@ -79,10 +78,41 @@ class Output_Mulliken
     Output_DMK<TK>* output_dmk_ = nullptr;
     Parallel_Orbitals* ParaV_ = nullptr;
     CellIndex* cell_index_ = nullptr;
-    std::vector<int> isk_;
+    const std::vector<int>& isk_;
     int nspin_;
     ModuleBase::matrix orbMulP_;
 };
+
+template <typename TK>
+void cal_mag(Parallel_Orbitals* pv,
+             hamilt::Hamilt<TK>* p_ham,
+             K_Vectors& kv,
+             elecstate::ElecState* pelec,
+             UnitCell& ucell,
+             const int istep,
+             const bool print)
+{
+    auto cell_index
+        = CellIndex(ucell.get_atomLabels(), ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
+    auto out_sk = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
+    auto out_dmk = ModuleIO::Output_DMK<TK>(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM(),
+                                            pv,
+                                            PARAM.inp.nspin,
+                                            kv.get_nks());
+    auto mulp = ModuleIO::Output_Mulliken<TK>(&(out_sk), &(out_dmk), pv, &cell_index, kv.isk, PARAM.inp.nspin);
+    auto atom_chg = mulp.get_atom_chg();
+    /// used in updating mag info in STRU file
+    ucell.atom_mulliken = mulp.get_atom_mulliken(atom_chg);
+    if (print && GlobalV::MY_RANK == 0)
+    {
+        /// write the Orbital file
+        cell_index.write_orb_info(PARAM.globalv.global_out_dir);
+        /// write mulliken.txt
+        mulp.write(istep, PARAM.globalv.global_out_dir);
+        /// write atomic mag info in running log file
+        mulp.print_atom_mag(atom_chg, GlobalV::ofs_running);
+    }
+}
 
 } // namespace ModuleIO
 
