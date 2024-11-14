@@ -4,6 +4,7 @@
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/cell_index.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_sk.h"
 
@@ -19,12 +20,13 @@ class Output_Mulliken
 {
   public:
     /// constructor of Output_Mulliken
-    Output_Mulliken(Output_Sk<TK>* output_sk,
-                    Output_DMK<TK>* output_dmk,
-                    Parallel_Orbitals* ParaV,
-                    CellIndex* cell_index,
-                    const std::vector<int>& isk,
-                    int nspin);
+    Output_Mulliken(Parallel_Orbitals* pv,
+                    hamilt::Hamilt<TK>* p_ham,
+                    const K_Vectors& kv,
+                    const elecstate::ElecStateLCAO<TK>* pelec,
+                    const UnitCell& ucell,
+                    const int nspin);
+    void cal_mag(UnitCell& ucell, const int istep, const bool print);
     /// the outer interface to write the Mulliken population charges
     void write(int istep, std::string out_dir);
     /// print atom mag to running log file
@@ -77,7 +79,7 @@ class Output_Mulliken
     Output_DMK<TK>* output_dmk_ = nullptr;
     Parallel_Orbitals* ParaV_ = nullptr;
     CellIndex* cell_index_ = nullptr;
-    const std::vector<int>& isk_;
+    std::vector<int> isk_;
     int nspin_;
     ModuleBase::matrix orbMulP_;
 };

@@ -258,7 +258,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_gets.o\
       lcao_others.o\
       lcao_init_after_vc.o\
-      lcao_fun.o\
       cal_edm_tddft.o\
 
 OBJS_GINT=gint.o\

@@ -13,6 +13,7 @@
 #include "module_io/nscf_band.h"
 #include "module_io/output_dmk.h"
 #include "module_io/output_log.h"
+#include "module_io/output_mat_sparse.h"
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
 #include "module_io/to_qo.h"
@@ -1132,14 +1133,33 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
-    // 14) write md related
-    if (!md_skip_out(PARAM.inp.calculation, istep, PARAM.inp.out_interval))
+    // 14) output sparse matrix
+    if (PARAM.inp.calculation != "md" || istep % PARAM.inp.out_interval == 0)
     {
-        this->create_Output_Mat_Sparse(istep).write();
+        ModuleIO::output_mat_sparse(PARAM.inp.out_mat_hs2,
+                                    PARAM.inp.out_mat_dh,
+                                    PARAM.inp.out_mat_t,
+                                    PARAM.inp.out_mat_r,
+                                    istep,
+                                    this->pelec->pot->get_effective_v(),
+                                    this->pv,
+                                    this->GK, // mohan add 2024-04-01
+                                    two_center_bundle_,
+                                    orb_,
+                                    GlobalC::ucell,
+                                    GlobalC::GridD, // mohan add 2024-04-06
+                                    this->kv,
+                                    this->p_hamilt);
         // mulliken charge analysis
         if (PARAM.inp.out_mul)
         {
-            this->cal_mag(istep, true);
+            auto mulp = ModuleIO::Output_Mulliken<TK>(&(this->pv),
+                                                      this->p_hamilt,
+                                                      this->kv,
+                                                      dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec),
+                                                      GlobalC::ucell,
+                                                      PARAM.inp.nspin);
+            mulp.cal_mag(GlobalC::ucell, istep, true);
         }
     }
 
