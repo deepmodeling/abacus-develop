@@ -11,7 +11,6 @@
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
 
 Grid_Technique::Grid_Technique() {
-    allocate_find_R2 = false;
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
         is_malloced = false;
@@ -117,7 +116,7 @@ void Grid_Technique::set_pbc_grid(
 
     this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
 
-    this->init_ijr_info(ucell, gd);
+    this->init_ijr_and_nnrg(ucell, gd);
     this->cal_trace_lo(ucell);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
@@ -539,9 +538,9 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     return;
 }
 
-void Grid_Technique::init_ijr_info(const UnitCell& ucell,
+void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell,
                                    Grid_Driver& gd) {
-    ModuleBase::TITLE("Grid_Technique", "init_ijr_info");
+    ModuleBase::TITLE("Grid_Technique", "init_ijr_and_nnrg");
 
     hamilt::HContainer<double> hRGint_tmp(ucell.nat);
 
@@ -610,28 +609,10 @@ void Grid_Technique::init_ijr_info(const UnitCell& ucell,
             }
     }
     this->ijr_info = hRGint_tmp.get_ijr_info();
+    this->nnrg = hRGint_tmp.get_nnr();
     return;
 }
 
-int Grid_Technique::find_offset(const int id1, const int id2, const int iat1, const int iat2) const
-	{
-		const int R1x=this->ucell_index2x[id1];
-		const int R2x=this->ucell_index2x[id2];
-		const int dRx=R1x-R2x;
-		const int R1y=this->ucell_index2y[id1];
-		const int R2y=this->ucell_index2y[id2];
-		const int dRy=R1y-R2y;
-		const int R1z=this->ucell_index2z[id1];
-		const int R2z=this->ucell_index2z[id2];
-		const int dRz=R1z-R2z;
-
-		const int index=this->cal_RindexAtom(dRx, dRy, dRz, iat2);
-
-		const int offset = this->binary_search_find_R2_offset(index, iat1);
-
-		assert(offset < this->nad[iat1]);
-		return offset;
-	};
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 

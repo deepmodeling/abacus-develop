@@ -67,15 +67,15 @@ class Grid_Technique : public Grid_MeshBall {
     // use: GridT.in_this_processor
     //---------------------------------------
     int nnrg = 0;
-    bool allocate_find_R2;
-    std::vector<int> nlocdimg;
-    std::vector<int> nlocstartg;
-    std::vector<int> nad; // number of adjacent atoms for each atom.
-    std::vector<std::vector<int>> find_R2;
-    std::vector<std::vector<int>> find_R2_sorted_index;
-    std::vector<std::vector<int>> find_R2st;
+    // bool allocate_find_R2;
+    // std::vector<int> nlocdimg;
+    // std::vector<int> nlocstartg;
+    // std::vector<int> nad; // number of adjacent atoms for each atom.
+    // std::vector<std::vector<int>> find_R2;
+    // std::vector<std::vector<int>> find_R2_sorted_index;
+    // std::vector<std::vector<int>> find_R2st;
     
-    int binary_search_find_R2_offset(int val, int iat) const;
+    // int binary_search_find_R2_offset(int val, int iat) const;
 
     // UnitCell and LCAO_Obrbitals
     const UnitCell* ucell;
@@ -129,7 +129,6 @@ class Grid_Technique : public Grid_MeshBall {
 
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(Grid division)
-    void cal_nnrg(Parallel_Orbitals* pv, const std::vector<double>& orb_cutoff);
     int cal_RindexAtom(const int& u1,
                        const int& u2,
                        const int& u3,
@@ -163,7 +162,8 @@ class Grid_Technique : public Grid_MeshBall {
                             const int& startz_current,
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
-    void init_ijr_info(const UnitCell& ucell, Grid_Driver& gd);
+    // initialize the ijr_info and nnrg
+    void init_ijr_and_nnrg(const UnitCell& ucell, Grid_Driver& gd);
     void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);

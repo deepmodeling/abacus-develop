@@ -222,7 +222,6 @@ class Gint {
                           double* rho);
 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
-    bool pvpR_alloc_flag = false;
     hamilt::HContainer<double>* hRGint
         = nullptr; // stores Hamiltonian in sparse format
     std::vector<hamilt::HContainer<double>*> hRGint_tmp; // size of vec is 4, only used when nspin = 4

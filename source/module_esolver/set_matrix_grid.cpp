@@ -86,14 +86,7 @@ void ESolver_KS_LCAO<TK, TR>::set_matrix_grid(Record_adj& ra)
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
     ra.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
-
-    if (!PARAM.globalv.gamma_only_local)
-    {
-        // need to first calculae lgd.
-        // using GridT.init.
-        this->GridT.cal_nnrg(&this->pv, orb_.cutoffs());
-    }
-
+    
     ModuleBase::timer::tick("ESolver_KS_LCAO", "set_matrix_grid");
     return;
 }

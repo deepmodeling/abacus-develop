@@ -13,32 +13,6 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include <mpi.h>
-
-void Gint_k::allocate_pvpR(void)
-{
-    ModuleBase::TITLE("Gint_k", "allocate_pvpR");
-    if (this->pvpR_alloc_flag)
-    {
-        return; // Liuxh add, 20181012
-        ModuleBase::WARNING_QUIT("Gint_k::allocate_pvpR", "pvpR has been allocated!");
-    }
-
-    this->pvpR_alloc_flag = true;
-    return;
-}
-
-void Gint_k::destroy_pvpR(void)
-{
-    ModuleBase::TITLE("Gint_k", "destroy_pvpR");
-    if (!pvpR_alloc_flag)
-    {
-        return;
-    }
-
-    this->pvpR_alloc_flag = false;
-    return;
-}
-
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 
 // transfer_pvpR, NSPIN = 1 or 2
