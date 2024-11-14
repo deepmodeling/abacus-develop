@@ -12,7 +12,7 @@ mixing_type         broyden
 mixing_beta         0.7
 scf_nmax            100
 scf_thr             1e-08
-kspacing            0.04 ### Abacus will generate KPT file when kspacing is used.
+kspacing            0.04 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 relax_nmax          100
 cal_force           1
 force_thr           0.001

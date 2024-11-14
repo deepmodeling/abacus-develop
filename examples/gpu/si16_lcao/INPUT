@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 device          gpu
-gamma_only      1  # GPU acceleration currently only support gamma_only set to 1. ### Abacus will generate KPT file when gamma_only=1.
+gamma_only      1  # GPU acceleration currently only support gamma_only set to 1. ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 ks_solver		cusolver  # if not set, the default ks_solver is cusolver,
                           # you can also choose genelpa or scalapack_gvx.
 

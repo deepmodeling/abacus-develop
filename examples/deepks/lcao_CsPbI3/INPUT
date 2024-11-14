@@ -13,7 +13,7 @@ scf_nmax                   50
 
 #Parameters (3.Basis)
 basis_type             lcao 
-kspacing               0.1 ### Abacus will generate KPT file when kspacing is used.
+kspacing               0.1 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 
 #Parameters (4.Smearing)
 smearing_method                gaussian

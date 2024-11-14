@@ -15,7 +15,7 @@ ks_solver     pexsi
 pexsi_temp    0.1
 pexsi_npole   80
 basis_type    lcao
-gamma_only    1 ### Abacus will generate KPT file when gamma_only=1.
+gamma_only    1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 symmetry      0
 nspin         2
 pseudo_dir	../../../tests/PP_ORB

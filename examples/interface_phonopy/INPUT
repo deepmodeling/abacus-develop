@@ -12,7 +12,7 @@ cal_force               1
 cal_stress              1
 #Parameters (3.Basis)
 basis_type              lcao
-#kspacing                0.06 ### Abacus will generate KPT file when kspacing is used.
+#kspacing                0.06 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 #Parameters (4.Smearing)
 smearing_method         gauss
 smearing_sigma          0.01
