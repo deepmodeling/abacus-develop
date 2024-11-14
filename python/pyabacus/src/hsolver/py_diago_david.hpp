@@ -137,8 +137,9 @@ public:
             syncmem_op()(this->ctx, this->ctx, spsi_out, psi_in, static_cast<size_t>(nbands * nrow));
         };
 
+        hsolver::PreOP<std::complex<double>> pre_op(precond_vec);
         obj = std::make_unique<hsolver::DiagoDavid<std::complex<double>, base_device::DEVICE_CPU>>(
-            precond_vec.data(), 
+            pre_op.get(),
             nband, 
             nbasis, 
             dav_ndim, 

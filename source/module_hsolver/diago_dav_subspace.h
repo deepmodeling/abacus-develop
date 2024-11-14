@@ -24,8 +24,9 @@ class Diago_DavSubspace
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
 
-  public:
-      Diago_DavSubspace(PreFunc<T>&& precondition_in,    /// pass in a function, lambda or PreOP object
+    using PreFunc = fvec::DivTransMinusEig<T>;
+public:
+    Diago_DavSubspace(PreFunc&& precondition_in,    /// pass in a function, lambda or PreOP object
                       const int& nband_in,
                       const int& nbasis_in,
                       const int& david_ndim_in,
@@ -69,7 +70,7 @@ class Diago_DavSubspace
     const int nbase_x = 0;
 
     /// The precondition operation, can be a function, lambda or PreOP object
-    const PreFunc<T> precondition;
+    const PreFunc precondition;
     // note that lambdas can only passed by value
 
     /// record for how many bands not have convergence eigenvalues

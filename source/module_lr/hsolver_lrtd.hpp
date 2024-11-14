@@ -73,23 +73,25 @@ namespace LR
                 auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {hm.hPsi(psi_in, hpsi, ld_psi, nvec);};
                 auto spsi_func = [&hm](const T* psi_in, T* spsi, const int ld_psi, const int nvec)
                     { std::memcpy(spsi, psi_in, sizeof(T) * ld_psi * nvec); };
-                auto pre_func = [&precondition](T* ptr, const Real<T>* eig, const int& ld, const int& nvec)->void
-                    {  hsolver::div_trans_prevec_minus_eigen(ptr, eig, ld, nvec, precondition.data()); };
 
                 if (method == "dav")
                 {
+                    auto pre_func = [&precondition](T* ptr, const int& ld, const int& nvec)->void
+                        {  hsolver::fvec::div_prevec(ptr, ld, nvec, precondition.data()); };
                     // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
                     const int ntry_max = 5;
                     // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
                     // converged.
                     const int notconv_max = ("nscf" == PARAM.inp.calculation) ? 0 : 5;
                     // do diag and add davidson iteration counts up to avg_iter
-                    hsolver::DiagoDavid<T> david(precondition.data(), nband, dim, PARAM.inp.pw_diag_ndim, PARAM.inp.use_paw, comm_info);
+                    hsolver::DiagoDavid<T> david(pre_func, nband, dim, PARAM.inp.pw_diag_ndim, PARAM.inp.use_paw, comm_info);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
                         dim, psi, eigenvalue.data(), diag_ethr, maxiter, ntry_max, 0));
                 }
                 else if (method == "dav_subspace") //need refactor
                 {
+                    auto pre_func = [&precondition](T* ptr, const Real<T>* eig, const int& ld, const int& nvec)->void
+                        {  hsolver::fvec::div_trans_prevec_minus_eigen(ptr, eig, ld, nvec, precondition.data()); };
                     hsolver::Diago_DavSubspace<T> dav_subspace(pre_func,
                         nband,
                         dim,

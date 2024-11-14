@@ -503,8 +503,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
-        PreOP<T, Device> pre_op(pre_condition, transfunc::qe_pw<Real>);
-        Diago_DavSubspace<T, Device> dav_subspace(bind_pre_op(pre_op),
+        // const auto pre_op = make_pre_op(pre_condition, fvec::div_trans_prevec_minus_eigen<T, Device>, fval::qe_pw<Real>);
+        const PreOP<T, Device, fvec::DivTransMinusEigKernel<T, Device>> pre_op(pre_condition, fvec::div_trans_prevec_minus_eigen<T, Device>, fval::qe_pw<Real>);
+        Diago_DavSubspace<T, Device> dav_subspace(pre_op.get(),
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),
@@ -573,7 +574,9 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("David", "spsi_func");
         };
 
-        DiagoDavid<T, Device> david(pre_condition.data(),
+        // const auto pre_op = make_pre_op(pre_condition, fvec::div_prevec<T, Device>);
+        const PreOP<T, Device> pre_op(pre_condition);
+        DiagoDavid<T, Device> david(pre_op.get(),
                                     nband,
                                     dim,
                                     PARAM.inp.pw_diag_ndim,

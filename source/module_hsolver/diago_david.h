@@ -6,7 +6,7 @@
 #include "module_base/module_device/memory_op.h"// base_device::memory
 
 #include "module_hsolver/diag_comm_info.h"
-
+#include "module_hsolver/precondition_funcs.h"
 #include <vector>
 #include <functional>
 
@@ -21,10 +21,11 @@ class DiagoDavid
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
-  
-  public:
 
-    DiagoDavid(const Real* precondition_in,
+    using PreFunc = fvec::Div<T>;
+public:
+
+    DiagoDavid(PreFunc&& precondition_in,
                const int nband_in,
                const int dim_in,
                const int david_ndim_in,
@@ -102,8 +103,7 @@ class DiagoDavid
     int notconv = 0;
 
     /// precondition for diag, diagonal approximation of matrix A(i.e. Hamilt)
-    const Real* precondition = nullptr;
-    Real* d_precondition = nullptr;
+    const PreFunc precondition;
 
     /// eigenvalue results
     Real* eigenvalue = nullptr;

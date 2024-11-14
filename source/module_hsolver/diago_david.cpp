@@ -32,16 +32,16 @@ using namespace hsolver;
  * @note Auxiliary memory is allocated in the constructor and deallocated in the destructor.
  */
 template <typename T, typename Device>
-DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in, 
+DiagoDavid<T, Device>::DiagoDavid(PreFunc&& precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in)
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in* nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in),
+    precondition(std::forward<PreFunc>(precondition_in))
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
 
     this->one = &one_;
     this->zero = &zero_;
@@ -110,15 +110,6 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
     // lagrange_matrix(nband, nband); // for orthogonalization
     resmem_complex_op()(this->ctx, this->lagrange_matrix, nband * nband);
     setmem_complex_op()(this->ctx, this->lagrange_matrix, 0, nband * nband);
-
-#if defined(__CUDA) || defined(__ROCM)
-    // device precondition array
-    if (this->device == base_device::GpuDevice)
-    {
-        resmem_var_op()(this->ctx, this->d_precondition, dim);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition, dim);
-    }
-#endif
 }
 
 /**
@@ -139,13 +130,6 @@ DiagoDavid<T, Device>::~DiagoDavid()
     delmem_complex_op()(this->ctx, this->vcc);
     delmem_complex_op()(this->ctx, this->lagrange_matrix);
     base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->cpu_ctx, this->eigenvalue);
-    // If the device is a GPU device, free the d_precondition array.
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_var_op()(this->ctx, this->d_precondition);
-    }
-#endif
 }
 
 template <typename T, typename Device>
@@ -499,40 +483,14 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                               dim // LDC: if(N) max(1, m)
     );
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
     // Preconditioning
     // basis[nbase] = T * basis[nbase] = T * (H - lambda * S) * psi
     // where T, the preconditioner, is an approximate inverse of H
     //          T is a diagonal stored in array `precondition`
     // to do preconditioning, divide each column of basis by the corresponding element of precondition
-    for (int m = 0; m < notconv; m++)
-    {
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        if (this->device == base_device::GpuDevice)
-        {
-#if defined(__CUDA) || defined(__ROCM)
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                                   dim,
-                                                   basis + dim*(nbase + m),
-                                                   basis + dim*(nbase + m),
-                                                   this->d_precondition);
-#endif
-        }
-        else
-        {
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                                   dim,
-                                                   basis + dim*(nbase + m),
-                                                   basis + dim*(nbase + m),
-                                                   this->precondition);
-        }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-        // for (int ig = 0; ig < dim; ig++)
-        // {
-        //     ppsi[ig] /= this->precondition[ig];
-        // }
-        //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    }
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+    this->precondition(basis + dim * nbase, dim, notconv);
+    //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // there is a nbase to nbase + notconv band orthogonalise
     // plan for SchmidtOrth
