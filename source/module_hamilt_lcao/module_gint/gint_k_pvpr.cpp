@@ -12,8 +12,10 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include <mpi.h>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 // transfer_pvpR, NSPIN = 1 or 2
 void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell, Grid_Driver* gd)
