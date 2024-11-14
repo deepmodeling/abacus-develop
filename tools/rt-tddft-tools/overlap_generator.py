@@ -17,7 +17,7 @@ class overlap_R:
         symbols = atoms0.get_chemical_symbols()
         element_counts = Counter(symbols)
         unique_elements = set(symbols)
-        assert orb_file_num == len(unique_elements), f"轨道数目{orb_file_num}与元素数目{len(unique_elements)}不一致！"
+        assert orb_file_num == len(unique_elements), f"The number of orbitals{orb_file_num}does not match the number of unique elements{len(unique_elements)}!"
 
         # Build orbital collection
         self.orb = nao.RadialCollection()
