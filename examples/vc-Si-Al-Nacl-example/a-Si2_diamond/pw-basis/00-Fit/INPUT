@@ -23,7 +23,7 @@ gamma_only          0
 
 #Parameters (6.Smearing) 
 smearing_method            gaussian
-smearing_sigma               0.02
+smearing_sigma               0.015
 
 #cal_stress 1
 #cell_factor         10
