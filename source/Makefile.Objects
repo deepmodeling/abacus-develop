@@ -233,6 +233,7 @@ OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       density_matrix.o\
       density_matrix_io.o\
       cal_dm_psi.o\
+      cal_edm_tddft.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -259,7 +260,6 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       lcao_others.o\
       lcao_init_after_vc.o\
       lcao_fun.o\
-      cal_edm_tddft.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\

@@ -37,8 +37,6 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
-
-    void cal_edm_tddft();
 };
 
 } // namespace ModuleESolver
