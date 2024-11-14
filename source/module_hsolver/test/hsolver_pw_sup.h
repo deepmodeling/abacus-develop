@@ -1,4 +1,5 @@
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_hsolver/precondition_funcs.h"
 
 namespace ModulePW {
 
@@ -121,15 +122,15 @@ template class DiagoCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoCG<std::complex<double>, base_device::DEVICE_CPU>;
 
 template <typename T, typename Device>
-DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
+DiagoDavid<T, Device>::DiagoDavid(PreFunc&& precondition_in,
                                   const int nband_in,
                                   const int dim_in,
                                   const int david_ndim_in,
                                   const bool use_paw_in,
                                   const diag_comm_info& diag_comm_in)
-    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in * nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in) {
+    : nband(nband_in), dim(dim_in), nbase_x(david_ndim_in* nband_in), david_ndim(david_ndim_in), use_paw(use_paw_in), diag_comm(diag_comm_in),
+    precondition(std::forward<PreFunc>(precondition_in)) {
     this->device = base_device::get_device_type<Device>(this->ctx);
-    this->precondition = precondition_in;
 
     test_david = 2;
     // 1: check which function is called and which step is executed

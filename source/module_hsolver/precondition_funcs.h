@@ -4,6 +4,9 @@
 #include "module_base/module_device/types.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+
+/// @brief Preconditioner Function Library
+/// Users can add other types of operation than the following ones at one's need.
 namespace hsolver
 {
     template <typename T>
@@ -19,10 +22,6 @@ namespace hsolver
     /// @brief Transform vectors
     namespace fvec
     {
-        /// @brief To be called in the iterative eigensolver.
-        /// Users can add other types of operation than the following ones at one's need.
-        /// fixed parameters: object vector, eigenvalue, leading dimension, number of vectors
-
         ///---------------------------------------------------------------------------------------------
         /// type 1: directly divide each vector by the precondition vector
         ///---------------------------------------------------------------------------------------------
@@ -30,13 +29,14 @@ namespace hsolver
         void div_prevec(T* ptr, const size_t& dim, const size_t& nvec,
             const Real<T>* const pre)
         {
+            Device* ctx = {};
             for (int m = 0; m < nvec; m++)
             {
                 T* const ptr_m = ptr + m * dim;
-                vector_div_vector_op<T, Device>()({}, dim, ptr_m, ptr_m, pre);
+                vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, pre);
             }
         }
-        /// calling intereface in the eigensolver
+        /// Intereface to be called in the eigensolver
         template <typename T>
         using Div = std::function<void(T*, const size_t&, const size_t&)>;
         // Kernel function full of dependence
@@ -54,6 +54,8 @@ namespace hsolver
             using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real<T>, Device, base_device::DEVICE_CPU>;
             std::vector<Real<T>> pre_trans(dim, 0.0);
             const auto device = base_device::get_device_type<Device>({});
+            Device* ctx = {};
+            base_device::DEVICE_CPU* cpu_ctx = {};
 
             for (int m = 0; m < nvec; m++)
             {
@@ -63,27 +65,28 @@ namespace hsolver
                 if (device == base_device::GpuDevice)
                 {
                     assert(d_pre);
-                    syncmem_var_h2d_op()({}, {}, d_pre, pre_trans.data(), dim);
-                    vector_div_vector_op<T, Device>()({}, dim, ptr_m, ptr_m, d_pre);
+                    syncmem_var_h2d_op()(ctx, cpu_ctx, d_pre, pre_trans.data(), dim);
+                    vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, d_pre);
                 }
                 else
 #endif
                 {
-                    vector_div_vector_op<T, Device>()({}, dim, ptr_m, ptr_m, pre_trans.data());
+                    vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, pre_trans.data());
                 }
             }
         }
-        /// calling intereface in the eigensolver
+        /// Intereface to be called in the eigensolver
         template <typename T>
         using DivTransMinusEig = std::function<void(T*, const Real<T>*, const size_t&, const size_t&)>;
-        // Kernel function full of dependence
+        /// Kernel function full of dependence
         template <typename T, typename Device = base_device::DEVICE_CPU>
         using DivTransMinusEigKernel = std::function<decltype(div_trans_prevec_minus_eigen<T, Device>)>;
     }
 
     /// @brief A operator-like class of precondition function
     ///     to encapsulate the pre-allocation of memory on different devices before starting the iterative eigensolver.
-    ///     One can pass the operatr() function of this class, or other custom lambdas/functions to eigensolvers.
+    ///     One can use `.get()` interface to get the function to be called by the eigensovler,
+    ///     or pass a custom lambdas/function to replace the one returned by `.get()`.
     template <typename T, typename Device = base_device::DEVICE_CPU, typename Kernel_t = fvec::DivKernel<T, Device>>
     struct PreOP
     {

@@ -21,7 +21,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(PreFunc&& precondition_in,
                                                 const int& diag_nmax_in,
                                                 const bool& need_subspace_in,
                                                 const diag_comm_info& diag_comm_in)
-    : precondition(std::forward<PreFunc>(precondition_in)), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in* david_ndim_in),
+    : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in* david_ndim_in),
     diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
