@@ -11,17 +11,17 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 void Gint::cal_meshball_rho(const int na_grid,
-                            int* block_index,
-                            int* vindex,
-                            double** psir_ylm,
-                            double** psir_DMR,
-                            double* rho)
+                            const int*const block_index,
+                            const int*const vindex,
+                            const double*const*const psir_ylm,
+                            const double*const*const psir_DMR,
+                            double*const rho)
 {
     const int inc = 1;
     // sum over mu to get density on grid
     for (int ib = 0; ib < this->bxyz; ++ib)
     {
-        double r = ddot_(&block_index[na_grid], psir_ylm[ib], &inc, psir_DMR[ib], &inc);
+        const double r = ddot_(&block_index[na_grid], psir_ylm[ib], &inc, psir_DMR[ib], &inc);
         const int grid = vindex[ib];
         rho[grid] += r;
     }

@@ -492,6 +492,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_nmax");
         item.annotation = "number of electron iterations";
         read_sync_int(input.scf_nmax);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "nscf")
+            {
+                para.input.scf_nmax = 1;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -526,6 +532,36 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_ene_thr");
         item.annotation = "total energy error threshold";
         read_sync_double(input.scf_ene_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_stop");
+        item.annotation = "whether to stop scf when oscillation is detected";
+        read_sync_bool(input.scf_os_stop);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_thr");
+        item.annotation = "charge density threshold for oscillation";
+        read_sync_double(input.scf_os_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.scf_os_thr >= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "scf_os_thr should be negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_ndim");
+        item.annotation = "number of old iterations used for oscillation detection";
+        read_sync_int(input.scf_os_ndim);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.scf_os_ndim <= 0) // default value
+            {
+                para.input.scf_os_ndim = para.input.mixing_ndim;
+            }
+        };
         this->add_item(item);
     }
     {

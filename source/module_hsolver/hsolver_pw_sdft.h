@@ -8,12 +8,14 @@ namespace hsolver
 template <typename T, typename Device = base_device::DEVICE_CPU>
 class HSolverPW_SDFT : public HSolverPW<T, Device>
 {
+  protected:
+    using Real = typename GetTypeReal<T>::type;
   public:
     HSolverPW_SDFT(K_Vectors* pkv,
                    ModulePW::PW_Basis_K* wfc_basis_in,
                    wavefunc* pwf_in,
                    Stochastic_WF<T, Device>& stowf,
-                   StoChe<double>& stoche,
+                   StoChe<Real, Device>& stoche,
                    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
                    const std::string calculation_type_in,
                    const std::string basis_type_in,
@@ -45,6 +47,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
 
     void solve(hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
+               psi::Psi<T>& psi_cpu,
                elecstate::ElecState* pes,
                ModulePW::PW_Basis_K* wfc_basis,
                Stochastic_WF<T, Device>& stowf,
@@ -53,6 +56,13 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                const bool skip_charge);
 
     Stochastic_Iter<T, Device> stoiter;
+  protected:
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
+    using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
+    using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
 };
 } // namespace hsolver
 #endif

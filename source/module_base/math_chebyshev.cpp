@@ -3,6 +3,7 @@
 #include "blas_connector.h"
 #include "constants.h"
 #include "global_function.h"
+#include "module_base/module_container/ATen/kernels/blas.h"
 #include "tool_quit.h"
 
 #include <cassert>
@@ -49,35 +50,55 @@ void FFTW<float>::execute_fftw()
 // A number to control the number of grids in C_n integration
 #define EXTEND 16
 
-template <typename REAL>
-Chebyshev<REAL>::Chebyshev(const int norder_in) : fftw(2 * EXTEND * norder_in)
+template <typename REAL, typename Device>
+Chebyshev<REAL, Device>::Chebyshev(const int norder_in) : fftw(2 * EXTEND * norder_in)
 {
     this->norder = norder_in;
     norder2 = 2 * norder * EXTEND;
     if (this->norder < 1)
     {
-        ModuleBase::WARNING_QUIT("Stochastic_Chebychev", "The Chebyshev expansion order should be at least 1!");
+        ModuleBase::WARNING_QUIT("Chebyshev", "The Chebyshev expansion order should be at least 1!");
+    }
+    coefr_cpu = new REAL[norder];
+    coefc_cpu = new std::complex<REAL>[norder];
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        resmem_var_op()(this->ctx, this->coef_real, norder);
+        resmem_complex_op()(this->ctx, this->coef_complex, norder);
+    }
+    else
+    {
+        coef_real = coefr_cpu;
+        coef_complex = coefc_cpu;
     }
     polytrace = new REAL[norder];
-    coef_real = new REAL[norder];
-    coef_complex = new std::complex<REAL>[norder];
 
     // ndmin = ndmax = ndmax_in;
-
     getcoef_complex = false;
     getcoef_real = false;
 }
 
-template <typename REAL>
-Chebyshev<REAL>::~Chebyshev()
+template <typename REAL, typename Device>
+Chebyshev<REAL, Device>::~Chebyshev()
 {
     delete[] polytrace;
-    delete[] coef_real;
-    delete[] coef_complex;
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        delmem_var_op()(this->ctx, this->coef_real);
+        delmem_complex_op()(this->ctx, this->coef_complex);
+    }
+    else
+    {
+        coef_real = nullptr;
+        coef_complex = nullptr;
+    }
+
+    delete[] coefr_cpu;
+    delete[] coefc_cpu;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::getpolyval(const REAL x, REAL* polyval, const int N)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::getpolyval(const REAL x, REAL* polyval, const int N)
 {
     polyval[0] = 1;
     polyval[1] = x;
@@ -86,46 +107,57 @@ void Chebyshev<REAL>::getpolyval(const REAL x, REAL* polyval, const int N)
         polyval[i] = 2 * x * polyval[i - 1] - polyval[i - 2];
     }
 }
-template <typename REAL>
-inline REAL Chebyshev<REAL>::recurs(const REAL x, const REAL Tn, REAL const Tn_1)
+template <typename REAL, typename Device>
+inline REAL Chebyshev<REAL, Device>::recurs(const REAL x, const REAL Tn, REAL const Tn_1)
 {
     return 2 * x * Tn - Tn_1;
 }
 
-template <typename REAL>
-REAL Chebyshev<REAL>::ddot_real(const std::complex<REAL>* psi_L,
-                                const std::complex<REAL>* psi_R,
-                                const int N,
-                                const int LDA,
-                                const int m)
+template <typename REAL, typename Device>
+REAL Chebyshev<REAL, Device>::ddot_real(const std::complex<REAL>* psi_L,
+                                        const std::complex<REAL>* psi_R,
+                                        const int N,
+                                        const int LDA,
+                                        const int m)
 {
     REAL result = 0;
+    const base_device::DEVICE_CPU* cpu_ctx = {};
     if (N == LDA || m == 1)
     {
         int dim2 = 2 * N * m;
         REAL *pL, *pR;
         pL = (REAL*)psi_L;
         pR = (REAL*)psi_R;
-        result = BlasConnector::dot(dim2, pL, 1, pR, 1);
+        REAL* dot_device = nullptr;
+        resmem_var_op()(this->ctx, dot_device, 1);
+        container::kernels::blas_dot<REAL, ct_Device>()(dim2, pL, 1, pR, 1, dot_device);
+        syncmem_var_d2h_op()(cpu_ctx, this->ctx, &result, dot_device, 1);
+        delmem_var_op()(this->ctx, dot_device);
     }
     else
     {
         REAL *pL, *pR;
         pL = (REAL*)psi_L;
         pR = (REAL*)psi_R;
+        REAL* dot_device = nullptr;
+        resmem_var_op()(this->ctx, dot_device, 1);
         for (int i = 0; i < m; ++i)
         {
             int dim2 = 2 * N;
-            result += BlasConnector::dot(dim2, pL, 1, pR, 1);
+            container::kernels::blas_dot<REAL, ct_Device>()(dim2, pL, 1, pR, 1, dot_device);
+            REAL result_temp = 0;
+            syncmem_var_d2h_op()(cpu_ctx, this->ctx, &result_temp, dot_device, 1);
+            result += result_temp;
             pL += 2 * LDA;
             pR += 2 * LDA;
         }
+        delmem_var_op()(this->ctx, dot_device);
     }
     return result;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calcoef_real(std::function<REAL(REAL)> fun)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calcoef_real(std::function<REAL(REAL)> fun)
 {
     std::complex<REAL>* pcoef = (std::complex<REAL>*)this->fftw.ccoef;
 
@@ -146,11 +178,11 @@ void Chebyshev<REAL>::calcoef_real(std::function<REAL(REAL)> fun)
         REAL phi = i * ModuleBase::PI / norder2;
         if (i == 0)
         {
-            coef_real[i] = (cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3;
+            coefr_cpu[i] = (cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3;
         }
         else
         {
-            coef_real[i] = (cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3;
+            coefr_cpu[i] = (cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3;
         }
     }
 
@@ -169,20 +201,25 @@ void Chebyshev<REAL>::calcoef_real(std::function<REAL(REAL)> fun)
     {
         if (i == 0)
         {
-            coef_real[i] += real(pcoef[i]) / norder2 * 1 / 3;
+            coefr_cpu[i] += real(pcoef[i]) / norder2 * 1 / 3;
         }
         else
         {
-            coef_real[i] += real(pcoef[i]) / norder2 * 2 / 3;
+            coefr_cpu[i] += real(pcoef[i]) / norder2 * 2 / 3;
         }
+    }
+
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, coef_real, coefr_cpu, norder);
     }
 
     getcoef_real = true;
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calcoef_complex(std::function<std::complex<REAL>(std::complex<REAL>)> fun)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calcoef_complex(std::function<std::complex<REAL>(std::complex<REAL>)> fun)
 {
     std::complex<REAL>* pcoef = (std::complex<REAL>*)this->fftw.ccoef;
 
@@ -200,11 +237,11 @@ void Chebyshev<REAL>::calcoef_complex(std::function<std::complex<REAL>(std::comp
         REAL phi = i * ModuleBase::PI / norder2;
         if (i == 0)
         {
-            coef_complex[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
+            coefc_cpu[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
         }
         else
         {
-            coef_complex[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
+            coefc_cpu[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
         }
     }
 
@@ -218,11 +255,11 @@ void Chebyshev<REAL>::calcoef_complex(std::function<std::complex<REAL>(std::comp
         REAL phi = i * ModuleBase::PI / norder2;
         if (i == 0)
         {
-            coef_complex[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
+            coefc_cpu[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
         }
         else
         {
-            coef_complex[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
+            coefc_cpu[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
         }
     }
 
@@ -238,11 +275,11 @@ void Chebyshev<REAL>::calcoef_complex(std::function<std::complex<REAL>(std::comp
     {
         if (i == 0)
         {
-            coef_complex[i].real(real(coef_complex[i]) + real(pcoef[i]) / norder2 * 1 / 3);
+            coefc_cpu[i].real(real(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 1 / 3);
         }
         else
         {
-            coef_complex[i].real(real(coef_complex[i]) + real(pcoef[i]) / norder2 * 2 / 3);
+            coefc_cpu[i].real(real(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 2 / 3);
         }
     }
 
@@ -255,20 +292,24 @@ void Chebyshev<REAL>::calcoef_complex(std::function<std::complex<REAL>(std::comp
     {
         if (i == 0)
         {
-            coef_complex[i].imag(imag(coef_complex[i]) + real(pcoef[i]) / norder2 * 1 / 3);
+            coefc_cpu[i].imag(imag(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 1 / 3);
         }
         else
         {
-            coef_complex[i].imag(imag(coef_complex[i]) + real(pcoef[i]) / norder2 * 2 / 3);
+            coefc_cpu[i].imag(imag(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 2 / 3);
         }
+    }
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, coef_complex, coefc_cpu, norder);
     }
 
     getcoef_complex = true;
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function<REAL(REAL)> fun2)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function<REAL(REAL)> fun2)
 {
     std::complex<REAL>* pcoef = (std::complex<REAL>*)this->fftw.ccoef;
 
@@ -286,11 +327,11 @@ void Chebyshev<REAL>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function
         REAL phi = i * ModuleBase::PI / norder2;
         if (i == 0)
         {
-            coef_complex[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
+            coefc_cpu[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
         }
         else
         {
-            coef_complex[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
+            coefc_cpu[i].real((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
         }
     }
 
@@ -304,11 +345,11 @@ void Chebyshev<REAL>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function
         REAL phi = i * ModuleBase::PI / norder2;
         if (i == 0)
         {
-            coef_complex[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
+            coefc_cpu[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 2 / 3);
         }
         else
         {
-            coef_complex[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
+            coefc_cpu[i].imag((cos(phi) * pcoef[i].real() + sin(phi) * pcoef[i].imag()) / norder2 * 4 / 3);
         }
     }
 
@@ -324,11 +365,11 @@ void Chebyshev<REAL>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function
     {
         if (i == 0)
         {
-            coef_complex[i].real(real(coef_complex[i]) + real(pcoef[i]) / norder2 * 1 / 3);
+            coefc_cpu[i].real(real(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 1 / 3);
         }
         else
         {
-            coef_complex[i].real(real(coef_complex[i]) + real(pcoef[i]) / norder2 * 2 / 3);
+            coefc_cpu[i].real(real(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 2 / 3);
         }
     }
 
@@ -341,132 +382,159 @@ void Chebyshev<REAL>::calcoef_pair(std::function<REAL(REAL)> fun1, std::function
     {
         if (i == 0)
         {
-            coef_complex[i].imag(imag(coef_complex[i]) + real(pcoef[i]) / norder2 * 1 / 3);
+            coefc_cpu[i].imag(imag(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 1 / 3);
         }
         else
         {
-            coef_complex[i].imag(imag(coef_complex[i]) + real(pcoef[i]) / norder2 * 2 / 3);
+            coefc_cpu[i].imag(imag(coefc_cpu[i]) + real(pcoef[i]) / norder2 * 2 / 3);
         }
+    }
+
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, coef_complex, coefc_cpu, norder);
     }
 
     getcoef_complex = true;
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calfinalvec_real(std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
-                                       std::complex<REAL>* wavein,
-                                       std::complex<REAL>* waveout,
-                                       const int N,
-                                       const int LDA,
-                                       const int m)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calfinalvec_real(
+    std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
+    std::complex<REAL>* wavein,
+    std::complex<REAL>* waveout,
+    const int N,
+    const int LDA,
+    const int m)
 {
-    if (!getcoef_real) {
+    if (!getcoef_real)
+    {
         ModuleBase::WARNING_QUIT("Chebyshev<REAL>", "Please calculate coef_real first!");
-}
+    }
 
-    std::complex<REAL>* arraynp1;
-    std::complex<REAL>* arrayn;
-    std::complex<REAL>* arrayn_1;
+    std::complex<REAL>* arraynp1 = nullptr;
+    std::complex<REAL>* arrayn = nullptr;
+    std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1) {
+    if (m == 1)
+    {
         ndmxt = N * m;
-    } else {
+    }
+    else
+    {
         ndmxt = LDA * m;
-}
+    }
 
-    arraynp1 = new std::complex<REAL>[ndmxt];
-    arrayn = new std::complex<REAL>[ndmxt];
-    arrayn_1 = new std::complex<REAL>[ndmxt];
+    resmem_complex_op()(this->ctx, arraynp1, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn_1, ndmxt);
 
-    ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
+    memcpy_complex_op()(this->ctx, this->ctx, arrayn_1, wavein, ndmxt);
+    // ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
 
     funA(arrayn_1, arrayn, m);
 
     // 0- & 1-st order
-    for (int i = 0; i < ndmxt; ++i)
-    {
-        waveout[i] = coef_real[0] * arrayn_1[i] + coef_real[1] * arrayn[i];
-    }
+    setmem_complex_op()(this->ctx, waveout, 0, ndmxt);
+    std::complex<REAL> coef0 = std::complex<REAL>(coefr_cpu[0], 0);
+    container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coef0, arrayn_1, 1, waveout, 1);
+    std::complex<REAL> coef1 = std::complex<REAL>(coefr_cpu[1], 0);
+    container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coef1, arrayn, 1, waveout, 1);
+    // for (int i = 0; i < ndmxt; ++i)
+    // {
+    //     waveout[i] = coef_real[0] * arrayn_1[i] + coef_real[1] * arrayn[i];
+    // }
 
     // more than 1-st orders
     for (int ior = 2; ior < norder; ++ior)
     {
         recurs_complex(funA, arraynp1, arrayn, arrayn_1, N, LDA, m);
-        for (int i = 0; i < ndmxt; ++i)
-        {
-            waveout[i] += coef_real[ior] * arraynp1[i];
-        }
+        std::complex<REAL> coefior = std::complex<REAL>(coefr_cpu[ior], 0);
+        container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coefior, arraynp1, 1, waveout, 1);
+        // for (int i = 0; i < ndmxt; ++i)
+        // {
+        //     waveout[i] += coef_real[ior] * arraynp1[i];
+        // }
         std::complex<REAL>* tem = arrayn_1;
         arrayn_1 = arrayn;
         arrayn = arraynp1;
         arraynp1 = tem;
     }
-    delete[] arraynp1;
-    delete[] arrayn;
-    delete[] arrayn_1;
+    delmem_complex_op()(this->ctx, arraynp1);
+    delmem_complex_op()(this->ctx, arrayn);
+    delmem_complex_op()(this->ctx, arrayn_1);
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calfinalvec_complex(std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
-                                          std::complex<REAL>* wavein,
-                                          std::complex<REAL>* waveout,
-                                          const int N,
-                                          const int LDA,
-                                          const int m)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calfinalvec_complex(
+    std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
+    std::complex<REAL>* wavein,
+    std::complex<REAL>* waveout,
+    const int N,
+    const int LDA,
+    const int m)
 {
-    if (!getcoef_complex) {
-        ModuleBase::WARNING_QUIT("Stochastic_Chebychev", "Please calculate coef_complex first!");
-}
+    if (!getcoef_complex)
+    {
+        ModuleBase::WARNING_QUIT("Chebyshev", "Please calculate coef_complex first!");
+    }
 
-    std::complex<REAL>* arraynp1;
-    std::complex<REAL>* arrayn;
-    std::complex<REAL>* arrayn_1;
+    std::complex<REAL>* arraynp1 = nullptr;
+    std::complex<REAL>* arrayn = nullptr;
+    std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1) {
+    if (m == 1)
+    {
         ndmxt = N * m;
-    } else {
+    }
+    else
+    {
         ndmxt = LDA * m;
-}
+    }
 
-    arraynp1 = new std::complex<REAL>[ndmxt];
-    arrayn = new std::complex<REAL>[ndmxt];
-    arrayn_1 = new std::complex<REAL>[ndmxt];
+    resmem_complex_op()(this->ctx, arraynp1, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn_1, ndmxt);
 
-    ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
+    memcpy_complex_op()(this->ctx, this->ctx, arrayn_1, wavein, ndmxt);
 
     funA(arrayn_1, arrayn, m);
 
     // 0- & 1-st order
-    for (int i = 0; i < ndmxt; ++i)
-    {
-        waveout[i] = coef_complex[0] * arrayn_1[i] + coef_complex[1] * arrayn[i];
-    }
+    setmem_complex_op()(this->ctx, waveout, 0, ndmxt);
+    container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coefc_cpu[0], arrayn_1, 1, waveout, 1);
+    container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coefc_cpu[1], arrayn, 1, waveout, 1);
+    // for (int i = 0; i < ndmxt; ++i)
+    // {
+    //     waveout[i] = coef_complex[0] * arrayn_1[i] + coef_complex[1] * arrayn[i];
+    // }
 
     // more than 1-st orders
     for (int ior = 2; ior < norder; ++ior)
     {
         recurs_complex(funA, arraynp1, arrayn, arrayn_1, N, LDA, m);
-        for (int i = 0; i < ndmxt; ++i)
-        {
-            waveout[i] += coef_complex[ior] * arraynp1[i];
-        }
+        container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(ndmxt, &coefc_cpu[ior], arraynp1, 1, waveout, 1);
+        // for (int i = 0; i < ndmxt; ++i)
+        // {
+        //     waveout[i] += coef_complex[ior] * arraynp1[i];
+        // }
         std::complex<REAL>* tem = arrayn_1;
         arrayn_1 = arrayn;
         arrayn = arraynp1;
         arraynp1 = tem;
     }
-    delete[] arraynp1;
-    delete[] arrayn;
-    delete[] arrayn_1;
+    delmem_complex_op()(this->ctx, arraynp1);
+    delmem_complex_op()(this->ctx, arrayn);
+    delmem_complex_op()(this->ctx, arrayn_1);
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::calpolyvec_complex(
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::calpolyvec_complex(
     std::function<void(std::complex<REAL>*, std::complex<REAL>*, const int)> funA,
     std::complex<REAL>* wavein,
     std::complex<REAL>* polywaveout,
@@ -485,7 +553,8 @@ void Chebyshev<REAL>::calpolyvec_complex(
     std::complex<REAL>*tmpin = wavein, *tmpout = arrayn_1;
     for (int i = 0; i < m; ++i)
     {
-        ModuleBase::GlobalFunc::DCOPY(tmpin, tmpout, N);
+        memcpy_complex_op()(this->ctx, this->ctx, tmpout, tmpin, N);
+        // ModuleBase::GlobalFunc::DCOPY(tmpin, tmpout, N);
         tmpin += LDA;
         tmpout += LDA;
     }
@@ -504,29 +573,34 @@ void Chebyshev<REAL>::calpolyvec_complex(
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::tracepolyA(std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
-                                 std::complex<REAL>* wavein,
-                                 const int N,
-                                 const int LDA,
-                                 const int m)
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::tracepolyA(
+    std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
+    std::complex<REAL>* wavein,
+    const int N,
+    const int LDA,
+    const int m)
 {
-    std::complex<REAL>* arraynp1;
-    std::complex<REAL>* arrayn;
-    std::complex<REAL>* arrayn_1;
+    std::complex<REAL>* arraynp1 = nullptr;
+    std::complex<REAL>* arrayn = nullptr;
+    std::complex<REAL>* arrayn_1 = nullptr;
     assert(N >= 0 && LDA >= N);
     int ndmxt;
-    if (m == 1) {
+    if (m == 1)
+    {
         ndmxt = N * m;
-    } else {
+    }
+    else
+    {
         ndmxt = LDA * m;
-}
+    }
 
-    arraynp1 = new std::complex<REAL>[ndmxt];
-    arrayn = new std::complex<REAL>[ndmxt];
-    arrayn_1 = new std::complex<REAL>[ndmxt];
+    resmem_complex_op()(this->ctx, arraynp1, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn, ndmxt);
+    resmem_complex_op()(this->ctx, arrayn_1, ndmxt);
 
-    ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
+    memcpy_complex_op()(this->ctx, this->ctx, arrayn_1, wavein, ndmxt);
+    // ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, ndmxt);
 
     funA(arrayn_1, arrayn, m);
 
@@ -544,14 +618,14 @@ void Chebyshev<REAL>::tracepolyA(std::function<void(std::complex<REAL>* in, std:
         arraynp1 = tem;
     }
 
-    delete[] arraynp1;
-    delete[] arrayn;
-    delete[] arrayn_1;
+    delmem_complex_op()(this->ctx, arraynp1);
+    delmem_complex_op()(this->ctx, arrayn);
+    delmem_complex_op()(this->ctx, arrayn_1);
     return;
 }
 
-template <typename REAL>
-void Chebyshev<REAL>::recurs_complex(
+template <typename REAL, typename Device>
+void Chebyshev<REAL, Device>::recurs_complex(
     std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
     std::complex<REAL>* arraynp1,
     std::complex<REAL>* arrayn,
@@ -561,17 +635,27 @@ void Chebyshev<REAL>::recurs_complex(
     const int m)
 {
     funA(arrayn, arraynp1, m);
+    const std::complex<REAL> two = 2.0;
+    const std::complex<REAL> invone = -1.0;
     for (int ib = 0; ib < m; ++ib)
     {
-        for (int i = 0; i < N; ++i)
-        {
-            arraynp1[i + ib * LDA] = REAL(2.0) * arraynp1[i + ib * LDA] - arrayn_1[i + ib * LDA];
-        }
+        container::kernels::blas_scal<std::complex<REAL>, ct_Device>()(N, &two, arraynp1 + ib * LDA, 1);
+        container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(N,
+                                                                    &invone,
+                                                                    arrayn_1 + ib * LDA,
+                                                                    1,
+                                                                    arraynp1 + ib * LDA,
+                                                                    1);
+
+        // for (int i = 0; i < N; ++i)
+        // {
+        //     arraynp1[i + ib * LDA] = REAL(2.0) * arraynp1[i + ib * LDA] - arrayn_1[i + ib * LDA];
+        // }
     }
 }
 
-template <typename REAL>
-bool Chebyshev<REAL>::checkconverge(
+template <typename REAL, typename Device>
+bool Chebyshev<REAL, Device>::checkconverge(
     std::function<void(std::complex<REAL>* in, std::complex<REAL>* out, const int)> funA,
     std::complex<REAL>* wavein,
     const int N,
@@ -581,15 +665,16 @@ bool Chebyshev<REAL>::checkconverge(
     REAL stept)
 {
     bool converge = true;
-    std::complex<REAL>* arraynp1;
-    std::complex<REAL>* arrayn;
-    std::complex<REAL>* arrayn_1;
+    std::complex<REAL>* arraynp1 = nullptr;
+    std::complex<REAL>* arrayn = nullptr;
+    std::complex<REAL>* arrayn_1 = nullptr;
 
-    arraynp1 = new std::complex<REAL>[LDA];
-    arrayn = new std::complex<REAL>[LDA];
-    arrayn_1 = new std::complex<REAL>[LDA];
+    resmem_complex_op()(this->ctx, arraynp1, LDA);
+    resmem_complex_op()(this->ctx, arrayn, LDA);
+    resmem_complex_op()(this->ctx, arrayn_1, LDA);
 
-    ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, N);
+    memcpy_complex_op()(this->ctx, this->ctx, arrayn_1, wavein, N);
+    // ModuleBase::GlobalFunc::DCOPY(wavein, arrayn_1, N);
 
     if (tmin == tmax)
     {
@@ -599,13 +684,21 @@ bool Chebyshev<REAL>::checkconverge(
     funA(arrayn_1, arrayn, 1);
     REAL sum1, sum2;
     REAL t;
+    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    {
+        sum1 = this->ddot_real(arrayn_1, arrayn_1, N);
+        sum2 = this->ddot_real(arrayn_1, arrayn, N);
+    }
+    else
+    {
 #ifdef __MPI
-    sum1 = ModuleBase::GlobalFunc::ddot_real(N, arrayn_1, arrayn_1);
-    sum2 = ModuleBase::GlobalFunc::ddot_real(N, arrayn_1, arrayn);
+        sum1 = ModuleBase::GlobalFunc::ddot_real(N, arrayn_1, arrayn_1);
+        sum2 = ModuleBase::GlobalFunc::ddot_real(N, arrayn_1, arrayn);
 #else
-    sum1 = this->ddot_real(arrayn_1, arrayn_1, N);
-    sum2 = this->ddot_real(arrayn_1, arrayn, N);
+        sum1 = this->ddot_real(arrayn_1, arrayn_1, N);
+        sum2 = this->ddot_real(arrayn_1, arrayn, N);
 #endif
+    }
     t = sum2 / sum1 * (tmax - tmin) / 2 + (tmax + tmin) / 2;
     if (t < tmin || tmin == 0)
     {
@@ -621,13 +714,21 @@ bool Chebyshev<REAL>::checkconverge(
     for (int ior = 2; ior < norder; ++ior)
     {
         funA(arrayn, arraynp1, 1);
+        if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+        {
+            sum1 = this->ddot_real(arrayn, arrayn, N);
+            sum2 = this->ddot_real(arrayn, arraynp1, N);
+        }
+        else
+        {
 #ifdef __MPI
-        sum1 = ModuleBase::GlobalFunc::ddot_real(N, arrayn, arrayn);
-        sum2 = ModuleBase::GlobalFunc::ddot_real(N, arrayn, arraynp1);
+            sum1 = ModuleBase::GlobalFunc::ddot_real(N, arrayn, arrayn);
+            sum2 = ModuleBase::GlobalFunc::ddot_real(N, arrayn, arraynp1);
 #else
-        sum1 = this->ddot_real(arrayn, arrayn, N);
-        sum2 = this->ddot_real(arrayn, arraynp1, N);
+            sum1 = this->ddot_real(arrayn, arrayn, N);
+            sum2 = this->ddot_real(arrayn, arraynp1, N);
 #endif
+        }
         t = sum2 / sum1 * (tmax - tmin) / 2 + (tmax + tmin) / 2;
         if (t < tmin)
         {
@@ -639,19 +740,23 @@ bool Chebyshev<REAL>::checkconverge(
             converge = false;
             tmax = t + stept;
         }
-        for (int i = 0; i < N; ++i)
-        {
-            arraynp1[i] = REAL(2.0) * arraynp1[i] - arrayn_1[i];
-        }
+        std::complex<REAL> two = 2.0;
+        std::complex<REAL> invone = -1.0;
+        container::kernels::blas_scal<std::complex<REAL>, ct_Device>()(N, &two, arraynp1, 1);
+        container::kernels::blas_axpy<std::complex<REAL>, ct_Device>()(N, &invone, arrayn_1, 1, arraynp1, 1);
+        // for (int i = 0; i < N; ++i)
+        // {
+        //     arraynp1[i] = REAL(2.0) * arraynp1[i] - arrayn_1[i];
+        // }
         std::complex<REAL>* tem = arrayn_1;
         arrayn_1 = arrayn;
         arrayn = arraynp1;
         arraynp1 = tem;
     }
 
-    delete[] arraynp1;
-    delete[] arrayn;
-    delete[] arrayn_1;
+    delmem_complex_op()(this->ctx, arraynp1);
+    delmem_complex_op()(this->ctx, arrayn);
+    delmem_complex_op()(this->ctx, arrayn_1);
     return converge;
 }
 
@@ -659,6 +764,9 @@ bool Chebyshev<REAL>::checkconverge(
 template class Chebyshev<double>;
 #ifdef __ENABLE_FLOAT_FFTW
 template class Chebyshev<float>;
+#endif
+#if ((defined __CUDA) || (defined __ROCM))
+template class Chebyshev<double, base_device::DEVICE_GPU>;
 #endif
 
 } // namespace ModuleBase

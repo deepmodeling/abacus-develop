@@ -8,14 +8,14 @@ pseudo_dir             ../../../tests/PP_ORB
 orbital_dir            ../../../tests/PP_ORB
 
 #Parameters (2.Iteration)
-ecutwfc                30
+ecutwfc                 60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                1e-5
 scf_nmax               100
 
 #Parameters (3.Basis)
 basis_type             lcao
 ks_solver              pexsi
-gamma_only             1
+gamma_only             1 ### Abacus will generate KPT file when gamma_only=1.
 
 #Parameters (5.Mixing)
 mixing_type            broyden
@@ -30,3 +30,6 @@ md_nstep               10
 md_dt                  1
 md_tfirst              300
 md_tfreq               0.025
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

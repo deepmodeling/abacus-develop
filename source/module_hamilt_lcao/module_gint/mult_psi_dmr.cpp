@@ -2,9 +2,19 @@
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 namespace Gint_Tools{
-void mult_psi_DMR(const Grid_Technique& gt, const int bxyz, const int LD_pool, const int& grid_index, const int& na_grid,
-                  const int* const block_index, const int* const block_size, bool** cal_flag, double** psi,
-                  double** psi_DMR, const hamilt::HContainer<double>* DM, const bool if_symm)
+void mult_psi_DMR(
+    const Grid_Technique& gt,
+    const int bxyz,
+    const int LD_pool,
+    const int &grid_index,
+    const int &na_grid,
+    const int*const block_index,
+    const int*const block_size,
+    const bool*const*const cal_flag,
+    const double*const*const psi,
+    double*const*const psi_DMR,
+    const hamilt::HContainer<double>*const DM,
+    const bool if_symm)
 {
     const UnitCell& ucell = *gt.ucell;
 

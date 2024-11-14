@@ -176,23 +176,23 @@ class DensityMatrix
 
     /**
      * @brief calculate density matrix DMR from dm(k) using blas::axpy
+     * if ik_in < 0, calculate all k-points
+     * if ik_in >= 0, calculate only one k-point without summing over k-points
      */
-    void cal_DMR();
+    void cal_DMR(const int ik_in = -1);
 
     /**
-     * @brief calculate density matrix DMR from dm(k) using blas::axpy for multi-k calculation, without summing over k-points
+     * @brief calculate complex density matrix DMR with both real and imaginary part for noncollinear-spin calculation
+     * the stored dm(k) has been used to calculate the passin DMR
+     * @param dmR_out pointer of HContainer object to store the calculated complex DMR
      */
-    void cal_DMR(const int ik);
+    void cal_DMR_full(hamilt::HContainer<std::complex<double>>* dmR_out) const;
 
     /**
-     * @brief calculate density matrix DMR from dm(k) using base_matrix->add_element()
+     * @brief (Only nspin=2) switch DMR to total density matrix or magnetization density matrix
+     * @param mode 0 - original density matrix; 1 - total density matrix; 2 - magnetization density matrix
      */
-    void cal_DMR_test(); // for reference during development
-
-    /**
-     * @brief merge density matrix DMR with different spin
-     */
-    void sum_DMR_spin();
+    void switch_dmr(const int mode);
 
     /**
      * @brief write density matrix dm(ik) into *.dmk
@@ -273,6 +273,9 @@ class DensityMatrix
      */
     int _nk = 0;
 
+    /// temporary pointers for switch DMR, only used with nspin=2
+    std::vector<TR> dmr_origin_;
+    TR* dmr_tmp_ = nullptr;
 
 };
 

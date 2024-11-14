@@ -6,7 +6,7 @@ nspin                   1
 calculation             scf
 basis_type              lcao
 ks_solver               genelpa
-ecutwfc                 100
+ecutwfc                 100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                 1e-8
 scf_nmax                100
 gamma_only              0
@@ -16,3 +16,6 @@ mixing_type             broyden
 mixing_beta             0.4
 
 dft_functional          hse
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
