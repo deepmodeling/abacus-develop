@@ -61,31 +61,43 @@ class ESolver_KS : public ESolver_FP
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
 
+    //! PW for wave functions, only used in KSDFT, not in OFDFT
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
 
+    //! Charge mixing method, only used in KDSFT, not in OFDFT
     Charge_Mixing* p_chgmix = nullptr;
 
+    //! wave functions, this one may be deleted in near future
+    //! mohan note 2024-11-14
     wavefunc wf;
 
-    // wavefunction coefficients
+    //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
 
-    std::string basisname; // PW or LCAO
+    //! plane wave or LCAO 
+    std::string basisname;
+
+    //! number of electrons
     double esolver_KS_ne = 0.0;
-    bool oscillate_esolver = false; // whether esolver is oscillated
+
+    //! whether esolver is oscillated
+    bool oscillate_esolver = false;
+
+    //! the start time of scf iteration
 #ifdef __MPI
-    double iter_time;               // the start time of scf iteration
+    double iter_time;               
 #else
     std::chrono::system_clock::time_point iter_time;
 #endif
-    double diag_ethr;               // the threshold for diagonalization
-    double scf_thr;                 // scf density threshold
-    double scf_ene_thr;             // scf energy threshold
-    double drho;                    // the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;           // the error of HSolver
-    int maxniter;                   // maximum iter steps for scf
-    int niter;                      // iter steps actually used in scf
-    int out_freq_elec;              // frequency for output
+
+    double diag_ethr;               //! the threshold for diagonalization
+    double scf_thr;                 //! scf density threshold
+    double scf_ene_thr;             //! scf energy threshold
+    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;           //! the error of HSolver
+    int maxniter;                   //! maximum iter steps for scf
+    int niter;                      //! iter steps actually used in scf
+    int out_freq_elec;              //! frequency for output
 };
 } // namespace ModuleESolver
 #endif
