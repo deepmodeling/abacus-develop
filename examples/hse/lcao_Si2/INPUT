@@ -6,7 +6,7 @@ nspin                   1
 calculation             scf
 basis_type              lcao
 ks_solver               genelpa
-ecutwfc                 100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
+ecutwfc                 100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                 1e-8
 scf_nmax                100
 gamma_only              0
@@ -18,4 +18,6 @@ mixing_beta             0.4
 dft_functional          hse
 
 
-### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.
