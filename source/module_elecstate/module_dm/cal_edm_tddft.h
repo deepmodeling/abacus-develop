@@ -1,5 +1,5 @@
-#ifndef CAL_DM_PSI_H
-#define CAL_DM_PSI_H
+#ifndef CAL_EDM_TDDFT_H
+#define CAL_EDM_TDDFT_H
 
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
@@ -13,4 +13,4 @@ void cal_edm_tddft(Parallel_Orbitals& pv,
                    K_Vectors& kv,
                    hamilt::Hamilt<std::complex<double>>* p_hamilt);
 } // namespace elecstate
-#endif
+#endif // CAL_EDM_TDDFT_H
