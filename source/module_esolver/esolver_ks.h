@@ -70,41 +70,9 @@ class ESolver_KS : public ESolver_FP
     // wavefunction coefficients
     psi::Psi<T>* psi = nullptr;
 
-<<<<<<< HEAD
-    protected:
-        // Print inforamtion in each iter
-		// G1    -3.435545e+03  0.000000e+00   3.607e-01  2.862e-01
-		// for metaGGA
-		// ITER   ETOT(eV)       EDIFF(eV)      DRHO       DKIN       TIME(s) 
-		// G1    -3.435545e+03  0.000000e+00   3.607e-01  3.522e-01  2.862e-01
-		void print_iter(
-				const int iter, 
-				const double drho, 
-				const double dkin, 
-				const double duration, 
-				const double ethr);
+	// // TR need be std::complex<double> when NSPIN = 4
+	// rdmft::RDMFT<T, double> rdmft_solver;  // add by jghan for rdmft calculation
 
-        //! Hamiltonian
-		hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
-
-		ModulePW::PW_Basis_K* pw_wfc = nullptr;
-
-		Charge_Mixing* p_chgmix = nullptr;
-
-		wavefunc wf;
-
-        // // TR need be std::complex<double> when NSPIN = 4
-        // rdmft::RDMFT<T, double> rdmft_solver;  // add by jghan for rdmft calculation
-
-        // wavefunction coefficients
-        psi::Psi<T>* psi = nullptr;
-
-      protected:
-        std::string basisname; // PW or LCAO
-        double esolver_KS_ne = 0.0;
-};	
-} // end of namespace
-=======
     std::string basisname; // PW or LCAO
     double esolver_KS_ne = 0.0;
     bool oscillate_esolver = false; // whether esolver is oscillated
@@ -123,5 +91,4 @@ class ESolver_KS : public ESolver_FP
     int out_freq_elec;              // frequency for output
 };
 } // namespace ModuleESolver
->>>>>>> dcff74dbeb77d0763e7d84e7581f64157d9b736b
 #endif
