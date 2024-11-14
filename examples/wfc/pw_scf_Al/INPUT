@@ -9,7 +9,7 @@ ecutwfc                          60 ###Energy cutoff needs to be tested to ensur
 scf_thr                         1.0e-8  // about iteration
 scf_nmax			100
 smearing_method         	gauss
-smearing_sigma          	0.015
+smearing_sigma          	0.01
 #Parameters (File)
 out_wfc_pw                         1
 out_wfc_r			1

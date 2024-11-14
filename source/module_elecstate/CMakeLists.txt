@@ -42,6 +42,7 @@ if(ENABLE_LCAO)
       module_dm/density_matrix.cpp
       module_dm/density_matrix_io.cpp
       module_dm/cal_dm_psi.cpp
+      module_dm/cal_edm_tddft.cpp
   )
 endif()
 

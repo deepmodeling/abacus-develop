@@ -18,7 +18,7 @@ basis_type             pw
 
 #Parameters (4.Smearing)
 smearing_method        gaussian
-smearing_sigma         0.02
+smearing_sigma         0.015
 
 #parameters (5.Mixing)
 mixing_type            pulay

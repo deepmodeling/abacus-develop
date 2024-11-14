@@ -9,7 +9,7 @@ orbital_dir	../../../tests/PP_ORB
 gamma_only      0
 
 #Parameters (2.Iteration)
-ecutwfc			 60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
+ecutwfc			 60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr				1e-8
 scf_nmax			1
 
@@ -18,7 +18,7 @@ basis_type		lcao
 
 #Parameters (4.Smearing)
 smearing_method		gauss
-smearing_sigma			0.015
+smearing_sigma			0.002
 
 #Parameters (5.Mixing)
 mixing_type		broyden
@@ -28,4 +28,6 @@ out_mat_hs  1
 ks_solver       genelpa
 
 
-### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.
