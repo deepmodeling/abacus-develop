@@ -171,8 +171,8 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
-* @brief set parallel orbital pointer to check parallel information
-*/
+    * @brief set parallel orbital pointer to check parallel information
+    */
     void set_paraV(const Parallel_Orbitals* paraV_in)
     {
         this->paraV = paraV_in;
