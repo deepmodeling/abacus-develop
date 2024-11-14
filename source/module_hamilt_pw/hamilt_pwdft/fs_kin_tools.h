@@ -20,10 +20,25 @@ class FS_Kin_tools
                  const ModuleBase::matrix& wg);
     ~FS_Kin_tools();
 
+    /**
+     * @brief calculate G+k and store it in gk and also calculate kfac
+     */
     void cal_gk(const int& ik);
 
+    /**
+     * @brief calculate stress tensor for kinetic energy
+     *        stress = \sum_{G,k,i}  wk(k) * gk_l(G) * gk_m(G) * d_kfac(G) * occ_i*|ppsi_i(G)|^2
+     * 
+     * @param ik k-point index
+     * @param npm number of bands
+     * @param occ if use the occupation of the bands
+     * @param psi wavefunctions
+     */
     void cal_stress_kin(const int& ik, const int& npm, const bool& occ, const std::complex<FPTYPE>* psi);
 
+    /**
+     * @brief symmetrize the stress tensor
+     */
     void symmetrize_stress(ModuleSymmetry::Symmetry* p_symm, ModuleBase::matrix& sigma);
 
   protected:
