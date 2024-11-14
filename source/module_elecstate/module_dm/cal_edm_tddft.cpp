@@ -1,5 +1,6 @@
 #include "cal_edm_tddft.h"
 
+#include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 namespace elecstate
 {
