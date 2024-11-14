@@ -32,9 +32,9 @@ if [[ ! -f scf1.output ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf3.log)" == " Total  Time  :"* ) ]] ||
    [[ ! ( "$(tail -1 OUT.ABACUS/running_scf4.log)" == " Total  Time  :"* ) ]]
 then
-	echo "job is failed!"
+	echo "job failed!"
 	exit 1
 else
-	echo "job is successed!"
+	echo "job succeeded!"
 	exit 0
 fi
