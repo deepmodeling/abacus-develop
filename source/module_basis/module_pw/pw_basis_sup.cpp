@@ -20,7 +20,9 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
     this->distribute_g(pw_rho);
     this->getstartgr();
     this->ft.clear();
+    this->fft_bundle.clear();
     if (this->xprime)
+    {
         this->ft.initfft(this->nx,
                          this->ny,
                          this->nz,
@@ -31,7 +33,19 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
                          this->poolnproc,
                          this->gamma_only,
                          this->xprime);
+        this->fft_bundle.initfft(this->nx,
+                          this->ny,
+                          this->nz,
+                          this->lix,
+                          this->rix,
+                          this->nst,
+                          this->nplane,
+                          this->poolnproc,
+                          this->gamma_only,
+                          this->xprime);
+    }
     else
+    {
         this->ft.initfft(this->nx,
                          this->ny,
                          this->nz,
@@ -42,7 +56,19 @@ void PW_Basis_Sup::setuptransform(const ModulePW::PW_Basis* pw_rho)
                          this->poolnproc,
                          this->gamma_only,
                          this->xprime);
+        this->fft_bundle.initfft(this->nx,
+                          this->ny,
+                          this->nz,
+                          this->liy,
+                          this->riy,
+                          this->nst,
+                          this->nplane,
+                          this->poolnproc,
+                          this->gamma_only,
+                          this->xprime);
+    }
     this->ft.setupFFT();
+    this->fft_bundle.setupFFT();
     ModuleBase::timer::tick(this->classname, "setuptransform");
 }
 

@@ -85,11 +85,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
     // self consistent calculations for electronic ground state
-    if (PARAM.inp.calculation == "nscf")
-    {
-        this->nscf();
-    }
-    else if (cal_type == "get_pchg")
+    if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
         IState_Charge ISC(this->psi, &(this->pv));

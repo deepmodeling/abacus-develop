@@ -8,8 +8,11 @@ nbands                          8
 basis_type                      lcao
 symmetry                        0       
 #Parameters (Accuracy)
-ecutwfc                         50
+ecutwfc                          60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                         1.0e-7  // about iteration
 scf_nmax			100
 #Parameters (File)
 out_wfc_lcao                         1
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

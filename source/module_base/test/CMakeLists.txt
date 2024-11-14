@@ -134,8 +134,8 @@ AddTest(
 
 AddTest(
   TARGET base_math_chebyshev
-  LIBS parameter  ${math_libs}
-  SOURCES math_chebyshev_test.cpp ../blas_connector.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp
+  LIBS parameter  ${math_libs} device container
+  SOURCES math_chebyshev_test.cpp  ../blas_connector.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../parallel_reduce.cpp
 )
 
 AddTest(

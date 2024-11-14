@@ -7,17 +7,17 @@ calculation             scf
 symmetry                0
 
 #Parameters (2.Iteration)
-ecutwfc                 100
+ecutwfc                 100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr                     1e-7
 scf_nmax                   50
 
 #Parameters (3.Basis)
 basis_type             lcao 
-kspacing               0.1
+kspacing               0.1 ### Abacus will generate KPT file when kspacing is used.
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
-smearing_sigma                   0.0015
+smearing_sigma                   0.015
 
 #Parameters (5.Mixing)
 mixing_type             broyden
@@ -30,3 +30,6 @@ deepks_model	model.ptg
 #Parameters (7.SOC)
 lspinorb 1
 
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.

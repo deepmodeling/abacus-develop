@@ -383,3 +383,6 @@ void Stochastic_WF<T, Device>::sync_chi0()
 }
 
 template class Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Stochastic_WF<std::complex<double>, base_device::DEVICE_GPU>;
+#endif

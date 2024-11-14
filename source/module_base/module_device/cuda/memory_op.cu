@@ -1,4 +1,5 @@
 #include "module_base/module_device/memory_op.h"
+#include "module_base/memory.h"
 
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
@@ -38,6 +39,18 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FP
     _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(_in[idx]);
 }
 
+template <typename FPTYPE_out, typename FPTYPE_in>
+__global__ void cast_memory(std::complex<FPTYPE_out>* out, const FPTYPE_in* in, const int size)
+{
+    int idx = blockIdx.x * blockDim.x + threadIdx.x;
+    if (idx >= size)
+    {
+        return;
+    }
+    auto* _out = reinterpret_cast<thrust::complex<FPTYPE_out>*>(out);
+    _out[idx] = static_cast<thrust::complex<FPTYPE_out>>(in[idx]);
+}
+
 template <typename FPTYPE>
 void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
                                                                    FPTYPE*& arr,
@@ -49,6 +62,20 @@ void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
         delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(dev, arr);
     }
     cudaErrcheck(cudaMalloc((void**)&arr, sizeof(FPTYPE) * size));
+    std::string record_string;
+    if (record_in != nullptr)
+    {
+        record_string = record_in;
+    }
+    else
+    {
+        record_string = "no_record";
+    }
+
+    if (record_string != "no_record")
+    {
+        ModuleBase::Memory::record_gpu(record_string, sizeof(FPTYPE) * size);
+    }
 }
 
 template <typename FPTYPE>
@@ -223,6 +250,8 @@ template struct cast_memory_op<std::complex<double>,
                                std::complex<float>,
                                base_device::DEVICE_GPU,
                                base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<float>, float, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
+template struct cast_memory_op<std::complex<double>, double, base_device::DEVICE_GPU, base_device::DEVICE_GPU>;
 template struct cast_memory_op<float, float, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 template struct cast_memory_op<double, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 template struct cast_memory_op<float, double, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;

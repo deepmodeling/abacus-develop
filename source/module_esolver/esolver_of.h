@@ -33,11 +33,6 @@ class ESolver_OF : public ESolver_FP
 
     virtual void cal_stress(ModuleBase::matrix& stress) override;
 
-    virtual int get_niter() override
-    {
-        return this->iter_;
-    }
-
   private:
     // ======================= variables ==========================
     // ---------- the kinetic energy density functionals ----------

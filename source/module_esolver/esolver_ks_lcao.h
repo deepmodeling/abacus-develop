@@ -39,8 +39,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void after_all_runners() override;
 
-    void nscf() override;
-
     void get_S();
 
     void cal_mag(const int istep, const bool print = false);
@@ -50,13 +48,11 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     virtual void iter_init(const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(int& iter) override;
+    virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
 
@@ -98,10 +94,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse
     /// density matrix of H, S, T, r
     ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
-
-    void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
-    void output_mat_npz(std::string& zipname,
-                        const hamilt::HContainer<double>& hR);
 
     /// @brief check if skip the corresponding output in md calculation
     bool md_skip_out(std::string calculation, int istep, int interval);

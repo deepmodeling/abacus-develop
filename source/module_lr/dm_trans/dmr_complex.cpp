@@ -5,7 +5,7 @@
 namespace elecstate
 {
     template<>
-    void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR()
+    void DensityMatrix<std::complex<double>, std::complex<double>>::cal_DMR(int ik_in)
     {
         ModuleBase::TITLE("DensityMatrix", "cal_DMR");
         ModuleBase::timer::tick("DensityMatrix", "cal_DMR");
@@ -45,6 +45,7 @@ namespace elecstate
                     if (PARAM.inp.nspin != 4) {
                         for (int ik = 0; ik < this->_nk; ++ik)
                         {
+                            if (ik_in >= 0 && ik_in != ik) continue;
                             // cal k_phase
                             // if TK==std::complex<double>, kphase is e^{ikR}
                             const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);

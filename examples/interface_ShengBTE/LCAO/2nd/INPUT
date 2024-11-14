@@ -12,15 +12,18 @@ cal_force       1
 cal_stress      1
 
 #Parameters (Accuracy)
-ecutwfc         100
+ecutwfc         100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 scf_thr         1e-6
 scf_nmax        100
 basis_type      lcao
 ks_solver       genelpa
 gamma_only      0
 smearing_method gauss
-smearing_sigma  0.01
+smearing_sigma  0.015
 mixing_type     broyden
 mixing_beta     0.7
 
 stru_file       STRU-001
+
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
