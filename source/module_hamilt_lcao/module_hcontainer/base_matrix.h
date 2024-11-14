@@ -81,11 +81,11 @@ class BaseMatrix
     size_t get_memory_size() const;
 
         /**
-     * @brief get col_size for this AtomPair
+     * @brief get col_size for this matrix
     */
     int get_col_size() const {return ncol_local;};
     /**
-     * @brief get row_size for this AtomPair
+     * @brief get row_size for this matrix
     */
     int get_row_size() const {return nrow_local;};
 
