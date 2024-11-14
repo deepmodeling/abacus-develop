@@ -8,7 +8,7 @@ nbands                          16
 basis_type                      lcao
 symmetry                        0       
 #Parameters (Accuracy)
-ecutwfc                          60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
+ecutwfc                          60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                         1.0e-7  // about iteration
 scf_nmax			100
 #Parameters (File)
@@ -16,4 +16,6 @@ gamma_only			1
 out_dm                         1
 
 
-### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

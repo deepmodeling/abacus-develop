@@ -4,12 +4,12 @@ orbital_dir                 ../../../tests/PP_ORB
 nbands		24
 
 calculation	scf
-ecutwfc		120 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
+ecutwfc		120 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr		1.0e-8
 scf_nmax		100
 
 smearing_method	gaussian
-smearing_sigma		0.02
+smearing_sigma		0.015
 
 mixing_type	broyden
 mixing_beta	0.4
@@ -19,4 +19,6 @@ gamma_only	0
 symmetry	1
 
 
-### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

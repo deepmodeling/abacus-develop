@@ -4,7 +4,9 @@
 #include "gint_tools.h"
 #include "kernels/cuda/gint_rho.cuh"
 
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 namespace GintKernel
 {
@@ -68,7 +70,9 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
                          cudaMemcpyHostToDevice));
 
 // calculate the rho for every nbzp bigcells
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(num_streams) collapse(2)
+#endif
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
@@ -78,7 +82,11 @@ void gint_rho_gpu(const hamilt::HContainer<double>* dm,
 
             checkCuda(cudaSetDevice(gridt.dev_id));
             // get stream id
+#ifdef _OPENMP
             const int sid = omp_get_thread_num();
+#else
+            const int sid = 0;
+#endif
 
             int max_m = 0;
             int max_n = 0;

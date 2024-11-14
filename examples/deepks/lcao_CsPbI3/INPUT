@@ -7,17 +7,17 @@ calculation             scf
 symmetry                0
 
 #Parameters (2.Iteration)
-ecutwfc                 100 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
+ecutwfc                 100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                     1e-7
 scf_nmax                   50
 
 #Parameters (3.Basis)
 basis_type             lcao 
-kspacing               0.1 ### Abacus will generate KPT file when kspacing is used.
+kspacing               0.1 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
-smearing_sigma                   0.015
+smearing_sigma                   0.0015
 
 #Parameters (5.Mixing)
 mixing_type             broyden
@@ -32,4 +32,6 @@ lspinorb 1
 
 
 
-### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.
