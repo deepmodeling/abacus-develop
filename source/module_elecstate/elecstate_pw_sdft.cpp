@@ -21,8 +21,6 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 
     if (GlobalV::MY_STOGROUP == 0)
     {
-        this->calEBand();
-
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             psi.fix_k(ik);

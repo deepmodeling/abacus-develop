@@ -6,7 +6,6 @@ list (APPEND LIBM_SRC
   libm/sincos.cpp
 )
 endif()
-
 add_library(
     base
     OBJECT

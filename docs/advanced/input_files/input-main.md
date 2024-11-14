@@ -1176,7 +1176,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Integer
 - **Description**: Print out energy for each band for every printe step
-- **Default**: 100
+- **Default**: `scf_nmax`
 
 ### scf_nmax
 

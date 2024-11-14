@@ -327,6 +327,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         // pes->ekb.nr * pes->ekb.nc
         this->wfc_basis->nks * psi.get_nbands());
 
+    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
+    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
     if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverPW", "solve");

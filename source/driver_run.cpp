@@ -62,7 +62,7 @@ void Driver::driver_run() {
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, PARAM);
     }
-    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax")
+    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax" || cal_type == "nscf")
     {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver);
@@ -70,7 +70,6 @@ void Driver::driver_run() {
     else
     {
         //! supported "other" functions:
-        //! nscf(PW,LCAO),
         //! get_pchg(LCAO),
         //! test_memory(PW,LCAO),
         //! test_neighbour(LCAO),

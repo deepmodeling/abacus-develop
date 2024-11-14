@@ -8,13 +8,15 @@ orbital_dir         ../../../tests/PP_ORB
 calculation scf
 mixing_beta 0.4
 basis_type  lcao
-gamma_only  1
+gamma_only  1 ### Abacus will generate KPT file when gamma_only=1.
 symmetry    0
 
-ecutwfc     60
+ecutwfc     60 ### Please refer to orbital files[1] to set ecutwfc for LCAO basis.
 lcao_dr         1e-3
 scf_nmax	      20
 
 ks_solver   pexsi
 
 pexsi_npole  40
+
+### [1]The energy cutoff of a LCAO basis can be found in lines starting with "Energy Cutoff" of a .orb file.
