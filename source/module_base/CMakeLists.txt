@@ -6,7 +6,6 @@ list (APPEND LIBM_SRC
   libm/sincos.cpp
 )
 endif()
-
 add_library(
     base
     OBJECT
@@ -60,6 +59,8 @@ add_library(
     module_mixing/broyden_mixing.cpp
     ${LIBM_SRC}
 )
+
+target_link_libraries(base PUBLIC container)
 
 add_subdirectory(module_container)
 

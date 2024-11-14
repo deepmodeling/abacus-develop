@@ -52,9 +52,6 @@ namespace ModuleESolver
         //! Electorn charge density
         Charge chr;
 
-        //! Non-Self-Consistant Filed (NSCF) calculations
-        virtual void nscf(){};
-
         //! Structure factors that used with plane-wave basis set
         Structure_Factor sf;
 

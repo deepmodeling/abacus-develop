@@ -32,6 +32,7 @@ namespace LR
             double* eig,
             const std::string method,
             const Real<T>& diag_ethr, ///< threshold for diagonalization
+            const std::vector<Real<T>>& precondition,
             const bool hermitian = true)
         {
             ModuleBase::TITLE("HSolverLR", "solve");
@@ -39,8 +40,7 @@ namespace LR
             // note: if not TDA, the eigenvalues will be complex
             // then we will need a new constructor of DiagoDavid
 
-            // 1. allocate precondition and eigenvalue
-            std::vector<Real<T>> precondition(dim);
+            // 1. allocate eigenvalue
             std::vector<Real<T>> eigenvalue(nband);   //nstates
             // 2. select the method
 #ifdef __MPI
@@ -67,9 +67,7 @@ namespace LR
             }
             else
             {
-                // 3. set precondition and diagethr
-                for (int i = 0; i < dim; ++i) { precondition[i] = static_cast<Real<T>>(1.0); }
-
+                // 3. set maxiter and funcs
                 const int maxiter = hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX;
 
                 auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {hm.hPsi(psi_in, hpsi, ld_psi, nvec);};
@@ -139,7 +137,8 @@ namespace LR
 
                     auto psi_tensor = ct::TensorMap(psi, ct::DataTypeToEnum<T>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband, dim }));
                     auto eigen_tensor = ct::TensorMap(eigenvalue.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ nband }));
-                    auto precon_tensor = ct::TensorMap(precondition.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ dim }));
+                    std::vector<Real<T>> precondition_(precondition);   //since TensorMap does not support const pointer
+                    auto precon_tensor = ct::TensorMap(precondition_.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ dim }));
                     auto hpsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& hpsi) {hm.hPsi(psi_in.data<T>(), hpsi.data<T>(), psi_in.shape().dim_size(0) /*nbasis_local*/, 1/*band-by-band*/);};
                     auto spsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& spsi)
                         { std::memcpy(spsi.data<T>(), psi_in.data<T>(), sizeof(T) * psi_in.NumElements()); };

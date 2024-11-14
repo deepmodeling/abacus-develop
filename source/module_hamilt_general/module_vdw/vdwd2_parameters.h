@@ -31,7 +31,15 @@ class Vdwd2Parameters : public VdwParameters
     void R0_input(const std::string &file, const std::string &unit);
 
     void initset(const UnitCell &ucell); // init sets of vdwd2 once this correction is called
-    void initial_parameters(const Input_para &input); // initial parameters of Vdwd2 with INPUT file
+
+    /**
+     * @brief initial parameters of Vdwd2 with INPUT file
+     * 
+     * @param input Parameter instance
+     * @param plog optional, for logging the parameter setting process (not implemented)
+     */
+    void initial_parameters(const Input_para &input, 
+                            std::ofstream* plog = nullptr); 
 
     inline const std::map<std::string, double> C6() const { return C6_; }
     inline const std::map<std::string, double> R0() const { return R0_; }

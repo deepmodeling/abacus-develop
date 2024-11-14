@@ -12,6 +12,7 @@
 #include "module_base/global_variable.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/hsolver_pw_sdft.h"
+#include "module_elecstate/elecstate_pw.h"
 #undef private
 #undef protected
 
@@ -20,16 +21,49 @@ template <typename REAL>
 Sto_Func<REAL>::Sto_Func()
 {
 }
-
 template class Sto_Func<double>;
 
-template <typename REAL>
-StoChe<REAL>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
+
+template <>
+elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
+                                    Charge* chg_in,
+                                    K_Vectors* pkv_in,
+                                    UnitCell* ucell_in,
+                                    pseudopot_cell_vnl* ppcell_in,
+                                    ModulePW::PW_Basis* rhodpw_in,
+                                    ModulePW::PW_Basis* rhopw_in,
+                                    ModulePW::PW_Basis_Big* bigpw_in)
+    : basis(wfc_basis_in)
+{
+}
+
+template<>
+elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::~ElecStatePW() 
+{
+}
+
+template<>
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
+{
+}
+
+template<>
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::psiToRho(const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi)
+{
+}
+
+template<>
+void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::cal_tau(const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi)
+{
+}
+
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
 {
     this->nche = nche;
 }
-template <typename REAL>
-StoChe<REAL>::~StoChe()
+template <typename REAL, typename Device>
+StoChe<REAL, Device>::~StoChe()
 {
 }
 
@@ -51,7 +85,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
                                       ModulePW::PW_Basis_K* wfc_basis,
                                       Stochastic_WF<T, Device>& stowf,
-                                      StoChe<double>& stoche,
+                                      StoChe<Real, Device>& stoche,
                                       hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto)
 {
     this->nchip = stowf.nchip;
@@ -108,7 +142,7 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
-                                             elecstate::ElecState* pes,
+                                             elecstate::ElecStatePW<T, Device>* pes,
                                              hamilt::Hamilt<T, Device>* pHamilt,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
@@ -136,7 +170,7 @@ Charge::~Charge(){};
 class TestHSolverPW_SDFT : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0)
+    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0), elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
     }
     ModulePW::PW_Basis_K pwbk;
@@ -170,7 +204,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
     psi::Psi<std::complex<double>> psi_test_cd;
     psi::Psi<std::complex<double>> psi_test_no;
 
-    elecstate::ElecState elecstate_test;
+    elecstate::ElecStatePW<std::complex<double>> elecstate_test;
 
     std::string method_test = "cg";
 
@@ -193,7 +227,7 @@ TEST_F(TestHSolverPW_SDFT, solve)
     int istep = 0;
     int iter = 0;
 
-    this->hs_d.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, &pwbk, stowf, istep, iter, false);
+    this->hs_d.solve(&hamilt_test_d, psi_test_cd, psi_test_cd, &elecstate_test, &pwbk, stowf, istep, iter, false);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[0], 4.0);
     EXPECT_DOUBLE_EQ(elecstate_test.ekb.c[1], 7.0);
@@ -234,10 +268,12 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     elecstate_test.charge->rho = new double*[1];
     elecstate_test.charge->rho[0] = new double[10];
     elecstate_test.charge->nrxx = 10;
+    elecstate_test.rho = new double*[1];
+    elecstate_test.rho[0] = new double[10];
     int istep = 0;
     int iter = 0;
 
-    this->hs_d.solve(&hamilt_test_d, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, false);
+    this->hs_d.solve(&hamilt_test_d, psi_test_no, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, false);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     EXPECT_EQ(stowf.nbands_diag, 2);
     EXPECT_EQ(stowf.nbands_total, 1);
@@ -251,7 +287,7 @@ TEST_F(TestHSolverPW_SDFT, solve_noband_skipcharge)
     std::cout<<__FILE__<<__LINE__<<" "<<elecstate_test.f_en.eband<<std::endl;*/
 
     // test for skip charge
-    this->hs_d.solve(&hamilt_test_d, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, true);
+    this->hs_d.solve(&hamilt_test_d, psi_test_no, psi_test_no, &elecstate_test, &pwbk, stowf, istep, iter, true);
     EXPECT_EQ(stowf.nbands_diag, 4);
     EXPECT_EQ(stowf.nbands_total, 1);
     EXPECT_EQ(stowf.nchi, 4);

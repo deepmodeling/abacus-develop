@@ -13,6 +13,7 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/module_dm/cal_edm_tddft.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
@@ -118,10 +119,8 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    pelec->charge->save_rho_before_sum_band();
-
     if (wf.init_wfc == "file")
     {
         if (istep >= 1)
@@ -167,15 +166,28 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
+            bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, false);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, skip_charge);
         }
     }
-    // else
-    // {
-    //     ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "HSolver has not been initialed!");
-    // }
 
+    // symmetrize the charge density only for ground state
+    if (istep <= 1)
+    {
+        Symmetry_rho srho;
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
+        }
+    }
+
+    // (7) calculate delta energy
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+}
+
+void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter)
+{
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
@@ -201,32 +213,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                              << std::endl;
     }
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        this->pelec_td->print_band(ik, PARAM.inp.printe, iter);
-    }
-
-    // using new charge density.
-    this->pelec->cal_energies(1);
-
-    // symmetrize the charge density only for ground state
-    if (istep <= 1)
-    {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
-        }
-    }
-
-    // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                pelec->nelec_spin.data());
-
-    // (7) calculate delta energy
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(istep, iter);
 }
 
 void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
@@ -372,7 +359,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         // calculate energy density matrix for tddft
         if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
         {
-            this->cal_edm_tddft();
+            elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
         }
     }
 

@@ -172,7 +172,7 @@
 211_NO_S2_elec_add
 211_NO_S2_nupdown0
 211_NO_S2_elec_minus
-212_NO_wfc_ienvelope
+212_NO_wfc_get_wf
 212_NO_wfc_out
 213_NO_mulliken
 214_NO_mulliken_nscf
@@ -224,8 +224,8 @@
 311_NO_GO_elec_minus
 311_NO_GO_S2_elec_minus
 312_NO_GO_wfc_file
-312_NO_GO_wfc_ienvelope
-312_NO_GO_wfc_istate
+312_NO_GO_wfc_get_wf
+312_NO_GO_wfc_get_pchg
 312_NO_GO_wfc_out
 313_NO_GO_mulliken
 314_NO_GO_dm_out

@@ -180,7 +180,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         {
             auto nroot_gauss = std::bind(&Sto_Func<double>::nroot_gauss, &this->stofunc, std::placeholders::_1);
             che.calcoef_real(nroot_gauss);
-            tmpsto = vTMv(che.coef_real, spolyv.data(), dos_nche);
+            tmpsto = vTMv<double, base_device::DEVICE_CPU>(che.coef_real, spolyv.data(), dos_nche);
         }
         if (PARAM.inp.nbands > 0)
         {

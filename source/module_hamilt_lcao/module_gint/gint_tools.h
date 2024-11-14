@@ -284,18 +284,19 @@ ModuleBase::Array_Pool<double> get_psir_vlbr3(
     const double* const* const psir_ylm); // psir_ylm[bxyz][LD_pool]
 
 // sum_nu,R rho_mu,nu(R) psi_nu, for multi-k and gamma point
-void mult_psi_DMR(const Grid_Technique& gt,
-                  const int bxyz,
-                  const int LD_pool,
-                  const int& grid_index,
-                  const int& na_grid,
-                  const int* const block_index,
-                  const int* const block_size,
-                  bool** cal_flag,
-                  double** psi,
-                  double** psi_DMR,
-                  const hamilt::HContainer<double>* DM,
-                  const bool if_symm);
+void mult_psi_DMR(
+    const Grid_Technique& gt,
+    const int bxyz,
+    const int LD_pool,
+    const int &grid_index,
+    const int &na_grid,
+    const int*const block_index,
+    const int*const block_size,
+    const bool*const*const cal_flag,
+    const double*const*const psi,
+    double*const*const psi_DMR,
+    const hamilt::HContainer<double>*const DM,
+    const bool if_symm);
 
 
 // pair.first is the first index of the meshcell which is inside atoms ia1 and ia2.

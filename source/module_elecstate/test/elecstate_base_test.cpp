@@ -56,6 +56,7 @@ ModulePW::FFT::FFT()
 ModulePW::FFT::~FFT()
 {
 }
+
 void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
 {
 }

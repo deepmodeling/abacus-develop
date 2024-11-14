@@ -105,11 +105,9 @@ template <typename TK>
 void set_zero_psi(psi::Psi<TK>& wfc)
 {
     TK* pwfc_in = &wfc(0, 0, 0);
-
-    #ifdef _OPENMP
+#ifdef _OPENMP
     #pragma omp parallel for schedule(static, 1024)
-    #endif
-    
+#endif
     for(int i=0; i<wfc.size(); ++i) pwfc_in[i] = 0.0;
 }
 

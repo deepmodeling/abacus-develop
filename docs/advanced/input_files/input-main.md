@@ -88,6 +88,9 @@
     - [scf\_thr](#scf_thr)
     - [scf\_ene\_thr](#scf_ene_thr)
     - [scf\_thr\_type](#scf_thr_type)
+    - [scf\_os\_stop](#scf_os_stop)
+    - [scf\_os\_thr](#scf_os_thr)
+    - [scf\_os\_ndim](#scf_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
@@ -243,8 +246,8 @@
     - [exx\_opt\_orb\_ecut](#exx_opt_orb_ecut)
     - [exx\_opt\_orb\_tolerence](#exx_opt_orb_tolerence)
     - [exx\_real\_number](#exx_real_number)
-    - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
+    - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
   - [Molecular dynamics](#molecular-dynamics)
     - [md\_type](#md_type)
@@ -273,6 +276,9 @@
     - [lj\_epsilon](#lj_epsilon)
     - [lj\_sigma](#lj_sigma)
     - [pot\_file](#pot_file)
+    - [dp\_rescaling](#dp_rescaling)
+    - [dp\_fparam](#dp_fparam)
+    - [dp\_aparam](#dp_aparam)
     - [msst\_direction](#msst_direction)
     - [msst\_vel](#msst_vel)
     - [msst\_vis](#msst_vis)
@@ -422,11 +428,12 @@
     - [nocc](#nocc)
     - [nvirt](#nvirt)
     - [lr\_nstates](#lr_nstates)
+    - [lr\_unrestricted](#lr_unrestricted)
     - [abs\_wavelen\_range](#abs_wavelen_range)
     - [out\_wfc\_lr](#out_wfc_lr)
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
-    - [aims_nbasis](#aims_nbasis)
+    - [aims\_nbasis](#aims_nbasis)
   - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
@@ -1172,7 +1179,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Integer
 - **Description**: Print out energy for each band for every printe step
-- **Default**: 100
+- **Default**: `scf_nmax`
 
 ### scf_nmax
 
@@ -1203,6 +1210,29 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
   Note: This parameter is still under testing and the default setting is usually sufficient.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
+
+### scf_os_stop
+
+- **Type**: bool
+- **Description**: For systems that are difficult to converge, the SCF process may exhibit oscillations in charge density, preventing further progress toward the specified convergence criteria and resulting in continuous oscillation until the maximum number of steps is reached; this greatly wastes computational resources. To address this issue, this function allows ABACUS to terminate the SCF process early upon detecting oscillations, thus reducing subsequent meaningless calculations. The detection of oscillations is based on the slope of the logarithm of historical drho values.. To this end, Least Squares Method is used to calculate the slope of the logarithmically taken drho for the previous `scf_os_ndim` iterations. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+  - **0**: The SCF will continue to run regardless of whether there is oscillation or not. 
+  - **1**: If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+- **Default**: false
+
+### scf_os_thr
+
+- **Type**: double
+- **Description**: The slope threshold to determine if the SCF is stuck in a charge density oscillation. If the calculated slope is larger than `scf_os_thr`, stop the SCF.
+
+- **Default**: -0.01
+
+### scf_os_ndim
+
+- **Type**: int
+- **Description**: To determine the number of old iterations' `drho` used in slope calculations.
+- **Default**: `mixing_ndim`
 
 ### chg_extrap
 
@@ -2911,46 +2941,38 @@ These variables are used to control vdW-corrected related parameters.
 - **Type**: String
 - **Description**: Specifies the method used for Van der Waals (VdW) correction. Available options are:
   - `d2`: [Grimme's D2](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.20495) dispersion correction method
-  - `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method
-  - `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method
+  - `d3_0`: [Grimme's DFT-D3(0)](https://aip.scitation.org/doi/10.1063/1.3382344) dispersion correction method (zero-damping)
+  - `d3_bj`: [Grimme's DFTD3(BJ)](https://onlinelibrary.wiley.com/doi/abs/10.1002/jcc.21759) dispersion correction method (BJ-damping)
   - `none`: no vdW correction
 - **Default**: none
+- **Note**: ABACUS supports automatic setting on DFT-D3 parameters for common functionals after version 3.8.3 (and several develop versions earlier). To benefit from this feature, please specify the parameter `dft_functional` explicitly (for more details on this parameter, please see [dft_functional](#dft_functional)), otherwise the autoset procedure will crash with error message like `cannot find DFT-D3 parameter for XC(***)`. If not satisfied with those in-built parameters, any manually setting on `vdw_s6`, `vdw_s8`, `vdw_a1` and `vdw_a2` will overwrite. 
+- **Special**: There are special cases for functional family wB97 (Omega-B97): if want to use the functional wB97X-D3BJ, one needs to specify the `dft_functional` as `HYB_GGA_WB97X_V` and `vdw_method` as `d3_bj`. If want to use the functional wB97X-D3, specify `dft_functional` as `HYB_GGA_WB97X_D3` and `vdw_method` as `d3_0`.
 
 ### vdw_s6
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d2`, `d3_0`, or `d3_bj`
-- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
+- **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the [here](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 - **Default**:
   - 0.75: if `vdw_method` is set to `d2`
-  - 1.0: if `vdw_method` is set to `d3_0` or `d3_bj`
 
 ### vdw_s8
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**:
-  - 0.722: if `vdw_method` is set to `d3_0`
-  - 0.7875: if `vdw_method` is set to `d3_bj`
+- **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_a1
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**:
-  - 1.217: if `vdw_method` is set to `d3_0`
-  - 0.4289: if `vdw_method` is set to `d3_bj`
+- **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_a2
 
 - **Type**: Real
 - **Availability**: `vdw_method` is set to `d3_0` or `d3_bj`
-- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://www.chemiebn.uni-bonn.de/pctc/mulliken-center/software/dft-d3/dft-d3). The default value of this parameter in ABACUS is set to be the recommended value for PBE.
-- **Default**:
-  - 1.0: if `vdw_method` is set to `d3_0`
-  - 4.4407: if `vdw_method` is set to `d3_bj`
+- **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the [webpage](https://github.com/dftd3/simple-dftd3/blob/main/assets/parameters.toml). If not set, will search in ABACUS built-in dataset based on the `dft_functional` keywords. User set value will overwrite the searched value.
 
 ### vdw_d
 

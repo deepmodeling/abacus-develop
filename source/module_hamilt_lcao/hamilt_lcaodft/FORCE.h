@@ -116,17 +116,6 @@ class Force_LCAO
                         ModuleBase::matrix& stvnl_dphi,
                         Record_adj* ra = nullptr);
 
-    void cal_fvnl_dbeta(const elecstate::DensityMatrix<T, double>* dm,
-                        const Parallel_Orbitals& pv,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const TwoCenterIntegrator& intor_orb_beta,
-                        Grid_Driver& gd,
-                        const bool isforce,
-                        const bool isstress,
-                        ModuleBase::matrix& fvnl_dbeta,
-                        ModuleBase::matrix& svnl_dbeta);
-
     //-------------------------------------------
     // forces related to local pseudopotentials
     //-------------------------------------------

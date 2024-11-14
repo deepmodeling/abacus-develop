@@ -1,4 +1,6 @@
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "kernels/cuda/cuda_tools.cuh"
 #include "module_base/ylm.h"
@@ -71,7 +73,9 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
     Cuda_Mem_Wrapper<double*> gemm_B(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_C(max_atompair_per_z, num_streams, true);
 
+#ifdef _OPENMP
 #pragma omp parallel for num_threads(num_streams) collapse(2)
+#endif
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
@@ -79,7 +83,11 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
             checkCuda(cudaSetDevice(gridt.dev_id));
+#ifdef _OPENMP
             const int sid = omp_get_thread_num();
+#else
+            const int sid = 0;
+#endif
 
             int max_m = 0;
             int max_n = 0;
