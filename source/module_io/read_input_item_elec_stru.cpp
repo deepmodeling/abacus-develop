@@ -76,7 +76,7 @@ void ReadInput::item_elec_stru()
 
             if (para.input.basis_type == "pw")
             {
-                if (!find_str(pw_solvers, ks_solver))
+                if (std::find(pw_solvers.begin(), pw_solvers.end(), ks_solver) == pw_solvers.end())
                 {
                     const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -84,7 +84,7 @@ void ReadInput::item_elec_stru()
             }
             else if (para.input.basis_type == "lcao")
             {
-                if (!find_str(lcao_solvers, ks_solver))
+                if (std::find(lcao_solvers.begin(), lcao_solvers.end(), ks_solver) == lcao_solvers.end())
                 {
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -163,7 +163,7 @@ void ReadInput::item_elec_stru()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (!find_str(basis_types, para.input.basis_type))
+            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
