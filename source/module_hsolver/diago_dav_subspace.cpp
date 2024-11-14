@@ -13,7 +13,7 @@
 using namespace hsolver;
 
 template <typename T, typename Device>
-Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precondition_in,
+Diago_DavSubspace<T, Device>::Diago_DavSubspace(PreFunc<T>&& precondition_in,
                                                 const int& nband_in,
                                                 const int& nbasis_in,
                                                 const int& david_ndim_in,
@@ -21,8 +21,8 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const int& diag_nmax_in,
                                                 const bool& need_subspace_in,
                                                 const diag_comm_info& diag_comm_in)
-    : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
+    : precondition(std::forward<PreFunc<T>>(precondition_in)), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in* david_ndim_in),
+    diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
 
@@ -55,14 +55,6 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
     resmem_complex_op()(this->ctx, this->vcc, this->nbase_x * this->nbase_x, "DAV::vcc");
     setmem_complex_op()(this->ctx, this->vcc, 0, this->nbase_x * this->nbase_x);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        resmem_real_op()(this->ctx, this->d_precondition, nbasis_in);
-        // syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, this->precondition.data(), nbasis_in);
-    }
-#endif
 }
 
 template <typename T, typename Device>
@@ -74,13 +66,6 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
     delmem_complex_op()(this->ctx, this->hcc);
     delmem_complex_op()(this->ctx, this->scc);
     delmem_complex_op()(this->ctx, this->vcc);
-
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == base_device::GpuDevice)
-    {
-        delmem_real_op()(this->ctx, this->d_precondition);
-    }
-#endif
 }
 
 template <typename T, typename Device>
@@ -334,35 +319,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim);
 
     // "precondition!!!"
-    std::vector<Real> pre(this->dim, 0.0);
-    for (int m = 0; m < notconv; m++)
-    {
-        for (size_t i = 0; i < this->dim; i++)
-        {
-            // pre[i] = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
-            double x = std::abs(this->precondition[i] - (*eigenvalue_iter)[m]);
-            pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
-        }
-#if defined(__CUDA) || defined(__ROCM)
-        if (this->device == base_device::GpuDevice)
-        {
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, this->d_precondition, pre.data(), this->dim);
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                              this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              this->d_precondition);
-        }
-        else
-#endif
-        {
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                              this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              pre.data());
-        }
-    }
+    this->precondition(psi_iter + nbase * this->dim, eigenvalue_iter->data(), this->dim, notconv);
 
     // "normalize!!!" in order to improve numerical stability of subspace diagonalization
     std::vector<Real> psi_norm(notconv, 0.0);

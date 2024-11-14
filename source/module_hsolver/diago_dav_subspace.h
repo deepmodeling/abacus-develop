@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <functional>
+#include "module_hsolver/precondition_funcs.h"
 
 namespace hsolver
 {
@@ -24,7 +25,7 @@ class Diago_DavSubspace
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    Diago_DavSubspace(const std::vector<Real>& precondition_in,
+      Diago_DavSubspace(PreFunc<T>&& precondition_in,    /// pass in a function, lambda or PreOP object
                       const int& nband_in,
                       const int& nbasis_in,
                       const int& david_ndim_in,
@@ -67,9 +68,9 @@ class Diago_DavSubspace
     /// the maximum dimension of the reduced basis set
     const int nbase_x = 0;
 
-    /// precondition for diag
-    const std::vector<Real>& precondition;
-    Real* d_precondition = nullptr;
+    /// The precondition operation, can be a function, lambda or PreOP object
+    const PreFunc<T> precondition;
+    // note that lambdas can only passed by value
 
     /// record for how many bands not have convergence eigenvalues
     int notconv = 0;

@@ -73,6 +73,8 @@ namespace LR
                 auto hpsi_func = [&hm](T* psi_in, T* hpsi, const int ld_psi, const int nvec) {hm.hPsi(psi_in, hpsi, ld_psi, nvec);};
                 auto spsi_func = [&hm](const T* psi_in, T* spsi, const int ld_psi, const int nvec)
                     { std::memcpy(spsi, psi_in, sizeof(T) * ld_psi * nvec); };
+                auto pre_func = [&precondition](T* ptr, const Real<T>* eig, const int& ld, const int& nvec)->void
+                    {  hsolver::div_trans_prevec_minus_eigen(ptr, eig, ld, nvec, precondition.data()); };
 
                 if (method == "dav")
                 {
@@ -88,7 +90,7 @@ namespace LR
                 }
                 else if (method == "dav_subspace") //need refactor
                 {
-                    hsolver::Diago_DavSubspace<T> dav_subspace(precondition,
+                    hsolver::Diago_DavSubspace<T> dav_subspace(pre_func,
                         nband,
                         dim,
                         PARAM.inp.pw_diag_ndim,

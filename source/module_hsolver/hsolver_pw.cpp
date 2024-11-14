@@ -503,7 +503,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         bool scf = this->calculation_type == "nscf" ? false : true;
 
-        Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
+        PreOP<T, Device> pre_op(pre_condition, transfunc::qe_pw<Real>);
+        Diago_DavSubspace<T, Device> dav_subspace(bind_pre_op(pre_op),
                                                   psi.get_nbands(),
                                                   psi.get_k_first() ? psi.get_current_nbas()
                                                                     : psi.get_nk() * psi.get_nbasis(),

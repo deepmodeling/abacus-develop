@@ -130,8 +130,9 @@ public:
             std::copy(hpsi_ptr, hpsi_ptr + nvec * ld_psi, hpsi_out);
         };
 
+        hsolver::PreOP<std::complex<double>> pre_op(precond_vec, hsolver::transfunc::qe_pw<double>);
         obj = std::make_unique<hsolver::Diago_DavSubspace<std::complex<double>, base_device::DEVICE_CPU>>(
-            precond_vec, 
+            hsolver::bind_pre_op(pre_op),
             nband, 
             nbasis, 
             dav_ndim, 
