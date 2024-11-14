@@ -37,6 +37,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
     const int nks = p_kv->get_nks();
+    const int max_nbands = wg.nc;
     for (int ik = 0; ik < nks; ik++) // loop k points
     {
         // skip zero weights to speed up
@@ -51,17 +52,17 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         }
         const int npm = nbands_occ;
 
-        nl_tools.cal_vkb(ik, npm);
+        nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
         nl_tools.cal_becp(ik, npm, &psi_in[0](ik,0,0));
-        nl_tools.reduce_pool_becp(npm);
+        nl_tools.reduce_pool_becp(max_nbands);
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
-                nl_tools.cal_vkb_deri_s(ik, npm, ipol, jpol);
+                nl_tools.cal_vkb_deri_s(ik, max_nbands, ipol, jpol);
                 nl_tools.cal_dbecp_s(ik, npm, &psi_in[0](ik,0,0));
                 nl_tools.cal_stress(ik, npm, true, ipol, jpol, stress_device);
             }

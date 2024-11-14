@@ -9,7 +9,7 @@ symmetry		0
 pseudo_dir	../../PP_ORB
 device          gpu
 
-kpar            1
+kpar            2
 bndpar          1
 
 nbands			0
@@ -21,7 +21,7 @@ cal_force       1
 cal_stress      1
 
 #Parameters (2.Iteration)
-ecutwfc			30
+ecutwfc			20
 scf_thr			1e-6
 scf_nmax		30
 
