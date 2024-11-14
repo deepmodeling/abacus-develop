@@ -33,7 +33,7 @@ void Gint_k::allocate_pvdpR(void)
         pvdpRz_reduced[is].allocate(nullptr, true);
     }
 
-    ModuleBase::Memory::record("pvdpR_reduced", 3 * sizeof(double) * this->pvdpRx_reduced[0].get_nnr() * nspin);
+    ModuleBase::Memory::record("pvdpR_reduced", 3 * sizeof(double) * this->gridt->nnrg * nspin);
     return;
 }
 

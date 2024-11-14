@@ -67,15 +67,6 @@ class Grid_Technique : public Grid_MeshBall {
     // use: GridT.in_this_processor
     //---------------------------------------
     int nnrg = 0;
-    // bool allocate_find_R2;
-    // std::vector<int> nlocdimg;
-    // std::vector<int> nlocstartg;
-    // std::vector<int> nad; // number of adjacent atoms for each atom.
-    // std::vector<std::vector<int>> find_R2;
-    // std::vector<std::vector<int>> find_R2_sorted_index;
-    // std::vector<std::vector<int>> find_R2st;
-    
-    // int binary_search_find_R2_offset(int val, int iat) const;
 
     // UnitCell and LCAO_Obrbitals
     const UnitCell* ucell;
