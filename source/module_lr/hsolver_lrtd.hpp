@@ -76,8 +76,8 @@ namespace LR
 
                 if (method == "dav")
                 {
-                    auto pre_func = [&precondition](T* ptr, const int& ld, const int& nvec)->void
-                        {  hsolver::fvec::div_prevec(ptr, ld, nvec, precondition.data()); };
+                    auto pre_func = [&precondition](T* const dst, const T* const src, const int& ld, const int& nvec)->void
+                        {  hsolver::fvec::div_prevec(dst, src, ld, nvec, precondition.data()); };
                     // Allow 5 tries at most. If ntry > ntry_max = 5, exit diag loop.
                     const int ntry_max = 5;
                     // In non-self consistent calculation, do until totally converged. Else allow 5 eigenvecs to be NOT
@@ -90,8 +90,8 @@ namespace LR
                 }
                 else if (method == "dav_subspace") //need refactor
                 {
-                    auto pre_func = [&precondition](T* ptr, const Real<T>* eig, const int& ld, const int& nvec)->void
-                        {  hsolver::fvec::div_trans_prevec_minus_eigen(ptr, eig, ld, nvec, precondition.data()); };
+                    auto pre_func = [&precondition](T* const dst, const T* const src, const Real<T>* eig, const int& ld, const int& nvec)->void
+                        {  hsolver::fvec::div_trans_prevec_minus_eigen(dst, src, eig, ld, nvec, precondition.data()); };
                     hsolver::Diago_DavSubspace<T> dav_subspace(pre_func,
                         nband,
                         dim,

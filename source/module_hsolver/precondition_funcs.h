@@ -26,19 +26,19 @@ namespace hsolver
         /// type 1: directly divide each vector by the precondition vector
         ///---------------------------------------------------------------------------------------------
         template <typename T, typename Device = base_device::DEVICE_CPU>
-        void div_prevec(T* ptr, const size_t& dim, const size_t& nvec,
+        void div_prevec(T* const dst, const T* const src, const size_t& dim, const size_t& nvec,
             const Real<T>* const pre)
         {
             Device* ctx = {};
-            for (int m = 0; m < nvec; m++)
+            for (size_t m = 0; m < nvec; m++)
             {
-                T* const ptr_m = ptr + m * dim;
-                vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, pre);
+                const size_t offset = m * dim;
+                vector_div_vector_op<T, Device>()(ctx, dim, dst + offset, src + offset, pre);
             }
         }
         /// Intereface to be called in the eigensolver
         template <typename T>
-        using Div = std::function<void(T*, const size_t&, const size_t&)>;
+        using Div = std::function<void(T* const, const T* const, const size_t&, const size_t&)>;
         // Kernel function full of dependence
         template <typename T, typename Device = base_device::DEVICE_CPU>
         using DivKernel = std::function<decltype(div_prevec<T, Device>)>;
@@ -48,7 +48,7 @@ namespace hsolver
         ///$X \to (A-\lambda I)^{-1} X$
         ///---------------------------------------------------------------------------------------------
         template <typename T, typename Device = base_device::DEVICE_CPU>
-        void div_trans_prevec_minus_eigen(T* ptr, const Real<T>* eig, const size_t& dim, const size_t& nvec,
+        void div_trans_prevec_minus_eigen(T* const dst, const T* const src, const Real<T>* eig, const size_t& dim, const size_t& nvec,
             const Real<T>* const pre, Real<T>* const d_pre = nullptr, const std::function<Real<T>(const Real<T>&)>& transval = fval::none<Real<T>>)
         {
             using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real<T>, Device, base_device::DEVICE_CPU>;
@@ -57,27 +57,27 @@ namespace hsolver
             Device* ctx = {};
             base_device::DEVICE_CPU* cpu_ctx = {};
 
-            for (int m = 0; m < nvec; m++)
+            for (size_t m = 0; m < nvec; m++)
             {
-                T* const ptr_m = ptr + m * dim;
+                const size_t offset = m * dim;
                 for (size_t i = 0; i < dim; i++) { pre_trans[i] = transval(pre[i] - eig[m]); }
 #if defined(__CUDA) || defined(__ROCM)
                 if (device == base_device::GpuDevice)
                 {
                     assert(d_pre);
                     syncmem_var_h2d_op()(ctx, cpu_ctx, d_pre, pre_trans.data(), dim);
-                    vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, d_pre);
+                    vector_div_vector_op<T, Device>()(ctx, dim, dst + offset, src + offset, d_pre);
                 }
                 else
 #endif
                 {
-                    vector_div_vector_op<T, Device>()(ctx, dim, ptr_m, ptr_m, pre_trans.data());
+                    vector_div_vector_op<T, Device>()(ctx, dim, dst + offset, src + offset, pre_trans.data());
                 }
             }
         }
         /// Intereface to be called in the eigensolver
         template <typename T>
-        using DivTransMinusEig = std::function<void(T*, const Real<T>*, const size_t&, const size_t&)>;
+        using DivTransMinusEig = std::function<void(T* const, const T* const, const Real<T>*, const size_t&, const size_t&)>;
         /// Kernel function full of dependence
         template <typename T, typename Device = base_device::DEVICE_CPU>
         using DivTransMinusEigKernel = std::function<decltype(div_trans_prevec_minus_eigen<T, Device>)>;
@@ -104,7 +104,9 @@ namespace hsolver
             dev_(base_device::get_device_type<Device>({}))
         {
 #if defined(__CUDA) || defined(__ROCM)
-            if (this->dev_ == base_device::GpuDevice) { resmem_real_op()({}, this->d_prevec_, dim_); }
+            if (this->dev_ == base_device::GpuDevice) {
+                resmem_real_op()({}, this->d_prevec_, dim_);
+            }
 #endif
         }
         PreOP(const PreOP&) = delete;
@@ -119,13 +121,13 @@ namespace hsolver
         fvec::Div<T> get() const
         {
             return std::bind(PreOP<T, Device, Kernel_t>::transvec_,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, this->prevec_);
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, this->prevec_);
         }
         template<typename U = Kernel_t, typename std::enable_if<std::is_same<U, fvec::DivTransMinusEigKernel<T, Device>>::value, bool>::type = 0>
         fvec::DivTransMinusEig<T> get() const
         {
             return std::bind(PreOP<T, Device, Kernel_t>::transvec_,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, std::placeholders::_5,
                 this->prevec_, this->d_prevec_, this->transval_);
         }
 

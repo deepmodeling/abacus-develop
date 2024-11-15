@@ -319,7 +319,8 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          this->dim);
 
     // "precondition!!!"
-    this->precondition(psi_iter + nbase * this->dim, eigenvalue_iter->data(), this->dim, notconv);
+    auto* start_ptr = psi_iter + nbase * this->dim;
+    this->precondition(start_ptr, start_ptr, eigenvalue_iter->data(), this->dim, notconv);
 
     // "normalize!!!" in order to improve numerical stability of subspace diagonalization
     std::vector<Real> psi_norm(notconv, 0.0);

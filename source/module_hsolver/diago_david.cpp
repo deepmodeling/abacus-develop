@@ -489,7 +489,8 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //          T is a diagonal stored in array `precondition`
     // to do preconditioning, divide each column of basis by the corresponding element of precondition
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    this->precondition(basis + dim * nbase, dim, notconv);
+    auto* start_ptr = basis + dim * nbase;
+    this->precondition(start_ptr, start_ptr, dim, notconv);
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
     // there is a nbase to nbase + notconv band orthogonalise
