@@ -22,19 +22,7 @@ namespace ModuleESolver
 {
     class ESolver_FP : public ESolver
     {
-    public:
-
-        ModulePW::PW_Basis* pw_rho;
-
-        /**
-         * @brief same as pw_rho for ncpp. Here 'd' stands for 'dense'
-         * dense grid for for uspp, used for ultrasoft augmented charge density.
-         * charge density and potential are defined on dense grids,
-         * but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
-         */
-        ModulePW::PW_Basis* pw_rhod;
-        ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
-
+      public:
         //! Constructor
         ESolver_FP();
 
@@ -43,6 +31,10 @@ namespace ModuleESolver
 
         //! Initialize of the first-principels energy solver
         virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+
+      protected:
+        //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
+        virtual void after_scf(const int istep);
 
         virtual void init_after_vc(const Input_para& inp, UnitCell& cell);    // liuyu add 2023-03-09
 
@@ -58,9 +50,16 @@ namespace ModuleESolver
         //! K points in Brillouin zone
         K_Vectors kv;
 
-      protected:
-        //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-        virtual void after_scf(const int istep);
+        ModulePW::PW_Basis* pw_rho;
+
+        /**
+         * @brief same as pw_rho for ncpp. Here 'd' stands for 'dense'
+         * dense grid for for uspp, used for ultrasoft augmented charge density.
+         * charge density and potential are defined on dense grids,
+         * but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
+         */
+        ModulePW::PW_Basis* pw_rhod;
+        ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
 
         //! Charge extrapolation
         Charge_Extra CE;
