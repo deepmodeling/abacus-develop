@@ -9,7 +9,6 @@
 #include "module_base/libm/libm.h"
 namespace hamilt
 {
-
 template <typename FPTYPE>
 struct cal_dbecp_noevc_nl_op<FPTYPE, base_device::DEVICE_CPU>
 {
@@ -83,6 +82,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -101,10 +101,15 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             {
                 const int nproj = atom_nh[it];
 #ifdef _OPENMP
-#pragma omp for collapse(4)
+#pragma omp for
 #endif
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
+                    FPTYPE ekb_now = 0.0;
+                    if(d_ekb != nullptr)
+                    {
+                        ekb_now = d_ekb[ib];
+                    }
                     for (int ia = 0; ia < atom_na[it]; ia++)
                     {
                         for (int ip1 = 0; ip1 < nproj; ip1++)
@@ -115,10 +120,22 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 {
                                     continue;
                                 }
-                                FPTYPE fac = d_wg[ib] * 1.0;
-                                FPTYPE ekb_now = d_ekb[ib];
-                                FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2]
-                                            - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+
+                                FPTYPE fac;
+                                if (occ)
+                                {
+                                    fac = d_wg[ib];
+                                }
+                                else
+                                {
+                                    fac = d_wg[0];
+                                }
+                                FPTYPE ps_qq = 0;
+                                if(ekb_now != 0)
+                                {
+                                    ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+                                }
+                                FPTYPE ps = deeq[((spin * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 const int inkb1 = sum + ia * nproj + ip1;
                                 const int inkb2 = sum + ia * nproj + ip2;
                                 // out<<"\n ps = "<<ps;
@@ -150,6 +167,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
@@ -167,10 +185,15 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
             {
                 const int nproj = atom_nh[it];
 #ifdef _OPENMP
-#pragma omp for collapse(4)
+#pragma omp for
 #endif
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
+                    FPTYPE ekb_now = 0.0;
+                    if(d_ekb != nullptr)
+                    {
+                        ekb_now = d_ekb[ib];
+                    }
                     for (int ia = 0; ia < atom_na[it]; ia++)
                     {
                         for (int ip1 = 0; ip1 < nproj; ip1++)
@@ -178,9 +201,20 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             for (int ip2 = 0; ip2 < nproj; ip2++)
                             {
                                 const int ib2 = ib*2;
-                                FPTYPE fac = d_wg[ib] * 1.0;
-                                FPTYPE ekb_now = d_ekb[ib];
-                                std::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+                                FPTYPE fac;
+                                if (occ)
+                                {
+                                    fac = d_wg[ib];
+                                }
+                                else
+                                {
+                                    fac = d_wg[0];
+                                }
+                                std::complex<FPTYPE> ps_qq = 0;
+                                if(ekb_now != 0)
+                                {
+                                    ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+                                }
                                 std::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
                                 std::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
                                 std::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
@@ -508,6 +542,27 @@ struct cal_force_npw_op<FPTYPE, base_device::DEVICE_CPU> {
     }
 };
 
+template <typename FPTYPE>
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_CPU> {
+    FPTYPE operator()(const int& npw,
+                      const FPTYPE& fac,
+                      const FPTYPE* gk1,
+                      const FPTYPE* gk2,
+                      const FPTYPE* d_kfac,
+                      const std::complex<FPTYPE>* psi)
+    {
+        FPTYPE sum = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum)
+#endif
+        for (int i = 0; i < npw; i++)
+        {
+            sum += fac * gk1[i] * gk2[i] * d_kfac[i] * std::norm(psi[i]);
+        }
+        return sum;
+    }
+};
+
 // // cpu version first, gpu version later
 // template <typename FPTYPE>
 // struct prepare_vkb_deri_ptr_op<FPTYPE, base_device::DEVICE_CPU>{
@@ -585,6 +640,9 @@ template struct cal_stress_drhoc_aux_op<double, base_device::DEVICE_CPU>;
 
 template struct cal_force_npw_op<float, base_device::DEVICE_CPU>;
 template struct cal_force_npw_op<double, base_device::DEVICE_CPU>;
+
+template struct cal_multi_dot_op<float, base_device::DEVICE_CPU>;
+template struct cal_multi_dot_op<double, base_device::DEVICE_CPU>;
 
 
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_CPU>;

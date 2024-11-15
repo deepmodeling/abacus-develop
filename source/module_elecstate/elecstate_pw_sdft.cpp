@@ -14,14 +14,13 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::TITLE(this->classname, "psiToRho");
     ModuleBase::timer::tick(this->classname, "psiToRho");
     const int nspin = PARAM.inp.nspin;
+    for (int is = 0; is < nspin; is++)
+    {
+        setmem_var_op()(this->ctx, this->rho[is], 0, this->charge->nrxx);
+    }
 
     if (GlobalV::MY_STOGROUP == 0)
     {
-        for (int is = 0; is < nspin; is++)
-        {
-            setmem_var_op()(this->ctx, this->rho[is], 0, this->charge->nrxx);
-        }
-
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             psi.fix_k(ik);

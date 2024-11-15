@@ -40,7 +40,7 @@ std::string get_device_info(std::string device_flag);
  * @brief Get the device kpar object
  * for module_io GlobalV::KPAR
  */
-int get_device_kpar(const int& kpar);
+int get_device_kpar(const int& kpar, const int& bndpar);
 
 /**
  * @brief Get the device flag object
@@ -50,6 +50,12 @@ std::string get_device_flag(const std::string& device,
                             const std::string& basis_type);
 
 #if __MPI
+/**
+ * @brief Get the rank of current node
+ *        Note that GPU can only be binded with CPU in the same node
+ * 
+ * @return int 
+ */
 int get_node_rank();
 int get_node_rank_with_mpi_shared(const MPI_Comm mpi_comm = MPI_COMM_WORLD);
 int stringCmp(const void* a, const void* b);

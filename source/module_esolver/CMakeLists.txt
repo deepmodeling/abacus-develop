@@ -25,7 +25,6 @@ if(ENABLE_LCAO)
       lcao_gets.cpp
       lcao_others.cpp
       lcao_init_after_vc.cpp
-      lcao_fun.cpp
   )
 endif()
 

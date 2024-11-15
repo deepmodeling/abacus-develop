@@ -41,8 +41,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void get_S();
 
-    void cal_mag(const int istep, const bool print = false);
-
   protected:
     virtual void before_scf(const int istep) override;
 
@@ -89,14 +87,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     void set_matrix_grid(Record_adj& ra);
 
     void beforesolver(const int istep);
-    //----------------------------------------------------------------------
-
-    /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse
-    /// density matrix of H, S, T, r
-    ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
-
-    /// @brief check if skip the corresponding output in md calculation
-    bool md_skip_out(std::string calculation, int istep, int interval);
+    //---------------------------------------------------------------------
 
 #ifdef __EXX
     std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;

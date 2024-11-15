@@ -96,10 +96,11 @@ class Forces
                      FPTYPE* drhocg,
                      ModulePW::PW_Basis* rho_basis,
                      const UnitCell& ucell_in); // used in nonlinear core correction stress
-  private:
+  protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+  private:
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;

@@ -19,7 +19,6 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     Structure_Factor* p_sf,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr,
                     const psi::Psi<complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:
