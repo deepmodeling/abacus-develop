@@ -1,0 +1,20 @@
+ATOMIC_SPECIES
+H	1.0080	../../PP_ORB/H_ONCV_PBE-1.0.upf					#Pseudopotentials are downloaded from http://www.quantum-simulation.org/potentials/sg15_oncv/upf/
+
+NUMERICAL_ORBITAL
+../../PP_ORB/H_gga_6au_60Ry_2s1p.orb                 
+
+LATTICE_CONSTANT
+60.0            #37.79532, 22.6767
+
+LATTICE_VECTORS
+0.5 0.5 0.0
+0.5 0.0 0.5
+0.0 0.5 0.5
+
+ATOMIC_POSITIONS
+Direct
+H
+0
+1
+0.5 0.5 0.5 0 0 0
