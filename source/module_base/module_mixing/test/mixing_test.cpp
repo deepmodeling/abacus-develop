@@ -1,4 +1,4 @@
-#ifdef _OPENMP
+#ifdef __OPENMP
 #include <omp.h>
 #endif
 
@@ -153,7 +153,7 @@ class Mixing_Test : public testing::Test
 
 TEST_F(Mixing_Test, BroydenSolveLinearEq)
 {
-#ifdef _OPENMP
+#ifdef __OPENMP
     omp_set_num_threads(1);
 #endif
     init_method("broyden");
@@ -200,7 +200,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
 
 TEST_F(Mixing_Test, PulaySolveLinearEq)
 {
-#ifdef _OPENMP
+#ifdef __OPENMP
     omp_set_num_threads(1);
 #endif
     init_method("pulay");
@@ -248,7 +248,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
 
 TEST_F(Mixing_Test, PlainSolveLinearEq)
 {
-#ifdef _OPENMP
+#ifdef __OPENMP
     omp_set_num_threads(1);
 #endif
     init_method("plain");
