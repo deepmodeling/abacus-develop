@@ -634,19 +634,22 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
 
 #ifdef __EXX
     // calculate exact-exchange
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (PARAM.inp.calculation != "nscf")
     {
-        this->exd->exx_eachiterinit(istep,
-                                    *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                    this->kv,
-                                    iter);
-    }
-    else
-    {
-        this->exc->exx_eachiterinit(istep,
-                                    *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                                    this->kv,
-                                    iter);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->exd->exx_eachiterinit(istep,
+                                        *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                        this->kv,
+                                        iter);
+        }
+        else
+        {
+            this->exc->exx_eachiterinit(istep,
+                                        *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                                        this->kv,
+                                        iter);
+        }
     }
 #endif
 
@@ -728,13 +731,16 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
 
     // 5) what's the exd used for?
 #ifdef __EXX
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (PARAM.inp.calculation != "nscf")
     {
-        this->exd->exx_hamilt2density(*this->pelec, this->pv, iter);
-    }
-    else
-    {
-        this->exc->exx_hamilt2density(*this->pelec, this->pv, iter);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->exd->exx_hamilt2density(*this->pelec, this->pv, iter);
+        }
+        else
+        {
+            this->exc->exx_hamilt2density(*this->pelec, this->pv, iter);
+        }
     }
 #endif
 
@@ -921,11 +927,29 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
 
 #ifdef __EXX
     // 3) save exx matrix
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (PARAM.inp.calculation != "nscf")
     {
-        GlobalC::exx_info.info_ri.real_number ?
-            this->exd->exx_iter_finish(this->kv, GlobalC::ucell, *this->p_hamilt, *this->pelec, *this->p_chgmix, this->scf_ene_thr, iter, istep, this->conv_esolver) :
-            this->exc->exx_iter_finish(this->kv, GlobalC::ucell, *this->p_hamilt, *this->pelec, *this->p_chgmix, this->scf_ene_thr, iter, istep, this->conv_esolver);
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            GlobalC::exx_info.info_ri.real_number ? this->exd->exx_iter_finish(this->kv,
+                                                                               GlobalC::ucell,
+                                                                               *this->p_hamilt,
+                                                                               *this->pelec,
+                                                                               *this->p_chgmix,
+                                                                               this->scf_ene_thr,
+                                                                               iter,
+                                                                               istep,
+                                                                               this->conv_esolver)
+                                                  : this->exc->exx_iter_finish(this->kv,
+                                                                               GlobalC::ucell,
+                                                                               *this->p_hamilt,
+                                                                               *this->pelec,
+                                                                               *this->p_chgmix,
+                                                                               this->scf_ene_thr,
+                                                                               iter,
+                                                                               istep,
+                                                                               this->conv_esolver);
+        }
     }
 #endif
 
@@ -1040,17 +1064,20 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
 
 #ifdef __EXX
     // 5) write Hexx matrix for NSCF (see `out_chg` in docs/advanced/input_files/input-main.md)
-    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.out_chg[0]
-        && istep % PARAM.inp.out_interval == 0) // Peize Lin add if 2022.11.14
+    if (PARAM.inp.calculation != "nscf")
     {
-        const std::string file_name_exx = PARAM.globalv.global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.out_chg[0]
+            && istep % PARAM.inp.out_interval == 0) // Peize Lin add if 2022.11.14
         {
-            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
-        }
-        else
-        {
-            ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exc->get_Hexxs());
+            const std::string file_name_exx = PARAM.globalv.global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exd->get_Hexxs());
+            }
+            else
+            {
+                ModuleIO::write_Hexxs_csr(file_name_exx, GlobalC::ucell, this->exc->get_Hexxs());
+            }
         }
     }
 #endif
