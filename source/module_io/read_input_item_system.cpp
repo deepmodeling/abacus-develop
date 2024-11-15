@@ -256,6 +256,12 @@ void ReadInput::item_system()
                 para.input.bndpar = GlobalV::NPROC;
             }
         };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (GlobalV::NPROC % para.input.bndpar != 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "The number of processors can not be divided by bndpar");
+            }
+        };
         this->add_item(item);
     }
     {

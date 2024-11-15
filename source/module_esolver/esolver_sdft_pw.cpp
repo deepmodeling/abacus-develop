@@ -169,6 +169,9 @@ void ESolver_SDFT_PW<T, Device>::after_scf(const int istep)
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, double ethr)
 {
+    ModuleBase::TITLE("ESolver_SDFT_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
+
     // reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
@@ -241,6 +244,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
 #ifdef __MPI
     MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
 }
 
 template <typename T, typename Device>
@@ -249,10 +253,10 @@ double ESolver_SDFT_PW<T, Device>::cal_energy()
     return this->pelec->f_en.etot;
 }
 
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_force(ModuleBase::matrix& force)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::cal_force(ModuleBase::matrix& force)
 {
-    Sto_Forces ff(GlobalC::ucell.nat);
+    Sto_Forces<double, Device> ff(GlobalC::ucell.nat);
 
     ff.cal_stoforce(force,
                     *this->pelec,
@@ -261,20 +265,16 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_force(M
                     &this->sf,
                     &this->kv,
                     this->pw_wfc,
-                    this->psi,
+                    GlobalC::ppcell,
+                    GlobalC::ucell,
+                    *this->kspw_psi,
                     this->stowf);
 }
 
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>::cal_force(ModuleBase::matrix& force)
+template <typename T, typename Device>
+void ESolver_SDFT_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 {
-    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::cal_force", "DEVICE_GPU is not supported");
-}
-
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_stress(ModuleBase::matrix& stress)
-{
-    Sto_Stress_PW ss;
+    Sto_Stress_PW<double, Device> ss;
     ss.cal_stress(stress,
                   *this->pelec,
                   this->pw_rho,
@@ -282,17 +282,11 @@ void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>::cal_stress(
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  this->psi,
+                  *this->kspw_psi,
                   this->stowf,
                   this->pelec->charge,
                   &GlobalC::ppcell,
                   GlobalC::ucell);
-}
-
-template <>
-void ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>::cal_stress(ModuleBase::matrix& stress)
-{
-    ModuleBase::WARNING_QUIT("ESolver_SDFT_PW<T, Device>::cal_stress", "DEVICE_GPU is not supported");
 }
 
 template <typename T, typename Device>
