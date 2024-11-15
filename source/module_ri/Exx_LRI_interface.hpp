@@ -128,10 +128,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep, const elecst
                 if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm_in.get_paraV_pointer(), &this->symrot_); }
                 else { this->exx_ptr->cal_exx_elec(Ds, *dm_in.get_paraV_pointer()); }
             };
-            if(istep > 0 && flag_restart)
+            if(istep > 0 && flag_restart) {
                 cal(*dm_last_step);
-            else
+            } else {
                 cal(dm);
+}
         }
     }
 }
