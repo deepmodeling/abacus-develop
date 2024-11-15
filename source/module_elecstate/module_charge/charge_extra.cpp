@@ -47,9 +47,20 @@ void Charge_Extra::Init_CE(const int& nspin, const int& natom, const int& nrxx, 
 
     if (pot_order > 0)
     {
-        delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
-        delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
-        delta_rho3.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho1.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho2.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // delta_rho3.resize(this->nspin, std::vector<double>(nrxx, 0.0));
+        // qianrui replace the above code with the following code.
+        // The above code cannot passed valgrind tests, which has an invalid read of size 32.
+        delta_rho1.resize(this->nspin);
+        delta_rho2.resize(this->nspin);
+        delta_rho3.resize(this->nspin);
+        for (int is = 0; is < this->nspin; is++)
+        {
+            delta_rho1[is].resize(nrxx, 0.0);
+            delta_rho2[is].resize(nrxx, 0.0);
+            delta_rho3[is].resize(nrxx, 0.0);
+        }
     }
 
     if(pot_order == 3)

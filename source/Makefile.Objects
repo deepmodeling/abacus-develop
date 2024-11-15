@@ -617,6 +617,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
+    parallel_device.o
       
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\
@@ -640,6 +641,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_cc.o\
     forces_scc.o\
     fs_nonlocal_tools.o\
+    fs_kin_tools.o\
     force_op.o\
     stress_op.o\
     wf_op.o\

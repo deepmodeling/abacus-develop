@@ -1,39 +1,34 @@
+#ifndef __PARALLEL_DEVICE_H__
+#define __PARALLEL_DEVICE_H__
 #ifdef __MPI
 #include "mpi.h"
 #include "module_base/module_device/device.h"
+#include "module_base/module_device/memory_op.h"
 #include <complex>
-#include <string>
-#include <vector>
 namespace Parallel_Common
 {
-void bcast_complex(std::complex<double>* object, const int& n, const MPI_Comm& comm)
-{
-    MPI_Bcast(object, n * 2, MPI_DOUBLE, 0, comm);
-}
-void bcast_complex(std::complex<float>* object, const int& n, const MPI_Comm& comm)
-{
-    MPI_Bcast(object, n * 2, MPI_FLOAT, 0, comm);
-}
-void bcast_real(double* object, const int& n, const MPI_Comm& comm)
-{
-    MPI_Bcast(object, n, MPI_DOUBLE, 0, comm);
-}
-void bcast_real(float* object, const int& n, const MPI_Comm& comm)
-{
-    MPI_Bcast(object, n, MPI_FLOAT, 0, comm);
-}
+void bcast_data(std::complex<double>* object, const int& n, const MPI_Comm& comm);
+void bcast_data(std::complex<float>* object, const int& n, const MPI_Comm& comm);
+void bcast_data(double* object, const int& n, const MPI_Comm& comm);
+void bcast_data(float* object, const int& n, const MPI_Comm& comm);
+void reduce_data(std::complex<double>* object, const int& n, const MPI_Comm& comm);
+void reduce_data(std::complex<float>* object, const int& n, const MPI_Comm& comm);
+void reduce_data(double* object, const int& n, const MPI_Comm& comm);
+void reduce_data(float* object, const int& n, const MPI_Comm& comm);
 
-template <typename T, typename Device>
 /**
- * @brief bcast complex in Device
+ * @brief bcast data in Device
  * 
+ * @tparam T: float, double, std::complex<float>, std::complex<double>
+ * @tparam Device 
  * @param ctx Device ctx
  * @param object complex arrays in Device
  * @param n the size of complex arrays
  * @param comm MPI_Comm
  * @param tmp_space tmp space in CPU
  */
-void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
+template <typename T, typename Device>
+void bcast_dev(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
 {
     const base_device::DEVICE_CPU* cpu_ctx = {};
     T* object_cpu = nullptr;
@@ -56,7 +51,7 @@ void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& c
         object_cpu = object;
     }
 
-    bcast_complex(object_cpu, n, comm);
+    bcast_data(object_cpu, n, comm);
 
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
@@ -70,7 +65,7 @@ void bcast_complex(const Device* ctx, T* object, const int& n, const MPI_Comm& c
 }
 
 template <typename T, typename Device>
-void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
+void reduce_dev(const Device* ctx, T* object, const int& n, const MPI_Comm& comm, T* tmp_space = nullptr)
 {
     const base_device::DEVICE_CPU* cpu_ctx = {};
     T* object_cpu = nullptr;
@@ -93,7 +88,7 @@ void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm
         object_cpu = object;
     }
 
-    bcast_real(object_cpu, n, comm);
+    reduce_data(object_cpu, n, comm);
 
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
@@ -105,7 +100,9 @@ void bcast_real(const Device* ctx, T* object, const int& n, const MPI_Comm& comm
     }
     return;
 }
+
 }
     
 
+#endif
 #endif
