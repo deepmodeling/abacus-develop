@@ -119,7 +119,7 @@ class ChargeMixingTest : public ::testing::Test
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {
-#ifdef __OPENMP
+#ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
     PARAM.input.nspin = 1;
@@ -219,7 +219,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 
 TEST_F(ChargeMixingTest, InitMixingTest)
 {
-#ifdef __OPENMP
+#ifdef _OPENMP
     omp_set_num_threads(1);
 #endif
     PARAM.input.nspin = 1;
