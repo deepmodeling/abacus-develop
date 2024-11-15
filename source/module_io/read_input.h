@@ -142,7 +142,7 @@ class ReadInput
 // convert string vector to a long string
 std::string longstring(const std::vector<std::string>& str_values);
 // convert string to bool
-bool assume_bool(const std::string& val);
+bool assume_as_boolean(const std::string& val);
 // convert to directory format
 std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector

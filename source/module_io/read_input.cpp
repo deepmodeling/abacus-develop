@@ -7,6 +7,7 @@
 #include <sstream>
 #include <array>
 #include <vector>
+#include <cassert>
 #include "module_base/formatter.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
@@ -20,14 +21,18 @@ std::string longstring(const std::vector<std::string>& words)
     return FmtCore::join(" ", words);
 }
 
-bool assume_bool(const std::string& val)
+bool assume_as_boolean(const std::string& val)
 {
     const std::string val_ = FmtCore::lower(val);
 
     const std::array<std::string, 7> t_ = {"true", "1", "t", "yes", "y", "on", ".true."};
     const std::array<std::string, 7> f_ = {"false", "0", "f", "no", "n", "off", ".false."};
     // This will work because std::array<T, N>::size() is a constexpr function
-    static_assert(t_.size() == f_.size(), "t_ and f_ must have the same lengths");
+    // Ouch it is of C++17 standard...
+    // static_assert(t_.size() == f_.size(), "t_ and f_ must have the same lengths");
+#ifdef __DEBUG // C++11 can do this
+    assert(t_.size() == f_.size());
+#endif
 
     if (std::find(t_.begin(), t_.end(), val_) != t_.end())
     {

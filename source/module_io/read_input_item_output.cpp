@@ -101,7 +101,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
             }
-            para.input.out_band[0] = assume_bool(item.str_values[0]);
+            para.input.out_band[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_band[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -236,7 +236,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
-            para.input.out_mat_hs[0] = assume_bool(item.str_values[0]);
+            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_hs[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -257,7 +257,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
             }
-            para.input.out_mat_tk[0] = assume_bool(item.str_values[0]);
+            para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_tk[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         sync_intvec(input.out_mat_tk, 2, 0);
