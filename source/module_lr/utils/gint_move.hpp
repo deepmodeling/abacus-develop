@@ -55,6 +55,9 @@ Gint& Gint::operator=(Gint&& rhs)
     {
         delete this->hRGint_tmp[i];
     }
+    this->pvdpRx_reduced = std::move(rhs.pvdpRx_reduced);
+    this->pvdpRy_reduced = std::move(rhs.pvdpRy_reduced);
+    this->pvdpRz_reduced = std::move(rhs.pvdpRz_reduced);
     this->DMRGint = std::move(rhs.DMRGint);
     this->hRGint_tmp = std::move(rhs.hRGint_tmp);
     this->DMRGint_full = rhs.DMRGint_full;
