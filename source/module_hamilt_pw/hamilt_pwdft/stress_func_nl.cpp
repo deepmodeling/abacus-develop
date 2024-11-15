@@ -34,9 +34,10 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     setmem_var_op()(this->ctx, stress_device, 0, 9);
     std::vector<FPTYPE> sigmanlc(9, 0.0);
 
-    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, psi_in, p_kv, wfc_basis, p_sf, wg, ekb);
+    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
     const int nks = p_kv->get_nks();
+    const int max_nbands = wg.nc;
     for (int ik = 0; ik < nks; ik++) // loop k points
     {
         // skip zero weights to speed up
@@ -51,15 +52,19 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
         }
         const int npm = nbands_occ;
 
+        nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, npm);
+        nl_tools.cal_becp(ik, npm, &psi_in[0](ik,0,0));
+        nl_tools.reduce_pool_becp(max_nbands);
         // calculate dbecp = <psi|d(beta)/dR> for all beta functions
         // calculate stress = \sum <psi|d(beta_j)/dR> * <psi|beta_i> * D_{ij}
         for (int ipol = 0; ipol < 3; ipol++)
         {
             for (int jpol = 0; jpol <= ipol; jpol++)
             {
-                nl_tools.cal_dbecp_s(ik, npm, ipol, jpol, stress_device);
+                nl_tools.cal_vkb_deri_s(ik, max_nbands, ipol, jpol);
+                nl_tools.cal_dbecp_s(ik, npm, &psi_in[0](ik,0,0));
+                nl_tools.cal_stress(ik, npm, true, ipol, jpol, stress_device);
             }
         }
     }
@@ -75,23 +80,16 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
             {
                 sigmanlc[l * 3 + m] = sigmanlc[m * 3 + l];
             }
-            Parallel_Reduce::reduce_all(sigmanlc[l * 3 + m]); // qianrui fix a bug for kpar > 1
         }
     }
-    // rescale the stress with 1/omega
-    for (int ipol = 0; ipol < 3; ipol++)
-    {
-        for (int jpol = 0; jpol < 3; jpol++)
-        {
-            sigmanlc[ipol * 3 + jpol] *= 1.0 / ucell_in.omega;
-        }
-    }
+    // sum up forcenl from all processors
+    Parallel_Reduce::reduce_all(sigmanlc.data(), 9);
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
         for (int jpol = 0; jpol < 3; jpol++)
         {
-            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol];
+            sigma(ipol, jpol) = sigmanlc[ipol * 3 + jpol] / ucell_in.omega;
         }
     }
     // do symmetry

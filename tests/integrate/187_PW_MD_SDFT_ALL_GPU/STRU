@@ -1,0 +1,19 @@
+ATOMIC_SPECIES
+Si 28 Si.pz-vbc.UPF
+
+LATTICE_CONSTANT
+4
+
+LATTICE_VECTORS
+1 0 0 #latvec1
+0 1 0 #latvec2
+0 0 1 #latvec3
+
+ATOMIC_POSITIONS
+Cartesian
+
+Si #label
+0 #magnetism
+2 #number of atoms
+0  0  0  m  1  1  1  v  1.62777250569e-06  -2.01685158301e-05  2.2830936097e-05
+0.5  0.5  0.5  m  1  1  1  v  -1.62777250569e-06  2.01685158301e-05  -2.2830936097e-05

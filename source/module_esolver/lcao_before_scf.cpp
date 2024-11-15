@@ -210,13 +210,16 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (PARAM.inp.calculation != "nscf")
     {
-        this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
-    }
-    else
-    {
-        this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        }
+        else
+        {
+            this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        }
     }
 #endif // __EXX
 

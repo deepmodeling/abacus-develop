@@ -183,7 +183,7 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.device  == "gpu" && PARAM.inp.basis_type == "pw")
     {
-        GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar);
+        GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar, PARAM.inp.bndpar);
     }
 #ifdef __LCAO
     else if (PARAM.inp.basis_type == "lcao") {

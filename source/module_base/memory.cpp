@@ -23,7 +23,7 @@ int Memory::short_memory = sizeof(short); // 2.0 Byte
 
 int Memory::n_memory = 1000;
 int Memory::n_now = 0;
-bool Memory::init_flag =  false;
+bool Memory::init_flag = false;
 
 #if defined(__CUDA) || defined(__ROCM)
 
@@ -365,6 +365,7 @@ void Memory::finish(std::ofstream &ofs)
 		delete[] name_gpu;
 		delete[] class_name_gpu;
 		delete[] consume_gpu;
+		init_flag_gpu = false;
 	}
 #endif
 	return;
@@ -372,11 +373,7 @@ void Memory::finish(std::ofstream &ofs)
 
 void Memory::print_all(std::ofstream &ofs)
 {
-	if(!init_flag
-#if defined(__CUDA) || defined(__ROCM)
-	&& !init_flag_gpu
-#endif
-	) 
+	if(!init_flag) 
 	{
 		return;
 	}
@@ -437,6 +434,11 @@ void Memory::print_all(std::ofstream &ofs)
 	}
 
 #if defined(__CUDA) || defined(__ROCM)
+	if(!init_flag_gpu) 
+	{
+		return;
+	}
+
 	ofs <<"\n NAME-------------------------|GPU MEMORY(MB)----" << std::endl;
 	ofs <<std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total_gpu << std::endl;
     

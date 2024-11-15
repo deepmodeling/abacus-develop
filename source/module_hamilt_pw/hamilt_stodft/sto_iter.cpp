@@ -55,6 +55,7 @@ template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "orthog");
+    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
     // orthogonal part
     if (PARAM.inp.nbands > 0)
     {
@@ -110,6 +111,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
                                       npwx);
         delmem_complex_op()(this->ctx, sum);
     }
+    ModuleBase::timer::tick("Stochastic_Iter", "orthog");
 }
 
 template <typename T, typename Device>
@@ -119,6 +121,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
                                           Stochastic_WF<T, Device>& stowf)
 {
     ModuleBase::TITLE("Stochastic_Iter", "checkemm");
+    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
     // iter = 1,2,...   istep = 0,1,2,...
     //  if( istep%PARAM.inp.initsto_freq != 0 )    return;
     const int npw = stowf.ngk[ik];
@@ -192,6 +195,7 @@ void Stochastic_Iter<T, Device>::checkemm(const int& ik,
         }
         change = false;
     }
+    ModuleBase::timer::tick("Stochastic_Iter", "checkemm");
 }
 
 template <typename T, typename Device>
@@ -412,6 +416,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
 template <typename T, typename Device>
 double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 {
+    ModuleBase::TITLE("Stochastic_Iter", "calne");
     ModuleBase::timer::tick("Stochastic_Iter", "calne");
     double totne = 0;
     KS_ne = 0;
@@ -455,12 +460,15 @@ double Stochastic_Iter<T, Device>::calne(elecstate::ElecState* pes)
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 {
+    ModuleBase::TITLE("Stochastic_Iter", "calHsqrtchi");
+    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
     auto nroot_fd = std::bind(&Sto_Func<double>::nroot_fd, &this->stofunc, std::placeholders::_1);
     p_che->calcoef_real(nroot_fd);
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         this->calTnchi_ik(ik, stowf);
     }
+    ModuleBase::timer::tick("Stochastic_Iter", "calHsqrtchi");
 }
 
 template <typename T, typename Device>

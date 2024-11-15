@@ -5,6 +5,10 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <array>
+#include <vector>
+#include <cassert>
+#include "module_base/formatter.h"
 #include "module_base/global_file.h"
 #include "module_base/global_function.h"
 #include "module_base/tool_quit.h"
@@ -12,72 +16,41 @@
 namespace ModuleIO
 {
 
-void strtolower(char* sa, char* sb)
+std::string longstring(const std::vector<std::string>& words)
 {
-    char c;
-    int len = strlen(sa);
-    for (int i = 0; i < len; i++)
-    {
-        c = sa[i];
-        sb[i] = tolower(c);
-    }
-    sb[len] = '\0';
+    return FmtCore::join(" ", words);
 }
 
-std::string longstring(const std::vector<std::string>& str_values)
+bool assume_as_boolean(const std::string& val)
 {
-    std::string output;
-    output = "";
-    const size_t length = str_values.size();
-    for (int i = 0; i < length; ++i)
-    {
-        output += str_values[i];
-        if (i != length - 1)
-        {
-            output += " ";
-        }
-    }
-    return output;
-}
+    const std::string val_ = FmtCore::lower(val);
 
-bool convert_bool(std::string str)
-{
-    for (auto& i: str)
-    {
-        i = tolower(i);
-    }
-    if (str == "true")
-    {
-        return true;
-    }
-    else if (str == "false")
-    {
-        return false;
-    }
-    else if (str == "1")
+    const std::array<std::string, 7> t_ = {"true", "1", "t", "yes", "y", "on", ".true."};
+    const std::array<std::string, 7> f_ = {"false", "0", "f", "no", "n", "off", ".false."};
+    // This will work because std::array<T, N>::size() is a constexpr function
+    // Ouch it is of C++17 standard...
+    // static_assert(t_.size() == f_.size(), "t_ and f_ must have the same lengths");
+#ifdef __DEBUG // C++11 can do this
+    assert(t_.size() == f_.size());
+#endif
+
+    if (std::find(t_.begin(), t_.end(), val_) != t_.end())
     {
         return true;
     }
-    else if (str == "0")
-    {
-        return false;
-    }
-    else if (str == "t")
-    {
-        return true;
-    }
-    else if (str == "f")
+    else if (std::find(f_.begin(), f_.end(), val_) != f_.end())
     {
         return false;
     }
     else
     {
-        std::string warningstr = "Bad boolean parameter ";
-        warningstr.append(str);
-        warningstr.append(", please check the input parameters in file INPUT");
-        ModuleBase::WARNING_QUIT("Input", warningstr);
+        std::string warnmsg = "Bad boolean parameter ";
+        warnmsg.append(val);
+        warnmsg.append(", please check the input parameters in file INPUT");
+        ModuleBase::WARNING_QUIT("Input", warnmsg);
     }
 }
+
 std::string to_dir(const std::string& str)
 {
     std::string str_dir = str;
@@ -216,8 +189,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     ifs.clear();
     ifs.seekg(0);
 
-    char word[80];
-    char word1[80];
+    std::string word, word1;
     int ierr = 0;
 
     // ifs >> std::setiosflags(ios::uppercase);
@@ -226,7 +198,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     {
         ifs >> word;
         ifs.ignore(150, '\n');
-        if (strcmp(word, "INPUT_PARAMETERS") == 0)
+        if (word == "INPUT_PARAMETERS")
         {
             ierr = 1;
             break;
@@ -247,10 +219,8 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
     while (ifs.good())
     {
         ifs >> word1;
-        if (ifs.eof()) {
-            break;
-}
-        strtolower(word1, word);
+        if (ifs.eof()) { break; }
+        word = FmtCore::lower(word1);
         auto it = std::find_if(input_lists.begin(),
                                input_lists.end(),
                                [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
@@ -311,7 +281,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         Input_Item* resetvalue_item = &(input_item.second);
         if (resetvalue_item->reset_value != nullptr) {
             resetvalue_item->reset_value(*resetvalue_item, param);
-}
+        }
     }
     this->set_globalv(param);
 
@@ -327,7 +297,7 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         Input_Item* checkvalue_item = &(input_item.second);
         if (checkvalue_item->check_value != nullptr) {
             checkvalue_item->check_value(*checkvalue_item, param);
-}
+        }
     }
 }
 
@@ -503,12 +473,6 @@ void ReadInput::add_item(const Input_Item& item)
     {
         this->input_lists.push_back(make_pair(item.label, item));
     }
-}
-
-bool find_str(const std::vector<std::string>& strings, const std::string& strToFind)
-{
-    auto it = std::find(strings.begin(), strings.end(), strToFind);
-    return it != strings.end();
 }
 
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str)
