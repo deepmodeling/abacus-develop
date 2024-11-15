@@ -31,23 +31,23 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     //---------------------------------------------------------------------------------------------------------------
     //---------------------------------for psi init guess!!!!--------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------------
-    if (!PARAM.inp.psi_initializer && !this->initialed_psi && this->basis_type == "pw")
-    {
-        for (int ik = 0; ik < nks; ++ik)
-        {
-            /// update H(k) for each k point
-            pHamilt->updateHk(ik);
+    // if (!PARAM.inp.psi_initializer && !this->initialed_psi && this->basis_type == "pw")
+    // {
+    //     for (int ik = 0; ik < nks; ++ik)
+    //     {
+    //         /// update H(k) for each k point
+    //         pHamilt->updateHk(ik);
 
-            if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
-            {
-                /// update psi pointer for each k point
-                psi.fix_k(ik);
+    //         if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
+    //         {
+    //             /// update psi pointer for each k point
+    //             psi.fix_k(ik);
 
-                /// for psi init guess!!!!
-                hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
-            }
-        }
-    }
+    //             /// for psi init guess!!!!
+    //             hamilt::diago_PAO_in_pw_k2(this->ctx, ik, psi, this->wfc_basis, this->pwf, pHamilt);
+    //         }
+    //     }
+    // }
     //---------------------------------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------------

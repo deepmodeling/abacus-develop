@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_parameter/parameter.h"
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_atomic_random.h"
 #include "module_psi/psi_initializer_nao.h"
@@ -155,7 +156,7 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 {
     ModuleBase::timer::tick("WFInit", "initialize_psi");
 
-    if (this->use_psiinitializer)
+    if (PARAM.inp.psi_initializer)
     {
         // if psig is not allocated before, allocate it
         if (!this->psi_init->psig_use_count())
@@ -253,16 +254,19 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     }
     else
     {
-        for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+        if (PARAM.inp.basis_type == "pw")
         {
-            //! Update Hamiltonian from other kpoint to the given one
-            p_hamilt->updateHk(ik);
+            for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+            {
+                //! Update Hamiltonian from other kpoint to the given one
+                p_hamilt->updateHk(ik);
 
-            //! Fix the wavefunction to initialize at given kpoint
-            kspw_psi->fix_k(ik);
+                //! Fix the wavefunction to initialize at given kpoint
+                kspw_psi->fix_k(ik);
 
-            /// for psi init guess!!!!
-            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
+                /// for psi init guess!!!!
+                hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
+            }
         }
     }
 
