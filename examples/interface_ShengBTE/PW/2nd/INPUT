@@ -18,7 +18,7 @@ scf_nmax        100
 basis_type      pw
 ks_solver       cg
 smearing_method gauss
-smearing_sigma  0.015
+smearing_sigma  0.01
 mixing_type     broyden
 mixing_beta     0.7
 
