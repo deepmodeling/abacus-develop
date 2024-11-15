@@ -53,10 +53,9 @@ namespace hsolver
         {
             using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real<T>, Device, base_device::DEVICE_CPU>;
             std::vector<Real<T>> pre_trans(dim, 0.0);
-            const auto device = base_device::get_device_type<Device>({});
             Device* ctx = {};
             base_device::DEVICE_CPU* cpu_ctx = {};
-
+            const auto device = base_device::get_device_type<Device>(ctx);
             for (size_t m = 0; m < nvec; m++)
             {
                 const size_t offset = m * dim;
@@ -100,19 +99,19 @@ namespace hsolver
         PreOP(const Real<T>* const prevec, const int& dim,
             const Kernel_t& transvec = fvec::div_prevec<T, Device>,
             const FVal_t& transval = fval::none<Real<T>>)
-            : prevec_(prevec), dim_(dim), transvec_(transvec), transval_(transval),
-            dev_(base_device::get_device_type<Device>({}))
+            : prevec_(prevec), dim_(dim), transvec_(transvec), transval_(transval)
         {
+            this->dev_ = base_device::get_device_type<Device>(this->ctx_);
 #if defined(__CUDA) || defined(__ROCM)
             if (this->dev_ == base_device::GpuDevice) {
-                resmem_real_op()({}, this->d_prevec_, dim_);
+                resmem_real_op()(this->ctx_, this->d_prevec_, dim_);
             }
 #endif
         }
         PreOP(const PreOP&) = delete;
         ~PreOP() {
 #if defined(__CUDA) || defined(__ROCM)
-            if (this->dev_ == base_device::GpuDevice) { delmem_real_op()({}, this->d_prevec_); }
+            if (this->dev_ == base_device::GpuDevice) { delmem_real_op()(this->ctx_, this->d_prevec_); }
 #endif
         }
 
@@ -137,6 +136,7 @@ namespace hsolver
         Real<T>* d_prevec_ = nullptr;
         const Kernel_t transvec_;
         const FVal_t transval_;
-        const base_device::AbacusDevice_t dev_;
+        base_device::AbacusDevice_t dev_;
+        Device* ctx_ = {};
     };
 }

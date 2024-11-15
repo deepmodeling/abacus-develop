@@ -78,8 +78,7 @@ Stochastic_Iter<T, Device>::Stochastic_Iter()
 }
 
 template <typename T, typename Device>
-Stochastic_Iter<T, Device>::~Stochastic_Iter(){};
-template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
+Stochastic_Iter<T, Device>::~Stochastic_Iter() {};
 
 template <typename T, typename Device>
 void Stochastic_Iter<T, Device>::init(K_Vectors* pkv_in,
@@ -150,6 +149,8 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     stowf.nbands_total++;
     return;
 }
+
+template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
 
 Charge::Charge(){};
 Charge::~Charge(){};
