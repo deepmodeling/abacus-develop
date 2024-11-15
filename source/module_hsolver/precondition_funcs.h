@@ -101,10 +101,13 @@ namespace hsolver
             const FVal_t& transval = fval::none<Real<T>>)
             : prevec_(prevec), dim_(dim), transvec_(transvec), transval_(transval)
         {
+            using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real<T>, Device, base_device::DEVICE_CPU>;
             this->dev_ = base_device::get_device_type<Device>(this->ctx_);
 #if defined(__CUDA) || defined(__ROCM)
             if (this->dev_ == base_device::GpuDevice) {
                 resmem_real_op()(this->ctx_, this->d_prevec_, dim_);
+                base_device::DEVICE_CPU* cpu_ctx = {};
+                syncmem_var_h2d_op()(this->ctx_, cpu_ctx, this->d_prevec_, prevec_, dim_);
             }
 #endif
         }
@@ -120,7 +123,8 @@ namespace hsolver
         fvec::Div<T> get() const
         {
             return std::bind(PreOP<T, Device, Kernel_t>::transvec_,
-                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4, this->prevec_);
+                std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4,
+                this->dev_ == base_device::GpuDevice ? this->d_prevec_ : this->prevec_);
         }
         template<typename U = Kernel_t, typename std::enable_if<std::is_same<U, fvec::DivTransMinusEigKernel<T, Device>>::value, bool>::type = 0>
         fvec::DivTransMinusEig<T> get() const
