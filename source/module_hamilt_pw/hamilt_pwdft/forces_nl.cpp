@@ -30,9 +30,10 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     resmem_var_op()(this->ctx, force, ucell_in.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, force, 0.0, ucell_in.nat * 3);
 
-    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, psi_in, p_kv, wfc_basis, p_sf, wg, ekb);
+    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
     const int nks = wfc_basis->nks;
+    const int max_nbands = wg.nc;
     for (int ik = 0; ik < nks; ik++) // loop k points
     {
         // skip zero weights to speed up
@@ -46,15 +47,19 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
             }
         }
         const int npm = nbands_occ;
+        nl_tools.cal_vkb(ik, max_nbands);
         // calculate becp = <psi|beta> for all beta functions
-        nl_tools.cal_becp(ik, npm);
+        nl_tools.cal_becp(ik, npm, &psi_in[0](ik,0,0));
+        nl_tools.reduce_pool_becp(max_nbands);
         for (int ipol = 0; ipol < 3; ipol++)
         {
+            nl_tools.cal_vkb_deri_f(ik, max_nbands, ipol);
             // calculate dbecp = <psi|\nabla beta> for all beta functions
-            nl_tools.cal_dbecp_f(ik, npm, ipol);
+            nl_tools.cal_dbecp_f(ik, max_nbands, npm, ipol, &psi_in[0](ik,0,0));
+            nl_tools.revert_vkb(ik, ipol);
         }
         // calculate the force_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
-        nl_tools.cal_force(ik, npm, force);
+        nl_tools.cal_force(ik, max_nbands, npm, true, force);
     } // end ik
 
     syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);

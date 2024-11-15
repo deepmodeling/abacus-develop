@@ -36,6 +36,7 @@ list(APPEND objects
     parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
+    fs_kin_tools.cpp
     radial_proj.cpp
 )
 

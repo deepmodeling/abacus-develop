@@ -54,6 +54,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -78,15 +79,31 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         FPTYPE local_force[3] = {0, 0, 0};
-                        FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
-                        FPTYPE ekb_now = d_ekb[ib];
+                        FPTYPE fac;
+                        if(occ)
+                        {
+                            fac = d_wg[ib] * 2.0 * tpiba;
+                        }
+                        else
+                        {
+                            fac = d_wg[0] * 2.0 * tpiba;
+                        }
+                        FPTYPE ekb_now = 0.0;
+                        if (d_ekb != nullptr)
+                        {
+                            ekb_now = d_ekb[ib];
+                        }
                         int iat = iat0 + ia;
                         int sum = sum0 + ia * nproj;
                         for (int ip = 0; ip < nproj; ip++)
                         {
+                            FPTYPE ps_qq = 0;
+                            if(ekb_now != 0)
+                            {
+                                ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
+                            }
                             // Effective values of the D-eS coefficients
-                            FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip]
-                                        - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
+                            FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip] + ps_qq;
                             const int inkb = sum + ip;
                             // out<<"\n ps = "<<ps;
 
@@ -105,9 +122,12 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                     if (ip != ip2)
                                     {
                                         const int jnkb = sum + ip2;
-                                        FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2]
-                                                    - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
-
+                                        FPTYPE ps_qq = 0;
+                                        if (ekb_now != 0)
+                                        {
+                                            ps_qq = -ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
+                                        }
+                                        FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2] + ps_qq;
                                         for (int ipol = 0; ipol < 3; ipol++)
                                         {
                                             const FPTYPE dbb = (conj(dbecp[ipol * nbands * nkb + ib * nkb + inkb])
@@ -159,6 +179,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
@@ -184,8 +205,20 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     {
                         const int ib2 = ib*2;
                         FPTYPE local_force[3] = {0, 0, 0};
-                        FPTYPE fac = d_wg[ib] * 2.0 * tpiba;
-                        FPTYPE ekb_now = d_ekb[ib];
+                        FPTYPE fac;
+                        if(occ)
+                        {
+                            fac = d_wg[ib] * 2.0 * tpiba;
+                        }
+                        else
+                        {
+                            fac = d_wg[0] * 2.0 * tpiba;
+                        }
+                        FPTYPE ekb_now = 0.0;
+                        if (d_ekb != nullptr)
+                        {
+                            ekb_now = d_ekb[ib];
+                        }
                         int iat = iat0 + ia;
                         int sum = sum0 + ia * nprojs;
                         for (int ip = 0; ip < nprojs; ip++)
@@ -195,7 +228,11 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             for (int ip2 = 0; ip2 < nprojs; ip2++)
                             {
                                 // Effective values of the D-eS coefficients
-                                std::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
+                                std::complex<FPTYPE> ps_qq = 0;
+                                if(ekb_now)
+                                {
+                                    ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip2];
+                                }
                                 const int jnkb = sum + ip2;
                                 std::complex<FPTYPE> ps0 = deeq_nc[((0 * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2] + ps_qq;
                                 std::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip2];

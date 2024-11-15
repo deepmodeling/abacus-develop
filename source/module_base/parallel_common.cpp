@@ -11,15 +11,16 @@ void Parallel_Common::bcast_string(std::string& object) // Peize Lin fix bug 201
 {
     int size = object.size();
     MPI_Bcast(&size, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    char* swap = new char[size + 1];
+    
     int my_rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
-    if (0 == my_rank)
-        strcpy(swap, object.c_str());
-    MPI_Bcast(swap, size + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    
     if (0 != my_rank)
-        object = static_cast<std::string>(swap);
-    delete[] swap;
+    {
+        object.resize(size);
+    }
+
+    MPI_Bcast(&object[0], size, MPI_CHAR, 0, MPI_COMM_WORLD);
     return;
 }
 
