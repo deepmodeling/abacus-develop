@@ -422,19 +422,21 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter)
 {
-    // call iter_finish() of ESolver_KS
+    // 1) Call iter_finish() of ESolver_KS
     ESolver_KS<T, Device>::iter_finish(istep, iter);
 
-    // liuyu 2023-10-24
+    // 2) Update USPP-related quantities
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential
-    // projectors
+    // projectors 
+    // liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
     }
 
+    // 3) Print out charge density
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
     {
         if (PARAM.inp.out_chg[0] > 0)
@@ -475,7 +477,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter)
                 }
             }
         }
-        // output wavefunctions
+        
+        // 4) Print out electronic wavefunctions
         if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
         {
             std::stringstream ssw;
@@ -509,6 +512,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
+    // 4) Transfer data from GPU to CPU
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_device(),
@@ -518,7 +522,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                             this->psi[0].size());
     }
 
-    // Calculate band-decomposed (partial) charge density
+    // 5) Calculate band-decomposed (partial) charge density
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
@@ -545,7 +549,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                               PARAM.inp.if_separate_k);
     }
 
-    //! 6) calculate Wannier functions
+    //! 6) Calculate Wannier functions
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
@@ -638,6 +642,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners()
 {
+    //! 1) Output information to screen
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -681,10 +686,11 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
     {
         nspin0 = 2;
     }
-    //! print occupation in istate.info
+    
+    //! 2) Print occupation numbers into istate.info
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
 
-    //! compute density of states
+    //! 3) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
     {
         ModuleIO::write_dos_pw(this->pelec->ekb,
@@ -707,7 +713,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    if (PARAM.inp.out_band[0]) // pengfei 2014-10-13
+    //! 4) Print out band structure information
+    if (PARAM.inp.out_band[0])
     {
         for (int is = 0; is < nspin0; is++)
         {
@@ -725,12 +732,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    if (PARAM.inp.basis_type == "pw" && winput::out_spillage) // xiaohui add 2013-09-01
+    //! 5) Calculate the spillage value, used to generate numerical atomic orbitals
+    if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
     {
-        //  calculate spillage value.
-
-        // ! Print out overlap before spillage optimization to generate atomic
-        // orbitals
+        // ! Print out overlap matrices
         if (winput::out_spillage <= 2)
         {
             for (int i = 0; i < PARAM.inp.bessel_nao_rcuts.size(); i++)
@@ -747,13 +752,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    //! Print out wave functions in real space
+    //! 6) Print out electronic wave functions in real space
     if (this->wf.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
         ModuleIO::write_psi_r_1(this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
     }
 
-    //! Use Kubo-Greenwood method to compute conductivities
+    //! 7) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
         EleCond elec_cond(&GlobalC::ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &GlobalC::ppcell);
