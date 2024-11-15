@@ -20,6 +20,7 @@
 #include <complex>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 
 // used by class Veff_rdmft
 //#include "veff_lcao.h"
@@ -219,7 +220,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
     {
         hsk_TV->set_zero_hk();
         hsk_hartree->set_zero_hk();
-        set_zero_vector(HK_XC);
+        std::fill(HK_XC.begin(), HK_XC.end(), 0.0);
 
         // get the HK with ik-th k vector, the result is stored in HK_TV, HK_hartree and HK_XC respectively
         V_local->contributeHk(ik);
@@ -236,7 +237,6 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
 #ifdef __EXX
         if(GlobalC::exx_info.info_global.cal_exx)
         {
-            // set_zero_vector(HK_exx_XC);
             hsk_exx_XC->set_zero_hk();
 
             V_exx_XC->contributeHk(ik);
@@ -248,7 +248,6 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
 #endif
         if( !only_exx_type )
         {
-            // set_zero_vector(HK_dft_XC);
             hsk_dft_XC->set_zero_hk();
 
             V_dft_XC->contributeHk(ik);
