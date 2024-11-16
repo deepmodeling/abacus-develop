@@ -112,11 +112,12 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
         // added by jghan, 2024-10-10
         double factor = 1.0;
-        if( scaling_factor == nullptr ) ;
-        else
+        if( scaling_factor == nullptr ) { ;
+        } else
         {
             auto pair_factor = scaling_factor->find(func.info->number);
-            if( pair_factor != scaling_factor->end() ) factor = pair_factor->second;
+            if( pair_factor != scaling_factor->end() ) { factor = pair_factor->second;
+}
         }
 
         // time factor is added by jghan, 2024-10-10
@@ -251,10 +252,12 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 #endif
         for( int ir=0; ir<nrxx; ++ir )
         {
-            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th)
+            if ( rho[ir*2]<rho_th || sqrt(std::abs(sigma[ir*3]))<grho_th || std::abs(kin_r[ir*2])<tau_th) {
                 sgn[ir*2] = 0.0;
-            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th)
+}
+            if ( rho[ir*2+1]<rho_th || sqrt(std::abs(sigma[ir*3+2]))<grho_th || std::abs(kin_r[ir*2+1])<tau_th) {
                 sgn[ir*2+1] = 0.0;
+}
         }
     }
 
