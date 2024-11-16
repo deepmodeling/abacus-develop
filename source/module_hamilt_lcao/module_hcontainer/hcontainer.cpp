@@ -794,6 +794,43 @@ void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs)
     }
 }
 
+template <typename T>
+void HContainer<T>::insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol)
+{
+    // prepare the row_index and col_index for construct AtomPairs, they are
+    // same, name as orb_index
+    std::vector<int> orb_index(ucell.nat + 1);
+    orb_index[0] = 0;
+    for (int i = 1; i < orb_index.size(); i++) {
+        int type = ucell.iat2it[i - 1];
+        orb_index[i] = orb_index[i - 1] + ucell.atoms[type].nw * npol;
+    }
+
+    // get number of atom pairs
+    const int number_ap = (*ijrs)[0];
+    // loop AtomPairs and unpack values
+    const int* ijr_p = ijrs->data() + 1;
+    for (int i = 0; i < number_ap; ++i)
+    {
+        // get atom_i and atom_j
+        const int atom_i = *ijr_p++;
+        const int atom_j = *ijr_p++;
+        // get number of R
+        const int number_R = *ijr_p++;
+        for (int k = 0; k < number_R; ++k)
+        {
+            int r_index[3];
+            // get R index
+            r_index[0] = *ijr_p++;
+            r_index[1] = *ijr_p++;
+            r_index[2] = *ijr_p++;
+            //insert this IJ AtomPair
+            AtomPair<T> tmp_ap(atom_i, atom_j, r_index[0], r_index[1], r_index[2], orb_index.data(), orb_index.data(), ucell.nat);
+            this->insert_pair(tmp_ap);
+        }
+    }
+}
+
 // T of HContainer can be double or complex<double>
 template class HContainer<double>;
 template class HContainer<std::complex<double>>;

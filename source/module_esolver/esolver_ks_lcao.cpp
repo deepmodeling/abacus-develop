@@ -938,24 +938,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
         }
     }
 
-    // 2.5) determine whether rdmft needs to get the initial value, added by jghan, 2024-10-25
-    int one_step_exx = false;
-    bool get_init_value_rdmft = false;
-    if( iter == 1 ) get_init_value_rdmft = true; // the case without hybrid functionals
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
-    {
-        if( this->conv_esolver ) one_step_exx = true;
-        // the case with hybrid functionals, calculate rdmft just after updateExx, cal once in  one inner loop
-        if( one_step_exx ) get_init_value_rdmft = true;
-        else get_init_value_rdmft = false;
-    }
-#endif
-
-#ifdef __EXX
-
-    if( GlobalC::exx_info.info_global.cal_exx && this->conv_esolver ) one_step_exx = true;
-
     // 3) save exx matrix
     if (PARAM.inp.calculation != "nscf")
     {
@@ -1037,23 +1020,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
     {
         GlobalC::dftu.initialed_locale = true;
     }
-
-    // 7) rdmft, added by jghan, 2024-10-25
-    if ( PARAM.inp.rdmft == true  && get_init_value_rdmft )
-    {
-            ModuleBase::matrix occ_number_ks(this->pelec->wg);
-            for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik]; }
-            this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
-
-            //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
-            ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
-            psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
-            dE_dWfc.zero_out();
-
-            double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);
-            // break;
-    }
-
 }
 
 //------------------------------------------------------------------------------

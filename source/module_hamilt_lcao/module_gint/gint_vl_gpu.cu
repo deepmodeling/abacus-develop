@@ -27,9 +27,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
                  const double dr,
                  const double* rcut,
                  const Grid_Technique& gridt,
-                 const UnitCell& ucell,
-                 double* pvpR,
-                 const bool is_gamma_only)
+                 const UnitCell& ucell)
 {
     checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
@@ -49,7 +47,8 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
         checkCuda(cudaStreamCreate(&streams[i]));
     }
 
-    const int nnrg = is_gamma_only ? hRGint->get_nnr() : gridt.nnrg;
+    const int nnrg = hRGint->get_nnr();
+    hRGint->set_zero();
     Cuda_Mem_Wrapper<double> grid_vlocal_g(nnrg, 1, false);
     grid_vlocal_g.memset_device_sync();
 
@@ -107,8 +106,7 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
                          dr_part.get_host_pointer(sid),
                          vldr3.get_host_pointer(sid));
         
-            alloc_mult_vlocal(is_gamma_only,
-                              hRGint,
+            alloc_mult_vlocal(hRGint,
                               gridt,
                               ucell,
                               grid_index_ij,
@@ -193,22 +191,12 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
         }
     }
 
-    if(is_gamma_only)
-    {
-        checkCuda(cudaMemcpy(
-            hRGint->get_wrapper(),
-            grid_vlocal_g.get_device_pointer(),
-            nnrg * sizeof(double),
-            cudaMemcpyDeviceToHost));
-    }
-    else
-    {
-        checkCuda(cudaMemcpy(
-            pvpR,
-            grid_vlocal_g.get_device_pointer(),
-            nnrg * sizeof(double),
-            cudaMemcpyDeviceToHost));
-    }
+    checkCuda(cudaMemcpy(
+        hRGint->get_wrapper(),
+        grid_vlocal_g.get_device_pointer(),
+        nnrg * sizeof(double),
+        cudaMemcpyDeviceToHost));
+
     for (int i = 0; i < num_streams; i++)
     {
         checkCuda(cudaStreamDestroy(streams[i]));
