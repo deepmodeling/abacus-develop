@@ -11,7 +11,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #undef private
 
-#ifdef __OPENMP
+#ifdef _OPENMP
 #include <omp.h>
 #endif
 
