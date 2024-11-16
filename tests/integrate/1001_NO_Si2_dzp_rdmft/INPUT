@@ -7,8 +7,8 @@ calculation      scf
 symmetry         1
                  
 #Parameters (2.Iteration)
-ecutwfc          40
-scf_thr          1e-4
+ecutwfc          50
+scf_thr          1e-5
 scf_nmax         100
 cal_force        0
 cal_stress       0
@@ -28,6 +28,6 @@ ks_solver        genelpa
 
 #Parameters (6.rdmft)
 rdmft               1
-dft_functional      cwp22
-exx_hse_omega       0.33
-rdmft_power_alpha   0.656
+#dft_functional      cwp22
+#exx_hse_omega       0.33
+#rdmft_power_alpha   0.656
