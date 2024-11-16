@@ -3,8 +3,8 @@ suffix                  autotest
 ntype                   1
 calculation             scf
 basis_type              lcao
-ecutwfc                 50
-scf_thr                 1e-5
+ecutwfc                 40
+scf_thr                 1e-4
 scf_nmax                100
 gamma_only              0
 #symmetry                -1

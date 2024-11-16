@@ -75,7 +75,6 @@ void RDMFT<TK, TR>::cal_V_TV()
             orb->cutoffs(),
             &GlobalC::GridD,
             nspin,
-
             charge,
             rho_basis,
             vloc,
@@ -95,7 +94,6 @@ void RDMFT<TK, TR>::cal_V_TV()
             orb->cutoffs(),
             &GlobalC::GridD,
             nspin,
-
             charge,
             rho_basis,
             vloc,
@@ -129,7 +127,6 @@ void RDMFT<TK, TR>::cal_V_hartree()
             orb->cutoffs(),
             &GlobalC::GridD,
             nspin,
-
             charge,
             rho_basis,
             vloc,
@@ -150,7 +147,6 @@ void RDMFT<TK, TR>::cal_V_hartree()
             orb->cutoffs(),
             &GlobalC::GridD,
             nspin,
-
             charge,
             rho_basis,
             vloc,
@@ -215,7 +211,6 @@ void RDMFT<TK, TR>::cal_V_XC()
                 orb->cutoffs(),
                 &GlobalC::GridD,
                 nspin,
-
                 charge,
                 rho_basis,
                 vloc,
@@ -238,7 +233,6 @@ void RDMFT<TK, TR>::cal_V_XC()
                 orb->cutoffs(),
                 &GlobalC::GridD,
                 nspin,
-
                 charge,
                 rho_basis,
                 vloc,

@@ -93,23 +93,6 @@ namespace rdmft
 double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha_power = 1.0);
 
 
-template <typename TK>
-void set_zero_vector(std::vector<TK>& HK)
-{
-    for(int i=0; i<HK.size(); ++i) { HK[i] = 0.0;
-}
-}
-
-
-// template <typename TK>
-// void set_zero_psi(psi::Psi<TK>& wfc)
-// {
-//     TK* pwfc_in = &wfc(0, 0, 0);
-// #ifdef _OPENMP
-//     #pragma omp parallel for schedule(static, 1024)
-// #endif
-//     for(int i=0; i<wfc.size(); ++i) pwfc_in[i] = 0.0;
-// }
 
 
 template <typename TK>
@@ -321,7 +304,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const std::vector<double>& orb_cutoff,
                       Grid_Driver* GridD_in,
                       const int& nspin,
-
                       const Charge* charge_in,
                       const ModulePW::PW_Basis* rho_basis_in,
                       const ModuleBase::matrix* vloc_in,
@@ -336,7 +318,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
           ucell(ucell_in),
           gd(GridD_in),
           hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-
           charge_(charge_in),
           rho_basis_(rho_basis_in),
           vloc_(vloc_in),
@@ -360,7 +341,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
                       const std::vector<double>& orb_cutoff,
                       Grid_Driver* GridD_in,
                       const int& nspin,
-
                       const Charge* charge_in,
                       const ModulePW::PW_Basis* rho_basis_in,
                       const ModuleBase::matrix* vloc_in,
@@ -373,7 +353,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
           orb_cutoff_(orb_cutoff),
           pot(pot_in),
           hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-
           ucell(ucell_in),
           gd(GridD_in),
           charge_(charge_in),

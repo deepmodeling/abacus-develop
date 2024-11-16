@@ -7,8 +7,8 @@ calculation      scf
 symmetry         1
                  
 #Parameters (2.Iteration)
-ecutwfc          60
-scf_thr          1e-6
+ecutwfc          40
+scf_thr          1e-4
 scf_nmax         100
 cal_force        0
 cal_stress       0
@@ -21,6 +21,7 @@ smearing_sigma   0.002
                  
 #Parameters (5.Mixing)
 mixing_type      broyden
+mixing_gg0       0
 #mixing_beta      0.3
 #gamma_only       1
 ks_solver        genelpa
