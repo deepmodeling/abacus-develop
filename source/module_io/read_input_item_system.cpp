@@ -80,7 +80,7 @@ void ReadInput::item_system()
                                                 "get_wf",
                                                 "get_pchg",
                                                 "gen_bessel"};
-            if (!find_str(callist, calculation))
+            if (std::find(callist.begin(), callist.end(), calculation) == callist.end())
             {
                 const std::string warningstr = nofound_str(callist, "calculation");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -111,7 +111,7 @@ void ReadInput::item_system()
         read_sync_string(input.esolver_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> esolver_types = { "ksdft", "sdft", "ofdft", "tddft", "lj", "dp", "lr", "ks-lr" };
-            if (!find_str(esolver_types, para.input.esolver_type))
+            if (std::find(esolver_types.begin(), esolver_types.end(), para.input.esolver_type) == esolver_types.end())
             {
                 const std::string warningstr = nofound_str(esolver_types, "esolver_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -208,7 +208,7 @@ void ReadInput::item_system()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
             std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "nscf", "get_S"};
-            if (find_str(use_force, para.input.calculation))
+            if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
             {
                 if (!para.input.cal_force)
                 {
@@ -216,7 +216,7 @@ void ReadInput::item_system()
                 }
                 para.input.cal_force = true;
             }
-            else if (find_str(not_use_force, para.input.calculation))
+            else if (std::find(not_use_force.begin(), not_use_force.end(), para.input.calculation) != not_use_force.end())
             {
                 if (para.input.cal_force)
                 {
@@ -538,7 +538,7 @@ void ReadInput::item_system()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto"};
-            if (!find_str(init_chgs, para.input.init_chg))
+            if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
             {
                 const std::string warningstr = nofound_str(init_chgs, "init_chg");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
