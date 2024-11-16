@@ -185,38 +185,39 @@ class RDMFT
     bool only_exx_type = false;
     const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
 
+    //! initialization of rdmft calculation
     void init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& ParaV_in, UnitCell& ucell_in,
                         K_Vectors& kv_in, elecstate::ElecState& pelec_in, LCAO_Orbitals& orb_in, TwoCenterBundle& two_center_bundle_in, std::string XC_func_rdmft_in, double alpha_power_in);
 
-    // update in ion-step and get V_TV
+    //! update in ion-step and get V_TV
     void update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis_in,
                         ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in);
 
-    // update in elec-step
+    //! update in elec-step
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_elec() function does not require parameters.
     void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in = nullptr);
 
-    // update occ_number for optimization algorithms that depend on Hamilton
+    //! update occ_number for optimization algorithms that depend on Hamilton
     void update_occNumber(const ModuleBase::matrix& occ_number_in);
 
-    // update occ_number for optimization algorithms that depend on Hamilton
+    //! update occ_number for optimization algorithms that depend on Hamilton
     void update_wg(const ModuleBase::matrix& wg_in);
 
-    // do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
+    //! do all calculation after update occNum&wfc, get Etotal and the gradient of energy with respect to the occNum&wfc
     double run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E_gradient_wfc);
 
 
 
   protected:
 
-    // get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
+    //! get the special density matrix DM_XC(nk*nbasis_local*nbasis_local)
     void get_DM_XC(std::vector< std::vector<TK> >& DM_XC);
 
     void cal_V_TV();
 
     void cal_V_hartree();
 
-    // construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
+    //! construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void cal_V_XC();
 
     double cal_E_gradient();
@@ -227,7 +228,7 @@ class RDMFT
 
   private:
 
-    // get the total Hamilton in k-space
+    //! get the total Hamilton in k-space
     void cal_Hk_Hpsi();
     
     void update_charge();

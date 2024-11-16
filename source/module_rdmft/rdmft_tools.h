@@ -88,11 +88,9 @@ namespace rdmft
 // }
 
 
-// now support XC_func_rdmft = "hf", "muller", "power", "pbe", "pbe0". "wp22" and "cwp22" is realizing.
+//! now support XC_func_rdmft = "hf", "muller", "power", "pbe", "pbe0". "wp22" and "cwp22" is realizing.
 // for the dft-xc-functional part of xc-functional, just use the default is right! Or don't use the function
 double occNum_func(double eta, int symbol = 0, const std::string XC_func_rdmft = "hf", const double alpha_power = 1.0);
-
-
 
 
 template <typename TK>
@@ -109,7 +107,7 @@ void conj_psi<double>(psi::Psi<double>& wfc);
 
 
 // wfc and H_wfc need to be k_firest and provide wfc(ik, 0, 0) and H_wfc(ik, 0, 0)
-// psi::Psi<TK> psi's (), std::vector<TK> HK's [] operator overloading return TK
+//! implement matrix multiplication of Hk^dagger and psi
 template <typename TK>
 void HkPsi(const Parallel_Orbitals* ParaV, const TK& HK, const TK& wfc, TK& H_wfc)
 {
@@ -136,6 +134,7 @@ template <>
 void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const double& wfc, double& H_wfc);
 
 
+//! implement matrix multiplication of psi^dagger and psi
 template <typename TK>
 void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
 {
@@ -176,7 +175,7 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_w
                         const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc);
 
 
-// realize occNum_wfc = occNum * wfc. Calling this function and we can get wfc = occNum*wfc.
+//! realize occNum_wfc = occNum * wfc. Calling this function and we can get wfc = occNum*wfc.
 template <typename TK>
 void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ_number, psi::Psi<TK>& wfc, int symbol = 0,
                 const std::string XC_func_rdmft = "hf", const double alpha = 1.0)
@@ -200,7 +199,7 @@ void occNum_MulPsi(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& occ
 }
 
 
-// add psi with eta and g(eta)
+//! add psi with eta and g(eta)
 template <typename TK>
 void add_psi(const Parallel_Orbitals* ParaV, 
                 const K_Vectors* kv, 
@@ -242,8 +241,8 @@ void add_psi(const Parallel_Orbitals* ParaV,
 }
 
 
-// occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
-// When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
+//! occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
+//! When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
 void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, 
                             const ModuleBase::matrix& wfcHwfc, 
                             ModuleBase::matrix& occNum_wfcHwfc,
@@ -252,8 +251,8 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number,
                             const double alpha = 1.0);
 
 
-// Default symbol = 0 for the gradient of Etotal with respect to occupancy
-// symbol = 1 for the relevant calculation of Etotal
+//! Default symbol = 0 for the gradient of Etotal with respect to occupancy
+//! symbol = 1 for the relevant calculation of Etotal
 void add_occNum(const K_Vectors& kv, 
                     const ModuleBase::matrix& occ_number, 
                     const ModuleBase::matrix& wfcHwfc_TV_in, 
@@ -265,9 +264,7 @@ void add_occNum(const K_Vectors& kv,
                     const double alpha = 1.0);
 
 
-// // do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
-// void add_wfcHwfc(const std::vector<double>& wk_in, const ModuleBase::matrix& occ_number, const ModuleBase::matrix& wfcHwfc_TV_in, const ModuleBase::matrix& wfcHwfc_hartree_in,
-//                 const ModuleBase::matrix& wfcHwfc_XC_in, ModuleBase::matrix& occNum_wfcHwfc, const std::string XC_func_rdmft, const double alpha);
+//! do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
 void add_wfcHwfc(const ModuleBase::matrix& wg, 
                     const ModuleBase::matrix& wk_fun_occNum, 
                     const ModuleBase::matrix& wfcHwfc_TV_in, 
@@ -278,7 +275,7 @@ void add_wfcHwfc(const ModuleBase::matrix& wg,
                     const double alpha);
 
 
-//give certain occNum_wfcHwfc, get the corresponding energy
+//! give certain occNum_wfcHwfc, get the corresponding energy
 double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc);
 
 
@@ -286,7 +283,7 @@ double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc);
 
 
 
-// this part of the code is copying from class Veff and do some modifications.
+//! this part of the code is copying from class Veff and do some modifications.
 template <typename TK, typename TR>
 class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 {
@@ -425,9 +422,6 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
     double* vtxc;
 
 };
-
-
-
 
 
 
