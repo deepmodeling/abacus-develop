@@ -3,7 +3,7 @@ suffix                  autotest
 ntype                   1
 calculation             scf
 basis_type              lcao
-ecutwfc                 60
+ecutwfc                 40
 scf_thr                 1e-6
 scf_nmax                100
 gamma_only              0
