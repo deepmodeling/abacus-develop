@@ -359,6 +359,27 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
     }
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
+    //---------------------------------------------------------------------------------------------------------------
+    //---------------------------------for psi init guess!!!!--------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------
+    if (!PARAM.inp.psi_initializer && PARAM.inp.basis_type == "pw" && iter == 1)
+    {
+        for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+        {
+            //! Update Hamiltonian from other kpoint to the given one
+            this->p_hamilt->updateHk(ik);
+
+            //! Fix the wavefunction to initialize at given kpoint
+            this->kspw_psi->fix_k(ik);
+
+            /// for psi init guess!!!!
+            hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(this->kspw_psi), this->pw_wfc, &this->wf, this->p_hamilt);
+        }
+    }
+    //---------------------------------------------------------------------------------------------------------------
+    //---------------------------------END: for psi init guess!!!!--------------------------------------------------------
+    //---------------------------------------------------------------------------------------------------------------
+
     hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
                                                  &this->wf,
                                                  PARAM.inp.calculation,

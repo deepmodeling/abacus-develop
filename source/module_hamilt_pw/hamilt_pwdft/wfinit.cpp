@@ -254,20 +254,20 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     }
     else
     {
-        if (PARAM.inp.basis_type == "pw")
-        {
-            for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
-            {
-                //! Update Hamiltonian from other kpoint to the given one
-                p_hamilt->updateHk(ik);
+        // if (PARAM.inp.basis_type == "pw")
+        // {
+        //     for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+        //     {
+        //         //! Update Hamiltonian from other kpoint to the given one
+        //         p_hamilt->updateHk(ik);
 
-                //! Fix the wavefunction to initialize at given kpoint
-                kspw_psi->fix_k(ik);
+        //         //! Fix the wavefunction to initialize at given kpoint
+        //         kspw_psi->fix_k(ik);
 
-                /// for psi init guess!!!!
-                hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
-            }
-        }
+        //         /// for psi init guess!!!!
+        //         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
+        //     }
+        // }
     }
 
     ModuleBase::timer::tick("WFInit", "initialize_psi");
