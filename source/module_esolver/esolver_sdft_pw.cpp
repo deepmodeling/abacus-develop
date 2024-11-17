@@ -197,7 +197,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
             //! Update Hamiltonian from other kpoint to the given one
             this->p_hamilt->updateHk(ik);
 
-            if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
+            if (this->kspw_psi->get_nbands() > 0 && GlobalV::MY_STOGROUP == 0)
             {
                 //! Fix the wavefunction to initialize at given kpoint
                 this->kspw_psi->fix_k(ik);
