@@ -1,0 +1,11 @@
+This test for:
+*SDFT
+*Si
+*kpoints 2*2*2 shift
+*complete orbitals
+*mixing_type plain
+*mixing_beta 0.7
+*method_sto 1
+*seed_sto > 0
+*bndpar  1
+*kpar    2

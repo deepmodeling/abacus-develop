@@ -10,7 +10,10 @@
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #undef private
+
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 int FUNC_TYPE = 1;
 
@@ -116,7 +119,9 @@ class ChargeMixingTest : public ::testing::Test
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     PARAM.input.nspin = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
@@ -214,7 +219,9 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 
 TEST_F(ChargeMixingTest, InitMixingTest)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     PARAM.input.nspin = 1;
     FUNC_TYPE = 1;
     Charge_Mixing CMtest;

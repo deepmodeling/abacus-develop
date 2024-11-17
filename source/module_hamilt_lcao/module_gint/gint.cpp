@@ -24,8 +24,13 @@ Gint::~Gint() {
 
     delete this->hRGint;
     delete this->hRGintCd;
+    // in gamma_only case, DMRGint.size()=0, 
+    // in multi-k case, DMRGint.size()=nspin
     for (int is = 0; is < this->DMRGint.size(); is++) {
         delete this->DMRGint[is];
+    }
+    for(int is = 0; is < this->hRGint_tmp.size(); is++) {
+        delete this->hRGint_tmp[is];
     }
 #ifdef __MPI
     delete this->DMRGint_full;
@@ -141,6 +146,7 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
     if (this->DMRGint.size() == 0) {
         this->DMRGint.resize(nspin);
     }
+    hRGint_tmp.resize(nspin);
     if (nspin != 4) {
         if (this->hRGint != nullptr) {
             delete this->hRGint;
@@ -157,7 +163,11 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
             if (this->DMRGint[is] != nullptr) {
                 delete this->DMRGint[is];
             }
+            if (this->hRGint_tmp[is] != nullptr) {
+                delete this->hRGint_tmp[is];
+            }
             this->DMRGint[is] = new hamilt::HContainer<double>(ucell_in.nat);
+            this->hRGint_tmp[is] = new hamilt::HContainer<double>(ucell_in.nat);
         }
 #ifdef __MPI
         if (this->DMRGint_full != nullptr) {
@@ -167,132 +177,14 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
 #endif
     }
 
-    // prepare the row_index and col_index for construct AtomPairs, they are
-    // same, name as orb_index
-    std::vector<int> orb_index(ucell_in.nat + 1);
-    orb_index[0] = 0;
-    for (int i = 1; i < orb_index.size(); i++) {
-        int type = ucell_in.iat2it[i - 1];
-        orb_index[i] = orb_index[i - 1] + ucell_in.atoms[type].nw;
-    }
-    std::vector<int> orb_index_npol;
-    if (npol == 2) {
-        orb_index_npol.resize(ucell_in.nat + 1);
-        orb_index_npol[0] = 0;
-        for (int i = 1; i < orb_index_npol.size(); i++) {
-            int type = ucell_in.iat2it[i - 1];
-            orb_index_npol[i]
-                = orb_index_npol[i - 1] + ucell_in.atoms[type].nw * npol;
-        }
-    }
-
     if (PARAM.globalv.gamma_only_local && nspin != 4) {
         this->hRGint->fix_gamma();
     }
-    for (int T1 = 0; T1 < ucell_in.ntype; ++T1) {
-        const Atom* atom1 = &(ucell_in.atoms[T1]);
-        for (int I1 = 0; I1 < atom1->na; ++I1) {
-            auto& tau1 = atom1->tau[I1];
-
-            gd->Find_atom(ucell_in, tau1, T1, I1);
-
-            const int iat1 = ucell_in.itia2iat(T1, I1);
-
-            // for grid integration (on FFT box),
-            // we only need to consider <phi_i | phi_j>,
-
-            // whether this atom is in this processor.
-            if (this->gridt->in_this_processor[iat1]) {
-                for (int ad = 0; ad < gd->getAdjacentNum() + 1; ++ad) {
-                    const int T2 = gd->getType(ad);
-                    const int I2 = gd->getNatom(ad);
-                    const int iat2 = ucell_in.itia2iat(T2, I2);
-                    const Atom* atom2 = &(ucell_in.atoms[T2]);
-
-                    // NOTE: hRGint wil save total number of atom pairs,
-                    // if only upper triangle is saved, the lower triangle will
-                    // be lost in 2D-block parallelization. if the adjacent atom
-                    // is in this processor.
-                    if (this->gridt->in_this_processor[iat2]) {
-                        ModuleBase::Vector3<double> dtau
-                            = gd->getAdjacentTau(ad) - tau1;
-                        double distance = dtau.norm() * ucell_in.lat0;
-                        double rcut
-                            = this->gridt->rcuts[T1] + this->gridt->rcuts[T2];
-
-                        // if(distance < rcut)
-                        //  mohan reset this 2013-07-02 in Princeton
-                        //  we should make absolutely sure that the distance is
-                        //  smaller than rcuts[it] this should be consistant
-                        //  with LCAO_nnr::cal_nnrg function typical example : 7
-                        //  Bohr cutoff Si orbital in 14 Bohr length of cell.
-                        //  distance = 7.0000000000000000
-                        //  rcuts[it] = 7.0000000000000008
-                        if (distance < rcut - 1.0e-15) {
-                            // calculate R index
-                            auto& R_index = gd->getBox(ad);
-                            // insert this atom-pair into this->hRGint
-                            if (npol == 1) {
-                                hamilt::AtomPair<double> tmp_atom_pair(
-                                    iat1,
-                                    iat2,
-                                    R_index.x,
-                                    R_index.y,
-                                    R_index.z,
-                                    orb_index.data(),
-                                    orb_index.data(),
-                                    ucell_in.nat);
-                                this->hRGint->insert_pair(tmp_atom_pair);
-                            } else {
-                                // HR is complex and size is nw * npol
-                                hamilt::AtomPair<std::complex<double>>
-                                    tmp_atom_pair(iat1,
-                                                  iat2,
-                                                  R_index.x,
-                                                  R_index.y,
-                                                  R_index.z,
-                                                  orb_index_npol.data(),
-                                                  orb_index_npol.data(),
-                                                  ucell_in.nat);
-                                this->hRGintCd->insert_pair(tmp_atom_pair);
-                                // DMR is double now and size is nw
-                                hamilt::AtomPair<double> tmp_dmR(
-                                    iat1,
-                                    iat2,
-                                    R_index.x,
-                                    R_index.y,
-                                    R_index.z,
-                                    orb_index.data(),
-                                    orb_index.data(),
-                                    ucell_in.nat);
-                                for (int is = 0; is < this->DMRGint.size();
-                                     is++) {
-                                    this->DMRGint[is]->insert_pair(tmp_dmR);
-                                }
-#ifdef __MPI
-                                hamilt::AtomPair<double> tmp_dmR_full(
-                                    iat1,
-                                    iat2,
-                                    R_index.x,
-                                    R_index.y,
-                                    R_index.z,
-                                    orb_index_npol.data(),
-                                    orb_index_npol.data(),
-                                    ucell_in.nat);
-                                // tmp DMR for transfer
-                                this->DMRGint_full->insert_pair(tmp_dmR_full);
-#endif
-                            }
-                        }
-                    } // end iat2
-                }     // end ad
-            }         // end iat
-        }             // end I1
-    }                 // end T1
     if (npol == 1) {
-        this->hRGint->allocate(nullptr, false);
+        this->hRGint->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
+        this->hRGint->allocate(nullptr, true);
         ModuleBase::Memory::record("Gint::hRGint",
-                                   this->hRGint->get_memory_size());
+                            this->hRGint->get_memory_size());
         // initialize DMRGint with hRGint when NSPIN != 4
         for (int is = 0; is < this->DMRGint.size(); is++) {
             if (this->DMRGint[is] != nullptr) {
@@ -304,17 +196,22 @@ void Gint::initialize_pvpR(const UnitCell& ucell_in, Grid_Driver* gd, const int&
                                    this->DMRGint[0]->get_memory_size()
                                        * this->DMRGint.size());
     } else {
-        this->hRGintCd->allocate(nullptr, 0);
-        ModuleBase::Memory::record("Gint::hRGintCd",
-                                   this->hRGintCd->get_memory_size());
-        for (int is = 0; is < this->DMRGint.size(); is++) {
-            this->DMRGint[is]->allocate(nullptr, false);
+        this->hRGintCd->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
+        this->hRGintCd->allocate(nullptr, true);
+        for(int is = 0; is < nspin; is++) {
+            this->hRGint_tmp[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
+            this->DMRGint[is]->insert_ijrs(this->gridt->get_ijr_info(), ucell_in);
+            this->hRGint_tmp[is]->allocate(nullptr, true);
+            this->DMRGint[is]->allocate(nullptr, true);
         }
+        ModuleBase::Memory::record("Gint::hRGint_tmp",
+                                       this->hRGint_tmp[0]->get_memory_size()*nspin);
         ModuleBase::Memory::record("Gint::DMRGint",
-                                   this->DMRGint[0]->get_memory_size()
-                                       * this->DMRGint.size());
+                                       this->DMRGint[0]->get_memory_size()
+                                           * this->DMRGint.size()*nspin);
 #ifdef __MPI
-        this->DMRGint_full->allocate(nullptr, false);
+        this->DMRGint_full->insert_ijrs(this->gridt->get_ijr_info(), ucell_in, npol);
+        this->DMRGint_full->allocate(nullptr, true);
         ModuleBase::Memory::record("Gint::DMRGint_full",
                                    this->DMRGint_full->get_memory_size());
 #endif

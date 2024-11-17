@@ -10,9 +10,9 @@ if [[ ! -f output ]] ||
    [[ ! -f OUT.autotest/running_get_S.log ]] ||
    [[ ! -f OUT.autotest/SR.csr ]]
 then
-	echo "job is failed!"
+	echo "job failed!"
 	exit 1
 else
-	echo "job is successed!"
+	echo "job succeeded!"
 	exit 0
 fi

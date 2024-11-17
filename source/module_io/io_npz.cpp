@@ -1,19 +1,9 @@
 //Deals with io of dm(r)/h(r) in npz format
 
-#include "module_parameter/parameter.h"
-#include "module_esolver/esolver_ks_lcao.h"
+#include "io_npz.h"
 
-#include "module_base/parallel_reduce.h"
-#include "module_cell/module_neighbor/sltk_atom_arrange.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
-#ifdef __DEEPKS
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"	//caoyu add 2021-07-26
-#endif
-#include "module_base/timer.h"
+#include "module_base/element_name.h"
+#include "module_parameter/parameter.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -24,17 +14,15 @@
 #include "cnpy.h"
 #endif
 
-#include "module_base/element_name.h"
-
-namespace ModuleESolver
+namespace ModuleIO
 {
 
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR)
+void read_mat_npz(const Parallel_Orbitals* paraV,
+                  const UnitCell& ucell,
+                  std::string& zipname,
+                  hamilt::HContainer<double>& hR)
 {
-    ModuleBase::TITLE("LCAO_Hamilt","read_mat_npz");
-
-    const Parallel_Orbitals* paraV = &(this->pv);
+    ModuleBase::TITLE("ModuleIO", "read_mat_npz");
 
 #ifdef __USECNPY
 
@@ -56,38 +44,38 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
         //check consistency
         // 1. lattice vectors
         double* lattice_vector = my_npz["lattice_vectors"].data<double>();
-        assert(std::abs(lattice_vector[0] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.x) < 1e-6);
-        assert(std::abs(lattice_vector[1] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.y) < 1e-6);
-        assert(std::abs(lattice_vector[2] - GlobalC::ucell.lat0 * GlobalC::ucell.a1.z) < 1e-6);
-        assert(std::abs(lattice_vector[3] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.x) < 1e-6);
-        assert(std::abs(lattice_vector[4] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.y) < 1e-6);
-        assert(std::abs(lattice_vector[5] - GlobalC::ucell.lat0 * GlobalC::ucell.a2.z) < 1e-6);
-        assert(std::abs(lattice_vector[6] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.x) < 1e-6);
-        assert(std::abs(lattice_vector[7] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.y) < 1e-6);
-        assert(std::abs(lattice_vector[8] - GlobalC::ucell.lat0 * GlobalC::ucell.a3.z) < 1e-6);
+        assert(std::abs(lattice_vector[0] - ucell.lat0 * ucell.a1.x) < 1e-6);
+        assert(std::abs(lattice_vector[1] - ucell.lat0 * ucell.a1.y) < 1e-6);
+        assert(std::abs(lattice_vector[2] - ucell.lat0 * ucell.a1.z) < 1e-6);
+        assert(std::abs(lattice_vector[3] - ucell.lat0 * ucell.a2.x) < 1e-6);
+        assert(std::abs(lattice_vector[4] - ucell.lat0 * ucell.a2.y) < 1e-6);
+        assert(std::abs(lattice_vector[5] - ucell.lat0 * ucell.a2.z) < 1e-6);
+        assert(std::abs(lattice_vector[6] - ucell.lat0 * ucell.a3.x) < 1e-6);
+        assert(std::abs(lattice_vector[7] - ucell.lat0 * ucell.a3.y) < 1e-6);
+        assert(std::abs(lattice_vector[8] - ucell.lat0 * ucell.a3.z) < 1e-6);
 
         // 2. atoms
         double* atom_info = my_npz["atom_info"].data<double>();
-        for(int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+        for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            const int it = GlobalC::ucell.iat2it[iat];
-            const int ia = GlobalC::ucell.iat2ia[iat];
+            const int it = ucell.iat2it[iat];
+            const int ia = ucell.iat2ia[iat];
 
             //get atomic number (copied from write_vdata_palgrid.cpp)
             std::string element = "";
-            element = GlobalC::ucell.atoms[it].label;
-			std::string::iterator temp = element.begin();
-			while (temp != element.end())
-			{
-				if ((*temp >= '1') && (*temp <= '9'))
-				{
-					temp = element.erase(temp);
-				}
-				else
+            element = ucell.atoms[it].label;
+            std::string::iterator temp = element.begin();
+            while (temp != element.end())
+            {
+                if ((*temp >= '1') && (*temp <= '9'))
+                {
+                    temp = element.erase(temp);
+                }
+                else
 				{
 					temp++;
 				}
-			}
+            }
             int z = 0;
             for(int j=0; j!=ModuleBase::element_name.size(); j++)
             {
@@ -100,24 +88,24 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
 
             assert(atom_info[iat*5] == it);
             assert(atom_info[iat*5+1] == z);
-            //I will not be checking the coordinates for now in case the direct coordinates provided in the 
-            //npz file do not fall in the range [0,1); if a protocol is to be set in the future such that
-            //this could be guaranteed, then the following lines could be uncommented
-            //assert(std::abs(atom_info[iat*5+2] - GlobalC::ucell.atoms[it].taud[ia].x) < 1e-6);
-            //assert(std::abs(atom_info[iat*5+3] - GlobalC::ucell.atoms[it].taud[ia].y) < 1e-6);
-            //assert(std::abs(atom_info[iat*5+4] - GlobalC::ucell.atoms[it].taud[ia].z) < 1e-6);            
+            // I will not be checking the coordinates for now in case the direct coordinates provided in the
+            // npz file do not fall in the range [0,1); if a protocol is to be set in the future such that
+            // this could be guaranteed, then the following lines could be uncommented
+            // assert(std::abs(atom_info[iat*5+2] - ucell.atoms[it].taud[ia].x) < 1e-6);
+            // assert(std::abs(atom_info[iat*5+3] - ucell.atoms[it].taud[ia].y) < 1e-6);
+            // assert(std::abs(atom_info[iat*5+4] - ucell.atoms[it].taud[ia].z) < 1e-6);
         }
 
         // 3. orbitals
-        for(int it = 0; it < GlobalC::ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it)
         {
             std::string filename="orbital_info_"+std::to_string(it);
             double* orbital_info = my_npz[filename].data<double>();
-            for(int iw = 0; iw < GlobalC::ucell.atoms[it].nw; ++iw)
+            for (int iw = 0; iw < ucell.atoms[it].nw; ++iw)
             {
-                assert(orbital_info[iw*3] == GlobalC::ucell.atoms[it].iw2n[iw]);
-                assert(orbital_info[iw*3+1] == GlobalC::ucell.atoms[it].iw2l[iw]);
-                const int im = GlobalC::ucell.atoms[it].iw2m[iw];
+                assert(orbital_info[iw * 3] == ucell.atoms[it].iw2n[iw]);
+                assert(orbital_info[iw * 3 + 1] == ucell.atoms[it].iw2l[iw]);
+                const int im = ucell.atoms[it].iw2m[iw];
                 const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 assert(orbital_info[iw*3+2] == m);
             }
@@ -148,12 +136,12 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
             int Ry = std::stoi(tokens[4]);
             int Rz = std::stoi(tokens[5]);
 
-            int it1 = GlobalC::ucell.iat2it[iat1];
-            int it2 = GlobalC::ucell.iat2it[iat2];
+            int it1 = ucell.iat2it[iat1];
+            int it2 = ucell.iat2it[iat2];
 
-            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
-            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
-            
+            assert(arr.shape[0] == ucell.atoms[it1].nw);
+            assert(arr.shape[1] == ucell.atoms[it2].nw);
+
             //hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,&serialV);
             //HR_serial->insert_pair(tmp);
             hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,paraV);
@@ -193,11 +181,11 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
             int Ry = std::stoi(tokens[4]);
             int Rz = std::stoi(tokens[5]);
 
-            int it1 = GlobalC::ucell.iat2it[iat1];
-            int it2 = GlobalC::ucell.iat2it[iat2];
+            int it1 = ucell.iat2it[iat1];
+            int it2 = ucell.iat2it[iat2];
 
-            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
-            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+            assert(arr.shape[0] == ucell.atoms[it1].nw);
+            assert(arr.shape[1] == ucell.atoms[it2].nw);
 
             double* submat_read = arr.data<double>();
             
@@ -257,12 +245,12 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
             int Ry = std::stoi(tokens[4]);
             int Rz = std::stoi(tokens[5]);
 
-            int it1 = GlobalC::ucell.iat2it[iat1];
-            int it2 = GlobalC::ucell.iat2it[iat2];
+            int it1 = ucell.iat2it[iat1];
+            int it2 = ucell.iat2it[iat2];
 
-            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
-            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
-            
+            assert(arr.shape[0] == ucell.atoms[it1].nw);
+            assert(arr.shape[1] == ucell.atoms[it2].nw);
+
             hamilt::AtomPair<double> tmp(iat1,iat2,Rx,Ry,Rz,paraV);
             hR->insert_pair(tmp);
             // use symmetry : H_{mu,nu,R} = H_{nu,mu,-R}
@@ -296,11 +284,11 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
             int Ry = std::stoi(tokens[4]);
             int Rz = std::stoi(tokens[5]);
 
-            int it1 = GlobalC::ucell.iat2it[iat1];
-            int it2 = GlobalC::ucell.iat2it[iat2];
+            int it1 = ucell.iat2it[iat1];
+            int it2 = ucell.iat2it[iat2];
 
-            assert(arr.shape[0] == GlobalC::ucell.atoms[it1].nw);
-            assert(arr.shape[1] == GlobalC::ucell.atoms[it2].nw);
+            assert(arr.shape[0] == ucell.atoms[it1].nw);
+            assert(arr.shape[1] == ucell.atoms[it2].nw);
 
             double* submat_read = arr.data<double>();
             
@@ -333,10 +321,9 @@ void ESolver_KS_LCAO<TK, TR>::read_mat_npz(std::string& zipname, hamilt::HContai
 #endif
 }
 
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt::HContainer<double>& hR)
+void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR)
 {
-    ModuleBase::TITLE("LCAO_Hamilt","output_mat_npz");
+    ModuleBase::TITLE("ModuleIO", "output_mat_npz");
 
 #ifdef __USECNPY
     std::string filename = "";
@@ -348,41 +335,41 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
         filename = "lattice_vectors";
         std::vector<double> lattice_vectors;
         lattice_vectors.resize(9);
-        lattice_vectors[0] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.x;
-        lattice_vectors[1] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.y;
-        lattice_vectors[2] = GlobalC::ucell.lat0 * GlobalC::ucell.a1.z;
-        lattice_vectors[3] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.x;
-        lattice_vectors[4] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.y;
-        lattice_vectors[5] = GlobalC::ucell.lat0 * GlobalC::ucell.a2.z;
-        lattice_vectors[6] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.x;
-        lattice_vectors[7] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.y;
-        lattice_vectors[8] = GlobalC::ucell.lat0 * GlobalC::ucell.a3.z;
+        lattice_vectors[0] = ucell.lat0 * ucell.a1.x;
+        lattice_vectors[1] = ucell.lat0 * ucell.a1.y;
+        lattice_vectors[2] = ucell.lat0 * ucell.a1.z;
+        lattice_vectors[3] = ucell.lat0 * ucell.a2.x;
+        lattice_vectors[4] = ucell.lat0 * ucell.a2.y;
+        lattice_vectors[5] = ucell.lat0 * ucell.a2.z;
+        lattice_vectors[6] = ucell.lat0 * ucell.a3.x;
+        lattice_vectors[7] = ucell.lat0 * ucell.a3.y;
+        lattice_vectors[8] = ucell.lat0 * ucell.a3.z;
 
         cnpy::npz_save(zipname,filename,lattice_vectors);
 
 // second block: atom info
         filename = "atom_info";
-        double* atom_info = new double[GlobalC::ucell.nat*5];
-        for(int iat = 0; iat < GlobalC::ucell.nat; ++iat)
+        double* atom_info = new double[ucell.nat * 5];
+        for (int iat = 0; iat < ucell.nat; ++iat)
         {
-            const int it = GlobalC::ucell.iat2it[iat];
-            const int ia = GlobalC::ucell.iat2ia[iat];
+            const int it = ucell.iat2it[iat];
+            const int ia = ucell.iat2ia[iat];
 
             //get atomic number (copied from write_vdata_palgrid.cpp)
             std::string element = "";
-            element = GlobalC::ucell.atoms[it].label;
-			std::string::iterator temp = element.begin();
-			while (temp != element.end())
-			{
-				if ((*temp >= '1') && (*temp <= '9'))
-				{
-					temp = element.erase(temp);
-				}
-				else
+            element = ucell.atoms[it].label;
+            std::string::iterator temp = element.begin();
+            while (temp != element.end())
+            {
+                if ((*temp >= '1') && (*temp <= '9'))
+                {
+                    temp = element.erase(temp);
+                }
+                else
 				{
 					temp++;
 				}
-			}
+            }
             int z = 0;
             for(int j=0; j!=ModuleBase::element_name.size(); j++)
             {
@@ -395,29 +382,29 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 
             atom_info[iat*5] = it;
             atom_info[iat*5+1] = z;
-            atom_info[iat*5+2] = GlobalC::ucell.atoms[it].taud[ia].x;
-            atom_info[iat*5+3] = GlobalC::ucell.atoms[it].taud[ia].y;
-            atom_info[iat*5+4] = GlobalC::ucell.atoms[it].taud[ia].z;
+            atom_info[iat * 5 + 2] = ucell.atoms[it].taud[ia].x;
+            atom_info[iat * 5 + 3] = ucell.atoms[it].taud[ia].y;
+            atom_info[iat * 5 + 4] = ucell.atoms[it].taud[ia].z;
         }
-        std::vector<size_t> shape={(size_t)GlobalC::ucell.nat,5};
+        std::vector<size_t> shape = {(size_t)ucell.nat, 5};
 
         cnpy::npz_save(zipname,filename,atom_info,shape,"a");
         delete[] atom_info;
 
 //third block: orbital info
-        for(int it = 0; it < GlobalC::ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it)
         {
             filename="orbital_info_"+std::to_string(it);
-            double* orbital_info = new double[GlobalC::ucell.atoms[it].nw*3];
-            for(int iw = 0; iw < GlobalC::ucell.atoms[it].nw; ++iw)
+            double* orbital_info = new double[ucell.atoms[it].nw * 3];
+            for (int iw = 0; iw < ucell.atoms[it].nw; ++iw)
             {
-                orbital_info[iw*3] = GlobalC::ucell.atoms[it].iw2n[iw];
-                orbital_info[iw*3+1] = GlobalC::ucell.atoms[it].iw2l[iw];
-                const int im = GlobalC::ucell.atoms[it].iw2m[iw];
+                orbital_info[iw * 3] = ucell.atoms[it].iw2n[iw];
+                orbital_info[iw * 3 + 1] = ucell.atoms[it].iw2l[iw];
+                const int im = ucell.atoms[it].iw2m[iw];
                 const int m = (im % 2 == 0) ? -im/2 : (im+1)/2; 
                 orbital_info[iw*3+2] = m;
             }
-            shape={(size_t)GlobalC::ucell.atoms[it].nw,3};
+            shape = {(size_t)ucell.atoms[it].nw, 3};
 
             cnpy::npz_save(zipname,filename,orbital_info,shape,"a");
         }
@@ -428,7 +415,7 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
     hamilt::HContainer<double>* HR_serial;
     Parallel_Orbitals serialV;
     serialV.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
-    serialV.set_atomic_trace(GlobalC::ucell.get_iat2iwt(), GlobalC::ucell.nat, PARAM.globalv.nlocal);
+    serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
     if(GlobalV::MY_RANK == 0)
     {
         HR_serial = new hamilt::HContainer<double>(&serialV);
@@ -484,7 +471,4 @@ void ESolver_KS_LCAO<TK, TR>::output_mat_npz(std::string& zipname, const hamilt:
 #endif
 }
 
-template class ESolver_KS_LCAO<double, double>;
-template class ESolver_KS_LCAO<std::complex<double>, double>;
-template class ESolver_KS_LCAO<std::complex<double>, std::complex<double>>;
-}
+} // namespace ModuleIO

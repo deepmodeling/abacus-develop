@@ -5,19 +5,26 @@
 #ifndef EXX_LIP_H
 #define EXX_LIP_H
 
-#include "module_base/complexmatrix.h"
-#include "module_base/vector3.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
-#include "module_basis/module_pw/pw_basis_k.h"
-#include "module_elecstate/elecstate.h"
-#include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
-class K_Vectors;
-class UnitCell;
+#include "module_base/macros.h"
+#include "module_base/matrix.h"
+
+#include <vector>
+#include <memory.h>
+
+    class K_Vectors;
+    class UnitCell;
+    class Structure_Factor;
+    namespace elecstate{ class ElecState; }
+    namespace ModulePW{ class PW_Basis_K; }
+    namespace ModulePW{ class PW_Basis; }
+    namespace ModuleSymmetry{ class Symmetry; }
+    namespace psi{ template <typename T, typename Device> class WFInit; }
+
 template<typename T, typename Device = base_device::DEVICE_CPU>
 class Exx_Lip
 {
-    using Real = typename GetTypeReal<T>::type;
+    using Treal = typename GetTypeReal<T>::type;
 public:
     Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in);
     ~Exx_Lip();
@@ -35,16 +42,16 @@ public:
         const Structure_Factor& sf,
         const UnitCell* ucell_ptr_in,
         const elecstate::ElecState* pelec_in);
-    
+
     // void cal_exx(const int& nks);
     void cal_exx();
     const std::vector<std::vector<std::vector<T>>>& get_exx_matrix() const
     {
-        return exx_matrix;
+        return this->exx_matrix;
     }
-    Real get_exx_energy() const
+    Treal get_exx_energy() const
     {
-        return exx_energy;
+        return this->exx_energy;
     }
 
     void write_q_pack() const;
@@ -55,7 +62,7 @@ public:
     }
     psi::Psi<T,Device> get_hvec() const
     {
-        return *k_pack->hvec_array;
+        return *this->k_pack->hvec_array;
     }
 
 private:
@@ -80,32 +87,32 @@ private:
 
     std::vector<std::vector<T>> phi;
     std::vector<std::vector<std::vector<T>>> psi;
-    std::vector<Real> recip_qkg2;
-    Real sum2_factor;
+    std::vector<Treal> recip_qkg2;
+    Treal sum2_factor;
     std::vector<T> b;
     std::vector<T> b0;
     std::vector<T> sum1;
     std::vector<std::vector<T>> sum3;
 
     std::vector<std::vector<std::vector<T>>> exx_matrix;
-    Real exx_energy = 0.0;
+    Treal exx_energy = 0.0;
 
-	void wf_wg_cal();
-    void phi_cal(k_package* kq_pack, int ikq);
+    void wf_wg_cal();
+    void phi_cal(k_package* kq_pack, const int ikq);
     void psi_cal();
-    void judge_singularity( int ik);
-	void qkg2_exp(int ik, int iq);
-	void b_cal(int ik, int iq, int ib);
-	void sum3_cal(int iq, int ib);
-	void b_sum(int iq, int ib);
-	void sum_all(int ik);
-	void exx_energy_cal();
+    void judge_singularity(const int ik);
+    void qkg2_exp(const int ik, const int iq);
+    void b_cal(const int ik, int iq, const int ib);
+    void sum3_cal(const int iq, const int ib);
+    void b_sum(const int iq, const int ib);
+    void sum_all(const int ik);
+    void exx_energy_cal();
     // void read_q_pack(const ModuleSymmetry::Symmetry& symm,
     //                  const ModulePW::PW_Basis_K* wfc_basis,
     //                  const Structure_Factor& sf);
 
     //2*pi*i
-    T two_pi_i = Real(ModuleBase::TWO_PI) * T(0.0, 1.0);
+    const T two_pi_i = Treal(ModuleBase::TWO_PI) * T(0.0, 1.0);
 public:
     const ModulePW::PW_Basis* rho_basis = nullptr;
     const ModulePW::PW_Basis_K* wfc_basis = nullptr;
@@ -113,5 +120,6 @@ public:
     const UnitCell* ucell_ptr = nullptr;
 };
 
+#include "exx_lip.hpp"
 
 #endif
