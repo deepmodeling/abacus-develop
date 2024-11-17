@@ -190,7 +190,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
     //---------------------------------------------------------------------------------------------------------------
     //---------------------------------for psi init guess!!!!--------------------------------------------------------
     //---------------------------------------------------------------------------------------------------------------
-    if (!PARAM.inp.psi_initializer && PARAM.inp.basis_type == "pw" && iter == 1)
+    if (!PARAM.inp.psi_initializer && PARAM.inp.basis_type == "pw" && this->init_psi == false)
     {
         for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
         {
