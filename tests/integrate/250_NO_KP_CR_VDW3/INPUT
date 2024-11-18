@@ -15,7 +15,7 @@ fixed_axes                    c
 force_thr_ev                  0.005
 stress_thr                    0.1
 suffix                        autotest
-calculation                   cell-relax
+calculation                   scf
 cal_force                         1
 cal_stress                        1
 pseudo_dir	../../PP_ORB
