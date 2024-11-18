@@ -246,7 +246,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
     // results
 #endif
 
-    this->pw_wfc->ft.fft_mode = inp.fft_mode;
     this->pw_wfc->fft_bundle.initfftmode(inp.fft_mode);
     this->pw_wfc->setuptransform();
 

@@ -18,6 +18,15 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
 
     void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
+  protected:
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
+
+    virtual void update_pot(const int istep, const int iter) override;
+
+    virtual void iter_finish(const int istep, int& iter) override;
+
+    virtual void after_scf(const int istep) override;
+
     //! wave functions of last time step
     psi::Psi<std::complex<double>>* psi_laststep = nullptr;
 
@@ -31,16 +40,6 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
 
     int td_htype = 1;
-
-  protected:
-
-    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
-
-    virtual void update_pot(const int istep, const int iter) override;
-
-    virtual void iter_finish(const int istep, int& iter) override;
-
-    virtual void after_scf(const int istep) override;
 };
 
 } // namespace ModuleESolver

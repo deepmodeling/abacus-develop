@@ -5,6 +5,7 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
@@ -879,7 +880,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
             {
                 const std::vector<std::vector<TK>>& tmp_dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                this->dftu_cal_occup_m(iter, tmp_dm);
+                ModuleDFTU::dftu_cal_occup_m(iter, tmp_dm, this->kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
             }
             GlobalC::dftu.cal_energy_correction(istep);
         }
