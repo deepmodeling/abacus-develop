@@ -358,8 +358,6 @@ const std::map<std::string, std::vector<double>> op = {
     
 
 // 's6', 'rs6', 'a1', 's8', 'rs8', 'a2', 's9', 'alp', 'bet'
-// a declaration
-std::string _lowercase(const std::string& s);
 /**
  * @brief Get the dftd3 params object. 
  * dftd3 method fall back: xc-bjm -> xc-bj -> pbe-bj
@@ -373,7 +371,7 @@ void _search(const std::string& xc,
                 const std::string& method, 
                 std::vector<double>& param)
 {
-    const std::string xc_lowercase = _lowercase(xc);
+    const std::string xc_lowercase = FmtCore::lower(xc);
     const std::vector<std::string> allowed_ = { "bj", "zero", "bjm", "zerom", "op" };
     assert(std::find(allowed_.begin(), allowed_.end(), method) != allowed_.end());
     if (method == "op")
@@ -441,20 +439,6 @@ void _search(const std::string& xc,
         ModuleBase::WARNING_QUIT("ModuleHamiltGeneral::ModuleVDW::DFTD3::_search",
                                     "Unknown DFT-D3 method: " + method);
     }
-}
-
-std::string _lowercase(const std::string& s)
-{
-    std::string result = s;
-    std::transform(s.begin(), s.end(), result.begin(), ::tolower);
-    return result;
-}
-
-std::string _uppercase(const std::string& s)
-{
-    std::string result = s;
-    std::transform(s.begin(), s.end(), result.begin(), ::toupper);
-    return result;
 }
 
 /**
