@@ -4,6 +4,8 @@ add_library(
         vdwd2_parameters.cpp
         vdwd3_parameters_tab.cpp
         vdwd3_parameters.cpp
+        vdwd3_autoset_xcname.cpp
+        vdwd3_autoset_xcparam.cpp
         vdwd2.cpp
         vdwd3.cpp
         vdw.cpp

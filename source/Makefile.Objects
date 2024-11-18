@@ -685,7 +685,9 @@ OBJS_VDW=vdw.o\
     vdwd3_parameters.o\
     vdwd2.o\
     vdwd3.o\
-    vdwd3_parameters_tab.o
+    vdwd3_parameters_tab.o\
+    vdwd3_autoset_xcparam.o\
+    vdwd3_autoset_xcname.o
 
 OBJS_DFTU=dftu.o\
       dftu_force.o\
