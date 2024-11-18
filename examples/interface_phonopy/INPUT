@@ -5,14 +5,14 @@ calculation     	scf
 symmetry                1
 
 #Parameters (2.Iteration)
-ecutwfc                 80
+ecutwfc                 80 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                 1e-8
 scf_nmax                100
 cal_force               1
 cal_stress              1
 #Parameters (3.Basis)
 basis_type              lcao
-#kspacing                0.06
+#kspacing                0.06 ### Abacus will generate/overwrite a KPT file when kspacing is used.
 #Parameters (4.Smearing)
 smearing_method         gauss
 smearing_sigma          0.01
@@ -23,3 +23,8 @@ mixing_beta             0.7
 
 pseudo_mesh     	1
 pseudo_rcut     	10.0
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

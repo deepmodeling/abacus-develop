@@ -1,0 +1,11 @@
+This test for:
+*SDFT
+*MD
+*Si
+*kpoints 1*1*1
+*All complete basis
+*mixing_type broyden
+*mixing_beta 0.4
+*seed_sto > 0
+*sto_method 2
+*bndpar     2

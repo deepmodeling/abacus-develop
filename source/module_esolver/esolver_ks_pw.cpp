@@ -1,14 +1,5 @@
 #include "esolver_ks_pw.h"
 
-#include "module_base/global_variable.h"
-#include "module_hamilt_pw/hamilt_pwdft/elecond.h"
-#include "module_io/input_conv.h"
-#include "module_io/nscf_band.h"
-#include "module_io/output_log.h"
-#include "module_io/write_dos_pw.h"
-#include "module_io/write_istate_info.h"
-#include "module_io/write_wfc_pw.h"
-
 #include <iostream>
 
 //--------------temporary----------------------------
@@ -22,10 +13,13 @@
 //-----stress------------------
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 //---------------------------------------------------
+#include "module_base/formatter.h"
+#include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
+#include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
@@ -34,17 +28,22 @@
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/get_pchg_pw.h"
+#include "module_io/input_conv.h"
+#include "module_io/nscf_band.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
+#include "module_io/output_log.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
+#include "module_io/write_dos_pw.h"
 #include "module_io/write_elecstat_pot.h"
+#include "module_io/write_istate_info.h"
+#include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#include "module_base/formatter.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -111,6 +110,21 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 
     delete this->psi;
     delete this->p_wf_init;
+}
+
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::allocate_hamilt()
+{
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv);
+}
+template <typename T, typename Device>
+void ESolver_KS_PW<T, Device>::deallocate_hamilt()
+{
+    if (this->p_hamilt != nullptr)
+    {
+        delete reinterpret_cast<hamilt::HamiltPW<T, Device>*>(this->p_hamilt);
+        this->p_hamilt = nullptr;
+    }
 }
 
 template <typename T, typename Device>
@@ -305,6 +319,9 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
 {
+    // call iter_init() of ESolver_KS
+    ESolver_KS<T, Device>::iter_init(istep, iter);
+
     if (iter == 1)
     {
         this->p_chgmix->init_mixing();
@@ -318,78 +335,53 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter)
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
-
-    //(2) save change density as previous charge,
-    // prepared fox mixing.
-    if (GlobalV::MY_STOGROUP == 0)
-    {
-        this->pelec->charge->save_rho_before_sum_band();
-    }
 }
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 
+    // reset energy
+    this->pelec->f_en.eband = 0.0;
+    this->pelec->f_en.demet = 0.0;
+    // choose if psi should be diag in subspace
+    // be careful that istep start from 0 and iter start from 1
+    // if (iter == 1)
+    hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
+
+    hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
+    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
+    if (PARAM.inp.calculation != "nscf")
     {
-        // reset energy
-        this->pelec->f_en.eband = 0.0;
-        this->pelec->f_en.demet = 0.0;
-        // choose if psi should be diag in subspace
-        // be careful that istep start from 0 and iter start from 1
-        // if (iter == 1)
-        hsolver::DiagoIterAssist<T, Device>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
-        
-        hsolver::DiagoIterAssist<T, Device>::SCF_ITER = iter;
-        hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
         hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-        
-        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc, 
-                                                     &this->wf, 
-                                                     
-                                                     PARAM.inp.calculation,
-                                                     PARAM.inp.basis_type,
-                                                     PARAM.inp.ks_solver,
-                                                     PARAM.inp.use_paw,
-                                                     PARAM.globalv.use_uspp,
-                                                     PARAM.inp.nspin,
-                                                     
-                                                     hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-
-                                                     hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                     this->init_psi);
-        
-        hsolver_pw_obj.solve(this->p_hamilt,
-                           this->kspw_psi[0],
-                           this->pelec,
-                           this->pelec->ekb.c,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           false);
-      
-        this->init_psi = true;
-
-        if (PARAM.inp.out_bandgap)
-        {
-            if (!PARAM.globalv.two_fermi)
-            {
-                this->pelec->cal_bandgap();
-            }
-            else
-            {
-                this->pelec->cal_bandgap_updw();
-            }
-        }
     }
+    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-    // calculate the delta_harris energy
-    // according to new charge density.
-    // mohan add 2009-01-23
-    this->pelec->cal_energies(1);
+    hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
+                                                 &this->wf,
+                                                 PARAM.inp.calculation,
+                                                 PARAM.inp.basis_type,
+                                                 PARAM.inp.ks_solver,
+                                                 PARAM.inp.use_paw,
+                                                 PARAM.globalv.use_uspp,
+                                                 PARAM.inp.nspin,
+                                                 hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                 this->init_psi);
+
+    hsolver_pw_obj.solve(this->p_hamilt,
+                         this->kspw_psi[0],
+                         this->pelec,
+                         this->pelec->ekb.c,
+                         GlobalV::RANK_IN_POOL,
+                         GlobalV::NPROC_IN_POOL,
+                         skip_charge);
+
+    this->init_psi = true;
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -397,18 +389,12 @@ void ESolver_KS_PW<T, Device>::hamilt2density(const int istep, const int iter, c
         srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
     }
 
-    // compute magnetization, only for LSDA(spin==2)
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                this->pelec->nelec_spin.data());
-
     // deband is calculated from "output" charge density calculated
     // in sum_band
     // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 
-    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density");
+    ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 }
 
 // Temporary, it should be rewritten with Hamilt class.
@@ -434,21 +420,23 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
+void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter)
 {
-    // call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(iter);
+    // 1) Call iter_finish() of ESolver_KS
+    ESolver_KS<T, Device>::iter_finish(istep, iter);
 
-    // liuyu 2023-10-24
+    // 2) Update USPP-related quantities
     // D in uspp need vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local pseudopotential
-    // projectors
+    // projectors 
+    // liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
         GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, GlobalC::ucell);
     }
 
+    // 3) Print out charge density
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
     {
         if (PARAM.inp.out_chg[0] > 0)
@@ -489,7 +477,8 @@ void ESolver_KS_PW<T, Device>::iter_finish(int& iter)
                 }
             }
         }
-        // output wavefunctions
+        
+        // 4) Print out electronic wavefunctions
         if (this->wf.out_wfc_pw == 1 || this->wf.out_wfc_pw == 2)
         {
             std::stringstream ssw;
@@ -523,6 +512,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
+    // 4) Transfer data from GPU to CPU
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_device(),
@@ -532,7 +522,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                             this->psi[0].size());
     }
 
-    // Calculate band-decomposed (partial) charge density
+    // 5) Calculate band-decomposed (partial) charge density
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
@@ -557,6 +547,31 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep)
                               GlobalC::Pgrid,
                               PARAM.globalv.global_out_dir,
                               PARAM.inp.if_separate_k);
+    }
+
+    //! 6) Calculate Wannier functions
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
+        toWannier90_PW wan(PARAM.inp.out_wannier_mmn,
+                           PARAM.inp.out_wannier_amn,
+                           PARAM.inp.out_wannier_unk,
+                           PARAM.inp.out_wannier_eig,
+                           PARAM.inp.out_wannier_wvfn_formatted,
+                           PARAM.inp.nnkpfile,
+                           PARAM.inp.wannier_spin);
+
+        wan.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
+    }
+
+    //! 7) calculate Berry phase polarization
+    if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
+    {
+        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
+        berryphase bp;
+        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 }
 
@@ -612,7 +627,6 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  this->psi,
                   this->__kspw_psi);
 
     // external stress
@@ -628,6 +642,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress)
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_all_runners()
 {
+    //! 1) Output information to screen
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);
     GlobalV::ofs_running << " !FINAL_ETOT_IS " << this->pelec->f_en.etot * ModuleBase::Ry_to_eV << " eV" << std::endl;
@@ -671,10 +686,11 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
     {
         nspin0 = 2;
     }
-    //! print occupation in istate.info
+    
+    //! 2) Print occupation numbers into istate.info
     ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
 
-    //! compute density of states
+    //! 3) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
     {
         ModuleIO::write_dos_pw(this->pelec->ekb,
@@ -697,7 +713,8 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    if (PARAM.inp.out_band[0]) // pengfei 2014-10-13
+    //! 4) Print out band structure information
+    if (PARAM.inp.out_band[0])
     {
         for (int is = 0; is < nspin0; is++)
         {
@@ -715,12 +732,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    if (PARAM.inp.basis_type == "pw" && winput::out_spillage) // xiaohui add 2013-09-01
+    //! 5) Calculate the spillage value, used to generate numerical atomic orbitals
+    if (PARAM.inp.basis_type == "pw" && winput::out_spillage)
     {
-        //  calculate spillage value.
-
-        // ! Print out overlap before spillage optimization to generate atomic
-        // orbitals
+        // ! Print out overlap matrices
         if (winput::out_spillage <= 2)
         {
             for (int i = 0; i < PARAM.inp.bessel_nao_rcuts.size(); i++)
@@ -737,13 +752,13 @@ void ESolver_KS_PW<T, Device>::after_all_runners()
         }
     }
 
-    //! Print out wave functions in real space
+    //! 6) Print out electronic wave functions in real space
     if (this->wf.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
         ModuleIO::write_psi_r_1(this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
     }
 
-    //! Use Kubo-Greenwood method to compute conductivities
+    //! 7) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
         EleCond elec_cond(&GlobalC::ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &GlobalC::ppcell);

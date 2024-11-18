@@ -145,6 +145,20 @@ public:
             [&delim](const std::string& acc, const std::string& s) { return acc + delim + s; });
     }
 
+    static std::string upper(const std::string& in)
+    {
+        std::string dst = in;
+        std::transform(dst.begin(), dst.end(), dst.begin(), ::toupper);
+        return dst;
+    }
+
+    static std::string lower(const std::string& in)
+    {
+        std::string dst = in;
+        std::transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
+        return dst;
+    }
+
 private:
     std::string fmt_;
     template<typename T>

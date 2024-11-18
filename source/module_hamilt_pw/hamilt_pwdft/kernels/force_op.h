@@ -60,6 +60,7 @@ struct cal_force_nl_op
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
     /// @param tpiba - GlobalC::ucell.tpiba
     /// @param d_wg - input parameter wg
+    /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
@@ -83,6 +84,7 @@ struct cal_force_nl_op
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -103,6 +105,7 @@ struct cal_force_nl_op
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,
@@ -145,6 +148,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
@@ -165,6 +169,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int* atom_na,
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const std::complex<FPTYPE>* deeq_nc,

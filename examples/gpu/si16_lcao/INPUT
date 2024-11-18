@@ -3,7 +3,7 @@ INPUT_PARAMETERS
 suffix			autotest
 calculation     scf
 device          gpu
-gamma_only      1  # GPU acceleration currently only support gamma_only set to 1.
+gamma_only      1  # GPU acceleration currently only support gamma_only set to 1. ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 ks_solver		cusolver  # if not set, the default ks_solver is cusolver,
                           # you can also choose genelpa or scalapack_gvx.
 
@@ -11,7 +11,7 @@ ks_solver		cusolver  # if not set, the default ks_solver is cusolver,
 symmetry		1
 
 #Parameters (2.Iteration)
-ecutwfc			100
+ecutwfc			100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr		    1e-6
 scf_nmax		100
 cal_force       1
@@ -27,3 +27,8 @@ smearing_sigma		0.002
 #Parameters (5.Mixing)
 mixing_type		broyden
 mixing_beta		0.3
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

@@ -61,10 +61,10 @@ extern "C"
 
 
     void dsygvx_(const int* itype, const char* jobz, const char* range, const char* uplo,
-                const int* n, double* A, const int* lda, double* B, const int* ldb,
-                const double* vl, const double* vu, const int* il, const int* iu,
-                const double* abstol, const int* m, double* w, double* Z, const int* ldz,
-                double* work, int* lwork, int*iwork, int* ifail, int* info);
+        const int* n, double* A, const int* lda, double* B, const int* ldb,
+        const double* vl, const double* vu, const int* il, const int* iu,
+        const double* abstol, const int* m, double* w, double* Z, const int* ldz,
+        double* work, const int* lwork, int* iwork, int* ifail, int* info);
 
     void chegvx_(const int* itype,const char* jobz,const char* range,const char* uplo,
              const int* n,std::complex<float> *a,const int* lda,std::complex<float> *b,

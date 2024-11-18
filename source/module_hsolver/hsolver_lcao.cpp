@@ -22,12 +22,14 @@
 
 #ifdef __PEXSI
 #include "diago_pexsi.h"
-#include "module_elecstate/elecstate_lcao.h"
 #endif
 
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
+#include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hsolver/parallel_k2d.h"
 #include "module_parameter/parameter.h"
 
@@ -71,6 +73,15 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
         {
             ModuleBase::WARNING_QUIT("HSolverLCAO::solve",
                                      "This method and KPAR setting is not supported for lcao basis in ABACUS!");
+        }
+
+        pes->calculate_weights();
+        if (!PARAM.inp.dm_to_rho)
+        {
+            auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+            _pes->calEBand();
+            elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, psi, *(_pes->DM));
+            _pes->DM->cal_DMR();
         }
 
         if (!skip_charge)

@@ -67,10 +67,7 @@ void ESolver_KS_PW<T, Device>::others(const int istep) {
                              PARAM.inp.bessel_descriptor_rcut,
                              PARAM.inp.bessel_descriptor_tolerence,
                              this->kv.get_nks());
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,
-                                     "GENERATE DESCRIPTOR FOR DEEPKS");
-    } else if (cal_type == "nscf") {
-        this->nscf();
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
     } else {
         ModuleBase::WARNING_QUIT("ESolver_KS_PW::others",
                                  "CALCULATION type not supported");

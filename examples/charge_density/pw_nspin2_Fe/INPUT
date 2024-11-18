@@ -4,7 +4,7 @@ symmetry      1
 
 calculation   scf
 nspin         2
-ecutwfc       50
+ecutwfc        60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr       1.0e-8
 scf_nmax      50
 out_chg       1
@@ -13,8 +13,13 @@ basis_type    pw
 ks_solver     cg
 
 smearing_method    gaussian
-smearing_sigma       0.07
+smearing_sigma       0.015
 
 mixing_type    broyden 
 mixing_beta    0.5
 
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

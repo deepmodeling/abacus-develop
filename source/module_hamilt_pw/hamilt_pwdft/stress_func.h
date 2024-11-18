@@ -66,7 +66,8 @@ class Stress_Func
                     ModuleSymmetry::Symmetry* p_symm,
                     K_Vectors* p_kv,
                     ModulePW::PW_Basis_K* wfc_basis,
-                    const psi::Psi<complex<FPTYPE>>* psi_in = nullptr); // electron kinetic part in PW basis
+                    const UnitCell& ucell_in,
+                    const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
     void stress_har(ModuleBase::matrix& sigma,
@@ -207,10 +208,11 @@ class Stress_Func
                 const ModuleBase::matrix& dylmk0,
                 std::complex<FPTYPE>* dqg);
 
-  private:
+  protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
+  private:
     using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;

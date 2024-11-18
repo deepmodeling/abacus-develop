@@ -164,7 +164,10 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(PARAM.inp.test_force, 0);
     EXPECT_EQ(param.inp.test_stress, 0);
     EXPECT_NEAR(param.inp.scf_thr, 1.0e-8, 1.0e-15);
-    EXPECT_NEAR(param.inp.scf_ene_thr, -1.0, 1.0e-15);
+    EXPECT_EQ(param.inp.scf_os_stop, 1);
+    EXPECT_NEAR(param.inp.scf_os_thr, -0.02, 1.0e-15);
+    EXPECT_EQ(param.inp.scf_os_ndim, 10);
+    EXPECT_NEAR(param.inp.scf_ene_thr, 1.0e-6, 1.0e-15);
     EXPECT_EQ(param.inp.scf_nmax, 50);
     EXPECT_EQ(param.inp.relax_nmax, 1);
     EXPECT_EQ(param.inp.out_stru, 0);

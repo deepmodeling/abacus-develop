@@ -12,11 +12,6 @@
 
 class Gint_k : public Gint {
   public:
-    ~Gint_k()
-    {
-        destroy_pvpR();
-    }
-
     /// @brief move operator for the next ESolver to directly use its infomation
     /// @param rhs 
     /// @return *this
@@ -42,16 +37,9 @@ class Gint_k : public Gint {
         } else if (this->spin_now != -1) {
             int start_spin = -1;
             this->reset_spin(start_spin);
-            this->destroy_pvpR();
-            this->allocate_pvpR();
         }
         return;
     }
-
-    // allocate the <phi_0 | V | phi_R> matrix element.
-    void allocate_pvpR();
-    // destroy the temporary <phi_0 | V | phi_R> matrix element.
-    void destroy_pvpR();
 
     // allocate the <phi_0 | V | dphi_R> matrix element.
     void allocate_pvdpR();
@@ -63,8 +51,7 @@ class Gint_k : public Gint {
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
     void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+                       const UnitCell* ucell_in, Grid_Driver* gd);
     void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
                        const UnitCell* ucell_in,
                        Grid_Driver* gd);

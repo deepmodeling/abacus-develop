@@ -1,9 +1,9 @@
-etotref -465.998623450138
-etotperatomref -155.3328744834
-totalforceref 5.535421
-totalstressref 1.520071
+etotref -465.9986234579140
+etotperatomref -155.3328744860
+totalforceref 5.535106
+totalstressref 1.520003
 totaldes 2.163703
-deepks_e_dm -57.88571808911911
-deepks_f_label 19.095622987658235
-deepks_s_label 19.250436793943024
-totaltimeref 19.73
+deepks_e_dm -57.885718058035934
+deepks_f_label 19.095598453044364
+deepks_s_label 19.250415261605152
+totaltimeref 12.68

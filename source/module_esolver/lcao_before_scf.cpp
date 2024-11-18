@@ -10,6 +10,7 @@
 #include "module_io/berryphase.h"
 #include "module_io/get_pchg_lcao.h"
 #include "module_io/get_wf_lcao.h"
+#include "module_io/io_npz.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
@@ -115,6 +116,7 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             orb_,
             DM
 #ifdef __EXX
+            , istep
             , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
             , GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr
             , GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
@@ -208,13 +210,16 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (PARAM.inp.calculation != "nscf")
     {
-        this->exd->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
-    }
-    else
-    {
-        this->exc->exx_beforescf(this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        if (GlobalC::exx_info.info_ri.real_number)
+        {
+            this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        }
+        else
+        {
+            this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+        }
     }
 #endif // __EXX
 
@@ -278,13 +283,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        this->read_mat_npz(zipname, *(dm->get_DMR_pointer(1)));
+        ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(1)));
         if (PARAM.inp.nspin == 2)
         {
             zipname = "output_DM1.npz";
-            this->read_mat_npz(zipname, *(dm->get_DMR_pointer(2)));
+            ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
 
+        this->pelec->calculate_weights();
         this->pelec->psiToRho(*this->psi);
 
         int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;

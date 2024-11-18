@@ -115,6 +115,9 @@ struct Input_para
     double scf_ene_thr = -1.0; ///< energy threshold for scf convergence, in eV
     int scf_thr_type = -1;     ///< type of the criterion of scf_thr, 1: reci drho, 2: real drho
     bool final_scf = false;    ///< whether to do final scf
+    bool scf_os_stop = false;  ///< whether to stop scf when oscillation is detected
+    double scf_os_thr = -0.01;  ///< drho threshold for oscillation
+    int scf_os_ndim = 0;       ///< number of old iterations used for oscillation detection
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
@@ -317,7 +320,7 @@ struct Input_para
     int out_pot = 0;                      ///< yes or no
     int out_wfc_pw = 0;                   ///< 0: no; 1: txt; 2: dat
     bool out_wfc_r = false;               ///< 0: no; 1: yes
-    int printe = 100;                     ///< mohan add 2011-03-16
+    int printe = 0;                       ///< Print out energy for each band for every printe step, default is scf_nmax
     std::vector<int> out_band = {0, 8};   ///< band calculation pengfei 2014-10-13
     int out_dos = 0;                      ///< dos calculation. mohan add 20090909
     bool out_mul = false;                 ///< qifeng add 2019-9-10

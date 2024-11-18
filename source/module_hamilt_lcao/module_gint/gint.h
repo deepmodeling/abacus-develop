@@ -13,6 +13,9 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+
+#include <functional>
+
 class Gint {
   public:
     ~Gint();
@@ -64,6 +67,21 @@ class Gint {
     const Grid_Technique* gridt = nullptr;
     const UnitCell* ucell;
 
+    // psir_ylm_new = psir_func(psir_ylm)
+    // psir_func==nullptr means psir_ylm_new=psir_ylm
+    using T_psir_func = std::function<
+        const ModuleBase::Array_Pool<double>&(
+            const ModuleBase::Array_Pool<double> &psir_ylm,
+            const Grid_Technique &gt,
+            const int grid_index,
+            const int is,
+            const std::vector<int> &block_iw,
+            const std::vector<int> &block_size,
+            const std::vector<int> &block_index,
+            const ModuleBase::Array_Pool<bool> &cal_flag)>;
+    T_psir_func psir_func_1 = nullptr;
+    T_psir_func psir_func_2 = nullptr;
+
   protected:
     // variables related to FFT grid
     int nbx;
@@ -86,6 +104,7 @@ class Gint {
 
     void gint_kernel_vlocal(Gint_inout* inout);
 
+    // calculate < phi_0 | vlocal | dphi_R >
     void gint_kernel_dvlocal(Gint_inout* inout);
 
     void gint_kernel_vlocal_meta(Gint_inout* inout);
@@ -98,43 +117,7 @@ class Gint {
 
     void gint_kernel_force_meta(Gint_inout* inout);
 
-    //------------------------------------------------------
-    // in gint_vl.cpp
-    //------------------------------------------------------
-    // calculate the matrix elements of Hamiltonian matrix,
-    // < phi_0 | Vl + Vh + Vxc | phi_R> or if the Vna is used,
-    // < phi_0 | delta_Vh + Vxc | phi_R>.
-    // void gint_kernel_vlocal(const int na_grid,
-    //                         const int grid_index,
-    //                         const double delta_r,
-    //                         double* vldr3,
-    //                         const int LD_pool,
-    //                         double* pvpR_reduced,
-    //                         const UnitCell& ucell,
-    //                         hamilt::HContainer<double>* hR = nullptr);
-
-    // calculate < phi_0 | vlocal | dphi_R >
-    void gint_kernel_dvlocal(const int na_grid,
-                             const int grid_index,
-                             const double delta_r,
-                             double* vldr3,
-                             const int LD_pool,
-                             double* pvdpRx_reduced,
-                             double* pvdpRy_reduced,
-                             double* pvdpRz_reduced,
-                             const UnitCell& ucell);
-
-    void gint_kernel_vlocal_meta(const int na_grid,
-                                 const int grid_index,
-                                 const double delta_r,
-                                 double* vldr3,
-                                 double* vkdr3,
-                                 const int LD_pool,
-                                 double* pvpR_reduced,
-                                 const UnitCell& ucell,
-                                 hamilt::HContainer<double>* hR = nullptr);
-
-    void cal_meshball_vlocal_gamma(
+    void cal_meshball_vlocal(
         const int na_grid, // how many atoms on this (i,j,k) grid
         const int LD_pool,
         const int* const block_iw, // block_iw[na_grid],	index of wave
@@ -151,18 +134,6 @@ class Gint {
         const double* const* const psir_vlbr3, // psir_vlbr3[bxyz][LD_pool]
         hamilt::HContainer<double>* hR); // HContainer for storing the <phi_0 |
                                          // V | phi_R> matrix element.
-
-    void cal_meshball_vlocal_k(int na_grid,
-                               const int LD_pool,
-                               int grid_index,
-                               int* block_size,
-                               int* block_index,
-                               int* block_iw,
-                               bool** cal_flag,
-                               double** psir_ylm,
-                               double** psir_vlbr3,
-                               double* pvpR,
-                               const UnitCell& ucell);
 
     //------------------------------------------------------
     // in gint_fvl.cpp
@@ -225,11 +196,11 @@ class Gint {
                          Gint_inout* inout);
 
     void cal_meshball_rho(const int na_grid,
-                          int* block_index,
-                          int* vindex,
-                          double** psir_ylm,
-                          double** psir_DMR,
-                          double* rho);
+                          const int*const block_index,
+                          const int*const vindex,
+                          const double*const*const psir_ylm,
+                          const double*const*const psir_DMR,
+                          double*const rho);
 
     void gint_kernel_tau(const int na_grid,
                          const int grid_index,
@@ -251,20 +222,18 @@ class Gint {
                           double* rho);
 
     // save the < phi_0i | V | phi_Rj > in sparse H matrix.
-    bool pvpR_alloc_flag = false;
-    double** pvpR_reduced
-        = nullptr; // stores Hamiltonian in reduced format, for multi-l
     hamilt::HContainer<double>* hRGint
         = nullptr; // stores Hamiltonian in sparse format
+    std::vector<hamilt::HContainer<double>*> hRGint_tmp; // size of vec is 4, only used when nspin = 4
     hamilt::HContainer<std::complex<double>>* hRGintCd
         = nullptr; // stores Hamiltonian in sparse format
     std::vector<hamilt::HContainer<double>*>
         DMRGint; // stores DMR in sparse format
     hamilt::HContainer<double>* DMRGint_full
         = nullptr; // tmp tools used in transfer_DM2DtoGrid
-    double** pvdpRx_reduced = nullptr;
-    double** pvdpRy_reduced = nullptr;
-    double** pvdpRz_reduced = nullptr;
+    std::vector<hamilt::HContainer<double>> pvdpRx_reduced;
+    std::vector<hamilt::HContainer<double>> pvdpRy_reduced;
+    std::vector<hamilt::HContainer<double>> pvdpRz_reduced;
 };
 
 #endif
