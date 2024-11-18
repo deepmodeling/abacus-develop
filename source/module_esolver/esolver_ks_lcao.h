@@ -97,10 +97,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 #endif
 
   private:
-    // tmp interfaces  before sub-modules are refactored
-    void dftu_cal_occup_m(const int& iter,
-                          const std::vector<std::vector<TK>>& dm) const;
-
 #ifdef __DEEPKS
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
 

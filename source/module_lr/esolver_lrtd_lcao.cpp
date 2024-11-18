@@ -352,6 +352,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         this->pw_rho->nplane,
         this->pw_rho->startz_current,
         GlobalC::ucell,
+        GlobalC::GridD,
         dr_uniform,
         rcuts,
         psi_u,
@@ -365,11 +366,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     d2psi_u.clear();
     d2psi_u.shrink_to_fit();
 
-    if (std::is_same<T, std::complex<double>>::value)
-    {
-        this->gt_.cal_nnrg(&this->paraMat_, orb.cutoffs());
-        this->gint_k_.allocate_pvpR();   // uses gt_.nnrg
-    }
     this->gint_->prep_grid(this->gt_,
         this->pw_big->nbx,
         this->pw_big->nby,
