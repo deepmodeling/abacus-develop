@@ -381,7 +381,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
     //---------------------------------------------------------------------------------------------------------------
 
     hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
-                                                 &this->wf,
                                                  PARAM.inp.calculation,
                                                  PARAM.inp.basis_type,
                                                  PARAM.inp.ks_solver,
@@ -391,8 +390,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
                                                  hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                 this->init_psi);
+                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
     hsolver_pw_obj.solve(this->p_hamilt,
                          this->kspw_psi[0],

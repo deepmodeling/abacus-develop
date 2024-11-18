@@ -183,7 +183,6 @@ class TestHSolverPW_SDFT : public ::testing::Test
         = hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU>(
             &kv,
             &pwbk,
-            &wf,
             stowf,
             stoche,
             p_hamilt_sto,
@@ -196,8 +195,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
-            false);
+            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 
