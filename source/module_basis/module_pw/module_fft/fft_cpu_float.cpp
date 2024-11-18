@@ -303,7 +303,7 @@ void FFT_CPU<float>::clear()
         fftw_free(c_auxg);
         c_auxg = nullptr;
     }
-    if (z_auxr != nullptr)
+    if (c_auxr != nullptr)
     {
         fftw_free(c_auxr);
         c_auxr = nullptr;

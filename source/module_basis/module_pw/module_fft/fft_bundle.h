@@ -9,7 +9,7 @@ class FFT_Bundle
 {
     public:
         FFT_Bundle(){};
-        ~FFT_Bundle(){};
+        ~FFT_Bundle();
         /**
          * @brief Constructor with device and precision.
          * @param device_in  device type, cpu or gpu.

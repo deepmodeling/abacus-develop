@@ -11,7 +11,7 @@ void ReadInput::item_output()
         item.annotation = "output the structure files after each ion step";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
-            if (find_str(offlist, para.input.calculation))
+            if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
                 para.input.out_stru = false;
             }
@@ -96,21 +96,13 @@ void ReadInput::item_output()
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
-                para.input.out_band[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
-                para.input.out_band[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
             }
+            para.input.out_band[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_band[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -239,21 +231,13 @@ void ReadInput::item_output()
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_hs[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_hs[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
+            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_hs[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
@@ -268,21 +252,13 @@ void ReadInput::item_output()
         Input_Item item("out_mat_tk");
         item.annotation = "output T(k)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_tk[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_tk[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
             }
+            para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_tk[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         sync_intvec(input.out_mat_tk, 2, 0);
         this->add_item(item);

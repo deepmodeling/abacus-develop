@@ -20,21 +20,20 @@ void Gint_k::allocate_pvdpR(void)
 
     //xiaohui modify 2015-05-30
     // the number of matrix element <phi_0 | V | dphi_R> is this->gridt->nnrg.
-    this->pvdpRx_reduced = new double*[nspin];
-    this->pvdpRy_reduced = new double*[nspin];
-    this->pvdpRz_reduced = new double*[nspin];
     for(int is =0;is<nspin;is++)
     {
-        this->pvdpRx_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRx_reduced[is], this->gridt->nnrg);
-        this->pvdpRy_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRy_reduced[is], this->gridt->nnrg);
-        this->pvdpRz_reduced[is] = new double[this->gridt->nnrg];	
-        ModuleBase::GlobalFunc::ZEROS( pvdpRz_reduced[is], this->gridt->nnrg);
+        this->pvdpRx_reduced.push_back(hamilt::HContainer<double>(this->ucell->nat));
+        pvdpRx_reduced[is].insert_ijrs(this->gridt->get_ijr_info(), *this->ucell);
+        pvdpRx_reduced[is].allocate(nullptr, true);
+        this->pvdpRy_reduced.push_back(hamilt::HContainer<double>(this->ucell->nat));
+        pvdpRy_reduced[is].insert_ijrs(this->gridt->get_ijr_info(), *this->ucell);
+        pvdpRy_reduced[is].allocate(nullptr, true);
+        this->pvdpRz_reduced.push_back(hamilt::HContainer<double>(this->ucell->nat));
+        pvdpRz_reduced[is].insert_ijrs(this->gridt->get_ijr_info(), *this->ucell);
+        pvdpRz_reduced[is].allocate(nullptr, true);
     }
 
     ModuleBase::Memory::record("pvdpR_reduced", 3 * sizeof(double) * this->gridt->nnrg * nspin);
-
     return;
 }
 
@@ -44,24 +43,11 @@ void Gint_k::destroy_pvdpR(void)
 
     const int nspin = PARAM.inp.nspin;
     assert(nspin>0);
-    
-	for(int is =0;is<nspin;is++) 
-	{
-		delete[] pvdpRx_reduced[is];
-	}
-    delete[] pvdpRx_reduced;
-
-	for(int is =0;is<nspin;is++) 
-	{
-		delete[] pvdpRy_reduced[is];
-	}
-    delete[] pvdpRy_reduced;
-
-	for(int is =0;is<nspin;is++) 
-	{
-		delete[] pvdpRz_reduced[is];
-	}
-    delete[] pvdpRz_reduced;
-
+    pvdpRx_reduced.clear();
+    pvdpRy_reduced.clear();
+    pvdpRz_reduced.clear();
+    pvdpRx_reduced.shrink_to_fit();
+    pvdpRy_reduced.shrink_to_fit();
+    pvdpRz_reduced.shrink_to_fit();
     return;
 }

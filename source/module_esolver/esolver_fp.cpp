@@ -83,7 +83,6 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     }
 
     this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
-    this->pw_rho->ft.fft_mode = inp.fft_mode;
     this->pw_rho->fft_bundle.initfftmode(inp.fft_mode);
     this->pw_rho->setuptransform();
     this->pw_rho->collect_local_pw();
@@ -109,7 +108,6 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
             this->pw_rhod->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
         }
         this->pw_rhod->initparameters(false, inp.ecutrho);
-        this->pw_rhod->ft.fft_mode = inp.fft_mode;
         this->pw_rhod->fft_bundle.initfftmode(inp.fft_mode);
         pw_rhod_sup->setuptransform(this->pw_rho);
         this->pw_rhod->collect_local_pw();
