@@ -256,7 +256,7 @@ OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       dftu_cal_occup_m.o\
       set_matrix_grid.o\
       lcao_before_scf.o\
-      lcao_gets.o\
+      esolver_gets.o\
       lcao_others.o\
       lcao_init_after_vc.o\
 

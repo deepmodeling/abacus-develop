@@ -22,7 +22,7 @@ if(ENABLE_LCAO)
       set_matrix_grid.cpp
       dftu_cal_occup_m.cpp
       lcao_before_scf.cpp
-      lcao_gets.cpp
+      esolver_gets.cpp
       lcao_others.cpp
       lcao_init_after_vc.cpp
   )

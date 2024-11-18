@@ -39,8 +39,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void after_all_runners() override;
 
-    void get_S();
-
   protected:
     virtual void before_scf(const int istep) override;
 
