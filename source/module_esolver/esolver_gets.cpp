@@ -122,6 +122,10 @@ void ESolver_GetS<std::complex<double>, std::complex<double>>::runner(const int 
             ->contributeHR();
     }
 
+    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
+    std::cout << " The file is saved in " << fn << std::endl;
+    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
+
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
@@ -157,22 +161,15 @@ void ESolver_GetS<std::complex<double>, double>::runner(const int istep, UnitCel
         dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
     }
 
+    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
+    std::cout << " The file is saved in " << fn << std::endl;
+    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
+
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
-template <typename TK, typename TR>
-void ESolver_GetS<TK, TR>::after_all_runners()
-{
-    ModuleBase::TITLE("ESolver_GetS", "after_all_runners");
-    ModuleBase::timer::tick("ESolver_GetS", "after_all_runners");
-
-    const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
-
-    std::cout << " The file is saved in " << fn << std::endl;
-
-    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
-
-    ModuleBase::timer::tick("ESolver_GetS", "after_all_runners");
-}
+template class ESolver_GetS<double, double>;
+template class ESolver_GetS<std::complex<double>, double>;
+template class ESolver_GetS<std::complex<double>, std::complex<double>>;
 
 } // namespace ModuleESolver
