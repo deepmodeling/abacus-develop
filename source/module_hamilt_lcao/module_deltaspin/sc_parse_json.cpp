@@ -7,14 +7,14 @@
 #include <string>
 #include <regex>
 
-template<typename FPTYPE, typename Device>
-const std::map<int, std::vector<ScAtomData>>& SpinConstrain<FPTYPE, Device>::get_ScData() const
+template<typename FPTYPE>
+const std::map<int, std::vector<ScAtomData>>& SpinConstrain<FPTYPE>::get_ScData() const
 {
     return this->ScData;
 }
 
-template<typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& filename)
+template<typename FPTYPE>
+void SpinConstrain<FPTYPE>::Set_ScData_From_Json(const std::string& filename)
 {
     ModuleBase::TITLE("SpinConstrain", "ScJsonFile");
     std::ifstream file(filename);
@@ -140,8 +140,8 @@ void SpinConstrain<FPTYPE, Device>::Set_ScData_From_Json(const std::string& file
     file.close();
 }
 
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, int ntype)
+template <typename FPTYPE>
+void SpinConstrain<FPTYPE>::bcast_ScData(std::string sc_file, int nat, int ntype)
 {
     /// set ScData
     ModuleBase::Vector3<double>* sc_lambda;
@@ -203,5 +203,5 @@ void SpinConstrain<FPTYPE, Device>::bcast_ScData(std::string sc_file, int nat, i
 #endif
 }
 
-template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
-template class SpinConstrain<double, base_device::DEVICE_CPU>;
+template class SpinConstrain<std::complex<double>>;
+template class SpinConstrain<double>;

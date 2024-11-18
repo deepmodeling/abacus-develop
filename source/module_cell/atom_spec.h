@@ -39,6 +39,8 @@ public:
 	ModuleBase::Vector3<double> *taud;// Direct coordinates of each atom in this type.
     ModuleBase::Vector3<double> *vel;// velocities of each atom in this type.
     ModuleBase::Vector3<double> *force; // force acting on each atom in this type.
+    ModuleBase::Vector3<double> *lambda; // Lagrange multiplier for each atom in this type. used in deltaspin
+    ModuleBase::Vector3<int> *constrain; // constrain for each atom in this type. used in deltaspin
     std::string label_orb; // atomic Element symbol in the orbital file of lcao
 
 	double* mag;

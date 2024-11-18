@@ -673,7 +673,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // method
     if (PARAM.inp.sc_mag_switch && iter > PARAM.inp.sc_scf_nmin)
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
+        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
         sc.run_lambda_loop(iter - 1);
     }
 }
@@ -779,30 +779,23 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density(int istep, int iter, double ethr)
     }
 #endif
 
-    // 8) for delta spin
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
-    }
-
-    // 9) use new charge density to calculate energy
+    // 8) use new charge density to calculate energy
     this->pelec->cal_energies(1);
 
-    // 10) symmetrize the charge density
+    // 9) symmetrize the charge density
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
     }
 
-    // 11) compute magnetization, only for spin==2
+    // 10) compute magnetization, only for nspin != 1
     GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
                                                 this->pelec->charge->nxyz,
                                                 this->pelec->charge->rho,
                                                 this->pelec->nelec_spin.data());
 
-    // 12) calculate delta energy
+    // 11) calculate delta energy for hartree and exchange-correlation double countings
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
@@ -911,7 +904,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 //! 2) output charge density
 //! 3) output exx matrix
 //! 4) output charge density and density matrix
-//! 5) cal_MW? (why put it here?)
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
@@ -1052,15 +1044,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(int& iter)
                     &(GlobalC::ucell));
             }
         }
-    }
-
-    // 5) cal_MW?
-    // escon: energy of spin constraint depends on Mi, so cal_energies should be
-    // called after cal_MW
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
@@ -1223,13 +1206,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
-    // 15) write spin constrian MW?
-    // spin constrain calculations, added by Tianqi Zhao.
-    if (PARAM.inp.sc_mag_switch)
+    // 15) write atomic magnetization only when spin_constraint is on
+    // spin constrain calculations.
+    if (PARAM.inp.sc_mag_switch) 
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, true);
-        sc.print_Mag_Force();
+        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(istep);
+        sc.print_Mi(GlobalV::ofs_running);
+        sc.print_Mag_Force(GlobalV::ofs_running);
     }
 
     // 16) delete grid

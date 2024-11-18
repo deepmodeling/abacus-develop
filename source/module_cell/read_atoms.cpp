@@ -515,16 +515,20 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                 delete[] atoms[it].angle1;
                 delete[] atoms[it].angle2;
                 delete[] atoms[it].m_loc_;
-                   atoms[it].tau = new ModuleBase::Vector3<double>[na];
+                delete[] atoms[it].lambda;
+                delete[] atoms[it].constrain;
+                atoms[it].tau = new ModuleBase::Vector3<double>[na];
                 atoms[it].dis = new ModuleBase::Vector3<double>[na];
-                   atoms[it].taud = new ModuleBase::Vector3<double>[na];
+                atoms[it].taud = new ModuleBase::Vector3<double>[na];
                 atoms[it].vel = new ModuleBase::Vector3<double>[na];
-                   atoms[it].mbl = new ModuleBase::Vector3<int>[na];
+                atoms[it].mbl = new ModuleBase::Vector3<int>[na];
                 atoms[it].mag = new double[na];
                 atoms[it].angle1 = new double[na];
                 atoms[it].angle2 = new double[na];
                 atoms[it].m_loc_ = new ModuleBase::Vector3<double>[na];
-                atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07 
+                atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07
+                atoms[it].lambda = new ModuleBase::Vector3<double>[na];
+                atoms[it].constrain = new ModuleBase::Vector3<int>[na]; 
                 ModuleBase::GlobalFunc::ZEROS(atoms[it].mag,na);
                 for (int ia = 0;ia < na; ia++)
                 {
@@ -538,6 +542,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     atoms[it].angle1[ia]=0;
                     atoms[it].angle2[ia]=0;
                     atoms[it].m_loc_[ia].set(0,0,0);
+                    atoms[it].lambda[ia].set(0,0,0);
+                    atoms[it].constrain[ia].set(0,0,0);
 
                     std::string tmpid;
                     tmpid = ifpos.get();
@@ -616,7 +622,52 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                                 atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
                                 input_angle_mag=true;
                                 set_element_mag_zero = true;
-                        }    
+                        }   
+                        else if ( tmpid == "lambda")
+                        {
+                            double tmplam=0;
+                            ifpos >> tmplam;
+                            tmp=ifpos.get();
+                            while (tmp==' ')
+                            {
+                                tmp=ifpos.get();
+                            }
+                            if((tmp >= 48 && tmp <= 57) or tmp=='-')
+                            {
+                                ifpos.putback(tmp);
+                                ifpos >> atoms[it].lambda[ia].y>>atoms[it].lambda[ia].z;
+                                atoms[it].lambda[ia].x=tmplam;
+                            }
+                            else
+                            {
+                                ifpos.putback(tmp);
+                                atoms[it].lambda[ia].z=tmplam;
+                            }
+                            atoms[it].lambda[ia].x /= ModuleBase::Ry_to_eV;
+                            atoms[it].lambda[ia].y /= ModuleBase::Ry_to_eV;
+                            atoms[it].lambda[ia].z /= ModuleBase::Ry_to_eV;
+                        }
+                        else if ( tmpid == "sc")
+                        {
+                            double tmplam=0;
+                            ifpos >> tmplam;
+                            tmp=ifpos.get();
+                            while (tmp==' ')
+                            {
+                                tmp=ifpos.get();
+                            }
+                            if((tmp >= 48 && tmp <= 57) or tmp=='-')
+                            {
+                                ifpos.putback(tmp);
+                                ifpos >> atoms[it].constrain[ia].y>>atoms[it].constrain[ia].z;
+                                atoms[it].constrain[ia].x=tmplam;
+                            }
+                            else
+                            {
+                                ifpos.putback(tmp);
+                                atoms[it].constrain[ia].z=tmplam;
+                            }
+                        } 
                     }
                     // move to next line
                     while ( (tmpid != "\n") && (ifpos.good()) )

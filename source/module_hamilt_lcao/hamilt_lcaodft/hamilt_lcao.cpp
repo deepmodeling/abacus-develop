@@ -33,7 +33,8 @@
 #include "operator_lcao/op_dftu_lcao.h"
 #include "operator_lcao/op_exx_lcao.h"
 #include "operator_lcao/overlap_new.h"
-#include "operator_lcao/sc_lambda_lcao.h"
+#include "operator_lcao/dspin_lcao.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "operator_lcao/td_ekinetic_lcao.h"
 #include "operator_lcao/td_nonlocal_lcao.h"
 #include "operator_lcao/veff_lcao.h"
@@ -377,11 +378,18 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         }
         if (PARAM.inp.sc_mag_switch)
         {
-            Operator<TK>* sc_lambda = new OperatorScLambda<OperatorLCAO<TK, TR>>(this->hsk,
-                                                                                 kv->kvec_d,
-                                                                                 this->hR, // no explicit call yet
-                                                                                 this->kv->isk);
+            Operator<TK>* sc_lambda = 
+                new DeltaSpin<OperatorLCAO<TK, TR>>(
+                    this->hsk,
+                    kv->kvec_d,
+                    this->hR,
+                    GlobalC::ucell,
+                    &GlobalC::GridD,
+                    two_center_bundle.overlap_orb_onsite.get()
+            );
             this->getOperator()->add(sc_lambda);
+            SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+            sc.set_operator(sc_lambda);
         }
     }
 
