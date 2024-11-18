@@ -38,7 +38,7 @@ void WARNING(const std::string &file, const std::string &description);
  * @brief Close .log files and exit
  *
  */
-[[noreturn]] void QUIT(const int ret);
+[[noreturn]] void QUIT(int ret);
 
 /**
  * @brief Combine the functions of WARNING and QUIT
