@@ -78,7 +78,7 @@ void Structure_Factor::get_sk(Device* ctx,
     {
         int it = GlobalC::ucell.iat2it[iat];
         int ia = GlobalC::ucell.iat2ia[iat];
-        auto *tau = reinterpret_cast<double *>(GlobalC::ucell.atoms[it].tau);
+        auto *tau = reinterpret_cast<double *>(GlobalC::ucell.atoms[it].tau.data());
         h_atom_tau[iat * 3 + 0] = static_cast<FPTYPE>(tau[ia * 3 + 0]);
         h_atom_tau[iat * 3 + 1] = static_cast<FPTYPE>(tau[ia * 3 + 1]);
         h_atom_tau[iat * 3 + 2] = static_cast<FPTYPE>(tau[ia * 3 + 2]);

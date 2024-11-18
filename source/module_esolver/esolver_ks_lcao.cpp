@@ -685,14 +685,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         this->p_hamilt->refresh();
     }
 
-    // run the inner lambda loop to contrain atomic moments with the DeltaSpin
-    // method
-    if (PARAM.inp.sc_mag_switch && iter > PARAM.inp.sc_scf_nmin)
-    {
-        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
-        sc.run_lambda_loop(iter - 1);
-    }
-
     // save density matrix DMR for mixing
     if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
@@ -726,8 +718,31 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
-    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+
+    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        if(!sc.mag_converged() && this->drho>0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if(sc.mag_converged())
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            skip_solve = true;
+        }
+    }
+    if(!skip_solve)
+    {
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+    }
 
     // 5) what's the exd used for?
 #ifdef __EXX
@@ -899,8 +914,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
     // 8) for delta spin
     if (PARAM.inp.sc_mag_switch)
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
+        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(iter);
     }
 
     // call iter_finish() of ESolver_KS

@@ -31,7 +31,8 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       hamilt::HContainer<TR>* hR_in,
                                       const UnitCell& ucell_in,
                                       Grid_Driver* gridD_in,
-                                      const TwoCenterIntegrator* intor);
+                                      const TwoCenterIntegrator* intor,
+                                      const std::vector<double>& orb_cutoff);
     ~DeltaSpin<OperatorLCAO<TK, TR>>();
 
     /**
@@ -75,6 +76,8 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     hamilt::HContainer<TR>* HR = nullptr;
 
     const TwoCenterIntegrator* intor_ = nullptr;
+
+    std::vector<double> orb_cutoff_;
 
     /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
     int nspin = 0;

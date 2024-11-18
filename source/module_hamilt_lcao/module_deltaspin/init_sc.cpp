@@ -9,13 +9,10 @@ void SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
                                             double sccut_in,
                                             double sc_drop_thr_in,
                                             const UnitCell& ucell,
-                                            std::string sc_file,
-                                            int NPOL,
                                             Parallel_Orbitals* ParaV_in,
                                             int nspin_in,
                                             K_Vectors& kv_in,
                                             std::string KS_SOLVER_in,
-                                            void* phsol_in,
                                             void* p_hamilt_in,
                                             void* psi_in,
                                             elecstate::ElecState* pelec_in)
@@ -30,9 +27,8 @@ void SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
     this->constrain_ = ucell.get_constrain();
     this->atomLabels_ = ucell.get_atomLabels();
     this->set_decay_grad();
-    this->set_npol(NPOL);
     if(ParaV_in != nullptr) this->set_ParaV(ParaV_in);
-    this->set_solver_parameters(kv_in, phsol_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in);
+    this->set_solver_parameters(kv_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in);
 }
 
 template class SpinConstrain<std::complex<double>>;

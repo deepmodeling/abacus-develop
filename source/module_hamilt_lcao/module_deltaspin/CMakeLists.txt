@@ -1,6 +1,5 @@
 list(APPEND objects
     spin_constrain.cpp
-    sc_parse_json.cpp
     init_sc.cpp
     cal_mw.cpp
     basic_funcs.cpp

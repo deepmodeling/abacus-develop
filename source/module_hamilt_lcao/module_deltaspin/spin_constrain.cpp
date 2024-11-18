@@ -51,20 +51,6 @@ const std::map<int, int>& SpinConstrain<FPTYPE>::get_atomCounts() const
     return this->atomCounts;
 }
 
-/// set npol
-template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::set_npol(int npol)
-{
-    this->npol_ = npol;
-}
-
-/// get npol
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_npol()
-{
-    return this->npol_;
-}
-
 /// set nspin
 template <typename FPTYPE>
 void SpinConstrain<FPTYPE>::set_nspin(int nspin_in)
@@ -179,51 +165,6 @@ template <typename FPTYPE>
 const std::map<int, std::map<int, int>>& SpinConstrain<FPTYPE>::get_lnchiCounts() const
 {
     return this->lnchiCounts;
-}
-
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_nw()
-{
-    this->check_atomCounts();
-    int nw = 0;
-    for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it)
-    {
-        nw += (it->second) * this->atomCounts[it->first] * this->npol_;
-    }
-    return nw;
-}
-
-template <typename FPTYPE>
-int SpinConstrain<FPTYPE>::get_iwt(int itype, int iat, int orbital_index)
-{
-    this->check_atomCounts();
-    if (itype < 0 || itype >= this->get_ntype())
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt", "itype out of range [0, ntype)");
-    }
-    if (iat < 0 || iat >= this->get_nat())
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt", "iat out of range [0, nat)");
-    }
-    if (orbital_index < 0 || orbital_index >= this->orbitalCounts[itype] * this->npol_)
-    {
-        ModuleBase::WARNING_QUIT("SpinConstrain::get_iwt", "orbital index out of range [0, atom_nw*npol)");
-    }
-    int iwt = 0;
-    for (std::map<int, int>::iterator it = this->orbitalCounts.begin(); it != this->orbitalCounts.end(); ++it)
-    {
-        if (it->first == itype)
-        {
-            break;
-        }
-        iwt += (it->second) * this->atomCounts[it->first] * this->npol_;
-    }
-    for (int i = 0; i < iat; ++i)
-    {
-        iwt += this->orbitalCounts[itype] * this->npol_;
-    }
-    iwt += orbital_index;
-    return iwt;
 }
 
 // set sc_lambda from ScData
@@ -544,14 +485,12 @@ double SpinConstrain<FPTYPE>::get_sc_drop_thr()
 
 template <typename FPTYPE>
 void SpinConstrain<FPTYPE>::set_solver_parameters(K_Vectors& kv_in,
-                                                  void* phsol_in,
                                                   void* p_hamilt_in,
                                                   void* psi_in,
                                                   elecstate::ElecState* pelec_in,
                                                   std::string KS_SOLVER_in)
 {
     this->kv_ = kv_in;
-    this->phsol = phsol_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
     this->pelec = pelec_in;

@@ -2,14 +2,14 @@ if(ENABLE_LCAO)
 
 AddTest(
   TARGET deltaspin_basic_func_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES basic_test.cpp
     ../basic_funcs.cpp
 )
 
 AddTest(
   TARGET deltaspin_spin_constrain_test
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES spin_constrain_test.cpp
     ../spin_constrain.cpp
     ../sc_parse_json.cpp
@@ -19,50 +19,9 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_template_helpers
-  LIBS ${math_libs} base device
+  LIBS ${math_libs} base device parameter
   SOURCES template_helpers_test.cpp
     ../spin_constrain.cpp
     ../template_helpers.cpp
-)
-
-AddTest(
-  TARGET deltaspin_cal_h_lambda
-  LIBS ${math_libs} base device
-  SOURCES cal_h_lambda_test.cpp
-    ../spin_constrain.cpp
-    ../cal_h_lambda.cpp
-    ../../../module_basis/module_ao/parallel_2d.cpp
-    ../../../module_basis/module_ao/parallel_orbitals.cpp
-)
-
-AddTest(
-  TARGET deltaspin_init_sc
-  LIBS ${math_libs} base device cell_info parameter
-  SOURCES init_sc_test.cpp
-    ../spin_constrain.cpp
-    ../sc_parse_json.cpp
-    ../init_sc.cpp
-    ../../../module_io/output.cpp
-    ../../../module_basis/module_ao/parallel_2d.cpp
-    ../../../module_basis/module_ao/parallel_orbitals.cpp
-)
-
-AddTest(
-  TARGET deltaspin_cal_mw_helper
-  LIBS ${math_libs} base device
-  SOURCES cal_mw_helper_test.cpp
-    ../spin_constrain.cpp
-    ../cal_mw_helper.cpp
-    ../../../module_basis/module_ao/parallel_2d.cpp
-    ../../../module_basis/module_ao/parallel_orbitals.cpp
-)
-
-AddTest(
-  TARGET deltaspin_lambda_loop_helper
-  LIBS ${math_libs} base device
-  SOURCES lambda_loop_helper_test.cpp
-    ../spin_constrain.cpp
-    ../lambda_loop_helper.cpp
-    ../basic_funcs.cpp
 )
 endif() 

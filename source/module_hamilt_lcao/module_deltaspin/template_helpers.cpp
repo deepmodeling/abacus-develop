@@ -52,14 +52,6 @@ void SpinConstrain<double>::print_header()
 }
 
 template <>
-void SpinConstrain<double>::collect_MW(ModuleBase::matrix& MecMulP,
-                                                                const ModuleBase::ComplexMatrix& mud,
-                                                                int nw,
-                                                                int isk)
-{
-}
-
-template <>
 bool SpinConstrain<double>::check_gradient_decay(
     std::vector<ModuleBase::Vector3<double>> new_spin,
     std::vector<ModuleBase::Vector3<double>> old_spin,

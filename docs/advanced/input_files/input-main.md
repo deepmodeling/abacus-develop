@@ -2925,7 +2925,7 @@ These variables are used to control DFT+U correlated parameters
 
   - where $\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
 - **Unit**: Bohr
-- **Default**: 5.0
+- **Default**: 3.0
 
 [back to top](#full-list-of-input-keywords)
 

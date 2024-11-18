@@ -102,6 +102,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         &&(PARAM.inp.psi_initializer)
         &&(PARAM.inp.init_wfc.substr(0, 3) == "nao")
         )
+        || PARAM.inp.onsite_radius > 0.0
     )
     {
         if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
@@ -468,8 +469,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     {
                         this->atoms[it].nwl = lmaxmax;
                     }
-                    delete[] this->atoms[it].l_nchi;
-                    this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+                    this->atoms[it].l_nchi.resize(this->atoms[it].nwl+1, 0);
                     for(int L=0; L<atoms[it].nwl+1; L++)
                     {
                         this->atoms[it].l_nchi[L] = 1;
@@ -506,30 +506,17 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             }
             if (na > 0)
             {
-                delete[] atoms[it].tau;
-                delete[] atoms[it].dis;
-                delete[] atoms[it].taud;
-                delete[] atoms[it].vel;
-                delete[] atoms[it].mbl;
-                delete[] atoms[it].mag;
-                delete[] atoms[it].angle1;
-                delete[] atoms[it].angle2;
-                delete[] atoms[it].m_loc_;
-                delete[] atoms[it].lambda;
-                delete[] atoms[it].constrain;
-                atoms[it].tau = new ModuleBase::Vector3<double>[na];
-                atoms[it].dis = new ModuleBase::Vector3<double>[na];
-                atoms[it].taud = new ModuleBase::Vector3<double>[na];
-                atoms[it].vel = new ModuleBase::Vector3<double>[na];
-                atoms[it].mbl = new ModuleBase::Vector3<int>[na];
-                atoms[it].mag = new double[na];
-                atoms[it].angle1 = new double[na];
-                atoms[it].angle2 = new double[na];
-                atoms[it].m_loc_ = new ModuleBase::Vector3<double>[na];
-                atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07
-                atoms[it].lambda = new ModuleBase::Vector3<double>[na];
-                atoms[it].constrain = new ModuleBase::Vector3<int>[na]; 
-                ModuleBase::GlobalFunc::ZEROS(atoms[it].mag,na);
+                atoms[it].tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].taud.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].vel.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].mbl.resize(na, ModuleBase::Vector3<int>(0,0,0));
+                atoms[it].mag.resize(na, 0);
+                atoms[it].angle1.resize(na, 0);
+                atoms[it].angle2.resize(na, 0);
+                atoms[it].m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
@@ -681,12 +668,11 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     {
                         if(PARAM.inp.noncolin)
                         {
-                            //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
                                     cos(atoms[it].angle1[ia]);
-                                if(sin(atoms[it].angle1[ia]) > 1e-10 )
+                                if(std::abs(sin(atoms[it].angle1[ia])) > 1e-10 )
                                 {
                                     atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
                                         sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
@@ -1197,8 +1183,8 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
         if (strcmp("Lmax", word) == 0)
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
-            delete[] atom->l_nchi;
-            atom->l_nchi = new int[ atom->nwl+1];
+            
+            atom->l_nchi.resize(atom->nwl+1, 0);
         }
         assert(atom->nwl<10);
         if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29

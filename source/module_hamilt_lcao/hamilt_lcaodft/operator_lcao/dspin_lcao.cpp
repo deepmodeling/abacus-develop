@@ -14,8 +14,9 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(
     hamilt::HContainer<TR>* hR_in,
     const UnitCell& ucell_in,
     Grid_Driver* gridD_in,
-    const TwoCenterIntegrator* intor)
-    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor)
+    const TwoCenterIntegrator* intor,
+    const std::vector<double>& orb_cutoff)
+    : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
 {
     this->cal_type = calculation_type::lcao_sc_lambda;
     this->ucell = &ucell_in;
@@ -249,12 +250,11 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_pre_HR()
             const int iat1 = ucell->itia2iat(T1, I1);
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
             // choose the real adjacent atoms
-            const LCAO_Orbitals& orb = LCAO_Orbitals::get_const_instance();
             // Note: the distance of atoms should less than the cutoff radius, 
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat, iat1, R_index1).norm() * this->ucell->lat0
-                < orb.Phi[T1].getRcut() + PARAM.inp.onsite_radius)
+                < this->orb_cutoff_[T1] + PARAM.inp.onsite_radius)
             {
                 is_adj[ad] = true;
             }

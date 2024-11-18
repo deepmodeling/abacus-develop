@@ -11,8 +11,8 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "module_hsolver/hsolver.h"
 #include "module_hamilt_general/operator.h"
+#include "module_elecstate/elecstate.h"
 
 struct ScAtomData;
 
@@ -31,13 +31,10 @@ public:
                double sccut_in,
                double sc_drop_thr_in,
                const UnitCell& ucell,
-               std::string sc_file,
-               int NPOL,
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
                K_Vectors& kv_in,
                std::string KS_SOLVER_in,
-               void* phsol_in,
                void* p_hamilt_in,
                void* psi_in,
                elecstate::ElecState* pelec_in);
@@ -105,7 +102,6 @@ public:
     Parallel_Orbitals *ParaV = nullptr;
     //--------------------------------------------------------------------------------
     // pointers for solve Hamiltonian to get new Magnetization from Lambda
-    void* phsol = nullptr;
     void* p_hamilt = nullptr;
     void* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
@@ -123,10 +119,6 @@ public:
     /// Delete copy and move constructors and assign operators
     SpinConstrain(SpinConstrain const&) = delete;
     SpinConstrain(SpinConstrain&&) = delete;
-    /// parse json input file for non-collinear spin-constrained DFT
-    void Set_ScData_From_Json(const std::string& filename);
-    /// get sc_data
-    const std::map<int, std::vector<ScAtomData>>& get_ScData() const;
     /// set element index to atom index map
     void set_atomCounts(const std::map<int, int>& atomCounts_in);
     /// get element index to atom index map
@@ -167,14 +159,6 @@ public:
     void check_atomCounts();
     /// get iat
     int get_iat(int itype, int atom_index);
-    /// get nw
-    int get_nw();
-    /// get iwt
-    int get_iwt(int itype, int iat, int orbital_index);
-    /// set npol
-    void set_npol(int npol);
-    /// get npol
-    int get_npol();
     /// set nspin
     void set_nspin(int nspin);
     /// get nspin
@@ -214,13 +198,10 @@ public:
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver
     void set_solver_parameters(K_Vectors& kv_in,
-                               void* phsol_in,
                                void* p_hamilt_in,
                                void* psi_in,
                                elecstate::ElecState* pelec_in,
                                std::string KS_SOLVER_in);
-    /// bcast sc data read from json file
-    void bcast_ScData(std::string sc_file, int nat, int ntype);
 
   private:
     SpinConstrain(){};                               // Private constructor
