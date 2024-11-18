@@ -230,6 +230,11 @@ AddTest(
   SOURCES formatter_test.cpp
 )
 
+AddTest(
+  TARGET lebedev_laikov
+  SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
+)
+
 if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET perf_sphbes
