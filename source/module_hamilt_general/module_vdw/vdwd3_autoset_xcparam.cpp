@@ -473,17 +473,17 @@ std::string _uppercase(const std::string& s)
  * @param a1 [out] a1 parameter
  * @param a2 [out] a2 parameter
  */
-void vdw::Vdwd3Parameters::dftd3_params(const std::string& xc_in,
-                                        const std::string& d3method,
-                                        const std::string& s6_in,
-                                        const std::string& s8_in,
-                                        const std::string& a1_in,
-                                        const std::string& a2_in,
-                                        double& s6,
-                                        double& s8,
-                                        double& a1,
-                                        double& a2,
-                                        std::ofstream* plog) const
+void vdw::Vdwd3Parameters::_vdwd3_autoset_xcparam(const std::string& xc_in,
+                                                  const std::string& d3method,
+                                                  const std::string& s6_in,
+                                                  const std::string& s8_in,
+                                                  const std::string& a1_in,
+                                                  const std::string& a2_in,
+                                                  double& s6,
+                                                  double& s8,
+                                                  double& a1,
+                                                  double& a2,
+                                                  std::ofstream* plog)
 {
     const std::map<std::string, std::string> param_map = {
         {"d3_bj", "bj"}, {"d3_0", "zero"}, {"d3_bjm", "bjm"}, {"d3_0m", "zerom"},
@@ -501,7 +501,7 @@ void vdw::Vdwd3Parameters::dftd3_params(const std::string& xc_in,
     else
     {
         std::vector<double> param;
-        const std::string xc = dftd3_xc_name(xc_in);
+        const std::string xc = _vdwd3_xcname(xc_in);
         _search(xc, param_map.at(d3method), param);
         s6 = (s6_in == "default") ? param[0] : std::stod(s6_in);
         s8 = (s8_in == "default") ? param[3] : std::stod(s8_in);

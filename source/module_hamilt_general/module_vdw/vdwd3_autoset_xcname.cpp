@@ -382,7 +382,7 @@ void _xcname_libxc(const std::string& xcpattern, std::string& xname)
     }
 }
 
-std::string vdw::Vdwd3Parameters::dftd3_xc_name(const std::string& xcpattern) const
+std::string vdw::Vdwd3Parameters::_vdwd3_xcname(const std::string& xcpattern)
 {
     std::string xcname = xcpattern;
     const std::regex pattern("(LDA|GGA|MGGA|HYB|HYB_LDA|HYB_GGA|HYB_MGGA)_(X|C|XC|K)_(.*)");
