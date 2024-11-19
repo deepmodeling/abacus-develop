@@ -1,36 +1,39 @@
 #ifndef GINT_INTERFACE
 #define GINT_INTERFACE
 
-// This class provides a unified interface to the
-//  grid intergration operation used to calculate
-//  electron density, and the contribution of local potential
-//  to Hamiltonian and force/stress
-//  There are two derived classes of this class
-//  namely Gint_k and Gint_Gamma, which contains some
-//  specific operations for gamma point/multi-k calculations
-
 #include "gint_tools.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-
 #include <functional>
+
+//----------------------------------------------------------
+//！This class provides a unified interface to the
+//！grid intergration operation used to calculate
+//！electron density, and the contribution of local
+//！potential to Hamiltonian and force/stress.
+//！There are two derived classes of this class
+//! namely Gint_Gamma and Gint_k, which contain
+//! specific operations for gamma point/multi-k calculations
+//----------------------------------------------------------
 
 class Gint {
   public:
     ~Gint();
 
-    /// move operator for the next ESolver to directly use its infomation
+    //! move operator for the next ESolver to directly use its infomation
     Gint& operator=(Gint&& rhs);
 
     hamilt::HContainer<double>* get_hRGint() const { return hRGint; }
+
     std::vector<hamilt::HContainer<double>*> get_DMRGint() const { return DMRGint; }
+
     int get_ncxyz() const { return ncxyz; }
 
-    // the unified interface to grid integration
+    //! the unified interface to grid integration
     void cal_gint(Gint_inout* inout);
 
-    // preparing FFT grid
+    //! preparing FFT grid
     void prep_grid(const Grid_Technique& gt,
                    const int& nbx_in,
                    const int& nby_in,
@@ -79,66 +82,81 @@ class Gint {
             const std::vector<int> &block_size,
             const std::vector<int> &block_index,
             const ModuleBase::Array_Pool<bool> &cal_flag)>;
+
     T_psir_func psir_func_1 = nullptr;
     T_psir_func psir_func_2 = nullptr;
 
   protected:
-    // variables related to FFT grid
+
+    //! variables related to FFT grid
     int nbx;
     int nby;
     int nbz;
     int ncxyz;
     int nbz_start;
-    int bx, by, bz, bxyz;
+    int bx;
+    int by;
+    int bz;
+    int bxyz;
     int nbxx;
-    int ny, nplane, startz_current; // from rhopw
+    int ny;
+    int nplane;
+    int startz_current; // from rhopw
 
-    // in cal_gint_gpu.cpp
+    //! in cal_gint_gpu.cpp
     void gpu_vlocal_interface(Gint_inout* inout);
 
     void gpu_rho_interface(Gint_inout* inout);
 
     void gpu_force_interface(Gint_inout* inout);
 
-    // in cal_gint_cpu.cpp
-
+    //! in cal_gint_cpu.cpp
     void gint_kernel_vlocal(Gint_inout* inout);
 
-    // calculate < phi_0 | vlocal | dphi_R >
+    //! calculate H_mu_nu(local)=<phi_0|vlocal|dphi_R>
     void gint_kernel_dvlocal(Gint_inout* inout);
 
+    //! calculate vlocal in meta-GGA functionals
     void gint_kernel_vlocal_meta(Gint_inout* inout);
 
+    //! calculate charge density rho(r)=\int D_munu \phi_mu \phi_nu
     void gint_kernel_rho(Gint_inout* inout);
 
+    //! used in meta-GGA functional
     void gint_kernel_tau(Gint_inout* inout);
 
+    //! compute forces
     void gint_kernel_force(Gint_inout* inout);
 
+    //! compute forces related to meta-GGA functionals
     void gint_kernel_force_meta(Gint_inout* inout);
 
-    void cal_meshball_vlocal(
-        const int na_grid, // how many atoms on this (i,j,k) grid
-        const int LD_pool,
-        const int* const block_iw, // block_iw[na_grid],	index of wave
-                                   // functions for each block
-        const int* const
-            block_size, // block_size[na_grid],	number of columns of a band
-        const int* const block_index, // block_index[na_grid+1], count total
-                                      // number of atomis orbitals
-        const int grid_index,         // index of grid group, for tracing iat
-        const bool* const* const
-            cal_flag, // cal_flag[bxyz][na_grid],	whether the atom-grid
-                      // distance is larger than cutoff
-        const double* const* const psir_ylm,   // psir_ylm[bxyz][LD_pool]
-        const double* const* const psir_vlbr3, // psir_vlbr3[bxyz][LD_pool]
-        hamilt::HContainer<double>* hR); // HContainer for storing the <phi_0 |
-                                         // V | phi_R> matrix element.
+    //! calculate local potential contribution to the Hamiltonian
+    //! na_grid: how many atoms on this (i,j,k) grid
+    //! block_iw: dim is [na_grid], index of wave function for each block
+    //! block_size: dim is [block_size], number of columns of a band
+    //! block_index: dim is [na_grid+1], total number of atomic orbitals
+    //! grid_index: index of grid group, for tracing iat
+    //! cal_flag: dim is [bxyz][na_grid], whether the atom-grid distance is larger than cutoff
+    //! psir_ylm: dim is [bxyz][LD_pool]
+    //! psir_vlbr3: dim is [bxyz][LD_pool]
+    //! hR: HContainer for storing the <phi_0|V|phi_R> matrix elements
 
-    //------------------------------------------------------
-    // in gint_fvl.cpp
-    //------------------------------------------------------
-    // calculate vl contributuion to force & stress via grid integrals
+    void cal_meshball_vlocal(
+        const int na_grid,
+        const int LD_pool,
+        const int* const block_iw,
+        const int* const block_size,
+        const int* const block_index,
+        const int grid_index,
+        const bool* const* const cal_flag,
+        const double* const* const psir_ylm,
+        const double* const* const psir_vlbr3,
+        hamilt::HContainer<double>* hR);
+
+
+    //! in gint_fvl.cpp
+    //! calculate vl contributuion to force & stress via grid integrals
     void gint_kernel_force(const int na_grid,
                            const int grid_index,
                            const double delta_r,
@@ -150,6 +168,9 @@ class Gint {
                            ModuleBase::matrix* svl_dphi,
                            const UnitCell& ucell);
 
+    //! in gint_fvl.cpp
+    //! calculate vl contributuion to force & stress via grid integrals
+    //! used in meta-GGA calculations
     void gint_kernel_force_meta(const int na_grid,
                                 const int grid_index,
                                 const double delta_r,
@@ -162,31 +183,38 @@ class Gint {
                                 ModuleBase::matrix* svl_dphi,
                                 const UnitCell& ucell);
 
+    //! Use grid integrals to compute the atomic force contributions
+    //! na_grid: how many atoms on this (i,j,k) grid
+    //! block_size: dim is [na_grid], number of columns of a band
+    //! block_index: dim is [na_grid+1], total number of atomis orbitals
+    //! psir_vlbr3_DMR: dim is [bxyz][LD_pool]
+    //! dpsir_x: dim is [bxyz][LD_pool]
+    //! dpsir_y: dim is [bxyz][LD_pool]
+    //! dpsir_z: dim is [bxyz][LD_pool]
     void cal_meshball_force(
         const int grid_index,
-        const int na_grid, // how many atoms on this (i,j,k) grid
-        const int* const
-            block_size, // block_size[na_grid],	number of columns of a band
-        const int* const block_index, // block_index[na_grid+1], count total
-                                      // number of atomis orbitals
-        const double* const* const psir_vlbr3_DMR, // psir_vlbr3[bxyz][LD_pool]
+        const int na_grid,
+        const int* const block_size,
+        const int* const block_index,
+        const double* const* const psir_vlbr3_DMR,
         const double* const* const dpsir_x,        // psir_vlbr3[bxyz][LD_pool]
         const double* const* const dpsir_y,        // psir_vlbr3[bxyz][LD_pool]
         const double* const* const dpsir_z,        // psir_vlbr3[bxyz][LD_pool]
         ModuleBase::matrix* force);
 
+    //! Use grid integrals to compute the stress contributions
+    //! na_grid: how many atoms on this (i,j,k) grid
+    //! block_index: dim is [na_grid+1], total number of atomis orbitals
     void cal_meshball_stress(
-        const int na_grid,  					    // how many atoms on this (i,j,k) grid
-        const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
+        const int na_grid,
+        const int*const block_index,
         const double*const psir_vlbr3_DMR,
         const double*const dpsirr,
         ModuleBase::matrix *stress);
-
-    //------------------------------------------------------
-    // in gint_k_rho.cpp
-    //------------------------------------------------------
-    // calculate the charge density & kinetic energy density (tau) via grid
-    // integrals
+    
+    //! Use grid integrals to compute charge density
+    //! in gint_k_rho.cpp
+    //! calculate the charge density & kinetic energy density (tau) via grid integrals
     void gint_kernel_rho(const int na_grid,
                          const int grid_index,
                          const double delta_r,
@@ -195,6 +223,7 @@ class Gint {
                          const UnitCell& ucell,
                          Gint_inout* inout);
 
+    //! Use grid integrals to compute charge density in a meshball
     void cal_meshball_rho(const int na_grid,
                           const int*const block_index,
                           const int*const vindex,
@@ -202,6 +231,8 @@ class Gint {
                           const double*const*const psir_DMR,
                           double*const rho);
 
+    //! Use grid integrals to compute kinetic energy density tau 
+    //！in meta-GGA functional 
     void gint_kernel_tau(const int na_grid,
                          const int grid_index,
                          const double delta_r,
@@ -210,6 +241,8 @@ class Gint {
                          Gint_inout* inout,
                          const UnitCell& ucell);
 
+    //! Use grid integrals to compute kinetic energy density tau
+    //！in a meshball, used in meta-GGA functional calculations
     void cal_meshball_tau(const int na_grid,
                           int* block_index,
                           int* vindex,
@@ -221,16 +254,22 @@ class Gint {
                           double** dpsiz_dm,
                           double* rho);
 
-    // save the < phi_0i | V | phi_Rj > in sparse H matrix.
-    hamilt::HContainer<double>* hRGint
-        = nullptr; // stores Hamiltonian in sparse format
-    std::vector<hamilt::HContainer<double>*> hRGint_tmp; // size of vec is 4, only used when nspin = 4
-    hamilt::HContainer<std::complex<double>>* hRGintCd
-        = nullptr; // stores Hamiltonian in sparse format
-    std::vector<hamilt::HContainer<double>*>
-        DMRGint; // stores DMR in sparse format
-    hamilt::HContainer<double>* DMRGint_full
-        = nullptr; // tmp tools used in transfer_DM2DtoGrid
+    //! save the < phi_0i | V | phi_Rj > in sparse H matrix.
+    //! stores Hamiltonian in sparse format
+    hamilt::HContainer<double>* hRGint = nullptr; 
+
+    //! size of vec is 4, only used when nspin = 4
+    std::vector<hamilt::HContainer<double>*> hRGint_tmp; 
+
+    //! stores Hamiltonian in sparse format
+    hamilt::HContainer<std::complex<double>>* hRGintCd = nullptr; 
+
+    //! stores DMR in sparse format
+    std::vector<hamilt::HContainer<double>*> DMRGint; 
+
+    //! tmp tools used in transfer_DM2DtoGrid 
+    hamilt::HContainer<double>* DMRGint_full = nullptr;
+
     std::vector<hamilt::HContainer<double>> pvdpRx_reduced;
     std::vector<hamilt::HContainer<double>> pvdpRy_reduced;
     std::vector<hamilt::HContainer<double>> pvdpRz_reduced;

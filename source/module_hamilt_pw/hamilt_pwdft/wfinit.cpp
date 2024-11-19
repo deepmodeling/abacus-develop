@@ -4,6 +4,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_hsolver/diago_iter_assist.h"
+#include "module_parameter/parameter.h"
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_atomic_random.h"
 #include "module_psi/psi_initializer_nao.h"
@@ -38,9 +39,10 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
 #endif
                                      pseudopot_cell_vnl* p_ppcell)
 {
-    if (!this->use_psiinitializer) {
+    if (!this->use_psiinitializer)
+    {
         return;
-}
+    }
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("WFInit", "prepare_init");
@@ -136,7 +138,9 @@ void WFInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
 template <typename T, typename Device>
 void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 {
-    if (this->use_psiinitializer) {} // do not need to do anything because the interpolate table is unchanged
+    if (this->use_psiinitializer)
+    {
+    }    // do not need to do anything because the interpolate table is unchanged
     else // old initialization method, used in EXX calculation
     {
         this->p_wf->init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
@@ -150,95 +154,121 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                        hamilt::Hamilt<T, Device>* p_hamilt,
                                        std::ofstream& ofs_running)
 {
-    if (!this->use_psiinitializer) { return; }
     ModuleBase::timer::tick("WFInit", "initialize_psi");
-    // if psig is not allocated before, allocate it
-    if (!this->psi_init->psig_use_count()) { this->psi_init->allocate(/*psig_only=*/true); }
-    
-    // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
-    // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
-    for (int ik = 0; ik < this->pw_wfc->nks; ik++)
+
+    if (PARAM.inp.psi_initializer)
     {
-        //! Fix the wavefunction to initialize at given kpoint
-        psi->fix_k(ik);
-
-        //! Update Hamiltonian from other kpoint to the given one
-        p_hamilt->updateHk(ik);
-
-        //! Project atomic orbitals on |k+G> planewave basis, where k is wavevector of kpoint
-        //! and G is wavevector of the peroiodic part of the Bloch function
-        this->psi_init->proj_ao_onkG(ik);
-
-        //! psi_initializer manages memory of psig with shared pointer,
-        //! its access to use is shared here via weak pointer
-        //! therefore once the psi_initializer is destructed, psig will be destructed, too
-        //! this way, we can avoid memory leak and undefined behavior
-        std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
-
-        if (psig.expired())
+        // if psig is not allocated before, allocate it
+        if (!this->psi_init->psig_use_count())
         {
-            ModuleBase::WARNING_QUIT("WFInit::initialize_psi", "psig lifetime is expired");
+            this->psi_init->allocate(/*psig_only=*/true);
         }
 
-        //! to use psig, we need to lock it to get a shared pointer version,
-        //! then switch kpoint of psig to the given one
-        auto psig_ = psig.lock();
-        // CHANGE LOG: if not lcaoinpw, the psig will only be used in psi-initialization
-        // so we can only allocate memory for one kpoint with the maximal number of pw
-        // over all kpoints, then the memory space will be always enough. Then for each
-        // kpoint, the psig is calculated in an overwrite manner.
-        const int ik_psig = (psig_->get_nk() == 1) ? 0 : ik;
-        psig_->fix_k(ik_psig);
-
-        std::vector<typename GetTypeReal<T>::type> etatom(psig_->get_nbands(), 0.0);
-
-        // then adjust dimension from psig to psi
-        // either by matrix-multiplication or by copying-discarding
-        if (this->psi_init->method() != "random")
+        // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
+        // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
+        for (int ik = 0; ik < this->pw_wfc->nks; ik++)
         {
-            // lcaoinpw and pw share the same esolver. In the future, we will have different esolver
-            if (((this->ks_solver == "cg") || (this->ks_solver == "lapack")) && (this->basis_type == "pw"))
+            //! Fix the wavefunction to initialize at given kpoint
+            psi->fix_k(ik);
+
+            //! Update Hamiltonian from other kpoint to the given one
+            p_hamilt->updateHk(ik);
+
+            //! Project atomic orbitals on |k+G> planewave basis, where k is wavevector of kpoint
+            //! and G is wavevector of the peroiodic part of the Bloch function
+            this->psi_init->proj_ao_onkG(ik);
+
+            //! psi_initializer manages memory of psig with shared pointer,
+            //! its access to use is shared here via weak pointer
+            //! therefore once the psi_initializer is destructed, psig will be destructed, too
+            //! this way, we can avoid memory leak and undefined behavior
+            std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
+
+            if (psig.expired())
             {
-                // the following function is only run serially, to be improved
-                hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
-                                                                         psig_->get_pointer(),
-                                                                         psig_->get_nbands(),
-                                                                         psig_->get_nbasis(),
-                                                                         *(kspw_psi),
-                                                                         etatom.data());
-                continue;
+                ModuleBase::WARNING_QUIT("WFInit::initialize_psi", "psig lifetime is expired");
             }
-            else if ((this->ks_solver == "lapack") && (this->basis_type == "lcao_in_pw"))
+
+            //! to use psig, we need to lock it to get a shared pointer version,
+            //! then switch kpoint of psig to the given one
+            auto psig_ = psig.lock();
+            // CHANGE LOG: if not lcaoinpw, the psig will only be used in psi-initialization
+            // so we can only allocate memory for one kpoint with the maximal number of pw
+            // over all kpoints, then the memory space will be always enough. Then for each
+            // kpoint, the psig is calculated in an overwrite manner.
+            const int ik_psig = (psig_->get_nk() == 1) ? 0 : ik;
+            psig_->fix_k(ik_psig);
+
+            std::vector<typename GetTypeReal<T>::type> etatom(psig_->get_nbands(), 0.0);
+
+            // then adjust dimension from psig to psi
+            // either by matrix-multiplication or by copying-discarding
+            if (this->psi_init->method() != "random")
             {
-                if (ik == 0)
+                // lcaoinpw and pw share the same esolver. In the future, we will have different esolver
+                if (((this->ks_solver == "cg") || (this->ks_solver == "lapack")) && (this->basis_type == "pw"))
                 {
-                    ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
+                    // the following function is only run serially, to be improved
+                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
+                                                                             psig_->get_pointer(),
+                                                                             psig_->get_nbands(),
+                                                                             psig_->get_nbasis(),
+                                                                             *(kspw_psi),
+                                                                             etatom.data());
+                    continue;
                 }
-                continue;
+                else if ((this->ks_solver == "lapack") && (this->basis_type == "lcao_in_pw"))
+                {
+                    if (ik == 0)
+                    {
+                        ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
+                    }
+                    continue;
+                }
+                // else the case is davidson
             }
-            // else the case is davidson
-        }
-        else
-        {
-            if (this->ks_solver == "cg")
+            else
             {
-                hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt, *(psig_), *(kspw_psi), etatom.data());
-                continue;
+                if (this->ks_solver == "cg")
+                {
+                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt, *(psig_), *(kspw_psi), etatom.data());
+                    continue;
+                }
+                // else the case is davidson
             }
-            // else the case is davidson
-        }
 
-        // for the Davidson method, we just copy the wavefunction (partially)
-        for (int iband = 0; iband < kspw_psi->get_nbands(); iband++)
-        {
-            for (int ibasis = 0; ibasis < kspw_psi->get_nbasis(); ibasis++)
+            // for the Davidson method, we just copy the wavefunction (partially)
+            for (int iband = 0; iband < kspw_psi->get_nbands(); iband++)
             {
-                (*(kspw_psi))(iband, ibasis) = (*psig_)(iband, ibasis);
+                for (int ibasis = 0; ibasis < kspw_psi->get_nbasis(); ibasis++)
+                {
+                    (*(kspw_psi))(iband, ibasis) = (*psig_)(iband, ibasis);
+                }
             }
-        }
-    } // end k-point loop
+        } // end k-point loop
 
-    if (this->basis_type != "lcao_in_pw") { this->psi_init->deallocate_psig(); }
+        if (this->basis_type != "lcao_in_pw")
+        {
+            this->psi_init->deallocate_psig();
+        }
+    }
+    else
+    {
+        // if (PARAM.inp.basis_type == "pw")
+        // {
+        //     for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+        //     {
+        //         //! Update Hamiltonian from other kpoint to the given one
+        //         p_hamilt->updateHk(ik);
+
+        //         //! Fix the wavefunction to initialize at given kpoint
+        //         kspw_psi->fix_k(ik);
+
+        //         /// for psi init guess!!!!
+        //         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
+        //     }
+        // }
+    }
 
     ModuleBase::timer::tick("WFInit", "initialize_psi");
 }

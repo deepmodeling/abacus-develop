@@ -74,6 +74,20 @@ class Vdwd3Parameters : public VdwParameters
     std::vector<double> rcov_;
     std::vector<std::vector<double>> r0ab_;
 
+    static void _vdwd3_autoset_xcparam(const std::string& xc_in,
+                                       const std::string& d3method,
+                                       const std::string& s6_in,
+                                       const std::string& s8_in,
+                                       const std::string& a1_in,
+                                       const std::string& a2_in,
+                                       double& s6,
+                                       double& s8,
+                                       double& a1,
+                                       double& a2,
+                                       std::ofstream* plog = nullptr);
+
+    static std::string _vdwd3_xcname(const std::string& xcpattern);
+
     void init_C6();
     void init_r2r4();
     void init_rcov();

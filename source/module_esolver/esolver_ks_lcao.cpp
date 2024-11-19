@@ -5,6 +5,7 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
@@ -121,30 +122,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
-    // 1) calculate overlap matrix S
-    if (PARAM.inp.calculation == "get_S")
-    {
-        // 1.1) read pseudopotentials
-        ucell.read_pseudo(GlobalV::ofs_running);
-
-        // 1.2) symmetrize things
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        {
-            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-        }
-
-        // 1.3) Setup k-points according to symmetry.
-        this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-        ModuleIO::setup_parameters(ucell, this->kv);
-    }
-    else
-    {
-        // 1) else, call before_all_runners() in ESolver_KS
-        ESolver_KS<TK>::before_all_runners(inp, ucell);
-    } // end ifnot get_S
+    ESolver_KS<TK>::before_all_runners(inp, ucell);
 
     // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
@@ -177,13 +155,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
-
-    // this function should be removed outside of the function in near future
-    if (PARAM.inp.calculation == "get_S")
-    {
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
-        return;
-    }
 
     // 5) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
@@ -893,7 +864,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
             {
                 const std::vector<std::vector<TK>>& tmp_dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                this->dftu_cal_occup_m(iter, tmp_dm);
+                ModuleDFTU::dftu_cal_occup_m(iter, tmp_dm, this->kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
             }
             GlobalC::dftu.cal_energy_correction(istep);
         }

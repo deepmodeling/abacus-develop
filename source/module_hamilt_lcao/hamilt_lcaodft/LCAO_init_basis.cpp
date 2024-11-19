@@ -55,9 +55,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // on the old interface for now.
     two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-
-    two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    if (PARAM.inp.vnl_in_h)
+    {
+        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    }
 
     int Lmax = 0;
 #ifdef __EXX
