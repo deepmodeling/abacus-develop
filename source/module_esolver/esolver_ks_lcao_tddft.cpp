@@ -66,54 +66,8 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 
 void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
-    // 1) run "before_all_runners" in ESolver_KS
-    ESolver_KS::before_all_runners(inp, ucell);
-
-    // 2) initialize the local pseudopotential with plane wave basis set
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
-
-    // 3) initialize the electronic states for TDDFT
-    if (this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&this->chr,
-                                                         &kv,
-                                                         kv.get_nks(),
-                                                         &this->GK, // mohan add 2024-04-01
-                                                         this->pw_rho,
-                                                         pw_big);
-    }
-
-    // 4) read the local orbitals and construct the interpolation tables.
-    // initialize the pv
-    LCAO_domain::init_basis_lcao(this->pv,
-                                 inp.onsite_radius,
-                                 inp.lcao_ecut,
-                                 inp.lcao_dk,
-                                 inp.lcao_dr,
-                                 inp.lcao_rmax,
-                                 ucell,
-                                 two_center_bundle_,
-                                 orb_);
-
-    // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, this->pv, kv.get_nks(), orb_);
-
-    // 6) initialize Density Matrix
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&kv, &this->pv, PARAM.inp.nspin);
-
-    // 8) initialize the charge density
-    this->pelec->charge->allocate(PARAM.inp.nspin);
-    this->pelec->omega = GlobalC::ucell.omega; // this line is very odd.
-
-    // 9) initializee the potential
-    this->pelec->pot = new elecstate::Potential(pw_rhod,
-                                                pw_rho,
-                                                &GlobalC::ucell,
-                                                &(GlobalC::ppcell.vloc),
-                                                &(sf),
-                                                &(pelec->f_en.etxc),
-                                                &(pelec->f_en.vtxc));
+    // 1) run before_all_runners in ESolver_KS_LCAO
+    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(inp, ucell);
 
     // this line should be optimized
     this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);

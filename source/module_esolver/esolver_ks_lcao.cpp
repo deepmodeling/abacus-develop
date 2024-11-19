@@ -56,6 +56,7 @@
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/elecstate_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 // function used by deepks
@@ -128,14 +129,26 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
     if (this->pelec == nullptr)
     {
-        // TK stands for double and complex<double>?
-        this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
-                                                       &(this->kv),
-                                                       this->kv.get_nks(),
-                                                       &(this->GG), // mohan add 2024-04-01
-                                                       &(this->GK), // mohan add 2024-04-01
-                                                       this->pw_rho,
-                                                       this->pw_big);
+        if (inp.esolver_type == "tddft")
+        {
+            this->pelec = new elecstate::ElecStateLCAO_TDDFT(&(this->chr),
+                                                             &(this->kv),
+                                                             this->kv.get_nks(),
+                                                             &(this->GK), // mohan add 2024-04-01
+                                                             this->pw_rho,
+                                                             this->pw_big);
+        }
+        else
+        {
+            // TK stands for double and complex<double>?
+            this->pelec = new elecstate::ElecStateLCAO<TK>(&(this->chr), // use which parameter?
+                                                           &(this->kv),
+                                                           this->kv.get_nks(),
+                                                           &(this->GG), // mohan add 2024-04-01
+                                                           &(this->GK), // mohan add 2024-04-01
+                                                           this->pw_rho,
+                                                           this->pw_big);
+        }
     }
 
     // 3) init LCAO basis
@@ -222,7 +235,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 12) set occupations
-    if (PARAM.inp.ocp)
+    // tddft does not need to set occupations in the first scf
+    if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }

@@ -12,8 +12,8 @@ namespace elecstate
 // multi-k case
 void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 {
-    ModuleBase::TITLE("ElecStateLCAO", "psiToRho");
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
+    ModuleBase::TITLE("ElecStateLCAO_TDDFT", "psiToRho_td");
+    ModuleBase::timer::tick("ElecStateLCAO_TDDFT", "psiToRho_td");
 
     this->calculate_weights_td();
     this->calEBand();
@@ -41,7 +41,7 @@ void ElecStateLCAO_TDDFT::psiToRho_td(const psi::Psi<std::complex<double>>& psi)
 
     this->charge->renormalize_rho();
 
-    ModuleBase::timer::tick("ElecStateLCAO", "psiToRho");
+    ModuleBase::timer::tick("ElecStateLCAO_TDDFT", "psiToRho_td");
     return;
 }
 
