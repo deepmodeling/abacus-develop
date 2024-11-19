@@ -84,6 +84,8 @@ class WFInit
     std::string basis_type = "none";
     // pw basis
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
+
+    Device* ctx = {};
 };
 
 } // namespace psi
