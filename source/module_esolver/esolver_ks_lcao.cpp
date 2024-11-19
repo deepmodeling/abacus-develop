@@ -222,7 +222,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 12) set occupations
-    if (PARAM.inp.ocp)
+    // tddft does not need to set occupations in the first scf
+    if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }

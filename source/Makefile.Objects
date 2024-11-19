@@ -228,7 +228,6 @@ OBJS_ELECSTAT=elecstate.o\
     pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      elecstate_lcao_tddft.o\
       elecstate_lcao_cal_tau.o\
       density_matrix.o\
       density_matrix_io.o\
