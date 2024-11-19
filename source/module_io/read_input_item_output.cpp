@@ -40,18 +40,18 @@ void ReadInput::item_output()
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_chg(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) {
-                return std::stoi(s);
-            });
-            // assign non-negative values to para.input.out_chg
-            std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
+            }
+            para.input.out_chg[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
-                                        ? 1
-                                        : para.input.out_chg[0];
+                                     ? 1
+                                     : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
