@@ -132,19 +132,6 @@ class Grid_Technique : public Grid_MeshBall {
     // store the information of atom pairs on this processor, used to initialize hcontainer.
     // The meaning of ijr can be referred to in the get_ijr_info function in hcontainer.cpp.
     std::vector<int> ijr_info;
-    int maxB1;
-    int maxB2;
-    int maxB3;
-
-    int minB1;
-    int minB2;
-    int minB3;
-
-    int nB1;
-    int nB2;
-    int nB3;
-
-    int nbox;
 
     void cal_max_box_index();
     // atoms on meshball

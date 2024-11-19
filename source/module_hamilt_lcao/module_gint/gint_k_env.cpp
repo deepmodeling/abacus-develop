@@ -88,9 +88,9 @@ void Gint_k::cal_env_k(int ik,
 
                 // find R by which_unitcell and cal kphase
                 const int id_ucell = this->gridt->which_unitcell[mcell_index1];
-                const int Rx = this->gridt->ucell_index2x[id_ucell] + this->gridt->min_ucell_para[0];
-                const int Ry = this->gridt->ucell_index2y[id_ucell] + this->gridt->min_ucell_para[1];
-                const int Rz = this->gridt->ucell_index2z[id_ucell] + this->gridt->min_ucell_para[2];
+                const int Rx = this->gridt->ucell_index2x[id_ucell];
+                const int Ry = this->gridt->ucell_index2y[id_ucell]; 
+                const int Rz = this->gridt->ucell_index2z[id_ucell];
                 ModuleBase::Vector3<double> R((double)Rx, (double)Ry, (double)Rz);
                 // std::cout << "kvec_d: " << kvec_d[ik].x << " " << kvec_d[ik].y << " " << kvec_d[ik].z << std::endl;
                 // std::cout << "kvec_c: " << kvec_c[ik].x << " " << kvec_c[ik].y << " " << kvec_c[ik].z << std::endl;
