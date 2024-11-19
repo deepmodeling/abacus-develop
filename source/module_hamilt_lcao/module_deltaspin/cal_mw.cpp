@@ -14,10 +14,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 
 template <>
-void SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)
+void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool print)
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_lcao");
-    ModuleBase::timer::tick("SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
     // calculate MW from lambda in real space projection method
     this->zero_Mi();
     const hamilt::HContainer<double>* dmr
@@ -46,16 +46,16 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& step, bool prin
         }
     }
 
-    ModuleBase::timer::tick("SpinConstrain", "cal_mi_lcao");
+    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_lcao");
 }
 
 #endif
 
 /*template <>
-void SpinConstrain<std::complex<double>>::cal_mi_pw()
+void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_pw");
-    ModuleBase::timer::tick("SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
 
     this->zero_Mi();
     if(PARAM.inp.device == "cpu")
@@ -153,18 +153,18 @@ void SpinConstrain<std::complex<double>>::cal_mi_pw()
     // reduce mag from all k-pools
     Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
-    ModuleBase::timer::tick("SpinConstrain", "cal_mi_pw");
+    ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
 }*/
 
 template <>
-void SpinConstrain<std::complex<double>>::set_operator(
+void spinconstrain::SpinConstrain<std::complex<double>>::set_operator(
     hamilt::Operator<std::complex<double>>* op_in)
 {
     this->p_operator = op_in;
 }
 
 template <>
-void SpinConstrain<double>::set_operator(
+void spinconstrain::SpinConstrain<double>::set_operator(
     hamilt::Operator<double>* op_in)
 {
     this->p_operator = op_in;

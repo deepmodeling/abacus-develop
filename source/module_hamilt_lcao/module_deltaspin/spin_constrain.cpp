@@ -5,6 +5,9 @@
 
 #include <cmath>
 
+namespace spinconstrain
+{
+
 template <typename FPTYPE>
 SpinConstrain<FPTYPE>& SpinConstrain<FPTYPE>::getScInstance()
 {
@@ -585,3 +588,5 @@ void SpinConstrain<FPTYPE>::print_Mag_Force(std::ofstream& ofs_running)
 
 template class SpinConstrain<std::complex<double>>;
 template class SpinConstrain<double>;
+
+} // namespace spinconstrain

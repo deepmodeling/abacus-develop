@@ -12,27 +12,27 @@
 
 /**
  * - Tested functions:
- *  - SpinConstrain::getScInstance()
- *      get the instance of SpinConstrain
- *  - SpinConstrain::set_atomCounts()
+ *  - spinconstrain::SpinConstrain::getScInstance()
+ *      get the instance of spinconstrain::SpinConstrain
+ *  - spinconstrain::SpinConstrain::set_atomCounts()
  *     set the map from element index to atom number
- *  - SpinConstrain::get_atomCounts()
+ *  - spinconstrain::SpinConstrain::get_atomCounts()
  *     get the map from element index to atom number
- *  - SpinConstrain::get_nat()
+ *  - spinconstrain::SpinConstrain::get_nat()
  *     get the total number of atoms
- *  - SpinConstrain::get_iat()
+ *  - spinconstrain::SpinConstrain::get_iat()
  *     get the atom index from (itype, atom_index)
- *  - SpinConstrain::set_orbitalCounts()
+ *  - spinconstrain::SpinConstrain::set_orbitalCounts()
  *     set the map from element index to orbital number
- *  - SpinConstrain::get_orbitalCounts()
+ *  - spinconstrain::SpinConstrain::get_orbitalCounts()
  *     get the map from element index to orbital number
- *  - SpinConstrain::get_nw()
+ *  - spinconstrain::SpinConstrain::get_nw()
  *     get the total number of orbitals
- *  - SpinConstrain::set_npol()
+ *  - spinconstrain::SpinConstrain::set_npol()
  *     set the number of npol, which is the number of spin components
- *  - SpinConstrain::get_npol()
+ *  - spinconstrain::SpinConstrain::get_npol()
  *     get the number of npol, which is the number of spin components
- *  - SpinConstrain::get_iwt()
+ *  - spinconstrain::SpinConstrain::get_iwt()
  *     get the index of orbital with spin component from (itype, iat, orbital_index)
  */
 #include "module_cell/klist.h"
@@ -43,7 +43,7 @@ template <typename T>
 class SpinConstrainTest : public testing::Test
 {
   protected:
-    SpinConstrain<T>& sc = SpinConstrain<T>::getScInstance();
+    spinconstrain::SpinConstrain<T>& sc = spinconstrain::SpinConstrain<T>::getScInstance();
 };
 
 using MyTypes = ::testing::Types<double, std::complex<double>>;

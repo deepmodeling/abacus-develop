@@ -25,7 +25,7 @@
 }
 
 template <>
-void SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step)
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step)
 {
     // init parameters
     int nat = this->get_nat();
@@ -99,7 +99,7 @@ void SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step)
 
 
 template <>
-void SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun)
+void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int outer_step, bool rerun)
 {
     // init controlling parameters
     int nat = this->get_nat();

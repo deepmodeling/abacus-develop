@@ -723,7 +723,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
     bool skip_solve = false;
     if (PARAM.inp.sc_mag_switch)
     {
-        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         if(!sc.mag_converged() && this->drho>0 && this->drho < PARAM.inp.sc_scf_thr)
         {
             // optimize lambda to get target magnetic moments, but the lambda is not near target
@@ -914,7 +914,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
     // 8) for delta spin
     if (PARAM.inp.sc_mag_switch)
     {
-        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(iter);
     }
 
@@ -1187,7 +1187,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
     // spin constrain calculations.
     if (PARAM.inp.sc_mag_switch) 
     {
-        SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
         sc.print_Mi(GlobalV::ofs_running);
         sc.print_Mag_Force(GlobalV::ofs_running);

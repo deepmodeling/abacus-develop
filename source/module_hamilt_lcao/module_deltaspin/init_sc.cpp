@@ -2,7 +2,7 @@
 
 // init sc
 template <typename FPTYPE>
-void SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
+void spinconstrain::SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
                                             int nsc_in,
                                             int nsc_min_in,
                                             double alpha_trial_in,
@@ -31,5 +31,5 @@ void SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
     this->set_solver_parameters(kv_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in);
 }
 
-template class SpinConstrain<std::complex<double>>;
-template class SpinConstrain<double>;
+template class spinconstrain::SpinConstrain<std::complex<double>>;
+template class spinconstrain::SpinConstrain<double>;

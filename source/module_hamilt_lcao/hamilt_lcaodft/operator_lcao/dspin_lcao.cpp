@@ -68,7 +68,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     // if lambda has not changed, calculate the HR^I = lambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}>
     // if lambda has changed, calculate the dHR^I = dlambda^I\sum_{lm}<phi_mu|alpha^I_{lm}><alpha^I_{lm}|phi_{nu,R}> 
-    SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+    spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
     // there are three case for contributeHR 
     // 1. HR has not been calculated, reset lambda_save and calculate HR = lambda * pre_hr
     // 2. HR has been calculated, but lambda has changed, calculate dHR = dlambda * pre_hr
@@ -444,7 +444,7 @@ std::vector<double> hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_moment(
     }
     if (!this->initialized)
     {
-        //SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+        //spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         //auto& constrain = sc.get_constrain();
         this->cal_constraint_atom_list(constrain);
         this->cal_pre_HR();

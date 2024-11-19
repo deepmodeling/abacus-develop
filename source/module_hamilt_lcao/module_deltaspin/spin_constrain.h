@@ -14,6 +14,9 @@
 #include "module_hamilt_general/operator.h"
 #include "module_elecstate/elecstate.h"
 
+namespace spinconstrain
+{
+
 struct ScAtomData;
 
 template <typename FPTYPE>
@@ -267,5 +270,7 @@ struct ScAtomData {
     double target_mag_angle1;
     double target_mag_angle2;
 };
+
+} // namespace spinconstrain
 
 #endif // SPIN_CONSTRAIN_H

@@ -388,7 +388,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                     orb.cutoffs()
             );
             this->getOperator()->add(sc_lambda);
-            SpinConstrain<TK>& sc = SpinConstrain<TK>::getScInstance();
+            spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
             sc.set_operator(sc_lambda);
         }
     }
