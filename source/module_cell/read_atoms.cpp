@@ -517,6 +517,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                 atoms[it].m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 atoms[it].lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 atoms[it].constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
+                atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07 
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
