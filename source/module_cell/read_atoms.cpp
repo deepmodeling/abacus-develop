@@ -1125,9 +1125,9 @@ void UnitCell::check_dtau() {
 
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
-    // the maximum L is 7, according to the basissetexchange https://www.basissetexchange.org/
-    // there is no orbitals with L>7 presently
-    const std::string spectrum = "SPDFGHIK";
+    // the maximum L is 9 like cc-pV9Z, according to the basissetexchange https://www.basissetexchange.org/
+    // there is no orbitals with L>9 presently
+    const std::string spectrum = "SPDFGHIKLM";
     std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
     // mohan add return 2021-04-26
     if (!ifs)
