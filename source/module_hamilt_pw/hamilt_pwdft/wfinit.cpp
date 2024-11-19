@@ -152,7 +152,8 @@ template <typename T, typename Device>
 void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                        psi::Psi<T, Device>* kspw_psi,
                                        hamilt::Hamilt<T, Device>* p_hamilt,
-                                       std::ofstream& ofs_running)
+                                       std::ofstream& ofs_running,
+                                       const bool is_already_initpsi)
 {
     ModuleBase::timer::tick("WFInit", "initialize_psi");
 
@@ -254,20 +255,35 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     }
     else
     {
-        // if (PARAM.inp.basis_type == "pw")
-        // {
-        //     for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
-        //     {
-        //         //! Update Hamiltonian from other kpoint to the given one
-        //         p_hamilt->updateHk(ik);
+        //! note: is_already_initpsi will be false in init_after_vc when vc changes.
+        if (PARAM.inp.basis_type == "pw" && is_already_initpsi == false)
+        {
+            for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+            {
+                //! Update Hamiltonian from other kpoint to the given one
+                p_hamilt->updateHk(ik);
 
-        //         //! Fix the wavefunction to initialize at given kpoint
-        //         kspw_psi->fix_k(ik);
+                if (PARAM.inp.esolver_type == "sdft")
+                {
+                    if (kspw_psi->get_nbands() > 0 && GlobalV::MY_STOGROUP == 0)
+                    {
+                        //! Fix the wavefunction to initialize at given kpoint
+                        kspw_psi->fix_k(ik);
 
-        //         /// for psi init guess!!!!
-        //         hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *kspw_psi, this->pw_wfc, this->p_wf, p_hamilt);
-        //     }
-        // }
+                        /// for psi init guess!!!!
+                        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, this->p_wf, p_hamilt);
+                    }
+                }
+                else
+                {
+                    //! Fix the wavefunction to initialize at given kpoint
+                    kspw_psi->fix_k(ik);
+
+                    /// for psi init guess!!!!
+                    hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, this->p_wf, p_hamilt);
+                }
+            }
+        }
     }
 
     ModuleBase::timer::tick("WFInit", "initialize_psi");
