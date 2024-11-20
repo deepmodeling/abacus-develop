@@ -63,7 +63,7 @@ void TwoCenterBundle::tabulate()
 {
     ModuleBase::SphericalBesselTransformer sbt(true);
     orb_->set_transformer(sbt);
-    beta_->set_transformer(sbt);
+    if (beta_) { beta_->set_transformer(sbt); }
     if (alpha_) {
         alpha_->set_transformer(sbt);
 }
@@ -75,22 +75,17 @@ void TwoCenterBundle::tabulate()
     //              build two-center integration tables
     //================================================================
     // set up a universal radial grid
-    double rmax = std::max(orb_->rcut_max(), beta_->rcut_max());
-    if (alpha_) {
-        rmax = std::max(rmax, alpha_->rcut_max());
-}
+    double rmax = orb_->rcut_max();
+    if (beta_) { rmax = std::max(rmax, beta_->rcut_max()); }
+    if (alpha_) { rmax = std::max(rmax, alpha_->rcut_max()); }
     double dr = 0.01;
     double cutoff = 2.0 * rmax;
     int nr = static_cast<int>(rmax / dr) + 1;
 
     orb_->set_uniform_grid(true, nr, cutoff, 'i', true);
-    beta_->set_uniform_grid(true, nr, cutoff, 'i', true);
-    if (alpha_) {
-        alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);
-}
-    if (orb_onsite_) {
-        orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);
-}
+    if (beta_) { beta_->set_uniform_grid(true, nr, cutoff, 'i', true); }
+    if (alpha_) { alpha_->set_uniform_grid(true, nr, cutoff, 'i', true);}
+    if (orb_onsite_) {  orb_onsite_->set_uniform_grid(true, nr, cutoff, 'i', true);}
 
     // build TwoCenterIntegrator objects
     kinetic_orb = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
@@ -101,9 +96,12 @@ void TwoCenterBundle::tabulate()
     overlap_orb->tabulate(*orb_, *orb_, 'S', nr, cutoff);
     ModuleBase::Memory::record("TwoCenterTable: Overlap", overlap_orb->table_memory());
 
-    overlap_orb_beta = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
-    overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff);
-    ModuleBase::Memory::record("TwoCenterTable: Nonlocal", overlap_orb_beta->table_memory());
+    if (beta_)
+    {
+        overlap_orb_beta = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
+        overlap_orb_beta->tabulate(*orb_, *beta_, 'S', nr, cutoff);
+        ModuleBase::Memory::record("TwoCenterTable: Nonlocal", overlap_orb_beta->table_memory());
+    }
 
     if (alpha_)
     {

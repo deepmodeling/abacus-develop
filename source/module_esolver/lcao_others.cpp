@@ -44,18 +44,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
 
     const std::string cal_type = PARAM.inp.calculation;
 
-    if (cal_type == "get_S")
-    {
-        std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "writing the overlap matrix");
-        this->get_S();
-        std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "writing the overlap matrix");
-
-        ModuleBase::QUIT();
-
-        // return; // use 'return' will cause segmentation fault. by mohan
-        // 2024-06-09
-    }
-    else if (cal_type == "test_memory")
+    if (cal_type == "test_memory")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
         Cal_Test::test_memory(this->pw_rho,

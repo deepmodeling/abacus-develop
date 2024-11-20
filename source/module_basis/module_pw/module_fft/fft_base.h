@@ -30,6 +30,11 @@ public:
                  bool gamma_only_in, 
                  bool xprime_in = true);
 
+    virtual __attribute__((weak))
+    void initfft(int nx_in, 
+                 int ny_in, 
+                 int nz_in);
+
     /**
      * @brief Setup the fft Plan and data As pure virtual function.
      * 

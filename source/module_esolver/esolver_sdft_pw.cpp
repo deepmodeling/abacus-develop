@@ -193,7 +193,6 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
     // hsolver only exists in this function
     hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
                                                            this->pw_wfc,
-                                                           &this->wf,
                                                            this->stowf,
                                                            this->stoche,
                                                            this->p_hamilt_sto,
@@ -206,8 +205,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
                                                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                           this->init_psi);
+                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
     hsolver_pw_sdft_obj.solve(this->p_hamilt,
                               this->kspw_psi[0],
@@ -218,7 +216,6 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
                               istep,
                               iter,
                               skip_charge);
-    this->init_psi = true;
 
     // set_diagethr need it
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;

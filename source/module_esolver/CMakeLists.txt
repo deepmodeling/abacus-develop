@@ -20,9 +20,8 @@ if(ENABLE_LCAO)
       esolver_ks_lcao_tddft.cpp
       dpks_cal_e_delta_band.cpp
       set_matrix_grid.cpp
-      dftu_cal_occup_m.cpp
       lcao_before_scf.cpp
-      lcao_gets.cpp
+      esolver_gets.cpp
       lcao_others.cpp
       lcao_init_after_vc.cpp
   )

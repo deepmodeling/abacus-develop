@@ -58,7 +58,7 @@ void ReadInput::item_relax()
             }
             else if (calculation == "relax" || calculation == "cell-relax")
             {
-                if (!para.input.relax_nmax)
+                if (para.input.relax_nmax == 0) // default value
                 {
                     para.input.relax_nmax = 50;
                 }

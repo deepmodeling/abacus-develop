@@ -312,7 +312,16 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     // does is only to initialize for once...
     if (((PARAM.inp.init_wfc == "random") && (istep == 0)) || (PARAM.inp.init_wfc != "random"))
     {
-        this->p_wf_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
+        this->p_wf_init->initialize_psi(this->psi,
+                                        this->kspw_psi,
+                                        this->p_hamilt,
+                                        GlobalV::ofs_running,
+                                        this->already_initpsi);
+
+        if (this->already_initpsi == false)
+        {
+            this->already_initpsi = true;
+        }
     }
 }
 
@@ -360,7 +369,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
     hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
-                                                 &this->wf,
                                                  PARAM.inp.calculation,
                                                  PARAM.inp.basis_type,
                                                  PARAM.inp.ks_solver,
@@ -370,8 +378,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
                                                  hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                  hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace,
-                                                 this->init_psi);
+                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
     hsolver_pw_obj.solve(this->p_hamilt,
                          this->kspw_psi[0],
@@ -380,8 +387,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
                          GlobalV::RANK_IN_POOL,
                          GlobalV::NPROC_IN_POOL,
                          skip_charge);
-
-    this->init_psi = true;
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)

@@ -20,7 +20,6 @@ class HSolverPW
 
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
-              wavefunc* pwf_in,
               const std::string calculation_type_in,
               const std::string basis_type_in,
               const std::string method_in,
@@ -30,13 +29,10 @@ class HSolverPW
               const int scf_iter_in,
               const int diag_iter_max_in,
               const double diag_thr_in,
-              const bool need_subspace_in,
-              const bool initialed_psi_in)
-        : wfc_basis(wfc_basis_in), pwf(pwf_in),
-          calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in), 
-          use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in),
-          scf_iter(scf_iter_in), diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in),
-          need_subspace(need_subspace_in), initialed_psi(initialed_psi_in)  {};
+              const bool need_subspace_in)
+        : wfc_basis(wfc_basis_in), calculation_type(calculation_type_in), basis_type(basis_type_in), method(method_in),
+          use_paw(use_paw_in), use_uspp(use_uspp_in), nspin(nspin_in), scf_iter(scf_iter_in),
+          diag_iter_max(diag_iter_max_in), diag_thr(diag_thr_in), need_subspace(need_subspace_in){};
 
     /// @brief solve function for pw
     /// @param pHamilt interface to hamilt
@@ -59,16 +55,12 @@ class HSolverPW
                          std::vector<Real>& pre_condition,
                          Real* eigenvalue);
 
-    // psi initializer && change k point in psi
-    void updatePsiK(hamilt::Hamilt<T, Device>* pHamilt, psi::Psi<T, Device>& psi, const int ik);
-
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
 
     void output_iterInfo();
 
     ModulePW::PW_Basis_K* wfc_basis;
-    wavefunc* pwf; // only for diago_PAO_in_pw_k2 func
 
     const std::string calculation_type;
     const std::string basis_type;
@@ -77,24 +69,24 @@ class HSolverPW
     const bool use_uspp;
     const int nspin;
 
-    const int scf_iter; // Start from 1
+    const int scf_iter;      // Start from 1
     const int diag_iter_max; // max iter times for diagonalization
-    const double diag_thr; // threshold for diagonalization
+    const double diag_thr;   // threshold for diagonalization
 
     const bool need_subspace; // for cg or dav_subspace
-    const bool initialed_psi; 
 
   protected:
     Device* ctx = {};
 
     int rank_in_pool = 0;
     int nproc_in_pool = 1;
+
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
     void cal_ethr_band(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
     std::vector<double> ethr_band;
-                  
+
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik);
 
