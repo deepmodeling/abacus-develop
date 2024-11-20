@@ -94,7 +94,7 @@ namespace Json
         int ntype = ucell->ntype;
         double lat0 = ucell->lat0;
         for(int i=0;i<ntype;i++){
-            ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau;
+            ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
             int na = ucell->atoms[i].na;
             for(int j=0;j<na;j++){
                 Json::jsonValue coordinateArray(JarrayType);

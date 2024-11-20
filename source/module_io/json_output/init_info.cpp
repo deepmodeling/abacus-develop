@@ -102,7 +102,7 @@ void gen_stru(UnitCell* ucell)
     std::string* label = ucell->atom_label;
     for (int i = 0; i < ntype; i++)
     {
-        ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau;
+        ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
         int na = ucell->atoms[i].na;
         for (int j = 0; j < na; j++)
         {

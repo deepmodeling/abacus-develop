@@ -38,5 +38,6 @@ cal_stress  1
 dft_plus_u    1
 orbital_corr    2 
 hubbard_u    5.0 
+onsite_radius   5.0
 pseudo_dir	../../PP_ORB
 orbital_dir	../../PP_ORB

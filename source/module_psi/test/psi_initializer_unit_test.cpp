@@ -153,9 +153,9 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->atoms[0].angle1.resize(1, 0.0);
             this->p_ucell->atoms[0].angle2.resize(1, 0.0);
             // atom position
-            this->p_ucell->atoms[0].tau[0] = {0.0, 0.0, 0.0};
-            this->p_ucell->atoms[0].taud[0] = {0.25, 0.25, 0.25};
-            this->p_ucell->atoms[0].mbl[0] = {0, 0, 0};
+            this->p_ucell->atoms[0].tau.resize(1, {0.0, 0.0, 0.0});
+            this->p_ucell->atoms[0].taud.resize(1, {0.25, 0.25, 0.25});
+            this->p_ucell->atoms[0].mbl.resize(1, {0, 0, 0});
             // atom pseudopotential
             if(this->p_ucell->pseudo_fn != nullptr) { delete[] this->p_ucell->pseudo_fn;
 }

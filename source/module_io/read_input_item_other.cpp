@@ -19,10 +19,10 @@ void ReadInput::item_others()
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_mag_switch)
             {
-                //ModuleBase::WARNING_QUIT("ReadInput",
-                //                         "This feature is not stable yet and might lead to "
-                //                         "erroneous results.\n"
-                //                         " Please wait for the official release version.");
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "This feature is not stable yet and might lead to "
+                                         "erroneous results.\n"
+                                         " Please wait for the official release version.");
                 // if (para.input.nspin != 4 && para.input.nspin != 2)
                 // {
                 //     ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 2 or
@@ -129,8 +129,7 @@ void ReadInput::item_others()
     }
     {
         Input_Item item("sc_scf_thr");
-        item.annotation = "Minimum number of outer scf loop before "
-                          "initializing lambda loop";
+        item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
         read_sync_double(input.sc_scf_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_scf_thr <= 0.0)

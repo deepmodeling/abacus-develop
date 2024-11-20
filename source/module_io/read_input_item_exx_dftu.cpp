@@ -400,7 +400,7 @@ void ReadInput::item_dftu()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
             {
-                // autoset onsite_radius to 3.0 as default
+                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
                 para.input.onsite_radius = 3.0;
             }
         };
