@@ -5,55 +5,30 @@
 #ifndef RDMFT_H
 #define RDMFT_H
 
-// #include "module_rdmft/rdmft_tools.h"
 
 #include "module_parameter/parameter.h"
-
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_psi/psi.h"
 #include "module_base/matrix.h"
-#include "module_cell/module_neighbor/sltk_grid_driver.h"
+
+#include "module_basis/module_ao/parallel_2d.h"
+#include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_elecstate/potentials/potential_new.h"
-#include "module_base/blas_connector.h"
-#include "module_base/scalapack_connector.h"
-#include "module_basis/module_ao/parallel_2d.h"
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_base/parallel_reduce.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
-
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_nao/two_center_bundle.h"
 
-#include "module_hamilt_general/operator.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
-
-// used by Exx&LRI
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
-#include "module_ri/RI_2D_Comm.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_ri/module_exx_symmetry/symmetry_rotation.h"
-#endif
-
 // there are some operator reload to print data in different formats
 #include "module_ri/test_code/test_function.h"
-
-// used by class Veff_rdmft
-#include "module_base/timer.h"
-#include "module_elecstate/potentials/potential_new.h"
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/pot_local.h"
-#include "module_elecstate/potentials/pot_xc.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-
+#endif
 
 #include <iostream>
 #include <type_traits>

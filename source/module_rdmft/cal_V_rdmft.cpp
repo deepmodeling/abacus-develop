@@ -5,9 +5,16 @@
 
 #include "rdmft.h"
 #include "module_rdmft/rdmft_tools.h"
-
 #include "module_psi/psi.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
+
+#ifdef __EXX
+#include "module_ri/RI_2D_Comm.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
+#endif
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
 
 namespace rdmft
 {
