@@ -44,7 +44,7 @@ public:
 	}
 	~FAtom();
 //2015-05-07
-	void delete_vector(void);
+	void delete_vector();
 
 //	static int count1;
 //	static int count2;
@@ -63,7 +63,7 @@ public:
 	std::shared_ptr<AdjacentSet> getAdjacentSet() const
 	{ return this->as; }
 
-	void allocate_AdjacentSet(void)
+	void allocate_AdjacentSet()
 	{ this->as = std::make_shared<AdjacentSet>(); }
 
 //==========================================================
