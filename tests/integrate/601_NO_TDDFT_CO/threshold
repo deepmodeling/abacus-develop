@@ -1,4 +1,4 @@
-threshold 0.01
-force_threshold 0.01
+threshold 1
+force_threshold 1
 stress_threshold 1
 fatal_threshold 1
