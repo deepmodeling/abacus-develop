@@ -21,76 +21,16 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-// #include "module_base/parallel_global.h" // for MPI
-// #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #endif
+
 namespace hsolver
 {
 
 #ifdef USE_PAW
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
-{
-    if (this->use_paw)
-    {
-        const int npw = this->wfc_basis->npwk[ik];
-        ModuleBase::Vector3<double>* _gk = new ModuleBase::Vector3<double>[npw];
-        for (int ig = 0; ig < npw; ig++)
-        {
-            _gk[ig] = this->wfc_basis->getgpluskcar(ik, ig);
-        }
-
-        std::vector<double> kpt(3, 0);
-        kpt[0] = this->wfc_basis->kvec_c[ik].x;
-        kpt[1] = this->wfc_basis->kvec_c[ik].y;
-        kpt[2] = this->wfc_basis->kvec_c[ik].z;
-
-        double** kpg;
-        double** gcar;
-        kpg = new double*[npw];
-        gcar = new double*[npw];
-        for (int ipw = 0; ipw < npw; ipw++)
-        {
-            kpg[ipw] = new double[3];
-            kpg[ipw][0] = _gk[ipw].x;
-            kpg[ipw][1] = _gk[ipw].y;
-            kpg[ipw][2] = _gk[ipw].z;
-
-            gcar[ipw] = new double[3];
-            gcar[ipw][0] = this->wfc_basis->getgcar(ik, ipw).x;
-            gcar[ipw][1] = this->wfc_basis->getgcar(ik, ipw).y;
-            gcar[ipw][2] = this->wfc_basis->getgcar(ik, ipw).z;
-        }
-
-        GlobalC::paw_cell.set_paw_k(npw,
-                                    wfc_basis->npwk_max,
-                                    kpt.data(),
-                                    this->wfc_basis->get_ig2ix(ik).data(),
-                                    this->wfc_basis->get_ig2iy(ik).data(),
-                                    this->wfc_basis->get_ig2iz(ik).data(),
-                                    (const double**)kpg,
-                                    GlobalC::ucell.tpiba,
-                                    (const double**)gcar);
-
-        std::vector<double>().swap(kpt);
-        for (int ipw = 0; ipw < npw; ipw++)
-        {
-            delete[] kpg[ipw];
-            delete[] gcar[ipw];
-        }
-        delete[] kpg;
-        delete[] gcar;
-
-        GlobalC::paw_cell.get_vkb();
-
-        GlobalC::paw_cell.set_currentk(ik);
-    }
-}
-
-template <typename T, typename Device>
 void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 {
-    if (this->use_paw)
+    if (PARAM.inp.use_paw)
     {
         GlobalC::paw_cell.set_currentk(ik);
     }
@@ -99,7 +39,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 template <typename T, typename Device>
 void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes)
 {
-    if (this->use_paw)
+    if (PARAM.inp.use_paw)
     {
         if (typeid(Real) != typeid(double))
         {
@@ -204,8 +144,8 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
         GlobalC::paw_cell.get_nhat(pes->charge->nhat, nhatgr);
     }
 }
-
 #endif
+
 
 template <typename T, typename Device>
 void HSolverPW<T, Device>::cal_ethr_band(const double& wk,
