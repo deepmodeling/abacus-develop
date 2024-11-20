@@ -7,7 +7,7 @@
 #include "module_base/realarray.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_psi/psi.h"
-#include "structure_factor.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 class WF_atomic
 {
