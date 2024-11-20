@@ -25,7 +25,7 @@ namespace hsolver
 {
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
+void HSolverPW<T, Device>::paw_func_in_kloop(const int ik, ModulePW::PW_Basis_K* wfc_basis)
 {
     if (PARAM.inp.use_paw)
     {

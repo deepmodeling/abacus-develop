@@ -4,12 +4,12 @@ list(APPEND objects
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
+    pawcode_in_hsolverpw.cpp
     hsolver_pw.cpp
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     hsolver.cpp
-    pawcode_in_hsolverpw.cpp
 )
 
 if(ENABLE_LCAO)

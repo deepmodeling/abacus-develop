@@ -88,7 +88,7 @@ class HSolverPW
     std::vector<double> ethr_band;
 
 #ifdef USE_PAW
-    void paw_func_in_kloop(const int ik);
+    void paw_func_in_kloop(const int ik, ModulePW::PW_Basis_K* wfc_basis);
 
     void call_paw_cell_set_currentk(const int ik);
 
