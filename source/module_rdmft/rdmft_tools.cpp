@@ -162,7 +162,7 @@ double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc)
 // for HF, Muller and power functional, g(eta) = eta, eta^0.5, eta^alpha respectively.
 // when symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively.
 // Default symbol=0, XC_func_rdmft="HF", alpha=0.656
-double occNum_func(double eta, int symbol, const std::string XC_func_rdmft, double alpha)
+double occNum_func(const double eta, const int symbol, const std::string XC_func_rdmft, double alpha)
 {
     // if( XC_func_rdmft == "hf" || XC_func_rdmft == "default" || XC_func_rdmft == "pbe0" ) alpha = 1.0;
     // else if( XC_func_rdmft == "muller" ) alpha = 0.5;
