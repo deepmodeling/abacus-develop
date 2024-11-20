@@ -1,0 +1,4 @@
+threshold 0.01
+force_threshold 0.01
+stress_threshold 1
+fatal_threshold 1
