@@ -61,10 +61,13 @@ RDMFT<TK, TR>::~RDMFT()
 {
     delete HR_TV;
     delete HR_hartree;
-    // delete HR_XC;
     delete HR_exx_XC;
-    // delete HR_local;
     delete HR_dft_XC;
+    // delete HR_local;
+    delete hsk_TV;
+    delete hsk_hartree;
+    delete hsk_dft_XC;
+    delete hsk_exx_XC;
 #ifdef __EXX
     delete Vxc_fromRI_d;
     delete Vxc_fromRI_c;
@@ -73,10 +76,8 @@ RDMFT<TK, TR>::~RDMFT()
     delete V_nonlocal;
     delete V_local;
     delete V_hartree;
-    // delete V_XC;
     delete V_exx_XC;
     delete V_dft_XC;
-    delete V_hartree_XC;
 }
 
 template <typename TK, typename TR>
@@ -101,7 +102,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
-    // // create desc[] and something about MPI to Eij(nbands*nbands)
+    // create desc[] and something about MPI to Eij(nbands*nbands)
 #ifdef __MPI
     para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
 #endif
@@ -146,7 +147,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // 
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
-    // HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_exx_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_dft_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     // HR_local = new hamilt::HContainer<TR>(*ucell, ParaV);
@@ -162,7 +162,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     
     HR_TV->set_zero();         // HR->set_zero() might be delete here, test on Gamma_only in the furure 
     HR_hartree->set_zero();
-    // HR_XC->set_zero();
     HR_exx_XC->set_zero();
     HR_dft_XC->set_zero();
     // HR_local->set_zero();
@@ -197,7 +196,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     {
         HR_TV->fix_gamma();
         HR_hartree->fix_gamma();
-        // HR_XC->fix_gamma();
         HR_exx_XC->fix_gamma();
         HR_dft_XC->fix_gamma();
     }
