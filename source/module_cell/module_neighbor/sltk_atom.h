@@ -29,6 +29,19 @@ public:
 //==========================================================
 
 	FAtom();
+	FAtom(const double& x_in, const double& y_in, const double& z_in, 
+			const int& type_in, const int& natom_in, 
+			const int& cell_x_in, const int& cell_y_in, const int& cell_z_in)
+	{
+		d_x = x_in;
+		d_y = y_in;
+		d_z = z_in;
+		type = type_in;
+		natom = natom_in;
+		cell_x = cell_x_in;
+		cell_y = cell_y_in;
+		cell_z = cell_z_in;
+	}
 	~FAtom();
 //2015-05-07
 	void delete_vector(void);
@@ -64,22 +77,7 @@ public:
 	const int& getNatom() const { return natom;}
 	const int& getCellX() const { return cell_x; }
 	const int& getCellY() const { return cell_y; }
-	const int& getCellZ() const { return cell_z; }
-
-
-//==========================================================
-// MEMBER FUNCTION :
-// EXPLAIN : set value
-//==========================================================
-	void setX(const double& r) { d_x = r; }
-	void setY(const double& r) { d_y = r; }
-	void setZ(const double& r) { d_z = r; }
-	void setType(const int ntype) {type = ntype;}
-	void setNatom(const int atom) {natom = atom;}
-	void setCellX(const int nx) {cell_x = nx;}
-	void setCellY(const int ny) {cell_y = ny;}
-	void setCellZ(const int nz) {cell_z = nz;}
-	
+	const int& getCellZ() const { return cell_z; }	
 };
 
 #endif

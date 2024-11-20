@@ -177,11 +177,8 @@ private:
 // MEMBRE FUNCTION :
 // NAME : Load_atom
 //==========================================================
-	void Load_atom(const UnitCell& ucell)const;
+
 	mutable int d_current;
-	mutable double x;
-	mutable double y;
-	mutable double z;
 	mutable int type;
 	mutable int natom;
 };

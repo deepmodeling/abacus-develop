@@ -70,21 +70,12 @@ int Grid_Driver::Locate_offset(
 //----------------------------------------------------------
 // EXPLAIN : Create an AtomLink object
 //----------------------------------------------------------
-	AtomLink temp;
-
-	temp.fatom.setX(cartesian_pos.x);
-	temp.fatom.setY(cartesian_pos.y);
-	temp.fatom.setZ(cartesian_pos.z);
-	temp.fatom.setCellX(0);
-	temp.fatom.setCellY(0);
-	temp.fatom.setCellZ(0);
-	temp.fatom.setType(ntype);
-	temp.fatom.setNatom(nnumber);
+	FAtom temp(cartesian_pos.x, cartesian_pos.y, cartesian_pos.z, ntype, nnumber, 0, 0, 0);
 
 //----------------------------------------------------------
 // EXPLAIN : Find the Hash number of this atom position
 //----------------------------------------------------------
-	AtomLink* Search = this->getHashCode(ucell, temp.fatom);
+	AtomLink* Search = this->getHashCode(ucell, temp);
 	
 //----------------------------------------------------------
 // EXPLAIN : If we don't get the index for one Hash try,

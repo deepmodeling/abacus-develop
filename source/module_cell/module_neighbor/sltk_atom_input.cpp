@@ -426,17 +426,11 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 				{
 					for (int j = 0;j < ucell.atoms[i].na;j++)
 					{
-						FAtom fake_atom;
-						fake_atom.setX(ucell.atoms[i].tau[j].x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz);
-						fake_atom.setY(ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz);
-						fake_atom.setZ(ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz);
-						fake_atom.setType(i);
-						fake_atom.setNatom(j);
-						fake_atom.setCellX(ix);
-						fake_atom.setCellY(iy);
-						fake_atom.setCellZ(iz);
+						double x = ucell.atoms[i].tau[j].x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
+						double y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
+						double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
-						this->fake_atoms.push_back(fake_atom);
+						this->fake_atoms.push_back(FAtom(x, y, z, i, j, ix, iy, iz));
 					}
 				}
 			}
@@ -556,42 +550,20 @@ void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
 //----------------------------------------------------------
 	else
 	{
-		Load_atom(ucell);
-		a.setX(x);
-		a.setY(y);
-		a.setZ(z);
-		a.setType(type);
-		a.setNatom(natom);
-//		GlobalV::ofs_running<<"\n x = "<<x;
-//		GlobalV::ofs_running<<"\n y = "<<y;
-//		GlobalV::ofs_running<<"\n z = "<<z;
-//		GlobalV::ofs_running<<"\n Type = "<<type;
-//		GlobalV::ofs_running<<"\n natom = "<<natom;
+		natom++;
+
+		if (natom >= ucell.atoms[type].na)
+		{
+			type ++;
+			natom = 0;
+		}
+		FAtom temp(ucell.atoms[type].tau[natom].x,
+				   ucell.atoms[type].tau[natom].y,
+				   ucell.atoms[type].tau[natom].z,
+				   type, natom,
+				   0, 0, 0);
+		a = temp;
 	}
 
-	return;
-}
-
-void Atom_input::Load_atom(const UnitCell& ucell)const
-{
-//	ModuleBase::TITLE("Atom_input","load_atom");
-	natom++;
-
-	if (natom >= ucell.atoms[type].na)
-	{
-		type ++;
-		natom = 0;
-	}
-
-	x = ucell.atoms[type].tau[natom].x;
-
-	y = ucell.atoms[type].tau[natom].y;
-	z = ucell.atoms[type].tau[natom].z;
-
-//	std::cout<<" x = "<<ucell.atoms[type].tau[natom].x
-//		<<" y = "<<ucell.atoms[type].tau[natom].y
-//		<<" z = "<<ucell.atoms[type].tau[natom].z
-//		<<" type = "<<type
-//		<<" natom = "<<natom;
 	return;
 }
