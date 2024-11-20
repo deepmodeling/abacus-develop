@@ -1125,6 +1125,9 @@ void UnitCell::check_dtau() {
 
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
+    // the maximum L is 7, according to the basissetexchange https://www.basissetexchange.org/
+    // there is no orbitals with L>7 presently
+    const std::string spectrum = "SPDFGHIK";
     std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
     // mohan add return 2021-04-26
     if (!ifs)
@@ -1133,71 +1136,36 @@ void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_r
         std::cout << " orbital file: " << orb_file << std::endl;
         ModuleBase::WARNING_QUIT("read_orb_file","ABACUS Cannot find the ORBITAL file (basis sets)");
     }
-    char word[80];
+    std::string word;
     atom->nw = 0;
-    int L =0;
     while (ifs.good())
     {
         ifs >> word;
-        if (strcmp("Element", word) == 0)         // pengfei Li 16-2-29
+        if (word == "Element")         // pengfei Li 16-2-29
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->label_orb);
         }
-        if (strcmp("Lmax", word) == 0)
+        if (word == "Lmax")
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
             delete[] atom->l_nchi;
-            atom->l_nchi = new int[ atom->nwl+1];
+            atom->l_nchi = new int[atom->nwl+1];
         }
-        assert(atom->nwl<10);
-        if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
+        // assert(atom->nwl<10); // cannot understand why restrict the maximum value of atom->nwl
+        if (word == "Cutoff(a.u.)")         // pengfei Li 16-2-29
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->Rcut);
         }
-        if (strcmp("Sorbital-->", word) == 0)
+        for (int i = 0; i < spectrum.size(); i++)
         {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Porbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Dorbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Forbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Gorbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
+            if (word == spectrum.substr(i, 1) + "orbital-->")
+            {
+                ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[i]);
+                atom->nw += (2*i + 1) * atom->l_nchi[i];
+                std::stringstream ss;
+                ss << "L=" << i << ", number of zeta";
+                ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[i]);
+            }
         }
     }
     ifs.close();

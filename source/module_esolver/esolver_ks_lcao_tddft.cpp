@@ -13,6 +13,9 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/scalapack_connector.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_elecstate/module_dm/cal_edm_tddft.h"
+#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
@@ -22,7 +25,6 @@
 
 //-----HSolver ElecState Hamilt--------
 #include "module_elecstate/elecstate_lcao.h"
-#include "module_elecstate/elecstate_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_parameter/parameter.h"
@@ -65,63 +67,15 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
 
 void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
 {
-    // 1) run "before_all_runners" in ESolver_KS
-    ESolver_KS::before_all_runners(inp, ucell);
-
-    // 2) initialize the local pseudopotential with plane wave basis set
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
-
-    // 3) initialize the electronic states for TDDFT
-    if (this->pelec == nullptr)
-    {
-        this->pelec = new elecstate::ElecStateLCAO_TDDFT(&this->chr,
-                                                         &kv,
-                                                         kv.get_nks(),
-                                                         &this->GK, // mohan add 2024-04-01
-                                                         this->pw_rho,
-                                                         pw_big);
-    }
-
-    // 4) read the local orbitals and construct the interpolation tables.
-    // initialize the pv
-    LCAO_domain::init_basis_lcao(this->pv,
-                                 inp.onsite_radius,
-                                 inp.lcao_ecut,
-                                 inp.lcao_dk,
-                                 inp.lcao_dr,
-                                 inp.lcao_rmax,
-                                 ucell,
-                                 two_center_bundle_,
-                                 orb_);
-
-    // 5) allocate H and S matrices according to computational resources
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, this->pv, kv.get_nks(), orb_);
-
-    // 6) initialize Density Matrix
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&kv, &this->pv, PARAM.inp.nspin);
-
-    // 8) initialize the charge density
-    this->pelec->charge->allocate(PARAM.inp.nspin);
-    this->pelec->omega = GlobalC::ucell.omega; // this line is very odd.
-
-    // 9) initializee the potential
-    this->pelec->pot = new elecstate::Potential(pw_rhod,
-                                                pw_rho,
-                                                &GlobalC::ucell,
-                                                &(GlobalC::ppcell.vloc),
-                                                &(sf),
-                                                &(pelec->f_en.etxc),
-                                                &(pelec->f_en.vtxc));
+    // 1) run before_all_runners in ESolver_KS_LCAO
+    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(inp, ucell);
 
     // this line should be optimized
-    this->pelec_td = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
+    // this->pelec = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, const double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    pelec->charge->save_rho_before_sum_band();
-
     if (wf.init_wfc == "file")
     {
         if (istep >= 1)
@@ -135,13 +89,13 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                                  this->psi_laststep,
                                                  this->Hk_laststep,
                                                  this->Sk_laststep,
-                                                 this->pelec_td->ekb,
+                                                 this->pelec->ekb,
                                                  td_htype,
                                                  PARAM.inp.propagator,
                                                  kv.get_nks());
-            this->pelec_td->psiToRho_td(this->psi[0]);
+            this->weight_dm_rho();
         }
-        this->pelec_td->psiToRho_td(this->psi[0]);
+        this->weight_dm_rho();
     }
     else if (istep >= 2)
     {
@@ -154,11 +108,11 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                                              this->psi_laststep,
                                              this->Hk_laststep,
                                              this->Sk_laststep,
-                                             this->pelec_td->ekb,
+                                             this->pelec->ekb,
                                              td_htype,
                                              PARAM.inp.propagator,
                                              kv.get_nks());
-        this->pelec_td->psiToRho_td(this->psi[0]);
+        this->weight_dm_rho();
     }
     else
     {
@@ -167,15 +121,28 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
         this->pelec->f_en.demet = 0.0;
         if (this->psi != nullptr)
         {
+            bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
             hsolver::HSolverLCAO<std::complex<double>> hsolver_lcao_obj(&this->pv, PARAM.inp.ks_solver);
-            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec_td, false);
+            hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
         }
     }
-    // else
-    // {
-    //     ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "HSolver has not been initialed!");
-    // }
 
+    // symmetrize the charge density only for ground state
+    if (istep <= 1)
+    {
+        Symmetry_rho srho;
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
+        }
+    }
+
+    // (7) calculate delta energy
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+}
+
+void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter)
+{
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
@@ -191,8 +158,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
             for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 std::setprecision(6);
-                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec_td->wg(ik, ib)
-                                     << std::endl;
+                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec->wg(ik, ib) << std::endl;
             }
         }
         GlobalV::ofs_running << std::endl;
@@ -201,32 +167,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density(const int istep, const int iter, cons
                              << std::endl;
     }
 
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        this->pelec_td->print_band(ik, PARAM.inp.printe, iter);
-    }
-
-    // using new charge density.
-    this->pelec->cal_energies(1);
-
-    // symmetrize the charge density only for ground state
-    if (istep <= 1)
-    {
-        Symmetry_rho srho;
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
-        }
-    }
-
-    // (6) compute magnetization, only for spin==2
-    GlobalC::ucell.magnet.compute_magnetization(this->pelec->charge->nrxx,
-                                                this->pelec->charge->nxyz,
-                                                this->pelec->charge->rho,
-                                                pelec->nelec_spin.data());
-
-    // (7) calculate delta energy
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(istep, iter);
 }
 
 void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
@@ -372,7 +313,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         // calculate energy density matrix for tddft
         if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
         {
-            this->cal_edm_tddft();
+            elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
         }
     }
 
@@ -392,7 +333,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
             for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
                 GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      "
-                                     << this->pelec_td->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;
+                                     << this->pelec->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::endl;
             }
         }
         GlobalV::ofs_running << std::endl;
@@ -428,6 +369,23 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                 this->RA);
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
+}
+
+void ESolver_KS_LCAO_TDDFT::weight_dm_rho()
+{
+    if (PARAM.inp.ocp == 1)
+    {
+        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
+    }
+    this->pelec->calEBand();
+
+    ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");
+
+    auto _pes = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
+    elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, this->psi[0], *(_pes->DM));
+    _pes->DM->cal_DMR();
+
+    this->pelec->psiToRho(this->psi[0]);
 }
 
 } // namespace ModuleESolver

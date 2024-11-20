@@ -3,12 +3,12 @@ pseudo_dir                      ../../../tests/PP_ORB
 orbital_dir                     ../../../tests/PP_ORB
 suffix                          ABACUS
 calculation                     scf
-ecutwfc                         100
+ecutwfc                         100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                         1.0e-5
 scf_nmax                        200
 out_chg                         0
 smearing_method                 gaussian
-smearing_sigma                  0.07
+smearing_sigma                  0.015
 mixing_type                     pulay
 mixing_ndim                     10
 mixing_beta                     0.1
@@ -19,3 +19,8 @@ noncolin                        true
 nspin                           4
 lspinorb                        true
 out_mul                         true
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

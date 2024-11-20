@@ -32,37 +32,111 @@ class FS_Nonlocal_tools
   public:
     FS_Nonlocal_tools(const pseudopot_cell_vnl* nlpp_in,
                       const UnitCell* ucell_in,
-                      const psi::Psi<std::complex<FPTYPE>, Device>* psi_in,
                       const K_Vectors* kv_in,
                       const ModulePW::PW_Basis_K* wfc_basis_in,
                       const Structure_Factor* sf_in,
                       const ModuleBase::matrix& wg,
-                      const ModuleBase::matrix& ekb);
+                      const ModuleBase::matrix* p_ekb);
     ~FS_Nonlocal_tools();
 
     /**
-     * @brief calculate the becp = <psi|beta> for all beta functions
+     * @brief calculate the projectors |beta>
+     * 
      */
-    void cal_becp(int ik, int npm);
+    void cal_vkb(const int& ik, const int& nbdall);
+
+    /**
+     * @brief calculate the becp = <psi|beta> for all beta functions
+     * 
+     * @param ik the index of k point
+     * @param npm the number of bands
+     * @param ppsi the wave functions
+     * @param nbd0 the start index of the bands
+     */
+    void cal_becp(const int& ik, const int& npm, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
+    
+    /// @brief mpi_allreduce the becp in the pool
+    void reduce_pool_becp(const int& npm);
+
+    /**
+     * @brief calculate vkb_deri
+     * 
+     * @param ik the index of k point
+     * @param nbdall the number of all bands, it decides the size of vkb_deri
+     * @param ipol the i index of the direction
+     * @param jpol the j index of the direction
+     */
+    void cal_vkb_deri_s(const int& ik, const int& nbdall, const int& ipol, const int& jpol);
+
     /**
      * @brief calculate the dbecp_{ij} = <psi|\partial beta/\partial varepsilon_{ij}> for all beta functions
      *       stress_{ij} = -1/omega \sum_{n,k}f_{nk} \sum_I \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_{ij} also calculated
+     * 
+     * @param ik the index of k point
+     * @param npm the number of bands
+     * @param ppsi the wave functions
+     * @param nbd0 the start index of the bands
      */
-    void cal_dbecp_s(int ik, int npm, int ipol, int jpol, FPTYPE* stress);
+    void cal_dbecp_s(const int& ik, const int& npm, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
+
+    /**
+     * @brief calculate stress
+     * 
+     * @param ik the index of k point
+     * @param npm the number of bands
+     * @param occ if use the occupation of the bands
+     * @param ipol the i index of the direction
+     * @param jpol the j index of the direction
+     * @param stress [out] the stress tensor
+     * @param nbd0 the start index of the bands
+     */
+    void cal_stress(const int& ik,
+                    const int& npm,
+                    const bool& occ,
+                    const int& ipol,
+                    const int& jpol,
+                    FPTYPE* stress,
+                    const int& nbd0 = 0);
+
+        /**
+         * @brief calculate vkb_deri
+         *
+         * @param ik the index of k point
+         * @param nbdall the number of all bands, it decides the size of vkb_deri
+         * @param ipol the index of the polar
+         */
+        void cal_vkb_deri_f(const int& ik, const int& nbdall, const int& ipol);
     /**
      * @brief calculate the dbecp_i = <psi|\partial beta/\partial \tau^I_i> for all beta functions
+     * 
+     * @param ik the index of k point
+     * @param nbdall the number of all bands, which is the dimension of dbecp and becp
+     * @param npm the number of bands
+     * @param ipol the index of the polar
+     * @param ppsi the wave functions
+     * @param nbd0 the start index of the bands
      */
-    void cal_dbecp_f(int ik, int npm, int ipol);
+    void cal_dbecp_f(const int& ik, const int& nbdall, const int& npm, const int& ipol, const std::complex<FPTYPE>* ppsi, const int& nbd0 = 0);
     /**
      * @brief calculate the force^I_i = - \sum_{n,k}f_{nk} \sum_{lm,l'm'}D_{l,l'}^{I} becp * dbecp_i
+     * 
+     * @param ik the index of k point
+     * @param npm the number of bands
+     * @param nbdall the number of all bands, which is the dimension of dbecp and becp
+     * @param nbd0 start band index for dbecp and becp
+     * @param occ if use the occupation of the bands
+     * @param force [out] the force
      */
-    void cal_force(int ik, int npm, FPTYPE* force);
+    void cal_force(const int& ik, const int& nbdall, const int& npm, const bool& occ, FPTYPE* force, const int& nbd0 = 0);
+
+    /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation
+    void revert_vkb(const int& ik, const int& ipol);
 
   private:
     /**
      * @brief allocate the memory for the variables
      */
-    void allocate_memory(const ModuleBase::matrix& wg, const ModuleBase::matrix& ekb);
+    void allocate_memory(const ModuleBase::matrix& wg, const ModuleBase::matrix* p_ekb);
     /**
      * @brief delete the memory for the variables
      */
@@ -73,7 +147,6 @@ class FS_Nonlocal_tools
     const Structure_Factor* sf_;
     const pseudopot_cell_vnl* nlpp_;
     const UnitCell* ucell_;
-    const psi::Psi<std::complex<FPTYPE>, Device>* psi_;
     const K_Vectors* kv_;
     const ModulePW::PW_Basis_K* wfc_basis_;
 
@@ -102,15 +175,14 @@ class FS_Nonlocal_tools
     int gcar_zero_counts[3] = {0, 0, 0};
     std::complex<FPTYPE>* vkb_save = nullptr;
     /// @brief count zero gcar indexes and prepare zero_indexes, do gcar_y /= gcar_x, gcar_z /= gcar_y
-    void transfer_gcar(int npw, int npw_max, const FPTYPE* gcar_in);
+    void transfer_gcar(const int& npw, const int& npw_max, const FPTYPE* gcar_in);
     /// @brief save the 0-value dvkbs for calculating the dbecp_i in the force calculation
-    void save_vkb(int npw, int ipol);
-    /// @brief revert the 0-value dvkbs for calculating the dbecp_i in the force calculation
-    void revert_vkb(int npw, int ipol);
+    void save_vkb(const int& npw, const int& ipol);
     /// ---------------------------------------------------------------------
 
     /// pointers to access the data without memory arrangement
     FPTYPE* d_wg = nullptr;
+    FPTYPE* d_wk = nullptr;
     FPTYPE* d_ekb = nullptr;
     FPTYPE* gcar = nullptr;
     FPTYPE* deeq = nullptr;

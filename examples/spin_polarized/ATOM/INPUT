@@ -16,13 +16,13 @@ orbital_dir             ../../../tests/PP_ORB
 
 #Parameters (2.Iteration)
 calculation             scf # scf relax cell-relax md
-ecutwfc                 60   # Rydberg, with pseudopot, lcao use pw for inner part
+ecutwfc                 60   # Rydberg, with pseudopot, lcao use pw for inner part ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                 1e-7  # drho, Rydberg
 scf_nmax                100
 
 #Parameters (3.Basis)
 basis_type              lcao  # lcao or pw
-# kspacing              0.25 # replace KPT
+# kspacing              0.25 # replace KPT ### Abacus will generate/overwrite a KPT file when kspacing is used.
 gamma_only            1  # 0/1, replace KPT
 
 #Parameters (4.Smearing)
@@ -53,3 +53,8 @@ out_mul            1  # print Mulliken charge and mag of atom in mulliken.txt
 # restart setting
 # restart_save       auto  # false, auto, other
 # restart_load       false
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

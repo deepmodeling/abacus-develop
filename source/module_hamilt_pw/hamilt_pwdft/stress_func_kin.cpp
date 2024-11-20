@@ -2,6 +2,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_base/timer.h"
+#include "module_hamilt_pw/hamilt_pwdft/fs_kin_tools.h"
 
 //calculate the kinetic stress in PW base
 template <typename FPTYPE, typename Device>
@@ -10,168 +11,29 @@ void Stress_Func<FPTYPE, Device>::stress_kin(ModuleBase::matrix& sigma,
                                              ModuleSymmetry::Symmetry* p_symm,
                                              K_Vectors* p_kv,
                                              ModulePW::PW_Basis_K* wfc_basis,
-                                             const psi::Psi<complex<FPTYPE>>* psi_in)
+                                             const UnitCell& ucell_in,
+                                             const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Stress_Func","stress_kin");
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
-	
-	FPTYPE **gk;
-	gk=new FPTYPE* [3];
-	int npw;
-	FPTYPE s_kin[3][3];
-	for(int l=0;l<3;l++)
-	{
-		for(int m=0;m<3;m++)
-		{
-			s_kin[l][m]=0.0;
-		}
-	}
-		
-	int npwx=0;
-    for (int ik = 0; ik < p_kv->get_nks(); ik++)
+	this->ucell = &ucell_in;
+	hamilt::FS_Kin_tools<FPTYPE, Device> kin_tool(*this->ucell, p_kv, wfc_basis, wg);
+    for (int ik = 0; ik < wfc_basis->nks; ++ik)
     {
-        if (npwx < p_kv->ngk[ik]) {
-            npwx = p_kv->ngk[ik];
-}
-    }
-
-    gk[0]= new FPTYPE[npwx];
-	gk[1]= new FPTYPE[npwx];
-	gk[2]= new FPTYPE[npwx];
-    FPTYPE tpiba = ModuleBase::TWO_PI / GlobalC::ucell.lat0;
-    FPTYPE twobysqrtpi = 2.0 / std::sqrt(ModuleBase::PI);
-    FPTYPE* kfac = new FPTYPE[npwx];
-    const int npol = GlobalC::ucell.get_npol();
-
-    for (int ik = 0; ik < p_kv->get_nks(); ik++)
-    {
-        npw = p_kv->ngk[ik];
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-        for (int i = 0; i < npw; i++)
+        int nbands_occ = wg.nc;
+        while (wg(ik, nbands_occ - 1) == 0.0)
         {
-            gk[0][i] = wfc_basis->getgpluskcar(ik, i)[0] * tpiba;
-            gk[1][i] = wfc_basis->getgpluskcar(ik, i)[1] * tpiba;
-            gk[2][i] = wfc_basis->getgpluskcar(ik, i)[2] * tpiba;
-            if (wfc_basis->erf_height > 0)
+            nbands_occ--;
+            if (nbands_occ == 0)
             {
-                FPTYPE gk2 = gk[0][i] * gk[0][i] + gk[1][i] * gk[1][i] + gk[2][i] * gk[2][i];
-                FPTYPE arg = (gk2 - wfc_basis->erf_ecut) / wfc_basis->erf_sigma;
-                kfac[i] = 1.0 + wfc_basis->erf_height / wfc_basis->erf_sigma * twobysqrtpi * std::exp(-arg * arg);
-            }
-            else
-            {
-                kfac[i] = 1.0;
+                break;
             }
         }
-
-        // kinetic contribution
-
-        for (int l = 0; l < 3; l++)
-        {
-            for (int m = 0; m < l + 1; m++)
-            {
-                for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
-                {
-                    if (wg(ik, ibnd) == 0.0) { continue;
-}
-                    const std::complex<FPTYPE>* ppsi = nullptr;
-                    ppsi = &(psi_in[0](ik, ibnd, 0));
-
-                    FPTYPE sum = 0;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-                    for (int i = 0; i < npw; i++)
-                    {
-                        sum += wg(ik, ibnd) * gk[l][i] * gk[m][i] * kfac[i]
-                               * (FPTYPE((conj(ppsi[i]) * ppsi[i]).real()));
-                    }
-                    if(npol == 2)
-                    {
-                        ppsi = &(psi_in[0](ik, ibnd, npwx));
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sum)
-#endif
-                        for (int i = 0; i < npw; i++)
-                        {
-                            sum += wg(ik, ibnd) * gk[l][i] * gk[m][i] * kfac[i]
-                                   * (FPTYPE((conj(ppsi[i]) * ppsi[i]).real()));
-                        }
-                    }
-                    s_kin[l][m] += sum;
-                }
-            }
-        }
-
-        //contribution from the nonlocal part
-		   
-		//stres_us(ik, gk, npw);
+        const int npm = nbands_occ;
+        kin_tool.cal_gk(ik);
+        kin_tool.cal_stress_kin(ik, npm, true, &psi_in[0](ik, 0, 0));
     }
-
-    // add the US term from augmentation charge derivatives
-
-    // addussstres(sigmanlc);
-	
-	//mp_cast
-		
-	for(int l=0;l<3;l++)
-	{
-		for(int m=0;m<l;m++)
-		{
-			s_kin[m][l]=s_kin[l][m];
-		}
-	}
-
-	if(PARAM.globalv.gamma_only_pw)
-	{
-		for(int l=0;l<3;l++)
-		{
-			for(int m=0;m<3;m++)
-			{
-				s_kin[l][m] *= 2.0*ModuleBase::e2/GlobalC::ucell.omega;
-			}
-		}
-	}
-	else 
-	{
-		for(int l=0;l<3;l++)
-		{
-			for(int m=0;m<3;m++)
-			{
-				s_kin[l][m] *= ModuleBase::e2/GlobalC::ucell.omega;
-			}
-		}
-	}
-
-	for(int l=0;l<3;l++)
-	{
-		for(int m=0;m<3;m++)
-		{
-            Parallel_Reduce::reduce_all(s_kin[l][m]); //qianrui fix a bug for kpar > 1
-		}
-	}
-
-
-	for(int l=0;l<3;l++)
-	{
-		for(int m=0;m<3;m++)
-		{
-			sigma(l,m) = s_kin[l][m];
-		}
-	}
-	//do symmetry
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        p_symm->symmetrize_mat3(sigma, GlobalC::ucell.lat);
-    } // end symmetry
-
-    delete[] gk[0];
-    delete[] gk[1];
-    delete[] gk[2];
-	delete[] gk;
-    delete[] kfac;
+    kin_tool.symmetrize_stress(p_symm, sigma);
 		
 	ModuleBase::timer::tick("Stress_Func","stress_kin");
 	return;

@@ -1,11 +1,3 @@
-[submodule "deps/LibRI"]
-	path = deps/LibRI
-	url = https://github.com/abacusmodeling/LibRI.git
-	branch = master
-[submodule "deps/LibComm"]
-	path = deps/LibComm
-	url = https://github.com/abacusmodeling/LibComm.git
-	branch = master
 [submodule "deps/libpaw_interface"]
 	path = deps/libpaw_interface
 	url = https://github.com/wenfei-li/libpaw_interface

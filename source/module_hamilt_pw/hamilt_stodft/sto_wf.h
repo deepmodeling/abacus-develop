@@ -1,7 +1,6 @@
 #ifndef STOCHASTIC_WF_H
 #define STOCHASTIC_WF_H
 
-#include "module_base/module_container/ATen/tensor.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/klist.h"
 #include "module_psi/psi.h"

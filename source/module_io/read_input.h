@@ -139,14 +139,10 @@ class ReadInput
     std::vector<std::function<void(Parameter&)>> bcastfuncs;
 };
 
-// convert string to lower case
-void strtolower(char* sa, char* sb);
 // convert string vector to a long string
 std::string longstring(const std::vector<std::string>& str_values);
 // convert string to bool
-bool convert_bool(std::string str);
-// if find a string in a vector of strings
-bool find_str(const std::vector<std::string>& strings, const std::string& strToFind);
+bool assume_as_boolean(const std::string& val);
 // convert to directory format
 std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector

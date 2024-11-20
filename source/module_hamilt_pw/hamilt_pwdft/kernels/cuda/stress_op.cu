@@ -113,6 +113,7 @@ __global__ void cal_stress_nl(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
+        const bool occ,
         const FPTYPE* d_ekb,
         const FPTYPE* qq_nt,
         const FPTYPE *deeq,
@@ -131,8 +132,20 @@ __global__ void cal_stress_nl(
     }
 
     FPTYPE stress_var = 0;
-    const FPTYPE fac = d_wg[ib];
-    const FPTYPE ekb_now = d_ekb[ib];
+    FPTYPE fac;
+    if (occ)
+    {
+        fac = d_wg[ib];
+    }
+    else
+    {
+        fac = d_wg[0];
+    }
+    FPTYPE ekb_now = 0.0;
+    if (d_ekb != nullptr)
+    {
+        ekb_now = d_ekb[ib];
+    }
     const int nproj = atom_nh[it];
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
@@ -141,8 +154,12 @@ __global__ void cal_stress_nl(
             if(!nondiagonal && ip1 != ip2) {
                 continue;
             }
-            const FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2]
-                        - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+            FPTYPE ps_qq = 0;
+            if (ekb_now != 0)
+            {
+                ps_qq = -ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+            }
+            const FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
             const int inkb1 = sum + ip1;
             const int inkb2 = sum + ip2;
             //out<<"\n ps = "<<ps;
@@ -156,6 +173,21 @@ __global__ void cal_stress_nl(
     warp_reduce(stress_var);
     if (threadIdx.x % WARP_SIZE == 0) {
         atomicAdd(stress + ipol * 3 + jpol, stress_var);
+    }
+}
+
+template <typename FPTYPE>
+__global__ void cal_multi_dot(const int npw,
+                              const FPTYPE fac,
+                              const FPTYPE* gk1,
+                              const FPTYPE* gk2,
+                              const FPTYPE* d_kfac,
+                              const thrust::complex<FPTYPE>* psi,
+                              FPTYPE* sum)
+{
+    int idx = threadIdx.x + blockIdx.x * blockDim.x;
+    if (idx < npw) {
+        atomicAdd(sum, fac * gk1[idx] * gk2[idx] * d_kfac[idx] * thrust::norm(psi[idx]));
     }
 }
 
@@ -211,6 +243,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int* atom_nh,
                                                                    const int* atom_na,
                                                                    const FPTYPE* d_wg,
+                                                                   const bool& occ,
                                                                    const FPTYPE* d_ekb,
                                                                    const FPTYPE* qq_nt,
                                                                    const FPTYPE* deeq,
@@ -231,6 +264,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              atom_nh,
              atom_na,
              d_wg,
+             occ,
              d_ekb,
              qq_nt,
              deeq,
@@ -253,6 +287,7 @@ __global__ void cal_stress_nl(
         const int *atom_nh,
         const int *atom_na,
         const FPTYPE *d_wg,
+        const bool occ,
         const FPTYPE* d_ekb,
         const FPTYPE* qq_nt,
         const thrust::complex<FPTYPE> *deeq_nc,
@@ -272,15 +307,31 @@ __global__ void cal_stress_nl(
     }
 
     FPTYPE stress_var = 0;
-    const FPTYPE fac = d_wg[ib];
-    const FPTYPE ekb_now = d_ekb[ib];
+    FPTYPE fac;
+    if (occ)
+    {
+        fac = d_wg[ib];
+    }
+    else
+    {
+        fac = d_wg[0];
+    }
+    FPTYPE ekb_now = 0.0;
+    if (d_ekb != nullptr)
+    {
+        ekb_now = d_ekb[ib];
+    }
     const int nproj = atom_nh[it];
     for (int ia = 0; ia < atom_na[it]; ia++)
     {
         for (int ii = threadIdx.x; ii < nproj * nproj; ii += blockDim.x) {
             const int ip1 = ii / nproj;
 	        const int ip2 = ii % nproj;
-            const thrust::complex<FPTYPE> ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2];
+            thrust::complex<FPTYPE> ps_qq = 0;
+            if(ekb_now != 0)
+            {
+                ps_qq = thrust::complex<FPTYPE>(- ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2], 0.0);
+            }
             const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
             const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
             const thrust::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
@@ -317,6 +368,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
                                                                    const int* atom_nh,
                                                                    const int* atom_na,
                                                                    const FPTYPE* d_wg,
+                                                                   const bool& occ,
                                                                    const FPTYPE* d_ekb,
                                                                    const FPTYPE* qq_nt,
                                                                    const std::complex<FPTYPE>* deeq_nc,
@@ -335,6 +387,7 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              atom_nh,
              atom_na,
              d_wg,
+             occ,
              d_ekb,
              qq_nt,
              reinterpret_cast<const thrust::complex<FPTYPE>*>(deeq_nc),
@@ -343,6 +396,28 @@ void cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_de
              stress);// array of data
 
     cudaCheckOnDebug();
+}
+
+template <typename FPTYPE>
+FPTYPE cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const int& npw,
+                                                                   const FPTYPE& fac,
+                                                                   const FPTYPE* gk1,
+                                                                   const FPTYPE* gk2,
+                                                                   const FPTYPE* d_kfac,
+                                                                   const std::complex<FPTYPE>* psi)
+{
+    FPTYPE* d_sum = nullptr;
+    cudaMalloc(&d_sum, sizeof(FPTYPE) * 1);
+    cudaMemset(d_sum, 0, sizeof(FPTYPE) * 1);
+    int block = (npw + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+    cal_multi_dot<FPTYPE><<<block, THREADS_PER_BLOCK>>>(
+        npw, fac, gk1, gk2, d_kfac, reinterpret_cast<const thrust::complex<FPTYPE>*>(psi), d_sum);
+    FPTYPE sum;
+    cudaMemcpy(&sum, d_sum, sizeof(FPTYPE) * 1, cudaMemcpyDeviceToHost);
+    cudaFree(d_sum);
+
+    cudaCheckOnDebug();
+    return sum;
 }
 
 template <typename T, typename Device>
@@ -860,6 +935,9 @@ template struct cal_stress_drhoc_aux_op<float, base_device::DEVICE_GPU>;
 
 template struct cal_force_npw_op<double, base_device::DEVICE_GPU>;
 template struct cal_force_npw_op<float, base_device::DEVICE_GPU>;
+
+template struct cal_multi_dot_op<double, base_device::DEVICE_GPU>;
+template struct cal_multi_dot_op<float, base_device::DEVICE_GPU>;
 
 // template struct prepare_vkb_deri_ptr_op<double, base_device::DEVICE_GPU>;
 // template struct prepare_vkb_deri_ptr_op<float, base_device::DEVICE_GPU>;

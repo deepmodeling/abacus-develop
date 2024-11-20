@@ -109,7 +109,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* X_
         //     &beta, dm_trans[isk].data<std::complex<double>>(), &i1, &i1, pmat.desc);
 
         // ============== [C_virt * X * C_occ^\dagger]^T=============
-        // ============== = [C_occ^* * X^T * C_virt^T]^T=============
+        // ============== = [C_occ^* * X^T * C_virt^T]=============
         // 1. X*C_occ^\dagger
         char transa = 'N';
         char transb = 'C';

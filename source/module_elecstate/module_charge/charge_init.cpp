@@ -260,8 +260,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {
-        rhoneg += std::min(0.0, this->rhopw->ft.get_auxr_data<double>()[ir].real());
-        rhoima += std::abs(this->rhopw->ft.get_auxr_data<double>()[ir].imag());
+        rhoneg += std::min(0.0, this->rhopw->fft_bundle.get_auxr_data<double>()[ir].real());
+        rhoima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.

@@ -47,12 +47,14 @@ class WFInit
      *
      * @param psi store the wavefunction
      * @param p_hamilt Hamiltonian operator
-     * @param ofs_running output stream for running information
+     * @param ofs_running output stream for running information 
+     * @param is_already_initpsi whether psi has been initialized
      */
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,
                         hamilt::Hamilt<T, Device>* p_hamilt,
-                        std::ofstream& ofs_running);
+                        std::ofstream& ofs_running,
+                        const bool is_already_initpsi);
 
     /**
      * @brief get the psi_initializer
@@ -84,6 +86,8 @@ class WFInit
     std::string basis_type = "none";
     // pw basis
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
+
+    Device* ctx = {};
 };
 
 } // namespace psi

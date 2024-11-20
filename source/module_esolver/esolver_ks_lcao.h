@@ -39,24 +39,16 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 
     void after_all_runners() override;
 
-    void nscf() override;
-
-    void get_S();
-
-    void cal_mag(const int istep, const bool print = false);
-
   protected:
     virtual void before_scf(const int istep) override;
 
     virtual void iter_init(const int istep, const int iter) override;
 
-    virtual void hamilt2density(const int istep,
-                                const int iter,
-                                const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
     virtual void update_pot(const int istep, const int iter) override;
 
-    virtual void iter_finish(int& iter) override;
+    virtual void iter_finish(const int istep, int& iter) override;
 
     virtual void after_scf(const int istep) override;
 
@@ -93,18 +85,7 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     void set_matrix_grid(Record_adj& ra);
 
     void beforesolver(const int istep);
-    //----------------------------------------------------------------------
-
-    /// @brief create ModuleIO::Output_Mat_Sparse object to output sparse
-    /// density matrix of H, S, T, r
-    ModuleIO::Output_Mat_Sparse<TK> create_Output_Mat_Sparse(int istep);
-
-    void read_mat_npz(std::string& zipname, hamilt::HContainer<double>& hR);
-    void output_mat_npz(std::string& zipname,
-                        const hamilt::HContainer<double>& hR);
-
-    /// @brief check if skip the corresponding output in md calculation
-    bool md_skip_out(std::string calculation, int istep, int interval);
+    //---------------------------------------------------------------------
 
 #ifdef __EXX
     std::shared_ptr<Exx_LRI_Interface<TK, double>> exd = nullptr;
@@ -114,10 +95,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
 #endif
 
   private:
-    // tmp interfaces  before sub-modules are refactored
-    void dftu_cal_occup_m(const int& iter,
-                          const std::vector<std::vector<TK>>& dm) const;
-
 #ifdef __DEEPKS
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
 

@@ -62,19 +62,21 @@ void Driver::driver_run() {
     {
         Run_MD::md_line(GlobalC::ucell, p_esolver, PARAM);
     }
-    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax")
+    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax" || cal_type == "nscf")
     {
         Relax_Driver rl_driver;
         rl_driver.relax_driver(p_esolver);
     }
+    else if (cal_type == "get_S")
+    {
+        p_esolver->runner(0, GlobalC::ucell);
+    }
     else
     {
         //! supported "other" functions:
-        //! nscf(PW,LCAO),
         //! get_pchg(LCAO),
         //! test_memory(PW,LCAO),
         //! test_neighbour(LCAO),
-        //! get_S(LCAO),
         //! gen_bessel(PW), et al.
         const int istep = 0;
         p_esolver->others(istep);

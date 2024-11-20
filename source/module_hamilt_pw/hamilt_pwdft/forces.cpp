@@ -33,6 +33,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        ModulePW::PW_Basis_K* wfc_basis,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
+    ModuleBase::timer::tick("Forces", "cal_force");
     ModuleBase::TITLE("Forces", "init");
     this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
@@ -455,7 +456,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
-
+    ModuleBase::timer::tick("Forces", "cal_force");
     return;
 }
 

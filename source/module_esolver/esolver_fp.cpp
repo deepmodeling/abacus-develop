@@ -5,6 +5,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
+#include "module_io/json_output/init_info.h"
+#include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
 #include "module_io/rhog_io.h"
@@ -81,7 +83,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
     }
 
     this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
-    this->pw_rho->ft.fft_mode = inp.fft_mode;
+    this->pw_rho->fft_bundle.initfftmode(inp.fft_mode);
     this->pw_rho->setuptransform();
     this->pw_rho->collect_local_pw();
     this->pw_rho->collect_uniqgg();
@@ -106,7 +108,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& cell)
             this->pw_rhod->initgrids(inp.ref_cell_factor * cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
         }
         this->pw_rhod->initparameters(false, inp.ecutrho);
-        this->pw_rhod->ft.fft_mode = inp.fft_mode;
+        this->pw_rhod->fft_bundle.initfftmode(inp.fft_mode);
         pw_rhod_sup->setuptransform(this->pw_rho);
         this->pw_rhod->collect_local_pw();
         this->pw_rhod->collect_uniqgg();
@@ -260,6 +262,14 @@ void ESolver_FP::after_scf(const int istep)
                 PARAM.inp.out_elf[1]);
         }
     }
+
+    // #ifdef __RAPIDJSON
+    //     // add Json of efermi energy converge
+    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
+    //     // add nkstot,nkstot_ibz to output json
+    //     int Jnkstot = this->pelec->klist->get_nkstot();
+    //     Json::add_nkstot(Jnkstot);
+    // #endif //__RAPIDJSON
 }
 
 void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)

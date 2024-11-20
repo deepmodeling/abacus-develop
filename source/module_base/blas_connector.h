@@ -40,6 +40,9 @@ extern "C"
 	double dznrm2_( const int *n, const std::complex<double> *X, const int *incX );
 
 	// level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
+	void sgemv_(const char*const transa, const int*const m, const int*const n,
+		const float*const alpha, const float*const a, const int*const lda, const float*const x, const int*const incx,
+		const float*const beta, float*const y, const int*const incy);
 	void dgemv_(const char*const transa, const int*const m, const int*const n,
 		const double*const alpha, const double*const a, const int*const lda, const double*const x, const int*const incx,
 		const double*const beta, double*const y, const int*const incy);
@@ -177,6 +180,11 @@ public:
 	void gemm(const char transa, const char transb, const int m, const int n, const int k,
 		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
 		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void gemv(const char trans, const int m, const int n,
+        const float alpha, const float* A, const int lda, const float* X, const int incx,
+        const float beta, float* Y, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
     static
     void gemv(const char trans, const int m, const int n,

@@ -21,6 +21,11 @@ list(APPEND objects
     module_charge/charge_mpi.cpp
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp
+    module_charge/charge_mixing_dmr.cpp
+    module_charge/charge_mixing_residual.cpp
+    module_charge/charge_mixing_preconditioner.cpp
+    module_charge/charge_mixing_rho.cpp
+    module_charge/charge_mixing_uspp.cpp
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp
@@ -31,11 +36,12 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      elecstate_lcao_tddft.cpp
       elecstate_lcao_cal_tau.cpp
       potentials/H_TDDFT_pw.cpp
       module_dm/density_matrix.cpp
+      module_dm/density_matrix_io.cpp
       module_dm/cal_dm_psi.cpp
+      module_dm/cal_edm_tddft.cpp
   )
 endif()
 

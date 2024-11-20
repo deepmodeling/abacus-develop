@@ -58,8 +58,8 @@ TEST_F(PWBasisTEST,Constructor)
 	EXPECT_EQ(pwb2.classname,"PW_Basis");
 	EXPECT_EQ(pwb2.device,"cpu");
 	EXPECT_EQ(pwb2.precision,"double");
-	EXPECT_EQ(pwb2.ft.device,"cpu");
-	EXPECT_EQ(pwb2.ft.precision,"double");
+	EXPECT_EQ(pwb2.fft_bundle.device,"cpu");
+	EXPECT_EQ(pwb2.fft_bundle.precision,"double");
 }
 
 TEST_F(PWBasisTEST,Initgrids1)

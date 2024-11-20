@@ -6,6 +6,7 @@
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/dsp/dsp_connector.h"
 
 #include <vector>
 
@@ -182,7 +183,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
             setmem_complex_op()(this->ctx, psi_in, 0, n_band * psi_in_dmax);
 
 #ifdef __DSP
-    gemm_op_mt<T, Device>()
+    gemm_op_mt<T, Device>()  // In order to not coding another whole template, using this method to minimize the code change.
 #else
     gemm_op<T, Device>()
 #endif
@@ -444,7 +445,12 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (this->diag_comm.nproc > 1)
     {
+#ifdef __DSP
+        // Only on dsp hardware need an extra space to reduce data
+        dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
+#else
         auto* swap = new T[notconv * this->nbase_x];
+
         syncmem_complex_op()(this->ctx, this->ctx, swap, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
 
         if (std::is_same<T, double>::value)
@@ -499,6 +505,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
             }
         }
         delete[] swap;
+#endif
     }
 #endif
 

@@ -23,7 +23,20 @@ int Memory::short_memory = sizeof(short); // 2.0 Byte
 
 int Memory::n_memory = 1000;
 int Memory::n_now = 0;
-bool Memory::init_flag =  false;
+bool Memory::init_flag = false;
+
+#if defined(__CUDA) || defined(__ROCM)
+
+double Memory::total_gpu = 0.0;
+int Memory::n_now_gpu = 0;
+bool Memory::init_flag_gpu = false;
+
+std::string *Memory::name_gpu;
+std::string *Memory::class_name_gpu;
+double *Memory::consume_gpu;
+
+#endif
+
 
 std::string *Memory::name;
 std::string *Memory::class_name;
@@ -208,6 +221,126 @@ void Memory::record
 	return;
 }
 
+#if defined(__CUDA) || defined(__ROCM)
+
+double Memory::record_gpu
+(
+ 	const std::string &class_name_in,
+	const std::string &name_in,
+	const long &n_in,
+	const std::string &type,
+	const bool accumulate
+)
+{
+	if(!Memory::init_flag_gpu)
+	{
+		name_gpu = new std::string[n_memory];
+		class_name_gpu = new std::string[n_memory];
+		consume_gpu = new double[n_memory];
+		for(int i=0;i<n_memory;i++)
+		{
+			consume_gpu[i] = 0.0;
+		}
+		Memory::init_flag_gpu = true;
+	}
+
+	int find = 0;
+	for(find = 0; find < n_now_gpu; find++)
+	{
+		if( name_in == name_gpu[find] )
+		{
+			break;
+		}
+	}
+
+	// find == n_now : found a new record.	
+	if(find == n_now_gpu)
+	{
+		n_now_gpu++;
+		name_gpu[find] = name_in;
+		class_name_gpu[find] = class_name_in;
+	}
+	if(n_now_gpu >= n_memory)
+	{
+		std::cout<<" Error! Too many gpu memories required.";
+		return 0.0;
+	}
+
+	consume_gpu[find] = Memory::calculate_mem(n_in,type);
+
+	if(consume_gpu[find] > 5)
+	{
+		print(find);
+	}
+	return consume_gpu[find];
+}
+
+void Memory::record_gpu
+(
+	const std::string &name_in,
+	const size_t &n_in,
+	const bool accumulate
+)
+{
+	if(!Memory::init_flag_gpu)
+	{
+		name_gpu = new std::string[n_memory];
+		class_name_gpu = new std::string[n_memory];
+		consume_gpu = new double[n_memory];
+		for(int i=0;i<n_memory;i++)
+		{
+			consume_gpu[i] = 0.0;
+		}
+		Memory::init_flag_gpu = true;
+	}
+
+	int find = 0;
+	for(find = 0; find < n_now_gpu; find++)
+	{
+		if( name_in == name_gpu[find] )
+		{
+			break;
+		}
+	}
+
+	// find == n_now : found a new record.	
+	if(find == n_now_gpu)
+	{
+		n_now_gpu++;
+		name_gpu[find] = name_in;
+		class_name_gpu[find] = "";
+	}
+	if(n_now_gpu >= n_memory)
+	{
+		std::cout<<" Error! Too many gpu memories has been recorded.";
+		return;
+	}
+
+	const double factor = 1.0/1024.0/1024.0;
+	double size_mb = n_in * factor;
+
+	if(accumulate)
+	{
+		consume_gpu[find] += size_mb;
+		Memory::total_gpu += size_mb;
+	}
+	else
+	{
+		if(consume_gpu[find] < size_mb)
+		{
+			Memory::total_gpu += size_mb - consume_gpu[find];
+			consume_gpu[find] = size_mb;
+			if(consume_gpu[find] > 5)
+			{
+				print(find);
+			}
+		}
+	}
+	return;
+}
+
+#endif
+
 void Memory::print(const int find)
 {
 	GlobalV::ofs_running <<"\n Warning_Memory_Consuming allocated: "
@@ -226,6 +359,15 @@ void Memory::finish(std::ofstream &ofs)
 		delete[] consume;
 		init_flag = false;
 	}
+#if defined(__CUDA) || defined(__ROCM)
+	if(init_flag_gpu)
+	{
+		delete[] name_gpu;
+		delete[] class_name_gpu;
+		delete[] consume_gpu;
+		init_flag_gpu = false;
+	}
+#endif
 	return;
 }
 
@@ -239,6 +381,9 @@ void Memory::print_all(std::ofstream &ofs)
 	const double small = 1.0; // unit is MB 
 #ifdef __MPI
 	Parallel_Reduce::reduce_all(Memory::total);
+#if defined(__CUDA) || defined(__ROCM)
+	Parallel_Reduce::reduce_all(Memory::total_gpu);
+#endif
 #endif
 	ofs <<"\n NAME-------------------------|MEMORY(MB)--------" << std::endl;
 	ofs <<std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total << std::endl;
@@ -254,23 +399,7 @@ void Memory::print_all(std::ofstream &ofs)
 
 	for (int i=0; i<n_memory; i++)
     {
-//		int k = 0;
-//		double tmp = -1.0;
-//		for(int j=0; j<n_memory; j++)
-//		{
-//			if(print_flag[j])
-//			{
-//				continue;
-//			}
-//			else if(tmp < consume[j])
-//			{
-//				k = j;
-//				tmp = consume[j];
-//			}
-//		}
-//		print_flag[k] = true;
 #ifdef __MPI
-//		Parallel_Reduce::reduce_all(consume[k]);
 		Parallel_Reduce::reduce_all(consume[i]);
 #endif
 	}
@@ -303,6 +432,63 @@ void Memory::print_all(std::ofstream &ofs)
 		}
 
 	}
+
+#if defined(__CUDA) || defined(__ROCM)
+	if(!init_flag_gpu) 
+	{
+		return;
+	}
+
+	ofs <<"\n NAME-------------------------|GPU MEMORY(MB)----" << std::endl;
+	ofs <<std::setw(30)<< "total" << std::setw(15) <<std::setprecision(4)<< Memory::total_gpu << std::endl;
+    
+    assert(n_memory>0);
+
+	bool *print_flag_gpu = new bool[n_memory];
+
+	for(int i=0; i<n_memory; i++) 
+	{
+		print_flag_gpu[i] = false;
+	}	
+
+	for (int i=0; i<n_memory; i++)
+    {
+#ifdef __MPI
+		Parallel_Reduce::reduce_all(consume_gpu[i]);
+#endif
+	}
+
+	for (int i=0; i<n_memory; i++) // Xiaoyang fix memory record sum bug 2023/10/25
+	{
+		int k = 0;
+		double tmp = -1.0;
+		for(int j=0; j<n_memory; j++)
+		{
+			if(print_flag_gpu[j])
+			{
+				continue;
+			}
+			else if(tmp < consume_gpu[j])
+			{
+				k = j;
+				tmp = consume_gpu[j];
+			}
+		}
+		print_flag_gpu[k] = true;
+		if ( consume_gpu[k] < small )
+        {
+			continue;
+		}
+		else
+		{
+			ofs << std::setw(30) << name_gpu[k]
+            << std::setw(15) << consume_gpu[k] << std::endl;
+		}
+
+	}
+
+	delete[] print_flag_gpu;
+#endif
 
 	ofs<<" -------------   < 1.0 MB has been ignored ----------------"<<std::endl;
     ofs<<" ----------------------------------------------------------"<<std::endl;

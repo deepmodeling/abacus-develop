@@ -1,6 +1,9 @@
 #ifndef STO_CHEBYCHEV_H
 #define STO_CHEBYCHEV_H
 #include "fftw3.h"
+#include "module_base/module_device/device.h"
+#include "module_base/module_device/memory_op.h"
+#include "module_base/module_container/ATen/core/tensor_types.h"
 
 #include <complex>
 #include <functional>
@@ -76,7 +79,7 @@ class FFTW;
  *    //calculate vp1: |vp1> = 2 H|v> - |vm1>;
  *
  */
-template <typename REAL>
+template <typename REAL, typename Device = base_device::DEVICE_CPU>
 class Chebyshev
 {
 
@@ -201,15 +204,18 @@ class Chebyshev
     int norder;  // order of Chebyshev expansion
     int norder2; // 2 * norder * EXTEND
 
-    REAL* coef_real;                  // expansion coefficient of each order
-    std::complex<REAL>* coef_complex; // expansion coefficient of each order
-    FFTW<REAL> fftw;                  // use for fftw
-    REAL* polytrace;                  // w_n = \sum_i v^+ * T_n(A) * v
+    REAL* coef_real = nullptr;                  //[Device] expansion coefficient of each order
+    std::complex<REAL>* coef_complex = nullptr; //[Device] expansion coefficient of each order
+    REAL* coefr_cpu = nullptr;                  //[CPU] expansion coefficient of each order
+    std::complex<REAL>* coefc_cpu = nullptr;    //[CPU] expansion coefficient of each order
+
+    FFTW<REAL> fftw;          // use for fftw
+    REAL* polytrace;                  //[CPU] w_n = \sum_i v^+ * T_n(A) * v, only
 
     bool getcoef_real;    // coef_real has been calculated
     bool getcoef_complex; // coef_complex has been calculated
 
-  private:
+  public:
     // SI.
     // calculate dot product <psi_L|psi_R>
     REAL ddot_real(const std::complex<REAL>* psi_L,
@@ -217,6 +223,22 @@ class Chebyshev
                    const int N,
                    const int LDA = 1,
                    const int m = 1);
+  
+  private:
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    using ct_Device = typename container::PsiToContainer<Device>::type;
+    using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<REAL>, Device>; 
+    using resmem_var_op = base_device::memory::resize_memory_op<REAL, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<std::complex<REAL>, Device>;
+    using delmem_var_op = base_device::memory::delete_memory_op<REAL, Device>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<REAL, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<REAL, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, base_device::DEVICE_CPU, Device>;
+    using memcpy_var_op = base_device::memory::synchronize_memory_op<REAL, Device, Device>;
+    using memcpy_complex_op = base_device::memory::synchronize_memory_op<std::complex<REAL>, Device, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<std::complex<REAL>, Device>;
 };
 
 template <>
@@ -244,6 +266,7 @@ class FFTW<float>
     fftwf_plan coef_plan;
 };
 #endif
+
 } // namespace ModuleBase
 
 #endif
