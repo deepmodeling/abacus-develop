@@ -81,6 +81,11 @@ class OperatorLCAO : public Operator<TK> {
      */
     void set_hr_done(bool hr_done_in);
 
+    /**
+     * @brief set current spin index
+     */
+    void set_current_spin(const int current_spin_in);
+
     // protected:
     //  Hamiltonian matrix which are calculated in OperatorLCAO
     HS_Matrix_K<TK>* hsk = nullptr;
@@ -91,6 +96,12 @@ class OperatorLCAO : public Operator<TK> {
 
     // Real space Hamiltonian pointer
     hamilt::HContainer<TR>* hR = nullptr;
+
+    // current spin index
+    int current_spin = 0;
+
+    // if HR is calculated
+    bool hr_done = false;
 
   private:
     void get_hs_pointers();
@@ -103,9 +114,6 @@ class OperatorLCAO : public Operator<TK> {
 
     // only used for Gamma_only case
     bool allocated_smatrix = false;
-
-    // if HR is calculated
-    bool hr_done = false;
 };
 
 } // end namespace hamilt

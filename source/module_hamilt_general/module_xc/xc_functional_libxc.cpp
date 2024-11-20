@@ -3,6 +3,7 @@
 #include "xc_functional_libxc.h"
 #include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
+#include "module_base/formatter.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"		// just for GlobalC::exx_info
@@ -10,7 +11,7 @@
 
 #include <xc.h>
 #include <vector>
-bool xc_with_laplacian(const std::string& xc_func_in)
+bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
 	// see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
 	// ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
@@ -26,16 +27,9 @@ bool xc_with_laplacian(const std::string& xc_func_in)
 	return false;
 }
 
-std::string _uppercase(const std::string& str)
-{
-	std::string result = str;
-	std::transform(result.begin(), result.end(), result.begin(), ::toupper);
-	return result;
-}
-
 bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 {
-	const std::string xc_func = _uppercase(xc_func_in);
+	const std::string xc_func = FmtCore::upper(xc_func_in);
 	if(xc_func.find("VDW") != std::string::npos) { return true; }
 	/* known excluded: GGA_X_OPTB86B_VDW, GGA_X_OPTB88_VDW, GGA_X_OPTPBE_VDW, GGA_X_PBEK1_VDW */
 
@@ -64,7 +58,7 @@ bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
 std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::string xc_func_in)
 {
     // determine the type (lda/gga/mgga)
-	if (xc_with_laplacian(xc_func_in))
+	if (not_supported_xc_with_laplacian(xc_func_in))
 	{
 		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
 			"XC Functional involving Laplacian of rho is not implemented.");

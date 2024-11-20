@@ -1448,7 +1448,7 @@ TEST_F(InputTest, Item_test2)
         param.input.onsite_radius = 0.0;
         param.input.dft_plus_u = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.onsite_radius, 5.0);
+        EXPECT_EQ(param.input.onsite_radius, 3.0);
     }
     { // hubbard_u
         auto it = find_label("hubbard_u", readinput.input_lists);
@@ -1586,10 +1586,9 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // sc_file
-        auto it = find_label("sc_file", readinput.input_lists);
-        param.input.sc_file = "notexist";
-        param.input.sc_mag_switch = true;
+    { // sc_scf_thr
+        auto it = find_label("sc_scf_thr", readinput.input_lists);
+        param.input.sc_scf_thr = -1e-3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(0), "");
         output = testing::internal::GetCapturedStdout();

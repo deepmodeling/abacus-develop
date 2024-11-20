@@ -1392,7 +1392,7 @@ These variables are used to control the geometry relaxation.
 
 - **Type**: Integer
 - **Description**: The maximal number of ionic iteration steps, the minimum value is 1.
-- **Default**: 1
+- **Default**: 1 for SCF, 50 for relax and cell-relax calcualtions
 
 ### relax_cg_thr
 
@@ -2928,7 +2928,7 @@ These variables are used to control DFT+U correlated parameters
 
   - where $\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
 - **Unit**: Bohr
-- **Default**: 5.0
+- **Default**: 3.0
 
 [back to top](#full-list-of-input-keywords)
 

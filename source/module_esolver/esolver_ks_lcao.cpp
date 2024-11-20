@@ -5,6 +5,7 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/dos_nao.h"
@@ -126,30 +127,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
-    // 1) calculate overlap matrix S
-    if (PARAM.inp.calculation == "get_S")
-    {
-        // 1.1) read pseudopotentials
-        ucell.read_pseudo(GlobalV::ofs_running);
-
-        // 1.2) symmetrize things
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        {
-            ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
-            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-        }
-
-        // 1.3) Setup k-points according to symmetry.
-        this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
-
-        ModuleIO::setup_parameters(ucell, this->kv);
-    }
-    else
-    {
-        // 1) else, call before_all_runners() in ESolver_KS
-        ESolver_KS<TK>::before_all_runners(inp, ucell);
-    } // end ifnot get_S
+    ESolver_KS<TK>::before_all_runners(inp, ucell);
 
     // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
@@ -182,13 +160,6 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
-
-    // this function should be removed outside of the function in near future
-    if (PARAM.inp.calculation == "get_S")
-    {
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "init");
-        return;
-    }
 
     // 5) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
@@ -256,7 +227,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell
 #endif
 
     // 12) set occupations
-    if (PARAM.inp.ocp)
+    // tddft does not need to set occupations in the first scf
+    if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
@@ -697,14 +669,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         this->p_hamilt->refresh();
     }
 
-    // run the inner lambda loop to contrain atomic moments with the DeltaSpin
-    // method
-    if (PARAM.inp.sc_mag_switch && iter > PARAM.inp.sc_scf_nmin)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.run_lambda_loop(iter - 1);
-    }
-
     // save density matrix DMR for mixing
     if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
@@ -738,8 +702,31 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
-    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+
+    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        if(!sc.mag_converged() && this->drho>0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if(sc.mag_converged())
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            skip_solve = true;
+        }
+    }
+    if(!skip_solve)
+    {
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+    }
 
     // 5) what's the exd used for?
 #ifdef __EXX
@@ -873,7 +860,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 //! 2) output charge density
 //! 3) output exx matrix
 //! 4) output charge density and density matrix
-//! 5) cal_MW? (why put it here?)
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
@@ -892,7 +878,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
             {
                 const std::vector<std::vector<TK>>& tmp_dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                this->dftu_cal_occup_m(iter, tmp_dm);
+                ModuleDFTU::dftu_cal_occup_m(iter, tmp_dm, this->kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
             }
             GlobalC::dftu.cal_energy_correction(istep);
         }
@@ -913,8 +899,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
     // 8) for delta spin
     if (PARAM.inp.sc_mag_switch)
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(iter);
     }
 
     // call iter_finish() of ESolver_KS
@@ -1004,15 +990,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
                     &(GlobalC::ucell));
             }
         }
-    }
-
-    // 5) cal_MW?
-    // escon: energy of spin constraint depends on Mi, so cal_energies should be
-    // called after cal_MW
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
@@ -1208,13 +1185,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
-    // 15) write spin constrian MW?
-    // spin constrain calculations, added by Tianqi Zhao.
-    if (PARAM.inp.sc_mag_switch)
+    // 15) write atomic magnetization only when spin_constraint is on
+    // spin constrain calculations.
+    if (PARAM.inp.sc_mag_switch) 
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, true);
-        sc.print_Mag_Force();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(istep);
+        sc.print_Mi(GlobalV::ofs_running);
+        sc.print_Mag_Force(GlobalV::ofs_running);
     }
 
     // 16) delete grid

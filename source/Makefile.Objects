@@ -230,7 +230,6 @@ OBJS_ELECSTAT=elecstate.o\
     pot_xc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      elecstate_lcao_tddft.o\
       elecstate_lcao_cal_tau.o\
       density_matrix.o\
       density_matrix_io.o\
@@ -255,10 +254,9 @@ OBJS_ESOLVER=esolver.o\
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       dpks_cal_e_delta_band.o\
-      dftu_cal_occup_m.o\
       set_matrix_grid.o\
       lcao_before_scf.o\
-      lcao_gets.o\
+      esolver_gets.o\
       lcao_others.o\
       lcao_init_after_vc.o\
 
@@ -321,7 +319,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
-    sc_lambda_lcao.o\
+    dspin_lcao.o\
     dftu_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
@@ -686,7 +684,9 @@ OBJS_VDW=vdw.o\
     vdwd3_parameters.o\
     vdwd2.o\
     vdwd3.o\
-    vdwd3_parameters_tab.o
+    vdwd3_parameters_tab.o\
+    vdwd3_autoset_xcname.o\
+    vdwd3_autoset_xcparam.o
 
 OBJS_DFTU=dftu.o\
       dftu_force.o\
@@ -698,14 +698,11 @@ OBJS_DFTU=dftu.o\
       dftu_hamilt.o
 
 OBJS_DELTASPIN=basic_funcs.o\
-      cal_h_lambda.o\
       cal_mw_from_lambda.o\
-      cal_mw_helper.o\
       cal_mw.o\
       init_sc.o\
       lambda_loop_helper.o\
       lambda_loop.o\
-      sc_parse_json.o\
       spin_constrain.o\
       template_helpers.o\
 

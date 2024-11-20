@@ -2,18 +2,14 @@
 // Author: Jingang Han
 // DATE : 2024-03-11
 //==========================================================
+
 #include "rdmft.h"
 #include "module_rdmft/rdmft_tools.h"
-
-#include "module_base/blas_connector.h"
-#include "module_base/scalapack_connector.h"
 #include "module_base/timer.h"
-// #include "module_psi/psi.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-
-// #include "module_elecstate/module_dm/cal_dm_psi.h"
+#include "module_base/parallel_reduce.h"
 #include "module_cell/module_symmetry/symmetry.h"
-// #include "module_hamilt_general/module_xc/xc_functional.h"
+
 
 #include <iostream>
 #include <cmath>
@@ -21,28 +17,6 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
-
-// used by class Veff_rdmft
-//#include "veff_lcao.h"
-//#include "module_base/timer.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/veff_lcao.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
-#include "module_base/tool_title.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_elecstate/potentials/H_Hartree_pw.h"
-#include "module_elecstate/potentials/pot_local.h"
-#include "module_elecstate/potentials/pot_xc.h"
-#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_elecstate/elecstate_lcao.h"
-
-// for test use dgemm_
-#include "module_base/matrix.h"
-#include "module_base/blas_connector.h"
-
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"  //test
-
-// #include "module_elecstate/module_charge/symmetry_rho.h"
-
 
 
 
@@ -61,10 +35,13 @@ RDMFT<TK, TR>::~RDMFT()
 {
     delete HR_TV;
     delete HR_hartree;
-    // delete HR_XC;
     delete HR_exx_XC;
-    // delete HR_local;
     delete HR_dft_XC;
+    // delete HR_local;
+    delete hsk_TV;
+    delete hsk_hartree;
+    delete hsk_dft_XC;
+    delete hsk_exx_XC;
 #ifdef __EXX
     delete Vxc_fromRI_d;
     delete Vxc_fromRI_c;
@@ -73,10 +50,8 @@ RDMFT<TK, TR>::~RDMFT()
     delete V_nonlocal;
     delete V_local;
     delete V_hartree;
-    // delete V_XC;
     delete V_exx_XC;
     delete V_dft_XC;
-    delete V_hartree_XC;
 }
 
 template <typename TK, typename TR>
@@ -101,7 +76,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     nk_total *= nspin;
     only_exx_type = ( XC_func_rdmft == "hf" || XC_func_rdmft == "muller" || XC_func_rdmft == "power" );
 
-    // // create desc[] and something about MPI to Eij(nbands*nbands)
+    // create desc[] and something about MPI to Eij(nbands*nbands)
 #ifdef __MPI
     para_Eij.set(nbands_total, nbands_total, ParaV->nb, ParaV->blacs_ctxt); // maybe in default, PARAM.inp.nb2d = 0, can't be used
 #endif
@@ -146,12 +121,10 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     // 
     HR_TV = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_hartree = new hamilt::HContainer<TR>(*ucell, ParaV);
-    // HR_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_exx_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     HR_dft_XC = new hamilt::HContainer<TR>(*ucell, ParaV);
     // HR_local = new hamilt::HContainer<TR>(*ucell, ParaV);
 
-    // set zero ( std::vector, ModuleBase::matrix will automatically be set to zero )
     wfc.zero_out();
     occNum_HamiltWfc.zero_out();
     H_wfc_TV.zero_out();
@@ -162,7 +135,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     
     HR_TV->set_zero();         // HR->set_zero() might be delete here, test on Gamma_only in the furure 
     HR_hartree->set_zero();
-    // HR_XC->set_zero();
     HR_exx_XC->set_zero();
     HR_dft_XC->set_zero();
     // HR_local->set_zero();
@@ -197,7 +169,6 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, Gint_k& GK_in, Parallel_Orbitals& Pa
     {
         HR_TV->fix_gamma();
         HR_hartree->fix_gamma();
-        // HR_XC->fix_gamma();
         HR_exx_XC->fix_gamma();
         HR_dft_XC->fix_gamma();
     }
@@ -351,7 +322,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         Parallel_Reduce::reduce_all(E_RDMFT[0]);
         Parallel_Reduce::reduce_all(E_RDMFT[1]);
 
-        Etotal = E_RDMFT[0] + E_RDMFT[1] + E_RDMFT[2] + E_Ewald + E_entropy + E_descf;
+        this->Etotal = E_RDMFT[0] + E_RDMFT[1] + E_RDMFT[2] + E_Ewald + E_entropy + E_descf;
 
         // temp
         E_RDMFT[3] = E_RDMFT[0] + E_RDMFT[1] + E_RDMFT[2];

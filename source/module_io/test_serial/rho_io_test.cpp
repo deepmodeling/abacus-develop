@@ -111,7 +111,6 @@ TEST_F(RhoIOTest, Write)
     ucell->atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
     ucell->atoms[0].tau[1] = ModuleBase::Vector3<double>(-0.75, 0.75, 0.75);
     ucell->atoms[0].ncpp.zv = 4;
-    ucell->atoms[1].ncpp.zv = 4;
     Parallel_Grid pgrid(nx, ny, nz, nz, nrxx, nz, 1);
     ModuleIO::read_vdata_palgrid(pgrid, my_rank, ofs_running, "support/SPIN1_CHG.cube", rho[0], ucell->nat);
     ModuleIO::write_vdata_palgrid(pgrid, rho[0], 0, nspin, 0, "test_write_vdata_palgrid.cube", 0.461002, ucell, 11, 1);
