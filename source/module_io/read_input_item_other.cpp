@@ -122,18 +122,19 @@ void ReadInput::item_others()
         this->add_item(item);
     }
     {
-        Input_Item item("sc_file");
-        item.annotation = "file name for parameters used in non-collinear "
-                          "spin-constrained DFT (json format)";
-        read_sync_string(input.sc_file);
+        Input_Item item("sc_drop_thr");
+        item.annotation = "Convergence criterion ratio of lambda iteration in Spin-constrained DFT";
+        read_sync_double(input.sc_drop_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scf_thr");
+        item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
+        read_sync_double(input.sc_scf_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.sc_mag_switch)
+            if (para.input.sc_scf_thr <= 0.0)
             {
-                const std::string ss = "test -f " + para.input.sc_file;
-                if (system(ss.c_str()))
-                {
-                    ModuleBase::WARNING_QUIT("ReadInput", "sc_file does not exist");
-                }
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
             }
         };
         this->add_item(item);

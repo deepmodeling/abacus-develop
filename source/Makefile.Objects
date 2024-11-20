@@ -319,7 +319,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
-    sc_lambda_lcao.o\
+    dspin_lcao.o\
     dftu_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
@@ -698,14 +698,11 @@ OBJS_DFTU=dftu.o\
       dftu_hamilt.o
 
 OBJS_DELTASPIN=basic_funcs.o\
-      cal_h_lambda.o\
       cal_mw_from_lambda.o\
-      cal_mw_helper.o\
       cal_mw.o\
       init_sc.o\
       lambda_loop_helper.o\
       lambda_loop.o\
-      sc_parse_json.o\
       spin_constrain.o\
       template_helpers.o\
 

@@ -61,8 +61,6 @@ class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
     int nspin = 0;
-    /// @brief the current spin index for nspin==2 to calculate spin-up and spin-down separately
-    int current_spin = 0;
 
     /**
      * @brief search the nearest neighbor atoms and save them into this->adjs_all

@@ -137,8 +137,7 @@ public:
 			ucell->atoms[it].label = this->elements[it];
 			ucell->atoms[it].nw = 0;
 			ucell->atoms[it].nwl = 2;
-			delete[] ucell->atoms[it].l_nchi;
-			ucell->atoms[it].l_nchi = new int[ ucell->atoms[it].nwl+1];
+			ucell->atoms[it].l_nchi.resize(ucell->atoms[it].nwl+1);
 			for(int L=0; L<ucell->atoms[it].nwl+1; L++)
 			{
 				ucell->atoms[it].l_nchi[L] = 1;
@@ -146,24 +145,15 @@ public:
 			}
 			ucell->atoms[it].na = this->natom[it];
 			//coordinates and related physical quantities
-			delete[] ucell->atoms[it].tau;
-			delete[] ucell->atoms[it].dis;
-			delete[] ucell->atoms[it].taud;
-			delete[] ucell->atoms[it].vel;
-			delete[] ucell->atoms[it].mag;
-			delete[] ucell->atoms[it].angle1;
-			delete[] ucell->atoms[it].angle2;
-			delete[] ucell->atoms[it].m_loc_;
-			delete[] ucell->atoms[it].mbl;
-			ucell->atoms[it].tau = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].dis = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].taud = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].vel = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].mag = new double[ucell->atoms[it].na];
-			ucell->atoms[it].angle1 = new double[ucell->atoms[it].na];
-			ucell->atoms[it].angle2 = new double[ucell->atoms[it].na];
-			ucell->atoms[it].m_loc_ = new ModuleBase::Vector3<double>[ucell->atoms[it].na];
-			ucell->atoms[it].mbl = new ModuleBase::Vector3<int>[ucell->atoms[it].na];
+			ucell->atoms[it].tau.resize(ucell->atoms[it].na);
+			ucell->atoms[it].dis.resize(ucell->atoms[it].na);
+			ucell->atoms[it].taud.resize(ucell->atoms[it].na);
+			ucell->atoms[it].vel.resize(ucell->atoms[it].na);
+			ucell->atoms[it].mag.resize(ucell->atoms[it].na);
+			ucell->atoms[it].angle1.resize(ucell->atoms[it].na);
+			ucell->atoms[it].angle2.resize(ucell->atoms[it].na);
+			ucell->atoms[it].m_loc_.resize(ucell->atoms[it].na);
+			ucell->atoms[it].mbl.resize(ucell->atoms[it].na);
 			ucell->atoms[it].mass = ucell->atom_mass[it]; // mass set here
 			for(int ia=0; ia<ucell->atoms[it].na; ++ia)
 			{

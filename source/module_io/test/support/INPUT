@@ -389,4 +389,3 @@ nsc_min                        4 #Minimum number of spin-constrained iteration
 sc_scf_nmin                    4 #Minimum number of outer scf loop before initializing lambda loop
 alpha_trial                    0.02 #Initial trial step size for lambda in eV/uB^2
 sccut                          4 #Maximal step size for lambda in eV/uB
-sc_file                        sc.json #file name for parameters used in non-collinear spin-constrained DFT (json format)

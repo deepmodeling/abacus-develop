@@ -355,8 +355,8 @@ TEST(AbacusJsonTest, Init_stru_test)
         atomlist[i].na = 2;
         atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
-        ucell.atoms[i].tau = new ModuleBase::Vector3<double>[2];
-        atomlist[i].mag = new double[2];
+        ucell.atoms[i].tau.resize(2);
+        atomlist[i].mag.resize(2);
         for (int j = 0; j < atomlist[i].na; j++)
         {
             atomlist[i].mag[j] = j * 131;

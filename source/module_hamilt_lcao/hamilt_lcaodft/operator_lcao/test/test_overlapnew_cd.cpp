@@ -34,7 +34,7 @@ class OverlapNewTest : public ::testing::Test
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
         ucell.iat2ia = new int[ucell.nat];
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[ucell.nat];
+        ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
@@ -45,9 +45,9 @@ class OverlapNewTest : public ::testing::Test
         }
         ucell.atoms[0].na = test_size;
         ucell.atoms[0].nw = test_nw;
-        ucell.atoms[0].iw2l = new int[test_nw];
-        ucell.atoms[0].iw2m = new int[test_nw];
-        ucell.atoms[0].iw2n = new int[test_nw];
+        ucell.atoms[0].iw2l.resize(test_nw);
+        ucell.atoms[0].iw2m.resize(test_nw);
+        ucell.atoms[0].iw2n.resize(test_nw);
         for (int iw = 0; iw < test_nw; ++iw)
         {
             ucell.atoms[0].iw2l[iw] = 0;
@@ -64,10 +64,6 @@ class OverlapNewTest : public ::testing::Test
     {
         delete SR;
         delete paraV;
-        delete[] ucell.atoms[0].tau;
-        delete[] ucell.atoms[0].iw2l;
-        delete[] ucell.atoms[0].iw2m;
-        delete[] ucell.atoms[0].iw2n;
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;

@@ -45,7 +45,7 @@ void ReadInput::item_output()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
             }
-            para.input.out_chg[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[0] = (item.str_values[0] == "-1")? -1: assume_as_boolean(item.str_values[0]);
             para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {

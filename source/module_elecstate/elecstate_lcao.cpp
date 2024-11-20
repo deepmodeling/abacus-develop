@@ -118,15 +118,15 @@ void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* pa
 template <>
 double ElecStateLCAO<double>::get_spin_constrain_energy()
 {
-    SpinConstrain<double, base_device::DEVICE_CPU>& sc = SpinConstrain<double>::getScInstance();
+    spinconstrain::SpinConstrain<double>& sc = spinconstrain::SpinConstrain<double>::getScInstance();
     return sc.cal_escon();
 }
 
 template <>
 double ElecStateLCAO<std::complex<double>>::get_spin_constrain_energy()
 {
-    SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>& sc
-        = SpinConstrain<std::complex<double>>::getScInstance();
+    spinconstrain::SpinConstrain<std::complex<double>>& sc
+        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
     return sc.cal_escon();
 }
 
