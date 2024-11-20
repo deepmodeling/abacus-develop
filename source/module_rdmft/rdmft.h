@@ -22,8 +22,6 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/parallel_reduce.h"
-// #include "module_elecstate/module_dm/cal_dm_psi.h"
-// #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 
 #include "module_basis/module_ao/ORB_read.h"
@@ -51,12 +49,6 @@
 // used by class Veff_rdmft
 #include "module_base/timer.h"
 #include "module_elecstate/potentials/potential_new.h"
-// #include "module_hamilt_lcao/hamilt_lcaodft/local_orbital_charge.h"
-//#include "module_hamilt_lcao/module_gint/gint_gamma.h"
-//#include "module_hamilt_lcao/module_gint/gint_k.h"
-//#include "operator_lcao.h"
-//#include "module_cell/module_neighbor/sltk_grid_driver.h"
-//#include "module_cell/unitcell.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/pot_local.h"
 #include "module_elecstate/potentials/pot_xc.h"
