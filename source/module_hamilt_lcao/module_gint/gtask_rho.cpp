@@ -89,8 +89,6 @@ void alloc_mult_dot_rho(const hamilt::HContainer<double>* dm,
             const int ry1 = gridt.ucell_index2y[uc1];
             const int rz1 = gridt.ucell_index2z[uc1];
             const int it1 = ucell.iat2it[iat1];
-            const int lo1
-                = gridt.trace_lo[ucell.itiaiw2iwt(it1, ucell.iat2ia[iat1], 0)];
             const int nw1 = ucell.atoms[it1].nw;
 
             for (int atom2 = atom1; atom2 < gridt.how_many_atoms[grid_index];
@@ -108,9 +106,6 @@ void alloc_mult_dot_rho(const hamilt::HContainer<double>* dm,
                     continue;
                 }
                 const int it2 = ucell.iat2it[iat2];
-                const int lo2 = gridt.trace_lo[ucell.itiaiw2iwt(it2,
-                                                          ucell.iat2ia[iat2],
-                                                          0)];
                 const int nw2 = ucell.atoms[it2].nw;
 
                 const int mat_A_idx = bcell_start_psir + atom2 * nwmax;

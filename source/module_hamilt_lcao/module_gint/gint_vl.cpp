@@ -22,7 +22,6 @@
 void Gint::cal_meshball_vlocal(
 	const int na_grid,  					    // how many atoms on this (i,j,k) grid
 	const int LD_pool,
-	const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 	const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
 	const int grid_index,                       // index of grid group, for tracing global atom index

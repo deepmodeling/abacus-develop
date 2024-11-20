@@ -32,8 +32,6 @@ void mult_psi_DMR(
     {
         const int bcell1 = gt.bcell_start[grid_index] + ia1;
         const int iat1 = gt.which_atom[bcell1];
-        const int T1 = ucell.iat2it[iat1];
-        const int I1 = ucell.iat2ia[iat1];
 
         //! get cell R1, this step is redundant in gamma_only case.
         const int id1 = gt.which_unitcell[bcell1];
@@ -74,7 +72,6 @@ void mult_psi_DMR(
         for (int ia2 = start; ia2 < na_grid; ia2++)
         {
             const int bcell2 = gt.bcell_start[grid_index] + ia2;
-            const int T2 = ucell.iat2it[gt.which_atom[bcell2]];
             const int iat2 = gt.which_atom[bcell2];
             const int id2 = gt.which_unitcell[bcell2];
  

@@ -18,6 +18,10 @@ class Grid_MeshCell: public Grid_MeshK
 	int nbzp_start,nbzp;
 	// save the position of each meshcell.
 	std::vector<std::vector<double>> meshcell_pos;
+
+	private:
+	// latvec0 and GT are not used in current code.
+	// these two variables may be removed in the future.
 	ModuleBase::Matrix3 meshcell_latvec0;
 	ModuleBase::Matrix3 meshcell_GT;
 	
