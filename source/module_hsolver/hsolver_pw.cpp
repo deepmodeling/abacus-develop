@@ -223,7 +223,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         pHamilt->updateHk(ik);
 
 #ifdef USE_PAW
-        this->paw_func_in_kloop(ik);
+        this->paw_func_in_kloop(ik, this->wfc_basis);
 #endif
 
         /// update psi pointer for each k point
