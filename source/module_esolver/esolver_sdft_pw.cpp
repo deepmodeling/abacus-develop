@@ -190,32 +190,6 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR = ethr;
     hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
 
-    //---------------------------------------------------------------------------------------------------------------
-    //---------------------------------for psi init guess!!!!--------------------------------------------------------
-    //---------------------------------------------------------------------------------------------------------------
-    if (!PARAM.inp.psi_initializer && PARAM.inp.basis_type == "pw" && this->init_psi == false)
-    {
-        for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
-        {
-            //! Update Hamiltonian from other kpoint to the given one
-            this->p_hamilt->updateHk(ik);
-
-            if (this->kspw_psi->get_nbands() > 0 && GlobalV::MY_STOGROUP == 0)
-            {
-                //! Fix the wavefunction to initialize at given kpoint
-                this->kspw_psi->fix_k(ik);
-
-                /// for psi init guess!!!!
-                hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(this->kspw_psi), this->pw_wfc, &this->wf, this->p_hamilt);
-            }
-
-        }
-    }
-    //---------------------------------------------------------------------------------------------------------------
-    //---------------------------------END: for psi init guess!!!!--------------------------------------------------------
-    //---------------------------------------------------------------------------------------------------------------
-
-
     // hsolver only exists in this function
     hsolver::HSolverPW_SDFT<T, Device> hsolver_pw_sdft_obj(&this->kv,
                                                            this->pw_wfc,
@@ -242,7 +216,6 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(int istep, int iter, doub
                               istep,
                               iter,
                               skip_charge);
-    this->init_psi = true;
 
     // set_diagethr need it
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
