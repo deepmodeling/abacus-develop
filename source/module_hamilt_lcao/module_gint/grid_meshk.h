@@ -19,7 +19,7 @@ class Grid_MeshK
         /// move operator for the next ESolver to directly use its infomation
         Grid_MeshK& operator=(Grid_MeshK&& rhs) = default;
 
-      protected:
+      private:
 		// the max and the min unitcell.
 		int maxu1;
 		int maxu2;
@@ -35,6 +35,7 @@ class Grid_MeshK
 		int nu3;
 		int nutot;
 
+		protected:
 		// calculate the extended unitcell.
 		void cal_extended_cell(const int &dxe, const int &dye, const int &dze,
 								const int& nbx, const int& nby, const int& nbz);

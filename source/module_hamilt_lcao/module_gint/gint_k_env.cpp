@@ -26,7 +26,6 @@ void Gint_k::cal_env_k(int ik,
     }
     const int nbx = this->gridt->nbx;
     const int nby = this->gridt->nby;
-    const int nbz_start = this->gridt->nbzp_start;
     const int nbz = this->gridt->nbzp;
     const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
 
