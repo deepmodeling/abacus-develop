@@ -118,6 +118,8 @@ public:
 
 	int getGrid_layerZ_minus(void) const { return glayerZ_minus;}
 
+	FAtom getFakeAtom(const int index) const { return fake_atoms[index];}
+
 private:
 	int test_atom_input;	//caoyu reconst 2021-05-24
 	int d_amount;//number of atoms.
@@ -154,14 +156,9 @@ private:
 // NAME : Expand_Grid
 //==========================================================
 	void Expand_Grid(const UnitCell& ucell, const int ntype);
-	double* store_x;
-	double* store_y;
-	double* store_z;
-	int* store_cell_x;
-	int* store_cell_y;
-	int* store_cell_z;
-	int* store_type;
-	int* store_natom;
+
+	std::vector<FAtom> fake_atoms;
+
 	double x_min_expand;
 	double y_min_expand;
 	double z_min_expand;

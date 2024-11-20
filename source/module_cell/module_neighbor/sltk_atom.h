@@ -20,6 +20,9 @@ private:
 	int type;
 	int natom;
 
+	int cell_x;
+	int cell_y;
+	int cell_z;
 public:
 //==========================================================
 // Default Constructor and deconstructor
@@ -59,6 +62,10 @@ public:
 	const double& z() const { return d_z; }
 	const int& getType() const { return type;}
 	const int& getNatom() const { return natom;}
+	const int& getCellX() const { return cell_x; }
+	const int& getCellY() const { return cell_y; }
+	const int& getCellZ() const { return cell_z; }
+
 
 //==========================================================
 // MEMBER FUNCTION :
@@ -69,6 +76,10 @@ public:
 	void setZ(const double& r) { d_z = r; }
 	void setType(const int ntype) {type = ntype;}
 	void setNatom(const int atom) {natom = atom;}
+	void setCellX(const int nx) {cell_x = nx;}
+	void setCellY(const int ny) {cell_y = ny;}
+	void setCellZ(const int nz) {cell_z = nz;}
+	
 };
 
 #endif

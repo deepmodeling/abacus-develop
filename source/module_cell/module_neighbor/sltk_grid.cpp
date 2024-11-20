@@ -401,49 +401,9 @@ void Grid::In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FA
 // A bug remain!
 // d_minX, d_minY, d_minZ must be the cell origin
 //----------------------------------------------------------
-		double directx, directy, directz;
-		ModuleBase::Mathzone::Cartesian_to_Direct(
-		    atom.x(), atom.y(), atom.z(),
-		    vec1[0], vec1[1], vec1[2],
-		    vec2[0], vec2[1], vec2[2],
-		    vec3[0], vec3[1], vec3[2],
-		    directx, directy, directz);
-	
-		// cell_x_length
-		// mohan add the 'save_add' 2011-03-12
-		// for example, if a is 2.999999999999999999, the int command
-		// will make a = 2 (in fact we want 3)
-		// if a is 3.00000000000000001, it's save.
-		//static double save_add = 1.0e-15; // from -8 to -15, mohan add 2012-03-22
-		//a = static_cast<int>( (directx - this->d_minX) + save_add );
-		//b = static_cast<int>( (directy - this->d_minY) + save_add );
-		//c = static_cast<int>( (directz - this->d_minZ) + save_add );
-		int now_type = atom.getType();
-		int now_number = atom.getNatom();
-		double now_x_d = ucell.atoms[now_type].taud[now_number].x;
-		double now_y_d = ucell.atoms[now_type].taud[now_number].y;
-		double now_z_d = ucell.atoms[now_type].taud[now_number].z;
-		a = static_cast<int>(directx - now_x_d - this->d_minX + 0.5 );
-                b = static_cast<int>(directy - now_y_d - this->d_minY + 0.5 );
-                c = static_cast<int>(directz - now_z_d - this->d_minZ + 0.5 );
-
-		//ofs_running << std::setw(8) << atom.x() << std::setw(8) << atom.y() << std::setw(8) << atom.z()
-		//<< std::setw(12) << directx << std::setw(12) << directy << std::setw(12) << directz
-		//<< std::setw(6) << a << std::setw(6) << b << std::setw(6) << c << std::endl;
-	
-	/*	
-		if(a==0 && b==4 && c==0)
-		{
-			std::cout << std::setprecision(25) << std::endl;
-			std::cout << " save_add=" << save_add << std::endl;
-			std::cout << atom.x() << " " << atom.y() << " " << atom.z() << std::endl;
-			std::cout << " directy=" << directy << " d_minX=" << d_minY << " b=" << b << std::endl;
-			std::cout << " (int)directy=" << (int)directy << " (int)d_minY=" << (int)d_minY << " static_cast<int>( (directx - this->d_minX) )=" << static_cast<int>( (directy - this->d_minY) ) << std::endl;
-			std::cout << std::endl;
-			int ok;
-			cin >> ok;
-		}
-		*/
+		a = atom.getCellX() - this->d_minX;
+		b = atom.getCellY() - this->d_minY;
+		c = atom.getCellZ() - this->d_minZ;
 	}
 	else
 	{
@@ -500,7 +460,7 @@ void Grid::Build_Hash_Table(const UnitCell &ucell, AtomLink* const pointCache)
 	Hash_one_hit = 0; // mohan add 2010-06-25
 	for (; current < end; ++ current)
 	{
-		AtomLink* const hashTarget = this->getHashCode(ucell, current->fatom);
+				AtomLink* const hashTarget = this->getHashCode(ucell, current->fatom);
 
 		//================================================
 		// Find a new position
