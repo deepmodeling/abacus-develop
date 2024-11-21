@@ -24,14 +24,11 @@ AdjacentSet::~AdjacentSet() {}
 
 
 
-void AdjacentSet::set
-(
-    const int box_x,
-    const int box_y,
-    const int box_z,
-	const int offset_in,
-	const int &test_grid_in
-)
+void AdjacentSet::set(const int box_x,
+						const int box_y,
+						const int box_z,
+						const int offset_in,
+						const int &test_grid_in)
 {
 	int index_box=0; // mohan update 2021-06-22
 
@@ -112,10 +109,4 @@ void AdjacentSet::getBox
 	}
 
 	return;
-}
-//2015-05-07
-void AdjacentSet::delete_vector()
-{
-	std::vector<int>().swap(box);
-	std::vector<int>().swap(offset);
 }

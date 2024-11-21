@@ -61,8 +61,6 @@ public:
 //==========================================================
 	AdjacentSet();
 	~AdjacentSet();
-	//2015-05-07
-	void delete_vector(void);
 
 	int getLength(void) const {return length;}
 
