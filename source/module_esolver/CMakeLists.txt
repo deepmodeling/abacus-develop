@@ -17,7 +17,6 @@ if(ENABLE_LCAO)
   list(APPEND objects
       esolver_ks_lcao.cpp
       esolver_ks_lcao_tddft.cpp
-      set_matrix_grid.cpp
       lcao_before_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
