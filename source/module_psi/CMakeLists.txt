@@ -2,7 +2,6 @@ add_library(
     psi
     OBJECT
     psi.cpp
-    wfinit.cpp
 )
 
 add_library(
@@ -14,6 +13,7 @@ add_library(
   psi_initializer_atomic_random.cpp
   psi_initializer_nao.cpp
   psi_initializer_nao_random.cpp
+  wfinit.cpp
 )
 
 if(ENABLE_COVERAGE)

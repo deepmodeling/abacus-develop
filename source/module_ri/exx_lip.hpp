@@ -87,7 +87,6 @@ Exx_Lip<T, Device>::Exx_Lip(
     K_Vectors* kv_ptr_in,
     psi::WFInit<T, Device>* wf_ptr_in,
     psi::Psi<T, Device>* kspw_psi_ptr_in,
-    //    wavefunc* wf_ptr_in,
     const ModulePW::PW_Basis_K* wfc_basis_in,
     const ModulePW::PW_Basis* rho_basis_in,
     const Structure_Factor& sf,

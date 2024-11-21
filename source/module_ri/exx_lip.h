@@ -34,7 +34,6 @@ public:
     Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
         const ModuleSymmetry::Symmetry& symm,
         K_Vectors* kv_ptr_in,
-        //   wavefunc* wf_ptr_in,
         psi::WFInit<T, Device>* wf_ptr_in,
         psi::Psi<T, Device>* kspw_psi_ptr_in,
         const ModulePW::PW_Basis_K* wfc_basis_in,
@@ -73,7 +72,6 @@ private:
     struct k_package
     {
         K_Vectors* kv_ptr = nullptr;
-        // wavefunc* wf_ptr;
         psi::Psi<T, Device>* kspw_psi_ptr = nullptr;  ///< PW  wavefunction
         psi::WFInit<T, Device>* wf_ptr = nullptr;
         ModuleBase::matrix wf_wg;
