@@ -33,10 +33,11 @@ namespace ModuleESolver
         virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
 
       protected:
+        //! Something to do before SCF iterations.
+        virtual void before_scf(const int istep);
+
         //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
         virtual void after_scf(const int istep);
-
-        virtual void init_after_vc(const Input_para& inp, UnitCell& cell);    // liuyu add 2023-03-09
 
         //! Electronic states
         elecstate::ElecState* pelec = nullptr;

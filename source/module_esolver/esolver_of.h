@@ -21,8 +21,6 @@ class ESolver_OF : public ESolver_FP
 
     virtual void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
-    virtual void init_after_vc(const Input_para& inp, UnitCell& ucell) override;
-
     virtual void runner(const int istep, UnitCell& ucell) override;
 
     virtual void after_all_runners() override;
