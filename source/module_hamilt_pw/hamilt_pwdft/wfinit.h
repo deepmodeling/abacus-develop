@@ -9,16 +9,16 @@ namespace psi
 
 // This class is used to initialize the wavefunction
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class WFInit
+class PSIInit
 {
   public:
-    WFInit(const std::string& init_wfc_in,
-           const std::string& ks_solver_in,
-           const std::string& basis_type_in,
-           const bool& use_psiinitializer_in,
-           wavefunc* p_wf_in,
-           ModulePW::PW_Basis_K* pw_wfc_in);
-    ~WFInit(){};
+    PSIInit(const std::string& init_wfc_in,
+            const std::string& ks_solver_in,
+            const std::string& basis_type_in,
+            const bool& use_psiinitializer_in,
+            wavefunc* p_wf_in,
+            ModulePW::PW_Basis_K* pw_wfc_in);
+    ~PSIInit(){};
 
     // prepare the wavefunction initialization
     void prepare_init(Structure_Factor* p_sf, //< structure factor

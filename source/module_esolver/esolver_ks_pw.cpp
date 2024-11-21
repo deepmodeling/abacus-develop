@@ -165,12 +165,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     }
 
     //! 7) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
-                                                 PARAM.inp.ks_solver,
-                                                 PARAM.inp.basis_type,
-                                                 PARAM.inp.psi_initializer,
-                                                 &this->wf,
-                                                 this->pw_wfc);
+    this->p_wf_init = new psi::PSIInit<T, Device>(PARAM.inp.init_wfc,
+                                                  PARAM.inp.ks_solver,
+                                                  PARAM.inp.basis_type,
+                                                  PARAM.inp.psi_initializer,
+                                                  &this->wf,
+                                                  this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),
                                   &ucell,
                                   1,
