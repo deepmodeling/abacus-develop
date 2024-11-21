@@ -12,11 +12,11 @@ using D2 = void(*) (T**, size_t);
 // template <typename T>
 // using D3 = void(*) (T***, size_t, size_t);
 // template <typename T>
-// D2<T> d2 = LR_Util::delete_p2<T>;
+// D2<T> d2 = LR_Util::_deallocate_2order_nested_ptr<T>;
 // template <typename T>
 // D3<T> d3 = LR_Util::delete_p3<T>;
 // Change to C++ 11
-D2<double> d2 = LR_Util::delete_p2<double>;
+D2<double> d2 = LR_Util::_deallocate_2order_nested_ptr<double>;
 // D3<double> d3 = LR_Util::delete_p3<double>;
 
 

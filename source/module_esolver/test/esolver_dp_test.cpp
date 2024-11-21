@@ -52,10 +52,8 @@ class ESolverDPTest : public ::testing::Test
         ucell.atoms = new Atom[2];
         ucell.atoms[0].na = 1;
         ucell.atoms[1].na = 1;
-        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-        ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
-        ucell.atoms[0].taud[0] = {0.0, 0.0, 0.0};
-        ucell.atoms[1].taud[0] = {0.0, 0.0, 0.0};
+        ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+        ucell.atoms[1].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
         ucell.atom_label = new std::string[2];
         ucell.atom_label[0] = "Cu";
@@ -69,10 +67,6 @@ class ESolverDPTest : public ::testing::Test
         delete esolver;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
-        for (int i = 0; i < 2; ++i)
-        {
-            delete[] ucell.atoms[i].taud;
-        }
         delete[] ucell.atoms;
         delete[] ucell.atom_label;
     }

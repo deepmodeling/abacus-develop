@@ -38,8 +38,6 @@ namespace LR
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
         virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override {};
-
-        virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override {};
         virtual void runner(int istep, UnitCell& ucell) override;
         virtual void after_all_runners() override;
 

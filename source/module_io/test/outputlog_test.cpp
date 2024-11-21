@@ -162,7 +162,7 @@ UnitCell::UnitCell()
     latvec.e12 = latvec.e13 = latvec.e23 = 0;
     latvec.e21 = latvec.e31 = latvec.e32 = 0;
 
-    atoms[0].taud = new ModuleBase::Vector3<double>[2];
+    atoms[0].taud.resize(2);
     atoms[0].taud[0].set(0.5456, 0, 0.54275);
     atoms[0].taud[1].set(0.54, 0.8495, 0.34175);
 }
@@ -190,8 +190,6 @@ Atom::Atom()
 }
 Atom::~Atom()
 {
-    if (taud != nullptr)
-        delete[] taud;
 }
 Atom_pseudo::Atom_pseudo()
 {

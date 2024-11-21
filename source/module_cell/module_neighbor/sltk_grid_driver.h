@@ -77,13 +77,6 @@ public:
 	const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const { return adj_info.adjacent_tau[i]; } 
 	const ModuleBase::Vector3<int>& getBox(const int i) const {return adj_info.box[i];}
 
-	//==========================================================
-	// get_adjs will not store results in Grid_Driver::adj_info,
-	// but return the AdjacentAtomInfo object instead
-	//==========================================================
-    AdjacentAtomInfo get_adjs(const UnitCell& ucell_in, const size_t &iat);
-    std::vector<AdjacentAtomInfo> get_adjs(const UnitCell& ucell_in);
-
 private:
 
 	mutable AdjacentAtomInfo adj_info;
@@ -106,9 +99,6 @@ private:
 		const int offset, 
 		std::shared_ptr<AdjacentSet> as,
 		AdjacentAtomInfo &adjs)const;
-
-	double Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)const;
-	double Distance(const AtomLink& a1, const AtomLink& a2)const;
 
 //==========================================================
 // MEMBER FUNCTIONS :

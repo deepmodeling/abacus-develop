@@ -4,7 +4,6 @@ orbital_dir                 ../../../tests/PP_ORB
 nbands		10
 
 calculation	scf
-ecutwfc		100 
 ecutwfc		100 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr		1.0e-8
 scf_nmax	100

@@ -70,19 +70,13 @@ int Grid_Driver::Locate_offset(
 //----------------------------------------------------------
 // EXPLAIN : Create an AtomLink object
 //----------------------------------------------------------
-	AtomLink temp;
-
-	temp.fatom.setX(cartesian_pos.x);
-	temp.fatom.setY(cartesian_pos.y);
-	temp.fatom.setZ(cartesian_pos.z);
-	temp.fatom.setType(ntype);
-	temp.fatom.setNatom(nnumber);
+	FAtom temp(cartesian_pos.x, cartesian_pos.y, cartesian_pos.z, ntype, nnumber, 0, 0, 0);
 
 //----------------------------------------------------------
 // EXPLAIN : Find the Hash number of this atom position
 //----------------------------------------------------------
-	AtomLink* Search = this->getHashCode(ucell, temp.fatom);
-
+	AtomLink* Search = this->getHashCode(ucell, temp);
+	
 //----------------------------------------------------------
 // EXPLAIN : If we don't get the index for one Hash try,
 // we need to search in array.
@@ -196,28 +190,6 @@ void Grid_Driver::Find_adjacent_atom(const int offset, std::shared_ptr<AdjacentS
 	return;
 }
 
-//==========================================================
-// For expand case
-//==========================================================
-double Grid_Driver::Distance(const AtomLink& a1, const AtomLink& a2)const
-{
-	const double dx = a1.fatom.x() - a2.fatom.x();
-	const double dy = a1.fatom.y() - a2.fatom.y();
-	const double dz = a1.fatom.z() - a2.fatom.z();
-	return sqrt(dx*dx + dy*dy + dz*dz);
-}
-
-//==========================================================
-// For not_expand case
-//==========================================================
-double Grid_Driver::Distance(const AtomLink& a1, const ModuleBase::Vector3<double> &adjacent_site)const
-{
-	const double dx = a1.fatom.x() - adjacent_site.x;
-	const double dy = a1.fatom.y() - adjacent_site.y;
-	const double dz = a1.fatom.z() - adjacent_site.z;
-	return sqrt(dx*dx + dy*dy + dz*dz);
-}
-
 
 ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 (
@@ -239,30 +211,6 @@ ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site
 	                  box_x * box31 + box_y * box32 + box_z * box33;
 
 	return adjacent_site;
-}
-
-AdjacentAtomInfo Grid_Driver::get_adjs(const UnitCell& ucell_in, const size_t &iat)
-{
-    const int it = ucell_in.iat2it[iat];
-    const int ia = ucell_in.iat2ia[iat];
-    const ModuleBase::Vector3<double> &tau = ucell_in.atoms[it].tau[ia];
-
-    AdjacentAtomInfo adjs;
-    this->Find_atom(ucell_in, tau, it, ia, &adjs);
-    return adjs;
-}
-
-std::vector<AdjacentAtomInfo> Grid_Driver::get_adjs(const UnitCell& ucell_in)
-{
-    std::vector<AdjacentAtomInfo> adjs(ucell_in.nat);
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for(size_t iat = 0; iat < ucell_in.nat; iat++)
-    {
-        adjs[iat] = Grid_Driver::get_adjs(ucell_in, iat);
-    }
-    return adjs;
 }
 
 // filter_adjs delete not adjacent atoms in adjs

@@ -1,34 +1,35 @@
 #include "spin_constrain.h"
 
 // init sc
-template <typename FPTYPE, typename Device>
-void SpinConstrain<FPTYPE, Device>::init_sc(double sc_thr_in,
+template <typename FPTYPE>
+void spinconstrain::SpinConstrain<FPTYPE>::init_sc(double sc_thr_in,
                                             int nsc_in,
                                             int nsc_min_in,
                                             double alpha_trial_in,
                                             double sccut_in,
-                                            bool decay_grad_switch_in,
+                                            double sc_drop_thr_in,
                                             const UnitCell& ucell,
-                                            std::string sc_file,
-                                            int NPOL,
                                             Parallel_Orbitals* ParaV_in,
                                             int nspin_in,
                                             K_Vectors& kv_in,
                                             std::string KS_SOLVER_in,
-                                            hamilt::Hamilt<FPTYPE, Device>* p_hamilt_in,
-                                            psi::Psi<FPTYPE>* psi_in,
+                                            void* p_hamilt_in,
+                                            void* psi_in,
                                             elecstate::ElecState* pelec_in)
 {
-    this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, decay_grad_switch_in);
+    this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, sc_drop_thr_in);
     this->set_atomCounts(ucell.get_atom_Counts());
     this->set_orbitalCounts(ucell.get_orbital_Counts());
     this->set_lnchiCounts(ucell.get_lnchi_Counts());
     this->set_nspin(nspin_in);
-    this->bcast_ScData(sc_file, this->get_nat(), this->get_ntype());
-    this->set_npol(NPOL);
-    this->set_ParaV(ParaV_in);
+    this->set_target_mag(ucell.get_target_mag());
+    this->lambda_ = ucell.get_lambda();
+    this->constrain_ = ucell.get_constrain();
+    this->atomLabels_ = ucell.get_atomLabels();
+    this->set_decay_grad();
+    if(ParaV_in != nullptr) this->set_ParaV(ParaV_in);
     this->set_solver_parameters(kv_in, p_hamilt_in, psi_in, pelec_in, KS_SOLVER_in);
 }
 
-template class SpinConstrain<std::complex<double>, base_device::DEVICE_CPU>;
-template class SpinConstrain<double, base_device::DEVICE_CPU>;
+template class spinconstrain::SpinConstrain<std::complex<double>>;
+template class spinconstrain::SpinConstrain<double>;

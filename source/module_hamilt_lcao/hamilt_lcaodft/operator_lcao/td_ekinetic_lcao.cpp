@@ -148,12 +148,12 @@ void TDEkinetic<OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1,
     // 2 for magnetic (one Hamiltonian matrix has both spin-up and spin-down)
     const int npol = this->ucell->get_npol();
 
-    const int* iw2l1 = atom1.iw2l;
-    const int* iw2n1 = atom1.iw2n;
-    const int* iw2m1 = atom1.iw2m;
-    const int* iw2l2 = atom2.iw2l;
-    const int* iw2n2 = atom2.iw2n;
-    const int* iw2m2 = atom2.iw2m;
+    const int* iw2l1 = atom1.iw2l.data();
+    const int* iw2n1 = atom1.iw2n.data();
+    const int* iw2m1 = atom1.iw2m.data();
+    const int* iw2l2 = atom2.iw2l.data();
+    const int* iw2n2 = atom2.iw2n.data();
+    const int* iw2m2 = atom2.iw2m.data();
     // ---------------------------------------------
     // get tau1 (in cell <0,0,0>) and tau2 (in cell R)
     // in principle, only dtau is needed in this function

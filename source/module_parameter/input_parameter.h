@@ -299,6 +299,7 @@ struct Input_para
 
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1; ///< the number of 2-particle states to be solved
+    std::vector<std::string> lr_init_xc_kernel = {};    ///< The method to initalize the xc kernel
     int nocc = -1;      ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;      ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT
@@ -528,7 +529,8 @@ struct Input_para
     int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
-    std::string sc_file = "none";   ///< file name for Deltaspin (json format)
+    double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
+    double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================
