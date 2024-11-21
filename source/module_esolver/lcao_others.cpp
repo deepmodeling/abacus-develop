@@ -70,7 +70,186 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         return;
     }
 
-    this->beforesolver(istep);
+    // 1. prepare HS matrices, prepare grid integral
+    // (1) Find adjacent atoms for each atom.
+    double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+                                                   PARAM.inp.out_level,
+                                                   orb_.get_rcutmax_Phi(),
+                                                   GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+                                                   PARAM.globalv.gamma_only_local);
+
+    atom_arrange::search(PARAM.inp.search_pbc,
+                         GlobalV::ofs_running,
+                         GlobalC::GridD,
+                         GlobalC::ucell,
+                         search_radius,
+                         PARAM.inp.test_atom_input);
+
+    // (3) Periodic condition search for each grid.
+    double dr_uniform = 0.001;
+    std::vector<double> rcuts;
+    std::vector<std::vector<double>> psi_u;
+    std::vector<std::vector<double>> dpsi_u;
+    std::vector<std::vector<double>> d2psi_u;
+
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
+
+    this->GridT.set_pbc_grid(this->pw_rho->nx,
+                             this->pw_rho->ny,
+                             this->pw_rho->nz,
+                             this->pw_big->bx,
+                             this->pw_big->by,
+                             this->pw_big->bz,
+                             this->pw_big->nbx,
+                             this->pw_big->nby,
+                             this->pw_big->nbz,
+                             this->pw_big->nbxx,
+                             this->pw_big->nbzp_start,
+                             this->pw_big->nbzp,
+                             this->pw_rho->ny,
+                             this->pw_rho->nplane,
+                             this->pw_rho->startz_current,
+                             GlobalC::ucell,
+                             GlobalC::GridD,
+                             dr_uniform,
+                             rcuts,
+                             psi_u,
+                             dpsi_u,
+                             d2psi_u,
+                             PARAM.inp.nstream);
+    psi_u.clear();
+    psi_u.shrink_to_fit();
+    dpsi_u.clear();
+    dpsi_u.shrink_to_fit();
+    d2psi_u.clear();
+    d2psi_u.shrink_to_fit();
+
+    // (2)For each atom, calculate the adjacent atoms in different cells
+    // and allocate the space for H(R) and S(R).
+    // If k point is used here, allocate HlocR after atom_arrange.
+    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+
+    // 2. density matrix extrapolation
+
+    // set the augmented orbitals index.
+    // after ParaO and GridT,
+    // this information is used to calculate
+    // the force.
+
+    // init psi
+    if (this->psi == nullptr)
+    {
+        int nsk = 0;
+        int ncol = 0;
+        if (PARAM.globalv.gamma_only_local)
+        {
+            nsk = PARAM.inp.nspin;
+            ncol = this->pv.ncol_bands;
+            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp")
+            {
+                ncol = this->pv.ncol;
+            }
+        }
+        else
+        {
+            nsk = this->kv.get_nks();
+#ifdef __MPI
+            ncol = this->pv.ncol_bands;
+#else
+            ncol = PARAM.inp.nbands;
+#endif
+        }
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
+    }
+
+    // init wfc from file
+    if (istep == 0 && PARAM.inp.init_wfc == "file")
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver", "read wfc nao failed");
+        }
+    }
+
+    // prepare grid in Gint
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, orb_, *this->pw_rho, *this->pw_big);
+
+    // init Hamiltonian
+    if (this->p_hamilt != nullptr)
+    {
+        delete this->p_hamilt;
+        this->p_hamilt = nullptr;
+    }
+    if (this->p_hamilt == nullptr)
+    {
+        elecstate::DensityMatrix<TK, double>* DM = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
+        this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
+            PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
+            PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
+            &this->pv,
+            this->pelec->pot,
+            this->kv,
+            two_center_bundle_,
+            orb_,
+            DM
+#ifdef __EXX
+            ,
+            istep,
+            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
+            GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
+#endif
+        );
+    }
+
+#ifdef __DEEPKS
+    // for each ionic step, the overlap <psi|alpha> must be rebuilt
+    // since it depends on ionic positions
+    if (PARAM.globalv.deepks_setorb)
+    {
+        const Parallel_Orbitals* pv = &this->pv;
+        // build and save <psi(0)|alpha(R)> at beginning
+        GlobalC::ld.build_psialpha(PARAM.inp.cal_force,
+                                   GlobalC::ucell,
+                                   orb_,
+                                   GlobalC::GridD,
+                                   *(two_center_bundle_.overlap_orb_alpha));
+
+        if (PARAM.inp.deepks_out_unittest)
+        {
+            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, orb_, GlobalC::GridD);
+        }
+    }
+#endif
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.init_sc(PARAM.inp.sc_thr,
+                   PARAM.inp.nsc,
+                   PARAM.inp.nsc_min,
+                   PARAM.inp.alpha_trial,
+                   PARAM.inp.sccut,
+                   PARAM.inp.sc_drop_thr,
+                   GlobalC::ucell,
+                   &(this->pv),
+                   PARAM.inp.nspin,
+                   this->kv,
+                   PARAM.inp.ks_solver,
+                   this->p_hamilt,
+                   this->psi,
+                   this->pelec);
+    }
+    //=========================================================
+    // cal_ux should be called before init_scf because
+    // the direction of ux is used in noncoline_rho
+    //=========================================================
+    if (PARAM.inp.nspin == 4)
+    {
+        GlobalC::ucell.cal_ux();
+    }
+
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
     // self consistent calculations for electronic ground state

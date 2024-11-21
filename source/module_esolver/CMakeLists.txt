@@ -18,7 +18,6 @@ if(ENABLE_LCAO)
       esolver_ks_lcao.cpp
       esolver_ks_lcao_tddft.cpp
       dpks_cal_e_delta_band.cpp
-      set_matrix_grid.cpp
       lcao_before_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
