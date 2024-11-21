@@ -46,10 +46,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
-    // temporary, this will be removed in the future;
-    // Init Global class
-    void Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
-
     virtual void allocate_hamilt();
     virtual void deallocate_hamilt();
 

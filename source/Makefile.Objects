@@ -245,7 +245,6 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    pw_init_globalc.o\
     pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\

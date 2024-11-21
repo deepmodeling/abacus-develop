@@ -50,49 +50,7 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(const Input_para& inp, UnitC
     this->method_sto = inp.method_sto;
 
     // 2) run "before_all_runners" in ESolver_KS
-    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
-
-    // 3) initialize the pointer for electronic states of SDFT
-    this->pelec = new elecstate::ElecStatePW_SDFT<T, Device>(this->pw_wfc,
-                                                             &(this->chr),
-                                                             &(this->kv),
-                                                             &ucell,
-                                                             &(GlobalC::ppcell),
-                                                             this->pw_rhod,
-                                                             this->pw_rho,
-                                                             this->pw_big);
-
-    // 4) inititlize the charge density.
-    this->pelec->charge->allocate(PARAM.inp.nspin);
-    this->pelec->omega = ucell.omega;
-
-    // 5) initialize the potential.
-    if (this->pelec->pot == nullptr)
-    {
-        this->pelec->pot = new elecstate::Potential(this->pw_rhod,
-                                                    this->pw_rho,
-                                                    &ucell,
-                                                    &(GlobalC::ppcell.vloc),
-                                                    &(this->sf),
-                                                    &(this->pelec->f_en.etxc),
-                                                    &(this->pelec->f_en.vtxc));
-    }
-
-    // 6) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::WFInit<T, Device>(PARAM.inp.init_wfc,
-                                                 PARAM.inp.ks_solver,
-                                                 PARAM.inp.basis_type,
-                                                 PARAM.inp.psi_initializer,
-                                                 &this->wf,
-                                                 this->pw_wfc);
-    // 7) set occupatio, redundant?
-    if (PARAM.inp.ocp)
-    {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
-    }
-
-    // 8) initialize the global classes
-    this->Init_GlobalC(inp, ucell, GlobalC::ppcell); // temporary
+    ESolver_KS_PW<T, Device>::before_all_runners(inp, ucell);
 
     // 9) initialize the stochastic wave functions
     this->stowf.init(&this->kv, this->pw_wfc->npwk_max);

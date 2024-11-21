@@ -10,7 +10,6 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
-    pw_init_globalc.cpp
     pw_others.cpp
 )
 if(ENABLE_LCAO)
