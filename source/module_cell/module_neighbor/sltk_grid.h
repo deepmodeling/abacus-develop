@@ -8,29 +8,32 @@
 #include "sltk_atom_input.h"
 
 #include "module_cell/unitcell.h"
-//extern Structure_Factor sf;
+#include <unordered_map>
+#include <tuple>
 
-//==========================================================
-// STRUCT :
-// NAME : AtomLink
-// NAME : CellSet
-//==========================================================
-
-struct AtomLink
-{
-	FAtom fatom;
-	AtomLink* next_p;
-
-	// Constructors and destructor
-	AtomLink(const FAtom& atom = FAtom(), AtomLink* const pointNext = NULL);
-	 //mohan fix bug 2011/09/26, from NullPtr->NULL
-
+struct KeyHash {
+    std::size_t operator()(const std::tuple<double, double, double>& key) const {
+        auto h1 = std::hash<double>{}(std::get<0>(key));
+        auto h2 = std::hash<double>{}(std::get<1>(key));
+        auto h3 = std::hash<double>{}(std::get<2>(key));
+        return h1 ^ (h2 << 1) ^ (h3 << 2); // a hash combine
+    }
 };
+
+struct KeyEqual {
+    bool operator()(const std::tuple<double, double, double>& lhs,
+                    const std::tuple<double, double, double>& rhs) const {
+        return std::get<0>(lhs) == std::get<0>(rhs) &&
+               std::get<1>(lhs) == std::get<1>(rhs) &&
+               std::get<2>(lhs) == std::get<2>(rhs);
+    }
+};
+
+typedef std::unordered_map<std::tuple<double, double, double>, FAtom, KeyHash, KeyEqual> AtomMap;
 
 struct CellSet
 {
-	AtomLink* address;
-	int length;
+	AtomMap atom_map;
 	int in_grid[3];
 	CellSet();
 };
@@ -57,18 +60,15 @@ public:
 	Grid(const int &test_grid_in);
 	virtual ~Grid();
 
-	void init(
-		std::ofstream &ofs,
-		const UnitCell &ucell, 
-		const Atom_input &input);
+	void init(std::ofstream &ofs,
+				const UnitCell &ucell, 
+				const Atom_input &input);
 
 	//2015-05-07
 	void delete_vector(const Atom_input &input);
 
 
 	//Static data
-	static const double TOLERATE_ERROR;
-	static const std::hash<int> INT_HASHER;
 	static const char* const ERROR[3];
 
 	//Data
@@ -86,6 +86,10 @@ public:
 	double cell_x_length;
 	double cell_y_length;
 	double cell_z_length;
+	int true_cell_x;
+	int true_cell_y;
+	int true_cell_z;
+
 	CellSet ***Cell; //dx , dy ,dz is cell number in each direction,respectly.
 	void delete_Cell() //it will replace by container soon!
 	{
@@ -126,10 +130,7 @@ public:
 
 	// Inner Function
 protected:
-	AtomLink* getHashCode(const UnitCell &ucell, const FAtom &atom)const;		// Peize Lin delete const 2018-07-14
-//	AtomLink* const getHashCode(const FAtom &atom)const;
-	AtomLink* atomlink;
-	AtomLink* cordon_p;// Warning! A guard! Don't delete it!
+	AtomMap all_atom_map;
 
 private:
 
@@ -139,53 +140,37 @@ private:
 // Three Main Steps:
 // NAME : setMemberVariables (read in datas from Atom_input,
 // 			init cells.)
-// NAME : setAtomLinkArray( set the AtomLinkArray twice,
-// 			first use Build_Hash,second use Fold_Hash)
 // NAME : setBoundaryAdjacent( Consider different situations,
 // 			if not_expand case : nature/periodic boundary
 // 			condition , if expand_case)
 //==========================================================
-	void setMemberVariables(
-		std::ofstream &ofs_in, 
-		const Atom_input &input);
+	void setMemberVariables(std::ofstream &ofs_in, 
+							const Atom_input &input);
 
-	void setAtomLinkArray(
-		const UnitCell &ucell, 
-		const Atom_input &input);
-
-	void setBoundaryAdjacent(
-		std::ofstream &ofs_in, 
-		const Atom_input &input);
+	void setBoundaryAdjacent(std::ofstream &ofs_in, 
+								const Atom_input &input);
 
 //==========================================================
-//
-//==========================================================
-	AtomLink* Build_Cache(const UnitCell &ucell, const Atom_input &input);		
-	// Peize Lin delete const and throw(std::out_of_range, std::logic_error) 2018-07-14
 
-	//	AtomLink* const Build_Cache(const Atom_input &input) throw(std::out_of_range, std::logic_error);
-	bool Push(const UnitCell &ucell, const FAtom& atom);
 	void In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FAtom &atom)const;
-	void Build_Cell(void);
-	void Build_Hash_Table(const UnitCell &ucell, AtomLink* const pointCache);
-	void Fold_Hash_Table(void);		// Peize Lin delete const and throw(std::logic_error) 2018-07-14
-	static int Hash_one_hit;
+	void Build_Hash_Table(const UnitCell &ucell, const Atom_input &input);
 
 //==========================================================
-//
-//==========================================================
+
 	void Construct_Adjacent_expand(const int i, const int j, const int k);
-	void Construct_Adjacent_expand_periodic(
-	    const int i, const int j, const int k, const int ia);
 
-	void Construct_Adjacent_begin(void);
+	void Construct_Adjacent_expand_periodic(const int i,
+	                                        const int j,
+											const int k,
+											FAtom& fatom);
+
+	void Construct_Adjacent_begin();
 	void Construct_Adjacent_nature(
-	    const int i, const int j, const int k, const int ia);
+	    const int i, const int j, const int k, FAtom & fatom1);
 	void Construct_Adjacent_periodic(
-	    const int i, const int j, const int k, const int ia);
-	void Construct_Adjacent_final(
-	    const int i, const int j, const int k, const int ia,
-	    const int i2, const int j2, const int k2, const int ia2);
+	    const int i, const int j, const int k, FAtom & fatom1);
+	void Construct_Adjacent_final(const int i, const int j, const int k, FAtom & fatom1,
+ 									const int i2, const int j2, const int k2, FAtom & fatom2);
 };
 
 #endif
