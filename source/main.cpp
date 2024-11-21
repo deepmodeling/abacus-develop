@@ -12,6 +12,8 @@
 #include <omp.h>
 #endif
 
+#include <iostream>
+
 int main(int argc, char** argv)
 {
     /*
@@ -51,6 +53,12 @@ int main(int argc, char** argv)
 #ifdef _OPENMP
     fftw_cleanup_threads();
 #endif
+
+    if(true)
+        std::cout<<true<<std::endl;
+
+    for(int i=0; i<10; ++i)
+        std::cout<<i<<std::endl;
 
     return 0;
 }
