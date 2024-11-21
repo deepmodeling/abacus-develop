@@ -657,14 +657,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
         this->p_hamilt->refresh();
     }
 
-    // run the inner lambda loop to contrain atomic moments with the DeltaSpin
-    // method
-    if (PARAM.inp.sc_mag_switch && iter > PARAM.inp.sc_scf_nmin)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.run_lambda_loop(iter - 1);
-    }
-
     // save density matrix DMR for mixing
     if (PARAM.inp.mixing_restart > 0 && PARAM.inp.mixing_dmr && this->p_chgmix->mixing_restart_count > 0)
     {
@@ -698,8 +690,31 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
-    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
-    hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+
+    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        if(!sc.mag_converged() && this->drho>0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if(sc.mag_converged())
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            skip_solve = true;
+        }
+    }
+    if(!skip_solve)
+    {
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver_lcao_obj.solve(this->p_hamilt, this->psi[0], this->pelec, skip_charge);
+    }
 
     // 5) what's the exd used for?
 #ifdef __EXX
@@ -832,7 +847,6 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter)
 //! 2) output charge density
 //! 3) output exx matrix
 //! 4) output charge density and density matrix
-//! 5) cal_MW? (why put it here?)
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
@@ -872,8 +886,8 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
     // 8) for delta spin
     if (PARAM.inp.sc_mag_switch)
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(iter);
     }
 
     // call iter_finish() of ESolver_KS
@@ -963,15 +977,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
                     &(GlobalC::ucell));
             }
         }
-    }
-
-    // 5) cal_MW?
-    // escon: energy of spin constraint depends on Mi, so cal_energies should be
-    // called after cal_MW
-    if (PARAM.inp.sc_mag_switch)
-    {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(iter, this->p_hamilt);
     }
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
@@ -1150,13 +1155,14 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep)
         }
     }
 
-    // 15) write spin constrian MW?
-    // spin constrain calculations, added by Tianqi Zhao.
-    if (PARAM.inp.sc_mag_switch)
+    // 15) write atomic magnetization only when spin_constraint is on
+    // spin constrain calculations.
+    if (PARAM.inp.sc_mag_switch) 
     {
-        SpinConstrain<TK, base_device::DEVICE_CPU>& sc = SpinConstrain<TK, base_device::DEVICE_CPU>::getScInstance();
-        sc.cal_MW(istep, true);
-        sc.print_Mag_Force();
+        spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+        sc.cal_mi_lcao(istep);
+        sc.print_Mi(GlobalV::ofs_running);
+        sc.print_Mag_Force(GlobalV::ofs_running);
     }
 
     // 16) delete grid

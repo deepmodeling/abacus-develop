@@ -92,8 +92,8 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
         ucell.atoms[i].label = coord[i].atomname;
         ucell.atoms[i].ncpp.psd = coord[i].atomname;
         ucell.atoms[i].na = coord[i].coordinate.size();
-        ucell.atoms[i].tau = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
-        ucell.atoms[i].taud = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
+        ucell.atoms[i].tau.resize(ucell.atoms[i].na);
+        ucell.atoms[i].taud.resize(ucell.atoms[i].na);
         for (int j = 0; j < ucell.atoms[i].na; j++)
         {
             std::vector<double> this_atom = coord[i].coordinate[j];
@@ -136,11 +136,6 @@ void construct_ucell(stru_ &stru, UnitCell &ucell)
 
 void ClearUcell(UnitCell &ucell)
 {
-    for (int i = 0; i < ucell.ntype; i++)
-    {
-        delete[] ucell.atoms[i].tau;
-        delete[] ucell.atoms[i].taud;
-    }
     delete[] ucell.atoms;
 }
 

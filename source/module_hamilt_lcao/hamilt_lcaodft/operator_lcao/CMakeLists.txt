@@ -11,7 +11,7 @@ add_library(
     nonlocal_new.cpp
     td_ekinetic_lcao.cpp
     td_nonlocal_lcao.cpp
-    sc_lambda_lcao.cpp
+    dspin_lcao.cpp
     dftu_lcao.cpp
 )
 

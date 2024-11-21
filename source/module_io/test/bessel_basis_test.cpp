@@ -401,14 +401,12 @@ protected:
         ucell.nmax = 1;
 
         ucell.atoms = new Atom[1];
-        ucell.atoms[0].l_nchi = new int[1];
+        ucell.atoms[0].l_nchi.resize(1, 1);
 
         ucell.atoms[0].nwl = 0;
-        ucell.atoms[0].l_nchi[0] = 1;
         /* setup_cell manually */
     }
     void TearDown() override {
-        delete[] ucell.atoms->l_nchi;
         delete[] ucell.atoms;
     }
 };
