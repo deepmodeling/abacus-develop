@@ -262,81 +262,44 @@ void ESolver_FP::after_scf(const int istep)
                 PARAM.inp.out_elf[1]);
         }
     }
-
-    // #ifdef __RAPIDJSON
-    //     // add Json of efermi energy converge
-    //     Json::add_output_efermi_converge(this->pelec->eferm.ef * ModuleBase::Ry_to_eV, this->conv_esolver);
-    //     // add nkstot,nkstot_ibz to output json
-    //     int Jnkstot = this->pelec->klist->get_nkstot();
-    //     Json::add_nkstot(Jnkstot);
-    // #endif //__RAPIDJSON
 }
 
-void ESolver_FP::init_after_vc(const Input_para& inp, UnitCell& cell)
+void ESolver_FP::before_scf(const int istep)
 {
-    ModuleBase::TITLE("ESolver_FP", "init_after_vc");
+    ModuleBase::TITLE("ESolver_FP", "before_scf");
 
-    if (inp.mdp.md_prec_level == 2)
-    {
-        if (inp.nx * inp.ny * inp.nz == 0)
-        {
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, 4.0 * inp.ecutwfc);
-        }
-        else
-        {
-            this->pw_rho->initgrids(cell.lat0, cell.latvec, inp.nx, inp.ny, inp.nz);
-        }
-
-        this->pw_rho->initparameters(false, 4.0 * inp.ecutwfc);
-        this->pw_rho->setuptransform();
-        this->pw_rho->collect_local_pw();
-        this->pw_rho->collect_uniqgg();
-
-        if ( PARAM.globalv.double_grid)
-        {
-            ModulePW::PW_Basis_Sup* pw_rhod_sup = static_cast<ModulePW::PW_Basis_Sup*>(pw_rhod);
-            if (inp.ndx * inp.ndy * inp.ndz == 0)
-            {
-                this->pw_rhod->initgrids(cell.lat0, cell.latvec, inp.ecutrho);
-            }
-            else
-            {
-                this->pw_rhod->initgrids(cell.lat0, cell.latvec, inp.ndx, inp.ndy, inp.ndz);
-            }
-            this->pw_rhod->initparameters(false, inp.ecutrho);
-            pw_rhod_sup->setuptransform(this->pw_rho);
-            this->pw_rhod->collect_local_pw();
-            this->pw_rhod->collect_uniqgg();
-        }
-    }
-    else
+    if (GlobalC::ucell.cell_parameter_updated)
     {
         // only G-vector and K-vector are changed due to the change of lattice
         // vector FFT grids do not change!!
-        pw_rho->initgrids(cell.lat0, cell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
+        pw_rho->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, pw_rho->nx, pw_rho->ny, pw_rho->nz);
         pw_rho->collect_local_pw();
         pw_rho->collect_uniqgg();
 
-        if ( PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid)
         {
-            this->pw_rhod->initgrids(cell.lat0, cell.latvec, pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
+            this->pw_rhod->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
             this->pw_rhod->collect_local_pw();
             this->pw_rhod->collect_uniqgg();
         }
 
         GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
-    }
-    this->pelec->omega = GlobalC::ucell.omega;
 
-    if (ModuleSymmetry::Symmetry::symm_flag == 1)
-    {
-        cell.symm.analy_sys(cell.lat, cell.st, cell.atoms, GlobalV::ofs_running);
-        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
-    }
+        this->pelec->omega = GlobalC::ucell.omega;
 
-    kv.set_after_vc(PARAM.inp.nspin, cell.G, cell.latvec);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+        if (ModuleSymmetry::Symmetry::symm_flag == 1)
+        {
+            GlobalC::ucell.symm.analy_sys(GlobalC::ucell.lat,
+                                          GlobalC::ucell.st,
+                                          GlobalC::ucell.atoms,
+                                          GlobalV::ofs_running);
+            ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
+        }
+
+        kv.set_after_vc(PARAM.inp.nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+    }
 
     return;
 }

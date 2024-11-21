@@ -10,7 +10,6 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
-    pw_init_after_vc.cpp
     pw_init_globalc.cpp
     pw_others.cpp
 )
@@ -23,7 +22,6 @@ if(ENABLE_LCAO)
       lcao_before_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
-      lcao_init_after_vc.cpp
   )
 endif()
 
