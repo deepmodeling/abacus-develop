@@ -127,10 +127,10 @@ class RDMFT
     hamilt::HContainer<TR>* HR_exx_XC = nullptr;
     // hamilt::HContainer<TR>* HR_local = nullptr;
 
-    hamilt::HS_Matrix_K<TK>* hsk_TV;
-    hamilt::HS_Matrix_K<TK>* hsk_hartree;
-    hamilt::HS_Matrix_K<TK>* hsk_dft_XC;
-    hamilt::HS_Matrix_K<TK>* hsk_exx_XC;
+    hamilt::HS_Matrix_K<TK>* hsk_TV = nullptr;
+    hamilt::HS_Matrix_K<TK>* hsk_hartree = nullptr;
+    hamilt::HS_Matrix_K<TK>* hsk_dft_XC = nullptr;
+    hamilt::HS_Matrix_K<TK>* hsk_exx_XC = nullptr;
 
     std::vector<TK> HK_XC;
     std::vector< std::vector<TK> > DM_XC_pass;
