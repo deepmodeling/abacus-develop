@@ -2,7 +2,6 @@
 #define ESOLVER_KS_LCAO_TDDFT_H
 #include "esolver_ks.h"
 #include "esolver_ks_lcao.h"
-#include "module_elecstate/elecstate_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
 #include "module_psi/psi.h"
 
@@ -36,10 +35,10 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     //! Overlap matrix of last time step
     std::complex<double>** Sk_laststep = nullptr;
 
-    //! Electronic states of rt-TDDFT
-    elecstate::ElecStateLCAO_TDDFT* pelec_td = nullptr;
-
     int td_htype = 1;
+
+  private:
+    void weight_dm_rho();
 };
 
 } // namespace ModuleESolver

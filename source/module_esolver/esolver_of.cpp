@@ -153,66 +153,6 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->allocate_array();
 }
 
-void ESolver_OF::init_after_vc(const Input_para& inp, UnitCell& ucell)
-{
-    ModuleBase::timer::tick("ESolver_OF", "init_after_vc");
-
-    ESolver_FP::init_after_vc(inp, ucell);
-
-    this->dV_ = ucell.omega / this->pw_rho->nxyz;
-
-    if (inp.mdp.md_prec_level == 2)
-    {
-        // initialize the real-space uniform grid for FFT and parallel
-        // distribution of plane waves
-        GlobalC::Pgrid.init(this->pw_rho->nx,
-                            this->pw_rho->ny,
-                            this->pw_rho->nz,
-                            this->pw_rho->nplane,
-                            this->pw_rho->nrxx,
-                            pw_big->nbz,
-                            pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
-
-        // Calculate Structure factor
-        this->sf.setup_structure_factor(&ucell, this->pw_rho);
-    }
-
-    // initialize elecstate, including potential
-    this->init_elecstate(ucell);
-    GlobalC::ppcell.init_vnl(ucell, pw_rho);
-
-    // Initialize KEDF
-    this->init_kedf(inp);
-
-    // Initialize optimization methods
-    this->init_opt();
-
-    // Refresh the arrays
-    delete this->psi_;
-    this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        this->pphi_[is] = this->psi_->get_pointer(is);
-    }
-
-    delete this->ptemp_rho_;
-    this->ptemp_rho_ = new Charge();
-    this->ptemp_rho_->set_rhopw(this->pw_rho);
-    this->ptemp_rho_->allocate(PARAM.inp.nspin);
-
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
-    {
-        delete[] this->pdLdphi_[is];
-        delete[] this->pdEdphi_[is];
-        delete[] this->pdirect_[is];
-        delete[] this->precip_dir_[is];
-        this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
-        this->pdirect_[is] = new double[this->pw_rho->nrxx];
-        this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
-    }
-}
-
 void ESolver_OF::runner(int istep, UnitCell& ucell)
 {
     ModuleBase::timer::tick("ESolver_OF", "runner");
@@ -260,9 +200,47 @@ void ESolver_OF::runner(int istep, UnitCell& ucell)
  */
 void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(istep);
+
     if (ucell.cell_parameter_updated)
     {
-        this->init_after_vc(PARAM.inp, ucell);
+        this->dV_ = ucell.omega / this->pw_rho->nxyz;
+
+        // initialize elecstate, including potential
+        this->init_elecstate(ucell);
+        GlobalC::ppcell.init_vnl(ucell, pw_rho);
+
+        // Initialize KEDF
+        this->init_kedf(PARAM.inp);
+
+        // Initialize optimization methods
+        this->init_opt();
+
+        // Refresh the arrays
+        delete this->psi_;
+        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        {
+            this->pphi_[is] = this->psi_->get_pointer(is);
+        }
+
+        delete this->ptemp_rho_;
+        this->ptemp_rho_ = new Charge();
+        this->ptemp_rho_->set_rhopw(this->pw_rho);
+        this->ptemp_rho_->allocate(PARAM.inp.nspin);
+
+        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        {
+            delete[] this->pdLdphi_[is];
+            delete[] this->pdEdphi_[is];
+            delete[] this->pdirect_[is];
+            delete[] this->precip_dir_[is];
+            this->pdLdphi_[is] = new double[this->pw_rho->nrxx];
+            this->pdEdphi_[is] = new double[this->pw_rho->nrxx];
+            this->pdirect_[is] = new double[this->pw_rho->nrxx];
+            this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
+        }
     }
     if (ucell.ionic_position_updated)
     {

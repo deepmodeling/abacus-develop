@@ -10,7 +10,6 @@ list(APPEND objects
     esolver_of.cpp
     esolver_of_interface.cpp
     esolver_of_tool.cpp
-    pw_init_after_vc.cpp
     pw_init_globalc.cpp
     pw_others.cpp
 )
@@ -21,9 +20,8 @@ if(ENABLE_LCAO)
       dpks_cal_e_delta_band.cpp
       set_matrix_grid.cpp
       lcao_before_scf.cpp
-      lcao_gets.cpp
+      esolver_gets.cpp
       lcao_others.cpp
-      lcao_init_after_vc.cpp
   )
 endif()
 

@@ -10,10 +10,10 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
 {
   protected:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     HSolverPW_SDFT(K_Vectors* pkv,
                    ModulePW::PW_Basis_K* wfc_basis_in,
-                   wavefunc* pwf_in,
                    Stochastic_WF<T, Device>& stowf,
                    StoChe<Real, Device>& stoche,
                    hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto,
@@ -26,10 +26,8 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                    const int scf_iter_in,
                    const int diag_iter_max_in,
                    const double diag_thr_in,
-                   const bool need_subspace_in,
-                   const bool initialed_psi_in)
+                   const bool need_subspace_in)
         : HSolverPW<T, Device>(wfc_basis_in,
-                               pwf_in,
                                calculation_type_in,
                                basis_type_in,
                                method_in,
@@ -39,8 +37,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                                scf_iter_in,
                                diag_iter_max_in,
                                diag_thr_in,
-                               need_subspace_in,
-                               initialed_psi_in)
+                               need_subspace_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
@@ -56,6 +53,7 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                const bool skip_charge);
 
     Stochastic_Iter<T, Device> stoiter;
+
   protected:
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;

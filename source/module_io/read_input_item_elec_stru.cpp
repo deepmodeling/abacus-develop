@@ -391,6 +391,19 @@ void ReadInput::item_elec_stru()
         Input_Item item("mixing_restart");
         item.annotation = "threshold to restart mixing during SCF";
         read_sync_double(input.mixing_restart);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.sc_mag_switch == 1)
+            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
+                if(para.input.sc_scf_thr != 10.0)
+                {
+                    para.input.mixing_restart = para.input.sc_scf_thr;
+                }
+                else
+                {// no mixing_restart until oscillation happen in PW base
+                    para.input.mixing_restart = para.input.scf_thr / 10.0;
+                }
+            }
+        };
         this->add_item(item);
     }
     {

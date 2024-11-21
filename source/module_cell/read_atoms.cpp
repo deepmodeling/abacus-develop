@@ -102,6 +102,7 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
         &&(PARAM.inp.psi_initializer)
         &&(PARAM.inp.init_wfc.substr(0, 3) == "nao")
         )
+        || PARAM.inp.onsite_radius > 0.0
     )
     {
         if( ModuleBase::GlobalFunc::SCAN_BEGIN(ifa, "NUMERICAL_ORBITAL") )
@@ -468,8 +469,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     {
                         this->atoms[it].nwl = lmaxmax;
                     }
-                    delete[] this->atoms[it].l_nchi;
-                    this->atoms[it].l_nchi = new int[ this->atoms[it].nwl+1];
+                    this->atoms[it].l_nchi.resize(this->atoms[it].nwl+1, 0);
                     for(int L=0; L<atoms[it].nwl+1; L++)
                     {
                         this->atoms[it].l_nchi[L] = 1;
@@ -506,26 +506,18 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             }
             if (na > 0)
             {
-                delete[] atoms[it].tau;
-                delete[] atoms[it].dis;
-                delete[] atoms[it].taud;
-                delete[] atoms[it].vel;
-                delete[] atoms[it].mbl;
-                delete[] atoms[it].mag;
-                delete[] atoms[it].angle1;
-                delete[] atoms[it].angle2;
-                delete[] atoms[it].m_loc_;
-                   atoms[it].tau = new ModuleBase::Vector3<double>[na];
-                atoms[it].dis = new ModuleBase::Vector3<double>[na];
-                   atoms[it].taud = new ModuleBase::Vector3<double>[na];
-                atoms[it].vel = new ModuleBase::Vector3<double>[na];
-                   atoms[it].mbl = new ModuleBase::Vector3<int>[na];
-                atoms[it].mag = new double[na];
-                atoms[it].angle1 = new double[na];
-                atoms[it].angle2 = new double[na];
-                atoms[it].m_loc_ = new ModuleBase::Vector3<double>[na];
+                atoms[it].tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].taud.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].vel.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].mbl.resize(na, ModuleBase::Vector3<int>(0,0,0));
+                atoms[it].mag.resize(na, 0);
+                atoms[it].angle1.resize(na, 0);
+                atoms[it].angle2.resize(na, 0);
+                atoms[it].m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
+                atoms[it].constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
                 atoms[it].mass = this->atom_mass[it]; //mohan add 2011-11-07 
-                ModuleBase::GlobalFunc::ZEROS(atoms[it].mag,na);
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
@@ -538,6 +530,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     atoms[it].angle1[ia]=0;
                     atoms[it].angle2[ia]=0;
                     atoms[it].m_loc_[ia].set(0,0,0);
+                    atoms[it].lambda[ia].set(0,0,0);
+                    atoms[it].constrain[ia].set(0,0,0);
 
                     std::string tmpid;
                     tmpid = ifpos.get();
@@ -616,7 +610,52 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                                 atoms[it].angle2[ia]=atoms[it].angle2[ia]/180 *ModuleBase::PI;
                                 input_angle_mag=true;
                                 set_element_mag_zero = true;
-                        }    
+                        }   
+                        else if ( tmpid == "lambda")
+                        {
+                            double tmplam=0;
+                            ifpos >> tmplam;
+                            tmp=ifpos.get();
+                            while (tmp==' ')
+                            {
+                                tmp=ifpos.get();
+                            }
+                            if((tmp >= 48 && tmp <= 57) or tmp=='-')
+                            {
+                                ifpos.putback(tmp);
+                                ifpos >> atoms[it].lambda[ia].y>>atoms[it].lambda[ia].z;
+                                atoms[it].lambda[ia].x=tmplam;
+                            }
+                            else
+                            {
+                                ifpos.putback(tmp);
+                                atoms[it].lambda[ia].z=tmplam;
+                            }
+                            atoms[it].lambda[ia].x /= ModuleBase::Ry_to_eV;
+                            atoms[it].lambda[ia].y /= ModuleBase::Ry_to_eV;
+                            atoms[it].lambda[ia].z /= ModuleBase::Ry_to_eV;
+                        }
+                        else if ( tmpid == "sc")
+                        {
+                            double tmplam=0;
+                            ifpos >> tmplam;
+                            tmp=ifpos.get();
+                            while (tmp==' ')
+                            {
+                                tmp=ifpos.get();
+                            }
+                            if((tmp >= 48 && tmp <= 57) or tmp=='-')
+                            {
+                                ifpos.putback(tmp);
+                                ifpos >> atoms[it].constrain[ia].y>>atoms[it].constrain[ia].z;
+                                atoms[it].constrain[ia].x=tmplam;
+                            }
+                            else
+                            {
+                                ifpos.putback(tmp);
+                                atoms[it].constrain[ia].z=tmplam;
+                            }
+                        } 
                     }
                     // move to next line
                     while ( (tmpid != "\n") && (ifpos.good()) )
@@ -630,12 +669,11 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     {
                         if(PARAM.inp.noncolin)
                         {
-                            //if magnetization only along z-axis, default settings are DOMAG_Z=true and DOMAG=false
                             if(input_angle_mag)
                             {
                                 atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
                                     cos(atoms[it].angle1[ia]);
-                                if(sin(atoms[it].angle1[ia]) > 1e-10 )
+                                if(std::abs(sin(atoms[it].angle1[ia])) > 1e-10 )
                                 {
                                     atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
                                         sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
@@ -1125,84 +1163,63 @@ void UnitCell::check_dtau() {
 
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
+    // the maximum L is 9 like cc-pV9Z, according to the basissetexchange https://www.basissetexchange.org/
+    // there is no orbitals with L>9 presently
+    const std::string spectrum = "SPDFGHIKLM";
     std::ifstream ifs(orb_file.c_str(), std::ios::in);  // pengfei 2014-10-13
     // mohan add return 2021-04-26
     if (!ifs)
     {
         std::cout << " Element index " << it+1 << std::endl;
         std::cout << " orbital file: " << orb_file << std::endl;
-        ModuleBase::WARNING_QUIT("read_orb_file","ABACUS Cannot find the ORBITAL file (basis sets)");
+        ModuleBase::WARNING_QUIT("UnitCell::read_orb_file", "ABACUS Cannot find the ORBITAL file (basis sets)");
     }
-    char word[80];
+    std::string word;
     atom->nw = 0;
-    int L =0;
     while (ifs.good())
     {
         ifs >> word;
-        if (strcmp("Element", word) == 0)         // pengfei Li 16-2-29
+        if (word == "Element")         // pengfei Li 16-2-29
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->label_orb);
         }
-        if (strcmp("Lmax", word) == 0)
+        if (word == "Lmax")
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->nwl);
-            delete[] atom->l_nchi;
-            atom->l_nchi = new int[ atom->nwl+1];
+            atom->l_nchi.resize(atom->nwl+1, 0);
         }
-        assert(atom->nwl<10);
-        if (strcmp("Cutoff(a.u.)", word) == 0)         // pengfei Li 16-2-29
+        // assert(atom->nwl<10); // cannot understand why restrict the maximum value of atom->nwl
+        if (word == "Cutoff(a.u.)")         // pengfei Li 16-2-29
         {
             ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->Rcut);
         }
-        if (strcmp("Sorbital-->", word) == 0)
+        if (FmtCore::endswith(word, "orbital-->"))
         {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Porbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Dorbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Forbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
-        }
-        if (strcmp("Gorbital-->", word) == 0)
-        {
-            ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[L]);
-            atom->nw += (2*L + 1) * atom->l_nchi[L];
-            std::stringstream ss;
-            ss << "L=" << L << ", number of zeta";
-            ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[L]);
-            L++;
+            bool valid = false;
+            for (int i = 0; i < spectrum.size(); i++)
+            {
+                if (word == spectrum.substr(i, 1) + "orbital-->")
+                {
+                    ModuleBase::GlobalFunc::READ_VALUE(ifs, atom->l_nchi[i]);
+                    atom->nw += (2*i + 1) * atom->l_nchi[i];
+                    std::stringstream ss;
+                    ss << "L=" << i << ", number of zeta";
+                    ModuleBase::GlobalFunc::OUT(ofs_running,ss.str(),atom->l_nchi[i]);
+                    valid = true;
+                    break;
+                }
+            }
+            if (!valid)
+            {
+                ModuleBase::WARNING_QUIT("UnitCell::read_orb_file", 
+                                         "ABACUS does not support numerical atomic orbital with L > 9, "
+                                         "or an invalid orbital label is found in the ORBITAL file.");
+            }
         }
     }
     ifs.close();
     if(!atom->nw)
     {
-        ModuleBase::WARNING_QUIT("read_orb_file","get nw = 0");
+        ModuleBase::WARNING_QUIT("UnitCell::read_orb_file","get nw = 0");
     }
 }

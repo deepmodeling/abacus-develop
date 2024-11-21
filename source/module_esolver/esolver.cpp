@@ -5,9 +5,10 @@
 #include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "esolver_ks_lcaopw.h"
+#include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
+#include "esolver_ks_lcaopw.h"
 #include "module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
@@ -188,18 +189,39 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 	{
 		if (PARAM.globalv.gamma_only_local)
 		{
-			return new ESolver_KS_LCAO<double, double>();
-		}
-		else if (PARAM.inp.nspin < 4)
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, double>();
-		}
-		else
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
-		}
-	}
-	else if (esolver_type == "ksdft_lcao_tddft")
+            if (PARAM.inp.calculation == "get_S")
+            {
+                return new ESolver_GetS<double, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<double, double>();
+            }
+        }
+        else if (PARAM.inp.nspin < 4)
+        {
+            if (PARAM.inp.calculation == "get_S")
+            {
+                return new ESolver_GetS<std::complex<double>, double>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
+            }
+        }
+        else
+        {
+            if (PARAM.inp.calculation == "get_S")
+            {
+                return new ESolver_GetS<std::complex<double>, std::complex<double>>();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            }
+        }
+    }
+    else if (esolver_type == "ksdft_lcao_tddft")
 	{
 		return new ESolver_KS_LCAO_TDDFT();
     }

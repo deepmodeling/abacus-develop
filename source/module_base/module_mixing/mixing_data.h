@@ -22,7 +22,7 @@ class Mixing_Data
      * @param type_size size of type
      *
      */
-    Mixing_Data(const int& ndim, const int& length, const size_t& type_size);
+    Mixing_Data(const int& ndim, const std::size_t& length, const size_t& type_size);
 
     /**
      * @brief Destroy the Mixing_Data object
@@ -38,7 +38,7 @@ class Mixing_Data
      * @param type_size size of type
      *
      */
-    void resize(const int& ndim, const int& length, const size_t& type_size);
+    void resize(const int& ndim, const std::size_t& length, const size_t& type_size);
 
     /**
      * @brief push data to the tensor
@@ -54,7 +54,7 @@ class Mixing_Data
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096/sizeof(FPTYPE))
 #endif
-        for (int i = 0; i < length; ++i)
+        for (std::size_t i = 0; i < length; ++i)
         {
             FP_startdata[i] = data_in[i];
         }
@@ -86,7 +86,7 @@ class Mixing_Data
     // the number of vectors for mixing
     int ndim_tot = 0;
     // the length of each vector
-    int length = 0;
+    std::size_t length = 0;
     // the start index for vector: start = this->index_move(0)
     int start = -1;
     // the number of used vectors for mixing

@@ -58,8 +58,7 @@ TEST_F(AtomSpecTest, PrintAtom)
 	atom.nw = 14;
 	atom.stapos_wf = 0;
 	atom.mass = 12.0;
-	delete[] atom.tau;
-	atom.tau = new ModuleBase::Vector3<double>[atom.na];
+	atom.tau.resize(atom.na);
 	atom.tau[0].x = 0.2;
 	atom.tau[0].y = 0.2;
 	atom.tau[0].z = 0.2;
@@ -94,8 +93,7 @@ TEST_F(AtomSpecTest, SetIndex)
 #endif
 	atom.nw = 0;
 	atom.nwl = 1;
-	delete[] atom.l_nchi;
-	atom.l_nchi = new int[atom.nwl+1];
+	atom.l_nchi.resize(atom.nwl+1);
 	atom.l_nchi[0] = 2; // l:0, N:2 (arbitrary)
 	atom.nw += 1*atom.l_nchi[0]; // m = 2*0+1 = 1
 	atom.l_nchi[1] = 4; // l:1, N:4 (arbitrary)
@@ -139,30 +137,21 @@ TEST_F(AtomSpecTest, BcastAtom)
 		atom.nw = 0;
 		atom.nwl = 1;
 		atom.Rcut = 1.1;
-		delete[] atom.l_nchi;
-		atom.l_nchi = new int[atom.nwl+1];
+		atom.l_nchi.resize(atom.nwl+1);
 		atom.l_nchi[0] = 2;
 		atom.nw += atom.l_nchi[0];
 		atom.l_nchi[1] = 4;
 		atom.nw += 3*atom.l_nchi[1];
 		atom.stapos_wf = 0;
 		atom.mass = 12.0;
-		delete[] atom.tau;
-		delete[] atom.taud;
-		delete[] atom.vel;
-		delete[] atom.mag;
-		delete[] atom.angle1;
-		delete[] atom.angle2;
-		delete[] atom.m_loc_;
-		delete[] atom.mbl;
-		atom.tau = new ModuleBase::Vector3<double>[atom.na];
-		atom.taud = new ModuleBase::Vector3<double>[atom.na];
-		atom.vel = new ModuleBase::Vector3<double>[atom.na];
-		atom.mag = new double[atom.na];
-		atom.angle1 = new double[atom.na];
-		atom.angle2 = new double[atom.na];
-		atom.m_loc_ = new ModuleBase::Vector3<double>[atom.na];
-		atom.mbl = new ModuleBase::Vector3<int>[atom.na];
+		atom.tau.resize(atom.na);
+		atom.taud.resize(atom.na);
+		atom.vel.resize(atom.na);
+		atom.mag.resize(atom.na);
+		atom.angle1.resize(atom.na);
+		atom.angle2.resize(atom.na);
+		atom.m_loc_.resize(atom.na);
+		atom.mbl.resize(atom.na);
 		atom.tau[0].x = 0.2;
 		atom.tau[0].y = 0.2;
 		atom.tau[0].z = 0.2;

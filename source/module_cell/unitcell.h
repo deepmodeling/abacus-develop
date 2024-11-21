@@ -328,6 +328,12 @@ class UnitCell {
     /// @brief get lnchiCounts, which is a vector of element type with the
     /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
+    /// @brief get target magnetic moment for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_target_mag() const;
+    /// @brief get lagrange multiplier for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_lambda() const;
+    /// @brief get constrain for deltaspin
+    std::vector<ModuleBase::Vector3<int>> get_constrain() const;
 };
 
 /**

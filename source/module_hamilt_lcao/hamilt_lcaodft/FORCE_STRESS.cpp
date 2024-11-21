@@ -18,6 +18,7 @@
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22 
 #endif
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
 #include "module_elecstate/elecstate_lcao.h"
 
@@ -314,6 +315,43 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         }
     }
 
+    // atomic force and stress for DeltaSpin
+    ModuleBase::matrix force_dspin;
+    ModuleBase::matrix stress_dspin;
+    if(PARAM.inp.sc_mag_switch)
+    {
+        if (isforce)
+        {
+            force_dspin.create(nat, 3);
+        }
+        if (isstress)
+        {
+            stress_dspin.create(3, 3);
+        }
+
+        hamilt::DeltaSpin<hamilt::OperatorLCAO<T, double>> tmp_dspin(
+                    nullptr,
+                    kv.kvec_d,
+                    nullptr,
+                    GlobalC::ucell,
+                    &GlobalC::GridD,
+                    two_center_bundle.overlap_orb_onsite.get(),
+                    orb.cutoffs()
+            );
+
+        const auto* dm_p = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
+        if(PARAM.inp.nspin == 2)
+        {
+            const_cast<elecstate::DensityMatrix<std::complex<double>, double>*>(dm_p)->switch_dmr(2);
+        }
+        const hamilt::HContainer<double>* dmr = dm_p->get_DMR_pointer(1);
+        tmp_dspin.cal_force_stress(isforce, isstress, dmr, force_dspin, stress_dspin);
+        if(PARAM.inp.nspin == 2)
+        {
+            const_cast<elecstate::DensityMatrix<std::complex<double>, double>*>(dm_p)->switch_dmr(0);
+        }
+    }
+
     if (!PARAM.globalv.gamma_only_local)
     {
         this->flk.finish_ftable(fsr);
@@ -377,6 +415,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 if (PARAM.inp.dft_plus_u)
                 {
                     fcs(iat, i) += force_dftu(iat, i);
+                }
+                if (PARAM.inp.sc_mag_switch)
+                {
+                    fcs(iat, i) += force_dspin(iat, i);
                 }
 #ifdef __EXX
                 // Force contribution from exx
@@ -590,6 +632,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             {
                 ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DFT+U      FORCE", force_dftu, false);
             }
+            if (PARAM.inp.sc_mag_switch)
+            {
+                ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "DeltaSpin  FORCE", force_dspin, false);
+            }
 #ifdef __DEEPKS
             // caoyu add 2021-06-03
             if (PARAM.inp.deepks_scf)
@@ -654,6 +700,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                 if (PARAM.inp.dft_plus_u)
                 {
                     scs(i, j) += stress_dftu(i, j);
+                }
+                if (PARAM.inp.sc_mag_switch)
+                {
+                    scs(i, j) += stress_dspin(i, j);
                 }
 #ifdef __EXX
                 // Stress contribution from exx
@@ -765,6 +815,10 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
             if (PARAM.inp.dft_plus_u)
             {
                 ModuleIO::print_stress("DFTU     STRESS", stress_dftu, PARAM.inp.test_stress, ry);
+            }
+            if (PARAM.inp.sc_mag_switch)
+            {
+                ModuleIO::print_stress("DeltaSpin  STRESS", stress_dspin, PARAM.inp.test_stress, ry);
             }
             ModuleIO::print_stress("TOTAL    STRESS", scs, PARAM.inp.test_stress, ry);
 

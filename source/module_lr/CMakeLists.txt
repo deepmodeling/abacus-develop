@@ -17,13 +17,8 @@ if(ENABLE_LCAO)
     potentials/pot_hxc_lrtd.cpp
     lr_spectrum.cpp
     hamilt_casida.cpp
-    esolver_lrtd_lcao.cpp)
-
-    if(ENABLE_LIBXC)
-      list(APPEND objects
-        potentials/kernel_xc.cpp
-      )
-    endif()
+    esolver_lrtd_lcao.cpp
+    potentials/xc_kernel.cpp)
 
 add_library(
     lr
