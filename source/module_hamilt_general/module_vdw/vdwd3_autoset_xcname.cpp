@@ -1,5 +1,3 @@
-#ifndef DFTD3_XC_NAME_H
-#define DFTD3_XC_NAME_H
 /**
  * Intro
  * -----
@@ -606,4 +604,3 @@ if __name__ == '__main__':
     # print_xc(others)
     print(paired_xc_to_stdmap(special))
  */
-#endif // DFTD3_XCNAME_H_
