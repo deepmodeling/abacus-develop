@@ -32,7 +32,7 @@ namespace LR_Util
     /// @param size1
     /// @param size2
     template <typename T>
-    void new_p2(T**& p2, size_t size1, size_t size2)
+    void _allocate_2order_nested_ptr(T**& p2, size_t size1, size_t size2)
     {
         p2 = new T * [size1];
         for (size_t i = 0; i < size1; ++i)
@@ -46,7 +46,7 @@ namespace LR_Util
     /// @param p2 
     /// @param size 
     template <typename T>
-    void delete_p2(T** p2, size_t size)
+    void _deallocate_2order_nested_ptr(T** p2, size_t size)
     {
         if (p2 != nullptr)
         {

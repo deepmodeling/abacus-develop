@@ -12,6 +12,15 @@
 using DAT = container::DataType;
 using DEV = container::DeviceType;
 
+#ifndef TO_COMPLEX_H
+#define TO_COMPLEX_H
+template <typename T> struct ToComplex;
+template <> struct ToComplex<double> { using type = std::complex<double>; };
+template <> struct ToComplex<std::complex<double>> { using type = std::complex<double>; };
+template <> struct ToComplex<float> { using type = std::complex<float>; };
+template <> struct ToComplex<std::complex<float>> { using type = std::complex<float>; };
+#endif
+
 namespace LR_Util
 {
     /// =====================PHYSICS====================
@@ -36,26 +45,16 @@ namespace LR_Util
     std::pair<ModuleBase::matrix, std::vector<std::pair<int, int>>>
         set_ix_map_diagonal(bool mode, int nc, int nv);
 
-#ifdef  USE_LIBXC
-    /// operators to calculate XC kernels
-    void grad(const double* rhor,
-        ModuleBase::Vector3<double>* gdr,
-        const ModulePW::PW_Basis& rho_basis,
-        const double& tpiba);
-    void laplace(const double* rhor,
-        double* lapn,
-        const ModulePW::PW_Basis& rho_basis,
-        const double& tpiba2);
-#endif
+    // Operators to calculate xc kernel have been moved into lr_util_xc.hpp.
     /// =================ALGORITHM====================
 
     //====== newers and deleters========
     /// @brief  delete 2d pointer  
     template <typename T>
-    void delete_p2(T** p2, size_t size);
+    void _deallocate_2order_nested_ptr(T** p2, size_t size);
     /// @brief  new 2d pointer  
     template <typename T>
-    void new_p2(T**& p2, size_t size1, size_t size2);
+    void _allocate_2order_nested_ptr(T**& p2, size_t size1, size_t size2);
 
     template<typename T> ct::Tensor newTensor(const ct::TensorShape& shape)
     {
@@ -75,20 +74,6 @@ namespace LR_Util
     template<typename T>
     void matsym(T* inout, const int n, const Parallel_2D& pmat);
 #endif
-    ///======== Tensor - Matrix transformer==========
-    container::Tensor mat2ten_double(ModuleBase::matrix& m);
-    std::vector<container::Tensor> mat2ten_double(std::vector<ModuleBase::matrix>& m);
-    ModuleBase::matrix ten2mat_double(container::Tensor& t);
-    std::vector<ModuleBase::matrix> ten2mat_double(std::vector<container::Tensor>& t);
-    container::Tensor mat2ten_complex(ModuleBase::ComplexMatrix& m);
-    std::vector<container::Tensor> mat2ten_complex(std::vector<ModuleBase::ComplexMatrix>& m);
-    ModuleBase::ComplexMatrix ten2mat_complex(container::Tensor& t);
-    std::vector<ModuleBase::ComplexMatrix> ten2mat_complex(std::vector<container::Tensor>& t);
-
-    ModuleBase::matrix vec2mat(const std::vector<double>& v, const int nr, const int nc);
-    ModuleBase::ComplexMatrix vec2mat(const std::vector<std::complex<double>>& v, const int nr, const int nc);
-    std::vector<ModuleBase::matrix> vec2mat(const std::vector<std::vector<double>>& v, const int nr, const int nc);
-    std::vector<ModuleBase::ComplexMatrix> vec2mat(const std::vector<std::vector<std::complex<double>>>& v, const int nr, const int nc);
 
     ///===================Psi wrapper=================
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy

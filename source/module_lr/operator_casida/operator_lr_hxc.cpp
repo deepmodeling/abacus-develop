@@ -61,15 +61,15 @@ namespace LR
         // \f[ \tilde{\rho}(r)=\sum_{\mu_j, \mu_b}\tilde{\rho}_{\mu_j,\mu_b}\phi_{\mu_b}(r)\phi_{\mu_j}(r) \f]
         double** rho_trans;
         const int& nrxx = this->pot.lock()->nrxx;
-        LR_Util::new_p2(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
+        LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // currently gint_kernel_rho uses PARAM.inp.nspin, it needs refactor
         ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
         Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
         this->gint->cal_gint(&inout_rho);
 
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
-        this->pot.lock()->cal_v_eff(rho_trans, &GlobalC::ucell, vr_hxc, ispin_ks);
-        LR_Util::delete_p2(rho_trans, 1);
+        this->pot.lock()->cal_v_eff(rho_trans, GlobalC::ucell, vr_hxc, ispin_ks);
+        LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
         Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);
@@ -103,7 +103,7 @@ namespace LR
                 double** rho_trans;
                 const int& nrxx = this->pot.lock()->nrxx;
 
-                LR_Util::new_p2(rho_trans, 1, nrxx); // nspin=1 for transition density
+                LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, nrxx); // nspin=1 for transition density
                 ModuleBase::GlobalFunc::ZEROS(rho_trans[0], nrxx);
                 Gint_inout inout_rho(rho_trans, Gint_Tools::job_type::rho, 1, false);
                 this->gint->cal_gint(&inout_rho);
@@ -111,10 +111,10 @@ namespace LR
 
                 // 3. v_hxc = f_hxc * rho_trans
                 ModuleBase::matrix vr_hxc(1, nrxx);   //grid
-                this->pot.lock()->cal_v_eff(rho_trans, &GlobalC::ucell, vr_hxc, ispin_ks);
+                this->pot.lock()->cal_v_eff(rho_trans, GlobalC::ucell, vr_hxc, ispin_ks);
                 // print_grid_nonzero(vr_hxc.c, this->poticab->nrxx, 10, "vr_hxc");
 
-                LR_Util::delete_p2(rho_trans, 1);
+                LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
                 // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
                 Gint_inout inout_vlocal(vr_hxc.c, 0, Gint_Tools::job_type::vlocal);

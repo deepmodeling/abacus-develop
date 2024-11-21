@@ -423,6 +423,7 @@
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
   - [Linear Response TDDFT](#linear-response-tddft)
     - [xc\_kernel](#xc_kernel)
+    - [lr\_init\_xc\_kernel](#lr_init_xc_kernel)
     - [lr\_solver](#lr_solver)
     - [lr\_thr](#lr_thr)
     - [nocc](#nocc)
@@ -3942,6 +3943,15 @@ These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 - **Description**: The exchange-correlation kernel used in the calculation. 
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
+
+### lr_init_xc_kernel
+
+- **Type**: String
+- **Description**: The method to initalize the xc kernel. 
+  - "default": Calculate xc kerenel ($f_\text{xc}$) from the ground-state charge density.
+  - "file": Read the xc kernel $f_\text{xc}$ on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (*[nspin](#nspin)==1*) or 3 (*[nspin](#nspin)==2*, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter [xc_kernel](#xc_kernel) will be invalid. Now only LDA-type kernel is supproted as the potential will be calculated by directly multiplying the transition density.
+  - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
+- **Default**: "default"
 
 ### lr_solver
 
