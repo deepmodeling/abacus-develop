@@ -59,12 +59,18 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
         if (PARAM.inp.basis_type == "lcao_in_pw")
         {
             wanf2[0].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
-            const size_t memory_cost = PARAM.globalv.nlocal * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
-            std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
+
+            // WARNING: put the sizeof() be the first to avoid the overflow of the multiplication of int
+            const size_t memory_cost = sizeof(std::complex<double>) * PARAM.globalv.nlocal * (PARAM.globalv.npol * npwx);
+
+            std::cout << " Memory for wanf2 (MB): " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
-        const size_t memory_cost = PARAM.inp.nbands * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
-        std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
+        
+        // WARNING: put the sizeof() be the first to avoid the overflow of the multiplication of int
+        const size_t memory_cost = sizeof(std::complex<double>) * PARAM.inp.nbands * (PARAM.globalv.npol * npwx);
+
+        std::cout << " MEMORY FOR PSI (MB)  : " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
     else if (PARAM.inp.basis_type != "pw")
@@ -82,8 +88,10 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
                 this->wanf2[ik].create(PARAM.globalv.nlocal, npwx * PARAM.globalv.npol);
             }
 
-            const size_t memory_cost = nks2 * PARAM.globalv.nlocal * (npwx * PARAM.globalv.npol) * sizeof(std::complex<double>);
-            std::cout << " Memory for wanf2 (MB): " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
+            // WARNING: put the sizeof() be the first to avoid the overflow of the multiplication of int
+            const size_t memory_cost = sizeof(std::complex<double>) * nks2 * PARAM.globalv.nlocal * (npwx * PARAM.globalv.npol);
+
+            std::cout << " Memory for wanf2 (MB): " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
             ModuleBase::Memory::record("WF::wanf2", memory_cost);
         }
     }
@@ -91,8 +99,11 @@ psi::Psi<std::complex<double>>* wavefunc::allocate(const int nkstot, const int n
     {
         // initial psi rather than evc
         psi_out = new psi::Psi<std::complex<double>>(nks2, PARAM.inp.nbands, npwx * PARAM.globalv.npol, ngk);
-        const size_t memory_cost = nks2 * PARAM.inp.nbands * (PARAM.globalv.npol * npwx) * sizeof(std::complex<double>);
-        std::cout << " MEMORY FOR PSI (MB)  : " << double(memory_cost) / 1024.0 / 1024.0 << std::endl;
+
+        // WARNING: put the sizeof() be the first to avoid the overflow of the multiplication of int
+        const size_t memory_cost = sizeof(std::complex<double>) * nks2 * PARAM.inp.nbands * (PARAM.globalv.npol * npwx);
+
+        std::cout << " MEMORY FOR PSI (MB)  : " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
         ModuleBase::Memory::record("Psi_PW", memory_cost);
     }
     return psi_out;
