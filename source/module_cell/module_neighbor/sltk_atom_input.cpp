@@ -188,14 +188,6 @@ Atom_input::Atom_input
 
 Atom_input::~Atom_input()
 {
-	if (expand_flag)
-	{
-		delete [] store_x;
-		delete [] store_y;
-		delete [] store_z;
-		delete [] store_type;
-		delete [] store_natom;
-	}
 }
 
 //============================================
@@ -409,27 +401,6 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 		GlobalV::ofs_running << " Good luck! " << std::endl;
 	}
 
-	double *x_old = new double[d_amount];
-	double *y_old = new double[d_amount];
-	double *z_old = new double[d_amount];
-
-	int *type_old = new int[d_amount];
-	int *natom_old = new int[d_amount];
-
-	int ia = 0;
-	for (int i = 0;i < ntype;i++)
-	{
-		for (int j = 0;j < ucell.atoms[i].na;j++)
-		{
-			x_old[ia] = ucell.atoms[i].tau[j].x;
-			y_old[ia] = ucell.atoms[i].tau[j].y;
-			z_old[ia] = ucell.atoms[i].tau[j].z;
-			type_old[ia] = i;
-			natom_old[ia] = j;
-			ia++;
-		}
-	}
-
 	// how many copys we need now.
 	const int gcopy =
 	    (glayerX + glayerX_minus) *
@@ -443,23 +414,7 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 	if(test_atom_input)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Atom_number_now",d_amount_expand);
 
 	// store new atom positions.
-	this->store_x = new double[d_amount_expand];
-	this->store_y = new double[d_amount_expand];
-	this->store_z = new double[d_amount_expand];
 
-	ModuleBase::Memory::record("SLTK::Epd_Atom",sizeof(double) * d_amount_expand*3);
-
-	// store which grid the atom is in.
-	store_cell_x = new int[d_amount_expand];
-	store_cell_y = new int[d_amount_expand];
-	store_cell_z = new int[d_amount_expand];
-
-	this->store_type = new int[d_amount_expand];
-	this->store_natom = new int[d_amount_expand];
-
-	ModuleBase::Memory::record("SLTK::Epd_atom_info",sizeof(int) * d_amount_expand*5);
-
-	int ia_all = 0;
 
 	for (int ix = -glayerX_minus; ix < glayerX; ix++)
 	{
@@ -467,48 +422,23 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 		{
 			for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
 			{
-				for (int ia = 0; ia < d_amount; ia++)
+				for (int i = 0;i < ntype;i++)
 				{
-					store_x[ia_all] = x_old[ia] + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
-					store_y[ia_all] = y_old[ia] + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
-					store_z[ia_all] = z_old[ia] + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
-					store_type[ia_all] = type_old[ia];
-					store_natom[ia_all] = natom_old[ia];
-
-					// notice '0' is not the origin unitcell.
-					store_cell_x[ia_all] = ix + glayerX_minus;
-					store_cell_y[ia_all] = iy + glayerY_minus;
-					store_cell_z[ia_all] = iz + glayerZ_minus;
-
-					if (test_atom_input > 1)
+					for (int j = 0;j < ucell.atoms[i].na;j++)
 					{
-						if (d_amount_expand < 1000)
-						{
-							GlobalV::ofs_running << "\n" << std::setw(6) << ia_all
-							<< std::setw(10) << x_old[ia]
-							<< std::setw(10) << y_old[ia]
-							<< std::setw(10) << z_old[ia]
-							<< std::setw(10) << store_x[ia_all]
-							<< std::setw(10) << store_y[ia_all]
-							<< std::setw(10) << store_z[ia_all]
-							<< std::setw(6) << store_cell_x[ia_all]
-							<< std::setw(6) << store_cell_y[ia_all]
-							<< std::setw(6) << store_cell_z[ia_all];
-						}
-					}
+						double x = ucell.atoms[i].tau[j].x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
+						double y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
+						double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
-					ia_all++;
+						this->fake_atoms.push_back(FAtom(x, y, z, i, j, ix, iy, iz));
+					}
 				}
 			}
 		}
 	}
 
-	// mohan fix bug 2012-04-02 by valgrind.
-	delete[] store_cell_x;
-	delete[] store_cell_y;
-	delete[] store_cell_z;
 
-	assert(ia_all == d_amount_expand);
+	assert(this->fake_atoms.size() == d_amount_expand);
 
 	// becareful! now the cell is not the origin cell,
 	// it's unitcell in expand case! so don't add
@@ -554,12 +484,6 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 			<< " Ymax=" << y_max_expand
 			<< " Zmax=" << z_max_expand << std::endl;
 	}
-
-	delete[] x_old;
-	delete[] y_old;
-	delete[] z_old;
-	delete[] type_old;
-	delete[] natom_old;
 	return;
 }
 
@@ -614,11 +538,7 @@ void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
 //----------------------------------------------------------
 	if (expand_flag)
 	{
-		a.setX(store_x[d_current]);
-		a.setY(store_y[d_current]);
-		a.setZ(store_z[d_current]);
-		a.setType(store_type[d_current]);
-		a.setNatom(store_natom[d_current]);
+		a = fake_atoms[d_current];
 		++ d_current;
 	}
 
@@ -630,44 +550,20 @@ void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
 //----------------------------------------------------------
 	else
 	{
-		Load_atom(ucell
+		natom++;
 
-		);
-		a.setX(x);
-		a.setY(y);
-		a.setZ(z);
-		a.setType(type);
-		a.setNatom(natom);
-//		GlobalV::ofs_running<<"\n x = "<<x;
-//		GlobalV::ofs_running<<"\n y = "<<y;
-//		GlobalV::ofs_running<<"\n z = "<<z;
-//		GlobalV::ofs_running<<"\n Type = "<<type;
-//		GlobalV::ofs_running<<"\n natom = "<<natom;
+		if (natom >= ucell.atoms[type].na)
+		{
+			type ++;
+			natom = 0;
+		}
+		FAtom temp(ucell.atoms[type].tau[natom].x,
+				   ucell.atoms[type].tau[natom].y,
+				   ucell.atoms[type].tau[natom].z,
+				   type, natom,
+				   0, 0, 0);
+		a = temp;
 	}
 
-	return;
-}
-
-void Atom_input::Load_atom(const UnitCell& ucell)const
-{
-//	ModuleBase::TITLE("Atom_input","load_atom");
-	natom++;
-
-	if (natom >= ucell.atoms[type].na)
-	{
-		type ++;
-		natom = 0;
-	}
-
-	x = ucell.atoms[type].tau[natom].x;
-
-	y = ucell.atoms[type].tau[natom].y;
-	z = ucell.atoms[type].tau[natom].z;
-
-//	std::cout<<" x = "<<ucell.atoms[type].tau[natom].x
-//		<<" y = "<<ucell.atoms[type].tau[natom].y
-//		<<" z = "<<ucell.atoms[type].tau[natom].z
-//		<<" type = "<<type
-//		<<" natom = "<<natom;
 	return;
 }

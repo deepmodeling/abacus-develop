@@ -195,9 +195,25 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(istep);
+
     if (GlobalC::ucell.cell_parameter_updated)
     {
-        this->init_after_vc(PARAM.inp, GlobalC::ucell);
+        GlobalC::ppcell.init_vnl(GlobalC::ucell, this->pw_rhod);
+        ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+
+        this->pw_wfc->initgrids(GlobalC::ucell.lat0,
+                                GlobalC::ucell.latvec,
+                                this->pw_wfc->nx,
+                                this->pw_wfc->ny,
+                                this->pw_wfc->nz);
+
+        this->pw_wfc->initparameters(false, PARAM.inp.ecutwfc, this->kv.get_nks(), this->kv.kvec_d.data());
+
+        this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
+
+        this->p_wf_init->make_table(this->kv.get_nks(), &this->sf);
     }
     if (GlobalC::ucell.ionic_position_updated)
     {

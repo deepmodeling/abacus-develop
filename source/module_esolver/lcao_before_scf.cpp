@@ -177,10 +177,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
 
-    if (GlobalC::ucell.cell_parameter_updated)
-    {
-        this->init_after_vc(PARAM.inp, GlobalC::ucell);
-    }
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(istep);
+
     if (GlobalC::ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(GlobalC::ucell);

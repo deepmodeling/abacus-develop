@@ -299,6 +299,7 @@ struct Input_para
 
     // ==============   #Parameters (10.lr-tddft) ===========================
     int lr_nstates = 1; ///< the number of 2-particle states to be solved
+    std::vector<std::string> lr_init_xc_kernel = {};    ///< The method to initalize the xc kernel
     int nocc = -1;      ///< the number of occupied orbitals to form the 2-particle basis
     int nvirt = 1;      ///< the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)
     std::string xc_kernel = "LDA"; ///< exchange correlation (XC) kernel for LR-TDDFT

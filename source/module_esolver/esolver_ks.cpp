@@ -336,34 +336,6 @@ void ESolver_KS<T, Device>::before_all_runners(const Input_para& inp, UnitCell& 
 }
 
 //------------------------------------------------------------------------------
-//! the 4th function of ESolver_KS: init_after_vc
-//! mohan add 2024-05-11
-//------------------------------------------------------------------------------
-template <typename T, typename Device>
-void ESolver_KS<T, Device>::init_after_vc(const Input_para& inp, UnitCell& ucell)
-{
-    ModuleBase::TITLE("ESolver_KS", "init_after_vc");
-
-    ESolver_FP::init_after_vc(inp, ucell);
-
-    if (inp.mdp.md_prec_level == 2)
-    {
-        // initialize the real-space uniform grid for FFT and parallel
-        // distribution of plane waves
-        GlobalC::Pgrid.init(this->pw_rhod->nx,
-                            this->pw_rhod->ny,
-                            this->pw_rhod->nz,
-                            this->pw_rhod->nplane,
-                            this->pw_rhod->nrxx,
-                            pw_big->nbz,
-                            pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
-
-        // Calculate Structure factor
-        this->sf.setup_structure_factor(&ucell, this->pw_rhod);
-    }
-}
-
-//------------------------------------------------------------------------------
 //! the 5th function of ESolver_KS: hamilt2density_single
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------

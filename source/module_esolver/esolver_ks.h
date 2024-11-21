@@ -38,8 +38,6 @@ class ESolver_KS : public ESolver_FP
     //! Something to do before SCF iterations.
     virtual void before_scf(const int istep) {};
 
-    virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override; // liuyu add 2023-03-09
-
     //! Something to do before hamilt2density function in each iter loop.
     virtual void iter_init(const int istep, const int iter);
 
