@@ -54,8 +54,9 @@ class Opt_TN
     void refresh(int nx_new = 0)
     {
         this->iter_ = 0;
-        if (nx_new != 0)
+        if (nx_new != 0) {
             this->nx_ = nx_new;
+}
         this->cg_.refresh(nx_new);
     }
 
@@ -169,18 +170,21 @@ void Opt_TN::next_direct(double* px,
         // Hcgd = (df(temp_x)/dx - df(x)/x) / epsilon, where temp_x = x + step * cg_direct
         epsilon = this->get_epsilon(px, cg_direct);
         // epsilon = 1e-9;
-        for (int i = 0; i < this->nx_; ++i)
+        for (int i = 0; i < this->nx_; ++i) {
             temp_x[i] = px[i] + epsilon * cg_direct[i];
+}
         (t->*p_calGradient)(temp_x, temp_gradient, ucell);
-        for (int i = 0; i < this->nx_; ++i)
+        for (int i = 0; i < this->nx_; ++i) {
             temp_Hcgd[i] = (temp_gradient[i] - pgradient[i]) / epsilon;
+}
 
         // get CG step length and update rdirect
         cg_alpha = cg_.step_length(temp_Hcgd, cg_direct, cg_ifPD);
         if (cg_ifPD == -1) // Hessian is not positive definite, and cgiter = 1.
         {
-            for (int i = 0; i < this->nx_; ++i)
+            for (int i = 0; i < this->nx_; ++i) {
                 rdirect[i] += cg_alpha * cg_direct[i];
+}
             flag = -1;
             break;
         }
@@ -190,15 +194,17 @@ void Opt_TN::next_direct(double* px,
             break;
         }
 
-        for (int i = 0; i < this->nx_; ++i)
+        for (int i = 0; i < this->nx_; ++i) {
             rdirect[i] += cg_alpha * cg_direct[i];
+}
 
         // store residuals used in truncated conditions
         last_residual = curr_residual;
         curr_residual = cg_.get_residual();
         cg_iter = cg_.get_iter();
-        if (cg_iter == 1)
+        if (cg_iter == 1) {
             init_residual = curr_residual;
+}
 
         // check truncated conditions
         // if (curr_residual < 1e-12)
