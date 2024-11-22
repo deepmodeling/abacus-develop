@@ -92,13 +92,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     std::shared_ptr<Exx_LRI<std::complex<double>>> exx_lri_complex = nullptr;
 #endif
 
-  private:
-#ifdef __DEEPKS
-    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm) const;
-
-    void dpks_cal_projected_DM(
-        const elecstate::DensityMatrix<TK, double>* dm) const;
-#endif
     friend class LR::ESolver_LR<double, double>;
     friend class LR::ESolver_LR<std::complex<double>, double>;
 };

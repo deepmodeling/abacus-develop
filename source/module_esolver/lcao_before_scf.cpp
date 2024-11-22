@@ -39,13 +39,94 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO", "beforesolver");
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
+    ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
+
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(istep);
+
+    if (GlobalC::ucell.ionic_position_updated)
+    {
+        this->CE.update_all_dis(GlobalC::ucell);
+        this->CE.extrapolate_charge(
+#ifdef __MPI
+            &(GlobalC::Pgrid),
+#endif
+            GlobalC::ucell,
+            this->pelec->charge,
+            &(this->sf),
+            GlobalV::ofs_running,
+            GlobalV::ofs_warning);
+    }
+
+    //----------------------------------------------------------
+    // about vdw, jiyy add vdwd3 and linpz add vdwd2
+    //----------------------------------------------------------
+    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
+    if (vdw_solver != nullptr)
+    {
+        this->pelec->f_en.evdw = vdw_solver->get_energy();
+    }
 
     // 1. prepare HS matrices, prepare grid integral
-    this->set_matrix_grid(this->RA);
+    // (1) Find adjacent atoms for each atom.
+    double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
+                                                   PARAM.inp.out_level,
+                                                   orb_.get_rcutmax_Phi(),
+                                                   GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+                                                   PARAM.globalv.gamma_only_local);
+
+    atom_arrange::search(PARAM.inp.search_pbc,
+                         GlobalV::ofs_running,
+                         GlobalC::GridD,
+                         GlobalC::ucell,
+                         search_radius,
+                         PARAM.inp.test_atom_input);
+
+    // (3) Periodic condition search for each grid.
+    double dr_uniform = 0.001;
+    std::vector<double> rcuts;
+    std::vector<std::vector<double>> psi_u;
+    std::vector<std::vector<double>> dpsi_u;
+    std::vector<std::vector<double>> d2psi_u;
+
+    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
+
+    this->GridT.set_pbc_grid(this->pw_rho->nx,
+                             this->pw_rho->ny,
+                             this->pw_rho->nz,
+                             this->pw_big->bx,
+                             this->pw_big->by,
+                             this->pw_big->bz,
+                             this->pw_big->nbx,
+                             this->pw_big->nby,
+                             this->pw_big->nbz,
+                             this->pw_big->nbxx,
+                             this->pw_big->nbzp_start,
+                             this->pw_big->nbzp,
+                             this->pw_rho->ny,
+                             this->pw_rho->nplane,
+                             this->pw_rho->startz_current,
+                             GlobalC::ucell,
+                             GlobalC::GridD,
+                             dr_uniform,
+                             rcuts,
+                             psi_u,
+                             dpsi_u,
+                             d2psi_u,
+                             PARAM.inp.nstream);
+    psi_u.clear();
+    psi_u.shrink_to_fit();
+    dpsi_u.clear();
+    dpsi_u.shrink_to_fit();
+    d2psi_u.clear();
+    d2psi_u.shrink_to_fit();
+
+    // (2)For each atom, calculate the adjacent atoms in different cells
+    // and allocate the space for H(R) and S(R).
+    // If k point is used here, allocate HlocR after atom_arrange.
+    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     // 2. density matrix extrapolation
 
@@ -63,12 +144,10 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
         {
             nsk = PARAM.inp.nspin;
             ncol = this->pv.ncol_bands;
-            if (PARAM.inp.ks_solver == "genelpa"
-                || PARAM.inp.ks_solver == "elpa"
-                || PARAM.inp.ks_solver == "lapack"
-                || PARAM.inp.ks_solver == "pexsi"
-                || PARAM.inp.ks_solver == "cusolver"
-                || PARAM.inp.ks_solver == "cusolvermp") {
+            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp")
+            {
                 ncol = this->pv.ncol;
             }
         }
@@ -85,12 +164,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     }
 
     // init wfc from file
-    if(istep == 0 && PARAM.inp.init_wfc == "file")
+    if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
-        if (! ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver",
-                                     "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver", "read wfc nao failed");
         }
     }
 
@@ -116,10 +194,11 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
             orb_,
             DM
 #ifdef __EXX
-            , istep
-            , GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step
-            , GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr
-            , GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
+            ,
+            istep,
+            GlobalC::exx_info.info_ri.real_number ? &this->exd->two_level_step : &this->exc->two_level_step,
+            GlobalC::exx_info.info_ri.real_number ? &exx_lri_double->Hexxs : nullptr,
+            GlobalC::exx_info.info_ri.real_number ? nullptr : &exx_lri_complex->Hexxs
 #endif
         );
     }
@@ -169,41 +248,6 @@ void ESolver_KS_LCAO<TK, TR>::beforesolver(const int istep)
     {
         GlobalC::ucell.cal_ux();
     }
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "beforesolver");
-}
-
-template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
-{
-    ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
-
-    //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep);
-
-    if (GlobalC::ucell.ionic_position_updated)
-    {
-        this->CE.update_all_dis(GlobalC::ucell);
-        this->CE.extrapolate_charge(
-#ifdef __MPI
-            &(GlobalC::Pgrid),
-#endif
-            GlobalC::ucell,
-            this->pelec->charge,
-            &(this->sf),
-            GlobalV::ofs_running,
-            GlobalV::ofs_warning);
-    }
-
-    //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
-    //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
-    if (vdw_solver != nullptr)
-    {
-        this->pelec->f_en.evdw = vdw_solver->get_energy();
-    }
-
-    this->beforesolver(istep);
 
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf

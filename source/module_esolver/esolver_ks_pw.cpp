@@ -18,6 +18,7 @@
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_elecstate/elecstate_pw_sdft.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
@@ -136,14 +137,29 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
     // 3) initialize ElecState,
     if (this->pelec == nullptr)
     {
-        this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
-                                                            &(this->chr),
-                                                            &(this->kv),
-                                                            &ucell,
-                                                            &GlobalC::ppcell,
-                                                            this->pw_rhod,
-                                                            this->pw_rho,
-                                                            this->pw_big);
+        if (inp.esolver_type == "sdft")
+        {
+            //! SDFT only supports double precision currently
+            this->pelec = new elecstate::ElecStatePW_SDFT<std::complex<double>, Device>(this->pw_wfc,
+                                                                                        &(this->chr),
+                                                                                        &(this->kv),
+                                                                                        &ucell,
+                                                                                        &(GlobalC::ppcell),
+                                                                                        this->pw_rhod,
+                                                                                        this->pw_rho,
+                                                                                        this->pw_big);
+        }
+        else
+        {
+            this->pelec = new elecstate::ElecStatePW<T, Device>(this->pw_wfc,
+                                                                &(this->chr),
+                                                                &(this->kv),
+                                                                &ucell,
+                                                                &GlobalC::ppcell,
+                                                                this->pw_rhod,
+                                                                this->pw_rho,
+                                                                this->pw_big);
+        }
     }
 
     //! 4) inititlize the charge density.
@@ -180,8 +196,39 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
 #endif
                                   &GlobalC::ppcell);
 
-    //! 8) setup global classes
-    this->Init_GlobalC(inp, ucell, GlobalC::ppcell);
+    if (this->psi != nullptr)
+    {
+        delete this->psi;
+    }
+
+    //! init pseudopotential
+    GlobalC::ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
+
+    //! initalize local pseudopotential
+    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rhod);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
+
+    //! Initalize non-local pseudopotential
+    GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
+
+    //! Allocate psi
+    this->p_wf_init->allocate_psi(this->psi,
+                                  this->kv.get_nkstot(),
+                                  this->kv.get_nks(),
+                                  this->kv.ngk.data(),
+                                  this->pw_wfc->npwk_max,
+                                  &(this->sf));
+
+    this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
+                         ? new psi::Psi<T, Device>(this->psi[0])
+                         : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
+
+    if (PARAM.inp.precision == "single")
+    {
+        ModuleBase::Memory::record("Psi_single", sizeof(T) * this->psi[0].size());
+    }
+    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     //! 9) setup occupations
     if (PARAM.inp.ocp)

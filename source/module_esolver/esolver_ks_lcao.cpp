@@ -879,7 +879,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
         const std::vector<std::vector<TK>>& dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
-        this->dpks_cal_e_delta_band(dm);
+        GlobalC::ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
     }
 #endif
 
