@@ -560,7 +560,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter)
     // mohan move it outside 2011-01-13
     // first need to calculate the weight according to
     // electrons number.
-    if (istep == 0 && this->wf.init_wfc == "file")
+    if (istep == 0 && PARAM.inp.init_wfc == "file")
     {
         if (iter == 1)
         {
@@ -892,7 +892,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter)
         const std::vector<std::vector<TK>>& dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
-        this->dpks_cal_e_delta_band(dm);
+        GlobalC::ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
     }
 #endif
 

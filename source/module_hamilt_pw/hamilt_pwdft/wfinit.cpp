@@ -14,12 +14,12 @@ namespace psi
 {
 
 template <typename T, typename Device>
-WFInit<T, Device>::WFInit(const std::string& init_wfc_in,
-                          const std::string& ks_solver_in,
-                          const std::string& basis_type_in,
-                          const bool& use_psiinitializer_in,
-                          wavefunc* p_wf_in,
-                          ModulePW::PW_Basis_K* pw_wfc_in)
+PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
+                            const std::string& ks_solver_in,
+                            const std::string& basis_type_in,
+                            const bool& use_psiinitializer_in,
+                            wavefunc* p_wf_in,
+                            ModulePW::PW_Basis_K* pw_wfc_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
@@ -30,14 +30,14 @@ WFInit<T, Device>::WFInit(const std::string& init_wfc_in,
 }
 
 template <typename T, typename Device>
-void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
-                                     UnitCell* p_ucell,
-                                     const int& random_seed,
+void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
+                                      UnitCell* p_ucell,
+                                      const int& random_seed,
 #ifdef __MPI
-                                     Parallel_Kpoints* p_parak,
-                                     const int& rank,
+                                      Parallel_Kpoints* p_parak,
+                                      const int& rank,
 #endif
-                                     pseudopot_cell_vnl* p_ppcell)
+                                      pseudopot_cell_vnl* p_ppcell)
 {
     if (!this->use_psiinitializer)
     {
@@ -45,7 +45,7 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
     }
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
-    ModuleBase::timer::tick("WFInit", "prepare_init");
+    ModuleBase::timer::tick("PSIInit", "prepare_init");
     if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
     {
         this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
@@ -72,7 +72,7 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
     }
     else
     {
-        ModuleBase::WARNING_QUIT("WFInit::prepare_init", "for new psi initializer, init_wfc type not supported");
+        ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
     //! function polymorphism is moved from constructor to function initialize.
@@ -85,25 +85,25 @@ void WFInit<T, Device>::prepare_init(Structure_Factor* p_sf,
 
     // always new->initialize->tabulate->allocate->proj_ao_onkG
     this->psi_init->tabulate();
-    ModuleBase::timer::tick("WFInit", "prepare_init");
+    ModuleBase::timer::tick("PSIInit", "prepare_init");
 }
 
 template <typename T, typename Device>
-void WFInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
-                                     const int nkstot,
-                                     const int nks,
-                                     const int* ngk,
-                                     const int npwx,
-                                     Structure_Factor* p_sf)
+void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
+                                      const int nkstot,
+                                      const int nks,
+                                      const int* ngk,
+                                      const int npwx,
+                                      Structure_Factor* p_sf)
 {
     // allocate memory for std::complex<double> datatype psi
     // New psi initializer in ABACUS, Developer's note:
-    // Because the calling relationship between WFInit and derived class is
+    // Because the calling relationship between PSIInit and derived class is
     // complicated, up to upcoming of ABACUS 3.4, we only implement this new psi
     // initialization method for ksdft_pw, which means the routinely used dft theory.
     // For other theories like stochastic DFT, we still use the old method.
 
-    // LCAOINPW also temporarily uses WFInit workflow, but in principle, it
+    // LCAOINPW also temporarily uses PSIInit workflow, but in principle, it
     // should have its own ESolver. ESolver class is for controlling workflow for each
     // theory-basis combination, in the future it is also possible to seperate/decouple
     // the basis (representation) with operator (hamiltonian) and solver (diagonalization).
@@ -136,7 +136,7 @@ void WFInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
 }
 
 template <typename T, typename Device>
-void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
+void PSIInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 {
     if (this->use_psiinitializer)
     {
@@ -149,13 +149,13 @@ void WFInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 }
 
 template <typename T, typename Device>
-void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
-                                       psi::Psi<T, Device>* kspw_psi,
-                                       hamilt::Hamilt<T, Device>* p_hamilt,
-                                       std::ofstream& ofs_running,
-                                       const bool is_already_initpsi)
+void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
+                                        psi::Psi<T, Device>* kspw_psi,
+                                        hamilt::Hamilt<T, Device>* p_hamilt,
+                                        std::ofstream& ofs_running,
+                                        const bool is_already_initpsi)
 {
-    ModuleBase::timer::tick("WFInit", "initialize_psi");
+    ModuleBase::timer::tick("PSIInit", "initialize_psi");
 
     if (PARAM.inp.psi_initializer)
     {
@@ -187,7 +187,7 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 
             if (psig.expired())
             {
-                ModuleBase::WARNING_QUIT("WFInit::initialize_psi", "psig lifetime is expired");
+                ModuleBase::WARNING_QUIT("PSIInit::initialize_psi", "psig lifetime is expired");
             }
 
             //! to use psig, we need to lock it to get a shared pointer version,
@@ -286,13 +286,13 @@ void WFInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     }
 
-    ModuleBase::timer::tick("WFInit", "initialize_psi");
+    ModuleBase::timer::tick("PSIInit", "initialize_psi");
 }
 
-template class WFInit<std::complex<float>, base_device::DEVICE_CPU>;
-template class WFInit<std::complex<double>, base_device::DEVICE_CPU>;
+template class PSIInit<std::complex<float>, base_device::DEVICE_CPU>;
+template class PSIInit<std::complex<double>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template class WFInit<std::complex<float>, base_device::DEVICE_GPU>;
-template class WFInit<std::complex<double>, base_device::DEVICE_GPU>;
+template class PSIInit<std::complex<float>, base_device::DEVICE_GPU>;
+template class PSIInit<std::complex<double>, base_device::DEVICE_GPU>;
 #endif
 } // namespace psi

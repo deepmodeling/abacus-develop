@@ -46,10 +46,6 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
 
-    // temporary, this will be removed in the future;
-    // Init Global class
-    void Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
-
     virtual void allocate_hamilt();
     virtual void deallocate_hamilt();
 
@@ -57,7 +53,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     // psi_initializer controller
-    psi::WFInit<T, Device>* p_wf_init = nullptr;
+    psi::PSIInit<T, Device>* p_wf_init = nullptr;
 
     Device* ctx = {};
 

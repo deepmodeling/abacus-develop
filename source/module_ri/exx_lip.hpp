@@ -81,18 +81,18 @@ void Exx_Lip<T, Device>::cal_exx()
 }
 
 template <typename T, typename Device>
-Exx_Lip<T, Device>::Exx_Lip(
-    const Exx_Info::Exx_Info_Lip& info_in,
-    const ModuleSymmetry::Symmetry& symm,
-    K_Vectors* kv_ptr_in,
-    psi::WFInit<T, Device>* wf_ptr_in,
-    psi::Psi<T, Device>* kspw_psi_ptr_in,
-    //    wavefunc* wf_ptr_in,
-    const ModulePW::PW_Basis_K* wfc_basis_in,
-    const ModulePW::PW_Basis* rho_basis_in,
-    const Structure_Factor& sf,
-    const UnitCell* ucell_ptr_in,
-    const elecstate::ElecState* pelec_in) : info(info_in)
+Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
+                            const ModuleSymmetry::Symmetry& symm,
+                            K_Vectors* kv_ptr_in,
+                            psi::PSIInit<T, Device>* wf_ptr_in,
+                            psi::Psi<T, Device>* kspw_psi_ptr_in,
+                            //    wavefunc* wf_ptr_in,
+                            const ModulePW::PW_Basis_K* wfc_basis_in,
+                            const ModulePW::PW_Basis* rho_basis_in,
+                            const Structure_Factor& sf,
+                            const UnitCell* ucell_ptr_in,
+                            const elecstate::ElecState* pelec_in)
+    : info(info_in)
 {
     ModuleBase::TITLE("Exx_Lip", "init");
     ModuleBase::timer::tick("Exx_Lip", "init");

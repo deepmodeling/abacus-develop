@@ -67,14 +67,6 @@ ESolver_KS<T, Device>::ESolver_KS()
     ///----------------------------------------------------------
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
-
-    ///----------------------------------------------------------
-    /// wavefunc
-    ///----------------------------------------------------------
-    this->wf.init_wfc = PARAM.inp.init_wfc;
-    this->wf.mem_saver = PARAM.inp.mem_saver;
-    this->wf.out_wfc_pw = PARAM.inp.out_wfc_pw;
-    this->wf.out_wfc_r = PARAM.inp.out_wfc_r;
 }
 
 //------------------------------------------------------------------------------
