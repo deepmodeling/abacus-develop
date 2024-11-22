@@ -21,7 +21,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
+#include "module_hamilt_pw/hamilt_pwdft/psiinit.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
