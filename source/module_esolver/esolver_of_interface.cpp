@@ -261,7 +261,7 @@ void ESolver_OF::init_opt()
  * @brief [Interface to opt]
  * Call optimization methods to get the optimization direction
  */
-void ESolver_OF::get_direction()
+void ESolver_OF::get_direction(UnitCell& ucell)
 {
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -272,6 +272,7 @@ void ESolver_OF::get_direction()
                                  this->pdLdphi_[is],
                                  this->flag_,
                                  this->pdirect_[is],
+                                 ucell,
                                  this,
                                  &ESolver_OF::cal_potential);
         }

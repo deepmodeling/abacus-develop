@@ -48,9 +48,9 @@
 
 namespace ModuleESolver {
 
-
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::others(const int istep) {
+void ESolver_KS_PW<T, Device>::others(const int istep, UnitCell& ucell)
+{
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
     const std::string cal_type = PARAM.inp.calculation;

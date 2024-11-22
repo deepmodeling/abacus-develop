@@ -23,13 +23,13 @@ class ESolver_OF : public ESolver_FP
 
     virtual void runner(const int istep, UnitCell& ucell) override;
 
-    virtual void after_all_runners() override;
+    virtual void after_all_runners(UnitCell& ucell) override;
 
     virtual double cal_energy() override;
 
-    virtual void cal_force(ModuleBase::matrix& force) override;
+    virtual void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override;
 
-    virtual void cal_stress(ModuleBase::matrix& stress) override;
+    virtual void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override;
 
   private:
     // ======================= variables ==========================
@@ -94,7 +94,7 @@ class ESolver_OF : public ESolver_FP
     void allocate_array();
 
     // --------------------- calculate physical qualities ---------------
-    void cal_potential(double* ptemp_phi, double* rdLdphi);
+    void cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
     void cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
     double cal_mu(double* pphi, double* pdEdphi, double nelec);
 
@@ -123,7 +123,7 @@ class ESolver_OF : public ESolver_FP
 
     // ---------------------- interfaces to optimization methods --------
     void init_opt();
-    void get_direction();
+    void get_direction(UnitCell& ucell);
     void get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell& ucell);
 };
 } // namespace ModuleESolver

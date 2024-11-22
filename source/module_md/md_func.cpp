@@ -260,11 +260,11 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     potential = p_esolver->cal_energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_force(force_temp);
+    p_esolver->cal_force(force_temp, unit_in);
 
     if (cal_stress)
     {
-        p_esolver->cal_stress(virial);
+        p_esolver->cal_stress(virial, unit_in);
     }
 
     /// convert Rydberg to Hartree

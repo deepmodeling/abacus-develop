@@ -39,13 +39,13 @@ namespace LR
         // initialize sth. independent of the ground state
         virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override {};
         virtual void runner(int istep, UnitCell& ucell) override;
-        virtual void after_all_runners() override;
+        virtual void after_all_runners(UnitCell& ucell) override;
 
         virtual double cal_energy()  override { return 0.0; };
-        virtual void cal_force(ModuleBase::matrix& force) override {};
-        virtual void cal_stress(ModuleBase::matrix& stress) override {};
+        virtual void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override{};
+        virtual void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override{};
 
-    protected:
+      protected:
         const Input_para& input;
         const UnitCell& ucell;
         std::vector<double> orb_cutoff_;

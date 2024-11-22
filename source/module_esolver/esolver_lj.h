@@ -14,17 +14,17 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+        void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
         void runner(const int istep, UnitCell& cell) override;
 
         double cal_energy() override;
 
-        void cal_force(ModuleBase::matrix& force) override;
+        void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override;
 
-        void cal_stress(ModuleBase::matrix& stress) override;
+        void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override;
 
-        void after_all_runners() override;
+        void after_all_runners(UnitCell& ucell) override;
 
       private:
 

@@ -30,31 +30,31 @@ class ESolver_KS : public ESolver_FP
     //! Deconstructor
     virtual ~ESolver_KS();
 
-    virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+    virtual void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
     virtual void runner(const int istep, UnitCell& cell) override;
 
   protected:
     //! Something to do before SCF iterations.
-    virtual void before_scf(const int istep) {};
+    virtual void before_scf(const int istep, UnitCell& ucell){};
 
     //! Something to do before hamilt2density function in each iter loop.
-    virtual void iter_init(const int istep, const int iter);
+    virtual void iter_init(const int istep, const int iter, UnitCell& ucell);
 
     //! Something to do after hamilt2density function in each iter loop.
-    virtual void iter_finish(const int istep, int& iter);
+    virtual void iter_finish(const int istep, int& iter, UnitCell& ucell);
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2density_single(const int istep, const int iter, const double ethr);
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2density(const int istep, const int iter, const double ethr);
+    void hamilt2density(const int istep, const int iter, const double ethr, UnitCell& ucell);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(const int istep, UnitCell& ucell) override;
 
     //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(const int istep, const int iter) {};
+    virtual void update_pot(const int istep, const int iter, UnitCell& ucell){};
 
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;

@@ -27,30 +27,30 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
     double cal_energy() override;
 
-    void cal_force(ModuleBase::matrix& force) override;
+    void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override;
 
-    void cal_stress(ModuleBase::matrix& stress) override;
+    void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override;
 
-    void after_all_runners() override;
+    void after_all_runners(UnitCell& ucell) override;
 
   protected:
-    virtual void before_scf(const int istep) override;
+    virtual void before_scf(const int istep, UnitCell& ucell) override;
 
-    virtual void iter_init(const int istep, const int iter) override;
+    virtual void iter_init(const int istep, const int iter, UnitCell& ucell) override;
 
-    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell) override;
 
-    virtual void update_pot(const int istep, const int iter) override;
+    virtual void update_pot(const int istep, const int iter, UnitCell& ucell) override;
 
-    virtual void iter_finish(const int istep, int& iter) override;
+    virtual void iter_finish(const int istep, int& iter, UnitCell& ucell) override;
 
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(const int istep, UnitCell& ucell) override;
 
-    virtual void others(const int istep) override;
+    virtual void others(const int istep, UnitCell& ucell) override;
 
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;

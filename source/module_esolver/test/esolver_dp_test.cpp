@@ -135,7 +135,7 @@ TEST_F(ESolverDPTest, CalForce)
         }
     }
 
-    esolver->cal_force(force);
+    esolver->cal_force(force, ucell);
 
     // Check the results
     for (int i = 0; i < ucell.nat; ++i)
@@ -178,7 +178,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->after_all_runners();
+    esolver->after_all_runners(ucell);
     GlobalV::ofs_running.close();
 
     std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "

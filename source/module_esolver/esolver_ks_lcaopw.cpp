@@ -81,9 +81,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::before_all_runners(const Input_para& inp, UnitCell& cell)
+    void ESolver_KS_LIP<T>::before_all_runners(const Input_para& inp, UnitCell& ucell)
     {
-        ESolver_KS_PW<T>::before_all_runners(inp, cell);
+        ESolver_KS_PW<T>::before_all_runners(inp, ucell);
 #ifdef __EXX
         if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
             || PARAM.inp.calculation == "cell-relax"
@@ -100,9 +100,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_init(const int istep, const int iter)
+    void ESolver_KS_LIP<T>::iter_init(const int istep, const int iter, UnitCell& ucell)
     {
-        ESolver_KS_PW<T>::iter_init(istep, iter);
+        ESolver_KS_PW<T>::iter_init(istep, iter, ucell);
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && !GlobalC::exx_info.info_global.separate_loop && this->two_level_step) {
             this->exx_lip->cal_exx();
@@ -111,7 +111,7 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::hamilt2density_single(const int istep, const int iter, const double ethr)
+    void ESolver_KS_LIP<T>::hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell)
     {
         ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density_single");
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
@@ -152,7 +152,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, GlobalC::ucell.symm);
+            srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
         }
 
         // deband is calculated from "output" charge density calculated
@@ -164,9 +164,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(const int istep, int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(const int istep, int& iter, UnitCell& ucell)
     {
-        ESolver_KS_PW<T>::iter_finish(istep, iter);
+        ESolver_KS_PW<T>::iter_finish(istep, iter, ucell);
 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
@@ -183,7 +183,7 @@ namespace ModuleESolver
                 if (!this->two_level_step)
                 {
                     // update exx and redo scf
-                    XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+                    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                     iter = 0;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
@@ -202,7 +202,7 @@ namespace ModuleESolver
                 // update exx and redo scf
                 if (this->two_level_step == 0)
                 {
-                    XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+                    XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
                 }
 
                 std::cout << " Updating EXX " << std::flush;
@@ -226,19 +226,29 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::after_all_runners()
+    void ESolver_KS_LIP<T>::after_all_runners(UnitCell& ucell)
     {
-        ESolver_KS_PW<T>::after_all_runners();
-        
+        ESolver_KS_PW<T>::after_all_runners(ucell);
+
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
-            ModuleIO::write_Vxc(PARAM.inp.nspin, PARAM.globalv.nlocal,
-                GlobalV::DRANK, *this->kspw_psi, GlobalC::ucell, this->sf,
-                *this->pw_wfc, *this->pw_rho, *this->pw_rhod,
-                GlobalC::ppcell.vloc, *this->pelec->charge, this->kv, this->pelec->wg
+            ModuleIO::write_Vxc(PARAM.inp.nspin,
+                                PARAM.globalv.nlocal,
+                                GlobalV::DRANK,
+                                *this->kspw_psi,
+                                ucell,
+                                this->sf,
+                                *this->pw_wfc,
+                                *this->pw_rho,
+                                *this->pw_rhod,
+                                GlobalC::ppcell.vloc,
+                                *this->pelec->charge,
+                                this->kv,
+                                this->pelec->wg
 #ifdef __EXX
-                , *this->exx_lip
+                                ,
+                                *this->exx_lip
 #endif
             );
         }

@@ -105,13 +105,13 @@ namespace ModuleESolver
         return lj_potential;
     }
 
-    void ESolver_LJ::cal_force(ModuleBase::matrix& force)
+    void ESolver_LJ::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
     {
         force = lj_force;
         ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
-    void ESolver_LJ::cal_stress(ModuleBase::matrix& stress)
+    void ESolver_LJ::cal_stress(ModuleBase::matrix& stress, UnitCell& ucell)
     {
         stress = lj_virial;
 
@@ -126,7 +126,7 @@ namespace ModuleESolver
         ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
-    void ESolver_LJ::after_all_runners()
+    void ESolver_LJ::after_all_runners(UnitCell& ucell)
     {
         GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

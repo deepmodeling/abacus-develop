@@ -127,13 +127,13 @@ double ESolver_DP::cal_energy()
     return dp_potential;
 }
 
-void ESolver_DP::cal_force(ModuleBase::matrix& force)
+void ESolver_DP::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
 {
     force = dp_force;
     ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
-void ESolver_DP::cal_stress(ModuleBase::matrix& stress)
+void ESolver_DP::cal_stress(ModuleBase::matrix& stress, UnitCell& ucell)
 {
     stress = dp_virial;
 
@@ -148,7 +148,7 @@ void ESolver_DP::cal_stress(ModuleBase::matrix& stress)
     ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
 }
 
-void ESolver_DP::after_all_runners()
+void ESolver_DP::after_all_runners(UnitCell& ucell)
 {
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);

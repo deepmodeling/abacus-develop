@@ -488,7 +488,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners()
+void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine

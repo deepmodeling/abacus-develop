@@ -551,6 +551,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     this->atoms = new Atom[this->ntype]; // atom species.
     this->set_atom_flag = true;
 
+    this->symm.epsilon = PARAM.inp.symmetry_prec;
+    this->symm.epsilon_input = PARAM.inp.symmetry_prec;
+
     bool ok = true;
     bool ok2 = true;
 

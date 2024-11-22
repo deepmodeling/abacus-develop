@@ -1,9 +1,10 @@
 #ifndef OPT_TN_H
 #define OPT_TN_H
 
-#include <limits>
-
 #include "./opt_CG.h"
+#include "module_cell/unitcell.h"
+
+#include <limits>
 
 namespace ModuleBase
 {
@@ -64,10 +65,11 @@ class Opt_TN
         double* pgradient, // df(x)/dx
         int& flag,       // record which truncated condition was triggered, 0 for cond.1, 1 for cond.2, and 2 for cond.3
         double* rdirect, // next optimization direction
-        T* t,            // point of class T, which contains the gradient function
-        void (T::*p_calGradient)(
-            double* ptemp_x,
-            double* rtemp_gradient) // a function point, which calculates the gradient at provided x
+        UnitCell& ucell,
+        T* t, // point of class T, which contains the gradient function
+        void (T::*p_calGradient)(double* ptemp_x,
+                                 double* rtemp_gradient,
+                                 UnitCell& ucell) // a function point, which calculates the gradient at provided x
     );
 
     int get_iter()
@@ -128,8 +130,9 @@ void Opt_TN::next_direct(double* px,
                          double* pgradient,
                          int& flag,
                          double* rdirect,
+                         UnitCell& ucell,
                          T* t,
-                         void (T::*p_calGradient)(double* px, double* rgradient))
+                         void (T::*p_calGradient)(double* px, double* rgradient, UnitCell& ucell))
 {
     // initialize arrays and parameters
     ModuleBase::GlobalFunc::ZEROS(rdirect, this->nx_); // very important
@@ -168,7 +171,7 @@ void Opt_TN::next_direct(double* px,
         // epsilon = 1e-9;
         for (int i = 0; i < this->nx_; ++i)
             temp_x[i] = px[i] + epsilon * cg_direct[i];
-        (t->*p_calGradient)(temp_x, temp_gradient);
+        (t->*p_calGradient)(temp_x, temp_gradient, ucell);
         for (int i = 0; i < this->nx_; ++i)
             temp_Hcgd[i] = (temp_gradient[i] - pgradient[i]) / epsilon;
 

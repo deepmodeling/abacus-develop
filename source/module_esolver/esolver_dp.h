@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+    void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell
@@ -59,21 +59,21 @@ class ESolver_DP : public ESolver
      *
      * @param force the computed atomic forces
      */
-    void cal_force(ModuleBase::matrix& force) override;
+    void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override;
 
     /**
      * @brief get the computed lattice virials
      *
      * @param stress the computed lattice virials
      */
-    void cal_stress(ModuleBase::matrix& stress) override;
+    void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override;
 
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
-    void after_all_runners() override;
+    void after_all_runners(UnitCell& ucell) override;
 
   private:
     /**
