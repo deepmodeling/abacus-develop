@@ -49,7 +49,7 @@ class Grid_MeshCell: public Grid_MeshK
 			const int &nbzp_in);
 
 	void init_latvec(const UnitCell &ucell);
-    void init_meshcell_pos(void);
+    void init_meshcell_pos();
 
 };
 

@@ -55,8 +55,10 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->minu2 = (-dye+1) / nby - 1; 
 	this->minu3 = (-dze+1) / nbz - 1; 
 
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
+}
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
+}
 
 	//--------------------------------------
 	// number of unitcell in each direction.
@@ -66,8 +68,10 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->nu3 = maxu3 - minu3 + 1;
 	this->nutot = nu1 * nu2 * nu3;
 
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
-	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
+}
+	if(PARAM.inp.out_level != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
+}
 
 
     this->ucell_index2x = std::vector<int>(nutot, 0);
