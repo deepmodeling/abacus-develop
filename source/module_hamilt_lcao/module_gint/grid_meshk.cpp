@@ -31,6 +31,15 @@ int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const
 	return (x3 + x2 * this->nu3 + x1 * this->nu2 * this->nu3);
 }
 
+ModuleBase::Vector3<int> Grid_MeshK::get_ucell_coords(const int &Rindex)const
+{
+	const int x = ucell_index2x[Rindex];
+	const int y = ucell_index2y[Rindex];
+	const int z = ucell_index2z[Rindex];
+
+	return ModuleBase::Vector3<int>(x, y, z);
+}
+
 void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dze,const int& nbx, const int& nby, const int& nbz)
 {
 	ModuleBase::TITLE("Grid_MeshK","cal_extended_cell");

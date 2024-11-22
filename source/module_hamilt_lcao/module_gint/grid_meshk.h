@@ -2,19 +2,18 @@
 #define GRID_MESHK_H
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/vector3.h"
 
 class Grid_MeshK
 {
 	public:
 		Grid_MeshK();
 		~Grid_MeshK();
-		// from 1D index to unitcell.
-		std::vector<int> ucell_index2x;
-		std::vector<int> ucell_index2y;
-		std::vector<int> ucell_index2z;
 
 		// calculate the index of unitcell.
         int cal_Rindex(const int& u1, const int& u2, const int& u3)const;
+
+		ModuleBase::Vector3<int> get_ucell_coords(const int& Rindex)const;
 
         /// move operator for the next ESolver to directly use its infomation
         Grid_MeshK& operator=(Grid_MeshK&& rhs) = default;
@@ -34,6 +33,11 @@ class Grid_MeshK
 		int nu2;
 		int nu3;
 		int nutot;
+
+		// from 1D index to unitcell.
+		std::vector<int> ucell_index2x;
+		std::vector<int> ucell_index2y;
+		std::vector<int> ucell_index2z;
 
 		protected:
 		// calculate the extended unitcell.
