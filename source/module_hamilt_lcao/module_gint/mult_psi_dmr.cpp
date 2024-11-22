@@ -73,9 +73,7 @@ void mult_psi_DMR(
             const int iat2 = gt.which_atom[bcell2];
             const int id2 = gt.which_unitcell[bcell2];
 
-            //---------------
-            // get cell R2, this step is redundant in gamma_only case.
-            //---------------
+            //! get cell R2, this step is redundant in gamma_only case.
             const ModuleBase::Vector3<int> r2 = gt.get_ucell_coords(id2);
 
             // get AtomPair
