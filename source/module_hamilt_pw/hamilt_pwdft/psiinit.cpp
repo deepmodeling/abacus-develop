@@ -1,4 +1,4 @@
-#include "wfinit.h"
+#include "psiinit.h"
 
 #include "module_base/macros.h"
 #include "module_base/timer.h"

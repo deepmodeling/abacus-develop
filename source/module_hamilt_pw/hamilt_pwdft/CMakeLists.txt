@@ -28,7 +28,7 @@ list(APPEND objects
     VNL_grad_pw.cpp
     wavefunc.cpp
     wf_atomic.cpp
-    wfinit.cpp
+    psiinit.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
