@@ -1,7 +1,6 @@
 #ifndef GRID_TECHNIQUE_H
 #define GRID_TECHNIQUE_H
 
-#include "grid_index.h"
 #include "grid_meshball.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -83,9 +82,6 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
-
-    // indexes for nnrg -> orbital index + R index
-    std::vector<gridIntegral::gridIndex> nnrg_index;
 
     // Determine whether the grid point integration is initialized.
     bool init_malloced;
