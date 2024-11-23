@@ -171,11 +171,11 @@ void Opt_TN::next_direct(double* px,
         for (int i = 0; i < this->nx_; ++i)
         {
             temp_x[i] = px[i] + epsilon * cg_direct[i];
-            (t->*p_calGradient)(temp_x, temp_gradient);
-            for (int i = 0; i < this->nx_; ++i)
-            {
-                temp_Hcgd[i] = (temp_gradient[i] - pgradient[i]) / epsilon;
-            }
+        }
+        (t->*p_calGradient)(temp_x, temp_gradient);
+        for (int i = 0; i < this->nx_; ++i)
+        {
+            temp_Hcgd[i] = (temp_gradient[i] - pgradient[i]) / epsilon;
         }
 
         // get CG step length and update rdirect
