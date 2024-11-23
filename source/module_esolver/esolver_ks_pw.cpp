@@ -129,10 +129,10 @@ void ESolver_KS_PW<T, Device>::deallocate_hamilt()
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     // 1) call before_all_runners() of ESolver_KS
-    ESolver_KS<T, Device>::before_all_runners(inp, ucell);
+    ESolver_KS<T, Device>::before_all_runners(ucell, inp);
 
     // 3) initialize ElecState,
     if (this->pelec == nullptr)
@@ -237,12 +237,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_scf(const int istep, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
 
     //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep, ucell);
+    ESolver_FP::before_scf(ucell, istep);
 
     if (ucell.cell_parameter_updated)
     {
@@ -384,10 +384,10 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep, UnitCell& ucell)
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
     // call iter_init() of ESolver_KS
-    ESolver_KS<T, Device>::iter_init(istep, iter, ucell);
+    ESolver_KS<T, Device>::iter_init(ucell, istep, iter);
 
     if (iter == 1)
     {
@@ -406,7 +406,10 @@ void ESolver_KS_PW<T, Device>::iter_init(const int istep, const int iter, UnitCe
 
 // Temporary, it should be replaced by hsolver later.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
+                                                     const int istep,
+                                                     const int iter,
+                                                     const double ethr)
 {
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 
@@ -462,7 +465,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(const int istep, const int 
 
 // Temporary, it should be rewritten with Hamilt class.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
     if (!this->conv_esolver)
     {
@@ -483,10 +486,10 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter, UnitC
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
 {
     // 1) Call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(istep, iter, ucell);
+    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter);
 
     // 2) Update USPP-related quantities
     // D in uspp need vloc, thus needs update when veff updated
@@ -556,7 +559,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(const int istep, int& iter, UnitCell&
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::after_scf(const int istep, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
 {
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
@@ -565,7 +568,7 @@ void ESolver_KS_PW<T, Device>::after_scf(const int istep, UnitCell& ucell)
     }
 
     // 2) call after_scf() of ESolver_KS
-    ESolver_KS<T, Device>::after_scf(istep, ucell);
+    ESolver_KS<T, Device>::after_scf(ucell, istep);
 
     // 3) output wavefunctions
     if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
@@ -645,7 +648,7 @@ double ESolver_KS_PW<T, Device>::cal_energy()
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double, Device> ff(ucell.nat);
     if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")
@@ -663,7 +666,7 @@ void ESolver_KS_PW<T, Device>::cal_force(ModuleBase::matrix& force, UnitCell& uc
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_stress(ModuleBase::matrix& stress, UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     Stress_PW<double, Device> ss(this->pelec);
     if (this->__kspw_psi != nullptr && PARAM.inp.precision == "single")

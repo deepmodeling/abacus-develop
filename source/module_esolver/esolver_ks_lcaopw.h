@@ -20,18 +20,18 @@ namespace ModuleESolver
 
         ~ESolver_KS_LIP();
 
-        void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
+        void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
         void after_all_runners(UnitCell& ucell) override;
 
       protected:
-        virtual void iter_init(const int istep, const int iter, UnitCell& ucell) override;
-        virtual void iter_finish(const int istep, int& iter, UnitCell& ucell) override;
+        virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
+        virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
 
         /// All the other interfaces except this one are the same as ESolver_KS_PW.
-        virtual void hamilt2density_single(const int istep,
+        virtual void hamilt2density_single(UnitCell& ucell,
+                                           const int istep,
                                            const int iter,
-                                           const double ethr,
-                                           UnitCell& ucell) override;
+                                           const double ethr) override;
 
         virtual void allocate_hamilt() override;
         virtual void deallocate_hamilt() override;

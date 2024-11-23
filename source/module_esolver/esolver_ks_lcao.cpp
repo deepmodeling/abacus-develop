@@ -117,12 +117,12 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 13) print a warning if needed
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
 
-    ESolver_KS<TK>::before_all_runners(inp, ucell);
+    ESolver_KS<TK>::before_all_runners(ucell, inp);
 
     // 2) init ElecState
     // autoset nbands in ElecState, it should before basis_init (for Psi 2d division)
@@ -270,7 +270,7 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_force");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_force");
@@ -313,7 +313,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(ModuleBase::matrix& force, UnitCell& uce
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
@@ -321,7 +321,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(ModuleBase::matrix& stress, UnitCell& u
     if (!this->have_force)
     {
         ModuleBase::matrix fcs;
-        this->cal_force(fcs, ucell);
+        this->cal_force(ucell, fcs);
     }
     stress = this->scs; // copy the stress
     this->have_force = false;
@@ -487,12 +487,12 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 //! mohan add 2024-05-11
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_init");
 
     // call iter_init() of ESolver_KS
-    ESolver_KS<TK>::iter_init(istep, iter, ucell);
+    ESolver_KS<TK>::iter_init(ucell, istep, iter);
 
     if (iter == 1)
     {
@@ -682,7 +682,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(const int istep, const int iter, UnitCel
 //! 12) calculate delta energy
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double ethr, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, int iter, double ethr)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2density_single");
 
@@ -750,7 +750,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(int istep, int iter, double 
 //! 3) print potential
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
@@ -849,7 +849,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(const int istep, const int iter, UnitCe
 //! 4) output charge density and density matrix
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
@@ -891,7 +891,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter, UnitCell& 
     }
 
     // call iter_finish() of ESolver_KS
-    ESolver_KS<TK>::iter_finish(istep, iter, ucell);
+    ESolver_KS<TK>::iter_finish(ucell, istep, iter);
 
     // 1) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
@@ -1003,7 +1003,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(const int istep, int& iter, UnitCell& 
 //! 18) write quasi-orbitals
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
@@ -1013,7 +1013,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(const int istep, UnitCell& ucell)
     }
     
     // 2) call after_scf() of ESolver_KS
-    ESolver_KS<TK>::after_scf(istep, ucell);
+    ESolver_KS<TK>::after_scf(ucell, istep);
 
     // 3) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),

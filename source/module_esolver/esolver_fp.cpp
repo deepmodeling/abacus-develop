@@ -52,7 +52,7 @@ ESolver_FP::~ESolver_FP()
     delete this->pelec;
 }
 
-void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
@@ -126,7 +126,7 @@ void ESolver_FP::before_all_runners(const Input_para& inp, UnitCell& ucell)
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-void ESolver_FP::after_scf(const int istep, UnitCell& ucell)
+void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
 {
     // 0) output convergence information
     ModuleIO::output_convergence_after_scf(this->conv_esolver, this->pelec->f_en.etot);
@@ -262,7 +262,7 @@ void ESolver_FP::after_scf(const int istep, UnitCell& ucell)
     }
 }
 
-void ESolver_FP::before_scf(const int istep, UnitCell& ucell)
+void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_FP", "before_scf");
 

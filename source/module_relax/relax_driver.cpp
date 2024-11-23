@@ -48,7 +48,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
 #endif //__RAPIDJSON
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->runner(istep - 1, ucell);
+        p_esolver->runner(ucell, istep - 1);
 
         time_t eend = time(nullptr);
         time_t fstart = time(nullptr);
@@ -67,12 +67,12 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             // calculate and gather all parts of total ionic forces
             if (PARAM.inp.cal_force)
             {
-                p_esolver->cal_force(force, ucell);
+                p_esolver->cal_force(ucell, force);
             }
             // calculate and gather all parts of stress
             if (PARAM.inp.cal_stress)
             {
-                p_esolver->cal_stress(stress, ucell);
+                p_esolver->cal_stress(ucell, stress);
             }
 
             if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")

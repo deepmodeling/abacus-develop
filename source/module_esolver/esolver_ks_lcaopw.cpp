@@ -81,9 +81,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+    void ESolver_KS_LIP<T>::before_all_runners(UnitCell& ucell, const Input_para& inp)
     {
-        ESolver_KS_PW<T>::before_all_runners(inp, ucell);
+        ESolver_KS_PW<T>::before_all_runners(ucell, inp);
 #ifdef __EXX
         if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
             || PARAM.inp.calculation == "cell-relax"
@@ -100,9 +100,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_init(const int istep, const int iter, UnitCell& ucell)
+    void ESolver_KS_LIP<T>::iter_init(UnitCell& ucell, const int istep, const int iter)
     {
-        ESolver_KS_PW<T>::iter_init(istep, iter, ucell);
+        ESolver_KS_PW<T>::iter_init(ucell, istep, iter);
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && !GlobalC::exx_info.info_global.separate_loop && this->two_level_step) {
             this->exx_lip->cal_exx();
@@ -111,7 +111,7 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell)
+    void ESolver_KS_LIP<T>::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
     {
         ModuleBase::TITLE("ESolver_KS_LIP", "hamilt2density_single");
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
@@ -164,9 +164,9 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(const int istep, int& iter, UnitCell& ucell)
+    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter)
     {
-        ESolver_KS_PW<T>::iter_finish(istep, iter, ucell);
+        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter);
 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)

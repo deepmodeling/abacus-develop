@@ -39,12 +39,12 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep, UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
 
     //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep, ucell);
+    ESolver_FP::before_scf(ucell, istep);
 
     if (ucell.ionic_position_updated)
     {

@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    ESolver_FP::before_all_runners(inp, ucell);
+    ESolver_FP::before_all_runners(ucell, inp);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
@@ -155,7 +155,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->allocate_array();
 }
 
-void ESolver_OF::runner(int istep, UnitCell& ucell)
+void ESolver_OF::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::timer::tick("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -203,7 +203,7 @@ void ESolver_OF::runner(int istep, UnitCell& ucell)
 void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
     //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep, ucell);
+    ESolver_FP::before_scf(ucell, istep);
 
     if (ucell.cell_parameter_updated)
     {
@@ -496,7 +496,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
     }
 
     // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep, ucell);
+    ESolver_FP::after_scf(ucell, istep);
 }
 
 /**
@@ -541,7 +541,7 @@ double ESolver_OF::cal_energy()
  *
  * @param [out] force
  */
-void ESolver_OF::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
+void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
     ff.cal_force(force, *pelec, this->pw_rho, &ucell.symm, &sf);
@@ -552,7 +552,7 @@ void ESolver_OF::cal_force(ModuleBase::matrix& force, UnitCell& ucell)
  *
  * @param [out] stress
  */
-void ESolver_OF::cal_stress(ModuleBase::matrix& stress, UnitCell& ucell)
+void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);

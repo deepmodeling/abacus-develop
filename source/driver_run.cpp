@@ -47,7 +47,7 @@ void Driver::driver_run(UnitCell& ucell)
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
 
     //! 3: initialize Esolver and fill json-structure
-    p_esolver->before_all_runners(PARAM.inp, ucell);
+    p_esolver->before_all_runners(ucell, PARAM.inp);
 
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON
@@ -68,7 +68,7 @@ void Driver::driver_run(UnitCell& ucell)
     }
     else if (cal_type == "get_S")
     {
-        p_esolver->runner(0, ucell);
+        p_esolver->runner(ucell, 0);
     }
     else
     {
@@ -78,7 +78,7 @@ void Driver::driver_run(UnitCell& ucell)
         //! test_neighbour(LCAO),
         //! gen_bessel(PW), et al.
         const int istep = 0;
-        p_esolver->others(istep, ucell);
+        p_esolver->others(ucell, istep);
     }
 
     //! 5: clean up esolver

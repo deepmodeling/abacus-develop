@@ -65,16 +65,16 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     // 1) run before_all_runners in ESolver_KS_LCAO
-    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(inp, ucell);
+    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(ucell, inp);
 
     // this line should be optimized
     // this->pelec = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     if (PARAM.inp.init_wfc == "file")
     {
@@ -141,7 +141,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int ite
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
-void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& iter)
 {
     // print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -167,10 +167,10 @@ void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter, UnitCell& uc
                              << std::endl;
     }
 
-    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(istep, iter, ucell);
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter);
 }
 
-void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
     if (this->conv_esolver)
@@ -343,7 +343,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter, UnitCell
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::after_scf(const int istep, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
 {
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -368,7 +368,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep, UnitCell& ucell)
                                 orb_,
                                 this->RA);
     }
-    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep, ucell);
+    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(ucell, istep);
 }
 
 void ESolver_KS_LCAO_TDDFT::weight_dm_rho()

@@ -25,7 +25,7 @@ ESolver_GetS<TK, TR>::~ESolver_GetS()
 }
 
 template <typename TK, typename TR>
-void ESolver_GetS<TK, TR>::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_GetS<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_GetS", "before_all_runners");
     ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
@@ -82,14 +82,14 @@ void ESolver_GetS<TK, TR>::before_all_runners(const Input_para& inp, UnitCell& u
 }
 
 template <>
-void ESolver_GetS<double, double>::runner(const int istep, UnitCell& ucell)
+void ESolver_GetS<double, double>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
     ModuleBase::WARNING_QUIT("ESolver_GetS<double, double>::runner", "not implemented");
 }
 
 template <>
-void ESolver_GetS<std::complex<double>, std::complex<double>>::runner(const int istep, UnitCell& ucell)
+void ESolver_GetS<std::complex<double>, std::complex<double>>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
     ModuleBase::timer::tick("ESolver_GetS", "runner");
@@ -130,7 +130,7 @@ void ESolver_GetS<std::complex<double>, std::complex<double>>::runner(const int 
 }
 
 template <>
-void ESolver_GetS<std::complex<double>, double>::runner(const int istep, UnitCell& ucell)
+void ESolver_GetS<std::complex<double>, double>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
     ModuleBase::timer::tick("ESolver_GetS", "runner");

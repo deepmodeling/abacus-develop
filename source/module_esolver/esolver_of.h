@@ -19,17 +19,17 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
+    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(const int istep, UnitCell& ucell) override;
+    virtual void runner(UnitCell& ucell, const int istep) override;
 
     virtual void after_all_runners(UnitCell& ucell) override;
 
     virtual double cal_energy() override;
 
-    virtual void cal_force(ModuleBase::matrix& force, UnitCell& ucell) override;
+    virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    virtual void cal_stress(ModuleBase::matrix& stress, UnitCell& ucell) override;
+    virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
   private:
     // ======================= variables ==========================
