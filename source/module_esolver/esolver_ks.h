@@ -65,10 +65,6 @@ class ESolver_KS : public ESolver_FP
     //! Charge mixing method, only used in KDSFT, not in OFDFT
     Charge_Mixing* p_chgmix = nullptr;
 
-    //! wave functions, this one may be deleted in near future
-    //! mohan note 2024-11-14
-    wavefunc wf;
-
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
 

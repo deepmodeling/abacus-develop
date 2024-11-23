@@ -36,6 +36,9 @@ template <class T> class Vector3
     Vector3(const Vector3<T> &v) : x(v.x), y(v.y), z(v.z){}; // Peize Lin add 2018-07-16   
     explicit Vector3(const std::array<T,3> &v) :x(v[0]), y(v[1]), z(v[2]){}
 
+    template <typename U>
+    explicit Vector3(const Vector3<U>& other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)), z(static_cast<T>(other.z)) {}
+
     Vector3(Vector3<T> &&v) noexcept : x(v.x), y(v.y), z(v.z) {}
 
     /**

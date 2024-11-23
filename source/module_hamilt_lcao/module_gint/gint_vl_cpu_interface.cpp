@@ -72,7 +72,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
             //integrate (psi_mu*v(r)*dv) * psi_nu on grid
             //and accumulates to the corresponding element in Hamiltonian
             this->cal_meshball_vlocal(
-                na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, 
+                na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, 
                 cal_flag.get_ptr_2D(),psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(),
                 &hRGint_thread);
         }
@@ -158,13 +158,13 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
 	//integrate (psi_mu*v(r)*dv) * psi_nu on grid
 	//and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
-                                    block_iw.data(), grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
+                                    grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
                                     dpsir_ylm_x.get_ptr_2D(), &pvdpRx_thread);
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
-                                    block_iw.data(), grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
+                                    grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
                                     dpsir_ylm_y.get_ptr_2D(), &pvdpRy_thread);
         this->cal_meshball_vlocal(na_grid, LD_pool, block_size.data(), block_index.data(),
-                                    block_iw.data(), grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
+                                    grid_index, cal_flag.get_ptr_2D(),psir_vlbr3.get_ptr_2D(),
                                     dpsir_ylm_z.get_ptr_2D(), &pvdpRz_thread);
     }
     #pragma omp critical(gint_k)
@@ -281,18 +281,18 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
         //integrate (psi_mu*v(r)*dv) * psi_nu on grid
         //and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(
-            na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
+            na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
             psir_ylm.get_ptr_2D(), psir_vlbr3.get_ptr_2D(), &hRGint_thread);
         //integrate (d/dx_i psi_mu*vk(r)*dv) * (d/dx_i psi_nu) on grid (x_i=x,y,z)
         //and accumulates to the corresponding element in Hamiltonian
         this->cal_meshball_vlocal(
-            na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
+            na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
             dpsir_ylm_x.get_ptr_2D(), dpsix_vlbr3.get_ptr_2D(), &hRGint_thread);
         this->cal_meshball_vlocal(
-            na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
+            na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
             dpsir_ylm_y.get_ptr_2D(), dpsiy_vlbr3.get_ptr_2D(), &hRGint_thread);
         this->cal_meshball_vlocal(
-            na_grid, LD_pool, block_iw.data(), block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
+            na_grid, LD_pool, block_size.data(), block_index.data(), grid_index, cal_flag.get_ptr_2D(),
             dpsir_ylm_z.get_ptr_2D(), dpsiz_vlbr3.get_ptr_2D(), &hRGint_thread);
     }
 

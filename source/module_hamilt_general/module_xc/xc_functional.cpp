@@ -235,14 +235,6 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = true;
     }
-    // just for test BLYP in libxc, added by jghan, 2024-10-22
-    else if( xc_func == "BLYP_LIBXC")
-    {
-        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
-        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
-        func_type = 2;
-        use_libxc = true;
-    }
     else if( xc_func == "BLYP_LR")
     {   
         // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
