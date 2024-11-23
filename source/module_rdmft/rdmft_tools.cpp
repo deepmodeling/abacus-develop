@@ -19,6 +19,7 @@
 #include <complex>
 #include <fstream>
 #include <sstream>
+#include <cassert>
 
 
 namespace rdmft
@@ -168,10 +169,11 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     // else if( XC_func_rdmft == "muller" ) alpha = 0.5;
     // else if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
     // else alpha = 1.0;
-    if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) { ;
-    } else if( XC_func_rdmft == "muller" ) { alpha = 0.5;
-    } else { alpha = 1.0;
-}
+    if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) { ; }
+    else if( XC_func_rdmft == "muller" ) { alpha = 0.5; }
+    else { alpha = 1.0; }
+
+    assert(symbol <= 5);
 
     if( symbol==0 ) { return eta;
     } else if ( symbol==1 ) { return 0.5*eta;
@@ -179,11 +181,8 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
     } else if ( symbol==3 ) { return 0.5*std::pow(eta, alpha);
     } else if ( symbol==4 ) { return alpha*std::pow(eta, alpha-1.0);
     } else if ( symbol==5 ) { return 1.0;
-    } else 
-    {
-        std::cout << "\n!!!!!!\nThere may be some errors when calling wg_fun()\n!!!!!!\n";
-        return eta ;
     }
+    
 }
 
 

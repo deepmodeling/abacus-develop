@@ -64,7 +64,6 @@
 
 // test RDMFT
 #include "module_rdmft/rdmft.h"
-#include "module_elecstate/module_dm/cal_dm_psi.h"  //temp ,delete
 #include <iostream>
 
 namespace ModuleESolver
