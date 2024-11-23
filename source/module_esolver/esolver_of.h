@@ -94,6 +94,8 @@ class ESolver_OF : public ESolver_FP
     void allocate_array();
 
     // --------------------- calculate physical qualities ---------------
+    std::function<void(double*, double*)> bound_cal_potential_;
+    void cal_potential_wrapper(double* ptemp_phi, double* rdLdphi);
     void cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell);
     void cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& ucell, double* ptheta, double* rdEdtheta);
     double cal_mu(double* pphi, double* pdEdphi, double nelec);

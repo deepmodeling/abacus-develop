@@ -69,6 +69,8 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->of_tolp_ = inp.of_tolp;
     this->max_iter_ = inp.scf_nmax;
     this->dV_ = ucell.omega / this->pw_rho->nxyz;
+    this->bound_cal_potential_
+        = std::bind(&ESolver_OF::cal_potential, this, std::placeholders::_1, std::placeholders::_2, std::ref(ucell));
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
