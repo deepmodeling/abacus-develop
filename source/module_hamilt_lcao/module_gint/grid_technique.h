@@ -1,7 +1,6 @@
 #ifndef GRID_TECHNIQUE_H
 #define GRID_TECHNIQUE_H
 
-#include "grid_index.h"
 #include "grid_meshball.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -84,9 +83,6 @@ class Grid_Technique : public Grid_MeshBall {
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    // indexes for nnrg -> orbital index + R index
-    std::vector<gridIntegral::gridIndex> nnrg_index;
-
     // Determine whether the grid point integration is initialized.
     bool init_malloced;
 
@@ -132,19 +128,6 @@ class Grid_Technique : public Grid_MeshBall {
     // store the information of atom pairs on this processor, used to initialize hcontainer.
     // The meaning of ijr can be referred to in the get_ijr_info function in hcontainer.cpp.
     std::vector<int> ijr_info;
-    int maxB1;
-    int maxB2;
-    int maxB3;
-
-    int minB1;
-    int minB2;
-    int minB3;
-
-    int nB1;
-    int nB2;
-    int nB3;
-
-    int nbox;
 
     void cal_max_box_index();
     // atoms on meshball

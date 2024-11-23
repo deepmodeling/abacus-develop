@@ -133,7 +133,6 @@ class Gint {
 
     //! calculate local potential contribution to the Hamiltonian
     //! na_grid: how many atoms on this (i,j,k) grid
-    //! block_iw: dim is [na_grid], index of wave function for each block
     //! block_size: dim is [block_size], number of columns of a band
     //! block_index: dim is [na_grid+1], total number of atomic orbitals
     //! grid_index: index of grid group, for tracing iat
@@ -141,11 +140,9 @@ class Gint {
     //! psir_ylm: dim is [bxyz][LD_pool]
     //! psir_vlbr3: dim is [bxyz][LD_pool]
     //! hR: HContainer for storing the <phi_0|V|phi_R> matrix elements
-
     void cal_meshball_vlocal(
         const int na_grid,
         const int LD_pool,
-        const int* const block_iw,
         const int* const block_size,
         const int* const block_index,
         const int grid_index,
@@ -153,7 +150,6 @@ class Gint {
         const double* const* const psir_ylm,
         const double* const* const psir_vlbr3,
         hamilt::HContainer<double>* hR);
-
 
     //! in gint_fvl.cpp
     //! calculate vl contributuion to force & stress via grid integrals

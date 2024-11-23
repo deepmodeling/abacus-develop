@@ -31,25 +31,14 @@ int Grid_MeshK::cal_Rindex(const int &u1, const int &u2, const int &u3)const
 	return (x3 + x2 * this->nu3 + x1 * this->nu2 * this->nu3);
 }
 
-void Grid_MeshK::init_ucell_para(void)
+ModuleBase::Vector3<int> Grid_MeshK::get_ucell_coords(const int &Rindex)const
 {
-	this->max_ucell_para=std::vector<int>(3,0);
-    this->max_ucell_para[0]=this->maxu1;
-    this->max_ucell_para[1]=this->maxu2;
-    this->max_ucell_para[2]=this->maxu3;
-	
-	this->min_ucell_para=std::vector<int>(3,0);
-    this->min_ucell_para[0]=this->minu1;
-    this->min_ucell_para[1]=this->minu2;
-    this->min_ucell_para[2]=this->minu3;
-    
-	this->num_ucell_para=std::vector<int>(4,0);
-	this->num_ucell_para[0]=this->nu1;
-    this->num_ucell_para[1]=this->nu2;
-    this->num_ucell_para[2]=this->nu3;
-    this->num_ucell_para[3]=this->nutot;
-}
+	const int x = ucell_index2x[Rindex];
+	const int y = ucell_index2y[Rindex];
+	const int z = ucell_index2z[Rindex];
 
+	return ModuleBase::Vector3<int>(x, y, z);
+}
 
 void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dze,const int& nbx, const int& nby, const int& nbz)
 {
@@ -66,8 +55,10 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->minu2 = (-dye+1) / nby - 1; 
 	this->minu3 = (-dze+1) / nbz - 1; 
 
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MaxUnitcell",maxu1,maxu2,maxu3);
+}
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"MinUnitcell",minu1,minu2,minu3);
+}
 
 	//--------------------------------------
 	// number of unitcell in each direction.
@@ -77,9 +68,10 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 	this->nu3 = maxu3 - minu3 + 1;
 	this->nutot = nu1 * nu2 * nu3;
 
-	init_ucell_para();
-	if(PARAM.inp.test_gridt)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
-	if(PARAM.inp.out_level != "m") ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
+	if(PARAM.inp.test_gridt) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellNumber",nu1,nu2,nu3);
+}
+	if(PARAM.inp.out_level != "m") { ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"UnitCellTotal",nutot);
+}
 
 
     this->ucell_index2x = std::vector<int>(nutot, 0);
@@ -97,9 +89,9 @@ void Grid_MeshK::cal_extended_cell(const int &dxe, const int &dye, const int &dz
 				const int cell = cal_Rindex(i,j,k);	
 				assert(cell<nutot);
 
-				this->ucell_index2x[cell] = i-minu1;
-				this->ucell_index2y[cell] = j-minu2;
-				this->ucell_index2z[cell] = k-minu3;
+				this->ucell_index2x[cell] = i;
+				this->ucell_index2y[cell] = j;
+				this->ucell_index2z[cell] = k;
 
 			}
 		}
