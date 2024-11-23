@@ -185,7 +185,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(const Input_para& inp, UnitCel
                                                   PARAM.inp.ks_solver,
                                                   PARAM.inp.basis_type,
                                                   PARAM.inp.psi_initializer,
-                                                  &this->wf,
                                                   this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),
                                   &ucell,

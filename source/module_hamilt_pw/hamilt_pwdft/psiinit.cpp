@@ -1,4 +1,4 @@
-#include "wfinit.h"
+#include "psiinit.h"
 
 #include "module_base/macros.h"
 #include "module_base/timer.h"
@@ -18,14 +18,12 @@ PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
                             const std::string& ks_solver_in,
                             const std::string& basis_type_in,
                             const bool& use_psiinitializer_in,
-                            wavefunc* p_wf_in,
                             ModulePW::PW_Basis_K* pw_wfc_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
     this->basis_type = basis_type_in;
     this->use_psiinitializer = use_psiinitializer_in;
-    this->p_wf = p_wf_in;
     this->pw_wfc = pw_wfc_in;
 }
 
@@ -122,16 +120,16 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
         // old method explicitly requires variables such as total number of kpoints, number
         // of bands, number of G-vectors, and so on. Comparatively in new method, these
         // variables are imported in function called initialize.
-        psi = this->p_wf->allocate(nkstot, nks, ngk, npwx);
+        psi = this->wf_old.allocate(nkstot, nks, ngk, npwx);
 
         // however, init_at_1 does not actually initialize the psi, instead, it is a
         // function to calculate a interpolate table saving overlap intergral or say
         // Spherical Bessel Transform of atomic orbitals.
-        this->p_wf->init_at_1(p_sf);
+        this->wf_old.init_at_1(p_sf);
         // similarly, wfcinit not really initialize any wavefunction, instead, it initialize
         // the mapping from ixy, the 1d flattened index of point on fft grid (x, y) plane,
         // to the index of "stick", composed of grid points.
-        this->p_wf->wfcinit(psi, pw_wfc);
+        this->wf_old.wfcinit(psi, pw_wfc);
     }
 }
 
@@ -143,8 +141,8 @@ void PSIInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
     }    // do not need to do anything because the interpolate table is unchanged
     else // old initialization method, used in EXX calculation
     {
-        this->p_wf->init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
-        this->p_wf->init_at_1(p_sf);    // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
+        this->wf_old.init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
+        this->wf_old.init_at_1(p_sf);    // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
     }
 }
 
@@ -271,7 +269,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                         kspw_psi->fix_k(ik);
 
                         /// for psi init guess!!!!
-                        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, this->p_wf, p_hamilt);
+                        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, p_hamilt);
                     }
                 }
                 else
@@ -280,7 +278,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                     kspw_psi->fix_k(ik);
 
                     /// for psi init guess!!!!
-                    hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, this->p_wf, p_hamilt);
+                    hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, p_hamilt);
                 }
             }
         }
