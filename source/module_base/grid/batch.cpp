@@ -78,16 +78,15 @@ int _maxmin_divide(int m, const double* grid, int* idx) {
     double* n = A.data() + 6; // normal vector of the cut plane
 
     // Rearrange the indices to put points in each subset together by
-    // examining the signed distances of the points to the cut plane (R^T*n).
+    // examining the signed distances of points to the cut plane (R^T*n).
     std::vector<double> dist(m);
     dgemv_("T", &i3, &m, &d1, R.data(), &i3, n, &i1, &d0, dist.data(), &i1);
 
     int *head = idx;
     std::reverse_iterator<int*> tail(idx + m), rend(idx);
     auto is_negative = [&dist](int j) { return dist[j] < 0; };
-    auto is_nonnegative = [&dist](int j) { return dist[j] >= 0; };
-    while ( ( head = std::find(head, idx + m, is_negative) ) <
-            ( tail = std::find(tail, rend, is_nonnegative) ).base() ) {
+    while ( ( head = std::find_if(head, idx + m, is_negative) ) <
+            ( tail = std::find_if_not(tail, rend, is_negative) ).base() ) {
         std::swap(*head, *tail);
         std::swap(dist[head - idx], dist[tail.base() - idx]);
         ++head;
@@ -101,29 +100,24 @@ int _maxmin_divide(int m, const double* grid, int* idx) {
 
 
 std::vector<int> Grid::Batch::maxmin(
-    int m_max,
-    int m,
     const double* grid,
-    int* idx
+    int* idx,
+    int m,
+    int m_thr
 ) {
-    if (m <= m_max) {
-        return std::vector<int>{};
+    if (m <= m_thr) {
+        return std::vector<int>{0};
     }
 
     int m_left = _maxmin_divide(m, grid, idx);
 
-    // recursively divide the subsets
-    std::vector<int> left = maxmin(m_max, m_left, grid, idx);
-    std::vector<int> right = maxmin(m_max, m - m_left, grid, idx + m_left);
+    std::vector<int> left = maxmin(grid, idx, m_left, m_thr);
+    std::vector<int> right = maxmin(grid, idx + m_left, m - m_left, m_thr);
     std::for_each(right.begin(), right.end(),
         [m_left](int& x) { x += m_left; }
     );
 
-    // merge all delimiters
-    int sz_left = left.size();
-    left.resize(sz_left + right.size() + 1);
-    left[sz_left] = m_left;
-    std::copy(right.begin(), right.end(), left.begin() + sz_left + 1);
+    left.insert(left.end(), right.begin(), right.end());
     return left;
 }
 
