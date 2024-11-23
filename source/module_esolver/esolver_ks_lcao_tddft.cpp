@@ -76,7 +76,7 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& 
 
 void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr)
 {
-    if (wf.init_wfc == "file")
+    if (PARAM.inp.init_wfc == "file")
     {
         if (istep >= 1)
         {
@@ -256,7 +256,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
-    if (istep >= (wf.init_wfc == "file" ? 0 : 1) && this->conv_esolver)
+    if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && this->conv_esolver)
     {
         if (this->psi_laststep == nullptr)
         {
@@ -311,7 +311,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
         }
 
         // calculate energy density matrix for tddft
-        if (istep >= (wf.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
+        if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
         {
             elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
         }

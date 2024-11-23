@@ -236,6 +236,7 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 		{
 			ifs >> pp.r[ir];
 		}
+        this->skip_number(ifs, this->mesh_changed);
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_R>");
 	}
 
@@ -245,6 +246,7 @@ void Pseudopot_upf::read_pseudo_mesh(std::ifstream &ifs, Atom_pseudo& pp)
 		{
 			ifs >> pp.rab[ir];
 		}
+        this->skip_number(ifs, this->mesh_changed);
 		ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RAB>");
 	}
 	return;
@@ -258,6 +260,7 @@ void Pseudopot_upf::read_pseudo_nlcc(std::ifstream &ifs, Atom_pseudo& pp)
 	{
 		ifs >> pp.rho_atc[ir];
 	}
+    this->skip_number(ifs, this->mesh_changed);
 	return;
 }
 
@@ -270,7 +273,7 @@ void Pseudopot_upf::read_pseudo_local(std::ifstream &ifs, Atom_pseudo& pp)
 	{
 		ifs >> pp.vloc_at[ir];
 	}
-	
+    this->skip_number(ifs, this->mesh_changed);
 	return;
 }
 
@@ -406,6 +409,7 @@ void Pseudopot_upf::read_pseudo_nl(std::ifstream &ifs, Atom_pseudo& pp)
                             ifs >> qfunc(nmb, ir);
                         }
                     }
+                    this->skip_number(ifs, this->mesh_changed);
 
                     if (this->nqf > 0)
                     {
@@ -445,11 +449,7 @@ void Pseudopot_upf::read_pseudo_pswfc(std::ifstream &ifs, Atom_pseudo& pp)
 		{
 			ifs >> pp.chi(i, ir);
 		}
-        if (this->mesh_changed)
-        {
-            double temp = 0.0;
-            ifs >> temp;
-        }
+        this->skip_number(ifs, this->mesh_changed);
 	}
 	return;
 }
@@ -461,6 +461,7 @@ void Pseudopot_upf::read_pseudo_rhoatom(std::ifstream &ifs, Atom_pseudo& pp)
 	{
 		ifs >> pp.rho_at[ir];
 	}
+    this->skip_number(ifs, this->mesh_changed);
 	return;
 }
 

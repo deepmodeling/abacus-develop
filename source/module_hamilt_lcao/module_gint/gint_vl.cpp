@@ -8,6 +8,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/timer.h"
 #include "module_base/array_pool.h"
+#include "module_base/vector3.h"
 //#include <mkl_cblas.h>
 
 #ifdef _OPENMP
@@ -22,7 +23,6 @@
 void Gint::cal_meshball_vlocal(
 	const int na_grid,  					    // how many atoms on this (i,j,k) grid
 	const int LD_pool,
-	const int*const block_iw,				    // block_iw[na_grid],	index of wave functions for each block
 	const int*const block_size, 			    // block_size[na_grid],	number of columns of a band
 	const int*const block_index,		    	// block_index[na_grid+1], count total number of atomis orbitals
 	const int grid_index,                       // index of grid group, for tracing global atom index
@@ -41,18 +41,14 @@ void Gint::cal_meshball_vlocal(
 		const int bcell1 = mcell_index + ia1;
 		const int iat1 = this->gridt->which_atom[bcell1];
 		const int id1 = this->gridt->which_unitcell[bcell1];
-		const int r1x = this->gridt->ucell_index2x[id1];
-		const int r1y = this->gridt->ucell_index2y[id1];
-		const int r1z = this->gridt->ucell_index2z[id1];
+		const ModuleBase::Vector3<int> r1 = this->gridt->get_ucell_coords(id1);
 
 		for(int ia2=0; ia2<na_grid; ++ia2)
 		{
 			const int bcell2 = mcell_index + ia2;
 			const int iat2= this->gridt->which_atom[bcell2];
 			const int id2 = this->gridt->which_unitcell[bcell2];
-			const int r2x = this->gridt->ucell_index2x[id2];
-			const int r2y = this->gridt->ucell_index2y[id2];
-			const int r2z = this->gridt->ucell_index2z[id2];
+			const ModuleBase::Vector3<int> r2 = this->gridt->get_ucell_coords(id2);
 
 			if(iat1<=iat2)
 			{
@@ -77,12 +73,7 @@ void Gint::cal_meshball_vlocal(
                 const int ib_length = last_ib-first_ib;
                 if(ib_length<=0) { continue; }
 
-				// calculate the BaseMatrix of <iat1, iat2, R> atom-pair
-				const int dRx = r1x - r2x;
-            	const int dRy = r1y - r2y;
-            	const int dRz = r1z - r2z;
-
-				const auto tmp_matrix = hR->find_matrix(iat1, iat2, dRx, dRy, dRz);
+				const auto tmp_matrix = hR->find_matrix(iat1, iat2, r1-r2);
 				if (tmp_matrix == nullptr)
 				{
 					continue;

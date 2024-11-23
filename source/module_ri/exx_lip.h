@@ -19,7 +19,11 @@
     namespace ModulePW{ class PW_Basis_K; }
     namespace ModulePW{ class PW_Basis; }
     namespace ModuleSymmetry{ class Symmetry; }
-    namespace psi{ template <typename T, typename Device> class WFInit; }
+    namespace psi
+    {
+    template <typename T, typename Device>
+    class PSIInit;
+    }
 
 template<typename T, typename Device = base_device::DEVICE_CPU>
 class Exx_Lip
@@ -32,16 +36,16 @@ public:
     const Exx_Info::Exx_Info_Lip& info;
 
     Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
-        const ModuleSymmetry::Symmetry& symm,
-        K_Vectors* kv_ptr_in,
-        //   wavefunc* wf_ptr_in,
-        psi::WFInit<T, Device>* wf_ptr_in,
-        psi::Psi<T, Device>* kspw_psi_ptr_in,
-        const ModulePW::PW_Basis_K* wfc_basis_in,
-        const ModulePW::PW_Basis* rho_basis_in,
-        const Structure_Factor& sf,
-        const UnitCell* ucell_ptr_in,
-        const elecstate::ElecState* pelec_in);
+            const ModuleSymmetry::Symmetry& symm,
+            K_Vectors* kv_ptr_in,
+            //   wavefunc* wf_ptr_in,
+            psi::PSIInit<T, Device>* wf_ptr_in,
+            psi::Psi<T, Device>* kspw_psi_ptr_in,
+            const ModulePW::PW_Basis_K* wfc_basis_in,
+            const ModulePW::PW_Basis* rho_basis_in,
+            const Structure_Factor& sf,
+            const UnitCell* ucell_ptr_in,
+            const elecstate::ElecState* pelec_in);
 
     // void cal_exx(const int& nks);
     void cal_exx();
@@ -75,7 +79,7 @@ private:
         K_Vectors* kv_ptr = nullptr;
         // wavefunc* wf_ptr;
         psi::Psi<T, Device>* kspw_psi_ptr = nullptr;  ///< PW  wavefunction
-        psi::WFInit<T, Device>* wf_ptr = nullptr;
+        psi::PSIInit<T, Device>* wf_ptr = nullptr;
         ModuleBase::matrix wf_wg;
 
         /// @brief LCAO wavefunction, the eigenvectors from lapack diagonalization
