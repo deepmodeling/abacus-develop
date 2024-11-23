@@ -10,7 +10,6 @@
 
 using namespace Grid::Batch;
 
-
 class BatchTest: public ::testing::Test
 {
 protected:
@@ -19,17 +18,28 @@ protected:
     std::vector<double> grid_;
     std::vector<int> idx_;
 
+    // parameters for cluster generation
     int n_each_ = 10;
-    double offset_ = 10.0;
     double width_ = 1.0;
+
+    // These offsets should be different from each other as maxmin might
+    // fail for highly symmetric, well-separated clusters.
+    // Consider the case where the 8 clusters as a whole have octahedral
+    // symmetry. In this case, R*R^T must be proprotional to the identity,
+    // and eigenvalues are three-fold degenerate, because xy, yz and zx
+    // plane are equivalent in terms of the maxmin optimization problem.
+    // This means eigenvectors are arbitrary in this case.
+    double offset_x_ = 7.0;
+    double offset_y_ = 8.0;
+    double offset_z_ = 9.0;
 };
 
-std::vector<double> gen_octant_cluster(int n_each, double offset, double width) {
+std::vector<double> gen_octant_cluster(int n_each, double offset_x, double offset_y, double offset_z, double width) {
 
     // Generates a set of points consisting of 8 well-separated, equal-sized
     // clusters located in individual octants.
 
-    std::vector<double> grid(n_each * 8);
+    std::vector<double> grid(n_each * 8 * 3);
     int I = 0;
 
     std::random_device rd;
@@ -40,15 +50,14 @@ std::vector<double> gen_octant_cluster(int n_each, double offset, double width) 
         for (int sign_y : {-1, 1}) {
             for (int sign_z : {-1, 1}) {
                 for (int i = 0; i < n_each; ++i) {
-                    grid[3*I    ] = sign_x * offset + dis(gen);
-                    grid[3*I + 1] = sign_y * offset + dis(gen);
-                    grid[3*I + 2] = sign_z * offset + dis(gen);
+                    grid[3*I    ] = sign_x * offset_x + dis(gen);
+                    grid[3*I + 1] = sign_y * offset_y + dis(gen);
+                    grid[3*I + 2] = sign_z * offset_z + dis(gen);
                     ++I;
                 }
             }
         }
     }
-
     return grid;
 }
 
@@ -73,9 +82,9 @@ bool is_same_octant(int ngrid, const double* grid) {
 
 void BatchTest::SetUp()
 {
-    grid_ = gen_octant_cluster(n_each_, offset_, width_);
+    grid_ = gen_octant_cluster(n_each_, offset_x_, offset_y_, offset_z_, width_);
 
-    idx_.resize(grid_.size());
+    idx_.resize(grid_.size() / 3);
     std::iota(idx_.begin(), idx_.end(), 0);
 
     std::random_device rd;
@@ -91,21 +100,25 @@ TEST_F(BatchTest, MaxMinOctantCluster)
     // The resulting batches should be able to recover this structure.
 
     std::vector<int> delim = 
-        maxmin(n_each_, grid_.size(), grid_.data(), idx_.data());
+        maxmin(grid_.data(), idx_.data(), grid_.size() / 3, n_each_);
 
-    EXPECT_EQ(delim.size(), 7);
-    for (int i = 0; i < 7; ++i) {
-        // check number of points in each batch via index delimiters
-        EXPECT_EQ(delim[i], (i+1) * n_each_);
+    EXPECT_EQ(delim.size(), 8);
 
-        // verify that points in each batch is in the same octant
-        std::vector<double> batch(3 * n_each_);
+    std::vector<double> grid_batch(3 * n_each_);
+    for (int i = 0; i < 8; ++i) {
+
+        EXPECT_EQ(delim[i], i * n_each_);
+
+        // collect points within the present batch
         for (int j = 0; j < n_each_; ++j) {
-            for (int k = 0; k < 3; ++k) {
-                batch[3*j + k] = grid_[3*(i*n_each_ + j) + k];
-            }
+            int ig = idx_[delim[i] + j];
+            grid_batch[3*j    ] = grid_[3*ig    ];
+            grid_batch[3*j + 1] = grid_[3*ig + 1];
+            grid_batch[3*j + 2] = grid_[3*ig + 2];
         }
-        EXPECT_TRUE(is_same_octant(n_each_, batch.data()));
+
+        // verify that points in a batch reside in the same octant
+        EXPECT_TRUE(is_same_octant(n_each_, grid_batch.data()));
     }
 }
 

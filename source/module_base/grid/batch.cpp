@@ -24,22 +24,21 @@ namespace {
  *
  * It can be shown that the optimal c is the centroid of the points, and
  * the optimal n is the eigenvector corresponding to the largest eigenvalue
- * of the matrix R*R^T, where R is the matrix whose i-th column is
- * r[idx[i]] - c.
+ * of the matrix R*R^T, where the i-th column of R is r[idx[i]] - c.
  *
- * @param[in]       m       Number of selected points (length of idx).
  * @param[in]       grid    Coordinates of all grid points.
  *                          grid[3*j], grid[3*j+1], grid[3*j+2] are the
  *                          x, y, z coordinates of the j-th point.
- *                          The length of grid is at least 3*m.
  * @param[in,out]   idx     Indices of the selected points within grid.
- *                          On exit, the indices are rearranged such that
- *                          points in each subset are put together.
+ *                          On return, idx will be rearranged such that
+ *                          points belonging to the same subset have their
+ *                          indices placed together.
+ * @param[in]       m       Number of selected points (length of idx).
  *
  * @return The number of points in the first subset (according to idx).
  *
  */
-int _maxmin_divide(int m, const double* grid, int* idx) {
+int _maxmin_divide(const double* grid, int* idx, int m) {
     assert(m > 1);
     if (m == 2) {
         return 1;
@@ -84,16 +83,16 @@ int _maxmin_divide(int m, const double* grid, int* idx) {
 
     int *head = idx;
     std::reverse_iterator<int*> tail(idx + m), rend(idx);
-    auto is_negative = [&dist](int j) { return dist[j] < 0; };
+    auto is_negative = [&dist, &idx](int& j) { return dist[&j - idx] < 0; };
     while ( ( head = std::find_if(head, idx + m, is_negative) ) <
             ( tail = std::find_if_not(tail, rend, is_negative) ).base() ) {
         std::swap(*head, *tail);
-        std::swap(dist[head - idx], dist[tail.base() - idx]);
+        std::swap(dist[head - idx], dist[tail.base() - idx - 1]);
         ++head;
         ++tail;
     }
 
-    return std::find(idx, idx + m, is_negative) - idx;
+    return head - idx;
 }
 
 } // end of anonymous namespace
@@ -109,7 +108,7 @@ std::vector<int> Grid::Batch::maxmin(
         return std::vector<int>{0};
     }
 
-    int m_left = _maxmin_divide(m, grid, idx);
+    int m_left = _maxmin_divide(grid, idx, m);
 
     std::vector<int> left = maxmin(grid, idx, m_left, m_thr);
     std::vector<int> right = maxmin(grid, idx + m_left, m - m_left, m_thr);
