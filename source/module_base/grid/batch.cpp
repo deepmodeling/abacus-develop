@@ -35,7 +35,7 @@ namespace {
  *                          indices placed together.
  * @param[in]       m       Number of selected points (length of idx).
  *
- * @return The number of points in the first subset (according to idx).
+ * @return The number of points in the first subset within idx.
  *
  */
 int _maxmin_divide(const double* grid, int* idx, int m) {

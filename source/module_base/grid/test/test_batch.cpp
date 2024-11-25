@@ -3,6 +3,7 @@
 #include "gtest/gtest.h"
 #include <algorithm>
 #include <random>
+//#include <cstdio>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -18,7 +19,7 @@ protected:
     std::vector<double> grid_;
     std::vector<int> idx_;
 
-    // parameters for octant clusters
+    // parameters for 8-octant clusters
     const int n_batch_oct_ = 10;
     const double width_oct_ = 1.0;
     const double offset_x_ = 7.0;
@@ -32,13 +33,14 @@ protected:
     // plane are equivalent in terms of the maxmin optimization problem.
     // This means eigenvectors are arbitrary in this case.
 
-    // parameters for random cluster
-    const int n_grid_rand_ = 10000;
-    const int n_batch_rand_ = 100;
-    const double width_rand_ = 20.0;
-    const double xc_ = 5.0;
-    const double yc_ = 5.0;
-    const double zc_ = 7.0;
+
+    // parameters for a random cluster
+    const int n_grid_rand_ = 1000;
+    const int n_batch_rand_ = 200;
+    const double width_rand_ = 10.0;
+    const double xc_ = 1.0;
+    const double yc_ = 1.0;
+    const double zc_ = 2.0;
 };
 
 
@@ -128,7 +130,27 @@ bool is_same_octant(int ngrid, const double* grid) {
 }
 
 
-TEST_F(BatchTest, MaxMinRandomCluster)
+bool good_batch_size(
+    const std::vector<int>& idx,
+    const std::vector<int>& delim,
+    int n_batch_thr
+) {
+    // checks if the sizes of batches are within the specified limit
+
+    bool flag = (delim[0] == 0);
+
+    size_t i = 1;
+    while (flag && i < delim.size()) {
+        int sz_batch = delim[i] - delim[i-1];
+        flag = flag && (sz_batch > 0) && (sz_batch <= n_batch_thr);
+        ++i;
+    }
+
+    return flag && ( ((int)idx.size() - delim.back()) < n_batch_thr );
+}
+
+
+TEST_F(BatchTest, MaxMinRandom)
 {
     // This test verifies that the sizes of batches produced by maxmin
     // do not exceed the specified limit.
@@ -138,20 +160,31 @@ TEST_F(BatchTest, MaxMinRandomCluster)
     std::vector<int> delim = 
         maxmin(grid_.data(), idx_.data(), idx_.size(), n_batch_rand_);
 
-    for (size_t i = 0; i < delim.size(); ++i) {
-        if (i == 0) {
-            EXPECT_EQ(delim[i], 0);
-        } else {
-            int sz_batch = delim[i] - delim[i-1];
-            EXPECT_GT(sz_batch, 0);
-            EXPECT_LE(sz_batch, n_batch_rand_);
-        }
-    }
-    EXPECT_LE(idx_.size() - delim.back(), n_batch_rand_);
+    EXPECT_TRUE(good_batch_size(idx_, delim, n_batch_rand_));
+
+    // write grid, idx & delim to file
+    //FILE* fp = fopen("grid.dat", "w");
+    //for (size_t i = 0; i < grid_.size() / 3; ++i) {
+    //    std::fprintf(fp, "% 12.6f % 12.6f % 12.6f\n",
+    //        grid_[3*i], grid_[3*i + 1], grid_[3*i + 2]);
+    //}
+    //fclose(fp);
+
+    //fp = fopen("idx.dat", "w");
+    //for (size_t i = 0; i < idx_.size(); ++i) {
+    //    std::fprintf(fp, "%d\n", idx_[i]);
+    //}
+    //fclose(fp);
+
+    //fp = fopen("delim.dat", "w");
+    //for (size_t i = 0; i < delim.size(); ++i) {
+    //    std::fprintf(fp, "%d\n", delim[i]);
+    //}
+    //fclose(fp);
 }
 
 
-TEST_F(BatchTest, MaxMinOctantCluster)
+TEST_F(BatchTest, MaxMinOctant)
 {
     // This test applies maxmin to a set of points consisting of 8
     // well-separated, equal-sized clusters located in individual octants.

@@ -35,7 +35,9 @@ namespace Batch {
  *      8  9             20 10 11
  *     12 13 19           14 15
  *
- * a possible outcome with m_thr = 4 and idx(in) = {0, 1, 2, ..., 15} is:
+ * a possible outcome with m_thr = 4 and idx(in) = {0, 1, 2, ..., 15}
+ * (idx may correspond to a subset of grid and does not have to be sorted,
+ * but it must not contain duplicates) is:
  *
  * idx(out): 0, 1, 4, 5, 8, 9, 12, 13, 2, 3, 6, 7, 10, 11, 14, 15
  * return  : {0, 4, 8, 12}
