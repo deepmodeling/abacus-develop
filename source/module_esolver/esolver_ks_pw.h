@@ -21,30 +21,30 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     ~ESolver_KS_PW();
 
-    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(ModuleBase::matrix& force) override;
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    void cal_stress(ModuleBase::matrix& stress) override;
+    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-    void after_all_runners() override;
+    void after_all_runners(UnitCell& ucell) override;
 
   protected:
-    virtual void before_scf(const int istep) override;
+    virtual void before_scf(UnitCell& ucell, const int istep) override;
 
-    virtual void iter_init(const int istep, const int iter) override;
+    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void update_pot(const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void iter_finish(const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
 
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep) override;
 
-    virtual void others(const int istep) override;
+    virtual void others(UnitCell& ucell, const int istep) override;
 
-    virtual void hamilt2density_single(const int istep, const int iter, const double ethr) override;
+    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt();
     virtual void deallocate_hamilt();

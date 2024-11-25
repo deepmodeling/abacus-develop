@@ -30,31 +30,31 @@ class ESolver_KS : public ESolver_FP
     //! Deconstructor
     virtual ~ESolver_KS();
 
-    virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override;
+    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(const int istep, UnitCell& cell) override;
+    virtual void runner(UnitCell& ucell, const int istep) override;
 
   protected:
     //! Something to do before SCF iterations.
-    virtual void before_scf(const int istep) {};
+    virtual void before_scf(UnitCell& ucell, const int istep) {};
 
     //! Something to do before hamilt2density function in each iter loop.
-    virtual void iter_init(const int istep, const int iter);
+    virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2density function in each iter loop.
-    virtual void iter_finish(const int istep, int& iter);
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter);
 
     // calculate electron density from a specific Hamiltonian with ethr
-    virtual void hamilt2density_single(const int istep, const int iter, const double ethr);
+    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     // calculate electron density from a specific Hamiltonian
-    void hamilt2density(const int istep, const int iter, const double ethr);
+    void hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep) override;
 
     //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(const int istep, const int iter) {};
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) {};
 
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;

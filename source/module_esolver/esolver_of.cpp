@@ -57,9 +57,9 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    ESolver_FP::before_all_runners(inp, ucell);
+    ESolver_FP::before_all_runners(ucell, inp);
 
     // save necessary parameters
     this->of_kinetic_ = inp.of_kinetic;
@@ -69,6 +69,8 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->of_tolp_ = inp.of_tolp;
     this->max_iter_ = inp.scf_nmax;
     this->dV_ = ucell.omega / this->pw_rho->nxyz;
+    this->bound_cal_potential_
+        = std::bind(&ESolver_OF::cal_potential, this, std::placeholders::_1, std::placeholders::_2, std::ref(ucell));
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
@@ -119,7 +121,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, sf.strucFac, GlobalC::ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, sf.strucFac, ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -153,7 +155,7 @@ void ESolver_OF::before_all_runners(const Input_para& inp, UnitCell& ucell)
     this->allocate_array();
 }
 
-void ESolver_OF::runner(int istep, UnitCell& ucell)
+void ESolver_OF::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::timer::tick("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -201,7 +203,7 @@ void ESolver_OF::runner(int istep, UnitCell& ucell)
 void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 {
     //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep);
+    ESolver_FP::before_scf(ucell, istep);
 
     if (ucell.cell_parameter_updated)
     {
@@ -256,7 +258,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             GlobalV::ofs_warning);
     }
 
-    this->pelec->init_scf(istep, sf.strucFac, GlobalC::ucell.symm);
+    this->pelec->init_scf(istep, sf.strucFac, ucell.symm);
 
     // calculate ewald energy
     this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
@@ -264,7 +266,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::ucell.symm);
+        srho.begin(is, *(pelec->charge), this->pw_rho, ucell.symm);
     }
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -359,7 +361,7 @@ void ESolver_OF::update_potential(UnitCell& ucell)
 void ESolver_OF::optimize(UnitCell& ucell)
 {
     // (1) get |d0> with optimization algorithm
-    this->get_direction();
+    this->get_direction(ucell);
     // initialize temp_phi and temp_rho used in line search
     double** ptemp_phi = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -415,7 +417,7 @@ void ESolver_OF::update_rho()
     //     Symmetry_rho srho;
     //     for (int is = 0; is < PARAM.inp.nspin; is++)
     //     {
-    //         srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, GlobalC::ucell.symm);
+    //         srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, ucell.symm);
     //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
     //         {
     //             this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
@@ -494,13 +496,13 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
     }
 
     // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(istep);
+    ESolver_FP::after_scf(ucell, istep);
 }
 
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::after_all_runners()
+void ESolver_OF::after_all_runners(UnitCell& ucell)
 {
 
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
@@ -539,10 +541,10 @@ double ESolver_OF::cal_energy()
  *
  * @param [out] force
  */
-void ESolver_OF::cal_force(ModuleBase::matrix& force)
+void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
-    Forces<double> ff(GlobalC::ucell.nat);
-    ff.cal_force(force, *pelec, this->pw_rho, &GlobalC::ucell.symm, &sf);
+    Forces<double> ff(ucell.nat);
+    ff.cal_force(force, *pelec, this->pw_rho, &ucell.symm, &sf);
 }
 
 /**
@@ -550,13 +552,13 @@ void ESolver_OF::cal_force(ModuleBase::matrix& force)
  *
  * @param [out] stress
  */
-void ESolver_OF::cal_stress(ModuleBase::matrix& stress)
+void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
     this->kinetic_stress(kinetic_stress_);
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress_, GlobalC::ucell, &GlobalC::ucell.symm, &sf, &kv);
+    ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, &sf, &kv);
 }
 } // namespace ModuleESolver

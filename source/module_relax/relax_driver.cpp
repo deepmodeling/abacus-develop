@@ -9,7 +9,7 @@
 #include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
-void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
+void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
@@ -18,11 +18,11 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
     {
         if (!PARAM.inp.relax_new)
         {
-            rl_old.init_relax(GlobalC::ucell.nat);
+            rl_old.init_relax(ucell.nat);
         }
         else
         {
-            rl.init_relax(GlobalC::ucell.nat);
+            rl.init_relax(ucell.nat);
         }
     }
 
@@ -48,7 +48,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
 #endif //__RAPIDJSON
 
         // mohan added eiter to count for the electron iteration number, 2021-01-28
-        p_esolver->runner(istep - 1, GlobalC::ucell);
+        p_esolver->runner(ucell, istep - 1);
 
         time_t eend = time(nullptr);
         time_t fstart = time(nullptr);
@@ -67,12 +67,12 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
             // calculate and gather all parts of total ionic forces
             if (PARAM.inp.cal_force)
             {
-                p_esolver->cal_force(force);
+                p_esolver->cal_force(ucell, force);
             }
             // calculate and gather all parts of stress
             if (PARAM.inp.cal_stress)
             {
-                p_esolver->cal_stress(stress);
+                p_esolver->cal_stress(ucell, stress);
             }
 
             if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
@@ -85,7 +85,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 {
                     stop = rl_old.relax_step(istep,
                                              this->etot,
-                                             GlobalC::ucell,
+                                             ucell,
                                              force,
                                              stress,
                                              force_step,
@@ -102,29 +102,29 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
                 need_orb = need_orb || PARAM.inp.basis_type == "lcao_in_pw";
                 std::stringstream ss, ss1;
                 ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
-                GlobalC::ucell.print_stru_file(ss.str(),
-                                               PARAM.inp.nspin,
-                                               true,
-                                               PARAM.inp.calculation == "md",
-                                               PARAM.inp.out_mul,
-                                               need_orb,
-                                               PARAM.globalv.deepks_setorb,
-                                               GlobalV::MY_RANK);
+                ucell.print_stru_file(ss.str(),
+                                      PARAM.inp.nspin,
+                                      true,
+                                      PARAM.inp.calculation == "md",
+                                      PARAM.inp.out_mul,
+                                      need_orb,
+                                      PARAM.globalv.deepks_setorb,
+                                      GlobalV::MY_RANK);
 
                 if (Ions_Move_Basic::out_stru)
                 {
                     ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
                     ss1 << istep << "_D";
-                    GlobalC::ucell.print_stru_file(ss1.str(),
-                                                   PARAM.inp.nspin,
-                                                   true,
-                                                   PARAM.inp.calculation == "md",
-                                                   PARAM.inp.out_mul,
-                                                   need_orb,
-                                                   PARAM.globalv.deepks_setorb,
-                                                   GlobalV::MY_RANK);
+                    ucell.print_stru_file(ss1.str(),
+                                          PARAM.inp.nspin,
+                                          true,
+                                          PARAM.inp.calculation == "md",
+                                          PARAM.inp.out_mul,
+                                          need_orb,
+                                          PARAM.globalv.deepks_setorb,
+                                          GlobalV::MY_RANK);
                     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
-                                               GlobalC::ucell,
+                                               ucell,
                                                "# Generated by ABACUS ModuleIO::CifParser",
                                                "data_?");
                 }
@@ -141,7 +141,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver)
         // add Json of cell coo stress force
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         double fac = ModuleBase::Ry_to_eV / 0.529177;
-        Json::add_output_cell_coo_stress_force(&GlobalC::ucell, force, fac, stress, unit_transform);
+        Json::add_output_cell_coo_stress_force(&ucell, force, fac, stress, unit_transform);
 #endif //__RAPIDJSON
 
         if (stop == false)

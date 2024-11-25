@@ -18,20 +18,20 @@ class ESolver_GetS : public ESolver_KS<TK>
     ESolver_GetS();
     ~ESolver_GetS();
 
-    void before_all_runners(const Input_para& inp, UnitCell& ucell) override;
+    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    void after_all_runners() {};
+    void after_all_runners(UnitCell& ucell){};
 
-    void runner(const int istep, UnitCell& ucell) override;
+    void runner(UnitCell& ucell, const int istep) override;
 
     //! calculate total energy of a given system
     double cal_energy() {};
 
     //! calcualte forces for the atoms in the given cell
-    void cal_force(ModuleBase::matrix& force) {};
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
 
     //! calcualte stress of given cell
-    void cal_stress(ModuleBase::matrix& stress) {};
+    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
 
   protected:
     // we will get rid of this class soon, don't use it, mohan 2024-03-28

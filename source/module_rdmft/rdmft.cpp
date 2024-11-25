@@ -252,7 +252,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
 
 
 template <typename TK, typename TR>
-double RDMFT<TK, TR>::cal_E_gradient()
+double RDMFT<TK, TR>::cal_E_grad_wfc_occ_num()
 {
     /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
 
@@ -405,7 +405,7 @@ double RDMFT<TK, TR>::run(ModuleBase::matrix& E_gradient_occNum, psi::Psi<TK>& E
     // this->cal_V_hartree();
     // this->cal_V_XC();
     this->cal_Hk_Hpsi();
-    this->cal_E_gradient();
+    this->cal_E_grad_wfc_occ_num();
     this->cal_Energy(this->cal_E_type);
     // this->cal_Energy(2);
 

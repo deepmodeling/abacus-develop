@@ -37,7 +37,7 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::others(const int istep)
+void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");
@@ -62,7 +62,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         atom_arrange::search(PARAM.inp.search_pbc,
                              GlobalV::ofs_running,
                              GlobalC::GridD,
-                             GlobalC::ucell,
+                             ucell,
                              search_radius,
                              PARAM.inp.test_atom_input,
                              true);
@@ -75,13 +75,13 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.inp.out_level,
                                                    orb_.get_rcutmax_Phi(),
-                                                   GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
-                         GlobalC::ucell,
+                         ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
 
@@ -92,7 +92,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -109,7 +109,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                              this->pw_rho->ny,
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
-                             GlobalC::ucell,
+                             ucell,
                              GlobalC::GridD,
                              dr_uniform,
                              rcuts,
@@ -212,14 +212,14 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(PARAM.inp.cal_force,
-                                   GlobalC::ucell,
+                                   ucell,
                                    orb_,
                                    GlobalC::GridD,
                                    *(two_center_bundle_.overlap_orb_alpha));
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, orb_, GlobalC::GridD);
+            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, ucell, orb_, GlobalC::GridD);
         }
     }
 #endif
@@ -232,7 +232,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                    PARAM.inp.alpha_trial,
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
-                   GlobalC::ucell,
+                   ucell,
                    &(this->pv),
                    PARAM.inp.nspin,
                    this->kv,
@@ -247,11 +247,11 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
     //=========================================================
     if (PARAM.inp.nspin == 4)
     {
-        GlobalC::ucell.cal_ux();
+        ucell.cal_ux();
     }
 
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
+    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm);
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {
@@ -280,7 +280,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
-                      &GlobalC::ucell,
+                      &ucell,
                       &GlobalC::GridD,
                       this->kv);
         }
@@ -309,7 +309,7 @@ void ESolver_KS_LCAO<TK, TR>::others(const int istep)
                       PARAM.globalv.nlocal,
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
-                      &GlobalC::ucell,
+                      &ucell,
                       &GlobalC::GridD,
                       this->kv,
                       PARAM.inp.if_separate_k,
