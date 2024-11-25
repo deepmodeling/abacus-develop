@@ -53,13 +53,11 @@ Magnetism::~Magnetism()
 Atom::Atom()
 {
     na = 1;
-    tau = new ModuleBase::Vector3<double>[na];
-    mbl = new ModuleBase::Vector3<int>[na];
+    tau.resize(na);
+    mbl.resize(na);
 }
 Atom::~Atom()
 {
-    delete[] tau;
-    delete[] mbl;
 }
 Atom_pseudo::Atom_pseudo()
 {

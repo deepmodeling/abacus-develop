@@ -83,7 +83,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
         for (int it=0; it<Ucell->ntype; it++)
         {
 	    	const int na = Ucell->atoms[it].na;
-	    	const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau;
+	    	const ModuleBase::Vector3<double> * const tau = Ucell->atoms[it].tau.data();
 #ifdef _OPENMP
 		    #pragma omp parallel for
 #endif
@@ -206,7 +206,7 @@ void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const Modul
     for (int it=0; it<Ucell->ntype; it++)
     {
 		const int na = Ucell->atoms[it].na;
-		const ModuleBase::Vector3<double> * const taud = Ucell->atoms[it].taud;
+		const ModuleBase::Vector3<double> * const taud = Ucell->atoms[it].taud.data();
         ModuleBase::GlobalFunc::ZEROS(r,rho_basis->nxyz);
 
         //A parallel algorithm can be added in the future.

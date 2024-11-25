@@ -12,14 +12,11 @@ namespace elecstate
 
 const double* ElecState::getRho(int spin) const
 {
-    // hamilt::MatrixBlock<double> temp{&(this->charge->rho[spin][0]), 1, this->charge->nrxx}; //
-    // this->chr->get_nspin(), this->chr->get_nrxx()};
     return &(this->charge->rho[spin][0]);
 }
 
 void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nbands, const double& nelec)
 {
-
     assert(nbands > 0);
     assert(nelec > 0.0);
 
@@ -56,6 +53,7 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
     return;
 }
 
+
 void ElecState::init_nelec_spin()
 {
     this->nelec_spin.resize(PARAM.inp.nspin);
@@ -66,6 +64,7 @@ void ElecState::init_nelec_spin()
     }
 }
 
+
 void ElecState::calculate_weights()
 {
     ModuleBase::TITLE("ElecState", "calculate_weights");
@@ -74,8 +73,8 @@ void ElecState::calculate_weights()
         return;
     }
 
-    int nbands = this->ekb.nc;
-    int nks = this->ekb.nr;
+    const int nbands = this->ekb.nc;
+    const int nks = this->ekb.nr;
 
     if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
@@ -176,6 +175,7 @@ void ElecState::calculate_weights()
     return;
 }
 
+
 void ElecState::calEBand()
 {
     ModuleBase::TITLE("ElecState", "calEBand");
@@ -205,10 +205,13 @@ void ElecState::calEBand()
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry& symm, const void* wfcpw)
+
+void ElecState::init_scf(const int istep, 
+                         const ModuleBase::ComplexMatrix& strucfac, 
+                         ModuleSymmetry::Symmetry& symm, 
+                         const void* wfcpw)
 {
-    //---------Charge part-----------------
-    // core correction potential.
+    //! core correction potential.
     if (!PARAM.inp.use_paw)
     {
         this->charge->set_rho_core(strucfac);
@@ -218,22 +221,21 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
         this->charge->set_rho_core_paw();
     }
 
-    //--------------------------------------------------------------------
-    // (2) other effective potentials need charge density,
+    //! other effective potentials need charge density,
     // choose charge density from ionic step 0.
-    //--------------------------------------------------------------------
     if (istep == 0)
     {
         this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 
-    // renormalize the charge density
+    //! renormalize the charge density
     this->charge->renormalize_rho();
 
-    //---------Potential part--------------
+    //! initialize the potential
     this->pot->init_pot(istep, this->charge);
 }
+
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
@@ -251,7 +253,5 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     this->ekb.create(nk_in, PARAM.inp.nbands);
     this->wg.create(nk_in, PARAM.inp.nbands);
 }
-
-
 
 } // namespace elecstate

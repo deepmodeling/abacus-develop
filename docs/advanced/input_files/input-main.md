@@ -423,6 +423,7 @@
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
   - [Linear Response TDDFT](#linear-response-tddft)
     - [xc\_kernel](#xc_kernel)
+    - [lr\_init\_xc\_kernel](#lr_init_xc_kernel)
     - [lr\_solver](#lr_solver)
     - [lr\_thr](#lr_thr)
     - [nocc](#nocc)
@@ -988,7 +989,7 @@ calculations.
 
 - **Type**: String
 - **Description**: In our package, the XC functional can either be set explicitly using the `dft_functional` keyword in `INPUT` file. If `dft_functional` is not specified, ABACUS will use the xc functional indicated in the pseudopotential file.
-  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/module_hamilt_general/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, 'dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://www.tddft.org/programs/libxc/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
+  On the other hand, if dft_functional is specified, it will overwrite the functional from pseudopotentials and performs calculation with whichever functional the user prefers. We further offer two ways of supplying exchange-correlation functional. The first is using 'short-hand' names such as 'LDA', 'PBE', 'SCAN'. A complete list of 'short-hand' expressions can be found in [the source code](../../../source/module_hamilt_general/module_xc/xc_functional.cpp). The other way is only available when ***compiling with LIBXC***, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'. The list of LIBXC keywords can be found on its [website](https://libxc.gitlab.io/functionals/). In this way, **we support all the LDA,GGA and mGGA functionals provided by LIBXC**.
 
   Furthermore, the old INPUT parameter exx_hybrid_type for hybrid functionals has been absorbed into dft_functional. Options are `hf` (pure Hartree-Fock), `pbe0`(PBE0), `hse` (Note: in order to use HSE functional, LIBXC is required). Note also that HSE has been tested while PBE0 has NOT been fully tested yet, and the maximum CPU cores for running exx in parallel is $N(N+1)/2$, with N being the number of atoms. And forces for hybrid functionals are not supported yet.
 
@@ -1759,14 +1760,14 @@ The band (KS orbital) energy for each (k-point, spin, band) will be printed in t
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Whether to print Hamiltonian matrices H(R)/density matrics DM(R) in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
+- **Description**: Whether to print Hamiltonian matrices $H(R)$/density matrics $DM(R)$ in npz format. This feature does not work for gamma-only calculations. Currently only intended for internal usage.
 - **Default**: False
 
 ### dm_to_rho
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis
-- **Description**: Reads density matrix DM(R) in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
+- **Description**: Reads density matrix $DM(R)$ in npz format and creates electron density on grids. This feature does not work for gamma-only calculations. Only supports serial calculations. Currently only intended for internal usage.
 - **Default**: False
 
 ### out_app_flag
@@ -2925,7 +2926,7 @@ These variables are used to control DFT+U correlated parameters
 
   - where $\gamma$ is a parameter that adjusts the relative weight of the error function to the derivative error function.
 - **Unit**: Bohr
-- **Default**: 5.0
+- **Default**: 3.0
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3942,6 +3943,15 @@ These parameters are used to solve the excited states using. e.g. LR-TDDFT.
 - **Description**: The exchange-correlation kernel used in the calculation. 
 Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Default**: LDA
+
+### lr_init_xc_kernel
+
+- **Type**: String
+- **Description**: The method to initalize the xc kernel. 
+  - "default": Calculate xc kerenel ($f_\text{xc}$) from the ground-state charge density.
+  - "file": Read the xc kernel $f_\text{xc}$ on grid from the provided files. The following words should be the paths of ".cube" files, where the first 1 (*[nspin](#nspin)==1*) or 3 (*[nspin](#nspin)==2*, namely spin-aa, spin-ab and spin-bb) will be read in. The parameter [xc_kernel](#xc_kernel) will be invalid. Now only LDA-type kernel is supproted as the potential will be calculated by directly multiplying the transition density.
+  - "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first [nspin]($nspin) files will be read in. 
+- **Default**: "default"
 
 ### lr_solver
 

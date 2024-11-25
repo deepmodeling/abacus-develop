@@ -76,24 +76,16 @@ class Setcell
         ucell.atoms[0].na = 4;
         ucell.init_vel = true;
 
-        delete[] ucell.atoms[0].tau;
-        delete[] ucell.atoms[0].dis;
-        delete[] ucell.atoms[0].taud;
-        delete[] ucell.atoms[0].vel;
-        delete[] ucell.atoms[0].mbl;
-        delete[] ucell.atoms[0].angle1;
-        delete[] ucell.atoms[0].angle2;
-        delete[] ucell.atoms[0].m_loc_;
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].dis = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].taud = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].vel = new ModuleBase::Vector3<double>[4];
-        ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[4];
+        ucell.atoms[0].tau.resize(4);
+        ucell.atoms[0].dis.resize(4);
+        ucell.atoms[0].taud.resize(4);
+        ucell.atoms[0].vel.resize(4);
+        ucell.atoms[0].mbl.resize(4);
         ucell.atoms[0].mass = ucell.atom_mass[0];
 
-        ucell.atoms[0].angle1 = new double[4];
-        ucell.atoms[0].angle2 = new double[4];
-        ucell.atoms[0].m_loc_ = new ModuleBase::Vector3<double>[4];
+        ucell.atoms[0].angle1.resize(4);
+        ucell.atoms[0].angle2.resize(4);
+        ucell.atoms[0].m_loc_.resize(4);
 
         ucell.atoms[0].taud[0].set(0.0, 0.0, 0.0);
         ucell.atoms[0].taud[1].set(0.52, 0.52, 0.0);

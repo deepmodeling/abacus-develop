@@ -205,7 +205,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             else if (this->add_hexx_type == Add_Hexx_Type::R)
             {
                 // read in Hexx(R)
-                const std::string restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+                const std::string restart_HR_path = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
                 bool all_exist = true;
                 for (int is = 0; is < PARAM.inp.nspin; ++is)
                 {

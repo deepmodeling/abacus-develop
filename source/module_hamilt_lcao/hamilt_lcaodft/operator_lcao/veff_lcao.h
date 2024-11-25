@@ -99,7 +99,6 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     elecstate::Potential* pot = nullptr;
 
     int nspin = 1;
-    int current_spin = 0;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms

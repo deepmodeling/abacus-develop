@@ -71,8 +71,8 @@ class Setcell
         ucell.atoms[0].na = 2;
         ucell.atoms[1].na = 1;
 
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[2];
-        ucell.atoms[1].tau = new ModuleBase::Vector3<double>[1];
+        ucell.atoms[0].tau.resize(ucell.atoms[0].na);
+        ucell.atoms[1].tau.resize(ucell.atoms[1].na);
 
         ucell.atoms[0].tau[0].set(7.5456, 0, 9.54275);
         ucell.atoms[0].tau[1].set(7.542, 1.8495, 7.34175);
