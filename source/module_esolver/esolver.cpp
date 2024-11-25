@@ -191,7 +191,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 		{
             if (PARAM.inp.calculation == "get_S")
             {
-                return new ESolver_GetS<double, double>();
+                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
             }
             else
             {
@@ -202,7 +202,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             if (PARAM.inp.calculation == "get_S")
             {
-                return new ESolver_GetS<std::complex<double>, double>();
+                return new ESolver_GetS();
             }
             else
             {
@@ -213,7 +213,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             if (PARAM.inp.calculation == "get_S")
             {
-                return new ESolver_GetS<std::complex<double>, std::complex<double>>();
+                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for npsin=4");
             }
             else
             {

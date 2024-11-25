@@ -1389,7 +1389,7 @@ These variables are used to control the geometry relaxation.
 ### relax_nmax
 
 - **Type**: Integer
-- **Description**: The maximal number of ionic iteration steps, the minimum value is 1.
+- **Description**: The maximal number of ionic iteration steps. If set to 0, the code performs a quick "dry run", stopping just after initialization. This is useful to check for input correctness and to have the summary printed.
 - **Default**: 1 for SCF, 50 for relax and cell-relax calcualtions
 
 ### relax_cg_thr
