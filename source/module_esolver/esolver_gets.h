@@ -11,8 +11,8 @@
 
 namespace ModuleESolver
 {
-template <typename TK, typename TR>
-class ESolver_GetS : public ESolver_KS<TK>
+
+class ESolver_GetS : public ESolver_KS<std::complex<double>>
 {
   public:
     ESolver_GetS();
