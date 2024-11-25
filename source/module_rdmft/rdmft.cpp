@@ -252,7 +252,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
 
 
 template <typename TK, typename TR>
-double RDMFT<TK, TR>::cal_E_gradient()
+double RDMFT<TK, TR>::cal_E_grad_wfc_occ_num()
 {
     /****** get occNum_wfcHamiltWfc, occNum_HamiltWfc and Etotal ******/
 

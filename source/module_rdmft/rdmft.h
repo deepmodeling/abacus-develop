@@ -110,7 +110,7 @@ class RDMFT
     //! construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
     void cal_V_XC();
 
-    double cal_E_gradient();
+    double cal_E_grad_wfc_occ_num();
 
     void cal_Energy(const int cal_type = 1);
 
