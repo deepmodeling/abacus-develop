@@ -939,46 +939,6 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 #endif
 
-    // 4) output charge density and density matrix
-    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            double* data = nullptr;
-            if (PARAM.inp.dm_to_rho)
-            {
-                data = this->pelec->charge->rho[is];
-            }
-            else
-            {
-                data = this->pelec->charge->rho_save[is];
-            }
-            std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                                          data,
-                                          is,
-                                          PARAM.inp.nspin,
-                                          0,
-                                          fn,
-                                          this->pelec->eferm.get_efval(is),
-                                          &(ucell),
-                                          3,
-                                          1);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                                              this->pelec->charge->kin_r_save[is],
-                                              is,
-                                              PARAM.inp.nspin,
-                                              0,
-                                              fn,
-                                              this->pelec->eferm.get_efval(is),
-                                              &(ucell));
-            }
-        }
-    }
-
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
     if (PARAM.inp.dft_plus_u && this->conv_esolver)
     {
