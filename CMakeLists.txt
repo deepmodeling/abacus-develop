@@ -709,6 +709,7 @@ target_link_libraries(
   hamilt_stodft
   psi
   psi_initializer
+  psi_overall_init
   esolver
   vdw
   device
