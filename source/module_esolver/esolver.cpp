@@ -247,8 +247,8 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
-        p_esolver->before_all_runners(inp, ucell);
-        p_esolver->runner(0, ucell); // scf-only
+        p_esolver->before_all_runners(ucell, inp);
+        p_esolver->runner(ucell, 0); // scf-only
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.

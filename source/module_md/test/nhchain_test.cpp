@@ -47,7 +47,7 @@ class NHC_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(param_in.inp, ucell);
+        p_esolver->before_all_runners(ucell, param_in.inp);
 
         param_in.input.mdp.md_type = "npt";
         param_in.input.mdp.md_pmode = "tri";

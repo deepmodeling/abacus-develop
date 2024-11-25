@@ -65,16 +65,16 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_KS_LCAO_TDDFT::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     // 1) run before_all_runners in ESolver_KS_LCAO
-    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(inp, ucell);
+    ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(ucell, inp);
 
     // this line should be optimized
     // this->pelec = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int iter, const double ethr)
+void ESolver_KS_LCAO_TDDFT::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
 {
     if (PARAM.inp.init_wfc == "file")
     {
@@ -133,7 +133,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int ite
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(pelec->charge), pw_rho, GlobalC::ucell.symm);
+            srho.begin(is, *(pelec->charge), pw_rho, ucell.symm);
         }
     }
 
@@ -141,7 +141,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(const int istep, const int ite
     this->pelec->f_en.deband = this->pelec->cal_delta_eband();
 }
 
-void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter)
+void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& iter)
 {
     // print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -167,10 +167,10 @@ void ESolver_KS_LCAO_TDDFT::iter_finish(const int istep, int& iter)
                              << std::endl;
     }
 
-    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(istep, iter);
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter);
 }
 
-void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
+void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
     // print Hamiltonian and Overlap matrix
     if (this->conv_esolver)
@@ -239,9 +239,9 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     {
         if (PARAM.inp.nspin == 4)
         {
-            GlobalC::ucell.cal_ux();
+            ucell.cal_ux();
         }
-        this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
+        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
@@ -343,7 +343,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(const int istep, const int iter)
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
+void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
 {
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -368,7 +368,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(const int istep)
                                 orb_,
                                 this->RA);
     }
-    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(istep);
+    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(ucell, istep);
 }
 
 void ESolver_KS_LCAO_TDDFT::weight_dm_rho()

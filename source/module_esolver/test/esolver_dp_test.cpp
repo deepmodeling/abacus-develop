@@ -58,7 +58,7 @@ class ESolverDPTest : public ::testing::Test
         ucell.atom_label = new std::string[2];
         ucell.atom_label[0] = "Cu";
         ucell.atom_label[1] = "Al";
-        esolver->before_all_runners(inp, ucell);
+        esolver->before_all_runners(ucell, inp);
     }
 
     void TearDown() override
@@ -107,7 +107,7 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->runner(istep, ucell), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(esolver->runner(ucell, istep), ::testing::ExitedWithCode(0), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }
@@ -135,7 +135,7 @@ TEST_F(ESolverDPTest, CalForce)
         }
     }
 
-    esolver->cal_force(force);
+    esolver->cal_force(ucell, force);
 
     // Check the results
     for (int i = 0; i < ucell.nat; ++i)
@@ -159,7 +159,7 @@ TEST_F(ESolverDPTest, CalStress)
         }
     }
 
-    esolver->cal_stress(stress);
+    esolver->cal_stress(ucell, stress);
 
     // Check the results
     for (int i = 0; i < 3; ++i)
@@ -178,7 +178,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->after_all_runners();
+    esolver->after_all_runners(ucell);
     GlobalV::ofs_running.close();
 
     std::string expected_output = "\n\n --------------------------------------------\n !FINAL_ETOT_IS 133.3358404 eV\n "

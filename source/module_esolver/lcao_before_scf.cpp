@@ -39,21 +39,21 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
+void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
 
     //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(istep);
+    ESolver_FP::before_scf(ucell, istep);
 
-    if (GlobalC::ucell.ionic_position_updated)
+    if (ucell.ionic_position_updated)
     {
-        this->CE.update_all_dis(GlobalC::ucell);
+        this->CE.update_all_dis(ucell);
         this->CE.extrapolate_charge(
 #ifdef __MPI
             &(GlobalC::Pgrid),
 #endif
-            GlobalC::ucell,
+            ucell,
             this->pelec->charge,
             &(this->sf),
             GlobalV::ofs_running,
@@ -63,7 +63,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(GlobalC::ucell, PARAM.inp, &(GlobalV::ofs_running));
+    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
         this->pelec->f_en.evdw = vdw_solver->get_energy();
@@ -74,13 +74,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.inp.out_level,
                                                    orb_.get_rcutmax_Phi(),
-                                                   GlobalC::ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL.get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
                          GlobalC::GridD,
-                         GlobalC::ucell,
+                         ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
 
@@ -91,7 +91,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
-    Gint_Tools::init_orb(dr_uniform, rcuts, GlobalC::ucell, orb_, psi_u, dpsi_u, d2psi_u);
+    Gint_Tools::init_orb(dr_uniform, rcuts, ucell, orb_, psi_u, dpsi_u, d2psi_u);
 
     this->GridT.set_pbc_grid(this->pw_rho->nx,
                              this->pw_rho->ny,
@@ -108,7 +108,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
                              this->pw_rho->ny,
                              this->pw_rho->nplane,
                              this->pw_rho->startz_current,
-                             GlobalC::ucell,
+                             ucell,
                              GlobalC::GridD,
                              dr_uniform,
                              rcuts,
@@ -211,14 +211,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         const Parallel_Orbitals* pv = &this->pv;
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(PARAM.inp.cal_force,
-                                   GlobalC::ucell,
+                                   ucell,
                                    orb_,
                                    GlobalC::GridD,
                                    *(two_center_bundle_.overlap_orb_alpha));
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, GlobalC::ucell, orb_, GlobalC::GridD);
+            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, ucell, orb_, GlobalC::GridD);
         }
     }
 #endif
@@ -231,7 +231,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
                    PARAM.inp.alpha_trial,
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
-                   GlobalC::ucell,
+                   ucell,
                    &(this->pv),
                    PARAM.inp.nspin,
                    this->kv,
@@ -246,7 +246,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     //=========================================================
     if (PARAM.inp.nspin == 4)
     {
-        GlobalC::ucell.cal_ux();
+        ucell.cal_ux();
     }
 
     // Peize Lin add 2016-12-03
@@ -255,16 +255,16 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+            this->exd->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
         }
         else
         {
-            this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, GlobalC::ucell, orb_);
+            this->exc->exx_beforescf(istep, this->kv, *this->p_chgmix, ucell, orb_);
         }
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac, GlobalC::ucell.symm);
+    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -274,13 +274,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
             ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                this->pelec->charge->rho[is],
-                is,
-                PARAM.inp.nspin,
-                istep,
-                ss.str(),
-                this->pelec->eferm.ef,
-                &(GlobalC::ucell));
+                                          this->pelec->charge->rho[is],
+                                          is,
+                                          PARAM.inp.nspin,
+                                          istep,
+                                          ss.str(),
+                                          this->pelec->eferm.ef,
+                                          &(ucell));
         }
     }
 
@@ -292,15 +292,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
             ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                this->pelec->pot->get_effective_v(is),
-                is,
-                PARAM.inp.nspin,
-                istep,
-                ss.str(),
-                0.0, // efermi
-                &(GlobalC::ucell),
-                11, // precsion
-                0); // out_fermi
+                                          this->pelec->pot->get_effective_v(is),
+                                          is,
+                                          PARAM.inp.nspin,
+                                          istep,
+                                          ss.str(),
+                                          0.0, // efermi
+                                          &(ucell),
+                                          11, // precsion
+                                          0); // out_fermi
         }
     }
 
@@ -324,11 +324,11 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         std::string zipname = "output_DM0.npz";
         elecstate::DensityMatrix<TK, double>* dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM();
-        ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(1)));
+        ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(1)));
         if (PARAM.inp.nspin == 2)
         {
             zipname = "output_DM1.npz";
-            ModuleIO::read_mat_npz(&(this->pv), GlobalC::ucell, zipname, *(dm->get_DMR_pointer(2)));
+            ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
 
         this->pelec->calculate_weights();
@@ -339,15 +339,15 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
             ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                this->pelec->charge->rho[is],
-                is,
-                PARAM.inp.nspin,
-                istep,
-                fn,
-                this->pelec->eferm.get_efval(is),
-                &(GlobalC::ucell),
-                3,
-                1);
+                                          this->pelec->charge->rho[is],
+                                          is,
+                                          PARAM.inp.nspin,
+                                          istep,
+                                          fn,
+                                          this->pelec->eferm.get_efval(is),
+                                          &(ucell),
+                                          3,
+                                          1);
         }
 
         return;
@@ -358,14 +358,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, GlobalC::ucell.symm);
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
     }
 
     // 1. calculate ewald energy.
     // mohan update 2021-02-25
     if (!PARAM.inp.test_skip_ewald)
     {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(GlobalC::ucell, this->pw_rho, this->sf.strucFac);
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, this->sf.strucFac);
     }
 
     this->p_hamilt->non_first_scf = istep;
