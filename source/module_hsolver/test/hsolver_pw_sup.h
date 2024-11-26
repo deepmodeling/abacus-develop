@@ -183,7 +183,7 @@ template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
 } // namespace hsolver
 
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 namespace hamilt {
 
 template <>

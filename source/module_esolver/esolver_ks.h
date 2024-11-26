@@ -5,7 +5,7 @@
 #include "module_cell/klist.h"
 #include "module_elecstate/module_charge/charge_mixing.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 #include "module_hsolver/hsolver.h"
 #include "module_io/cal_test.h"
 #include "module_psi/psi.h"
