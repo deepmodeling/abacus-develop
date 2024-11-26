@@ -17,6 +17,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_elecstate/cal_ux.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
@@ -215,7 +216,7 @@ void ESolver_KS_PW<T, Device>::before_scf(const int istep)
     //! the direction of ux is used in noncoline_rho
     if (PARAM.inp.nspin == 4)
     {
-        GlobalC::ucell.cal_ux();
+        elecstate::cal_ux(GlobalC::ucell);
     }
 
     //! calculate the total local pseudopotential in real space
@@ -436,7 +437,7 @@ void ESolver_KS_PW<T, Device>::update_pot(const int istep, const int iter)
     {
         if (PARAM.inp.nspin == 4)
         {
-            GlobalC::ucell.cal_ux();
+            elecstate::cal_ux(GlobalC::ucell);
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &GlobalC::ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();

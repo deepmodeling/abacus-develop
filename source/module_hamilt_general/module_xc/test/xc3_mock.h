@@ -190,15 +190,18 @@ Charge::~Charge(){};
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
 
-void UnitCell::cal_ux()
+namespace elecstate
 {
-    magnet.lsign_ = false;
+    void cal_ux(UnitCell& ucell)
+    {
+        ucell.magnet.lsign_ = false;
 
-    magnet.ux_[0] = 0;
-    magnet.ux_[1] = 1;
-    magnet.ux_[2] = 2;
+        ucell.magnet.ux_[0] = 0;
+        ucell.magnet.ux_[1] = 1;
+        ucell.magnet.ux_[2] = 2;
 
-    magnet.lsign_ = true;
+        ucell.magnet.lsign_ = true;
+    };
 }
 
 #ifdef __LCAO

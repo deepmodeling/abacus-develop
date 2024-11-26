@@ -224,6 +224,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
+    cal_ux.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_tddft.o\
