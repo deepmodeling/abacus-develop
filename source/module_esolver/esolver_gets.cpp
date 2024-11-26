@@ -103,11 +103,24 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
-                                                                              this->kv,
-                                                                              *(two_center_bundle_.overlap_orb),
-                                                                              orb_.cutoffs());
-        dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+        if (PARAM.inp.nspin == 4)
+        {
+            this->p_hamilt
+                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->pv,
+                                                                                     this->kv,
+                                                                                     *(two_center_bundle_.overlap_orb),
+                                                                                     orb_.cutoffs());
+            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
+                ->contributeHR();
+        }
+        else
+        {
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
+                                                                                  this->kv,
+                                                                                  *(two_center_bundle_.overlap_orb),
+                                                                                  orb_.cutoffs());
+            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+        }
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";

@@ -13,7 +13,7 @@
 #include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/klist.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/parallel_global.h"

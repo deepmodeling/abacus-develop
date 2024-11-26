@@ -29,6 +29,7 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/cal_ux.h"
 
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -239,7 +240,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const i
     {
         if (PARAM.inp.nspin == 4)
         {
-            ucell.cal_ux();
+            elecstate::cal_ux(ucell);
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();

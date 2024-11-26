@@ -15,6 +15,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
+#include "module_elecstate/cal_ux.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -70,9 +71,10 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        if (PARAM.inp.nspin == 4) {
-            ucell_in.cal_ux();
-}
+        if (PARAM.inp.nspin == 4) 
+        {
+            elecstate::cal_ux(ucell_in);
+        }
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in);
 
         // etxc = std::get<0>(etxc_vtxc_v);
