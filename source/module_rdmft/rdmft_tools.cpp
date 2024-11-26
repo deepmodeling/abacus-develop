@@ -87,6 +87,29 @@ void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_E
 }
 
 
+template <>
+void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
+                                const double& wfc, const double& H_wfc, std::vector<double>& Dmn)
+{
+    const int one_int = 1;
+    const double one_double = 1.0;
+    const double zero_double = 0.0;
+    const char N_char = 'N';
+    const char T_char = 'T';
+
+    const int nrow_bands = para_Eij_in.get_row_size();
+    const int ncol_bands = para_Eij_in.get_col_size();
+
+#ifdef __MPI
+    const int nbasis = ParaV->desc[2];
+    const int nbands = ParaV->desc_wfc[3];
+
+    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
+            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
+#endif
+}
+
+
 // occNum_wfcHwfc = occNum*wfcHwfc + occNum_wfcHwfc
 // When symbol = 0, 1, 2, 3, 4, occNum = occNum, 0.5*occNum, g(occNum), 0.5*g(occNum), d_g(occNum)/d_occNum respectively. Default symbol=0.
 void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number, 
