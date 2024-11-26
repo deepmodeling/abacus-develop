@@ -40,6 +40,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_elecstate/cal_ux.h"
 
 #include <memory>
 #ifdef __EXX
@@ -593,7 +594,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
             if (PARAM.inp.nspin == 4)
             {
-                ucell.cal_ux();
+                elecstate::cal_ux(ucell);
             }
 
             //! update the potentials by using new electron charge density
@@ -829,7 +830,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     {
         if (PARAM.inp.nspin == 4)
         {
-            ucell.cal_ux();
+            elecstate::cal_ux(ucell);
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
