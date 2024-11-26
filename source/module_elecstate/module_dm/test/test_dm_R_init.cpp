@@ -48,7 +48,7 @@ class DMTest : public testing::Test
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
         ucell.iat2ia = new int[ucell.nat];
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[ucell.nat];
+        ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
@@ -59,9 +59,9 @@ class DMTest : public testing::Test
         }
         ucell.atoms[0].na = test_size;
         ucell.atoms[0].nw = test_nw;
-        ucell.atoms[0].iw2l = new int[test_nw];
-        ucell.atoms[0].iw2m = new int[test_nw];
-        ucell.atoms[0].iw2n = new int[test_nw];
+        ucell.atoms[0].iw2l.resize(test_nw);
+        ucell.atoms[0].iw2m.resize(test_nw);
+        ucell.atoms[0].iw2n.resize(test_nw);
         for (int iw = 0; iw < test_nw; ++iw)
         {
             ucell.atoms[0].iw2l[iw] = 0;
@@ -74,13 +74,9 @@ class DMTest : public testing::Test
         init_parav();
     }
 
-    void TearDown()
+    void TearDown() override
     {
         delete paraV;
-        delete[] ucell.atoms[0].tau;
-        delete[] ucell.atoms[0].iw2l;
-        delete[] ucell.atoms[0].iw2m;
-        delete[] ucell.atoms[0].iw2n;
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
@@ -118,7 +114,7 @@ TEST_F(DMTest, DMInit1)
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize this->_DMR
     Grid_Driver gd(0,0);
     DM.init_DMR(&gd, &ucell);
@@ -145,7 +141,7 @@ TEST_F(DMTest, DMInit2)
     // construct DM
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     std::cout << "nrow: " << paraV->nrow << "    ncol:" << paraV->ncol << std::endl;
-    elecstate::DensityMatrix<double, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, nks);
     // initialize Record_adj using Grid_Driver
     Grid_Driver gd(0,0);
     Record_adj ra;
@@ -208,12 +204,12 @@ TEST_F(DMTest, DMInit3)
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct a DM
-    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     // construct another DM
-    elecstate::DensityMatrix<std::complex<double>, double> DM1(kv, paraV, nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM1(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     DM1.init_DMR(*DM.get_DMR_pointer(1));
     // compare
     EXPECT_EQ(DM1.get_DMR_pointer(2)->size_atom_pairs(), test_size * test_size);
@@ -266,7 +262,7 @@ TEST_F(DMTest, DMInit4)
         }
     }
     // construct a DM from this HContainer
-    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     DM.init_DMR(*tmp_DMR);
     std::cout << "dim0: " << paraV->dim0 << "    dim1:" << paraV->dim1 << std::endl;
     // compare
@@ -292,11 +288,11 @@ TEST_F(DMTest, saveDMR)
     kv->kvec_d[1].x = 0.5;
     kv->kvec_d[3].x = 0.5;
     // construct a DM
-    elecstate::DensityMatrix<std::complex<double>, double> DM(kv, paraV, nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     Grid_Driver gd(0, 0);
     DM.init_DMR(&gd, &ucell);
     // construct another DM
-    elecstate::DensityMatrix<std::complex<double>, double> DM_test(kv, paraV, nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM_test(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
     DM_test.init_DMR(*DM.get_DMR_pointer(1));
     DM_test.save_DMR();
     EXPECT_EQ(DM_test.get_DMR_pointer(1)->get_nnr(), DM.get_DMR_pointer(1)->get_nnr());

@@ -2,6 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_HAMILT_LCAO_H
 
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_cell/klist.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
@@ -36,6 +37,7 @@ class HamiltLCAO : public Hamilt<TK>
           const LCAO_Orbitals& orb,
           elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
+          , const int istep
           , int* exx_two_level_step = nullptr
           , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
           , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
@@ -103,6 +105,8 @@ class HamiltLCAO : public Hamilt<TK>
 
     /// current_spin for NSPIN=2, 0: hamiltonian for spin up, 1: hamiltonian for spin down
     int current_spin = 0;
+
+    const int istep = 0;
 
     // sk and hk will be refactored to HamiltLCAO later
     // std::vector<TK> sk;

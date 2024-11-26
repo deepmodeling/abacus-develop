@@ -15,11 +15,11 @@ cal_force           1
 cal_stress          1
 
 #Parameters (MD)
-md_nstep            5
+md_nstep            14
 md_type             nvt
 md_dt               1
 md_tfirst           300
-
+md_restart          1
 init_vel            1
 
 #Parameters (thermostat)

@@ -39,6 +39,10 @@ ElecStatePW<T, Device>::~ElecStatePW()
             delmem_var_op()(this->ctx, this->kin_r_data);
         }
     }
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
+        delete[] this->rho;
+        delete[] this->kin_r;
+    }
     delmem_var_op()(this->ctx, becsum);
     delmem_complex_op()(this->ctx, this->wfcr);
     delmem_complex_op()(this->ctx, this->wfcr_another_spin);
@@ -47,7 +51,11 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if(this->init_rho) {
+        return;
+    }
+    
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
         for (int ii = 0; ii < this->charge->nspin; ii++) {
@@ -80,12 +88,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     ModuleBase::TITLE("ElecStatePW", "psiToRho");
     ModuleBase::timer::tick("ElecStatePW", "psiToRho");
 
-    if (!this->init_rho) {
-        this->init_rho_data();
-    }
-    this->calculate_weights();
-
-    this->calEBand();
+    this->init_rho_data();
 
     for(int is=0; is<PARAM.inp.nspin; is++)
 	{
@@ -104,11 +107,11 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->add_usrho(psi);
     }
-    if (PARAM.globalv.device_flag == "gpu" || PARAM.inp.precision == "single") {
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)
@@ -154,9 +157,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
     // if (PARAM.inp.nspin == 4)
     //     wfcr_another_spin.resize(this->charge->nrxx);
 
-    if (!this->init_rho) {
-        this->init_rho_data();
-    }
+    this->init_rho_data();
     int ik = psi.get_current_k();
     int npw = psi.get_current_nbas();
     int current_spin = 0;

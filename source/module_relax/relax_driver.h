@@ -1,6 +1,7 @@
 #ifndef RELAX_DRIVER_H
 #define RELAX_DRIVER_H
 
+#include "module_cell/unitcell.h"
 #include "module_esolver/esolver.h"
 #include "module_esolver/esolver_ks.h"
 #include "relax_new/relax.h"
@@ -13,7 +14,7 @@ class Relax_Driver
     Relax_Driver(){};
     ~Relax_Driver(){};
 
-    void relax_driver(ModuleESolver::ESolver *p_esolver);
+    void relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell);
 
   private:
     // mohan add 2021-01-28

@@ -12,7 +12,9 @@
 #include <utility>
 #include <vector>
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_hamilt_general/hamilt.h"
+#include "module_psi/psi.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
@@ -20,15 +22,15 @@
 namespace hsolver
 {
     template<typename T>
-    class DiagoScalapack : public DiagH<T>
+    class DiagoScalapack
 {
 private:
     using Real = typename GetTypeReal<T>::type;
   public:
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 #ifdef __MPI
     // diagnolization used in parallel-k case
-    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm) override;
+    void diag_pool(hamilt::MatrixBlock<T>& h_mat, hamilt::MatrixBlock<T>& s_mat, psi::Psi<T>& psi, Real* eigenvalue_in, MPI_Comm& comm);
 #endif
 
   private:

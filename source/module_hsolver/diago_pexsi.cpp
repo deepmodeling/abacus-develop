@@ -66,7 +66,7 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
-    std::vector<double> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     int ik = psi.get_current_k();
     this->ps->prepare(this->ParaV->blacs_ctxt,
                       this->ParaV->nb,

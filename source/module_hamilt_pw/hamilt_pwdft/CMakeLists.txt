@@ -28,7 +28,6 @@ list(APPEND objects
     VNL_grad_pw.cpp
     wavefunc.cpp
     wf_atomic.cpp
-    wfinit.cpp
     structure_factor.cpp
     structure_factor_k.cpp
     soc.cpp
@@ -36,6 +35,7 @@ list(APPEND objects
     parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
+    fs_kin_tools.cpp
     radial_proj.cpp
 )
 

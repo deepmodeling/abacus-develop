@@ -45,11 +45,11 @@ void test_deepks::read_dm()
 {
     std::ifstream ifs("dm");
     dm.resize(1);
-    dm[0].create(GlobalV::NLOCAL, GlobalV::NLOCAL);
+    dm[0].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
 
-    for (int mu = 0; mu < GlobalV::NLOCAL; mu++)
+    for (int mu = 0; mu < PARAM.sys.nlocal; mu++)
     {
-        for (int nu = 0; nu < GlobalV::NLOCAL; nu++)
+        for (int nu = 0; nu < PARAM.sys.nlocal; nu++)
         {
             double c;
             ifs >> c;
@@ -67,11 +67,11 @@ void test_deepks::read_dm_k(const int nks)
         ss.str("");
         ss << "dm_" << ik;
         std::ifstream ifs(ss.str().c_str());
-        dm_k[ik].create(GlobalV::NLOCAL, GlobalV::NLOCAL);
+        dm_k[ik].create(PARAM.sys.nlocal, PARAM.sys.nlocal);
 
-        for (int mu = 0; mu < GlobalV::NLOCAL; mu++)
+        for (int mu = 0; mu < PARAM.sys.nlocal; mu++)
         {
-            for (int nu = 0; nu < GlobalV::NLOCAL; nu++)
+            for (int nu = 0; nu < PARAM.sys.nlocal; nu++)
             {
                 std::complex<double> c;
                 ifs >> c;

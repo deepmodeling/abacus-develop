@@ -13,6 +13,7 @@ template <typename FPTYPE>
 __global__ void ekinetic_pw(
     const int npw,
     const int max_npw,
+    const bool is_first_node,
     const FPTYPE tpiba2,
     const FPTYPE* gk2,
     thrust::complex<FPTYPE>* hpsi,
@@ -20,9 +21,24 @@ __global__ void ekinetic_pw(
 {
   const int block_idx = blockIdx.x;
   const int thread_idx = threadIdx.x;
-  for (int ii = thread_idx; ii < npw; ii+= blockDim.x) {
-    hpsi[block_idx * max_npw + ii]
-      += gk2[ii] * tpiba2 * psi[block_idx * max_npw + ii];
+  const int start_idx = block_idx * max_npw;
+  if(is_first_node)
+  {
+      for (int ii = thread_idx; ii < npw; ii += blockDim.x)
+      {
+          hpsi[start_idx + ii] = gk2[ii] * tpiba2 * psi[start_idx + ii];
+      }
+      for (int ii = npw + thread_idx; ii < max_npw; ii += blockDim.x)
+      {
+          hpsi[start_idx + ii] = 0.0;
+      }
+  }
+  else
+  {
+      for (int ii = thread_idx; ii < npw; ii += blockDim.x)
+      {
+          hpsi[start_idx + ii] += gk2[ii] * tpiba2 * psi[start_idx + ii];
+      }
   }
 }
 
@@ -31,6 +47,7 @@ void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
                                                                          const int& nband,
                                                                          const int& npw,
                                                                          const int& max_npw,
+                                                                         const bool& is_first_node,
                                                                          const FPTYPE& tpiba2,
                                                                          const FPTYPE* gk2_ik,
                                                                          std::complex<FPTYPE>* tmhpsi,
@@ -39,7 +56,7 @@ void hamilt::ekinetic_pw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const b
   // denghui implement 20221019
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
   ekinetic_pw<FPTYPE><<<nband, THREADS_PER_BLOCK>>>(
-    npw, max_npw, tpiba2, // control params
+    npw, max_npw, is_first_node, tpiba2, // control params
     gk2_ik, // array of data
     reinterpret_cast<thrust::complex<FPTYPE>*>(tmhpsi), // array of data
     reinterpret_cast<const thrust::complex<FPTYPE>*>(tmpsi_in)); // array of data

@@ -2,7 +2,7 @@
 #define ESOLVER_KS_PW_H
 #include "./esolver_ks.h"
 #include "module_hamilt_pw/hamilt_pwdft/operator_pw/velocity_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
+#include "module_psi/psi_init.h"
 
 #include <memory>
 #include <module_base/macros.h>
@@ -21,40 +21,30 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     ~ESolver_KS_PW();
 
-    void before_all_runners(const Input_para& inp, UnitCell& cell) override;
-
-    void init_after_vc(const Input_para& inp, UnitCell& cell) override;
+    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(ModuleBase::matrix& force) override;
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
-    void cal_stress(ModuleBase::matrix& stress) override;
+    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-    virtual void hamilt2density(const int istep, const int iter, const double ethr) override;
-
-    virtual void hamilt2estates(const double ethr) override;
-
-    virtual void nscf() override;
-
-    void after_all_runners() override;
+    void after_all_runners(UnitCell& ucell) override;
 
   protected:
-    virtual void before_scf(const int istep) override;
+    virtual void before_scf(UnitCell& ucell, const int istep) override;
 
-    virtual void iter_init(const int istep, const int iter) override;
+    virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void update_pot(const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void iter_finish(int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
 
-    virtual void after_scf(const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep) override;
 
-    virtual void others(const int istep) override;
+    virtual void others(UnitCell& ucell, const int istep) override;
 
-    // temporary, this will be removed in the future;
-    // Init Global class
-    void Init_GlobalC(const Input_para& inp, UnitCell& ucell, pseudopot_cell_vnl& ppcell);
+    virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     virtual void allocate_hamilt();
     virtual void deallocate_hamilt();
@@ -63,7 +53,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     // psi_initializer controller
-    psi::WFInit<T, Device>* p_wf_init = nullptr;
+    psi::PSIInit<T, Device>* p_wf_init = nullptr;
 
     Device* ctx = {};
 
@@ -73,7 +63,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     psi::Psi<std::complex<double>, Device>* __kspw_psi = nullptr;
 
-    bool init_psi = false;
+    bool already_initpsi = false;
 
     using castmem_2d_d2h_op
         = base_device::memory::cast_memory_op<std::complex<double>, T, base_device::DEVICE_CPU, Device>;

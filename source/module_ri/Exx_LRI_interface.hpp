@@ -13,6 +13,7 @@
 #include <sys/time.h>
 #include "module_io/csr_reader.h"
 #include "module_io/write_HS_sparse.h"
+#include "module_elecstate/elecstate_lcao.h"
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::write_Hexxs_cereal(const std::string& file_name) const
@@ -37,13 +38,31 @@ void Exx_LRI_Interface<T, Tdata>::read_Hexxs_cereal(const std::string& file_name
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const Parallel_2D& pv, const LCAO_Orbitals& orb)
+void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(const K_Vectors& kv, const UnitCell& ucell, const Parallel_2D& pv)
+{
+    // initialize the rotation matrix in AO representation
+    this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    if (this->exx_spacegroup_symmetry)
+    {
+        const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
+        this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
+            RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
+        // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
+        this->symrot_.cal_Ms(kv, ucell, pv);
+    }
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep, const K_Vectors& kv, const Charge_Mixing& chgmix, const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
 #ifdef __MPI
     if (GlobalC::exx_info.info_global.cal_exx)
     {
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx) { XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
-        } else
+        } 
+        else if (istep > 0) { XC_Functional::set_xc_type(GlobalC::ucell.atoms[0].ncpp.xc_func);
+        } 
+        else
         {
             if (ucell.atoms[0].ncpp.xc_func == "HF" || ucell.atoms[0].ncpp.xc_func == "PBE0" || ucell.atoms[0].ncpp.xc_func == "HSE")
             {
@@ -54,17 +73,6 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
                 XC_Functional::set_xc_type("scan");
             }
         }
-        // initialize the rotation matrix in AO representation
-        this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
-        if (this->exx_spacegroup_symmetry)
-        {
-            const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
-            this->symrot_.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st,
-                RI_Util::get_Born_von_Karmen_cells(period), period, ucell.lat);
-            // this->symrot_.set_Cs_rotation(this->exx_ptr->get_abfs_nchis());
-            this->symrot_.cal_Ms(kv, ucell, pv);
-        }
-
         this->exx_ptr->cal_exx_ions(PARAM.inp.out_ri_cv);
     }
 
@@ -96,21 +104,28 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const K_Vectors& kv, const Charg
 }
 
 template<typename T, typename Tdata>
-void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const elecstate::DensityMatrix<T, double>& dm, const K_Vectors& kv, const int& iter)
+void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep, const elecstate::DensityMatrix<T, double>& dm, const K_Vectors& kv, const int& iter)
 {
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop && this->two_level_step)
+        if (!GlobalC::exx_info.info_global.separate_loop && (this->two_level_step || istep > 0))
         {
             const bool flag_restart = (iter == 1) ? true : false;
-            if (this->exx_spacegroup_symmetry) { this->mix_DMk_2D.mix(symrot_.restore_dm(kv, dm.get_DMK_vector(), *dm.get_paraV_pointer()), flag_restart); }
-            else { this->mix_DMk_2D.mix(dm.get_DMK_vector(), flag_restart); }
-			const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
-				Ds = PARAM.globalv.gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
-                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, this->exx_spacegroup_symmetry);
-            if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer(), &this->symrot_); }
-            else { this->exx_ptr->cal_exx_elec(Ds, *dm.get_paraV_pointer()); }
+            auto cal = [this, &kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
+            {
+                if (this->exx_spacegroup_symmetry) { this->mix_DMk_2D.mix(symrot_.restore_dm(kv,dm_in.get_DMK_vector(), *dm_in.get_paraV_pointer()), flag_restart); }
+                else { this->mix_DMk_2D.mix(dm_in.get_DMK_vector(), flag_restart); }
+			        const std::vector<std::map<int,std::map<std::pair<int, std::array<int, 3>>,RI::Tensor<Tdata>>>>
+				            Ds = PARAM.globalv.gamma_only_local
+                                ? RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_gamma_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin)
+                                : RI_2D_Comm::split_m2D_ktoR<Tdata>(*this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_k_out(), *dm_in.get_paraV_pointer(), PARAM.inp.nspin, this->exx_spacegroup_symmetry);
+                if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace) { this->exx_ptr->cal_exx_elec(Ds, *dm_in.get_paraV_pointer(), &this->symrot_); }
+                else { this->exx_ptr->cal_exx_elec(Ds, *dm_in.get_paraV_pointer()); }
+            };
+            if(istep > 0 && flag_restart)
+                cal(*dm_last_step);
+            else
+                cal(dm);
         }
     }
 }
@@ -126,8 +141,14 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
             && this->two_level_step == 0 && iter == 1)
         {
-            if (GlobalV::MY_RANK == 0) {GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
-}
+            if (GlobalV::MY_RANK == 0)
+            {
+                try { GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx); }
+                catch (const std::exception& e)
+                {
+                    std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl;
+                }
+            }
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
             this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
         }
@@ -140,12 +161,72 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
 }
 
 template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv, const UnitCell& ucell,
+    hamilt::Hamilt<T>& hamilt, elecstate::ElecState& elec, Charge_Mixing& chgmix,
+    const double& scf_ene_thr, int& iter, const int istep, bool& conv_esolver)
+{
+    if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
+        && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+    {
+        ////////// for Add_Hexx_Type::k
+        /*
+        hamilt::HS_Matrix_K<TK> Hexxk_save(&this->pv, 1);
+        for (int ik = 0; ik < this->kv.get_nks(); ++ik) {
+            Hexxk_save.set_zero_hk();
+
+            hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> opexx_save(&Hexxk_save,
+                                                                         nullptr,
+                                                                         this->kv);
+
+            opexx_save.contributeHk(ik);
+
+            GlobalC::restart.save_disk("Hexx",
+                                       ik,
+                                       this->pv.get_local_size(),
+                                       Hexxk_save.get_hk());
+        }*/
+        ////////// for Add_Hexx_Type:R
+        const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
+        ModuleIO::write_Hexxs_csr(restart_HR_path, GlobalC::ucell, this->get_Hexxs());
+
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalC::restart.save_disk("Eexx", 0, 1, &elec.f_en.exx);
+        }
+    }
+
+    if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
+    {
+        // Kerker mixing does not work for the density matrix.
+        // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
+        // In the non-separate loop case where Hexx(DM) is updated in every iteration of the 2nd loop, it should be
+        // closed.
+        if (!GlobalC::exx_info.info_global.separate_loop)
+        {
+            chgmix.close_kerker_gg0();
+        }
+        this->dm_last_step = dynamic_cast<const elecstate::ElecStateLCAO<T>*>(&elec)->get_DM();
+        conv_esolver = this->exx_after_converge(
+            hamilt,
+            *dynamic_cast<const elecstate::ElecStateLCAO<T>*>(&elec)->get_DM(),
+            kv,
+            PARAM.inp.nspin,
+            iter,
+            istep,
+            elec.f_en.etot,
+            scf_ene_thr);
+    }
+    //else if ( PARAM.inp.rdmft && two_level_step ) { conv_esolver = true; }    // for RDMFT in the future to quit after the first iter of the exx-loop
+}
+
+template<typename T, typename Tdata>
 bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     hamilt::Hamilt<T>& hamilt,
     const elecstate::DensityMatrix<T, double>& dm,
     const K_Vectors& kv,
     const int& nspin,
     int& iter,
+    const int& istep,
     const double& etot,
     const double& scf_ene_thr)
 {   // only called if (GlobalC::exx_info.info_global.cal_exx)
@@ -154,7 +235,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             GlobalC::restart.info_load.restart_exx = true;
             this->exx_ptr->Eexx = 0;
         };
-
+        
         // no separate_loop case
         if (!GlobalC::exx_info.info_global.separate_loop)
         {
@@ -164,7 +245,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
             // in first scf loop, exx updated once in beginning,
             // in second scf loop, exx updated every iter
 
-            if (this->two_level_step)
+            if (this->two_level_step || istep > 0)
             {
                 restart_reset();
                 return true;

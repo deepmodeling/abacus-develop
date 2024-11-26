@@ -88,7 +88,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_real_number);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_real_number == "default")
-            {
+            {  // to run through here, the default value of para.input.exx_real_number should be "default"
                 if (para.input.gamma_only)
                 {
                     para.input.exx_real_number = "1";
@@ -181,7 +181,7 @@ void ReadInput::item_exx()
         read_sync_string(input.exx_ccp_rmesh_times);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_ccp_rmesh_times == "default")
-            {
+            {   // to run through here, the default value of para.input.exx_ccp_rmesh_times should be "default"
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);
@@ -398,10 +398,10 @@ void ReadInput::item_dftu()
         item.annotation = "radius of the sphere for onsite projection (Bohr)";
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.dft_plus_u == 1 && para.input.onsite_radius == 0.0)
+            if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)
             {
-                // autoset onsite_radius to 5.0 as default
-                para.input.onsite_radius = 5.0;
+                // autoset onsite_radius to 3.0 as default, this default value comes from the systematic atomic magnetism test
+                para.input.onsite_radius = 3.0;
             }
         };
         this->add_item(item);

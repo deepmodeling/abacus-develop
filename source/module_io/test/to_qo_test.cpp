@@ -26,14 +26,10 @@ void define_fcc_cell(UnitCell& ucell)
     ucell.set_atom_flag = true;
     ucell.ntype = 2;
     ucell.lat0 = 1.889726124565062;
-    ucell.atoms[0].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[1].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[1].tau[0] = ModuleBase::Vector3<double>(2.0, 2.0, 2.0);
-    ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[1].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[1].taud[0] = ModuleBase::Vector3<double>(0.25, 0.25, 0.25);
+    ucell.atoms[0].tau.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[1].tau.resize(1, ModuleBase::Vector3<double>(2.0, 2.0, 2.0));
+    ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[1].taud.resize(1, ModuleBase::Vector3<double>(0.25, 0.25, 0.25));
     ucell.atoms[0].na = 1;
     ucell.atoms[1].na = 1;
     ucell.atoms[0].nwl = 2;
@@ -74,10 +70,8 @@ void define_sc_cell(UnitCell& ucell)
     ucell.set_atom_flag = true;
     ucell.ntype = 1;
     ucell.lat0 = 1.889726124565062;
-    ucell.atoms[0].tau = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
-    ucell.atoms[0].taud = new ModuleBase::Vector3<double>[1];
-    ucell.atoms[0].taud[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    ucell.atoms[0].tau.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     ucell.atoms[0].na = 1;
     ucell.atoms[0].nwl = 2;
     ucell.a1 = ModuleBase::Vector3<double>(8.0, 0.0, 0.0);
@@ -110,12 +104,16 @@ class toQOTest : public testing::Test
   protected:
     void SetUp() override
     {
+        #ifdef __MPI
+            MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+        #endif
     }
 
     void TearDown() override
     {
     }
     UnitCell ucell;
+    int myrank = 0;
 };
 
 TEST_F(toQOTest, Constructor)
@@ -1498,6 +1496,50 @@ TEST_F(toQOTest, CalculateHydrogenlike)
         std::string fovlpR = "QO_ovlpR_" + std::to_string(iR) + ".dat";
         std::remove(fovlpR.c_str());
     }
+}
+
+TEST_F(toQOTest, BcastStdvectorOfVector3Int)
+{
+    #ifdef __MPI
+    std::vector<ModuleBase::Vector3<int>> vec;
+    if (this->myrank == 0)
+    {
+        vec.push_back(ModuleBase::Vector3<int>(1, 2, 3));
+        vec.push_back(ModuleBase::Vector3<int>(4, 5, 6));
+        vec.push_back(ModuleBase::Vector3<int>(7, 8, 9));
+    }
+    toQO::bcast_stdvector_ofvector3int(vec, myrank);
+    if (this->myrank != 0)
+    {
+        EXPECT_EQ(vec[0], ModuleBase::Vector3<int>(1, 2, 3));
+        EXPECT_EQ(vec[1], ModuleBase::Vector3<int>(4, 5, 6));
+        EXPECT_EQ(vec[2], ModuleBase::Vector3<int>(7, 8, 9));
+    }
+    #else
+    GTEST_SKIP();
+    #endif
+}
+
+TEST_F(toQOTest, BcastStdvectorOfVector3Double)
+{
+    #ifdef __MPI
+    std::vector<ModuleBase::Vector3<double>> vec;
+    if (this->myrank == 0)
+    {
+        vec.push_back(ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+        vec.push_back(ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+        vec.push_back(ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
+    }
+    toQO::bcast_stdvector_ofvector3double(vec, myrank);
+    if (this->myrank != 0)
+    {
+        EXPECT_EQ(vec[0], ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+        EXPECT_EQ(vec[1], ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+        EXPECT_EQ(vec[2], ModuleBase::Vector3<double>(7.0, 8.0, 9.0));
+    }
+    #else
+    GTEST_SKIP();
+    #endif
 }
 
 /**/

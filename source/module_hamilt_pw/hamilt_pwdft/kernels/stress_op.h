@@ -1,5 +1,6 @@
 #ifndef SRC_PW_STRESS_MULTI_DEVICE_H
 #define SRC_PW_STRESS_MULTI_DEVICE_H
+#include "module_parameter/parameter.h"
 
 #include "module_psi/psi.h"
 
@@ -65,19 +66,18 @@ struct cal_stress_nl_op
     /// @param nbands_occ - number of occupied bands
     /// @param ntype - total atomic type
     /// @param spin - current spin
-    /// @param wg_nc - the second dimension of matrix wg
-    /// @param ik - current k point
     /// @param deeq_2 - the second dimension of deeq
     /// @param deeq_3 - the third dimension of deeq
     /// @param deeq_4 - the forth dimension of deeq
     /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
     /// @param atom_na - GlobalC::ucell.atoms[ii].na
     /// @param d_wg - input parameter wg
+    /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb
     /// @param qq_nt - GlobalC::ppcell.qq_nt
     /// @param deeq - GlobalC::ppcell.deeq
-    /// @param becp - intermediate matrix with GlobalV::NBANDS * nkb
-    /// @param dbecp - intermediate matrix with 3 * GlobalV::NBANDS * nkb
+    /// @param becp - intermediate matrix with PARAM.inp.nbands * nkb
+    /// @param dbecp - intermediate matrix with 3 * PARAM.inp.nbands * nkb
     ///
     /// Output Parameters
     /// @param stress - output stresses
@@ -89,17 +89,36 @@ struct cal_stress_nl_op
                     const int& nbands_occ,
                     const int& ntype,
                     const int& spin,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // interface for nspin=4 only
+    void operator()(const Device* ctx,
+                    const int& ipol,
+                    const int& jpol,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& deeq_2,
+                    const int& deeq_3,
+                    const int& deeq_4,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const bool& occ,
+                    const FPTYPE* d_ekb,
+                    const FPTYPE* qq_nt,
+                    const std::complex<FPTYPE>* deeq_nc,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
@@ -202,6 +221,16 @@ struct cal_force_npw_op{
     );
 };
 
+template <typename FPTYPE, typename Device>
+struct cal_multi_dot_op{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
+
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 template <typename FPTYPE>
@@ -236,17 +265,36 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const int& nbands_occ,
                     const int& ntype,
                     const int& spin,
-                    const int& wg_nc,
-                    const int& ik,
                     const int& deeq_2,
                     const int& deeq_3,
                     const int& deeq_4,
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
+                    const bool& occ,
                     const FPTYPE* d_ekb,
                     const FPTYPE* qq_nt,
                     const FPTYPE* deeq,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* stress);
+    // interface for nspin=4 only
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& ipol,
+                    const int& jpol,
+                    const int& nkb,
+                    const int& nbands_occ,
+                    const int& ntype,
+                    const int& deeq_2,
+                    const int& deeq_3,
+                    const int& deeq_4,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE* d_wg,
+                    const bool& occ,
+                    const FPTYPE* d_ekb,
+                    const FPTYPE* qq_nt,
+                    const std::complex<FPTYPE>* deeq_nc,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress);
@@ -318,6 +366,15 @@ struct cal_vq_deri_op<FPTYPE, base_device::DEVICE_GPU>
                     FPTYPE* vq);
 };
 
+template <typename FPTYPE>
+struct cal_multi_dot_op<FPTYPE, base_device::DEVICE_GPU>{
+    FPTYPE operator()(const int& npw,
+                    const FPTYPE& fac,
+                    const FPTYPE* gk1,
+                    const FPTYPE* gk2,
+                    const FPTYPE* d_kfac,
+                    const std::complex<FPTYPE>* psi);
+};
 
 /**
  * The operator is used to compute the auxiliary amount of stress /force 

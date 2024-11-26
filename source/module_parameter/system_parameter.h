@@ -10,6 +10,7 @@ struct System_para
     // ---------------------------------------------------------------
     int myrank = 0;
     int nproc = 1;
+    int nthread_per_proc = 1;
     int mypool = 0;
     int npool = 1;
     int nproc_in_pool = 1;
@@ -19,8 +20,9 @@ struct System_para
     // ------------ parameters not defined in INPUT file -------------
     // ------------ but decided by INPUT parameters      -------------
     // ---------------------------------------------------------------
+    int nlocal = 0; ///< total number of local basis.
     bool two_fermi = false; ///< true if "nupdown" is set
-
+    bool use_uspp = false;   ///< true if "uspp" is set
     bool dos_setemin = false; ///< true: "dos_emin_ev" is set
     bool dos_setemax = false; ///< true: "dos_emax_ev" is set
 
@@ -48,7 +50,6 @@ struct System_para
     bool domag = false;                     /// 1 : calculate the magnetism with x, y, z component
     bool domag_z = false;                   /// 1 : constrain the magnetism to z axis
 
-    std::string device_flag = "cpu";        ///< device flag, "cpu" or "gpu"
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)

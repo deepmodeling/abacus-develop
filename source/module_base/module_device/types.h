@@ -6,12 +6,14 @@ namespace base_device
 
 struct DEVICE_CPU;
 struct DEVICE_GPU;
+struct DEVICE_DSP;
 
 enum AbacusDevice_t
 {
     UnKnown,
     CpuDevice,
     GpuDevice,
+    DspDevice
 };
 
 } // namespace base_device

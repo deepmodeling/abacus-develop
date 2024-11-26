@@ -19,7 +19,20 @@ Inside ABACUS, orbitals in LCAO basis are arranged lexicographically by species-
 
 ## Generating atomic orbital bases
 
-Users may also choose to generate their own atomic obitals. In ABACUS, the atomic orbital bases are generated using a scheme developed in the [paper](https://iopscience.iop.org/article/10.1088/0953-8984/22/44/445501). A detailed description of the procedure for generating orbitals will be provided later.
+Users may also generate ABACUS numerical atomic obitals based on their own flavor. The theoretical background of orbital generation can be found in following works:
+
+- Spillage: [Chen M, Guo G C, He L. Systematically improvable optimized atomic basis sets for ab initio calculations[J]. Journal of Physics: Condensed Matter, 2010, 22(44): 445501.](https://iopscience.iop.org/article/10.1088/0953-8984/22/44/445501)
+- PTG DPSI: [Lin P, Ren X, He L. Strategy for constructing compact numerical atomic orbital basis sets by incorporating the gradients of reference wavefunctions[J]. Physical Review B, 2021, 103(23): 235131.](https://journals.aps.org/prb/abstract/10.1103/PhysRevB.103.235131)
+
+Guidelines for generating atomic orbital bases are as follows:
+
+- [Numerical Atomic Orbitals 1: the nomenclature and usage of numerical atomic orbitals in ABACUS](https://mcresearch.github.io/abacus-user-guide/abacus-nac1.html) (Chinese)
+- [Numerical Atomic Orbitals 2: generate numerical atomic orbitals based on given norm-conserving pseudopotential](https://mcresearch.github.io/abacus-user-guide/abacus-nac1.html) (Chinese)
+- [Numerical Atomic Orbitals 3: generate high-precision numerical atomic orbitals](https://mcresearch.github.io/abacus-user-guide/abacus-nac1.html) (Chinese)
+
+Stable orbital generation programs can be found in guidelines above, there is also another developing version of orbital generation program, in which algorithms are consecutively improved: [Github repository of ABACUS ORBGEN project](https://github.com/kirk0830/ABACUS-ORBGEN), the usage of which can be found in README (in English) file.
+
+*NOTE*: users are encouraged to cite the above works when numerical atomic orbitals and its generation codes are used in their research.
 
 ## BSSE Correction
 
@@ -51,16 +64,46 @@ $$
 $$
 
 ## Pseudopotentials
+### Supported formats
+ABACUS supports both norm-conserving and ultrasoft pseudopotentials. For norm-conserving pseudopotentials, UPF, UPF2, VWR, and BLPS formats are supported. For ultrasoft pseudopotentials, UPF and UPF2 formats are supported. 
 
-In ABACUS, we support norm-conserving and ultrasoft pseudopotentials. 
-For norm-conserving pseudopotentials, we support four different formats of the pseudopotential files: UPF, UPF2, VWR, and BLPS. 
-For ultrasoft pseudopotentials, currently we support only one format of the pseudopotential files: UPF2.
+### Usage
+For more information about pseudopotential usage, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
 
-For more information, check the `ATOMIC_SPECIES` section in the specification of the [STRU file](./input_files/stru.md).
+### Download
+Users can find pseudopotentials in the following links:
 
-Here we list some common sources of the pseudopotential files:
+**Website**
+- [Quantum ESPRESSO](https://www.quantum-espresso.org/pseudopotentials): the official website of Quantum ESPRESSO, where you can find a large number of pseudopotential files.
+- [Stantard Solid State Pseudopotential library](https://www.materialscloud.org/sssp): a library of **high-quality** pseudopotentials for solid-state calculations, with **a large number of tests on efficiency and precison**.
+- [PWmat](http://www.pwmat.com/potential-download): a website that provides a large number of pseudopotential files, various kinds of semi-core constructed pseudopotentials are included. **Several sets (with or without f-electrons/noncolinear core correction) of Lanthanide pseudopotentials are also available**.
+- [THEOS](http://theossrv1.epfl.ch/Main/Pseudopotentials): PSlibrary 0.3.1, a library of pseudopotentials for DFT calculations, including ultrasoft, paw, norm-conserving both full-relativistic and scalar-relativistic pseudopotentials.
+- [ABACUS@USTC](https://abacus.ustc.edu.cn/pseudo/list.htm): **ABACUS official website** where you can find a large number of pseudopotential files and numerical atomic orbital files.
+- [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary): BLPS format pseudopotential library
 
-1. [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/).
-2. [SG15-ONCV](http://quantum-simulation.org/potentials/sg15_oncv/upf/).
-3. [DOJO](http://www.pseudo-dojo.org/).
-4. [BLPS](https://github.com/PrincetonUniversity/BLPSLibrary).
+**Norm-conserving pseudopotentials**
+- [SG15](http://www.quantum-simulation.org/potentials/sg15_oncv/): **vastly used in ABACUS** DFT calculation and numerical atomic orbital generation.
+- [PseudoDOJO](http://www.pseudo-dojo.org/): another widely used pseudopotential database, developed by Abinit group, **including Lanthanide pseudopotentials (f-electrons frozen)**.
+- [The Rappe group](https://www.sas.upenn.edu/rappegroup/research/pseudo-potential-gga.html): a collection of GGA pseudopotentials which are generated with Opium code, several tests proves that are out-performing in alloy systems.
+- [Matteo Giantomassi's Github repo](https://github.com/gmatteo/pseudos_ac_she): a Github repository that contains norm-conserving pseudopotentials for **Actinides and superheavy elements to 120-th element**.
+
+**Ultrasoft pseudopotentials**
+- [Vanderbilt](http://www.physics.rutgers.edu/~dhv/uspp/): a collection of ultrasoft pseudopotentials generated by Vanderbilt group.
+- [GBRV](https://www.physics.rutgers.edu/gbrv/) by Kevin F. Garrity, Joseph W. Bennett, Karin M. Rabe, and David Vanderbilt: presently the most popular ultrasoft pseudpotentials in Quantum ESPRESSO user community.
+
+### Pseudopotential Generation
+For pseudopotential generation, please refer to the following links for more information:
+- [Quantum ESPRESSO](http://www.quantum-espresso.org/pseudopotentials/)
+- [ONCVPSP](http://www.mat-simresearch.com/)
+- [Opium](https://opium.sourceforge.net/)
+
+A Chinese guideline is also available here: [A brief introduction of norm-conserving pseudopotential generation](https://mcresearch.github.io/abacus-user-guide/abacus-upf.html)
+
+# ABACUS Pseudopotential-Numerical atomic orbital Square (APNS) project
+For the purpose of providing high-quality pseudopotentials and numerical atomic orbitals, we have initiated the APNS project. The project is aimed at providing a large number of high-quality pseudopotentials and numerical atomic orbitals, along with diverse test data for the ABACUS user community, reduce the cost of generating and testing pseudopotentials and numerical atomic orbitals by users, and promote the development of ABACUS software. The project is currently in the development stage, and we welcome contributions from the community. For more information, please refer to the following links:
+- [APNS website: test data and results](https://kirk0830.github.io/ABACUS-Pseudopot-Nao-Square/)
+- [APNS workflow (Github repository): high-throughput test of pseudopotentials and numerical atomic orbitals](https://github.com/kirk0830/ABACUS-Pseudopot-Nao-Square)
+
+There are also other excellent projects that provide high-quality pseudopotentials along with test data:
+- [Solid State Pseudopotential library](https://www.materialscloud.org/sssp)
+- [Verification of the precision of DFT implementation via AiiDA common workflows](https://acwf-verification.materialscloud.org/)

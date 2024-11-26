@@ -1,5 +1,6 @@
 #include "hsolver.h"
 
+#include "module_parameter/parameter.h"
 namespace hsolver
 {
 
@@ -20,7 +21,14 @@ double set_diagethr_ks(const std::string basis_type,
     if (basis_type == "pw" && esolver_type == "ksdft")
     {
         // It is too complex now and should be modified.
-        if (iter == 1)
+        if (calculation_in == "nscf")
+        {
+            if (res_diag_ethr - 1e-2 > -1e-5)
+            {
+                res_diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, PARAM.inp.scf_thr / PARAM.inp.nelec));
+            }
+        }
+        else if (iter == 1)
         {
             if (std::abs(res_diag_ethr - 1.0e-2) < 1.0e-6)
             {
@@ -93,7 +101,11 @@ double set_diagethr_sdft(const std::string basis_type,
 
     if (basis_type == "pw" && esolver_type == "sdft")
     {
-        if (iter == 1)
+        if (calculation_in == "nscf")
+        {
+            res_diag_ethr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
+        }
+        else if (iter == 1)
         {
             if (istep == 0)
             {
@@ -110,7 +122,7 @@ double set_diagethr_sdft(const std::string basis_type,
         }
         else
         {
-            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //GlobalV::NBANDS > 0 && this->stoiter.KS_ne > 1e-6
+            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //PARAM.inp.nbands > 0 && this->stoiter.KS_ne > 1e-6
             {
                 res_diag_ethr = std::min(res_diag_ethr, 0.1 * drho / std::max(1.0, stoiter_ks_ne_in));
             }

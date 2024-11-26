@@ -19,9 +19,9 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
     this->o_delta.zero_out();
     for (int hl = 0; hl < 1; ++hl)
     {
-        for (int i = 0; i < GlobalV::NLOCAL; ++i)
+        for (int i = 0; i < PARAM.globalv.nlocal; ++i)
         {
-            for (int j = 0; j < GlobalV::NLOCAL; ++j)
+            for (int j = 0; j < PARAM.globalv.nlocal; ++j)
             {
                 const int mu = pv->global2local_row(j);
                 const int nu = pv->global2local_col(i);
@@ -54,9 +54,9 @@ void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::Comple
         for (int hl=0; hl<1; hl++)
         {
             std::complex<double> o_delta_k=std::complex<double>(0.0,0.0);
-            for (int i = 0; i < GlobalV::NLOCAL; ++i)
+            for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {
-                for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                 {
                     const int mu = pv->global2local_row(j);
                     const int nu = pv->global2local_col(i);

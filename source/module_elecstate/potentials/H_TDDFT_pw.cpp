@@ -227,7 +227,7 @@ int H_TDDFT_pw::check_ncut(int t_type)
         break;
 
     case 3:
-        ncut = 1;
+        ncut = 2;
         break;
 
         // case 4:

@@ -59,7 +59,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 
     ModuleBase::timer::tick("DiagoElpaNative", "elpa_solve");
 
-    int nev = GlobalV::NBANDS;
+    int nev = PARAM.inp.nbands;
     int narows = h_mat.row;
     int nacols = h_mat.col;
 
@@ -70,7 +70,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     int nprows, npcols, myprow, mypcol;
 
     Cblacs_gridinfo(cblacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    std::vector<Real> eigen(GlobalV::NLOCAL, 0.0);
+    std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
     std::vector<T> eigenvectors(narows * nacols);
 
     if (elpa_init(20210430) != ELPA_OK)
@@ -81,7 +81,11 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     // elpa_init(20210430);
     int success;
     elpa_t handle = elpa_allocate(&success);
+#ifdef _OPENMP
     int num_threads = omp_get_max_threads();
+#else
+    int num_threads = 1;
+#endif
     elpa_set(handle, "omp_threads", num_threads, &success);
     elpa_set(handle, "na", (int)nFull, &success);
     elpa_set(handle, "nev", (int)nev, &success);
@@ -103,7 +107,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     #define ELPA_WITH_SYCL_GPU_VERSION 0
  */
 #if ELPA_WITH_NVIDIA_GPU_VERSION
-    if (PARAM.globalv.device_flag == "gpu")
+    if (PARAM.inp.device == "gpu")
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);
@@ -134,7 +138,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     }
 
     const int inc = 1;
-    BlasConnector::copy(GlobalV::NBANDS, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
 }

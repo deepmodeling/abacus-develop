@@ -1,19 +1,32 @@
-Build Example: TwoCenterIntegral Section in ABACUS
-==================================================
+# pyabacus: a Python interface for the ABACUS package
 
-An example project built with [pybind11](https://github.com/pybind/pybind11)
-and scikit-build-core. Python 3.7+ (see older commits for older versions of
-Python).
+`pyabacus` is a Python interface for the ABACUS package, which provides a high-level Python API for interacting with the `ABACUS` library.
 
-Installation
-------------
+This project is built using [pybind11](http://github.com/pybind/pybind11) and [scikit-build-core](https://scikit-build-core.readthedocs.io/), so you can easily build the project and use it in your Python environment.
+
+Now, `pyabacus` provides the following modules:
+- `io`: a module for input/output in pyabacus.
+- `Cell`: a module for the cell structure to bridge `ModuleNAO` in python module with users' input.
+- `ModuleBase`: a module for basic math functions.
+- `ModuleNAO`: a module for numerical atomic orbitals (NAO).
+- `hsolver`: a module for solving the Hamiltonian.
+
+<!-- toc -->
+
+- [Installation](#installation)
+- [CI Examples](#ci-examples)
+- [License](#license)
+- [Test call](#test-call)
+
+<!-- tocstop -->
+
+## Installation
 
 - Create and activate a new conda env, e.g. `conda create -n myenv python=3.8 & conda activate myenv`.
 - Clone ABACUS main repository and `cd abacus-develop/python/pyabacus`.
 - Build pyabacus by `pip install -v .` or install test dependencies & build  pyabacus by `pip install .[test]`. (Use `pip install -v .[test] -i https://pypi.tuna.tsinghua.edu.cn/simple` to accelerate installation process.)
 
-CI Examples
------------
+## CI Examples
 
 There are examples for CI in `.github/workflows`. A simple way to produces
 binary "wheels" for all platforms is illustrated in the "wheels.yml" file,
@@ -71,15 +84,13 @@ eigenvalues difference:
  -8.94295749e-12  4.71351846e-11  5.39378986e-10  1.97244101e-08]
 ```
 
-License
--------
+## License
 
 pybind11 is provided under a BSD-style license that can be found in the LICENSE
 file. By using, distributing, or contributing to this project, you agree to the
 terms and conditions of this license.
 
-Test call
----------
+## Test call
 
 ```python
 import pyabacus as m

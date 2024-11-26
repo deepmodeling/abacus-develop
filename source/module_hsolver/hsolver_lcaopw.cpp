@@ -8,7 +8,6 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
-#include "module_hsolver/diagh.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 
@@ -273,6 +272,8 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
+    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
+    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
     if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverLIP", "solve");

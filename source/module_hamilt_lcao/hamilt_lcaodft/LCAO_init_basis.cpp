@@ -23,7 +23,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "init_basis_lcao");
 
-    const int nlocal = GlobalV::NLOCAL;
+    const int nlocal = PARAM.globalv.nlocal;
     int nb2d = PARAM.inp.nb2d;
     // autoset NB2D first
     if (nb2d == 0)
@@ -55,9 +55,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // on the old interface for now.
     two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-
-    two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    if (PARAM.inp.vnl_in_h)
+    {
+        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    }
 
     int Lmax = 0;
 #ifdef __EXX
@@ -76,20 +78,22 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // is determined in 'divide_HS_2d' subroutine
 
     int try_nb = pv.init(nlocal, nlocal, nb2d, DIAG_WORLD);
-    try_nb += pv.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
+    try_nb += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {
-        pv.set(nlocal, nlocal, 1, pv.blacs_ctxt);
-        try_nb = pv.set_nloc_wfc_Eij(GlobalV::NBANDS, GlobalV::ofs_running, GlobalV::ofs_warning);
+        // fall back to the minimum size, 1 or 2 (nspin=4)
+        const int min_size = (PARAM.inp.nspin == 4) ? 2 : 1;
+        pv.set(nlocal, nlocal, min_size, pv.blacs_ctxt);
+        try_nb = pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
     // init blacs context for genelpa
-    pv.set_desc_wfc_Eij(nlocal, GlobalV::NBANDS, pv.nrow);
+    pv.set_desc_wfc_Eij(nlocal, PARAM.inp.nbands, pv.nrow);
 
 #else
     pv.set_serial(nlocal, nlocal);
     pv.nrow_bands = nlocal;
-    pv.ncol_bands = GlobalV::NBANDS;
+    pv.ncol_bands = PARAM.inp.nbands;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 #endif
 

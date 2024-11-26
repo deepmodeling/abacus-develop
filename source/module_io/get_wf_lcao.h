@@ -16,11 +16,11 @@ class IState_Envelope
     IState_Envelope(const elecstate::ElecState* pes);
     ~IState_Envelope();
 
-    /// for gamma_only
+    /// For gamma_only
     void begin(const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gg,
                const int& out_wfc_pw,
@@ -28,7 +28,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -36,9 +37,9 @@ class IState_Envelope
 
     /// tmp, delete after Gint is refactored.
     void begin(const psi::Psi<double>* psid,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_k& gg,
                const int& out_wfc_pw,
@@ -46,7 +47,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -54,11 +56,12 @@ class IState_Envelope
     {
         throw std::logic_error("gint_k should use with complex psi.");
     };
-    /// for multi-k
+
+    /// For multi-k
     void begin(const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_k& gk,
                const int& out_wfc_pw,
@@ -66,7 +69,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -74,9 +78,9 @@ class IState_Envelope
 
     /// tmp, delete after Gint is refactored.
     void begin(const psi::Psi<std::complex<double>>* psi,
-               const ModulePW::PW_Basis* rhopw,
-               const ModulePW::PW_Basis_K* wfcpw,
-               const ModulePW::PW_Basis_Big* bigpw,
+               const ModulePW::PW_Basis* pw_rhod,
+               const ModulePW::PW_Basis_K* pw_wfc,
+               const ModulePW::PW_Basis_Big* pw_big,
                const Parallel_Orbitals& para_orb,
                Gint_Gamma& gk,
                const int& out_wfc_pw,
@@ -84,7 +88,8 @@ class IState_Envelope
                const K_Vectors& kv,
                const double nelec,
                const int nbands_istate,
-               const std::vector<int>& out_band_kb,
+               const std::vector<int>& out_wfc_norm,
+               const std::vector<int>& out_wfc_re_im,
                const int nbands,
                const int nspin,
                const int nlocal,
@@ -94,16 +99,22 @@ class IState_Envelope
     };
 
   private:
-    std::vector<int> bands_picked_;
-    const elecstate::ElecState* pes_ = nullptr;
+    void select_bands(const int nbands_istate,
+                      const std::vector<int>& out_wfc_kb,
+                      const int nbands,
+                      const double nelec,
+                      const int mode,
+                      const int fermi_band);
 
-    void set_pw_wfc(const ModulePW::PW_Basis_K* wfcpw,
+    void set_pw_wfc(const ModulePW::PW_Basis_K* pw_wfc,
                     const int& ik,
                     const int& ib,
                     const int& nspin,
                     const double* const* const rho,
                     psi::Psi<std::complex<double>>& wfc_g);
+
     int globalIndex(int localindex, int nblk, int nprocs, int myproc);
+
     int localIndex(int globalindex, int nblk, int nprocs, int& myproc);
 
 #ifdef __MPI
@@ -120,5 +131,8 @@ class IState_Envelope
     template <typename T>
     void wfc_2d_to_grid(const T* wfc_2d, const Parallel_Orbitals& pv, T** wfc_grid, const std::vector<int>& trace_lo);
 #endif
+
+    std::vector<int> bands_picked_;
+    const elecstate::ElecState* pes_ = nullptr;
 };
 #endif

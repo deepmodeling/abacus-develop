@@ -12,14 +12,11 @@ namespace elecstate
 
 const double* ElecState::getRho(int spin) const
 {
-    // hamilt::MatrixBlock<double> temp{&(this->charge->rho[spin][0]), 1, this->charge->nrxx}; //
-    // this->chr->get_nspin(), this->chr->get_nrxx()};
     return &(this->charge->rho[spin][0]);
 }
 
 void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nbands, const double& nelec)
 {
-
     assert(nbands > 0);
     assert(nelec > 0.0);
 
@@ -56,16 +53,17 @@ void ElecState::fixed_weights(const std::vector<double>& ocp_kb, const int& nban
     return;
 }
 
+
 void ElecState::init_nelec_spin()
 {
     this->nelec_spin.resize(PARAM.inp.nspin);
     if (PARAM.inp.nspin == 2)
     {
-        // in fact, when TWO_EFERMI(nupdown in INPUT is not 0.0), nelec_spin will be fixed.
-        this->nelec_spin[0] = (GlobalV::nelec + GlobalV::nupdown) / 2.0;
-        this->nelec_spin[1] = (GlobalV::nelec - GlobalV::nupdown) / 2.0;
+        this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
+        this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
 }
+
 
 void ElecState::calculate_weights()
 {
@@ -75,8 +73,8 @@ void ElecState::calculate_weights()
         return;
     }
 
-    int nbands = this->ekb.nc;
-    int nks = this->ekb.nr;
+    const int nbands = this->ekb.nc;
+    const int nks = this->ekb.nr;
 
     if (!Occupy::use_gaussian_broadening && !Occupy::fixed_occupations)
     {
@@ -108,7 +106,7 @@ void ElecState::calculate_weights()
             Occupy::iweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              this->ekb,
                              this->eferm.ef,
                              this->wg,
@@ -154,7 +152,7 @@ void ElecState::calculate_weights()
             Occupy::gweights(nks,
                              this->klist->wk,
                              nbands,
-                             GlobalV::nelec,
+                             PARAM.inp.nelec,
                              Occupy::gaussian_parameter,
                              Occupy::gaussian_type,
                              this->ekb,
@@ -176,6 +174,7 @@ void ElecState::calculate_weights()
 
     return;
 }
+
 
 void ElecState::calEBand()
 {
@@ -206,10 +205,13 @@ void ElecState::calEBand()
     return;
 }
 
-void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& strucfac, ModuleSymmetry::Symmetry& symm, const void* wfcpw)
+
+void ElecState::init_scf(const int istep, 
+                         const ModuleBase::ComplexMatrix& strucfac, 
+                         ModuleSymmetry::Symmetry& symm, 
+                         const void* wfcpw)
 {
-    //---------Charge part-----------------
-    // core correction potential.
+    //! core correction potential.
     if (!PARAM.inp.use_paw)
     {
         this->charge->set_rho_core(strucfac);
@@ -219,22 +221,21 @@ void ElecState::init_scf(const int istep, const ModuleBase::ComplexMatrix& struc
         this->charge->set_rho_core_paw();
     }
 
-    //--------------------------------------------------------------------
-    // (2) other effective potentials need charge density,
+    //! other effective potentials need charge density,
     // choose charge density from ionic step 0.
-    //--------------------------------------------------------------------
     if (istep == 0)
     {
         this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 
-    // renormalize the charge density
+    //! renormalize the charge density
     this->charge->renormalize_rho();
 
-    //---------Potential part--------------
+    //! initialize the potential
     this->pot->init_pot(istep, this->charge);
 }
+
 
 void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
                         const K_Vectors* klist_in,
@@ -249,35 +250,8 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // initialize ekb and wg
-    this->ekb.create(nk_in, GlobalV::NBANDS);
-    this->wg.create(nk_in, GlobalV::NBANDS);
+    this->ekb.create(nk_in, PARAM.inp.nbands);
+    this->wg.create(nk_in, PARAM.inp.nbands);
 }
-
-void set_is_occupied(std::vector<bool>& is_occupied,
-                     elecstate::ElecState* pes,
-                     const int i_scf,
-                     const int nk,
-                     const int nband,
-                     const bool diago_full_acc)
-{
-    if (i_scf != 0 && diago_full_acc == false)
-    {
-        for (int i = 0; i < nk; i++)
-        {
-            if (pes->klist->wk[i] > 0.0)
-            {
-                for (int j = 0; j < nband; j++)
-                {
-                    if (pes->wg(i, j) / pes->klist->wk[i] < 0.01)
-                    {
-                        is_occupied[i * nband + j] = false;
-                    }
-                }
-            }
-        }
-    }
-};
-
-
 
 } // namespace elecstate

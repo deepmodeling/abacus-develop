@@ -171,8 +171,8 @@ class HContainer
     HContainer(const Parallel_Orbitals* paraV, T* data_pointer = nullptr, const std::vector<int>* ijr_info = nullptr);
 
     /**
-* @brief set parallel orbital pointer to check parallel information
-*/
+    * @brief set parallel orbital pointer to check parallel information
+    */
     void set_paraV(const Parallel_Orbitals* paraV_in)
     {
         this->paraV = paraV_in;
@@ -400,6 +400,14 @@ class HContainer
      */
     void insert_ijrs(const std::vector<int>* ijrs);
 
+    /**
+     * @brief use infomation of IJ pairs to expand HContainer
+     * the number of wavefunctions are stored in UnitCell.
+     * HContainer has not been allocated after this function,
+     * user should call allocate(...) to allocate memory.
+     */
+    void insert_ijrs(const std::vector<int>* ijrs, const UnitCell& ucell, const int npol=1);
+    
     /**
      * @brief return the wrapper_pointer
      */

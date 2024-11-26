@@ -302,6 +302,48 @@ std::vector<std::vector<int>> UnitCell::get_lnchiCounts() const {
     return lnchiCounts;
 }
 
+std::vector<ModuleBase::Vector3<double>> UnitCell::get_target_mag() const
+{
+	std::vector<ModuleBase::Vector3<double>> target_mag(this->nat);
+	for (int it = 0; it < this->ntype; it++)
+	{
+		for (int ia = 0; ia < this->atoms[it].na; ia++)
+		{
+			int iat = itia2iat(it, ia);
+			target_mag[iat] = this->atoms[it].m_loc_[ia];
+		}
+	}
+	return target_mag;
+}
+
+std::vector<ModuleBase::Vector3<double>> UnitCell::get_lambda() const
+{
+	std::vector<ModuleBase::Vector3<double>> lambda(this->nat);
+	for (int it = 0; it < this->ntype; it++)
+	{
+		for (int ia = 0; ia < this->atoms[it].na; ia++)
+		{
+			int iat = itia2iat(it, ia);
+			lambda[iat] = this->atoms[it].lambda[ia];
+		}
+	}
+	return lambda;
+}
+
+std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
+{
+	std::vector<ModuleBase::Vector3<int>> constrain(this->nat);
+	for (int it = 0; it < this->ntype; it++)
+	{
+		for (int ia = 0; ia < this->atoms[it].na; ia++)
+		{
+			int iat = itia2iat(it, ia);
+			constrain[iat] = this->atoms[it].constrain[ia];
+		}
+	}
+	return constrain;
+}
+
 void UnitCell::update_pos_tau(const double* pos) {
     int iat = 0;
     for (int it = 0; it < this->ntype; it++) {
@@ -444,6 +486,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     // (2) init *Atom class array.
     this->atoms = new Atom[this->ntype]; // atom species.
     this->set_atom_flag = true;
+
+    this->symm.epsilon = PARAM.inp.symmetry_prec;
+    this->symm.epsilon_input = PARAM.inp.symmetry_prec;
 
     bool ok = true;
     bool ok2 = true;
@@ -766,7 +811,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
     CalAtomsInfo ca;
     ca.cal_atoms_info(this->atoms, this->ntype, PARAM);
 
-    // setup GlobalV::NLOCAL
+    // setup PARAM.globalv.nlocal
     cal_nwfc(ofs);
 
     // Check whether the number of valence is minimum
@@ -846,7 +891,7 @@ void UnitCell::read_pseudo(std::ofstream& ofs) {
 // calculate the total number of local basis
 // Target : nwfc, lmax,
 // 			atoms[].stapos_wf
-// 			GlobalV::NBANDS
+// 			PARAM.inp.nbands
 //===========================================
 void UnitCell::cal_nwfc(std::ofstream& log) {
     ModuleBase::TITLE("UnitCell", "cal_nwfc");
@@ -893,7 +938,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
         //orbitals",atoms[it].stapos_wf);
     }
 
-    // OUT(GlobalV::ofs_running,"NLOCAL",GlobalV::NLOCAL);
+    // OUT(GlobalV::ofs_running,"NLOCAL",PARAM.globalv.nlocal);
     log << " " << std::setw(40) << "NLOCAL"
         << " = " << nlocal_tmp << std::endl;
     //========================================================
@@ -902,7 +947,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
 
     // mohan add 2010-09-26
     assert(nlocal_tmp > 0);
-    assert(nlocal_tmp == GlobalV::NLOCAL);
+    assert(nlocal_tmp == PARAM.globalv.nlocal);
     delete[] iwt2iat;
     delete[] iwt2iw;
     this->iwt2iat = new int[nlocal_tmp];
@@ -978,14 +1023,14 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
             && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
             && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
     {
-        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", GlobalV::NBANDS);
+        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", PARAM.inp.nbands);
     } else // plane wave basis
     {
         // if(winput::after_iter && winput::sph_proj)
         //{
-        //	if(GlobalV::NBANDS < GlobalV::NLOCAL)
+        //	if(PARAM.inp.nbands < PARAM.globalv.nlocal)
         //	{
-        //		ModuleBase::WARNING_QUIT("cal_nwfc","NBANDS must > GlobalV::NLOCAL
+        //		ModuleBase::WARNING_QUIT("cal_nwfc","NBANDS must > PARAM.globalv.nlocal
         //!");
         //	}
         // }

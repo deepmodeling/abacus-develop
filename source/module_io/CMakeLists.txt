@@ -13,7 +13,6 @@ list(APPEND objects
     output.cpp
     print_info.cpp
     read_cube.cpp
-    read_rho.cpp
     rhog_io.cpp
     read_exit_file.cpp
     read_wfc_pw.cpp
@@ -67,6 +66,7 @@ if(ENABLE_LCAO)
       output_sk.cpp
       output_dmk.cpp
       output_mulliken.cpp
+      io_npz.cpp
   )
   list(APPEND objects_advanced
       unk_overlap_lcao.cpp

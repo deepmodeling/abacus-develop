@@ -1,5 +1,6 @@
 #include "module_base/parallel_global.h"
 #ifdef __PEXSI
+#include "module_parameter/parameter.h"
 #include "pexsi_solver.h"
 
 #include <mpi.h>
@@ -78,14 +79,14 @@ int PEXSI_Solver::solve(double mu0)
                 DIAG_WORLD,
                 grid_group,
                 this->blacs_text,
-                GlobalV::NLOCAL,
+                PARAM.globalv.nlocal,
                 this->nb,
                 this->nrow,
                 this->ncol,
                 'c',
                 this->h,
                 this->s,
-                GlobalV::nelec,
+                PARAM.inp.nelec,
                 "PEXSIOPTION",
                 this->DM,
                 this->EDM,

@@ -1,4 +1,6 @@
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 #include "gint_force_gpu.h"
 #include "kernels/cuda/cuda_tools.cuh"
@@ -31,11 +33,7 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                         const Grid_Technique& gridt,
                         const UnitCell& ucell)
 { 
-#ifdef __MPI
-    const int dev_id = base_device::information::set_device_by_rank();
-#else
-    const int dev_id = 0;
-#endif
+    checkCuda(cudaSetDevice(gridt.dev_id));
     // checkCuda(cudaSetDeviceFlags(cudaDeviceScheduleBlockingSync));
 
     const int nbzp = gridt.nbzp;
@@ -91,16 +89,21 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                          dm->get_wrapper(),
                          dm->get_nnr() * sizeof(double),
                          cudaMemcpyHostToDevice));
-
+#ifdef _OPENMP
     #pragma omp parallel for num_threads(num_streams) collapse(2)
+#endif
     for (int i = 0; i < gridt.nbx; i++)
     {
         for (int j = 0; j < gridt.nby; j++)
         {
             // 20240620 Note that it must be set again here because 
             // cuda's device is not safe in a multi-threaded environment.
-            checkCuda(cudaSetDevice(dev_id));
+            checkCuda(cudaSetDevice(gridt.dev_id));
+#ifdef _OPENMP
             const int sid = omp_get_thread_num();
+#else
+            const int sid = 0;
+#endif
 
             int max_m = 0;
             int max_n = 0;

@@ -4,7 +4,7 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-
+FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(
     const double lat0_in, // unit length (unit in bohr)
     const ModuleBase::Matrix3
@@ -153,9 +153,9 @@ DiagoDavid<T, Device>::~DiagoDavid() {
 }
 
 template <typename T, typename Device>
-int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int, const int, const int)>& hpsi_func,
-                                const std::function<void(T*, T*, const int, const int, const int)>& spsi_func,
-                                const int ldPsi,
+int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
+                                const std::function<void(T*, T*, const int, const int)>& spsi_func,
+                                const int ld_psi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
                                 const Real david_diag_thr,

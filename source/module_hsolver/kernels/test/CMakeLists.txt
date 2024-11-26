@@ -11,7 +11,7 @@ elseif()
     AddTest(
         TARGET Hsolver_Kernels_UTs
         LIBS parameter ${math_libs} base device
-        SOURCES math_kernel_test.cpp 
+        SOURCES math_kernel_test.cpp ../../../module_base/blas_connector.cpp
     )
 endif()
 

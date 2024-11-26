@@ -22,11 +22,8 @@ struct AtomLink
 	AtomLink* next_p;
 
 	// Constructors and destructor
-	AtomLink
-	(
-	    const FAtom& atom = FAtom(),
-	    AtomLink* const pointNext = NULL //mohan fix bug 2011/09/26, from NullPtr->NULL
-	);
+	AtomLink(const FAtom& atom = FAtom(), AtomLink* const pointNext = NULL);
+	 //mohan fix bug 2011/09/26, from NullPtr->NULL
 
 };
 

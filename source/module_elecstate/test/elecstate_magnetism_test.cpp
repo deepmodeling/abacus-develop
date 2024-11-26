@@ -75,7 +75,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 {
                   PARAM.input.nspin = 2;
                   PARAM.sys.two_fermi = false;
-                  GlobalV::nelec = 10.0;
+                  PARAM.input.nelec = 10.0;
 
                   Charge* chr = new Charge;
                   chr->nrxx = 100;

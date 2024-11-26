@@ -62,6 +62,20 @@ void OperatorLCAO<TK, TR>::set_hr_done(bool hr_done_in) {
     this->hr_done = hr_done_in;
 }
 
+template<typename TK, typename TR>
+void OperatorLCAO<TK, TR>::set_current_spin(const int current_spin_in)
+{
+    this->current_spin = current_spin_in;
+    if(this->next_op != nullptr)
+    {
+        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->set_current_spin(current_spin_in);
+    }
+    if(this->next_sub_op != nullptr)
+    {
+        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_current_spin(current_spin_in);
+    }
+}
+
 template <typename TK, typename TR>
 void OperatorLCAO<TK, TR>::init(const int ik_in) {
     ModuleBase::TITLE("OperatorLCAO", "init");
@@ -166,9 +180,10 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
         }
         case calculation_type::lcao_sc_lambda:
         {
-            //update HK only
-            //in cal_type=lcao_sc_mag, HK only need to be updated
-            this->contributeHk(ik_in);
+            //update HR first
+            this->contributeHR();
+            //in cal_type=lcao_sc_mag, 
+            //this->contributeHk(ik_in);
             break;
         }
         case calculation_type::lcao_exx:

@@ -13,13 +13,13 @@ namespace LR
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<double>& AX_istate);
+        double* AX_istate);
     void cal_AX_blas(
         const std::vector<container::Tensor>& V_istate,
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<double>& AX_istate,
+        double* AX_istate,
         const bool add_on = true);
 #ifdef __MPI
     void cal_AX_pblas(
@@ -27,11 +27,11 @@ namespace LR
         const Parallel_2D& pmat,
         const psi::Psi<double>& c,
         const Parallel_2D& pc,
-        int naos,
-        int nocc,
-        int nvirt,
-        Parallel_2D& pX,
-        psi::Psi<double>& AX_istate,
+        const int& naos,
+        const int& nocc,
+        const int& nvirt,
+        const Parallel_2D& pX,
+        double* AX_istate,
         const bool add_on=true);
 #endif
     // complex
@@ -40,13 +40,13 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<std::complex<double>>& AX_istate);
+        std::complex<double>* AX_istate);
     void cal_AX_blas(
         const std::vector<container::Tensor>& V_istate,
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        psi::Psi<std::complex<double>>& AX_istate,
+        std::complex<double>* AX_istate,
         const bool add_on = true);
 
 #ifdef __MPI
@@ -55,11 +55,11 @@ namespace LR
         const Parallel_2D& pmat,
         const psi::Psi<std::complex<double>>& c,
         const Parallel_2D& pc,
-        int naos,
-        int nocc,
-        int nvirt,
-        Parallel_2D& pX,
-        psi::Psi<std::complex<double>>& AX_istate,
+        const int& naos,
+        const int& nocc,
+        const int& nvirt,
+        const Parallel_2D& pX,
+        std::complex<double>* AX_istate,
         const bool add_on = true);
 #endif
 }

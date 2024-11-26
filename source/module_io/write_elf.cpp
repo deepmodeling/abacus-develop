@@ -1,5 +1,6 @@
 #include "write_elf.h"
 #include "module_io/cube_io.h"
+#include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 namespace ModuleIO
 {
@@ -69,7 +70,7 @@ void write_elf(
     }
 
     // 3) calculate the enhancement factor F = (tau_KS - tau_vw) / tau_TF, and then ELF = 1 / (1 + F^2)
-    double eps = 1.0e-5; // suppress the numerical instability in LCAO
+    double eps = 1.0e-5; // suppress the numerical instability in LCAO (Ref: Acta Phys. -Chim. Sin. 2011, 27(12), 2786-2792. doi: 10.3866/PKU.WHXB20112786)
     for (int is = 0; is < nspin; ++is)
     {
         for (int ir = 0; ir < rho_basis->nrxx; ++ir)
@@ -88,21 +89,12 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_cube(
-    #ifdef __MPI
-            bz,
-            nbz,
-            rho_basis->nplane,
-            rho_basis->startz_current,
-    #endif
+        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
             elf[0].data(),
             is,
             nspin,
             istep,
             fn,
-            rho_basis->nx,
-            rho_basis->ny,
-            rho_basis->nz,
             ef_tmp,
             ucell_,
             precision,
@@ -112,24 +104,15 @@ void write_elf(
     {
         for (int is = 0; is < nspin; ++is)
         {
-            std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is) + ".cube";
+            std::string fn_temp = out_dir + "/ELF_SPIN" + std::to_string(is + 1) + ".cube";
             int ispin = is + 1;
 
-            ModuleIO::write_cube(
-        #ifdef __MPI
-                bz,
-                nbz,
-                rho_basis->nplane,
-                rho_basis->startz_current,
-        #endif
+            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
                 elf[is].data(),
                 ispin,
                 nspin,
                 istep,
                 fn_temp,
-                rho_basis->nx,
-                rho_basis->ny,
-                rho_basis->nz,
                 ef_tmp,
                 ucell_,
                 precision,
@@ -145,21 +128,12 @@ void write_elf(
         std::string fn = out_dir + "/ELF.cube";
 
         int is = -1;
-        ModuleIO::write_cube(
-    #ifdef __MPI
-            bz,
-            nbz,
-            rho_basis->nplane,
-            rho_basis->startz_current,
-    #endif
+        ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
             elf_tot.data(),
             is,
             nspin,
             istep,
             fn,
-            rho_basis->nx,
-            rho_basis->ny,
-            rho_basis->nz,
             ef_tmp,
             ucell_,
             precision,

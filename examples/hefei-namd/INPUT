@@ -7,7 +7,7 @@ INPUT_PARAMETERS
  calculation     md
 
  #Parameters (Accuracy)
- ecutwfc			50
+ ecutwfc			 60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
  scf_nmax			20
 
  basis_type		lcao
@@ -29,9 +29,14 @@ INPUT_PARAMETERS
 
  read_file_dir   ./
 
- gamma_only       1
+ gamma_only       1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
  out_wfc_lcao     1
  out_mat_hs           1
  cal_syns	1
  dmax		0.01
+
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

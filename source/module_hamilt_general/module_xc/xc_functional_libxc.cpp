@@ -3,19 +3,69 @@
 #include "xc_functional_libxc.h"
 #include "module_parameter/parameter.h"
 #include "module_base/tool_quit.h"
+#include "module_base/formatter.h"
 
 #ifdef __EXX
 #include "module_hamilt_pw/hamilt_pwdft/global.h"		// just for GlobalC::exx_info
 #endif
 
 #include <xc.h>
-
 #include <vector>
+bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
+{
+	// see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
+	// ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
+	const std::vector<std::string> not_supported = {
+		"MGGA_XC_CC06", "MGGA_C_CS", "MGGA_X_BR89", "MGGA_X_MK00"};
+	for (const std::string& s : not_supported)
+	{
+		if (xc_func_in.find(s) != std::string::npos)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+bool not_supported_xc_with_nonlocal_vdw(const std::string& xc_func_in)
+{
+	const std::string xc_func = FmtCore::upper(xc_func_in);
+	if(xc_func.find("VDW") != std::string::npos) { return true; }
+	/* known excluded: GGA_X_OPTB86B_VDW, GGA_X_OPTB88_VDW, GGA_X_OPTPBE_VDW, GGA_X_PBEK1_VDW */
+
+	if(xc_func.find("VV10") != std::string::npos) { return true; }
+	/* known excluded: GGA_XC_VV10, HYB_GGA_XC_LC_VV10, MGGA_C_REVSCAN_VV10, MGGA_C_SCAN_VV10, 
+	            	   MGGA_C_SCANL_VV10, MGGA_XC_VCML_RVV10 */
+					   
+	const std::vector<std::string> not_supported = {"C09X", "VCML", "HYB_MGGA_XC_WB97M_V", "MGGA_XC_B97M_V"};
+	for(const std::string& str : not_supported)
+	{
+		if(xc_func.find(str) != std::string::npos) { return true; }
+	}
+	/* known excluded: GGA_X_C09X, MGGA_X_VCML, HYB_MGGA_XC_WB97M_V, MGGA_XC_B97M_V */
+
+	/* There is also a functional not quite sure: HYB_GGA_XC_WB97X_V */
+	if(xc_func.find("HYB_GGA_XC_WB97X_V") != std::string::npos)
+	{
+		std::cout << " WARNING: range-seperated XC omega-B97 family with nonlocal correction term is used.\n" 
+		          << "          if you are not planning to use these functionals like wB97X-D3BJ that:\n"
+				  << "          XC_GGA_XC_WB97X_V with specified D3BJ DFT-D3 parameters, this is not what\n"
+				  << "          you want." << std::endl;
+	}
+	return false;
+}
 
 std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::string xc_func_in)
 {
     // determine the type (lda/gga/mgga)
+	if (not_supported_xc_with_laplacian(xc_func_in))
+	{
+		ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc",
+			"XC Functional involving Laplacian of rho is not implemented.");
+	}
 	int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
+	if(not_supported_xc_with_nonlocal_vdw(xc_func_in))
+	{ ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc","functionals with non-local dispersion are not supported."); }
     func_type = 1;
     if(xc_func_in.find("GGA") != std::string::npos) { func_type = 2; }
     if(xc_func_in.find("MGGA") != std::string::npos) { func_type = 3; }

@@ -111,7 +111,7 @@ void ESolver_OF::allocate_array()
  * @param [in] ptemp_phi phi
  * @param [out] rdLdphi dL/dphi
  */
-void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
+void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& ucell)
 {
     double** dEdtemp_phi = new double*[PARAM.inp.nspin];
     double** temp_phi = new double*[PARAM.inp.nspin];
@@ -135,9 +135,9 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi)
 
     if (PARAM.inp.nspin == 4) 
     {
-        elecstate::cal_ux(GlobalC::ucell);
+        elecstate::cal_ux(ucell);
     }
-    this->pelec->pot->update_from_charge(this->ptemp_rho_, &GlobalC::ucell);
+    this->pelec->pot->update_from_charge(this->ptemp_rho_, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_effective_v();
 
     this->kinetic_potential(this->ptemp_rho_->rho, temp_phi, vr_eff);
@@ -433,7 +433,7 @@ void ESolver_OF::print_info()
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
     if (PARAM.inp.printe > 0
-        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_elec || this->iter_ == PARAM.inp.scf_nmax))
+        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_esolver || this->iter_ == PARAM.inp.scf_nmax))
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);

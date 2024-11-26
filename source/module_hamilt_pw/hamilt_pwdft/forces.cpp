@@ -33,6 +33,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        ModulePW::PW_Basis_K* wfc_basis,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
 {
+    ModuleBase::timer::tick("Forces", "cal_force");
     ModuleBase::TITLE("Forces", "init");
     this->device = base_device::get_device_type<Device>(this->ctx);
     const ModuleBase::matrix& wg = elec.wg;
@@ -69,7 +70,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
             this->npwx = wfc_basis->npwk_max;
             Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, &GlobalC::ppcell, GlobalC::ucell, psi_in);
 
-            if (GlobalV::use_uspp)
+            if (PARAM.globalv.use_uspp)
             {
                 this->cal_force_us(forcenl, rho_basis, &GlobalC::ppcell, elec, GlobalC::ucell);
             }
@@ -134,9 +135,9 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
 
                 psi_in[0].fix_k(ik);
                 double *weight, *epsilon;
-                weight = new double[GlobalV::NBANDS];
-                epsilon = new double[GlobalV::NBANDS];
-                for (int ib = 0; ib < GlobalV::NBANDS; ib++)
+                weight = new double[PARAM.inp.nbands];
+                epsilon = new double[PARAM.inp.nbands];
+                for (int ib = 0; ib < PARAM.inp.nbands; ib++)
                 {
                     weight[ib] = wg(ik, ib);
                     epsilon[ib] = ekb(ik, ib);
@@ -144,7 +145,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                 GlobalC::paw_cell.paw_nl_force(reinterpret_cast<std::complex<double>*>(psi_in[0].get_pointer()),
                                                epsilon,
                                                weight,
-                                               GlobalV::NBANDS,
+                                               PARAM.inp.nbands,
                                                forcenl.c);
 
                 delete[] weight;
@@ -455,7 +456,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         }
     }
     ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
-
+    ModuleBase::timer::tick("Forces", "cal_force");
     return;
 }
 

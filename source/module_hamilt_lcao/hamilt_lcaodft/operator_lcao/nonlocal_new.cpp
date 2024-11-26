@@ -22,11 +22,15 @@ hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::NonlocalNew(
 {
     this->cal_type = calculation_type::lcao_fixed;
     this->ucell = ucell_in;
+    this->gridD = GridD_in;
 #ifdef __DEBUG
     assert(this->ucell != nullptr);
 #endif
     // initialize HR to allocate sparse Nonlocal matrix memory
-    this->initialize_HR(GridD_in);
+    if(hR_in != nullptr) 
+    {
+        this->initialize_HR(GridD_in);
+    }
 }
 
 // destructor
@@ -175,7 +179,7 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                     int M1 = (m1 % 2 == 0) ? -m1 / 2 : (m1 + 1) / 2;
 
                     ModuleBase::Vector3<double> dtau = tau0 - tau1;
-                    intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 0 /*cal_deri*/, nlm);
+                    intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, false /*cal_deri*/, nlm);
                     nlm_tot[ad].insert({all_indexes[iw1l], nlm[0]});
                 }
             }
@@ -318,6 +322,8 @@ void hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::tick("NonlocalNew", "contributeHR");
     return;
 }
+
+#include "nonlocal_force_stress.hpp"
 
 template class hamilt::NonlocalNew<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::NonlocalNew<hamilt::OperatorLCAO<std::complex<double>, double>>;

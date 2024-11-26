@@ -14,7 +14,6 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            Structure_Factor* p_sf,
                                            K_Vectors* p_kv,
                                            ModulePW::PW_Basis_K* wfc_basis,
-                                           const psi::Psi<complex<FPTYPE>>* psi_in,
                                            const psi::Psi<complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
@@ -64,7 +63,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // kinetic contribution
-    this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, psi_in);
+    this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
 
     // hartree contribution
     this->stress_har(sigmahar, rho_basis, 1, pelec->charge);
@@ -99,7 +98,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
 
     // add US term from augmentation charge derivatives
-    if (GlobalV::use_uspp)
+    if (PARAM.globalv.use_uspp)
     {
         this->stress_us(sigmanl, rho_basis, &GlobalC::ppcell, ucell);
     }

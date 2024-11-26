@@ -1,6 +1,7 @@
 #pragma once
 #include "module_base/abfs-vector3_order.h"
 #include "module_cell/unitcell.h"
+#include "module_ri/serialization_cereal.h"
 #include <RI/global/Tensor.h>
 #include <map>
 
@@ -13,6 +14,11 @@ namespace ModuleIO
     template<typename Tdata>
     void read_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
         const int nspin, const int nbasis,
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
+
+    /// read Hexxs in cereal format
+    template<typename Tdata>
+    void read_Hexxs_cereal(const std::string& file_name,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs);
 
     /// write Hexxs in CSR format

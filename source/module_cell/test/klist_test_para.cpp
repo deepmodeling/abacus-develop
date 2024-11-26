@@ -173,8 +173,8 @@ class KlistParaTest : public testing::Test
         {
             GlobalC::ucell.atoms[i].label = coord[i].atomname;
             GlobalC::ucell.atoms[i].na = coord[i].coordinate.size();
-            GlobalC::ucell.atoms[i].tau = new ModuleBase::Vector3<double>[GlobalC::ucell.atoms[i].na];
-            GlobalC::ucell.atoms[i].taud = new ModuleBase::Vector3<double>[GlobalC::ucell.atoms[i].na];
+            GlobalC::ucell.atoms[i].tau.resize(GlobalC::ucell.atoms[i].na);
+            GlobalC::ucell.atoms[i].taud.resize(GlobalC::ucell.atoms[i].na);
             for (int j = 0; j < GlobalC::ucell.atoms[i].na; j++)
             {
                 std::vector<double> this_atom = coord[i].coordinate[j];
@@ -201,11 +201,6 @@ class KlistParaTest : public testing::Test
     // clear GlobalC::ucell
     void ClearUcell()
     {
-        for (int i = 0; i < GlobalC::ucell.ntype; i++)
-        {
-            delete[] GlobalC::ucell.atoms[i].tau;
-            delete[] GlobalC::ucell.atoms[i].taud;
-        }
         delete[] GlobalC::ucell.atoms;
     }
 };

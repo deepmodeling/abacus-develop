@@ -48,7 +48,7 @@ void Set_GlobalV_Default()
 {
     PARAM.input.nspin = 1;
     PARAM.input.test_charge = 0;
-    GlobalV::nelec = 8;
+    PARAM.input.nelec = 8;
 }
 } // namespace elecstate
 
@@ -164,7 +164,7 @@ TEST_F(ChargeTest, RenormalizeRho)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(GlobalV::nelec, 8);
+    EXPECT_EQ(PARAM.input.nelec, 8);
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -184,7 +184,7 @@ TEST_F(ChargeTest, CheckNe)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(GlobalV::nelec, 8);
+    EXPECT_EQ(PARAM.input.nelec, 8);
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
@@ -205,7 +205,7 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
             charge->rho[is][ir] = 0.1;
         }
     }
-    EXPECT_EQ(GlobalV::nelec, 8);
+    EXPECT_EQ(PARAM.input.nelec, 8);
     elecstate::tmp_xc_func_type = 3;
     elecstate::tmp_ucell_omega = ucell->omega;
     charge->renormalize_rho();

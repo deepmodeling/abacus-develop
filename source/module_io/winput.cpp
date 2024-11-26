@@ -703,9 +703,9 @@ void winput::Check()
     //			{
     //				ModuleBase::WARNING_QUIT("winput::Check","Please check your bloch_end");
     //			}
-    //			if(bloch_end > GlobalV::NBANDS)
+    //			if(bloch_end > PARAM.inp.nbands)
     //			{
-    //				ModuleBase::WARNING_QUIT("winput::Check","Bloch_end > GlobalV::NBANDS, reset either of them");
+    //				ModuleBase::WARNING_QUIT("winput::Check","Bloch_end > PARAM.inp.nbands, reset either of them");
     //			}
     //		}
     //	}// end after_iter

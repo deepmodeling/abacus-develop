@@ -13,55 +13,20 @@ Atom::Atom()
     type = 0;
     stapos_wf = 0;
     mass = 0.0;
-    tau = new ModuleBase::Vector3<double>[1];
-    dis = new ModuleBase::Vector3<double>[1];
-    taud = new ModuleBase::Vector3<double>[1];
-    vel = new ModuleBase::Vector3<double>[1];
-    mag = new double[1];
-    angle1 = new double[1];
-    angle2 = new double[1];
-    m_loc_ = new ModuleBase::Vector3<double>[1];
-    l_nchi = new int[1];
-    iw2l = new int[1];
-    iw2n = new int[1];
-    iw2m = new int[1];
-    iw2_ylm = new int[1];
-    iw2_new = new bool[1];
-    mbl = new ModuleBase::Vector3<int>[1];
 }
 
 Atom::~Atom()
 {
-    delete[] tau;
-    delete[] dis;
-    delete[] taud;
-    delete[] vel;
-    delete[] mag;
-    delete[] angle1;
-    delete[] angle2;
-    delete[] m_loc_;
-    delete[] l_nchi;
-    delete[] iw2l;
-    delete[] iw2n;
-    delete[] iw2m;
-    delete[] iw2_ylm;
-    delete[] iw2_new;
-    delete[] mbl;
 }
 
 void Atom::set_index(void)
 {
     assert(nw != 0);
-    delete[] iw2l;
-    delete[] iw2n;
-    delete[] iw2m;
-    delete[] iw2_ylm;
-    delete[] iw2_new;
-    iw2l = new int[nw];
-    iw2n = new int[nw];
-    iw2m = new int[nw];
-    iw2_ylm = new int[nw];
-    iw2_new = new bool[nw];
+    this->iw2l.resize(nw, 0);
+    this->iw2n.resize(nw, 0);
+    this->iw2m.resize(nw, 0);
+    this->iw2_ylm.resize(nw, 0);
+    this->iw2_new.resize(nw, false); // bool array to check if the local orbital is new
 
     int index = 0;
     for (int L = 0; L <= nwl; L++)
@@ -103,7 +68,7 @@ void Atom::print_Atom(std::ofstream& ofs)
     ModuleBase::GlobalFunc::OUT(ofs, "mass", mass);
     ofs << std::endl;
 
-    output::printv31_d(ofs, "atom_position(cartesian)", tau, na);
+    output::printv31_d(ofs, "atom_position(cartesian)", tau.data(), na);
     /*
     for (int i = 0;i < na;i++)
     {
@@ -131,34 +96,26 @@ void Atom::bcast_atom(void)
     Parallel_Common::bcast_bool(coulomb_potential);
     if (GlobalV::MY_RANK != 0)
     {
-        delete[] l_nchi;
-        l_nchi = new int[nwl + 1];
+        this->l_nchi.resize(nwl + 1, 0);
     }
-    Parallel_Common::bcast_int(l_nchi, nwl + 1);
+    Parallel_Common::bcast_int(l_nchi.data(), nwl + 1);
     Parallel_Common::bcast_bool(this->flag_empty_element);
     Parallel_Common::bcast_double(mass);
 
     if (GlobalV::MY_RANK != 0)
     {
         assert(na != 0);
-        delete[] tau;
-        delete[] dis;
-        delete[] taud;
-        delete[] vel;
-        delete[] mag;
-        delete[] angle1;
-        delete[] angle2;
-        delete[] m_loc_;
-        delete[] mbl;
-        tau = new ModuleBase::Vector3<double>[na];
-        dis = new ModuleBase::Vector3<double>[na];
-        taud = new ModuleBase::Vector3<double>[na];
-        vel = new ModuleBase::Vector3<double>[na];
-        mag = new double[na];
-        angle1 = new double[na];
-        angle2 = new double[na];
-        m_loc_ = new ModuleBase::Vector3<double>[na];
-        mbl = new ModuleBase::Vector3<int>[na];
+        this->tau.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->dis.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->taud.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->vel.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->mag.resize(na, 0);
+        this->angle1.resize(na, 0);
+        this->angle2.resize(na, 0);
+        this->m_loc_.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->mbl.resize(na, ModuleBase::Vector3<int>(0, 0, 0));
+        this->lambda.resize(na, ModuleBase::Vector3<double>(0, 0, 0));
+        this->constrain.resize(na, ModuleBase::Vector3<int>(0, 0, 0));
     }
 
     for (int i = 0; i < na; i++)
@@ -184,6 +141,12 @@ void Atom::bcast_atom(void)
         Parallel_Common::bcast_int(mbl[i].x);
         Parallel_Common::bcast_int(mbl[i].y);
         Parallel_Common::bcast_int(mbl[i].z);
+        Parallel_Common::bcast_double(lambda[i].x);
+        Parallel_Common::bcast_double(lambda[i].y);
+        Parallel_Common::bcast_double(lambda[i].z);
+        Parallel_Common::bcast_int(constrain[i].x);
+        Parallel_Common::bcast_int(constrain[i].y);
+        Parallel_Common::bcast_int(constrain[i].z);
     }
 
     return;

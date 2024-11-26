@@ -1,10 +1,9 @@
 #ifndef STO_DOS
 #define STO_DOS
 #include "module_elecstate/elecstate.h"
-#include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_pw/hamilt_stodft/hamilt_sdft_pw.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_che.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_func.h"
-#include "module_hamilt_pw/hamilt_stodft/sto_hchi.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
 
 class Sto_DOS
@@ -16,7 +15,7 @@ class Sto_DOS
             psi::Psi<std::complex<double>>* p_psi_in,
             hamilt::Hamilt<std::complex<double>>* p_hamilt_in,
             StoChe<double>& stoche,
-            Stochastic_WF* p_stowf_in);
+            Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf_in);
     ~Sto_DOS();
 
     /**
@@ -60,9 +59,12 @@ class Sto_DOS
     elecstate::ElecState* p_elec = nullptr;          ///< pointer to the electronic state
     psi::Psi<std::complex<double>>* p_psi = nullptr; ///< pointer to the wavefunction
     hamilt::Hamilt<std::complex<double>>* p_hamilt;  ///< pointer to the Hamiltonian
-    Stochastic_WF* p_stowf = nullptr;                ///< pointer to the stochastic wavefunctions
-    Stochastic_hchi stohchi;                         ///< stochastic hchi
-    Sto_Func<double> stofunc;                        ///< functions
+
+    Stochastic_WF<std::complex<double>, base_device::DEVICE_CPU>* p_stowf
+        = nullptr;            ///< pointer to the stochastic wavefunctions
+    Sto_Func<double> stofunc; ///< functions
+
+    hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr; ///< pointer to the Hamiltonian for sDFT
 };
 
 #endif // STO_DOS

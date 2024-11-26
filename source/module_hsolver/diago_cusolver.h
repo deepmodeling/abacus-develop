@@ -1,7 +1,8 @@
 #ifndef DIAGOCUSOLVER_H
 #define DIAGOCUSOLVER_H
 
-#include "diagh.h"
+#include "module_base/macros.h"   // GetRealType
+#include "module_hamilt_general/hamilt.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hsolver/kernels/cuda/diag_cusolver.cuh"
 // #include "module_hsolver/kernels/cuda/dngvd_op.cu"
@@ -9,9 +10,9 @@
 namespace hsolver
 {
 
-// DiagoCusolver class, derived from DiagH, for diagonalization using CUSOLVER
+// DiagoCusolver class for diagonalization using CUSOLVER
 template <typename T>
-class DiagoCusolver : public DiagH<T>
+class DiagoCusolver
 {
   private:
     // Real is the real part of the complex type T
@@ -24,7 +25,7 @@ class DiagoCusolver : public DiagH<T>
     ~DiagoCusolver();
     
     // Override the diag function for CUSOLVER diagonalization
-    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in) override;
+    void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 
     // Static variable to keep track of the decomposition state
     static int DecomposedState;

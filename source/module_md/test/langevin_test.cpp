@@ -49,7 +49,7 @@ class Langevin_test : public testing::Test
         Setcell::parameters(param_in.input);
 
         p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(param_in.inp, ucell);
+        p_esolver->before_all_runners(ucell, param_in.inp);
 
         mdrun = new Langevin(param_in, ucell);
         mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);

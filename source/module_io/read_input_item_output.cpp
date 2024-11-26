@@ -11,7 +11,7 @@ void ReadInput::item_output()
         item.annotation = "output the structure files after each ion step";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::vector<std::string> offlist = {"nscf", "get_S", "get_pchg", "get_wf"};
-            if (find_str(offlist, para.input.calculation))
+            if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
                 para.input.out_stru = false;
             }
@@ -40,14 +40,18 @@ void ReadInput::item_output()
         item.annotation = "> 0 output charge density for selected electron steps"
                           ", second parameter controls the precision, default is 3.";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            std::vector<int> out_chg(count); // create a placeholder vector
-            std::transform(item.str_values.begin(), item.str_values.end(), out_chg.begin(), [](std::string s) { return std::stoi(s); });
-            // assign non-negative values to para.input.out_chg
-            std::copy(out_chg.begin(), out_chg.end(), para.input.out_chg.begin());
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_chg should have 1 or 2 values");
+            }
+            para.input.out_chg[0] = (item.str_values[0] == "-1")? -1: assume_as_boolean(item.str_values[0]);
+            para.input.out_chg[1] = (count == 2) ? std::stoi(item.str_values[1]) : 3;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg") ? 1 : para.input.out_chg[0];
+            para.input.out_chg[0] = (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
+                                     ? 1
+                                     : para.input.out_chg[0];
         };
         sync_intvec(input.out_chg, 2, 0);
         this->add_item(item);
@@ -79,6 +83,12 @@ void ReadInput::item_output()
     {
         Input_Item item("printe");
         item.annotation = "Print out energy for each band for every printe steps";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.printe <= 0) // default is scf_nmax
+            {
+                para.input.printe = para.input.scf_nmax;
+            }
+        };
         read_sync_int(input.printe);
         this->add_item(item);
     }
@@ -86,21 +96,13 @@ void ReadInput::item_output()
         Input_Item item("out_band");
         item.annotation = "output energy and band structure (with precision 8)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
-                para.input.out_band[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_band[0] = std::stoi(item.str_values[0]);
-                para.input.out_band[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_band should have 1 or 2 values");
             }
+            para.input.out_band[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_band[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -229,21 +231,13 @@ void ReadInput::item_output()
         Input_Item item("out_mat_hs");
         item.annotation = "output H and S matrix (with precision 8)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_hs[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_mat_hs[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_hs[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs should have 1 or 2 values");
             }
+            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_hs[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
@@ -258,21 +252,13 @@ void ReadInput::item_output()
         Input_Item item("out_mat_tk");
         item.annotation = "output T(k)";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            size_t count = item.get_size();
-            if (count == 1)
-            {
-                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_tk[1] = 8;
-            }
-            else if (count == 2)
-            {
-                para.input.out_mat_tk[0] = std::stoi(item.str_values[0]);
-                para.input.out_mat_tk[1] = std::stoi(item.str_values[1]);
-            }
-            else
+            const size_t count = item.get_size();
+            if (count != 1 && count != 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk should have 1 or 2 values");
             }
+            para.input.out_mat_tk[0] = assume_as_boolean(item.str_values[0]);
+            para.input.out_mat_tk[1] = (count == 2) ? std::stoi(item.str_values[1]) : 8;
         };
         sync_intvec(input.out_mat_tk, 2, 0);
         this->add_item(item);
@@ -472,7 +458,7 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("bands_to_print");
-        item.annotation = "specify the bands to be calculated in get_wf and get_pchg calculation";
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.bands_to_print);
         };
@@ -483,6 +469,51 @@ void ReadInput::item_output()
             }
         };
         add_intvec_bcast(input.bands_to_print, para.input.bands_to_print.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_pchg");
+        item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_pchg);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_pchg, para.input.out_pchg.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_norm");
+        item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_norm);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_norm, para.input.out_wfc_norm.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_wfc_re_im");
+        item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.out_wfc_re_im);
+        };
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.out_wfc_re_im, para.input.out_wfc_re_im.size(), 0);
         this->add_item(item);
     }
     {

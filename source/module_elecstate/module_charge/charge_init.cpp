@@ -14,7 +14,7 @@
 #include "module_elecstate/magnetism.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_io/rho_io.h"
+#include "module_io/cube_io.h"
 #include "module_io/rhog_io.h"
 #include "module_io/read_wfc_to_rho.h"
 #ifdef USE_PAW
@@ -53,63 +53,37 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-                double& ef_tmp = eferm_iout.get_ef(is);
-                if (ModuleIO::read_rho(
-#ifdef __MPI
-                        &(GlobalC::Pgrid),
-#endif
-                        GlobalV::MY_RANK,
-                        PARAM.inp.esolver_type,
-                        GlobalV::RANK_IN_STOGROUP,
-                        is,
-                        GlobalV::ofs_running,
-                        PARAM.inp.nspin,
-                        ssc.str(),
-                        this->rho[is],
-                        this->rhopw->nx,
-                        this->rhopw->ny,
-                        this->rhopw->nz,
-                        ef_tmp,
-                        &(GlobalC::ucell),
-                        this->prenspin))
+                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                    GlobalV::ofs_running,
+                    ssc.str(),
+                    this->rho[is],
+                    GlobalC::ucell.nat))
                 {
                     GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
                 }
-                else if (is > 0)
+                else if (is > 0)    // nspin=2 or 4
                 {
-                    if (prenspin == 1)
+                    if (is == 1)    // failed at the second spin
                     {
-                        GlobalV::ofs_running << " Didn't read in the charge density but autoset it for spin " << is + 1
-                                             << std::endl;
+                        std::cout << "Incomplete charge density file!" << std::endl;
+                        read_error = true;
+                        break;
+                    }
+                    else if (is == 2)   // read 2 files when nspin=4
+                    {
+                        GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
+                            << std::endl;
+                    }
+                    else if (is == 3)   // read 2 files when nspin=4
+                    {
+                        GlobalV::ofs_running << " rearrange charge density " << std::endl;
                         for (int ir = 0; ir < this->rhopw->nrxx; ir++)
                         {
-                            this->rho[is][ir] = 0.0;
-                        }
-                    }
-                    //
-                    else if (prenspin == 2)
-                    { // read up and down , then rearrange them.
-                        if (is == 1)
-                        {
-                            std::cout << "Incomplete charge density file!" << std::endl;
-                            read_error = true;
-                            break;
-                        }
-                        else if (is == 2)
-                        {
-                            GlobalV::ofs_running << " Didn't read in the charge density but would rearrange it later. "
-                                                 << std::endl;
-                        }
-                        else if (is == 3)
-                        {
-                            GlobalV::ofs_running << " rearrange charge density " << std::endl;
-                            for (int ir = 0; ir < this->rhopw->nrxx; ir++)
-                            {
-                                this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
-                                this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
-                                this->rho[1][ir] = 0.0;
-                                this->rho[2][ir] = 0.0;
-                            }
+                            this->rho[3][ir] = this->rho[0][ir] - this->rho[1][ir];
+                            this->rho[0][ir] = this->rho[0][ir] + this->rho[1][ir];
+                            this->rho[1][ir] = 0.0;
+                            this->rho[2][ir] = 0.0;
                         }
                     }
                 }
@@ -129,24 +103,12 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_rho(
-#ifdef __MPI
-                            &(GlobalC::Pgrid),
-#endif
-                            GlobalV::MY_RANK,
-                            PARAM.inp.esolver_type,
-                            GlobalV::RANK_IN_STOGROUP,
-                            is,
-                            GlobalV::ofs_running,
-                            PARAM.inp.nspin,
-                            ssc.str(),
-                            this->kin_r[is],
-                            this->rhopw->nx,
-                            this->rhopw->ny,
-                            this->rhopw->nz,
-                            eferm_iout.ef,
-                            &(GlobalC::ucell),
-                            this->prenspin))
+                    if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                        (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                        GlobalV::ofs_running,
+                        ssc.str(),
+                        this->kin_r[is],
+                        GlobalC::ucell.nat))
                     {
                         GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
                     }
@@ -195,7 +157,25 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            try
+            {
+                GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            }
+            catch (const std::exception& e)
+            {
+                // try to load from the output of `out_chg` 
+                std::stringstream ssc;
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                    GlobalV::ofs_running,
+                    ssc.str(),
+                    this->rho[is],
+                    GlobalC::ucell.nat))
+                {
+                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                }
+            }
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
@@ -298,8 +278,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {
-        rhoneg += std::min(0.0, this->rhopw->ft.get_auxr_data<double>()[ir].real());
-        rhoima += std::abs(this->rhopw->ft.get_auxr_data<double>()[ir].imag());
+        rhoneg += std::min(0.0, this->rhopw->fft_bundle.get_auxr_data<double>()[ir].real());
+        rhoima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.

@@ -19,7 +19,7 @@ if(USE_ROCM)
   set(ATen_ROCM_DEPENDENCY_LIBS container_rocm)
 endif()
 
-add_library(container OBJECT ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
+add_library(container STATIC ${ATen_CPU_SRCS} ${ATen_CUDA_SRCS})
 
 target_link_libraries(container PUBLIC 
   ${ATen_CPU_DEPENDENCY_LIBS} ${ATen_CUDA_DEPENDENCY_LIBS} ${ATen_ROCM_DEPENDENCY_LIBS})

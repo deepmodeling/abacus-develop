@@ -2,3 +2,4 @@ K_POINTS
 0
 Gamma
 4 4 4 0 0 0
+###This file will be overwritten by Abacus because either kspacing is used or gamma_only is set to 1

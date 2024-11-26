@@ -103,6 +103,7 @@
 135_PW_15_PK
 140_PW_15_SO
 140_PW_15_SO_average
+140_PW_15_SO_wfcinit
 150_PW_15_CR_VDW3
 170_PW_MD_1O
 170_PW_MD_2O
@@ -171,7 +172,7 @@
 211_NO_S2_elec_add
 211_NO_S2_nupdown0
 211_NO_S2_elec_minus
-212_NO_wfc_ienvelope
+212_NO_wfc_get_wf
 212_NO_wfc_out
 213_NO_mulliken
 214_NO_mulliken_nscf
@@ -223,8 +224,8 @@
 311_NO_GO_elec_minus
 311_NO_GO_S2_elec_minus
 312_NO_GO_wfc_file
-312_NO_GO_wfc_ienvelope
-312_NO_GO_wfc_istate
+312_NO_GO_wfc_get_wf
+312_NO_GO_wfc_get_pchg
 312_NO_GO_wfc_out
 313_NO_GO_mulliken
 314_NO_GO_dm_out
@@ -243,6 +244,7 @@
 386_NO_GO_MD_S1_HSE
 391_NO_GO_LR
 392_NO_GO_LR_HF
+393_NO_GO_ULR_HF
 401_NP_KP_sp
 401_NP_KP_spd
 #501_NO_neighboring_GaAs512

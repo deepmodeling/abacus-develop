@@ -135,16 +135,17 @@ ifdef LIBRI_DIR
     HONG += -D__EXX -DEXX_H_COMM=2 -DEXX_DM=3 -DTEST_EXX_LCAO=0 -DTEST_EXX_RADIAL=1
 endif
 
+ifdef LIBNPY_DIR
+    CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
+    HONG += -D__DEEPKS
+    INCLUDES += $(CNPY_INCLUDE_DIR)
+endif
+
 ifdef LIBTORCH_DIR
- ifdef LIBNPY_DIR
-      LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
-      LIBTORCH_LIB_DIR= ${LIBTORCH_DIR}/lib
-      LIBTORCH_LIB = -L${LIBTORCH_LIB_DIR} -ltorch -lc10 -Wl,-rpath,${LIBTORCH_LIB_DIR} -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch_cpu.so" -Wl,--as-needed ${LIBTORCH_LIB_DIR}/libc10.so -lpthread -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch.so" -Wl,--as-needed 
-      CNPY_INCLUDE_DIR = -I${LIBNPY_DIR}/include
-      HONG += -D__DEEPKS
-      INCLUDES += $(LIBTORCH_INCLUDE_DIR) $(CNPY_INCLUDE_DIR)
-      LIBS += $(LIBTORCH_LIB)
-  endif
+    LIBTORCH_INCLUDE_DIR =  -I${LIBTORCH_DIR}/include -I${LIBTORCH_DIR}/include/torch/csrc/api/include
+    INCLUDES += $(LIBTORCH_INCLUDE_DIR)
+    LIBTORCH_LIB_DIR= ${LIBTORCH_DIR}/lib
+    LIBS += -L${LIBTORCH_LIB_DIR} -ltorch -lc10 -Wl,-rpath,${LIBTORCH_LIB_DIR} -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch_cpu.so" -Wl,--as-needed ${LIBTORCH_LIB_DIR}/libc10.so -lpthread -Wl,--no-as-needed,"${LIBTORCH_LIB_DIR}/libtorch.so" -Wl,--as-needed 
 endif
 
 ifdef DeePMD_DIR
@@ -162,18 +163,17 @@ ifdef DeePMD_DIR
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_c -Wl,-rpath=${DeeP_LIB_DIR}
     else
         LIBS += -L${DeeP_LIB_DIR} -ldeepmd_cc -Wl,-rpath=${DeeP_LIB_DIR}
-
-        #==========================
-        # TensorFlow package
-        #==========================
-        ifndef TensorFlow_DIR
-            TensorFlow_DIR = ${DeePMD_DIR}
-        endif
-        TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
-        LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
-        TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
-        INCLUDES += -I${TensorFlow_INCLUDE_DIR}
     endif
+endif
+
+ifdef TensorFlow_DIR
+    #==========================
+    # TensorFlow package
+    #==========================
+    TensorFlow_LIB_DIR = ${TensorFlow_DIR}/lib
+    LIBS += -L${TensorFlow_LIB_DIR} -ltensorflow_cc -Wl,-rpath=${TensorFlow_LIB_DIR}
+    TensorFlow_INCLUDE_DIR = ${TensorFlow_DIR}/include
+    INCLUDES += -I${TensorFlow_INCLUDE_DIR}
 endif
 
 ifdef PEXSI_DIR

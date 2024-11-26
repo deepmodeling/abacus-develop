@@ -257,11 +257,16 @@ void ESolver_OF::init_opt()
     }
 }
 
+void ESolver_OF::cal_potential_wrapper(double* ptemp_phi, double* rdLdphi)
+{
+    this->bound_cal_potential_(ptemp_phi, rdLdphi);
+}
+
 /**
  * @brief [Interface to opt]
  * Call optimization methods to get the optimization direction
  */
-void ESolver_OF::get_direction()
+void ESolver_OF::get_direction(UnitCell& ucell)
 {
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
@@ -273,7 +278,7 @@ void ESolver_OF::get_direction()
                                  this->flag_,
                                  this->pdirect_[is],
                                  this,
-                                 &ESolver_OF::cal_potential);
+                                 &ESolver_OF::cal_potential_wrapper);
         }
         else if (this->of_method_ == "cg1")
         {

@@ -32,6 +32,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ifs >> pp.rho_atc[ir];
         }
+        this->skip_number(ifs, this->mesh_changed);
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_NLCC>");
     }
 
@@ -53,6 +54,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
         {
             ifs >> pp.vloc_at[ir];
         }
+        this->skip_number(ifs, this->mesh_changed);
         ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_LOCAL>");
     }
 
@@ -90,6 +92,7 @@ int Pseudopot_upf::read_pseudo_upf201(std::ifstream &ifs, Atom_pseudo& pp)
     {
         ifs >> pp.rho_at[ir];
     }
+    this->skip_number(ifs, this->mesh_changed);
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RHOATOM>");
 
     //--------------------------------------
@@ -406,6 +409,7 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
     {
         ifs >> pp.r[ir];
     }
+    this->skip_number(ifs, this->mesh_changed);
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_R>");
 
     if (ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_RAB", true, false))
@@ -420,6 +424,7 @@ void Pseudopot_upf::read_pseudo_upf201_mesh(std::ifstream& ifs, Atom_pseudo& pp)
     {
         ifs >> pp.rab[ir];
     }
+    this->skip_number(ifs, this->mesh_changed);
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_RAB>");
     ModuleBase::GlobalFunc::SCAN_END(ifs, "</PP_MESH>");
 }
@@ -497,6 +502,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
         {
             ifs >> pp.betar(ib, ir);
         }
+        this->skip_number(ifs, this->mesh_changed);
         word = "</PP_BETA." + std::to_string(ib + 1) + ">";
         ModuleBase::GlobalFunc::SCAN_END(ifs, word);
     }
@@ -639,6 +645,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
                         {
                             ifs >> pp.qfuncl(l, nmb, ir);
                         }
+                        this->skip_number(ifs, this->mesh_changed);
                         word = "</PP_QIJL." + std::to_string(nb + 1) + "." + std::to_string(mb + 1) + "."
                                + std::to_string(l) + ">";
                         ModuleBase::GlobalFunc::SCAN_END(ifs, word);
@@ -653,6 +660,7 @@ void Pseudopot_upf::read_pseudo_upf201_nonlocal(std::ifstream& ifs, Atom_pseudo&
                     {
                         ifs >> this->qfunc(nmb, ir);
                     }
+                    this->skip_number(ifs, this->mesh_changed);
                     word = "</PP_QIJ." + std::to_string(nb + 1) + "." + std::to_string(mb + 1) + ">";
                     ModuleBase::GlobalFunc::SCAN_END(ifs, word);
                 }
@@ -757,6 +765,7 @@ void Pseudopot_upf::read_pseudo_upf201_pswfc(std::ifstream& ifs, Atom_pseudo& pp
         {
             assert(pp.chi.c[iw * pp.mesh + ir] == pp.chi(iw, ir));
         }
+        this->skip_number(ifs, this->mesh_changed);
         word = "</PP_CHI." + std::to_string(iw + 1) + ">";
         ModuleBase::GlobalFunc::SCAN_END(ifs, word);
     }

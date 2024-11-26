@@ -30,6 +30,7 @@ list(APPEND device_srcs
   module_hamilt_pw/hamilt_pwdft/kernels/veff_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/ekinetic_op.cpp
   module_hamilt_pw/hamilt_pwdft/kernels/meta_op.cpp
+  module_hamilt_pw/hamilt_stodft/kernels/hpsi_norm_op.cpp
   module_basis/module_pw/kernels/pw_op.cpp
   module_hsolver/kernels/dngvd_op.cpp
   module_hsolver/kernels/math_kernel_op.cpp
@@ -55,6 +56,7 @@ if(USE_CUDA)
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/veff_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/ekinetic_op.cu
     module_hamilt_pw/hamilt_pwdft/kernels/cuda/meta_op.cu
+    module_hamilt_pw/hamilt_stodft/kernels/cuda/hpsi_norm_op.cu
     module_basis/module_pw/kernels/cuda/pw_op.cu
     module_hsolver/kernels/cuda/dngvd_op.cu
     module_hsolver/kernels/cuda/math_kernel_op.cu
@@ -78,6 +80,7 @@ if(USE_ROCM)
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/veff_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/ekinetic_op.hip.cu
     module_hamilt_pw/hamilt_pwdft/kernels/rocm/meta_op.hip.cu
+    module_hamilt_pw/hamilt_stodft/kernels/rocm/hpsi_norm_op.hip.cu
     module_basis/module_pw/kernels/rocm/pw_op.hip.cu
     module_hsolver/kernels/rocm/dngvd_op.hip.cu
     module_hsolver/kernels/rocm/math_kernel_op.hip.cu

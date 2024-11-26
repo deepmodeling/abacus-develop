@@ -27,6 +27,7 @@ VPATH=./src_global:\
 ./module_base/module_mixing:\
 ./module_md:\
 ./module_basis/module_pw:\
+./module_basis/module_pw/module_fft:\
 ./module_esolver:\
 ./module_hsolver:\
 ./module_hsolver/kernels:\
@@ -49,6 +50,7 @@ VPATH=./src_global:\
 ./module_hamilt_pw/hamilt_stodft:\
 ./module_hamilt_pw/hamilt_pwdft/operator_pw:\
 ./module_hamilt_pw/hamilt_pwdft/kernels:\
+./module_hamilt_pw/hamilt_stodft/kernels:\
 ./module_hamilt_lcao/module_hcontainer:\
 ./module_hamilt_lcao/hamilt_lcaodft:\
 ./module_hamilt_lcao/module_tddft:\
@@ -121,6 +123,7 @@ OBJS_MAIN=main.o\
 
 OBJS_BASE=abfs-vector3_order.o\
     assoc_laguerre.o\
+    blas_connector.o\
     complexarray.o\
     complexmatrix.o\
     clebsch_gordan_coeff.o\
@@ -165,7 +168,6 @@ OBJS_BASE=abfs-vector3_order.o\
     broyden_mixing.o\
     memory_op.o\
     device.o\
-
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -227,10 +229,11 @@ OBJS_ELECSTAT=elecstate.o\
     cal_ux.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
-      elecstate_lcao_tddft.o\
       elecstate_lcao_cal_tau.o\
       density_matrix.o\
+      density_matrix_io.o\
       cal_dm_psi.o\
+      cal_edm_tddft.o\
 
 OBJS_ESOLVER=esolver.o\
     esolver_ks.o\
@@ -243,26 +246,13 @@ OBJS_ESOLVER=esolver.o\
     esolver_of.o\
     esolver_of_tool.o\
     esolver_of_interface.o\
-    print_funcs.o\
-    pw_fun.o\
-    pw_init_after_vc.o\
-    pw_init_globalc.o\
-    pw_nscf.o\
     pw_others.o\
 
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
-      dpks_cal_e_delta_band.o\
-      dftu_cal_occup_m.o\
-      io_npz.o\
-      set_matrix_grid.o\
       lcao_before_scf.o\
-      lcao_gets.o\
-      lcao_nscf.o\
+      esolver_gets.o\
       lcao_others.o\
-      lcao_init_after_vc.o\
-      lcao_fun.o\
-      cal_edm_tddft.o\
 
 OBJS_GINT=gint.o\
       gint_gamma_env.o\
@@ -291,10 +281,12 @@ OBJS_GINT=gint.o\
       init_orb.o\
 
 OBJS_HAMILT=hamilt_pw.o\
+    hamilt_sdft_pw.o\
     operator.o\
     operator_pw.o\
     ekinetic_pw.o\
     ekinetic_op.o\
+    hpsi_norm_op.o\
     veff_pw.o\
     veff_op.o\
     nonlocal_pw.o\
@@ -321,7 +313,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
-    sc_lambda_lcao.o\
+    dspin_lcao.o\
     dftu_lcao.o\
 
 OBJS_HCONTAINER=base_matrix.o\
@@ -411,6 +403,9 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_nao_random.o\
 
 OBJS_PW=fft.o\
+    fft_bundle.o\
+    fft_base.o\
+    fft_cpu.o\
     pw_basis.o\
     pw_basis_k.o\
     pw_basis_sup.o\
@@ -484,7 +479,6 @@ OBJS_IO=input_conv.o\
     output.o\
     print_info.o\
     read_cube.o\
-    read_rho.o\
     rhog_io.o\
     read_exit_file.o\
     read_wfc_pw.o\
@@ -555,6 +549,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       output_mulliken.o\
       output_sk.o\
       output_dmk.o\
+      io_npz.o\
 
 OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
@@ -569,14 +564,9 @@ OBJS_LCAO=evolve_elec.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
 	  FORCE_k.o\
-	  fvl_dphi_gamma.o\
-	  fvl_dphi_k.o\
-	  fedm_gamma.o\
-	  fedm_k.o\
-	  ftvnl_dphi_gamma.o\
-	  ftvnl_dphi_k.o\
-	  fvnl_dbeta_gamma.o\
-	  fvnl_dbeta_k.o\
+      stress_tools.o\
+      edm.o\
+      pulay_force_stress_center2.o\
 	  grid_init.o\
       spar_dh.o\
       spar_exx.o\
@@ -586,7 +576,6 @@ OBJS_LCAO=evolve_elec.o\
       LCAO_set_fs.o\
       LCAO_set_st.o\
       LCAO_nl_mu.o\
-      LCAO_nnr.o\
       LCAO_set_zero.o\
       LCAO_allocate.o\
       LCAO_set_mat2d.o\
@@ -606,7 +595,6 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       ABFs_Construct-PCA.o \
       exx_opt_orb.o \
       exx_opt_orb-print.o \
-      exx_lip.o\
       Matrix_Orbs11.o\
       Matrix_Orbs21.o\
       Matrix_Orbs22.o\
@@ -622,6 +610,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_grid.o\
     parallel_kpoints.o\
     parallel_reduce.o\
+    parallel_device.o
       
 OBJS_SRCPW=H_Ewald_pw.o\
     dnrm2.o\
@@ -633,6 +622,11 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mpi.o\
     charge_extra.o\
     charge_mixing.o\
+    charge_mixing_dmr.o\
+    charge_mixing_residual.o\
+    charge_mixing_preconditioner.o\
+    charge_mixing_rho.o\
+    charge_mixing_uspp.o\
     fp_energy.o\
     forces.o\
     forces_us.o\
@@ -640,6 +634,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_cc.o\
     forces_scc.o\
     fs_nonlocal_tools.o\
+    fs_kin_tools.o\
     force_op.o\
     stress_op.o\
     wf_op.o\
@@ -652,7 +647,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     structure_factor_k.o\
     soc.o\
     sto_iter.o\
-    sto_hchi.o\
     sto_che.o\
     sto_wf.o\
     sto_func.o\
@@ -673,7 +667,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     symmetry_rhog.o\
     wavefunc.o\
     wf_atomic.o\
-    wfinit.o\
+    psi_init.o\
     elecond.o\
     sto_tool.o\
     sto_elecond.o\
@@ -684,7 +678,9 @@ OBJS_VDW=vdw.o\
     vdwd3_parameters.o\
     vdwd2.o\
     vdwd3.o\
-    vdwd3_parameters_tab.o
+    vdwd3_parameters_tab.o\
+    vdwd3_autoset_xcname.o\
+    vdwd3_autoset_xcparam.o
 
 OBJS_DFTU=dftu.o\
       dftu_force.o\
@@ -696,14 +692,11 @@ OBJS_DFTU=dftu.o\
       dftu_hamilt.o
 
 OBJS_DELTASPIN=basic_funcs.o\
-      cal_h_lambda.o\
       cal_mw_from_lambda.o\
-      cal_mw_helper.o\
       cal_mw.o\
       init_sc.o\
       lambda_loop_helper.o\
       lambda_loop.o\
-      sc_parse_json.o\
       spin_constrain.o\
       template_helpers.o\
 
@@ -730,9 +723,8 @@ OBJS_TENSOR=tensor.o\
     dmr_complex.o\
     operator_lr_hxc.o\
     operator_lr_exx.o\
-    kernel_xc.o\
+    xc_kernel.o\
     pot_hxc_lrtd.o\
-    hsolver_lrtd.o\
     lr_spectrum.o\
     hamilt_casida.o\
     esolver_lrtd_lcao.o\

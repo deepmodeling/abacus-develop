@@ -76,12 +76,12 @@ void sparse_format::cal_HR_dftu(
 
             GlobalC::dftu.cal_eff_pot_mat_R_double(current_spin, SR_tmp, HR_tmp);
 
-            for (int i = 0; i < GlobalV::NLOCAL; ++i)
+            for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {
                 ir = pv.global2local_row(i);
                 if (ir >= 0)
                 {
-                    for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                    for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                     {
                         ic = pv.global2local_col(j);
                         if (ic >= 0)
@@ -196,12 +196,12 @@ void sparse_format::cal_HR_dftu_soc(
 
             GlobalC::dftu.cal_eff_pot_mat_R_complex_double(current_spin, SR_soc_tmp, HR_soc_tmp);
 
-            for (int i = 0; i < GlobalV::NLOCAL; ++i)
+            for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {
                 ir = pv.global2local_row(i);
                 if (ir >= 0)
                 {
-                    for (int j = 0; j < GlobalV::NLOCAL; ++j)
+                    for (int j = 0; j < PARAM.globalv.nlocal; ++j)
                     {
                         ic = pv.global2local_col(j);
                         if (ic >= 0)

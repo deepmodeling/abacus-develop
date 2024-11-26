@@ -12,6 +12,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/write_HS.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress.h"
 
 #include <map>
 #include <unordered_map>
@@ -130,16 +131,6 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               &GlobalC::GridD,
                               nullptr); // delete lm.Hloc_fixedR
 
-    // calculate dVnl=<phi|dVnl|dphi> in LCAO
-    LCAO_domain::build_Nonlocal_mu_new(pv,
-                                       fsr,
-                                       nullptr,
-                                       cal_deri,
-                                       GlobalC::ucell,
-                                       orb,
-                                       *(two_center_bundle.overlap_orb_beta),
-                                       &GlobalC::GridD);
-
     // calculate asynchronous S matrix to output for Hefei-NAMD
     if (PARAM.inp.cal_syns)
     {
@@ -216,8 +207,8 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //    RA.for_2d(pv, GlobalV::GAMMA_ONLY_LOCAL, GlobalC::ORB.cutoffs());
 //
 //    double* test;
-//    test = new double[GlobalV::NLOCAL * GlobalV::NLOCAL];
-//    ModuleBase::GlobalFunc::ZEROS(test, GlobalV::NLOCAL * GlobalV::NLOCAL);
+//    test = new double[PARAM.globalv.nlocal * PARAM.globalv.nlocal];
+//    ModuleBase::GlobalFunc::ZEROS(test, PARAM.globalv.nlocal * PARAM.globalv.nlocal);
 //
 //    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
 //    {
@@ -240,7 +231,7 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //                    {
 //                        const int iw2_all = start2 + kk;
 //                        assert(irr < pv.nnr);
-//                        test[iw1_all * GlobalV::NLOCAL + iw2_all] += mmm[irr];
+//                        test[iw1_all * PARAM.globalv.nlocal + iw2_all] += mmm[irr];
 //                        ++irr;
 //                    }
 //                }
@@ -251,13 +242,13 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //
 //    std::cout << "\n " << name << std::endl;
 //    std::cout << std::setprecision(4);
-//    for (int i = 0; i < GlobalV::NLOCAL; i++)
+//    for (int i = 0; i < PARAM.globalv.nlocal; i++)
 //    {
-//        for (int j = 0; j < GlobalV::NLOCAL; j++)
+//        for (int j = 0; j < PARAM.globalv.nlocal; j++)
 //        {
-//            if (std::abs(test[i * GlobalV::NLOCAL + j]) > 1.0e-5)
+//            if (std::abs(test[i * PARAM.globalv.nlocal + j]) > 1.0e-5)
 //            {
-//                std::cout << std::setw(12) << test[i * GlobalV::NLOCAL + j];
+//                std::cout << std::setw(12) << test[i * PARAM.globalv.nlocal + j];
 //            }
 //            else
 //            {
@@ -312,25 +303,21 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                    kv->get_nks(),
                    kv->kvec_d);
 
+    const double* dSx[3] = { fsr.DSloc_Rx, fsr.DSloc_Ry, fsr.DSloc_Rz };
     // calculate the energy density matrix
     // and the force related to overlap matrix and energy density matrix.
-    this->cal_fedm(isforce, isstress, fsr, ucell, dm, psi, pv, pelec, foverlap, soverlap, kv, ra);
+    PulayForceStress::cal_pulay_fs(foverlap, soverlap,
+        this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
+        ucell, pv, dSx, fsr.DH_r, isforce, isstress, ra, -1.0, 1.0);
 
-    this->cal_ftvnl_dphi(dm, pv, ucell, fsr, isforce, isstress, ftvnl_dphi, stvnl_dphi, ra);
+    const double* dHx[3] = { fsr.DHloc_fixedR_x, fsr.DHloc_fixedR_y, fsr.DHloc_fixedR_z }; // T+Vnl
+    const double* dHxy[6] = { fsr.stvnl11, fsr.stvnl12, fsr.stvnl13, fsr.stvnl22, fsr.stvnl23, fsr.stvnl33 };   //T
+    // tvnl_dphi
+    PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress, ra, 1.0, -1.0);
 
     // doing on the real space grid.
-    this->cal_fvl_dphi(isforce, isstress, pelec->pot, gint, fvl_dphi, svl_dphi);
-
-    this->cal_fvnl_dbeta(dm,
-                         pv,
-                         ucell,
-                         orb,
-                         *(two_center_bundle.overlap_orb_beta),
-                         GlobalC::GridD,
-                         isforce,
-                         isstress,
-                         fvnl_dbeta,
-                         svnl_dbeta);
+    // vl_dphi
+    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
 
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)

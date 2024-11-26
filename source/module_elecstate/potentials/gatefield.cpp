@@ -37,7 +37,7 @@ void Gatefield::add_gatefield(double *vltot,
     {
         ion_charge += cell.atoms[it].na * cell.atoms[it].ncpp.zv;
     }
-    rho_surface = -(GlobalV::nelec - ion_charge) / area * ModuleBase::TWO_PI;
+    rho_surface = -(PARAM.inp.nelec - ion_charge) / area * ModuleBase::TWO_PI;
 
     double block_size = block_up - block_down;
 
@@ -56,7 +56,7 @@ void Gatefield::add_gatefield(double *vltot,
         }
     }
     etotgatefield
-        = -ModuleBase::e2 * rho_surface * cell.lat0 / Efield::bmod * (factor + (GlobalV::nelec - ion_charge) / 12.0);
+        = -ModuleBase::e2 * rho_surface * cell.lat0 / Efield::bmod * (factor + (PARAM.inp.nelec - ion_charge) / 12.0);
 
     GlobalV::ofs_running << "\n\n Adding charged plate to compensate the charge of the system" << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "prefactor of the potential (Ry a.u.)", rho_surface);

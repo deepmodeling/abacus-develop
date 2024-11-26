@@ -10,7 +10,10 @@
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #undef private
+
+#ifdef _OPENMP
 #include <omp.h>
+#endif
 
 int FUNC_TYPE = 1;
 
@@ -116,7 +119,9 @@ class ChargeMixingTest : public ::testing::Test
 
 TEST_F(ChargeMixingTest, SetMixingTest)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     PARAM.input.nspin = 1;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
@@ -214,7 +219,9 @@ TEST_F(ChargeMixingTest, SetMixingTest)
 
 TEST_F(ChargeMixingTest, InitMixingTest)
 {
+#ifdef _OPENMP
     omp_set_num_threads(1);
+#endif
     PARAM.input.nspin = 1;
     FUNC_TYPE = 1;
     Charge_Mixing CMtest;
@@ -1023,4 +1030,42 @@ TEST_F(ChargeMixingTest, MixDivCombTest)
     CMtest.clean_data(datas2, datahf2);
     EXPECT_EQ(datas2, nullptr);
     EXPECT_EQ(datahf2, nullptr);
+}
+
+TEST_F(ChargeMixingTest, SCFOscillationTest)
+{
+    Charge_Mixing CMtest;
+    int scf_nmax = 20;
+    int scf_os_ndim = 3;
+    double scf_os_thr = -0.05;
+    bool scf_oscillate = false;
+    std::vector<double> drho(scf_nmax, 0.0);
+    std::vector<bool> scf_oscillate_ref(scf_nmax, false);
+    drho = {6.83639633652e-05,
+            4.93523029235e-05,
+            3.59230097735e-05,
+            2.68356403913e-05,
+            2.17490806464e-05,
+            2.14231642508e-05,
+            1.67507494811e-05,
+            1.53575889539e-05,
+            1.26504511554e-05,
+            1.04762016224e-05,
+            8.10000162918e-06,
+            7.66427917682e-06,
+            6.70112820094e-06,
+            5.68594436664e-06,
+            4.80120233733e-06,
+            4.86519757184e-06,
+            4.37855804356e-06,
+            4.29922703412e-06,
+            4.36398486331e-06,
+            4.94224615955e-06};
+    scf_oscillate_ref = {false,false,false,false,false,true,false,false,false,false,
+                        false,false,true,false,false,true,true,true,true,true};
+    for (int i = 1; i <= scf_nmax; ++i)
+    {
+        scf_oscillate = CMtest.if_scf_oscillate(i,drho[i-1],scf_os_ndim,scf_os_thr);
+        EXPECT_EQ(scf_oscillate, scf_oscillate_ref[i-1]);
+    } 
 }

@@ -29,6 +29,12 @@ void PotLocal::cal_fixed_v(double *vl_pseudo // store the local pseudopotential
         }
     }
 
+    /// save the V_local at G=0
+    if(this->rho_basis_->npw > 0)
+    {
+        *vl_of_0_ = vg[0].real();
+    }
+
     // recip2real should be a const function, but now it isn't
     // a dangerous usage appears here, which should be fix in the future.
     const_cast<ModulePW::PW_Basis *>(this->rho_basis_)->recip2real(vg, vl_pseudo);

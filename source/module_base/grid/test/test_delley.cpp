@@ -101,8 +101,8 @@ TEST_F(DelleyTest, Accuracy) {
             ModuleBase::Ylm::sph_harm(func_lmax,
                     grid[3*i], grid[3*i+1], grid[3*i+2], ylm_real);
             double tmp = 0.0;
-            for (size_t i = 0; i < coef.size(); ++i) {
-                tmp += coef[i] * ylm_real[i];
+            for (size_t j = 0; j < coef.size(); ++j) {
+                tmp += coef[j] * ylm_real[j];
             }
             val += weight[i] * tmp * tmp;
         }

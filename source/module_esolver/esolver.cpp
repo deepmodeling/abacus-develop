@@ -5,9 +5,10 @@
 #include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "esolver_ks_lcaopw.h"
+#include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
+#include "esolver_ks_lcaopw.h"
 #include "module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
@@ -22,11 +23,6 @@ extern "C"
 
 namespace ModuleESolver
 {
-
-void ESolver::printname()
-{
-	std::cout << classname << std::endl;
-}
 
 std::string determine_type()
 {
@@ -100,7 +96,7 @@ std::string determine_type()
 
     GlobalV::ofs_running << " The esolver type has been set to : " << esolver_type << std::endl;
 
-    auto device_info = PARAM.globalv.device_flag;
+    auto device_info = PARAM.inp.device;
 
 	for (char &c : device_info)
 	{
@@ -112,11 +108,11 @@ std::string determine_type()
 	if (GlobalV::MY_RANK == 0)
 	{
 		std::cout << " RUNNING WITH DEVICE  : " << device_info << " / "
-			<< base_device::information::get_device_info(PARAM.globalv.device_flag) << std::endl;
+			<< base_device::information::get_device_info(PARAM.inp.device) << std::endl;
 	}
 
     GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.globalv.device_flag) << std::endl;
+                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
 
     return esolver_type;
 }
@@ -132,7 +128,7 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     if (esolver_type == "ksdft_pw")
     {
 #if ((defined __CUDA) || (defined __ROCM))
-		if (PARAM.globalv.device_flag == "gpu")
+		if (PARAM.inp.device == "gpu")
 		{
 			if (PARAM.inp.precision == "single")
 			{
@@ -153,6 +149,30 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 			return new ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>();
 		}
 	}
+    else if (esolver_type == "sdft_pw")
+	{
+#if ((defined __CUDA) || (defined __ROCM))
+        if (PARAM.inp.device == "gpu")
+        {
+            // if (PARAM.inp.precision == "single")
+            // {
+            //     return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            // }
+            // else
+            // {
+                return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            // }
+        }
+#endif
+        // if (PARAM.inp.precision == "single")
+		// {
+		// 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
+		// }
+		// else
+		// {
+			return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_CPU>();
+		// }
+	}
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
     {
@@ -169,31 +189,47 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 	{
 		if (PARAM.globalv.gamma_only_local)
 		{
-			return new ESolver_KS_LCAO<double, double>();
-		}
-		else if (PARAM.inp.nspin < 4)
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, double>();
-		}
-		else
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
-		}
-	}
-	else if (esolver_type == "ksdft_lcao_tddft")
+            if (PARAM.inp.calculation == "get_S")
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<double, double>();
+            }
+        }
+        else if (PARAM.inp.nspin < 4)
+        {
+            if (PARAM.inp.calculation == "get_S")
+            {
+                return new ESolver_GetS();
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, double>();
+            }
+        }
+        else
+        {
+            if (PARAM.inp.calculation == "get_S")
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for npsin=4");
+            }
+            else
+            {
+                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            }
+        }
+    }
+    else if (esolver_type == "ksdft_lcao_tddft")
 	{
 		return new ESolver_KS_LCAO_TDDFT();
     }
     else if (esolver_type == "lr_lcao")
     {
         // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
-        if (PARAM.globalv.gamma_only_local){
-            return new LR::ESolver_LR<double, double>(inp, ucell);
-        } else if (PARAM.inp.nspin < 2) {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
-        } else {
-            throw std::runtime_error("LR-TDDFT is not implemented for spin polarized case");
-}
+        if (PARAM.globalv.gamma_only_local) { return new LR::ESolver_LR<double, double>(inp, ucell); }
+        else { return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell); }
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
@@ -211,8 +247,8 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
-        p_esolver->before_all_runners(inp, ucell);
-        p_esolver->runner(0, ucell); // scf-only
+        p_esolver->before_all_runners(ucell, inp);
+        p_esolver->runner(ucell, 0); // scf-only
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.
@@ -235,10 +271,6 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         return p_esolver_lr;
     }
 #endif
-	else if (esolver_type == "sdft_pw")
-	{
-		return new ESolver_SDFT_PW();
-	}
 	else if(esolver_type == "ofdft")
 	{
 		return new ESolver_OF();
