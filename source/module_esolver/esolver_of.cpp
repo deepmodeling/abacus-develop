@@ -10,6 +10,7 @@
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_elecstate/cal_ux.h"
 //-----force-------------------
 #include "module_hamilt_pw/hamilt_pwdft/forces.h"
 //-----stress------------------
@@ -315,7 +316,7 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     // (1) get dL/dphi
     if (PARAM.inp.nspin == 4)
     {
-        ucell.cal_ux();
+        elecstate::cal_ux(ucell);
     }
 
     this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
