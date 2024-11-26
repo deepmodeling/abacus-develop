@@ -7,7 +7,7 @@ add_library(
 add_library(
     psi_overall_init
     OBJECT
-    psiinit.cpp
+    psi_init.cpp
 )
 
 add_library(
