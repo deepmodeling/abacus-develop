@@ -1,4 +1,4 @@
-#include "psiinit.h"
+#include "psi_init.h"
 
 #include "module_base/macros.h"
 #include "module_base/timer.h"

@@ -44,19 +44,72 @@ class Stochastic_Iter
               StoChe<Real, Device>& stoche,
               hamilt::HamiltSdftPW<T, Device>* p_hamilt_sto);
 
+    /**
+     * @brief sum demet and eband energies for each k point and each band
+     * 
+     * @param stowf stochastic wave function
+     * @param pes elecstate
+     * @param pHamilt hamiltonian
+     * @param wfc_basis wfc pw basis
+     */
     void sum_stoband(Stochastic_WF<T, Device>& stowf,
                      elecstate::ElecStatePW<T, Device>* pes,
                      hamilt::Hamilt<T, Device>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);
 
+    /**
+     * @brief calculate the density
+     * 
+     * @param stowf stochastic wave function
+     * @param pes elecstate
+     * @param wfc_basis wfc pw basis
+     */
+    void cal_storho(Stochastic_WF<T, Device>& stowf,
+                    elecstate::ElecStatePW<T, Device>* pes,
+                    ModulePW::PW_Basis_K* wfc_basis);
+
+    /**
+     * @brief calculate total number of electrons
+     * 
+     * @param pes elecstate
+     * @return double 
+     */
     double calne(elecstate::ElecState* pes);
 
+    /**
+     * @brief solve ne(mu) = ne_target and get chemical potential mu
+     * 
+     * @param iter scf iteration index
+     * @param pes elecstate
+     */
     void itermu(const int iter, elecstate::ElecState* pes);
 
+    /**
+     * @brief orthogonalize stochastic wave functions with KS wave functions
+     * 
+     * @param ik k point index
+     * @param psi KS wave functions
+     * @param stowf stochastic wave functions
+     */
     void orthog(const int& ik, psi::Psi<T, Device>& psi, Stochastic_WF<T, Device>& stowf);
 
+    /**
+     * @brief check emax and emin
+     * 
+     * @param ik k point index
+     * @param istep ion step index
+     * @param iter scf iteration index
+     * @param stowf stochastic wave functions
+     */
     void checkemm(const int& ik, const int istep, const int iter, Stochastic_WF<T, Device>& stowf);
 
+    /**
+     * @brief check precision of Chebyshev expansion
+     * 
+     * @param ref reference value
+     * @param thr threshold
+     * @param info information
+     */
     void check_precision(const double ref, const double thr, const std::string info);
 
     ModuleBase::Chebyshev<double, Device>* p_che = nullptr;

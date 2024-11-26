@@ -5,6 +5,12 @@ add_library(
 )
 
 add_library(
+    psi_overall_init
+    OBJECT
+    psi_init.cpp
+)
+
+add_library(
   psi_initializer
   OBJECT
   psi_initializer.cpp

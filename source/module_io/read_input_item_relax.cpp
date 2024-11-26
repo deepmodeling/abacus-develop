@@ -54,11 +54,14 @@ void ReadInput::item_relax()
                 = {"scf", "nscf", "get_S", "get_pchg", "get_wf", "test_memory", "test_neighbour", "gen_bessel"};
             if (std::find(singlelist.begin(), singlelist.end(), calculation) != singlelist.end())
             {
-                para.input.relax_nmax = 1;
+                if (para.input.relax_nmax != 0)
+                {
+                    para.input.relax_nmax = 1;
+                }
             }
             else if (calculation == "relax" || calculation == "cell-relax")
             {
-                if (para.input.relax_nmax == 0) // default value
+                if (para.input.relax_nmax < 0)
                 {
                     para.input.relax_nmax = 50;
                 }

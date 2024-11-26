@@ -10,7 +10,7 @@ if (USE_CUDA)
 endif()
 if (USE_ROCM)
   list (APPEND FFT_SRC
-    module_fft/fft_rcom.cpp
+    module_fft/fft_rocm.cpp
   )
 endif()
 

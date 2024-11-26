@@ -479,8 +479,7 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
 {
     ModuleBase::TITLE("Stochastic_Iter", "sum_stoband");
     ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
-    int nrxx = wfc_basis->nrxx;
-    int npwx = wfc_basis->npwk_max;
+    const int npwx = wfc_basis->npwk_max;
     const int norder = p_che->norder;
 
     //---------------cal demet-----------------------
@@ -557,33 +556,53 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     MPI_Allreduce(MPI_IN_PLACE, &sto_eband, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
     pes->f_en.eband += sto_eband;
-    //---------------------cal rho-------------------------
-    double* sto_rho = new double[nrxx];
+    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
+}
 
-    double dr3 = GlobalC::ucell.omega / wfc_basis->nxyz;
-    double tmprho, tmpne;
-    T outtem;
-    double sto_ne = 0;
-    ModuleBase::GlobalFunc::ZEROS(sto_rho, nrxx);
+template <typename T, typename Device>
+void Stochastic_Iter<T, Device>::cal_storho(Stochastic_WF<T, Device>& stowf,
+                                             elecstate::ElecStatePW<T, Device>* pes,
+                                             ModulePW::PW_Basis_K* wfc_basis)
+{
+    ModuleBase::TITLE("Stochastic_Iter", "cal_storho");
+    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
+    //---------------------cal rho-------------------------
+    const int nrxx = wfc_basis->nrxx;
+    const int npwx = wfc_basis->npwk_max;
+    const int nspin = PARAM.inp.nspin;
 
     T* porter = nullptr;
     resmem_complex_op()(this->ctx, porter, nrxx);
-    double out2;
 
-    double* ksrho = nullptr;
-    if (PARAM.inp.nbands > 0 && GlobalV::MY_STOGROUP == 0)
+    std::vector<double*> sto_rho(nspin);
+    for(int is = 0; is < nspin; ++is)
     {
-        ksrho = new double[nrxx];
-        ModuleBase::GlobalFunc::DCOPY(pes->charge->rho[0], ksrho, nrxx);
-        setmem_var_op()(this->ctx, pes->rho[0], 0, nrxx);
-        // ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
+        sto_rho[is] = pes->charge->rho[is];
+    }
+    std::vector<double> _tmprho;
+    if (PARAM.inp.nbands > 0)
+    {
+        // If there are KS orbitals, we need to allocate another memory for sto_rho
+        _tmprho.resize(nrxx * nspin);
+        for(int is = 0; is < nspin; ++is)
+        {
+            sto_rho[is] = _tmprho.data() + is * nrxx;
+        }
     }
 
+    // pes->rho is a device memory, and when using cpu and double, we donot need to allocate memory for pes->rho 
+    if (PARAM.inp.device != "gpu" && PARAM.inp.precision != "single") {
+        pes->rho = reinterpret_cast<Real **>(sto_rho.data());
+    }
+    for (int is = 0; is < nspin; is++)
+    {
+        setmem_var_op()(this->ctx, pes->rho[is], 0, nrxx);
+    }
     for (int ik = 0; ik < this->pkv->get_nks(); ++ik)
     {
         const int nchip_ik = nchip[ik];
         int current_spin = 0;
-        if (PARAM.inp.nspin == 2)
+        if (nspin == 2)
         {
             current_spin = this->pkv->isk[ik];
         }
@@ -602,27 +621,50 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
         }
     }
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
-        for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
-            castmem_var_d2h_op()(this->cpu_ctx, this->ctx, pes->charge->rho[ii], pes->rho[ii], nrxx);
+        for(int is = 0; is < nspin; ++is)
+        {
+            castmem_var_d2h_op()(this->cpu_ctx, this->ctx, sto_rho[is], pes->rho[is], nrxx);
         }
     }
+    else
+    {
+        // We need to set pes->rho back to the original value
+        pes->rho = reinterpret_cast<Real **>(pes->charge->rho);
+    }
+
     delmem_complex_op()(this->ctx, porter);
 #ifdef __MPI
-    // temporary, rho_mpi should be rewrite as a tool function! Now it only treats pes->charge->rho
-    pes->charge->rho_mpi();
-#endif
-    for (int ir = 0; ir < nrxx; ++ir)
+    if(GlobalV::KPAR > 1)
     {
-        tmprho = pes->charge->rho[0][ir] / GlobalC::ucell.omega;
-        sto_rho[ir] = tmprho;
-        sto_ne += tmprho;
+        for (int is = 0; is < nspin; ++is)
+        {
+            pes->charge->reduce_diff_pools(sto_rho[is]);
+        }
     }
-    sto_ne *= dr3;
+#endif
+
+    double sto_ne = 0;
+    for(int is = 0; is < nspin; ++is)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sto_ne)
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            sto_rho[is][ir] /= GlobalC::ucell.omega;
+            sto_ne += sto_rho[is][ir];
+        }
+    }
+
+    sto_ne *= GlobalC::ucell.omega / wfc_basis->nxyz;
 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, &sto_ne, 1, MPI_DOUBLE, MPI_SUM, PARAPW_WORLD);
-    MPI_Allreduce(MPI_IN_PLACE, sto_rho, nrxx, MPI_DOUBLE, MPI_SUM, PARAPW_WORLD);
+    for(int is = 0; is < nspin; ++is)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, sto_rho[is], nrxx, MPI_DOUBLE, MPI_SUM, PARAPW_WORLD);
+    }
 #endif
     double factor = targetne / (KS_ne + sto_ne);
     if (std::abs(factor - 1) > 1e-10)
@@ -635,32 +677,32 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
         factor = 1;
     }
 
-    if (GlobalV::MY_STOGROUP == 0)
+    for (int is = 0; is < 1; ++is)
     {
         if (PARAM.inp.nbands > 0)
         {
-            ModuleBase::GlobalFunc::DCOPY(ksrho, pes->charge->rho[0], nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int ir = 0; ir < nrxx; ++ir)
+            {
+                pes->charge->rho[is][ir] += sto_rho[is][ir];
+                pes->charge->rho[is][ir] *= factor;
+            }
         }
         else
         {
-            ModuleBase::GlobalFunc::ZEROS(pes->charge->rho[0], nrxx);
-        }
-    }
-
-    if (GlobalV::MY_STOGROUP == 0)
-    {
-        for (int is = 0; is < 1; ++is)
-        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
             for (int ir = 0; ir < nrxx; ++ir)
             {
-                pes->charge->rho[is][ir] += sto_rho[ir];
                 pes->charge->rho[is][ir] *= factor;
             }
         }
     }
-    delete[] sto_rho;
-    delete[] ksrho;
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
+
+    ModuleBase::timer::tick("Stochastic_Iter", "cal_storho");
     return;
 }
 
