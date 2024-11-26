@@ -1,13 +1,8 @@
 #ifndef HSOLVER_H
 #define HSOLVER_H
 
-#include "module_base/macros.h"
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_general/hamilt.h"
-// #include "module_hamilt_pw/hamilt_stodft/sto_wf.h"
-#include "module_psi/psi.h"
-
-#include <complex>
 
 namespace hsolver
 {

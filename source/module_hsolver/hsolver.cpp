@@ -1,6 +1,7 @@
 #include "hsolver.h"
 
 #include "module_parameter/parameter.h"
+
 namespace hsolver
 {
 
