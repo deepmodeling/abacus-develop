@@ -52,42 +52,6 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
 
 
 template <>
-void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc)
-{
-    const int one_int = 1;
-    const double one_double = 1.0;
-    const double zero_double = 0.0;
-    const char N_char = 'N';
-    const char T_char = 'T';
-
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
-
-#ifdef __MPI
-    const int nbasis = ParaV->desc[2];
-    const int nbands = ParaV->desc_wfc[3];
-
-    pdgemm_( &T_char, &N_char, &nbands, &nbands, &nbasis, &one_double, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_double, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
-#endif
-
-    for(int i=0; i<nrow_bands; ++i)
-    {
-        int i_global = para_Eij_in.local2global_row(i);
-        for(int j=0; j<ncol_bands; ++j)
-        {
-            int j_global = para_Eij_in.local2global_col(j);
-            if(i_global==j_global)
-            {
-                wfcHwfc[j_global] = std::real( Dmn[i*ncol_bands+j] );
-            }
-        }
-    }
-}
-
-
-template <>
 void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
                                 const double& wfc, const double& H_wfc, std::vector<double>& Dmn)
 {

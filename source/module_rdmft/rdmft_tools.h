@@ -128,47 +128,6 @@ template <>
 void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const double& wfc, double& H_wfc);
 
 
-//! implement matrix multiplication of psi^dagger and psi
-template <typename TK>
-void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
-{
-    const int one_int = 1;
-    const std::complex<double> one_complex = {1.0, 0.0};
-    const std::complex<double> zero_complex = {0.0, 0.0};
-    const char N_char = 'N';
-    const char C_char = 'C';
-
-    const int nrow_bands = para_Eij_in.get_row_size();
-    const int ncol_bands = para_Eij_in.get_col_size();
-
-#ifdef __MPI
-    const int nbasis = ParaV->desc[2];
-    const int nbands = ParaV->desc_wfc[3];
-
-    pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
-            &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
-#endif
-
-    for(int i=0; i<nrow_bands; ++i)
-    {
-        int i_global = para_Eij_in.local2global_row(i);
-        for(int j=0; j<ncol_bands; ++j)
-        {
-            int j_global = para_Eij_in.local2global_col(j);
-            if(i_global==j_global)
-            {   
-                // because the Dmn obtained from pzgemm_() is stored column-major
-                wfcHwfc[j_global] = std::real( Dmn[i+j*nrow_bands] );
-            }
-        }
-    }
-}
-
-template <>
-void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc);
-
-
 //! implement matrix multiplication of sum_mu conj(wfc(ik, m ,mu)) * op_wfc(ik, n, mu)
 template <typename TK>
 void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
