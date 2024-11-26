@@ -83,7 +83,7 @@ if [ ! -z $esolver_type ] && ([ $esolver_type == "lr" ] || [ $esolver_type == "k
 	is_lr=1
 fi
 
-if [ $calculation != "nscf" ] && [ $calculation != "get_wf" ]\
+if [ $calculation != "get_wf" ]\
 && [ $calculation != "get_pchg" ] && [ $calculation != "get_S" ]\
 && [ $is_lr == 0 ]; then
 	#etot=`grep ETOT_ $running_path | awk '{print $2}'` 
