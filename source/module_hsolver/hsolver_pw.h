@@ -1,7 +1,8 @@
 #ifndef HSOLVERPW_H
 #define HSOLVERPW_H
 
-#include "hsolver.h"
+#include "module_elecstate/elecstate.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_base/macros.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
