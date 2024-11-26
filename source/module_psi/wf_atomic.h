@@ -34,7 +34,7 @@ class WF_atomic
 
     void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
 
-    void print_PAOs(void)const;
+    void print_PAOs()const;
 
     public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;
