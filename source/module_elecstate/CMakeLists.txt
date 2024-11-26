@@ -31,6 +31,7 @@ list(APPEND objects
     fp_energy.cpp
     magnetism.cpp
     occupy.cpp
+    cal_ux.cpp
 )
 
 if(ENABLE_LCAO)

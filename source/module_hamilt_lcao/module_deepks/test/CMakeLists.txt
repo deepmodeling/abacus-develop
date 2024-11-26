@@ -14,7 +14,7 @@ target_link_libraries(
     neighbor orb io_basic io_advanced relax gint driver esolver hsolver psi elecstate
     hamilt_general hamilt_pwdft hamilt_lcao tddft hamilt_ofdft hamilt_stodft planewave
     pthread vdw dftu deltaspin hcontainer
-    deepks device numerical_atomic_orbitals container psi_initializer
+    deepks device numerical_atomic_orbitals container psi_initializer psi_overall_init
     ${ABACUS_LINK_LIBRARIES}
 )
 

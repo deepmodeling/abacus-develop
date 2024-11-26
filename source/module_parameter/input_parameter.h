@@ -152,7 +152,7 @@ struct Input_para
     bool relax_new = true;
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
-    int relax_nmax = 0;        ///< number of max ionic iter
+    int relax_nmax = -1;       ///< number of max ionic iter
     double relax_cg_thr = 0.5; ///< threshold when cg to bfgs, pengfei add 2011-08-15
     double force_thr = -1;     ///< threshold of force in unit (Ry/Bohr)
     double force_thr_ev = -1;  ///< threshold of force in unit (eV/Angstrom)

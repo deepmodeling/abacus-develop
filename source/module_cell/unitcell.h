@@ -19,8 +19,6 @@ class UnitCell {
 
     bool set_atom_flag; // added on 2009-3-8 by mohan
     Magnetism magnet;   // magnetism Yu Liu 2021-07-03
-    void cal_ux();
-    bool judge_parallel(double a[3], ModuleBase::Vector3<double> b);
     std::vector<std::vector<double>> atom_mulliken; //[nat][nspin]
     int n_mag_at;
 

@@ -19,6 +19,7 @@
 namespace rdmft
 {
 
+//! @brief This file is to get each potential matrix in NAOs, 'V' represents the potential matrix
 
 
 template <typename TK, typename TR>

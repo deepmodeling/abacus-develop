@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/cal_ux.h"
 //
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
@@ -247,7 +248,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     //=========================================================
     if (PARAM.inp.nspin == 4)
     {
-        ucell.cal_ux();
+        elecstate::cal_ux(ucell);
     }
 
     // pelec should be initialized before these calculations

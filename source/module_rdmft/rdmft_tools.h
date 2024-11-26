@@ -128,9 +128,9 @@ template <>
 void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const double& wfc, double& H_wfc);
 
 
-//! implement matrix multiplication of psi^dagger and psi
+//! implement matrix multiplication of sum_mu conj(wfc(ik, m ,mu)) * op_wfc(ik, n, mu)
 template <typename TK>
-void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn, double* wfcHwfc)
+void cal_bra_op_ket(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, const TK& wfc, const TK& H_wfc, std::vector<TK>& Dmn)
 {
     const int one_int = 1;
     const std::complex<double> one_complex = {1.0, 0.0};
@@ -148,6 +148,20 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, c
     pzgemm_( &C_char, &N_char, &nbands, &nbands, &nbasis, &one_complex, &wfc, &one_int, &one_int, ParaV->desc_wfc,
             &H_wfc, &one_int, &one_int, ParaV->desc_wfc, &zero_complex, &Dmn[0], &one_int, &one_int, para_Eij_in.desc );
 #endif
+}
+
+
+template <>
+void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
+                                const double& wfc, const double& H_wfc, std::vector<double>& Dmn);
+
+
+//! for Dmn that conforms to the 2d-block rule, get its diagonal elements
+template <typename TK>
+void _diagonal_in_serial(const Parallel_2D& para_Eij_in, const std::vector<TK>& Dmn, double* wfcHwfc)
+{
+    const int nrow_bands = para_Eij_in.get_row_size();
+    const int ncol_bands = para_Eij_in.get_col_size();
 
     for(int i=0; i<nrow_bands; ++i)
     {
@@ -163,10 +177,6 @@ void psiDotPsi(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in, c
         }
     }
 }
-
-template <>
-void psiDotPsi<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_wfc_in,
-                        const double& wfc, const double& H_wfc, std::vector<double>& Dmn, double* wfcHwfc);
 
 
 //! realize occNum_wfc = occNum * wfc. Calling this function and we can get wfc = occNum*wfc.
