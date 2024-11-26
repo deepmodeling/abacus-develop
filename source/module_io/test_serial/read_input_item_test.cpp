@@ -608,8 +608,16 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_nmax, 1);
 
+        param.input.relax_nmax = 0;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.relax_nmax, 0);
+
         param.input.calculation = "relax";
         param.input.relax_nmax = 0;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.relax_nmax, 0);
+
+        param.input.relax_nmax = -1;
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.relax_nmax, 50);
     }

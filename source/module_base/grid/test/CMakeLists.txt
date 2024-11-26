@@ -20,3 +20,10 @@ AddTest(
   ../radial.cpp
   ../delley.cpp
 )
+
+AddTest(
+  TARGET test_batch
+  SOURCES test_batch.cpp
+  ../batch.cpp
+  LIBS ${math_libs}
+)

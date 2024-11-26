@@ -39,6 +39,20 @@ extern "C"
 	double dnrm2_( const int *n, const double *X, const int *incX );
 	double dznrm2_( const int *n, const std::complex<double> *X, const int *incX );
 
+    // symmetric rank-k update
+    void dsyrk_(
+        const char* uplo,
+        const char* trans,
+        const int* n,
+        const int* k,
+        const double* alpha,
+        const double* a,
+        const int* lda,
+        const double* beta,
+        double* c,
+        const int* ldc
+    );
+
 	// level 2: matrix-std::vector operations, O(n^2) data and O(n^2) work.
 	void sgemv_(const char*const transa, const int*const m, const int*const n,
 		const float*const alpha, const float*const a, const int*const lda, const float*const x, const int*const incx,

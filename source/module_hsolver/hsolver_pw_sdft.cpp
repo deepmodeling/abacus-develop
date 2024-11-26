@@ -128,15 +128,10 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
 #endif
     }
-    else
-    {
-        for (int is = 0; is < this->nspin; is++)
-        {
-            setmem_var_op()(this->ctx, pes_pw->rho[is], 0, pes_pw->charge->nrxx);
-        }
-    }
+    
     // calculate stochastic rho
     stoiter.sum_stoband(stowf, pes_pw, pHamilt, wfc_basis);
+    stoiter.cal_storho(stowf, pes_pw, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver
     ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
