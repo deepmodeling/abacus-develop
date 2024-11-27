@@ -114,7 +114,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 
     this->init_meshball();
 
-    this->init_atoms_on_grid(ny, nplane, startz_current, ucell);
+    this->init_atoms_on_grid(ny, nplane, ucell);
 
     this->init_ijr_and_nnrg(ucell, gd);
     this->cal_trace_lo(ucell);
@@ -129,8 +129,7 @@ void Grid_Technique::set_pbc_grid(const int& ncx_in,
 }
 
 void Grid_Technique::get_startind(const int& ny,
-                                  const int& nplane,
-                                  const int& startz_current) {
+                                  const int& nplane) {
     ModuleBase::TITLE("Grid_Technique", "get_startind");
 
     assert(nbxx >= 0);
@@ -155,7 +154,7 @@ void Grid_Technique::get_startind(const int& ny,
 
         ix = ibx * this->bx;
         iy = iby * this->by;
-        iz = (ibz + nbzp_start) * this->bz - startz_current;
+        iz = ibz * this->bz;
 
         int ind = iz + iy * nplane + ix * ny * nplane;
 
@@ -170,12 +169,11 @@ void Grid_Technique::get_startind(const int& ny,
 // mohan add 2021-04-06
 void Grid_Technique::init_atoms_on_grid(const int& ny,
                                         const int& nplane,
-                                        const int& startz_current,
                                         const UnitCell& ucell) {
     ModuleBase::TITLE("Grid_Technique", "init_atoms_on_grid");
 
     assert(nbxx >= 0);
-    this->get_startind(ny, nplane, startz_current);
+    this->get_startind(ny, nplane);
 
     // (1) prepare data.
     // counting the number of atoms whose orbitals have
@@ -438,6 +436,7 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
         }
     }
     assert(count == total_atoms_on_grid);
+    printf("total_atoms_on_grid = %d\n", total_atoms_on_grid);
     return;
 }
 
