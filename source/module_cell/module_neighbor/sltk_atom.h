@@ -43,7 +43,10 @@ public:
 		cell_y = cell_y_in;
 		cell_z = cell_z_in;
 	}
-	~FAtom();
+	~FAtom()
+	{
+		adjacent.clear();
+	}
 
 	void addAdjacent(FAtom& atom_in)
 	{

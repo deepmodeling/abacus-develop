@@ -15,7 +15,3 @@ FAtom::FAtom()
 	type = 0;		
 	natom = 0;
 }
-
-FAtom::~FAtom()
-{
-}
