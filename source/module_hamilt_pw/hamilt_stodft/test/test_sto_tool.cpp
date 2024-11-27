@@ -8,7 +8,7 @@
  ***********************************************/
 
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv){}
+hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv,pseudopot_cell_vnl*){}
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){};
 template <typename T, typename Device>
