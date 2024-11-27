@@ -19,7 +19,8 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 
 void pseudopot_cell_vl::init_vloc(const ModulePW::PW_Basis* rho_basis)
 {
-	if(PARAM.inp.use_paw) return;
+	if(PARAM.inp.use_paw) { return;
+}
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
 	// This routine computes the fourier coefficient of the local
@@ -77,8 +78,10 @@ void pseudopot_cell_vl::init_vloc(const ModulePW::PW_Basis* rho_basis)
 
 void pseudopot_cell_vl::allocate(const int ngg)
 {
-	if(PARAM.inp.test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
-	if(PARAM.inp.use_paw) return;
+	if(PARAM.inp.test_pp>0) { ModuleBase::TITLE("pseudopot_cell_vl","allocate");
+}
+	if(PARAM.inp.use_paw) { return;
+}
 	this->vloc.create(GlobalC::ucell.ntype, ngg);
 
 	delete[] numeric;
@@ -252,7 +255,8 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 
 void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
 {
-	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
+	if(GlobalV::MY_RANK!=0) { return; //mohan fix bug 2011-10-13
+}
 	bool check_vl = PARAM.inp.out_element_info;
 	if(check_vl)
 	{
