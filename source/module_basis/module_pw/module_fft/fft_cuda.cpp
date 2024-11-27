@@ -1,6 +1,7 @@
 #include "fft_cuda.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+
 namespace ModulePW
 {
 template <typename FPTYPE>
@@ -105,4 +106,9 @@ template <> std::complex<float>*
 FFT_CUDA<float>::get_auxr_3d_data()  const {return this->c_auxr_3d;}
 template <> std::complex<double>* 
 FFT_CUDA<double>::get_auxr_3d_data() const {return this->z_auxr_3d;}
+
+template FFT_CUDA<float>::FFT_CUDA();
+template FFT_CUDA<float>::~FFT_CUDA();
+template FFT_CUDA<double>::FFT_CUDA();
+template FFT_CUDA<double>::~FFT_CUDA();
 }// namespace ModulePW

@@ -3,7 +3,8 @@
 #include "module_parameter/input_parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_hsolver/hsolver.h"
+#include "module_elecstate/elecstate.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_elecstate/elecstate_lcao.h"
 
 #include <vector>   //future tensor

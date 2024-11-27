@@ -1,12 +1,8 @@
-#include "fft_base.h"
-#include "fftw3.h"
-
-// #ifdef __ENABLE_FLOAT_FFTW
-
-// #endif
-// #endif
 #ifndef FFT_CPU_H
 #define FFT_CPU_H
+
+#include "fft_base.h"
+#include "fftw3.h"
 namespace ModulePW
 {
 template <typename FPTYPE>
@@ -33,7 +29,6 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
      * @param gamma_only_in  whether only gamma point is used.
      * @param xprime_in  whether xprime is used.
      */
-    __attribute__((weak)) 
     void initfft(int nx_in, 
                  int ny_in, 
                  int nz_in, 
@@ -44,6 +39,7 @@ class FFT_CPU : public FFT_BASE<FPTYPE>
                  int nproc_in, 
                  bool gamma_only_in, 
                  bool xprime_in = true) override;
+                 
 	__attribute__((weak)) 
     void setupFFT() override; 
 

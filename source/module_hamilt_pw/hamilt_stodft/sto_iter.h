@@ -52,7 +52,7 @@ class Stochastic_Iter
      * @param pHamilt hamiltonian
      * @param wfc_basis wfc pw basis
      */
-    void sum_stoband(Stochastic_WF<T, Device>& stowf,
+    void sum_stoeband(Stochastic_WF<T, Device>& stowf,
                      elecstate::ElecStatePW<T, Device>* pes,
                      hamilt::Hamilt<T, Device>* pHamilt,
                      ModulePW::PW_Basis_K* wfc_basis);

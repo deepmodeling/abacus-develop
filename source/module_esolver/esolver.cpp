@@ -186,39 +186,29 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
     }
     else if (esolver_type == "ksdft_lcao")
-	{
-		if (PARAM.globalv.gamma_only_local)
-		{
-            if (PARAM.inp.calculation == "get_S")
+    {
+        if (PARAM.inp.calculation == "get_S")
+        {
+            if (PARAM.globalv.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
             }
             else
             {
-                return new ESolver_KS_LCAO<double, double>();
+                return new ESolver_GetS();
             }
+        }
+        if (PARAM.globalv.gamma_only_local)
+        {
+            return new ESolver_KS_LCAO<double, double>();
         }
         else if (PARAM.inp.nspin < 4)
         {
-            if (PARAM.inp.calculation == "get_S")
-            {
-                return new ESolver_GetS();
-            }
-            else
-            {
-                return new ESolver_KS_LCAO<std::complex<double>, double>();
-            }
+            return new ESolver_KS_LCAO<std::complex<double>, double>();
         }
         else
         {
-            if (PARAM.inp.calculation == "get_S")
-            {
-                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for npsin=4");
-            }
-            else
-            {
-                return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
-            }
+            return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
     }
     else if (esolver_type == "ksdft_lcao_tddft")

@@ -6,8 +6,9 @@
 #include "module_base/global_variable.h"
 #include "module_base/realarray.h"
 #include "module_basis/module_pw/pw_basis_k.h"
+#include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
+
 #include "module_psi/psi.h"
-#include "structure_factor.h"
 
 class WF_atomic
 {
@@ -38,7 +39,7 @@ class WF_atomic
      */
     void init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell);
 
-    void print_PAOs(void)const;
+    void print_PAOs()const;
 
     public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;

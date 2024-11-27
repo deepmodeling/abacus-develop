@@ -45,9 +45,6 @@ double& PW_Basis_K::getgk2(const int ik, const int igl) const {
     return this->gk2[igl];
 }
 
-FFT::FFT() {}
-
-FFT::~FFT() {}
 
 } // namespace ModulePW
 
@@ -183,7 +180,7 @@ template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
 } // namespace hsolver
 
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 namespace hamilt {
 
 template <>
