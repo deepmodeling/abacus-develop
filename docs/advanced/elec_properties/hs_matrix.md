@@ -61,6 +61,8 @@ We also offer the option of only calculating the overlap matrix without running 
 
 A file named `SR.csr` will be generated in the working directory, which contains the overlap matrix.
 
+> Note that the column of the overlap matrix when nspin=4 adopts the format of s(up) s(down) p(up) p(down) ... instead of s(up) p(up) ... s(down) p(down) ... 
+
 ## examples
 We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/matrix_hs) of outputting the matrices. There are four examples:
 
