@@ -4,7 +4,7 @@ if(ENABLE_LCAO)
         OBJECT
         rdmft.cpp
         rdmft_tools.cpp
-        rdmft_pot_mat.cpp
+        rdmft_pot.cpp
         update_state_rdmft.cpp
     )
 endif()
