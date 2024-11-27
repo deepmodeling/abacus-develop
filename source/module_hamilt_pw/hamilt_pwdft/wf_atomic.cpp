@@ -30,12 +30,7 @@ WF_atomic::~WF_atomic()
     }
 }
 
-//==========================================================
-// MEMBER FUNCTION :
-// NAME : init_at_1(init a table with the radial Fourier
-// transform of the atomic WF_atomictions)
-//==========================================================
-void WF_atomic::init_at_1(Structure_Factor *sf_in)
+void WF_atomic::init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell)
 {
     if(PARAM.inp.use_paw) { return;
 }
@@ -59,7 +54,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
 
     // needed to normalize atomic wfcs (not a bad idea in general and
     // necessary to compute correctly lda+U projections)
-    GlobalC::ppcell.tab_at.zero_out();
+    p_ppcell->tab_at.zero_out();
 //----------------------------------------------------------
 // EXPLAIN : If use gauss orbitals to represent aotmic
 // orbitals (controlled by parameters)
@@ -198,7 +193,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
                     double vqint = 0.0;
                     ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab.data(), vqint);
 
-                    GlobalC::ppcell.tab_at(it, ic, iq) =  vqint * pref;
+                    p_ppcell->tab_at(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )
                     //				{
                     //
@@ -334,7 +329,7 @@ void WF_atomic::atomic_wfc(const int ik,
                                       {
                                           if(fabs(fact[is])>1e-8)
                                           {
-                                              const int ind = GlobalC::ppcell.lmaxkb + soc.sph_ind(l,j,m,is);
+                                              const int ind = p_ppcell->lmaxkb + soc.sph_ind(l,j,m,is);
                                               ModuleBase::GlobalFunc::ZEROS(aux, np);
                                               for(int n1=0;n1<2*l+1;n1++){
                                                  const int lm = l*l +n1;

@@ -200,7 +200,8 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
 // computes the core charge on the real space 3D mesh.
 //==========================================================
 void Charge::set_rho_core(
-    const ModuleBase::ComplexMatrix &structure_factor
+    const ModuleBase::ComplexMatrix &structure_factor,
+    const bool* numeric,
 )
 {
     ModuleBase::TITLE("Charge","set_rho_core");
@@ -249,7 +250,7 @@ void Charge::set_rho_core(
 // each shell of g vec
 //----------------------------------------------------------
             this->non_linear_core_correction(
-                GlobalC::ppcell.numeric,
+                numeric,
                 GlobalC::ucell.atoms[it].ncpp.msh,
                 GlobalC::ucell.atoms[it].ncpp.r.data(),
                 GlobalC::ucell.atoms[it].ncpp.rab.data(),

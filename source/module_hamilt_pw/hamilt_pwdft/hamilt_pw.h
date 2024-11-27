@@ -20,7 +20,7 @@ class HamiltPW : public Hamilt<T, Device>
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
   public:
-    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv);
+    HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl* nlpp);
     template<typename T_in, typename Device_in = Device>
     explicit HamiltPW(const HamiltPW<T_in, Device_in>* hamilt);
     ~HamiltPW();

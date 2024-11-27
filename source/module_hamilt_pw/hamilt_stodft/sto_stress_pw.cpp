@@ -52,10 +52,10 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_gga(sigmaxc, rho_basis, chr);
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, p_sf, true, chr);
+    this->stress_loc(sigmaloc, rho_basis, nlpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, true, chr);
+    this->stress_cc(sigmaxcc, rho_basis, p_sf, true, nlpp->numeric, chr);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);

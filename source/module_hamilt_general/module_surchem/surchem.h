@@ -106,7 +106,10 @@ class surchem
                      const ModulePW::PW_Basis* rho_basis,
                      const double* const* const rho);
 
-    void cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
+    void cal_force_sol(const UnitCell& cell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       const ModuleBase::matrix& vloc,
+                       ModuleBase::matrix& forcesol);
 
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* totn_reci);
 

@@ -10,6 +10,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
+											 const ModuleBase::matrix& vloc,
                                              const Structure_Factor* p_sf,
                                              const bool is_pw,
                                              const Charge* const chr)
@@ -73,10 +74,10 @@ void Stress_Func<FPTYPE, Device>::stress_loc(ModuleBase::matrix& sigma,
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
                 if (rho_basis->ig_gge0 == ig) {
-                    evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
+                    evloc += vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
                 } else {
-                    evloc += GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig])
+                    evloc += vloc(it, rho_basis->ig2igg[ig])
                              * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
 }
             }

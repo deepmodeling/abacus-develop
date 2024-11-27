@@ -46,9 +46,16 @@ class Forces
     int nat = 0;
     int npwx = 0;
 
-    void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
+    void cal_force_loc(ModuleBase::matrix& forcelc,
+                       ModulePW::PW_Basis* rho_basis,
+                       const ModuleBase::matrix& vloc,
+                       const Charge* const chr);
     void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
-    void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr, UnitCell& ucell_in);
+    void cal_force_cc(ModuleBase::matrix& forcecc,
+                      ModulePW::PW_Basis* rho_basis,
+                      const Charge* const chr,
+                      const bool* numeric,
+                      UnitCell& ucell_in);
     /**
      * @brief This routine computes the atomic force of non-local pseudopotential
      *    F^{NL}_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
@@ -72,6 +79,7 @@ class Forces
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist,
+                       const bool* numeric,
                        const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,

@@ -31,7 +31,12 @@ class WF_atomic
 
     ModuleBase::ComplexMatrix *wanf2 = nullptr; // wannier functions in the PW basis
 
-    void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
+    /**
+     * @brief init a table with the radial Fourier transform of the atomic WF_atomictions
+     * @param sf_in [out] the structure factor
+     * @param p_ppcell [out] the pseudopotential cell
+     */
+    void init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell);
 
     void print_PAOs(void)const;
 

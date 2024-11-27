@@ -92,7 +92,8 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
                                       const int nks,
                                       const int* ngk,
                                       const int npwx,
-                                      Structure_Factor* p_sf)
+                                      Structure_Factor* p_sf,
+                                      pseudopot_cell_vnl* p_ppcell)
 {
     // allocate memory for std::complex<double> datatype psi
     // New psi initializer in ABACUS, Developer's note:
@@ -125,7 +126,7 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
         // however, init_at_1 does not actually initialize the psi, instead, it is a
         // function to calculate a interpolate table saving overlap intergral or say
         // Spherical Bessel Transform of atomic orbitals.
-        this->wf_old.init_at_1(p_sf);
+        this->wf_old.init_at_1(p_sf, p_ppcell);
         // similarly, wfcinit not really initialize any wavefunction, instead, it initialize
         // the mapping from ixy, the 1d flattened index of point on fft grid (x, y) plane,
         // to the index of "stick", composed of grid points.
@@ -150,6 +151,7 @@ template <typename T, typename Device>
 void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         psi::Psi<T, Device>* kspw_psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
+                                        const pseudopot_cell_vnl& nlpp,
                                         std::ofstream& ofs_running,
                                         const bool is_already_initpsi)
 {
@@ -269,7 +271,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                         kspw_psi->fix_k(ik);
 
                         /// for psi init guess!!!!
-                        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, p_hamilt);
+                        hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, nlpp.tab_at, p_hamilt);
                     }
                 }
                 else
@@ -278,7 +280,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                     kspw_psi->fix_k(ik);
 
                     /// for psi init guess!!!!
-                    hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, p_hamilt);
+                    hamilt::diago_PAO_in_pw_k2(this->ctx, ik, *(kspw_psi), this->pw_wfc, &this->wf_old, nlpp.tab_at, p_hamilt);
                 }
             }
         }

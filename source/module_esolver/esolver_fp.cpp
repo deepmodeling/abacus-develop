@@ -281,7 +281,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
             this->pw_rhod->collect_uniqgg();
         }
 
-        GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rhod);
+        this->ppcell.init_vloc(pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
         this->pelec->omega = ucell.omega;

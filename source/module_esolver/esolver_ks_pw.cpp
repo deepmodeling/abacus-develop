@@ -117,7 +117,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt()
 {
-    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv);
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell);
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hamilt()
@@ -145,7 +145,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                                                         &(this->chr),
                                                                                         &(this->kv),
                                                                                         &ucell,
-                                                                                        &(GlobalC::ppcell),
+                                                                                        &(this->ppcell),
                                                                                         this->pw_rhod,
                                                                                         this->pw_rho,
                                                                                         this->pw_big);
@@ -156,7 +156,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                                 &(this->chr),
                                                                 &(this->kv),
                                                                 &ucell,
-                                                                &GlobalC::ppcell,
+                                                                &this->ppcell,
                                                                 this->pw_rhod,
                                                                 this->pw_rho,
                                                                 this->pw_big);
@@ -175,7 +175,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
                                                     &ucell,
-                                                    &GlobalC::ppcell.vloc,
+                                                    &this->ppcell.vloc,
                                                     &(this->sf),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
@@ -194,7 +194,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                   &GlobalC::Pkpoints,
                                   GlobalV::MY_RANK,
 #endif
-                                  &GlobalC::ppcell);
+                                  &this->ppcell);
 
     if (this->psi != nullptr)
     {
@@ -202,14 +202,14 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     //! init pseudopotential
-    GlobalC::ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
+    this->ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
 
     //! initalize local pseudopotential
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, this->pw_rhod);
+    this->ppcell.init_vloc(this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! Initalize non-local pseudopotential
-    GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
+    this->ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     //! Allocate psi
@@ -247,7 +247,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        GlobalC::ppcell.init_vnl(ucell, this->pw_rhod);
+        this->ppcell.init_vnl(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz);
@@ -303,7 +303,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     }
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm, (void*)this->pw_wfc);
+    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm, this->ppcell.numeric, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -358,7 +358,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     // projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
 
-    GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
+    this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
 
     // after init_rho (in pelec->init_scf), we have rho now.
     // before hamilt2density, we update Hk and initialize psi
@@ -374,6 +374,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->p_wf_init->initialize_psi(this->psi,
                                         this->kspw_psi,
                                         this->p_hamilt,
+                                        this->ppcell,
                                         GlobalV::ofs_running,
                                         this->already_initpsi);
 
@@ -500,7 +501,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     if (PARAM.globalv.use_uspp)
     {
         ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-        GlobalC::ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
+        this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
     if (this->out_freq_elec && iter % this->out_freq_elec == 0)
@@ -641,7 +642,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     ss.cal_stress(stress,
                   ucell,
-                  &GlobalC::ppcell,
+                  &this->ppcell,
                   this->pw_rhod,
                   &ucell.symm,
                   &this->sf,
@@ -781,7 +782,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 7) Use Kubo-Greenwood method to compute conductivities
     if (PARAM.inp.cal_cond)
     {
-        EleCond elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &GlobalC::ppcell);
+        EleCond elec_cond(&ucell, &this->kv, this->pelec, this->pw_wfc, this->psi, &this->ppcell);
         elec_cond.KG(PARAM.inp.cond_smear,
                      PARAM.inp.cond_fwhm,
                      PARAM.inp.cond_wcut,

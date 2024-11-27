@@ -17,7 +17,7 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 	delete[] zp;
 }
 
-void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis)
+void pseudopot_cell_vl::init_vloc(const ModulePW::PW_Basis* rho_basis)
 {
 	if(PARAM.inp.use_paw) return;
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
@@ -59,9 +59,9 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 			ModuleBase::WARNING_QUIT("init_vloc","not available now.");
 		}
 
-		if(it>=0 && it<vloc_in.nr && vloc_in.nc>=0)
+		if(it>=0 && it<this->vloc.nr && this->vloc.nc>=0)
 		{
-			ModuleBase::GlobalFunc::COPYARRAY(vloc1d, &vloc_in(it, 0), rho_basis->ngg);
+			ModuleBase::GlobalFunc::COPYARRAY(vloc1d, &this->vloc(it, 0), rho_basis->ngg);
 		}
 	} 
 

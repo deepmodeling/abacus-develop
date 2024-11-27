@@ -250,7 +250,7 @@ namespace ModuleESolver
                                 *this->pw_wfc,
                                 *this->pw_rho,
                                 *this->pw_rhod,
-                                GlobalC::ppcell.vloc,
+                                this->ppcell.vloc,
                                 *this->pelec->charge,
                                 this->kv,
                                 this->pelec->wg

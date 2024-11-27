@@ -110,6 +110,7 @@ class ElecState
      */
     void init_scf(const int istep,
                   const ModuleBase::ComplexMatrix& strucfac,
+                  const bool* numeric,
                   ModuleSymmetry::Symmetry& symm,
                   const void* wfcpw = nullptr);
     std::string classname = "elecstate";

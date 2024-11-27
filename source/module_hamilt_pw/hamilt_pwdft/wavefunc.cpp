@@ -188,6 +188,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                         psi::Psi<std::complex<float>>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<float>>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
@@ -292,7 +293,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                          GlobalC::ucell.lmax_ppwf,
                          wfc_basis,
                          wfcatom,
-                         GlobalC::ppcell.tab_at,
+                         tab_at,
                          PARAM.globalv.nqx,
                          PARAM.globalv.dq);
 
@@ -347,6 +348,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                         psi::Psi<std::complex<double>>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<double>>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
@@ -449,7 +451,7 @@ void diago_PAO_in_pw_k2(const int& ik,
                          GlobalC::ucell.lmax_ppwf,
                          wfc_basis,
                          wfcatom,
-                         GlobalC::ppcell.tab_at,
+                         tab_at,
                          PARAM.globalv.nqx,
                          PARAM.globalv.dq);
 
@@ -501,6 +503,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
                         psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in)
 {
     diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
@@ -512,9 +515,10 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
                         psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in)
 {
-    diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, phm_in);
+    diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, tab_at, phm_in);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -524,6 +528,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         psi::Psi<std::complex<float>, base_device::DEVICE_GPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
@@ -557,7 +562,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          GlobalC::ucell.lmax_ppwf,
                          wfc_basis,
                          wfcatom,
-                         GlobalC::ppcell.tab_at,
+                         tab_at,
                          PARAM.globalv.nqx,
                          PARAM.globalv.dq);
         if (PARAM.inp.init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
@@ -628,6 +633,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray* tab_at,
                         hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
@@ -660,7 +666,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                          GlobalC::ucell.lmax_ppwf,
                          wfc_basis,
                          wfcatom,
-                         GlobalC::ppcell.tab_at,
+                         tab_at,
                          PARAM.globalv.nqx,
                          PARAM.globalv.dq);
         if (PARAM.inp.init_wfc == "atomic+random" && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16

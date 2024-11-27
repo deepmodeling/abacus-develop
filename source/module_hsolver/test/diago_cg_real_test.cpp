@@ -108,7 +108,7 @@ public:
         double* en = new double[npw];
         int ik = 1;
         hamilt::Hamilt<double>* ha;
-        ha = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr);
+        ha = new hamilt::HamiltPW<double>(nullptr, nullptr, nullptr, nullptr);
         int* ngk = new int[1];
         psi::Psi<double> psi;
         psi.resize(ik, nband, npw);

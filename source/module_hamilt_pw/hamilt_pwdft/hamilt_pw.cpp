@@ -18,11 +18,14 @@
 namespace hamilt
 {
 
-template<typename T, typename Device>
-HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template <typename T, typename Device>
+HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
+                              ModulePW::PW_Basis_K* wfc_basis,
+                              K_Vectors* pkv,
+                              pseudopot_cell_vnl* nlpp)
 {
     this->classname = "HamiltPW";
-    this->ppcell = &GlobalC::ppcell;
+    this->ppcell = nlpp;
     this->qq_nt = this->ppcell->template get_qq_nt_data<Real>();
     this->qq_so = this->ppcell->template get_qq_so_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
@@ -100,7 +103,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     if (PARAM.inp.vnl_in_h)
     {
         Operator<T, Device>* nonlocal
-            = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
+            = new Nonlocal<OperatorPW<T, Device>>(isk, this->ppcell, &GlobalC::ucell, wfc_basis);
         if(this->ops == nullptr)
         {
             this->ops = nonlocal;
