@@ -1,7 +1,7 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
 #include "module_hamilt_general/hamilt.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 #include "module_psi/psi_initializer.h"
 
 namespace psi
@@ -9,16 +9,15 @@ namespace psi
 
 // This class is used to initialize the wavefunction
 template <typename T, typename Device = base_device::DEVICE_CPU>
-class WFInit
+class PSIInit
 {
   public:
-    WFInit(const std::string& init_wfc_in,
-           const std::string& ks_solver_in,
-           const std::string& basis_type_in,
-           const bool& use_psiinitializer_in,
-           wavefunc* p_wf_in,
-           ModulePW::PW_Basis_K* pw_wfc_in);
-    ~WFInit(){};
+    PSIInit(const std::string& init_wfc_in,
+            const std::string& ks_solver_in,
+            const std::string& basis_type_in,
+            const bool& use_psiinitializer_in,
+            ModulePW::PW_Basis_K* pw_wfc_in);
+    ~PSIInit(){};
 
     // prepare the wavefunction initialization
     void prepare_init(Structure_Factor* p_sf, //< structure factor
@@ -47,7 +46,7 @@ class WFInit
      *
      * @param psi store the wavefunction
      * @param p_hamilt Hamiltonian operator
-     * @param ofs_running output stream for running information 
+     * @param ofs_running output stream for running information
      * @param is_already_initpsi whether psi has been initialized
      */
     void initialize_psi(Psi<std::complex<double>>* psi,
@@ -73,17 +72,22 @@ class WFInit
     // while the std::make_unique() is not supported till C++14,
     // so use the new and std::unique_ptr to manage the memory, but this makes new-delete not symmetric
     std::unique_ptr<psi_initializer<T, Device>> psi_init;
-    // temporary
-    // wavefunc pointer
-    wavefunc* p_wf = nullptr;
+
+    //! temporary: wave functions, this one may be deleted in future
+    wavefunc wf_old;
+
     // whether to use psi_initializer
     bool use_psiinitializer = false;
+
     // wavefunction initialization type
     std::string init_wfc = "none";
+
     // Kohn-Sham solver type
     std::string ks_solver = "none";
+
     // basis type
     std::string basis_type = "none";
+
     // pw basis
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
 

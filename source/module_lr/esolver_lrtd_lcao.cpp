@@ -249,7 +249,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
 
     // necessary steps in ESolver_FP
-    ESolver_FP::before_all_runners(inp, ucell);
+    ESolver_FP::before_all_runners(ucell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
@@ -407,7 +407,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
+void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::tick("ESolver_LR", "runner");
@@ -488,7 +488,7 @@ void LR::ESolver_LR<T, TR>::runner(int istep, UnitCell& cell)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners()
+void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine

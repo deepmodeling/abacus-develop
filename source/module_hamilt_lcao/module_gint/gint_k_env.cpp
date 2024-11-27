@@ -6,6 +6,7 @@
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_base/array_pool.h"
+#include "module_base/vector3.h"
 
 void Gint_k::cal_env_k(int ik,
                        const std::complex<double>* psi_k,
@@ -26,7 +27,6 @@ void Gint_k::cal_env_k(int ik,
     }
     const int nbx = this->gridt->nbx;
     const int nby = this->gridt->nby;
-    const int nbz_start = this->gridt->nbzp_start;
     const int nbz = this->gridt->nbzp;
     const int ncyz = this->ny * this->nplane; // mohan add 2012-03-25
 
@@ -88,10 +88,7 @@ void Gint_k::cal_env_k(int ik,
 
                 // find R by which_unitcell and cal kphase
                 const int id_ucell = this->gridt->which_unitcell[mcell_index1];
-                const int Rx = this->gridt->ucell_index2x[id_ucell] + this->gridt->min_ucell_para[0];
-                const int Ry = this->gridt->ucell_index2y[id_ucell] + this->gridt->min_ucell_para[1];
-                const int Rz = this->gridt->ucell_index2z[id_ucell] + this->gridt->min_ucell_para[2];
-                ModuleBase::Vector3<double> R((double)Rx, (double)Ry, (double)Rz);
+                ModuleBase::Vector3<double> R(this->gridt->get_ucell_coords(id_ucell));
                 // std::cout << "kvec_d: " << kvec_d[ik].x << " " << kvec_d[ik].y << " " << kvec_d[ik].z << std::endl;
                 // std::cout << "kvec_c: " << kvec_c[ik].x << " " << kvec_c[ik].y << " " << kvec_c[ik].z << std::endl;
                 // std::cout << "R: " << R.x << " " << R.y << " " << R.z << std::endl;

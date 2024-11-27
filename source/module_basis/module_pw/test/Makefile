@@ -2,7 +2,7 @@
 # Please set
 # e.g. make CXX=mpiicpc or make CXX=icpc
 #======================================================================
-CXX = mpiicpx
+CXX = mpiicpc
 # mpiicpc:   compile intel parallel version
 # icpc:      compile intel sequential version
 # mpicxx:    compile gnu parallel version
@@ -94,7 +94,7 @@ endif
 ##==========================
 ## GTEST 
 ##==========================
-GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread
+GTESTOPTS = -I${GTEST_DIR}/include -L${GTEST_DIR}/lib -lgtest -lpthread -w
 
 
 
@@ -106,6 +106,7 @@ VPATH=../../../module_base\
 ../../../module_base/module_container/ATen/core\
 ../../../module_base/module_container/ATen\
 ../../../module_parameter\
+../module_fft\
 ../\
 
 MATH_OBJS0=matrix.o\
@@ -120,7 +121,6 @@ pw_transform.o\
 pw_distributeg.o\
 pw_distributeg_method1.o\
 pw_distributeg_method2.o\
-fft.o\
 pw_basis_k.o\
 pw_basis_sup.o\
 pw_transform_k.o\
@@ -128,9 +128,10 @@ memory.o\
 memory_op.o\
 depend_mock.o\
 parameter.o\
-fft_base.o\
-fft_bundle.o\
 fft_cpu.o\
+fft_cpu_float.o\
+fft_bundle.o\
+
 
 
 OTHER_OBJS0=

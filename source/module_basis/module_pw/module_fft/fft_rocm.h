@@ -1,8 +1,10 @@
+
+#ifndef FFT_ROCM_H
+#define FFT_ROCM_H
+
 #include "fft_base.h"
 #include <hipfft/hipfft.h>
 #include <hip/hip_runtime.h>
-#ifndef FFT_ROCM_H
-#define FFT_ROCM_H
 namespace ModulePW
 {
 template <typename FPTYPE>
@@ -57,9 +59,5 @@ class FFT_ROCM : public FFT_BASE<FPTYPE>
         mutable std::complex<double>* z_auxr_3d = nullptr; // fft space
 
 };
-template FFT_RCOM<float>::FFT_RCOM();
-template FFT_ROCM<float>::~FFT_ROCM();
-template FFT_RCOM<double>::FFT_RCOM();
-template FFT_ROCM<double>::~FFT_ROCM();
 }// namespace ModulePW
 #endif

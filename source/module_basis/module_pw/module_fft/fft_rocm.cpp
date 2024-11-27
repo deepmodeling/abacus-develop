@@ -1,10 +1,10 @@
-#include "fft_rcom.h"
+#include "fft_rocm.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 namespace ModulePW
 {
 template <typename FPTYPE>
-void FFT_RCOM<FPTYPE>::initfft(int nx_in, 
+void FFT_ROCM<FPTYPE>::initfft(int nx_in, 
                                int ny_in, 
                                int nz_in)
 {
@@ -13,20 +13,20 @@ void FFT_RCOM<FPTYPE>::initfft(int nx_in,
     this->nz = nz_in;
 }
 template <>
-void FFT_RCOM<float>::setupFFT()
+void FFT_ROCM<float>::setupFFT()
 {
     hipfftPlan3d(&c_handle, this->nx, this->ny, this->nz, HIPFFT_C2C);
     resmem_cd_op()(gpu_ctx, this->c_auxr_3d, this->nx * this->ny * this->nz);
         
 }
 template <>  
-void FFT_RCOM<double>::setupFFT()
+void FFT_ROCM<double>::setupFFT()
 {
     hipfftPlan3d(&z_handle, this->nx, this->ny, this->nz, HIPFFT_Z2Z);
     resmem_zd_op()(gpu_ctx, this->z_auxr_3d, this->nx * this->ny * this->nz);
 }
 template <>
-void FFT_RCOM<float>::cleanFFT()
+void FFT_ROCM<float>::cleanFFT()
 {
     if (c_handle)
     {
@@ -35,7 +35,7 @@ void FFT_RCOM<float>::cleanFFT()
     }
 }
 template <>
-void FFT_RCOM<double>::cleanFFT()
+void FFT_ROCM<double>::cleanFFT()
 {
     if (z_handle)
     {
@@ -44,7 +44,7 @@ void FFT_RCOM<double>::cleanFFT()
     }
 }
 template <>
-void FFT_RCOM<float>::clear()
+void FFT_ROCM<float>::clear()
 {
     this->cleanFFT();
     if (c_auxr_3d != nullptr)
@@ -54,7 +54,7 @@ void FFT_RCOM<float>::clear()
     }
 }
 template <>
-void FFT_RCOM<double>::clear()
+void FFT_ROCM<double>::clear()
 {
     this->cleanFFT();
     if (z_auxr_3d != nullptr)
@@ -64,7 +64,7 @@ void FFT_RCOM<double>::clear()
     }
 }
 template <>
-void FFT_RCOM<float>::fft3D_forward(std::complex<float>* in, 
+void FFT_ROCM<float>::fft3D_forward(std::complex<float>* in, 
                                     std::complex<float>* out) const
 {
     CHECK_CUFFT(hipfftExecC2C(this->c_handle, 
@@ -73,7 +73,7 @@ void FFT_RCOM<float>::fft3D_forward(std::complex<float>* in,
                               HIPFFT_FORWARD));
 }
 template <>
-void FFT_RCOM<double>::fft3D_forward(std::complex<double>* in, 
+void FFT_ROCM<double>::fft3D_forward(std::complex<double>* in, 
                                      std::complex<double>* out) const
 {
     CHECK_CUFFT(hipfftExecZ2Z(this->z_handle, 
@@ -82,7 +82,7 @@ void FFT_RCOM<double>::fft3D_forward(std::complex<double>* in,
                               HIPFFT_FORWARD));
 }
 template <>
-void FFT_RCOM<float>::fft3D_backward(std::complex<float>* in, 
+void FFT_ROCM<float>::fft3D_backward(std::complex<float>* in, 
                                      std::complex<float>* out) const
 {
     CHECK_CUFFT(hipfftExecC2C(this->c_handle, 
@@ -91,7 +91,7 @@ void FFT_RCOM<float>::fft3D_backward(std::complex<float>* in,
                               HIPFFT_BACKWARD));
 }
 template <>
-void FFT_RCOM<double>::fft3D_backward(std::complex<double>* in, 
+void FFT_ROCM<double>::fft3D_backward(std::complex<double>* in, 
                                       std::complex<double>* out) const
 {
     CHECK_CUFFT(hipfftExecZ2Z(this->z_handle, 
@@ -100,7 +100,11 @@ void FFT_RCOM<double>::fft3D_backward(std::complex<double>* in,
                               HIPFFT_BACKWARD));
 }
 template <> std::complex<float>* 
-FFT_RCOM<float>::get_auxr_3d_data()  const {return this->c_auxr_3d;}
+FFT_ROCM<float>::get_auxr_3d_data()  const {return this->c_auxr_3d;}
 template <> std::complex<double>* 
-FFT_RCOM<double>::get_auxr_3d_data() const {return this->z_auxr_3d;}
+FFT_ROCM<double>::get_auxr_3d_data() const {return this->z_auxr_3d;}
+template FFT_ROCM<float>::FFT_ROCM();
+template FFT_ROCM<float>::~FFT_ROCM();
+template FFT_ROCM<double>::FFT_ROCM();
+template FFT_ROCM<double>::~FFT_ROCM();
 }// namespace ModulePW

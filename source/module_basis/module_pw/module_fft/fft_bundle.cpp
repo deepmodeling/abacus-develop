@@ -1,12 +1,13 @@
 #include <cassert>
 #include "fft_bundle.h"
-#include "fft_cpu.h"
+
 #include "module_base/module_device/device.h"
+#include "module_base/module_device/memory_op.h"
 #if defined(__CUDA)
 #include "fft_cuda.h"
 #endif
 #if defined(__ROCM)
-#include "fft_rcom.h"
+#include "fft_rocm.h"
 #endif
 
 template<typename FFT_BASE, typename... Args>
@@ -89,9 +90,9 @@ void FFT_Bundle::initfft(int nx_in,
     if (device=="gpu")
     {
         #if defined(__ROCM)
-            fft_float = new FFT_RCOM<float>();
+            fft_float = make_unique<FFT_ROCM<float>>();
             fft_float->initfft(nx_in,ny_in,nz_in);
-            fft_double = new FFT_RCOM<double>();
+            fft_double = make_unique<FFT_ROCM<double>>();
             fft_double->initfft(nx_in,ny_in,nz_in);
         #elif defined(__CUDA)
             fft_float = make_unique<FFT_CUDA<float>>();

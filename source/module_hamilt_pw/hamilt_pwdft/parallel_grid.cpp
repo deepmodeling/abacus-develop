@@ -355,7 +355,6 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin)const
 	// send the Barrier command.
 	if(GlobalV::MY_POOL!=0) 
 	{
-		MPI_Barrier(MPI_COMM_WORLD);
 		return;
 	}
 
@@ -406,8 +405,6 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin)const
 	}
 
 	delete[] zpiece;	
-
-	MPI_Barrier(MPI_COMM_WORLD);
 
 	return;
 }

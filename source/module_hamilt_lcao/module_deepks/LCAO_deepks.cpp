@@ -482,4 +482,14 @@ void LCAO_Deepks::del_v_delta_pdm_shell(const int nks,const int nlocal)
     return;
 }
 
+void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int nks)
+{
+    this->cal_e_delta_band(dm);
+}
+
+void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm, const int nks)
+{
+    this->cal_e_delta_band_k(dm, nks);
+}
+
 #endif

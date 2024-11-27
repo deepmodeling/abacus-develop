@@ -141,8 +141,14 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2density(elecstate::ElecState& elec,
         if (GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx
             && this->two_level_step == 0 && iter == 1)
         {
-            if (GlobalV::MY_RANK == 0) {GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx);
-}
+            if (GlobalV::MY_RANK == 0)
+            {
+                try { GlobalC::restart.load_disk("Eexx", 0, 1, &this->exx_ptr->Eexx); }
+                catch (const std::exception& e)
+                {
+                    std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl;
+                }
+            }
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
             this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
         }

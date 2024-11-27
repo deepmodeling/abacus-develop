@@ -41,7 +41,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
         auto tau1 = ucell->get_tau(iat1);
-        int T1, I1;
+        int T1=0;
+        int I1=0;
         ucell->iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD->Find_atom(*ucell, tau1, T1, I1, &adjs);
@@ -84,8 +85,8 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::calculate_SR()
     for (int iap = 0; iap < this->SR->size_atom_pairs(); ++iap)
     {
         hamilt::AtomPair<TR>& tmp = this->SR->get_atom_pair(iap);
-        int iat1 = tmp.get_atom_i();
-        int iat2 = tmp.get_atom_j();
+        const int iat1 = tmp.get_atom_i();
+        const int iat2 = tmp.get_atom_j();
         const Parallel_Orbitals* paraV = tmp.get_paraV();
 
         for (int iR = 0; iR < tmp.get_R_size(); ++iR)
@@ -116,9 +117,11 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::cal_SR_IJR(const int& iat
     // ---------------------------------------------
     // get info of orbitals of atom1 and atom2 from ucell
     // ---------------------------------------------
-    int T1, I1;
+    int T1=0;
+    int I1=0;
     this->ucell->iat2iait(iat1, &I1, &T1);
-    int T2, I2;
+    int T2=0;
+    int I2=0;
     this->ucell->iat2iait(iat2, &I2, &T2);
     Atom& atom1 = this->ucell->atoms[T1];
     Atom& atom2 = this->ucell->atoms[T2];
@@ -188,14 +191,15 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 template <typename TK, typename TR>
 void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
-    // if k vector is not changed, then do nothing and return, only for gamma_only case
+    //! if k vector is not changed, then do nothing and return, only for gamma_only case
     if (this->kvec_d[ik] == this->kvec_d_old && std::is_same<TK, double>::value)
     {
         return;
     }
     ModuleBase::TITLE("OverlapNew", "contributeHk");
     ModuleBase::timer::tick("OverlapNew", "contributeHk");
-    // set SK to zero and then calculate SK for each k vector
+    
+    //! set SK to zero and then calculate SK for each k vector
     this->hsk->set_zero_sk();
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
@@ -207,6 +211,7 @@ void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
         const int ncol = this->SR->get_atom_pair(0).get_paraV()->get_col_size();
         hamilt::folding_HR(*this->SR, this->hsk->get_sk(), this->kvec_d[ik], ncol, 0);
     }
+    
     // update kvec_d_old
     this->kvec_d_old = this->kvec_d[ik];
 

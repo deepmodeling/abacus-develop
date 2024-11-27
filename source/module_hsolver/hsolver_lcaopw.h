@@ -1,7 +1,8 @@
 #ifndef HSOLVERLIP_H
 #define HSOLVERLIP_H
 
-#include "hsolver.h"
+#include "module_elecstate/elecstate.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_base/macros.h"
 #include "module_base/module_device/types.h"
 namespace hsolver

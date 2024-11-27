@@ -46,7 +46,7 @@ TEST(DMKTest, GenFileName) {
     std::string output;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleIO::dmk_gen_fname(false, 2, 0),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
 };

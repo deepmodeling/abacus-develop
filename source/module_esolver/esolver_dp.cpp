@@ -31,7 +31,7 @@
 namespace ModuleESolver
 {
 
-void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
+void ESolver_DP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     ucell_ = &ucell;
     dp_potential = 0;
@@ -57,7 +57,7 @@ void ESolver_DP::before_all_runners(const Input_para& inp, UnitCell& ucell)
 #endif
 }
 
-void ESolver_DP::runner(const int istep, UnitCell& ucell)
+void ESolver_DP::runner(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_DP", "runner");
     ModuleBase::timer::tick("ESolver_DP", "runner");
@@ -127,13 +127,13 @@ double ESolver_DP::cal_energy()
     return dp_potential;
 }
 
-void ESolver_DP::cal_force(ModuleBase::matrix& force)
+void ESolver_DP::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     force = dp_force;
     ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
 }
 
-void ESolver_DP::cal_stress(ModuleBase::matrix& stress)
+void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
@@ -148,7 +148,7 @@ void ESolver_DP::cal_stress(ModuleBase::matrix& stress)
     ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
 }
 
-void ESolver_DP::after_all_runners()
+void ESolver_DP::after_all_runners(UnitCell& ucell)
 {
     GlobalV::ofs_running << "\n\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);

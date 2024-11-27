@@ -13,7 +13,7 @@
 #include "module_base/vector3.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_cell/klist.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/wavefunc_in_pw.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/parallel_global.h"
@@ -21,7 +21,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_cell/module_symmetry/symmetry.h"
-#include "module_hamilt_pw/hamilt_pwdft/wfinit.h"
+#include "module_psi/psi_init.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
@@ -81,18 +81,18 @@ void Exx_Lip<T, Device>::cal_exx()
 }
 
 template <typename T, typename Device>
-Exx_Lip<T, Device>::Exx_Lip(
-    const Exx_Info::Exx_Info_Lip& info_in,
-    const ModuleSymmetry::Symmetry& symm,
-    K_Vectors* kv_ptr_in,
-    psi::WFInit<T, Device>* wf_ptr_in,
-    psi::Psi<T, Device>* kspw_psi_ptr_in,
-    //    wavefunc* wf_ptr_in,
-    const ModulePW::PW_Basis_K* wfc_basis_in,
-    const ModulePW::PW_Basis* rho_basis_in,
-    const Structure_Factor& sf,
-    const UnitCell* ucell_ptr_in,
-    const elecstate::ElecState* pelec_in) : info(info_in)
+Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
+                            const ModuleSymmetry::Symmetry& symm,
+                            K_Vectors* kv_ptr_in,
+                            psi::PSIInit<T, Device>* wf_ptr_in,
+                            psi::Psi<T, Device>* kspw_psi_ptr_in,
+                            //    wavefunc* wf_ptr_in,
+                            const ModulePW::PW_Basis_K* wfc_basis_in,
+                            const ModulePW::PW_Basis* rho_basis_in,
+                            const Structure_Factor& sf,
+                            const UnitCell* ucell_ptr_in,
+                            const elecstate::ElecState* pelec_in)
+    : info(info_in)
 {
     ModuleBase::TITLE("Exx_Lip", "init");
     ModuleBase::timer::tick("Exx_Lip", "init");
