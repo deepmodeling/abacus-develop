@@ -423,7 +423,7 @@ int Symmetry::standard_lat(
 
     Symm_Other::right_hand_sense(a, b, c);
 	ModuleBase::GlobalFunc::ZEROS(cel_const, 6);
-	const double small = 1.0e-5;
+	const double small = PARAM.inp.symmetry_prec;
 
 	//---------------------------	
 	// 1. alpha == beta == gamma 

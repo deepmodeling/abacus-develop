@@ -73,7 +73,7 @@ double Symmetry_Basic::check_diff(const double& x1, const double& x2)const
 	double diff = x1 - x2;
 	diff = fmod(diff + 100,1);
 	//for reasons of safety
-	if(fabs(diff - 1.0) < epsilon * 0.5)
+	if(fabs(diff - 1.0) < epsilon)
 	{
 		diff = 0;
 	}
