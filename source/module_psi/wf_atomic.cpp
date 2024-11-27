@@ -31,7 +31,7 @@ WF_atomic::~WF_atomic()
     }
 }
 
-void WF_atomic::init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell)
+void WF_atomic::init_at_1(Structure_Factor *sf_in, ModuleBase::realArray* tab_at)
 {
     if(PARAM.inp.use_paw) { return;
 }
@@ -55,7 +55,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell)
 
     // needed to normalize atomic wfcs (not a bad idea in general and
     // necessary to compute correctly lda+U projections)
-    p_ppcell->tab_at.zero_out();
+    tab_at->zero_out();
 //----------------------------------------------------------
 // EXPLAIN : If use gauss orbitals to represent aotmic
 // orbitals (controlled by parameters)
@@ -194,7 +194,7 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell)
                     double vqint = 0.0;
                     ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi, atom->ncpp.rab.data(), vqint);
 
-                    p_ppcell->tab_at(it, ic, iq) =  vqint * pref;
+                    tab_at->operator()(it, ic, iq) =  vqint * pref;
                     //				if( it == 0 && ic == 0 )
                     //				{
                     //
@@ -247,9 +247,10 @@ void WF_atomic::print_PAOs()const
     return;
 }
 
-void WF_atomic::atomic_wfc(const int ik,
-                           const int np,
-                           const int lmax_wfc,
+void WF_atomic::atomic_wfc(const int& ik,
+                           const int& np,
+                           const int& lmax_wfc,
+                           const int& lmaxkb,
                            const ModulePW::PW_Basis_K* wfc_basis,
                            ModuleBase::ComplexMatrix& wfcatom,
                            const ModuleBase::realArray& table_q,
@@ -330,7 +331,7 @@ void WF_atomic::atomic_wfc(const int ik,
                                       {
                                           if(fabs(fact[is])>1e-8)
                                           {
-                                              const int ind = p_ppcell->lmaxkb + soc.sph_ind(l,j,m,is);
+                                              const int ind = lmaxkb + soc.sph_ind(l,j,m,is);
                                               ModuleBase::GlobalFunc::ZEROS(aux, np);
                                               for(int n1=0;n1<2*l+1;n1++){
                                                  const int lm = l*l +n1;

@@ -26,10 +26,11 @@
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
                                        const elecstate::ElecState& elec,
-                                       const pseudopot_cell_vnl& nlpp,
                                        ModulePW::PW_Basis* rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
+                                       const pseudopot_cell_vl* locpp,
+                                       const pseudopot_cell_vnl* p_nlpp,
                                        K_Vectors* pkv,
                                        ModulePW::PW_Basis_K* wfc_basis,
                                        const psi::Psi<std::complex<FPTYPE>, Device>* psi_in)
@@ -53,7 +54,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // For PAW, calculated together in paw_cell.calculate_force
     if (!PARAM.inp.use_paw)
     {
-        this->cal_force_loc(forcelc, rho_basis, nlpp.vloc, chr);
+        this->cal_force_loc(forcelc, rho_basis, locpp->vloc, chr);
     }
     else
     {
@@ -69,11 +70,11 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
         if (!PARAM.inp.use_paw)
         {
             this->npwx = wfc_basis->npwk_max;
-            Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, &nlpp, GlobalC::ucell, psi_in);
+            Forces::cal_force_nl(forcenl, wg, ekb, pkv, wfc_basis, p_sf, *p_nlpp, GlobalC::ucell, psi_in);
 
             if (PARAM.globalv.use_uspp)
             {
-                this->cal_force_us(forcenl, rho_basis, &nlpp, elec, GlobalC::ucell);
+                this->cal_force_us(forcenl, rho_basis, *p_nlpp, elec, GlobalC::ucell);
             }
         }
         else
@@ -160,7 +161,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // not relevant for PAW
     if (!PARAM.inp.use_paw)
     {
-        Forces::cal_force_cc(forcecc, rho_basis, chr, nlpp.numeric, GlobalC::ucell);
+        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, GlobalC::ucell);
     }
     else
     {
@@ -171,7 +172,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     // For PAW, calculated together in paw_cell.calculate_force
     if (!PARAM.inp.use_paw)
     {
-        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, nlpp.numeric, GlobalC::ucell);
+        this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, GlobalC::ucell);
     }
     else
     {
@@ -223,7 +224,7 @@ void Forces<FPTYPE, Device>::cal_force(ModuleBase::matrix& force,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, nlpp.vloc, rho_basis, forcesol);
+        GlobalC::solvent_model.cal_force_sol(GlobalC::ucell, rho_basis, locpp->vloc, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, GlobalC::ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);

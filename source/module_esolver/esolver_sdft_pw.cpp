@@ -99,6 +99,7 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
                                                          this->pw_wfc,
                                                          &this->kv,
+                                                         &this->ppcell,
                                                          PARAM.globalv.npol,
                                                          &this->stoche.emin_sto,
                                                          &this->stoche.emax_sto);

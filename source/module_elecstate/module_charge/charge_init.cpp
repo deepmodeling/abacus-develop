@@ -199,10 +199,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
 //==========================================================
 // computes the core charge on the real space 3D mesh.
 //==========================================================
-void Charge::set_rho_core(
-    const ModuleBase::ComplexMatrix &structure_factor,
-    const bool* numeric,
-)
+void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, const bool* numeric)
 {
     ModuleBase::TITLE("Charge","set_rho_core");
     ModuleBase::timer::tick("Charge","set_rho_core");

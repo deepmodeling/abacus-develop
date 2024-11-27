@@ -14,12 +14,12 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
                                           const K_Vectors* p_kv,
                                           const ModulePW::PW_Basis_K* wfc_basis,
                                           const Structure_Factor* p_sf,
-                                          pseudopot_cell_vnl* nlpp_in,
+                                          const pseudopot_cell_vnl& nlpp,
                                           const UnitCell& ucell_in,
                                           const psi::Psi<complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_nl");
-    if (nlpp_in->nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
+    if (nlpp.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
     {
         return;
     }
@@ -30,7 +30,7 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     resmem_var_op()(this->ctx, force, ucell_in.nat * 3);
     base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, force, 0.0, ucell_in.nat * 3);
 
-    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
+    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
     const int nks = wfc_basis->nks;
     const int max_nbands = wg.nc;

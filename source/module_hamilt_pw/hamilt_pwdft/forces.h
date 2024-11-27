@@ -38,6 +38,8 @@ class Forces
                    ModulePW::PW_Basis* rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
+                   const pseudopot_cell_vl* locpp,
+                   const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
                    ModulePW::PW_Basis_K* psi_basis = nullptr,
                    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
@@ -72,7 +74,7 @@ class Forces
                       const K_Vectors* p_kv,
                       const ModulePW::PW_Basis_K* psi_basis,
                       const Structure_Factor* p_sf,
-                      pseudopot_cell_vnl* nlpp_in,
+                      const pseudopot_cell_vnl& nlpp_in,
                       const UnitCell& ucell_in,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
@@ -83,7 +85,7 @@ class Forces
                        const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,
-                      pseudopot_cell_vnl* ppcell_in,
+                      const pseudopot_cell_vnl& ppcell_in,
                       const elecstate::ElecState& elec,
                       const UnitCell& ucell);
     void cal_ylm(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm);

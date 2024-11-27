@@ -35,18 +35,19 @@ class WF_atomic
     /**
      * @brief init a table with the radial Fourier transform of the atomic WF_atomictions
      * @param sf_in [out] the structure factor
-     * @param p_ppcell [out] the pseudopotential cell
+     * @param tab_at [out] atomic table
      */
-    void init_at_1(Structure_Factor *sf_in, pseudopot_cell_vnl* p_ppcell);
+    void init_at_1(Structure_Factor *sf_in, ModuleBase::realArray* tab_at);
 
     void print_PAOs()const;
 
     public: //template change to public, will be refactor later. added by zhengdy 20230302
     int *irindex = nullptr;
 
-    void atomic_wfc(const int ik,
-                    const int np,
-                    const int lmax_wfc,
+    void atomic_wfc(const int& ik,
+                    const int& np,
+                    const int& lmax_wfc,
+                    const int& lmaxkb,
                     const ModulePW::PW_Basis_K* wfc_basis,
                     ModuleBase::ComplexMatrix& wfcatom,
                     const ModuleBase::realArray& table_q,

@@ -39,7 +39,7 @@ class PSIInit
                       pseudopot_cell_vnl* p_ppcell);   //< nonlocal pseudopotential
 
     // make interpolate table
-    void make_table(const int nks, Structure_Factor* p_sf);
+    void make_table(const int nks, Structure_Factor* p_sf, pseudopot_cell_vnl* p_ppcell);
 
     //------------------------ only for psi_initializer --------------------
     /**

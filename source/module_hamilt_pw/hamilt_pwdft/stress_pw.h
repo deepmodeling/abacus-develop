@@ -30,7 +30,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // which is due to the dependence of the Q function on the atomic position
     void stress_us(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
-                   pseudopot_cell_vnl* ppcell_in,
+                   const pseudopot_cell_vnl& nlpp,
                    const UnitCell& ucell); // nonlocal part of uspp in PW basis
 
     const elecstate::ElecState* pelec = nullptr;
