@@ -3,7 +3,8 @@
 #include "module_parameter/input_parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_hamilt_general/hamilt.h"
-#include "module_hsolver/hsolver.h"
+#include "module_elecstate/elecstate.h"
+#include "module_hamilt_general/hamilt.h"
 #include "module_elecstate/elecstate_lcao.h"
 
 #include <vector>   //future tensor
@@ -37,17 +38,15 @@ namespace LR
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
-        virtual void before_all_runners(const Input_para& inp, UnitCell& cell) override {};
-
-        virtual void init_after_vc(const Input_para& inp, UnitCell& cell) override {};
-        virtual void runner(int istep, UnitCell& ucell) override;
-        virtual void after_all_runners() override;
+        virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override {};
+        virtual void runner(UnitCell& ucell, int istep) override;
+        virtual void after_all_runners(UnitCell& ucell) override;
 
         virtual double cal_energy()  override { return 0.0; };
-        virtual void cal_force(ModuleBase::matrix& force) override {};
-        virtual void cal_stress(ModuleBase::matrix& stress) override {};
+        virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override {};
+        virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override {};
 
-    protected:
+      protected:
         const Input_para& input;
         const UnitCell& ucell;
         std::vector<double> orb_cutoff_;

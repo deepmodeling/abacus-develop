@@ -13,7 +13,7 @@ if(ENABLE_LCAO)
         operator_lcao/nonlocal_new.cpp
         operator_lcao/td_ekinetic_lcao.cpp
         operator_lcao/td_nonlocal_lcao.cpp
-        operator_lcao/sc_lambda_lcao.cpp
+        operator_lcao/dspin_lcao.cpp
         operator_lcao/dftu_lcao.cpp
         pulay_force_stress_center2.cpp
         FORCE_STRESS.cpp
@@ -21,15 +21,12 @@ if(ENABLE_LCAO)
         FORCE_k.cpp
         stress_tools.cpp
         edm.cpp
-        fvnl_dbeta_gamma.cpp
-        fvnl_dbeta_k.cpp
         grid_init.cpp
         spar_dh.cpp
         spar_exx.cpp
         spar_hsr.cpp
         spar_st.cpp
         spar_u.cpp
-        LCAO_nnr.cpp
 		LCAO_set_fs.cpp
 		LCAO_set_st.cpp
 		LCAO_nl_mu.cpp	

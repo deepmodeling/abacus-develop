@@ -1,5 +1,20 @@
+if (ENABLE_FLOAT_FFTW)
+  list (APPEND FFT_SRC
+    module_fft/fft_cpu_float.cpp
+  )
+endif()
+if (USE_CUDA)
+  list (APPEND FFT_SRC
+    module_fft/fft_cuda.cpp
+  )
+endif()
+if (USE_ROCM)
+  list (APPEND FFT_SRC
+    module_fft/fft_rocm.cpp
+  )
+endif()
+
 list(APPEND objects
-    fft.cpp
     pw_basis.cpp
     pw_basis_k.cpp
     pw_basis_sup.cpp
@@ -10,6 +25,9 @@ list(APPEND objects
     pw_init.cpp
     pw_transform.cpp
     pw_transform_k.cpp
+    module_fft/fft_bundle.cpp
+    module_fft/fft_cpu.cpp
+    ${FFT_SRC}
 )
 
 add_library(

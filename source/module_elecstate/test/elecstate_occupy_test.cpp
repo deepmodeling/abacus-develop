@@ -74,7 +74,7 @@ TEST_F(OccupyTest, DecisionSmearingGauss)
 TEST_F(OccupyTest, DecisionSmearingGaussianWarning)
 {
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.decision("smearing", "gaussian", 0.0), ::testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(occupy.decision("smearing", "gaussian", 0.0), ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   // test output on screen
   EXPECT_THAT(
@@ -157,7 +157,7 @@ TEST_F(OccupyTest, DecisionFD)
 TEST_F(OccupyTest, DecisionTetrahedraWarning)
 {
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.decision("tetrahedra", "gaussian", 0.0), ::testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(occupy.decision("tetrahedra", "gaussian", 0.0), ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   // test output on screen
   EXPECT_THAT(output, testing::HasSubstr("not implemented yet!"));
@@ -175,7 +175,7 @@ TEST_F(OccupyTest, DecisionFromInput)
 TEST_F(OccupyTest, DecisionArbitrary)
 {
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.decision("arbitrary", "gaussian", 0.0), ::testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(occupy.decision("arbitrary", "gaussian", 0.0), ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   // test output on screen
   EXPECT_THAT(output, testing::HasSubstr("occupations, not implemented"));
@@ -227,7 +227,7 @@ TEST_F(OccupyTest, IweightsWarning)
   ekb(0, 0) = 0.1;
 
   testing::internal::CaptureStdout();
-  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(0), "");
+  EXPECT_EXIT(occupy.iweights(1, wk, 1, 1.0, ekb, ef, wg, -1, isk);, ::testing::ExitedWithCode(1), "");
   output = testing::internal::GetCapturedStdout();
   EXPECT_THAT(output, testing::HasSubstr("It is not a semiconductor or insulator. Please do not set 'smearing_method=fixed', and try other options."));
 }

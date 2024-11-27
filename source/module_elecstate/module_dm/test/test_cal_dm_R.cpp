@@ -47,7 +47,7 @@ class DMTest : public testing::Test
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
         ucell.iat2ia = new int[ucell.nat];
-        ucell.atoms[0].tau = new ModuleBase::Vector3<double>[ucell.nat];
+        ucell.atoms[0].tau.resize(ucell.nat);
         ucell.itia2iat.create(ucell.ntype, ucell.nat);
         for (int iat = 0; iat < ucell.nat; iat++)
         {
@@ -58,9 +58,9 @@ class DMTest : public testing::Test
         }
         ucell.atoms[0].na = test_size;
         ucell.atoms[0].nw = test_nw;
-        ucell.atoms[0].iw2l = new int[test_nw];
-        ucell.atoms[0].iw2m = new int[test_nw];
-        ucell.atoms[0].iw2n = new int[test_nw];
+        ucell.atoms[0].iw2l.resize(test_nw);
+        ucell.atoms[0].iw2m.resize(test_nw);
+        ucell.atoms[0].iw2n.resize(test_nw);
         for (int iw = 0; iw < test_nw; ++iw)
         {
             ucell.atoms[0].iw2l[iw] = 0;
@@ -77,10 +77,6 @@ class DMTest : public testing::Test
     void TearDown() override
     {
         delete paraV;
-        delete[] ucell.atoms[0].tau;
-        delete[] ucell.atoms[0].iw2l;
-        delete[] ucell.atoms[0].iw2m;
-        delete[] ucell.atoms[0].iw2n;
         delete[] ucell.atoms;
         delete[] ucell.iat2it;
         delete[] ucell.iat2ia;
@@ -104,7 +100,7 @@ class DMTest : public testing::Test
 #endif
 };
 
-TEST_F(DMTest, cal_DMR_test)
+TEST_F(DMTest, cal_DMR_full)
 {
     // get my rank of this process
     int my_rank = 0;
@@ -123,51 +119,46 @@ TEST_F(DMTest, cal_DMR_test)
     }
     // initalize a kvectors, Gamma-only
     K_Vectors* kv = nullptr;
-    int nspin = 2;
+    int nspin = 4;
     int nks = 2; // since nspin = 2
     kv = new K_Vectors;
     kv->set_nks(nks);
     kv->kvec_d.resize(nks);
     // construct DM
-    elecstate::DensityMatrix<double, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks() / nspin);
+    elecstate::DensityMatrix<std::complex<double>, double> DM(paraV, nspin, kv->kvec_d, kv->get_nks());
     // set this->_DMK
     for (int is = 1; is <= nspin; is++)
     {
-        for (int ik = 0; ik < kv->get_nks() / nspin; ik++)
+        for (int ik = 0; ik < kv->get_nks(); ik++)
         {
             for (int i = 0; i < paraV->nrow; i++)
             {
                 for (int j = 0; j < paraV->ncol; j++)
                 {
-                    DM.set_DMK(is, ik, i, j, 0.77);
+                    DM.set_DMK(is, ik, i, j, std::complex<double>(0.77, 0.77));
                 }
             }
         }
     }
-    // initialize this->_DMR
-    Grid_Driver gd(0,0);
-    DM.init_DMR(&gd, &ucell);
-    // set Gamma-only
-    for (int is = 1; is <= nspin; is++)
-    {
-        DM.get_DMR_pointer(is)->fix_gamma();
-    }
+    // initialize dmR_full
+    hamilt::HContainer<std::complex<double>> dmR_full(ucell, paraV);
     // calculate this->_DMR
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
-    DM.cal_DMR_test();
+    DM.cal_DMR_full(&dmR_full);
     std::chrono::high_resolution_clock::time_point end_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed_time
         = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "my rank: " << my_rank << " elapsed time blas: " << elapsed_time.count() << std::endl;
     // compare the result
-    for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
+    for (int i = 0; i < dmR_full.size_atom_pairs(); i++)
     {
-        double* ptr1 = DM.get_DMR_pointer(1)->get_atom_pair(i).get_HR_values(0, 0, 0).get_pointer();
+        const std::complex<double>* ptr1 = dmR_full.get_atom_pair(i).get_HR_values(0, 0, 0).get_pointer();
         //
-        for (int j = 0; j < DM.get_DMR_pointer(1)->get_atom_pair(i).get_size(); j++)
+        for (int j = 0; j < dmR_full.get_atom_pair(i).get_size(); j++)
         {
-            // std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
-            EXPECT_NEAR(ptr1[j], 0.77, 1e-10);
+            //std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j].real(), 1.54, 1e-10);
+            EXPECT_NEAR(ptr1[j].imag(), 1.54, 1e-10);
         }
     }
     delete kv;
@@ -316,8 +307,8 @@ TEST_F(DMTest, cal_DMR_blas_complex)
             EXPECT_NEAR(ptr1[j], -0.77 * 2, 1e-10);
         }
     }
-    // merge DMR
-    DM.sum_DMR_spin();
+    // calculate DMR_total
+    DM.switch_dmr(1);
     // compare the result for spin-up after sum
     for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
     {
@@ -327,6 +318,30 @@ TEST_F(DMTest, cal_DMR_blas_complex)
         {
             //std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
             EXPECT_NEAR(ptr1[j], -0.77 * 3, 1e-10);
+        }
+    }
+    // restore to normal DMR 
+    DM.switch_dmr(0);
+    for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
+    {
+        double* ptr1 = DM.get_DMR_pointer(1)->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        //
+        for (int j = 0; j < DM.get_DMR_pointer(1)->get_atom_pair(i).get_size(); j++)
+        {
+            //std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j], -0.77, 1e-10);
+        }
+    }
+    // calculate DMR_differenct
+    DM.switch_dmr(2);
+    for (int i = 0; i < DM.get_DMR_pointer(1)->size_atom_pairs(); i++)
+    {
+        double* ptr1 = DM.get_DMR_pointer(1)->get_atom_pair(i).get_HR_values(1, 1, 1).get_pointer();
+        //
+        for (int j = 0; j < DM.get_DMR_pointer(1)->get_atom_pair(i).get_size(); j++)
+        {
+            //std::cout << "my rank: " << my_rank << " i: " << i << " j: " << j << " value: " << ptr1[j] << std::endl;
+            EXPECT_NEAR(ptr1[j], 0.77, 1e-10);
         }
     }
     delete kv;

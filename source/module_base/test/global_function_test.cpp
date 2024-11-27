@@ -713,7 +713,7 @@ TEST_F(GlobalFunctionTest,BlockHere2)
 	std::istringstream iss{fake_input};
 	std::cin.rdbuf(iss.rdbuf());
 	testing::internal::CaptureStdout();
-//	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(0),"");
+//	EXPECT_EXIT(ModuleBase::GlobalFunc::BLOCK_HERE(block_in), ::testing::ExitedWithCode(1),"");
 	ModuleBase::GlobalFunc::BLOCK_HERE(block_in);
 	output2 = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output2,testing::HasSubstr("\n********************************************"

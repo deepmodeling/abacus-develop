@@ -247,7 +247,10 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
         else
         {
-            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij", "some processor has no bands-row-blocks.");
+            ModuleBase::WARNING_QUIT("Parallel_Orbitals::set_nloc_wfc_Eij",
+                "The number of columns of the 2D process grid exceeds the number of bands. "
+                "Try launching the calculation with fewer MPI processes."
+            );
         }
     }
     int col_b_bands = block / dim1;

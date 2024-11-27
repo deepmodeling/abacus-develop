@@ -382,6 +382,10 @@ class LCAO_Deepks
     void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
                             const int nks);
 
+    //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k
+    void dpks_cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int nks);
+    void dpks_cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm, const int nks);
+
     //-------------------
     // LCAO_deepks_odelta.cpp
     //-------------------

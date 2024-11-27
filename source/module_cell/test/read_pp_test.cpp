@@ -436,7 +436,7 @@ TEST_F(ReadPPTest, HeaderErr2011)
 	//read_pp->read_pseudo_upf201(ifs, *upf);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(read_pp->read_pseudo_upf201(ifs, *upf),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Found no PP_HEADER"));
     ifs.close();
@@ -450,7 +450,7 @@ TEST_F(ReadPPTest, HeaderErr2012)
 	//read_pp->read_pseudo_upf201(ifs, *upf);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(read_pp->read_pseudo_upf201(ifs, *upf),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("SEMI-LOCAL PSEUDOPOTENTIAL IS NOT SUPPORTED"));
     ifs.close();
@@ -464,7 +464,7 @@ TEST_F(ReadPPTest, HeaderErr2013)
 	//read_pp->read_pseudo_upf201(ifs, *upf);
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(read_pp->read_pseudo_upf201(ifs, *upf),
-			::testing::ExitedWithCode(0),"");
+			::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("PAW POTENTIAL IS NOT SUPPORTED"));
     ifs.close();

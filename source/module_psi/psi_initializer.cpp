@@ -73,8 +73,8 @@ psi::Psi<std::complex<double>>* psi_initializer<T, Device>::allocate(const bool 
                                                      PARAM.inp.nbands, // because no matter what, the wavefunction finally needed has PARAM.inp.nbands bands
                                                      nbasis_actual, 
                                                      this->pw_wfc_->npwk);
-        double memory_cost_psi = nks_psi * PARAM.inp.nbands * this->pw_wfc_->npwk_max * PARAM.globalv.npol*
-                        sizeof(std::complex<double>);
+        double memory_cost_psi = sizeof(std::complex<double>) * nks_psi * PARAM.inp.nbands 
+                                                              * this->pw_wfc_->npwk_max * PARAM.globalv.npol;
 #ifdef __MPI
         // get the correct memory cost for psi by all-reduce sum
         Parallel_Reduce::reduce_all(memory_cost_psi);

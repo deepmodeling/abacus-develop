@@ -157,7 +157,25 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            try
+            {
+                GlobalC::restart.load_disk("charge", is, this->nrxx, rho[is]);
+            }
+            catch (const std::exception& e)
+            {
+                // try to load from the output of `out_chg` 
+                std::stringstream ssc;
+                ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
+                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                    GlobalV::ofs_running,
+                    ssc.str(),
+                    this->rho[is],
+                    GlobalC::ucell.nat))
+                {
+                    GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
+                }
+            }
         }
         GlobalC::restart.info_load.load_charge_finish = true;
     }
@@ -260,8 +278,8 @@ void Charge::set_rho_core(
     double rhoneg = 0.0;
     for (int ir = 0; ir < this->rhopw->nrxx; ir++)
     {
-        rhoneg += std::min(0.0, this->rhopw->ft.get_auxr_data<double>()[ir].real());
-        rhoima += std::abs(this->rhopw->ft.get_auxr_data<double>()[ir].imag());
+        rhoneg += std::min(0.0, this->rhopw->fft_bundle.get_auxr_data<double>()[ir].real());
+        rhoima += std::abs(this->rhopw->fft_bundle.get_auxr_data<double>()[ir].imag());
         // NOTE: Core charge is computed in reciprocal space and brought to real
         // space by FFT. For non smooth core charges (or insufficient cut-off)
         // this may result in negative values in some grid points.

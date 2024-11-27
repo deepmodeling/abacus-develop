@@ -74,6 +74,8 @@ class ElecStateLCAO : public ElecState
     void dmToRho(std::vector<TK*> pexsi_DM, std::vector<TK*> pexsi_EDM);
 #endif
 
+    DensityMatrix<TK, double>* DM = nullptr;
+
   protected:
     // calculate electronic charge density on grid points or density matrix in real space
     // the consequence charge density rho saved into rho_out, preparing for charge mixing.
@@ -85,7 +87,6 @@ class ElecStateLCAO : public ElecState
 
     Gint_Gamma* gint_gamma = nullptr; // mohan add 2024-04-01
     Gint_k* gint_k = nullptr;         // mohan add 2024-04-01
-    DensityMatrix<TK, double>* DM = nullptr;
 };
 
 template <typename TK>

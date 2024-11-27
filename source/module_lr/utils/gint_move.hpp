@@ -12,11 +12,11 @@ using D2 = void(*) (T**, size_t);
 // template <typename T>
 // using D3 = void(*) (T***, size_t, size_t);
 // template <typename T>
-// D2<T> d2 = LR_Util::delete_p2<T>;
+// D2<T> d2 = LR_Util::_deallocate_2order_nested_ptr<T>;
 // template <typename T>
 // D3<T> d3 = LR_Util::delete_p3<T>;
 // Change to C++ 11
-D2<double> d2 = LR_Util::delete_p2<double>;
+D2<double> d2 = LR_Util::_deallocate_2order_nested_ptr<double>;
 // D3<double> d3 = LR_Util::delete_p3<double>;
 
 
@@ -39,25 +39,6 @@ Gint& Gint::operator=(Gint&& rhs)
     this->nplane = rhs.nplane;
     this->startz_current = rhs.startz_current;
 
-    if (this->pvpR_reduced != nullptr) { d2(this->pvpR_reduced, PARAM.inp.nspin);  //nspin*gridt.nnrg
-}
-    if (this->pvdpRx_reduced != nullptr) { d2(this->pvdpRx_reduced, PARAM.inp.nspin);
-}
-    if (this->pvdpRy_reduced != nullptr) { d2(this->pvdpRy_reduced, PARAM.inp.nspin);
-}
-    if (this->pvdpRz_reduced != nullptr) { d2(this->pvdpRz_reduced, PARAM.inp.nspin);
-}
-    this->pvpR_alloc_flag = rhs.pvpR_alloc_flag;
-    rhs.pvpR_alloc_flag = false;
-    this->pvpR_reduced = rhs.pvpR_reduced;
-    this->pvdpRx_reduced = rhs.pvdpRx_reduced;
-    this->pvdpRy_reduced = rhs.pvdpRy_reduced;
-    this->pvdpRz_reduced = rhs.pvdpRz_reduced;
-    rhs.pvpR_reduced = nullptr;
-    rhs.pvdpRx_reduced = nullptr;
-    rhs.pvdpRy_reduced = nullptr;
-    rhs.pvdpRz_reduced = nullptr;
-
     this->gridt = rhs.gridt;
     this->ucell = rhs.ucell;
 
@@ -66,7 +47,19 @@ Gint& Gint::operator=(Gint&& rhs)
     rhs.hRGint = nullptr;
     this->hRGintCd = rhs.hRGintCd;
     rhs.hRGintCd = nullptr;
+    for (int i = 0; i < this->DMRGint.size(); i++)
+    {
+        delete this->DMRGint[i];
+    }
+    for (int i = 0; i < this->hRGint_tmp.size(); i++)
+    {
+        delete this->hRGint_tmp[i];
+    }
+    this->pvdpRx_reduced = std::move(rhs.pvdpRx_reduced);
+    this->pvdpRy_reduced = std::move(rhs.pvdpRy_reduced);
+    this->pvdpRz_reduced = std::move(rhs.pvdpRz_reduced);
     this->DMRGint = std::move(rhs.DMRGint);
+    this->hRGint_tmp = std::move(rhs.hRGint_tmp);
     this->DMRGint_full = rhs.DMRGint_full;
     rhs.DMRGint_full = nullptr;
 

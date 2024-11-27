@@ -55,9 +55,11 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // on the old interface for now.
     two_center_bundle.to_LCAO_Orbitals(orb, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-
-    two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    if (PARAM.inp.vnl_in_h)
+    {
+        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    }
 
     int Lmax = 0;
 #ifdef __EXX
@@ -79,7 +81,9 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     try_nb += pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     if (try_nb != 0)
     {
-        pv.set(nlocal, nlocal, 1, pv.blacs_ctxt);
+        // fall back to the minimum size, 1 or 2 (nspin=4)
+        const int min_size = (PARAM.inp.nspin == 4) ? 2 : 1;
+        pv.set(nlocal, nlocal, min_size, pv.blacs_ctxt);
         try_nb = pv.set_nloc_wfc_Eij(PARAM.inp.nbands, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 

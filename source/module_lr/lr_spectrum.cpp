@@ -53,7 +53,7 @@ void LR::LR_Spectrum<double>::oscillator_strength(Grid_Driver& gd, const std::ve
 
             // 2. transition density
             double** rho_trans;
-            LR_Util::new_p2(rho_trans, 1, this->rho_basis.nrxx);
+            LR_Util::_allocate_2order_nested_ptr(rho_trans, 1, this->rho_basis.nrxx);
             this->cal_gint_rho(rho_trans, this->rho_basis.nrxx);
 
             // 3. transition dipole moment
@@ -67,7 +67,7 @@ void LR::LR_Spectrum<double>::oscillator_strength(Grid_Driver& gd, const std::ve
                 ModuleBase::Vector3<double> rc = rd * ucell.latvec * ucell.lat0; // real coordinate
                 transition_dipole_[istate] += rc * rho_trans[0][ir];
             }
-            LR_Util::delete_p2(rho_trans, 1);
+            LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
         }
         transition_dipole_[istate] *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
         Parallel_Reduce::reduce_all(transition_dipole_[istate].x);
@@ -114,8 +114,8 @@ void LR::LR_Spectrum<std::complex<double>>::oscillator_strength(Grid_Driver& gd,
             // 2. transition density
             double** rho_trans_real;
             double** rho_trans_imag;
-            LR_Util::new_p2(rho_trans_real, 1, this->rho_basis.nrxx);
-            LR_Util::new_p2(rho_trans_imag, 1, this->rho_basis.nrxx);
+            LR_Util::_allocate_2order_nested_ptr(rho_trans_real, 1, this->rho_basis.nrxx);
+            LR_Util::_allocate_2order_nested_ptr(rho_trans_imag, 1, this->rho_basis.nrxx);
             // real part
             LR_Util::get_DMR_real_imag_part(DM_trans, DM_trans_real_imag, ucell.nat, 'R');
             this->gint->transfer_DM2DtoGrid(DM_trans_real_imag.get_DMR_vector());
@@ -140,8 +140,8 @@ void LR::LR_Spectrum<std::complex<double>>::oscillator_strength(Grid_Driver& gd,
                 ModuleBase::Vector3<std::complex<double>> rc_complex(rc.x, rc.y, rc.z);
                 transition_dipole_[istate] += rc_complex * std::complex<double>(rho_trans_real[0][ir], rho_trans_imag[0][ir]);
             }
-            LR_Util::delete_p2(rho_trans_real, 1);
-            LR_Util::delete_p2(rho_trans_imag, 1);
+            LR_Util::_deallocate_2order_nested_ptr(rho_trans_real, 1);
+            LR_Util::_deallocate_2order_nested_ptr(rho_trans_imag, 1);
         }
         transition_dipole_[istate] *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
         Parallel_Reduce::reduce_all(transition_dipole_[istate].x);

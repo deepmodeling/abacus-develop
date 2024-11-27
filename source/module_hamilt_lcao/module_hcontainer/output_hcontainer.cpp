@@ -40,13 +40,21 @@ void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
     int find_R = 0;
     for (int iR = 0; iR < size_for_loop_R; iR++)
     {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
         this->_hcontainer->loop_R(iR, rx, ry, rz);
         if (rx == rx_in && ry == ry_in && rz == rz_in)
         {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
             find_R += 1;
             this->write_single_R(rx, ry, rz);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
             break;
         }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     }
     if (find_R == 0)
     {
@@ -57,10 +65,18 @@ void Output_HContainer<T>::write(int rx_in, int ry_in, int rz_in)
 template <typename T>
 void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
 {
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     this->_hcontainer->fix_R(rx, ry, rz);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     ModuleIO::SparseMatrix<T> sparse_matrix
         = ModuleIO::SparseMatrix<T>(_hcontainer->get_nbasis(), _hcontainer->get_nbasis());
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     sparse_matrix.setSparseThreshold(this->_sparse_threshold);
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     for (int iap = 0; iap < this->_hcontainer->size_atom_pairs(); ++iap)
     {
         auto atom_pair = this->_hcontainer->get_atom_pair(iap);
@@ -77,6 +93,8 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
             }
         }
     }
+    std::cout << __FILE__ << " " << __LINE__ << std::endl;
+
     if (sparse_matrix.getNNZ() != 0)
     {
         _ofs << rx << " " << ry << " " << rz << " " << sparse_matrix.getNNZ() << std::endl;

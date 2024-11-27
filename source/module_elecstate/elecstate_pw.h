@@ -39,6 +39,9 @@ class ElecStatePW : public ElecState
     // void getNewRho() override;
 
     Real* becsum = nullptr;
+    // init rho_data and kin_r_data
+    void init_rho_data();
+    Real ** rho = nullptr, ** kin_r = nullptr; //[Device] [spin][nrxx] rho and kin_r
 
   protected:
     ModulePW::PW_Basis* rhopw_smooth = nullptr;
@@ -58,15 +61,12 @@ class ElecStatePW : public ElecState
     // \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
     void addusdens_g(const Real* becsum, T* rhog);
 
-    void init_rho_data();
-
     Device * ctx = {};
     bool init_rho = false;
     mutable T* vkb = nullptr;
-    Real ** rho = nullptr, ** kin_r = nullptr;
     Real * rho_data = nullptr, * kin_r_data = nullptr;
     T * wfcr = nullptr, * wfcr_another_spin = nullptr;
-
+  private:
     using meta_op = hamilt::meta_pw_op<Real, Device>;
     using elecstate_pw_op = elecstate::elecstate_pw_op<Real, Device>;
 

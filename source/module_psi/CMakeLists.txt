@@ -5,6 +5,14 @@ add_library(
 )
 
 add_library(
+    psi_overall_init
+    OBJECT
+    psi_init.cpp
+    wavefunc.cpp
+    wf_atomic.cpp
+)
+
+add_library(
   psi_initializer
   OBJECT
   psi_initializer.cpp

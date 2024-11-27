@@ -1,6 +1,8 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
+#include "module_cell/unitcell.h"
+
 class Driver
 {
   public:
@@ -34,7 +36,7 @@ class Driver
     void atomic_world();
 
     // the actual calculations
-    void driver_run();
+    void driver_run(UnitCell& ucell);
 };
 
 #endif

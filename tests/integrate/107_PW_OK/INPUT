@@ -11,6 +11,7 @@ pseudo_dir	../../PP_ORB
 ecutwfc			20
 scf_thr			1e-8
 scf_nmax		100
+kpar           2
 
 out_chg         1
 dft_functional  scan	

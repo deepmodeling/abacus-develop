@@ -5,9 +5,10 @@
 #include "module_base/module_device/device.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
-#include "esolver_ks_lcaopw.h"
+#include "esolver_gets.h"
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
+#include "esolver_ks_lcaopw.h"
 #include "module_lr/esolver_lrtd_lcao.h"
 extern "C"
 {
@@ -150,6 +151,19 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
 	}
     else if (esolver_type == "sdft_pw")
 	{
+#if ((defined __CUDA) || (defined __ROCM))
+        if (PARAM.inp.device == "gpu")
+        {
+            // if (PARAM.inp.precision == "single")
+            // {
+            //     return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>();
+            // }
+            // else
+            // {
+                return new ESolver_SDFT_PW<std::complex<double>, base_device::DEVICE_GPU>();
+            // }
+        }
+#endif
         // if (PARAM.inp.precision == "single")
 		// {
 		// 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
@@ -172,21 +186,32 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         }
     }
     else if (esolver_type == "ksdft_lcao")
-	{
-		if (PARAM.globalv.gamma_only_local)
-		{
-			return new ESolver_KS_LCAO<double, double>();
-		}
-		else if (PARAM.inp.nspin < 4)
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, double>();
-		}
-		else
-		{
-			return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
-		}
-	}
-	else if (esolver_type == "ksdft_lcao_tddft")
+    {
+        if (PARAM.inp.calculation == "get_S")
+        {
+            if (PARAM.globalv.gamma_only_local)
+            {
+                ModuleBase::WARNING_QUIT("ESolver", "get_S is not implemented for gamma_only");
+            }
+            else
+            {
+                return new ESolver_GetS();
+            }
+        }
+        if (PARAM.globalv.gamma_only_local)
+        {
+            return new ESolver_KS_LCAO<double, double>();
+        }
+        else if (PARAM.inp.nspin < 4)
+        {
+            return new ESolver_KS_LCAO<std::complex<double>, double>();
+        }
+        else
+        {
+            return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+        }
+    }
+    else if (esolver_type == "ksdft_lcao_tddft")
 	{
 		return new ESolver_KS_LCAO_TDDFT();
     }
@@ -212,8 +237,8 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
         {
             p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
-        p_esolver->before_all_runners(inp, ucell);
-        p_esolver->runner(0, ucell); // scf-only
+        p_esolver->before_all_runners(ucell, inp);
+        p_esolver->runner(ucell, 0); // scf-only
         // force and stress is not needed currently,
         // they will be supported after the analytical gradient
         // of LR-TDDFT is implemented.

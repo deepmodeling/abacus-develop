@@ -255,16 +255,16 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::tick("MD_func", "force_virial");
 
-    p_esolver->runner(istep, unit_in);
+    p_esolver->runner(unit_in, istep);
 
     potential = p_esolver->cal_energy();
 
     ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_force(force_temp);
+    p_esolver->cal_force(unit_in, force_temp);
 
     if (cal_stress)
     {
-        p_esolver->cal_stress(virial);
+        p_esolver->cal_stress(unit_in, virial);
     }
 
     /// convert Rydberg to Hartree

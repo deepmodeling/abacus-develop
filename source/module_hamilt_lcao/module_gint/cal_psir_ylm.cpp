@@ -3,7 +3,8 @@
 #include "module_base/ylm.h"
 namespace Gint_Tools{
 void cal_psir_ylm(
-    const Grid_Technique& gt, const int bxyz,
+    const Grid_Technique& gt,
+    const int bxyz,
     const int na_grid,            // number of atoms on this grid
     const int grid_index,         // 1d index of FFT index (i,j,k)
     const double delta_r,         // delta_r of the uniform FFT grid

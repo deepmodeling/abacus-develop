@@ -196,8 +196,8 @@ class KlistTest : public testing::Test
         {
             ucell.atoms[i].label = coord[i].atomname;
             ucell.atoms[i].na = coord[i].coordinate.size();
-            ucell.atoms[i].tau = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
-            ucell.atoms[i].taud = new ModuleBase::Vector3<double>[ucell.atoms[i].na];
+            ucell.atoms[i].tau.resize(ucell.atoms[i].na);
+            ucell.atoms[i].taud.resize(ucell.atoms[i].na);
             for (int j = 0; j < ucell.atoms[i].na; j++)
             {
                 std::vector<double> this_atom = coord[i].coordinate[j];
@@ -224,11 +224,6 @@ class KlistTest : public testing::Test
     // clear ucell
     void ClearUcell()
     {
-        for (int i = 0; i < ucell.ntype; i++)
-        {
-            delete[] ucell.atoms[i].tau;
-            delete[] ucell.atoms[i].taud;
-        }
         delete[] ucell.atoms;
     }
 };
@@ -344,7 +339,7 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->read_kpoints(k_file), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(kv->read_kpoints(k_file), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
@@ -633,7 +628,7 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nkstot < nks"));
 }

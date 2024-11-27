@@ -8,17 +8,17 @@ nbands                23
 symmetry               	-1
 
 #Parameters (2.Iteration)
-ecutwfc                 50
+ecutwfc                  60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
 scf_thr                     1e-6
 scf_nmax                   100
 
 #Parameters (3.Basis)
 basis_type              lcao 
-gamma_only              1
+gamma_only              1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
 #Parameters (4.Smearing)
 smearing_method                gaussian
-smearing_sigma                   0.02
+smearing_sigma                   0.015
 
 #Parameters (5.Mixing)
 mixing_type             pulay
@@ -39,3 +39,7 @@ out_alllog	1
 nvirt 19
 abs_wavelen_range  40 180
 abs_broadening 0.01
+
+### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
+###     So it is strongly recommended to test whether your result (such as converged SCF energies) is
+###     converged with respect to the energy cutoff.

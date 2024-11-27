@@ -4,7 +4,7 @@ namespace ModulePW {
 
 PW_Basis::PW_Basis(){};
 PW_Basis::~PW_Basis(){};
-
+FFT_Bundle::~FFT_Bundle(){};
 void PW_Basis::initgrids(
     const double lat0_in, // unit length (unit in bohr)
     const ModuleBase::Matrix3
@@ -45,9 +45,6 @@ double& PW_Basis_K::getgk2(const int ik, const int igl) const {
     return this->gk2[igl];
 }
 
-FFT::FFT() {}
-
-FFT::~FFT() {}
 
 } // namespace ModulePW
 
@@ -183,7 +180,7 @@ template class DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>;
 
 } // namespace hsolver
 
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 namespace hamilt {
 
 template <>

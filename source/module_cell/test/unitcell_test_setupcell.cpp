@@ -115,7 +115,7 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
 	ofs_running.open("setup_cell.tmp");
 	ucell->ntype = 2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
 	ofs_running.close();
@@ -129,7 +129,7 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
 	ofs_running.open("setup_cell.tmp");
 	ucell->ntype = 2;
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(0),"");
+	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
 	ofs_running.close();

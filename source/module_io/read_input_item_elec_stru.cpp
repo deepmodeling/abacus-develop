@@ -76,7 +76,7 @@ void ReadInput::item_elec_stru()
 
             if (para.input.basis_type == "pw")
             {
-                if (!find_str(pw_solvers, ks_solver))
+                if (std::find(pw_solvers.begin(), pw_solvers.end(), ks_solver) == pw_solvers.end())
                 {
                     const std::string warningstr = "For PW basis: " + nofound_str(pw_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -84,7 +84,7 @@ void ReadInput::item_elec_stru()
             }
             else if (para.input.basis_type == "lcao")
             {
-                if (!find_str(lcao_solvers, ks_solver))
+                if (std::find(lcao_solvers.begin(), lcao_solvers.end(), ks_solver) == lcao_solvers.end())
                 {
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -163,7 +163,7 @@ void ReadInput::item_elec_stru()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> basis_types = {"pw", "lcao_in_pw", "lcao"};
-            if (!find_str(basis_types, para.input.basis_type))
+            if (std::find(basis_types.begin(), basis_types.end(), para.input.basis_type) == basis_types.end())
             {
                 const std::string warningstr = nofound_str(basis_types, "basis_type");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
@@ -391,6 +391,19 @@ void ReadInput::item_elec_stru()
         Input_Item item("mixing_restart");
         item.annotation = "threshold to restart mixing during SCF";
         read_sync_double(input.mixing_restart);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.sc_mag_switch == 1)
+            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
+                if(para.input.sc_scf_thr != 10.0)
+                {
+                    para.input.mixing_restart = para.input.sc_scf_thr;
+                }
+                else
+                {// no mixing_restart until oscillation happen in PW base
+                    para.input.mixing_restart = para.input.scf_thr / 10.0;
+                }
+            }
+        };
         this->add_item(item);
     }
     {
@@ -492,6 +505,12 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_nmax");
         item.annotation = "number of electron iterations";
         read_sync_int(input.scf_nmax);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.calculation == "nscf")
+            {
+                para.input.scf_nmax = 1;
+            }
+        };
         this->add_item(item);
     }
     {
@@ -526,6 +545,36 @@ void ReadInput::item_elec_stru()
         Input_Item item("scf_ene_thr");
         item.annotation = "total energy error threshold";
         read_sync_double(input.scf_ene_thr);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_stop");
+        item.annotation = "whether to stop scf when oscillation is detected";
+        read_sync_bool(input.scf_os_stop);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_thr");
+        item.annotation = "charge density threshold for oscillation";
+        read_sync_double(input.scf_os_thr);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.scf_os_thr >= 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "scf_os_thr should be negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("scf_os_ndim");
+        item.annotation = "number of old iterations used for oscillation detection";
+        read_sync_int(input.scf_os_ndim);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.scf_os_ndim <= 0) // default value
+            {
+                para.input.scf_os_ndim = para.input.mixing_ndim;
+            }
+        };
         this->add_item(item);
     }
     {

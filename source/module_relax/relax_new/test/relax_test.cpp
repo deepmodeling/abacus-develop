@@ -43,8 +43,8 @@ class Test_SETGRAD : public testing::Test
             
             GlobalC::ucell.iat2it = new int[nat];
             GlobalC::ucell.iat2ia = new int[nat];
-            GlobalC::ucell.atoms[0].mbl = new ModuleBase::Vector3<int>[nat];
-            GlobalC::ucell.atoms[0].taud = new ModuleBase::Vector3<double>[nat];
+            GlobalC::ucell.atoms[0].mbl.resize(nat);
+            GlobalC::ucell.atoms[0].taud.resize(nat);
             GlobalC::ucell.lc = new int[3];
 
             GlobalC::ucell.iat2it[0] = 0;
@@ -249,8 +249,8 @@ class Test_RELAX : public testing::Test
             for(int i=0;i<ntype;i++)
             {
                 int na = GlobalC::ucell.atoms[i].na;
-                GlobalC::ucell.atoms[i].mbl = new ModuleBase::Vector3<int>[na];
-                GlobalC::ucell.atoms[i].taud = new ModuleBase::Vector3<double>[na];
+                GlobalC::ucell.atoms[i].mbl.resize(na);
+                GlobalC::ucell.atoms[i].taud.resize(na);
                 for (int j=0;j<na;j++)
                 {
                     GlobalC::ucell.atoms[i].mbl[j] = {1,1,1};

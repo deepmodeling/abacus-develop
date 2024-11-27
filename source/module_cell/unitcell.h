@@ -19,8 +19,6 @@ class UnitCell {
 
     bool set_atom_flag; // added on 2009-3-8 by mohan
     Magnetism magnet;   // magnetism Yu Liu 2021-07-03
-    void cal_ux();
-    bool judge_parallel(double a[3], ModuleBase::Vector3<double> b);
     std::vector<std::vector<double>> atom_mulliken; //[nat][nspin]
     int n_mag_at;
 
@@ -328,6 +326,12 @@ class UnitCell {
     /// @brief get lnchiCounts, which is a vector of element type with the
     /// l:nchi vector
     std::vector<std::vector<int>> get_lnchiCounts() const;
+    /// @brief get target magnetic moment for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_target_mag() const;
+    /// @brief get lagrange multiplier for deltaspin
+    std::vector<ModuleBase::Vector3<double>> get_lambda() const;
+    /// @brief get constrain for deltaspin
+    std::vector<ModuleBase::Vector3<int>> get_constrain() const;
 };
 
 /**
