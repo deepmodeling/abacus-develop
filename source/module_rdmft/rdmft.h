@@ -5,7 +5,6 @@
 #ifndef RDMFT_H
 #define RDMFT_H
 
-
 #include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_psi/psi.h"
@@ -36,11 +35,9 @@
 #include <vector>
 #include <iomanip>
 
-
-
+//! Reduced Density Matrix Functional Theory (RDMFT)
 namespace rdmft
 {
-
 
 template <typename TK, typename TR>
 class RDMFT
@@ -51,27 +48,34 @@ class RDMFT
     ~RDMFT();
     
     const Parallel_Orbitals* ParaV = nullptr;
+
     Parallel_2D para_Eij;
-    elecstate::ElecState* pelec = nullptr;  // just to gain Ewald and this->pelec->pot
-    const K_Vectors* kv = nullptr; // update after ion step
+
+    //! obain Ewald and this->pelec->pot
+    elecstate::ElecState* pelec = nullptr;
+
+    //! update after ion step
+    const K_Vectors* kv = nullptr; 
 
     int nk_total = 0;
     int nbands_total;
     int nspin = 1;
     std::string XC_func_rdmft;
-    double alpha_power = 0.656; // 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
 
-    // natrual occupation numbers and wavefunction
+    //! 0.656 for soilds, 0.525 for dissociation of H2, 0.55~0.58 for HEG
+    double alpha_power = 0.656; 
+
+    //! natrual occupation numbers and wavefunction
     ModuleBase::matrix occ_number;
     psi::Psi<TK> wfc;
     ModuleBase::matrix wg;
     ModuleBase::matrix wk_fun_occNum;
 
-    // store the gradients of Etotal with respect to the natural occupation numbers and wfc respectively
+    //! gradients of total energy with respect to the natural occupation numbers and wfc
     ModuleBase::matrix occNum_wfcHamiltWfc;
     psi::Psi<TK> occNum_HamiltWfc;
 
-    // E_RDMFT[4] stores ETV, Ehartree, Exc, Etotal respectively
+    //! E_RDMFT[4] stores ETV, Ehartree, Exc, Etotal
     double E_RDMFT[4] = {0.0};
     double Etotal = 0.0;
     // std::vector<double> E_RDMFT(4);
@@ -88,7 +92,7 @@ class RDMFT
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_elec() function does not require parameters.
     void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in = nullptr);
 
-    //! get the gradient of total energy with respect to occupation number and wfc respectively
+    //! obtain the gradient of total energy with respect to occupation number and wfc
     double cal_E_grad_wfc_occ_num();
 
     void cal_Energy(const int cal_type = 1);
@@ -122,12 +126,14 @@ class RDMFT
 
   private:
 
+    //! Hamiltonian matrices in real space
     hamilt::HContainer<TR>* HR_TV = nullptr;
     hamilt::HContainer<TR>* HR_hartree = nullptr;
     hamilt::HContainer<TR>* HR_dft_XC = nullptr;
     hamilt::HContainer<TR>* HR_exx_XC = nullptr;
     // hamilt::HContainer<TR>* HR_local = nullptr;
 
+    //! Hamiltonian matrices in reciprocal space
     hamilt::HS_Matrix_K<TK>* hsk_TV = nullptr;
     hamilt::HS_Matrix_K<TK>* hsk_hartree = nullptr;
     hamilt::HS_Matrix_K<TK>* hsk_dft_XC = nullptr;
@@ -175,7 +181,6 @@ class RDMFT
     bool only_exx_type = false;
     const int cal_E_type = 1;   // cal_type = 2 just support XC-functional without exx
 
-
     /****** these parameters are passed in from outside, don't need delete ******/
     // GK and GG are used for multi-k grid integration and gamma only algorithms respectively
     Gint_k* GK = nullptr;
@@ -189,13 +194,7 @@ class RDMFT
     const ModuleBase::ComplexMatrix* sf = nullptr;
     const LCAO_Orbitals* orb = nullptr;
     const TwoCenterBundle* two_center_bundle = nullptr;
-
-
 };
 
-
-
 }
-
-
 #endif
