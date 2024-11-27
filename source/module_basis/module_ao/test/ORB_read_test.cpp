@@ -109,19 +109,19 @@ void LcaoOrbitalsTest::TearDown() {
 
 TEST_F(LcaoOrbitalsTest, ReadInFlag) {
     read_in_flag_ = false;
-    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(1), "");
 }
 
 
 TEST_F(LcaoOrbitalsTest, WrongOrbFile) {
     orbital_file_[0] = "./lcao_H2O/H_gga_8au_60Ry_2s1.orb";
-    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(1), "");
 }
 
 
 TEST_F(LcaoOrbitalsTest, WrongDescFile) {
     descriptor_file_ = "./lcao_H2O/jl.orb";
-    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->lcao_read(), testing::ExitedWithCode(1), "");
 }
 
 

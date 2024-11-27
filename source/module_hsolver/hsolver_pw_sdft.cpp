@@ -108,29 +108,39 @@ void HSolverPW_SDFT<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     // prepare sqrt{f(\hat{H})}|\chi> to calculate density, force and stress
     stoiter.calHsqrtchi(stowf);
 
+    // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
     if (GlobalV::MY_STOGROUP == 0)
     {
         pes_pw->calEBand();
     }
+    if (nbands > 0)
+    {
+#ifdef __MPI
+        pes->f_en.eband /= GlobalV::NPROC_IN_POOL;
+        MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
+        MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+#endif
+    }
+    stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
+    
+    
+
+    // for nscf, skip charge
     if (skip_charge)
     {
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve");
         return;
     }
+
     //(5) calculate new charge density
     // calculate KS rho.
     pes_pw->init_rho_data();
     if (nbands > 0)
     {
         pes_pw->psiToRho(psi);
-#ifdef __MPI
-        MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
-#endif
     }
-    
     // calculate stochastic rho
-    stoiter.sum_stoband(stowf, pes_pw, pHamilt, wfc_basis);
     stoiter.cal_storho(stowf, pes_pw, wfc_basis);
 
     // will do rho symmetry and energy calculation in esolver

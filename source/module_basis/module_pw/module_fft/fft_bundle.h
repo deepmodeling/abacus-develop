@@ -1,8 +1,9 @@
-#include "fft_base.h"
-#include <memory>
-// #include "module_psi/psi.h"
 #ifndef FFT_TEMP_H
 #define FFT_TEMP_H
+
+#include <memory>
+#include "fft_base.h"
+#include "fft_cpu.h"
 namespace ModulePW
 {
 class FFT_Bundle

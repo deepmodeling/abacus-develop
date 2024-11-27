@@ -76,17 +76,17 @@ TEST_F(SocTest, Spinor)
                   EXPECT_DOUBLE_EQ(soc.spinor(1, 0.5, -1, 1), 0.0);
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.spinor(2, 0.5, 0, 0), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.spinor(2, 0.5, 0, 0), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("j and l not compatible"));
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.spinor(2, 0.5, 0, 2), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.spinor(2, 0.5, 0, 2), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("spin direction unknown"));
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.spinor(2, 0.5, 3, 0), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.spinor(2, 0.5, 3, 0), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("m not allowed"));
 }
@@ -100,17 +100,17 @@ TEST_F(SocTest, SphInd)
                   EXPECT_EQ(soc.sph_ind(1, 0.5, -1, 0), 0);
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 0, 0), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 0, 0), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("l and j not suitable"));
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 0, 2), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 0, 2), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("spin must be 0 1"));
                   //warning message
                   testing::internal::CaptureStdout();
-                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 3, 0), ::testing::ExitedWithCode(0),"");
+                  EXPECT_EXIT(soc.sph_ind(2, 0.5, 3, 0), ::testing::ExitedWithCode(1),"");
                   output = testing::internal::GetCapturedStdout();
                   EXPECT_THAT(output, testing::HasSubstr("m not allowed"));
 }

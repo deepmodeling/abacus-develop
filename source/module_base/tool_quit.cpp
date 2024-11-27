@@ -61,7 +61,7 @@ void QUIT(int ret)
 
 void WARNING_QUIT(const std::string &file,const std::string &description)
 {
-	WARNING_QUIT(file, description, 0);
+	WARNING_QUIT(file, description, 1);
 }
 
 void WARNING_QUIT(const std::string &file,const std::string &description,int ret)

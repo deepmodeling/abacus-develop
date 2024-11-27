@@ -16,7 +16,7 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hamilt_pw/hamilt_pwdft/wavefunc.h"
+#include "module_psi/wavefunc.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_io/berryphase.h"
 #include "module_io/restart.h"

@@ -8,10 +8,6 @@
    to avoid using UnitCell functions because there is GLobalC, which will bring
    endless compile troubles like undefined behavior"
 */
-void UnitCell::cal_ux() {}
-bool UnitCell::judge_parallel(double a[3], ModuleBase::Vector3<double> b) {
-    return true;
-}
 void UnitCell::set_iat2iwt(const int& npol_in) {}
 UnitCell::UnitCell() {
     Coordinate = "Direct";

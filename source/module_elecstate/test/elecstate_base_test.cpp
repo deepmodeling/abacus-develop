@@ -50,12 +50,6 @@ ModulePW::PW_Basis::~PW_Basis()
 ModulePW::PW_Basis_Sup::~PW_Basis_Sup()
 {
 }
-ModulePW::FFT::FFT()
-{
-}
-ModulePW::FFT::~FFT()
-{
-}
 ModulePW::FFT_Bundle::~FFT_Bundle(){};
 void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, double)
 {
@@ -295,7 +289,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning1)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("size of occupation array is wrong , please check ocp_set"));
 }
@@ -315,7 +309,7 @@ TEST_F(ElecStateDeathTest,FixedWeightsWarning2)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("total number of occupations is wrong , please check ocp_set"));
 }
@@ -350,7 +344,7 @@ TEST_F(ElecStateDeathTest, CalculateWeightsFixedOccupations)
 {
     Occupy::fixed_occupations = true;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->calculate_weights(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate->calculate_weights(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("other occupations, not implemented"));
     Occupy::fixed_occupations = false;

@@ -67,7 +67,7 @@ TEST_F(FileReaderTest, ReadLine)
     EXPECT_EQ(fr.ss.str(), "1 2");
     fr.readLine();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(fr.readLine(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(fr.readLine(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("End of file"));
 }

@@ -204,7 +204,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
     PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate.print_eigenvalue(GlobalV::ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate.print_eigenvalue(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();
@@ -217,7 +217,7 @@ TEST_F(ElecStatePrintTest, PrintBandWarning)
     PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate.print_band(0, 1, 0), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(elecstate.print_band(0, 1, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();
