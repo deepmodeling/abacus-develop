@@ -181,7 +181,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
@@ -189,7 +189,7 @@ TEST_F(Mixing_Test, BroydenSolveLinearEq)
         testing::HasSubstr("One Broyden_Mixing object can only bind one Mixing_Data object to calculate coefficients"));
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
@@ -229,7 +229,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
 
     testing::internal::CaptureStdout();
     EXPECT_EXIT(this->mixing->push_data(testdata, x_in.data(), x_out.data(), nullptr, true),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
@@ -237,7 +237,7 @@ TEST_F(Mixing_Test, PulaySolveLinearEq)
         testing::HasSubstr("One Pulay_Mixing object can only bind one Mixing_Data object to calculate coefficients"));
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->mixing->cal_coef(testdata, ext_inner_product_mock), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,

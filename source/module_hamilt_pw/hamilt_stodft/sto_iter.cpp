@@ -472,13 +472,13 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
+void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
                                              elecstate::ElecStatePW<T, Device>* pes,
                                              hamilt::Hamilt<T, Device>* pHamilt,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
-    ModuleBase::TITLE("Stochastic_Iter", "sum_stoband");
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
+    ModuleBase::TITLE("Stochastic_Iter", "sum_stoeband");
+    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
     const int npwx = wfc_basis->npwk_max;
     const int norder = p_che->norder;
 
@@ -556,7 +556,7 @@ void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
     MPI_Allreduce(MPI_IN_PLACE, &sto_eband, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif
     pes->f_en.eband += sto_eband;
-    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoband");
+    ModuleBase::timer::tick("Stochastic_Iter", "sum_stoeband");
 }
 
 template <typename T, typename Device>

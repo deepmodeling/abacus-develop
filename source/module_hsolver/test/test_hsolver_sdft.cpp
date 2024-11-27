@@ -141,7 +141,7 @@ void Stochastic_Iter<T, Device>::calHsqrtchi(Stochastic_WF<T, Device>& stowf)
 }
 
 template <typename T, typename Device>
-void Stochastic_Iter<T, Device>::sum_stoband(Stochastic_WF<T, Device>& stowf,
+void Stochastic_Iter<T, Device>::sum_stoeband(Stochastic_WF<T, Device>& stowf,
                                              elecstate::ElecStatePW<T, Device>* pes,
                                              hamilt::Hamilt<T, Device>* pHamilt,
                                              ModulePW::PW_Basis_K* wfc_basis)

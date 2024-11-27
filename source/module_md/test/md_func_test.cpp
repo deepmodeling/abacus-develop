@@ -437,5 +437,5 @@ TEST_F(MD_func_test, current_step_warning)
     std::string file_dir = "./";
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(1), "");
 }

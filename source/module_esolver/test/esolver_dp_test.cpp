@@ -107,7 +107,9 @@ TEST_F(ESolverDPTest, RunWarningQuit)
     int istep = 0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(esolver->runner(ucell, istep), ::testing::ExitedWithCode(0), "");
+
+    EXPECT_EXIT(esolver->runner(ucell, istep), ::testing::ExitedWithCode(1), "");
+
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
 }

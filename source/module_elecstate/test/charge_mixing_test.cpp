@@ -177,7 +177,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                                 PARAM.input.mixing_gg0_mag,
                                 PARAM.input.mixing_gg0_min,
                                 PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta to [0.0, 1.0]!"));
 
@@ -194,7 +194,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                                 PARAM.input.mixing_gg0_mag,
                                 PARAM.input.mixing_gg0_min,
                                 PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("You'd better set mixing_beta_mag >= 0.0!"));
 
@@ -212,7 +212,7 @@ TEST_F(ChargeMixingTest, SetMixingTest)
                                 PARAM.input.mixing_gg0_mag,
                                 PARAM.input.mixing_gg0_min,
                                 PARAM.input.mixing_angle,
-                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(0), "");
+                                PARAM.input.mixing_dmr);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("This Mixing mode is not implemended yet,coming soon."));
 }
