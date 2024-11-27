@@ -116,6 +116,8 @@ void surchem::createcavity(const UnitCell& ucell,
     //-------------------------------------------------------------
     // cavitation energy
     //-------------------------------------------------------------
+    this->Acav = PARAM.inp.tau * qs * ucell.omega / rho_basis->nxyz;
+    Parallel_Reduce::reduce_pool(this->Acav);
 
     // double Ael = cal_Acav(ucell, pwb);
 

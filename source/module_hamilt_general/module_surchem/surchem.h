@@ -24,6 +24,9 @@ class surchem
     ModuleBase::matrix Vel;
     double qs;
 
+    double Acav;
+    double Ael;
+
     // get atom info
     atom_in GetAtom;
 
