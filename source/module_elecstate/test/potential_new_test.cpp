@@ -615,7 +615,7 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 
     pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, etxc, vtxc);
 
-    EXPECT_EXIT(pot->interpolate_vrs(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(pot->interpolate_vrs(), ::testing::ExitedWithCode(1), "");
 }
 
 TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)

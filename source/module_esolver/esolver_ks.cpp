@@ -442,15 +442,16 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     this->diag_ethr = PARAM.inp.pw_diag_thr;
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
-        // 6) initialization of SCF iterations
+        // 5) initialization of SCF iterations
         this->iter_init(ucell, istep, iter);
 
+        // 6) use Hamiltonian to obtain charge density
         this->hamilt2density(ucell, istep, iter, diag_ethr);
 
-        // 10) finish scf iterations
+        // 7) finish scf iterations
         this->iter_finish(ucell, istep, iter);
 
-        // 13) check convergence
+        // 8) check convergence
         if (this->conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
@@ -462,7 +463,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         }
     } // end scf iterations
 
-    // 15) after scf
+    // 9) after scf
     ModuleBase::timer::tick(this->classname, "after_scf");
     this->after_scf(ucell, istep);
     ModuleBase::timer::tick(this->classname, "after_scf");

@@ -1,7 +1,8 @@
 #include <cassert>
 #include "fft_bundle.h"
-#include "fft_cpu.h"
+
 #include "module_base/module_device/device.h"
+#include "module_base/module_device/memory_op.h"
 #if defined(__CUDA)
 #include "fft_cuda.h"
 #endif

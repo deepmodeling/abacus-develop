@@ -171,14 +171,28 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
 
     const int istep = 0;
 
-    ModuleIO::save_sparse(HS_Arrays.SR_sparse,
-                          HS_Arrays.all_R_coor,
-                          sparse_thr,
-                          binary,
-                          SR_filename,
-                          pv,
-                          "S",
-                          istep);
+    if (PARAM.inp.nspin == 4)
+    {
+        ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
+                              HS_Arrays.all_R_coor,
+                              sparse_thr,
+                              binary,
+                              SR_filename,
+                              pv,
+                              "S",
+                              istep);
+    }
+    else
+    {
+        ModuleIO::save_sparse(HS_Arrays.SR_sparse,
+                              HS_Arrays.all_R_coor,
+                              sparse_thr,
+                              binary,
+                              SR_filename,
+                              pv,
+                              "S",
+                              istep);
+    }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
 

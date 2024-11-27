@@ -8,6 +8,8 @@ add_library(
     psi_overall_init
     OBJECT
     psi_init.cpp
+    wavefunc.cpp
+    wf_atomic.cpp
 )
 
 add_library(

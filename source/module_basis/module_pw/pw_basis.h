@@ -1,11 +1,11 @@
 #ifndef PWBASIS_H
 #define PWBASIS_H
 
+#include "module_base/module_device/memory_op.h"
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "module_base/vector3.h"
 #include <complex>
-#include "fft.h"
 #include "module_fft/fft_bundle.h"
 #include <cstring>
 #ifdef __MPI
