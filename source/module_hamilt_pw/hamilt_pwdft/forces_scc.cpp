@@ -1,5 +1,4 @@
 #include "forces.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 #include "stress_func.h"
 // new
@@ -28,6 +27,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
                                            ModulePW::PW_Basis* rho_basis,
                                            const ModuleBase::matrix& vnew,
                                            const bool vnew_exist,
+                                           const bool* numeric,
                                            const UnitCell& ucell_in) {
     ModuleBase::TITLE("Forces", "cal_force_scc");
     ModuleBase::timer::tick("Forces", "cal_force_scc");
@@ -85,7 +85,7 @@ void Forces<FPTYPE, Device>::cal_force_scc(ModuleBase::matrix& forcescc,
     for (int nt = 0; nt < ucell_in.ntype; nt++) {
         //		Here we compute the G.ne.0 term
         const int mesh = ucell_in.atoms[nt].ncpp.msh;
-        this->deriv_drhoc_scc(GlobalC::ppcell.numeric,
+        this->deriv_drhoc_scc(numeric,
                             mesh,
                             ucell_in.atoms[nt].ncpp.r.data(),
                             ucell_in.atoms[nt].ncpp.rab.data(),

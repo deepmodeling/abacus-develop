@@ -26,12 +26,12 @@ double ElecState::get_etot_gatefield()
 
 double ElecState::get_solvent_model_Ael()
 {
-    return GlobalC::solvent_model.cal_Ael(GlobalC::ucell, this->charge->nrxx, this->charge->nxyz);
+    return GlobalC::solvent_model.Ael;
 }
 
 double ElecState::get_solvent_model_Acav()
 {
-    return GlobalC::solvent_model.cal_Acav(GlobalC::ucell, this->charge->nxyz);
+    return GlobalC::solvent_model.Acav;
 }
 
 #ifdef __LCAO

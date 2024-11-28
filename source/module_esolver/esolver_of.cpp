@@ -23,6 +23,7 @@ ESolver_OF::ESolver_OF()
 {
     this->classname = "ESolver_OF";
     this->task_ = new char[60];
+    this->p_locpp = &this->locpp;
 }
 
 ESolver_OF::~ESolver_OF()
@@ -90,7 +91,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // Setup the k points according to symmetry.
-    kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     // print information
@@ -111,24 +112,20 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     // initialize local pseudopotential
-    GlobalC::ppcell.init_vloc(GlobalC::ppcell.vloc, pw_rho);
+    this->locpp.init_vloc(pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-    // initialize non local pseudopotential
-    GlobalC::ppcell.init_vnl(ucell, pw_rho);
-    ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
     // initialize elecstate, including potential
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, sf.strucFac, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
     // calculate the effective coefficient matrix for non-local pseudopotential projectors
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
-    GlobalC::ppcell.cal_effective_D(veff, this->pw_rho, ucell);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT POTENTIAL");
 
@@ -212,7 +209,6 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         // initialize elecstate, including potential
         this->init_elecstate(ucell);
-        GlobalC::ppcell.init_vnl(ucell, pw_rho);
 
         // Initialize KEDF
         this->init_kedf(PARAM.inp);
@@ -259,7 +255,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             GlobalV::ofs_warning);
     }
 
-    this->pelec->init_scf(istep, sf.strucFac, ucell.symm);
+    this->pelec->init_scf(istep, sf.strucFac, locpp.numeric, ucell.symm);
 
     // calculate ewald energy
     this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
@@ -545,7 +541,7 @@ double ESolver_OF::cal_energy()
 void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
-    ff.cal_force(force, *pelec, this->pw_rho, &ucell.symm, &sf);
+    ff.cal_force(force, *pelec, this->pw_rho, &ucell.symm, &sf, &this->locpp);
 }
 
 /**
@@ -560,6 +556,6 @@ void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
     this->kinetic_stress(kinetic_stress_);
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, &sf, &kv);
+    ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, this->locpp, &sf, &kv);
 }
 } // namespace ModuleESolver

@@ -2,7 +2,6 @@
 // Author: Jingang Han
 // DATE : 2024-03-11
 //==========================================================
-
 #include "module_rdmft/rdmft_tools.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 // used by class Veff_rdmft
@@ -21,17 +20,17 @@
 #include <sstream>
 #include <cassert>
 
-
 namespace rdmft
 {
-
 
 template <>
 void conj_psi<double>(psi::Psi<double>& wfc) {}
 
-
 template <>
-void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const double& wfc, double& H_wfc)
+void HkPsi<double>(const Parallel_Orbitals* ParaV, 
+                   const double& HK, 
+                   const double& wfc, 
+                   double& H_wfc)
 {
     const int one_int = 1;
     const double one_double = 1.0;
@@ -52,8 +51,11 @@ void HkPsi<double>(const Parallel_Orbitals* ParaV, const double& HK, const doubl
 
 
 template <>
-void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, const Parallel_2D& para_Eij_in,
-                                const double& wfc, const double& H_wfc, std::vector<double>& Dmn)
+void cal_bra_op_ket<double>(const Parallel_Orbitals* ParaV, 
+                            const Parallel_2D& para_Eij_in,
+                            const double& wfc, 
+                            const double& H_wfc, 
+                            std::vector<double>& Dmn)
 {
     const int one_int = 1;
     const double one_double = 1.0;
@@ -85,8 +87,10 @@ void occNum_Mul_wfcHwfc(const ModuleBase::matrix& occ_number,
 {
     for(int ir=0; ir<occ_number.nr; ++ ir)
     {
-        for(int ic=0; ic<occ_number.nc; ++ic) { occNum_wfcHwfc(ir, ic) += occNum_func(occ_number(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
-}
+        for(int ic=0; ic<occ_number.nc; ++ic) 
+        { 
+            occNum_wfcHwfc(ir, ic) += occNum_func(occ_number(ir, ic), symbol, XC_func_rdmft, alpha) * wfcHwfc(ir, ic);
+        }
     } 
 }
 
@@ -111,13 +115,16 @@ void add_occNum(const K_Vectors& kv,
     // consider W_k for dE/d_occNum
     for(int ik=0; ik<occ_number.nr; ++ik)
     {
-        for(int inb=0; inb<occ_number.nc; ++inb) { occNum_wfcHwfc(ik, inb) *= kv.wk[ik];
-}
+        for(int inb=0; inb<occ_number.nc; ++inb) 
+        { 
+            occNum_wfcHwfc(ik, inb) *= kv.wk[ik];
+        }
     } 
 }
 
 
-// do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. This function just use once, so it can be replace and delete
+//! do wk*g(occNum)*wfcHwfc and add for TV, hartree, XC. 
+//! This function just use once, so it can be replace and delete
 void add_wfcHwfc(const ModuleBase::matrix& wg, 
                     const ModuleBase::matrix& wk_fun_occNum, 
                     const ModuleBase::matrix& wfcHwfc_TV_in, 
@@ -134,28 +141,31 @@ void add_wfcHwfc(const ModuleBase::matrix& wg,
 }
 
 
-// give certain occNum_wfcHwfc, get the corresponding energy
+//! give certain occNum_wfcHwfc, get the corresponding energy
 double getEnergy(const ModuleBase::matrix& occNum_wfcHwfc)
 {
     double energy = 0.0;
     for(int ir=0; ir<occNum_wfcHwfc.nr; ++ ir)
     {
-        for(int ic=0; ic<occNum_wfcHwfc.nc; ++ic) { energy += occNum_wfcHwfc(ir, ic);
-}
+        for(int ic=0; ic<occNum_wfcHwfc.nc; ++ic) 
+        { 
+            energy += occNum_wfcHwfc(ir, ic);
+        }
     }
     return energy;
 }
 
 
-// for HF, Muller and power functional, g(eta) = eta, eta^0.5, eta^alpha respectively.
-// when symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively.
-// Default symbol=0, XC_func_rdmft="HF", alpha=0.656
+//! for HF, Muller and power functional, g(eta) = eta, eta^0.5, eta^alpha respectively.
+//! when symbol = 0, 1, 2, 3, 4, 5, return eta, 0.5*eta, g(eta), 0.5*g(eta), d_g(eta)/d_eta, 1.0 respectively.
+//! Default symbol=0, XC_func_rdmft="HF", alpha=0.656
 double occNum_func(const double eta, const int symbol, const std::string XC_func_rdmft, double alpha)
 {
     // if( XC_func_rdmft == "hf" || XC_func_rdmft == "default" || XC_func_rdmft == "pbe0" ) alpha = 1.0;
     // else if( XC_func_rdmft == "muller" ) alpha = 0.5;
     // else if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) ;
     // else alpha = 1.0;
+    
     if( XC_func_rdmft == "power" || XC_func_rdmft == "wp22" || XC_func_rdmft == "cwp22" ) { ; }
     else if( XC_func_rdmft == "muller" ) { alpha = 0.5; }
     else { alpha = 1.0; }
@@ -173,8 +183,6 @@ double occNum_func(const double eta, const int symbol, const std::string XC_func
 }
 
 
-
-
 template class Veff_rdmft<double, double>;
 
 template class Veff_rdmft<std::complex<double>, double>;
@@ -185,7 +193,7 @@ template class Veff_rdmft<std::complex<double>, std::complex<double>>;
 // initialize_HR()
 template <typename TK, typename TR>
 void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
-                                        Grid_Driver* GridD)
+                                       Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
@@ -304,7 +312,10 @@ void Veff_rdmft<TK, TR>::contributeHR()
     // this->GK->transfer_pvpR(this->hR);
     this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 
-    if(this->nspin == 2) { this->current_spin = 1 - this->current_spin; }
+    if(this->nspin == 2) 
+    { 
+        this->current_spin = 1 - this->current_spin; 
+    }
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
@@ -387,12 +398,13 @@ void Veff_rdmft<double, double>::contributeHR()
 
     this->new_e_iteration = false;
 
-    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+    if(this->nspin == 2)
+    {
+        this->current_spin = 1 - this->current_spin;
+    }
 
     return;
 }
-
-
 
 }
 

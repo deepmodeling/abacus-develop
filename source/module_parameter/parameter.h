@@ -33,6 +33,11 @@ class Parameter
     // Set the start time
     void set_start_time(const std::time_t& start_time);
 
+    // set input.nbands 
+    void set_input_nbands(const int& nbands);
+    // set sys.nlocal
+    void set_sys_nlocal(const int& nlocal);
+
   private:
     // Only ReadInput and CalAtomInfo can modify the value of Parameter.
     // Do not add extra friend class here!!!

@@ -23,6 +23,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
     HamiltSdftPW(elecstate::Potential* pot_in,
                  ModulePW::PW_Basis_K* wfc_basis,
                  K_Vectors* p_kv,
+                 pseudopot_cell_vnl* nlpp,
                  const int& npol,
                  double* emin_in,
                  double* emax_in);

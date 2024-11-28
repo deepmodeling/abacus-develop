@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include "mpi.h"
+#include <fstream>
 #include "../dm_trans.h"
 #ifdef __MPI
+#include "mpi.h"
 #include "module_lr/utils/lr_util.h"
 #endif
 struct matsize
@@ -226,9 +227,13 @@ TEST_F(DMTransTest, ComplexParallel)
 int main(int argc, char** argv)
 {
     srand(time(NULL));  // for random number generator
+#ifdef __MPI
     MPI_Init(&argc, &argv);
+#endif
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
+#ifdef __MPI
     MPI_Finalize();
+#endif
     return result;
 }

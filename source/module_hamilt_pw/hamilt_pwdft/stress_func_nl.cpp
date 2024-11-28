@@ -18,12 +18,12 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
                                             ModuleSymmetry::Symmetry* p_symm,
                                             ModulePW::PW_Basis_K* wfc_basis,
                                             const psi::Psi<complex<FPTYPE>, Device>* psi_in,
-                                            pseudopot_cell_vnl* nlpp_in,
+                                            const pseudopot_cell_vnl& nlpp_in,
                                             const UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Stress_Func", "stress_nl");
     // skip nkb==0
-    if (nlpp_in->nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
+    if (nlpp_in.nkb == 0 || psi_in == nullptr || wfc_basis == nullptr)
     {
         return;
     }
@@ -34,7 +34,7 @@ void Stress_Func<FPTYPE, Device>::stress_nl(ModuleBase::matrix& sigma,
     setmem_var_op()(this->ctx, stress_device, 0, 9);
     std::vector<FPTYPE> sigmanlc(9, 0.0);
 
-    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
+    hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp_in, &ucell_in, p_kv, wfc_basis, p_sf, wg, &ekb);
 
     const int nks = p_kv->get_nks();
     const int max_nbands = wg.nc;

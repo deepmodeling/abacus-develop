@@ -109,7 +109,13 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     }
 
     // calculate Ael
-    // double Ael = cal_Ael(cell, pwb);
+    this->Ael = 0.0;
+    for (int ir = 0; ir < rho_basis->nrxx; ir++)
+    {
+        this->Ael -= TOTN_real[ir] * delta_phi[ir];
+    }
+    Parallel_Reduce::reduce_pool(this->Ael);
+    this->Ael *= cell.omega / rho_basis->nxyz;
 
     // the 2nd item of tmp_Vel
     eps_pot(PS_TOTN_real, Sol_phi, rho_basis, epsilon, epspot);

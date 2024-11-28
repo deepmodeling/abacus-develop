@@ -13,7 +13,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
                     UnitCell& ucell,
-                    pseudopot_cell_vnl* nlpp,
+                    const pseudopot_cell_vnl& nlpp,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,
                     Structure_Factor* p_sf,
@@ -30,7 +30,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // which is due to the dependence of the Q function on the atomic position
     void stress_us(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
-                   pseudopot_cell_vnl* ppcell_in,
+                   const pseudopot_cell_vnl& nlpp,
                    const UnitCell& ucell); // nonlocal part of uspp in PW basis
 
     const elecstate::ElecState* pelec = nullptr;

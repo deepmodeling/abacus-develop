@@ -39,7 +39,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // 1.3) Setup k-points according to symmetry.
-    this->kv.set(ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec,GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::setup_parameters(ucell, this->kv);
@@ -52,8 +52,8 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
                                                                          &(this->kv),
                                                                          this->kv.get_nks(),
-                                                                         &(this->GG), // mohan add 2024-04-01
-                                                                         &(this->GK), // mohan add 2024-04-01
+                                                                         nullptr, // mohan add 2024-04-01
+                                                                         nullptr, // mohan add 2024-04-01
                                                                          this->pw_rho,
                                                                          this->pw_big);
     }
@@ -100,7 +100,8 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                          search_radius,
                          PARAM.inp.test_atom_input);
 
-    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    Record_adj RA;
+    RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {

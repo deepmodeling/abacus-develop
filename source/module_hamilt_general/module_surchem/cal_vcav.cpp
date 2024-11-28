@@ -10,18 +10,21 @@ void lapl_rho(const std::complex<double>* rhog, double* lapn, const ModulePW::PW
     std::complex<double> *aux = new std::complex<double>[rho_basis->nmaxgr];
 
     // the formula is : rho(r)^prime = \int iG * rho(G)e^{iGr} dG
-    for (int ig = 0; ig < rho_basis->npw; ig++)
+    for (int ig = 0; ig < rho_basis->npw; ig++) {
         gdrtmpg[ig] = rhog[ig];
+}
     for(int i = 0 ; i < 3 ; ++i)
     {
         // calculate the charge density gradient in reciprocal space.
-        for (int ig = 0; ig < rho_basis->npw; ig++)
+        for (int ig = 0; ig < rho_basis->npw; ig++) {
             aux[ig] = gdrtmpg[ig] * pow(rho_basis->gcar[ig][i], 2);
+}
         // bring the gdr from G --> R
         rho_basis->recip2real(aux, aux);
         // remember to multily 2pi/a0, which belongs to G vectors.
-        for (int ir = 0; ir < rho_basis->nrxx; ir++)
+        for (int ir = 0; ir < rho_basis->nrxx; ir++) {
             lapn[ir] -= aux[ir].real() * GlobalC::ucell.tpiba2;
+}
     }
 
     delete[] gdrtmpg;
@@ -116,6 +119,8 @@ void surchem::createcavity(const UnitCell& ucell,
     //-------------------------------------------------------------
     // cavitation energy
     //-------------------------------------------------------------
+    this->Acav = PARAM.inp.tau * qs * ucell.omega / rho_basis->nxyz;
+    Parallel_Reduce::reduce_pool(this->Acav);
 
     // double Ael = cal_Acav(ucell, pwb);
 
