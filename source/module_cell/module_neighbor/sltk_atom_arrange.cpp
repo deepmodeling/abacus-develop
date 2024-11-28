@@ -75,7 +75,11 @@ void atom_arrange::search(
 {
 	ModuleBase::TITLE("atom_arrange", "search");
 	ModuleBase::timer::tick("atom_arrange","search");
-
+/* 	std::cout << "pbc_flag = " << pbc_flag << std::endl;
+	std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
+	std::cout << "test_atom_in = " << test_atom_in << std::endl;
+	std::cout << "test_only = " << test_only << std::endl;
+ */
 	assert( search_radius_bohr > 0.0 );
 
 //	OUT(ofs_in,"Atom coordinates reading from",PARAM.inp.stru_file);
@@ -93,6 +97,7 @@ void atom_arrange::search(
 	//=============================
 
 	const double radius_lat0unit = search_radius_bohr / ucell.lat0;
+    ModuleBase::timer::tick("atom_arrange", "Atom_input");
 
 	Atom_input at(
 		ofs_in,
@@ -102,6 +107,7 @@ void atom_arrange::search(
 		pbc_flag, 
 		radius_lat0unit, 
 		test_atom_in);
+    ModuleBase::timer::tick("atom_arrange", "Atom_input");
 
 	//===========================================
 	// Print important information in Atom_input
@@ -111,7 +117,13 @@ void atom_arrange::search(
 	//=========================================
 	// Construct Grid , Cells , Adjacent atoms
 	//=========================================
+
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+
 	grid_d.init(ofs_in, ucell, at);
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+
+    ModuleBase::timer::tick("atom_arrange", "search");
 
 	// test the adjacent atoms and the box.
 	if(test_only)
@@ -142,7 +154,6 @@ void atom_arrange::search(
         ofs_in << "search neighboring atoms done." << std::endl;
     }
 
-    ModuleBase::timer::tick("atom_arrange", "search");
     return;
 }
 

@@ -6,16 +6,13 @@
 //==========================================================
 // define constructor and deconstructor
 //==========================================================
-Atom_input::Atom_input
-(
-	std::ofstream &ofs_in,
-	const UnitCell &ucell,
-	const int amount,
-	const int ntype,
-    const bool boundary_in,
-	const double radius_in,
-	const int &test_atom_in
-)
+Atom_input::Atom_input(std::ofstream &ofs_in,
+						const UnitCell &ucell,
+						const int amount,
+						const int ntype,
+						const bool boundary_in,
+						const double radius_in,
+						const int &test_atom_in)
 		:d_amount(amount),
 		d_amount_expand(amount),
 		periodic_boundary(boundary_in),
@@ -33,17 +30,7 @@ Atom_input::Atom_input
 		x_max_expand(0),
 		y_max_expand(0),
 		z_max_expand(0),
-		d_current(0),
-		test_atom_input(test_atom_in),
-
-//----------------------------------------------------------
-// WARNING :
-// Please be very very careful!
-// Here type = 0 ,and natom = -1 is a initial value,
-// don't change it !!
-//----------------------------------------------------------
-		type(0),
-		natom(-1)
+		test_atom_input(test_atom_in)
 {
 	ModuleBase::TITLE("Atom_input", "Atom_input");
 
@@ -528,42 +515,5 @@ void Atom_input::calculate_cells(void)
 	// Not need because if int_nx = real_nx,
 	// the position belong to the next cell
 	//=======================================
-	return;
-}
-
-void Atom_input::set_FAtom(const UnitCell &ucell, FAtom &a)const
-{
-//----------------------------------------------------------
-// EXPLAIN : if expand grid , set from array
-//----------------------------------------------------------
-	if (expand_flag)
-	{
-		a = fake_atoms[d_current];
-		++ d_current;
-	}
-
-//----------------------------------------------------------
-// CALL MEMBER FUNCTION :
-// NAME : load_atom
-//
-// EXPLAIN : if not expand grid , set directly
-//----------------------------------------------------------
-	else
-	{
-		natom++;
-
-		if (natom >= ucell.atoms[type].na)
-		{
-			type ++;
-			natom = 0;
-		}
-		FAtom temp(ucell.atoms[type].tau[natom].x,
-				   ucell.atoms[type].tau[natom].y,
-				   ucell.atoms[type].tau[natom].z,
-				   type, natom,
-				   0, 0, 0);
-		a = temp;
-	}
-
 	return;
 }
