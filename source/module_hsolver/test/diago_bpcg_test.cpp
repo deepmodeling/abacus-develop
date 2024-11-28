@@ -130,10 +130,32 @@ class DiagoBPCGPrepare
         psi_local.fix_k(0);
         double start, end;
         start = MPI_Wtime();
-        bpcg.init_iter(psi_local);
-        bpcg.diag(ha,psi_local,en); 
-        bpcg.diag(ha,psi_local,en); 
-        bpcg.diag(ha,psi_local,en); 
+        using T = std::complex<double>;
+        const int dim = DIAGOTEST::npw;
+        const std::vector<T> &h_mat = DIAGOTEST::hmatrix;
+        auto hpsi_func = [h_mat, dim](T *psi_in, T *hpsi_out,
+                                const int ld_psi, const int nvec) {
+            auto one = std::make_unique<T>(1.0);
+            auto zero = std::make_unique<T>(0.0);
+            const T *one_ = one.get();
+            const T *zero_ = zero.get();
+
+            base_device::DEVICE_CPU *ctx = {};
+            // hpsi_out(dim * nvec) = h_mat(dim * dim) * psi_in(dim * nvec)
+            hsolver::gemm_op<T, base_device::DEVICE_CPU>()(
+                ctx, 'N', 'N',
+                dim, nvec, dim,
+                one_,
+                h_mat.data(), dim,
+                psi_in, ld_psi,
+                zero_,
+                hpsi_out, ld_psi);
+        };
+        bpcg.init_iter(nband, npw);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en); 
+        // bpcg.diag(ha,psi_local,en); 
+        // bpcg.diag(ha,psi_local,en); 
+        // bpcg.diag(ha,psi_local,en); 
         end = MPI_Wtime();
         //if(mypnum == 0) printf("diago time:%7.3f\n",end-start);
         delete [] DIAGOTEST::npw_local;
