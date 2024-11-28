@@ -1052,7 +1052,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     if ( PARAM.inp.rdmft == true ) // rdmft, added by jghan, 2024-10-17
     {
         ModuleBase::matrix occ_number_ks(this->pelec->wg);
-        for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik]; }
+        for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) { occ_number_ks(ik, inb) /= this->kv.wk[ik]; 
+}}
         this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
 
         //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
