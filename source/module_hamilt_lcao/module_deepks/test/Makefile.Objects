@@ -68,8 +68,7 @@ ORB_nonlocal.o\
 ORB_nonlocal_lm.o\
 ORB_gaunt_table.o\
 
-OBJS_NEIGHBOR=sltk_adjacent_set.o\
-sltk_atom_arrange.o\
+OBJS_NEIGHBOR=sltk_atom_arrange.o\
 sltk_atom.o\
 sltk_atom_input.o\
 sltk_grid.o\
