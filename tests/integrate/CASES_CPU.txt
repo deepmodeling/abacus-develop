@@ -355,3 +355,4 @@
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA
 922_NO_FeBiTe
+1001_NO_Si2_dzp_rdmft

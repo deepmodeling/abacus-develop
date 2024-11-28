@@ -1,0 +1,15 @@
+etotref -31.6002017035609910
+etotperatomref -15.8001008518
+
+The following energy units are in Rydberg:
+E_TV_RDMFT_ref -4.4437438926
+E_hartree_RDMFT_ref 2.3658071108
+Exc_cwp22_RDMFT_ref 
+E_Ewald_ref 1.1449701760
+E_entropy_ref -0.0000000000
+E_descf_ref 0.0000000000
+Etotal_RDMFT_ref -2.3226185398
+Exc_ksdft_ref -1.3896519340
+E_exx_ksdft_ref 0.0000000000
+
+totaltimeref 5.82

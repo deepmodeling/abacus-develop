@@ -591,5 +591,12 @@ struct Input_para
     int  test_pp = 0;                ///< variables for test_pp only
     int  test_relax_method = false;  ///< variables for test_relax_method only
     int  test_deconstructor = false; ///< variables for test_deconstructor only
+
+    // ==============   #Parameters (21.RDMFT) =====================
+    // RDMFT    jghan added on 2024-07-06
+    bool rdmft = false;                           // rdmft, reduced density matrix funcional theory
+    double rdmft_power_alpha = 0.656;             // the alpha parameter of power-functional, g(occ_number) = occ_number^alpha
+    // double rdmft_wp22_omega;                 // the omega parameter of wp22-functional = exx_hse_omega
+
 };
 #endif
