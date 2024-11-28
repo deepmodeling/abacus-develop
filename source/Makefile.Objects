@@ -74,6 +74,7 @@ VPATH=./src_global:\
 ./module_lr/operator_casida:\
 ./module_lr/potentials:\
 ./module_lr/utils:\
+./module_rdmft:\
 ./\
 
 OBJS_ABACUS_PW=${OBJS_MAIN}\
@@ -115,6 +116,7 @@ ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
+${OBJS_RDMFT}
 
 OBJS_MAIN=main.o\
     driver.o\
@@ -726,3 +728,8 @@ OBJS_TENSOR=tensor.o\
     lr_spectrum.o\
     hamilt_casida.o\
     esolver_lrtd_lcao.o\
+
+OBJS_RDMFT=rdmft.o\
+        rdmft_tools.o\
+        rdmft_pot.o\
+        update_state_rdmft.o\

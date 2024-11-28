@@ -69,6 +69,7 @@ has_mat_dh=$(get_input_key_value "out_mat_dh" "INPUT")
 has_scan=$(get_input_key_value "dft_functional" "INPUT")
 out_chg=$(get_input_key_value "out_chg" "INPUT") 
 esolver_type=$(get_input_key_value "esolver_type" "INPUT")
+rdmft=$(get_input_key_value "rdmft" "INPUT")
 #echo $running_path
 base=$(get_input_key_value "basis_type" "INPUT")
 word="driver_line"
@@ -541,6 +542,40 @@ if [ $is_lr == 1 ]; then
 	grep -A$lrns1 "Excitation Energy" $running_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
 	lreig_tot=`sum_file lr_eig.txt`
 	echo "totexcitationenergyref $lreig_tot" >>$1
+fi
+
+if ! test -z "$rdmft" && [[ $rdmft == 1 ]]; then
+	echo "" >>$1
+	echo "The following energy units are in Rydberg:" >>$1
+
+	E_TV_RDMFT=$(grep "E_TV_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_TV_RDMFT_ref $E_TV_RDMFT" >>$1
+
+	E_hartree_RDMFT=$(grep "E_hartree_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_hartree_RDMFT_ref $E_hartree_RDMFT" >>$1
+
+	Exc_cwp22_RDMFT=$(grep "Exc_cwp22_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
+	echo "Exc_cwp22_RDMFT_ref $Exc_cwp22_RDMFT" >>$1
+
+	E_Ewald=$(grep "E_Ewald" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_Ewald_ref $E_Ewald" >>$1
+
+	E_entropy=$(grep "E_entropy(-TS)" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_entropy_ref $E_entropy" >>$1
+
+	E_descf=$(grep "E_descf" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_descf_ref $E_descf" >>$1
+
+	Etotal_RDMFT=$(grep "Etotal_RDMFT" "$running_path" | tail -1 | awk '{print $2}')
+	echo "Etotal_RDMFT_ref $Etotal_RDMFT" >>$1
+
+	Exc_ksdft=$(grep "Exc_ksdft" "$running_path" | tail -1 | awk '{print $2}')
+	echo "Exc_ksdft_ref $Exc_ksdft" >>$1
+
+	E_exx_ksdft=$(grep "E_exx_ksdft" "$running_path" | tail -1 | awk '{print $2}')
+	echo "E_exx_ksdft_ref $E_exx_ksdft" >>$1
+
+	echo "" >>$1
 fi
 
 #echo $total_band

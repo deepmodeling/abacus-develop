@@ -18,6 +18,7 @@ std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
+std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
@@ -61,6 +62,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     //        func_id.push_back(XC_GGA_C_PBE);
 
     func_id.clear();
+    scaling_factor_xc.clear(); // added by jghan, 2024-07-07
     std::string xc_func = xc_func_in;
     std::transform(xc_func.begin(), xc_func.end(), xc_func.begin(), (::toupper));
 	if( xc_func == "LDA" || xc_func == "PZ" || xc_func == "SLAPZNOGXNOGC") //SLA+PZ
@@ -196,11 +198,58 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         // not doing anything
     }
+    else if( xc_func == "MULLER" || xc_func == "POWER" ) // added by jghan, 2024-07-06
+    {
+        func_type = 4;
+        use_libxc = false;
+    }
 #ifdef USE_LIBXC
     else if( xc_func == "HSE")
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
         func_type = 4;
+        use_libxc = true;
+    }
+    // added by jghan, 2024-07-06
+    else if( xc_func == "WP22")
+    {
+        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "CWP22")
+    {   
+        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
+        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+
+        // the scaling factor of CWP22-functionals
+        scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
+        scaling_factor_xc[XC_GGA_C_LYPR] = -1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+
+        func_type = 4;
+        use_libxc = true;
+    }
+    else if( xc_func == "BLYP_LR")
+    {   
+        // BLYP_XC_lr = -BLYP_XC_sr + BLYP_XC, the realization of it is in v_xc_libxc() function, xc_functional_libxc_vxc.cpp
+        func_id.push_back(XC_GGA_X_ITYH);   // short-range of B88_X, id=529
+        func_id.push_back(XC_GGA_C_LYPR);   // short-range of LYP_C, id=624
+        func_id.push_back(XC_GGA_X_B88);    // complete B88_X, id=106
+        func_id.push_back(XC_GGA_C_LYP);    // complete LYP_C, id=131
+
+        // the scaling factor of BLYP_LR-functionals
+        scaling_factor_xc[XC_GGA_X_ITYH] = -1.0;
+        scaling_factor_xc[XC_GGA_C_LYPR] = -1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+        scaling_factor_xc[XC_GGA_X_B88] = 1.0;
+
+        func_type = 2;
         use_libxc = true;
     }
 #endif
@@ -243,7 +292,8 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
 
 #ifndef USE_LIBXC
-    if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0")
+    if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
+        || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22")
     {
         ModuleBase::WARNING_QUIT("set_xc_type","to use SCAN, SCAN0, or HSE, LIBXC is required");
     }
