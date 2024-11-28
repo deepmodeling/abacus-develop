@@ -304,7 +304,7 @@ void DiagoBPCG<T, Device>::diag(
         syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band);
 
         // Calculate H|grad> matrix
-        this->calc_hpsi_with_block(hpsi_func, this->grad.data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
+        this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
 
         // optimize psi as well as the hpsi
         // 1. normalize grad
