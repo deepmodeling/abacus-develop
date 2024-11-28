@@ -91,9 +91,11 @@ void WF_atomic::init_at_1(Structure_Factor *sf_in)
             int nmesh;
             if(PARAM.inp.pseudo_mesh) {
                 nmesh = atom->ncpp.mesh;
-            } else {
+            }
+            else
+            {
                 nmesh = atom->ncpp.msh;
-}
+            }
 
             // check the unit condition
             double *inner_part = new double[nmesh];

@@ -81,8 +81,12 @@ void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
     this->psi_init->initialize(p_sf, pw_wfc, p_ucell, random_seed, p_ppcell);
 #endif
 
+
+    
     // always new->initialize->tabulate->allocate->proj_ao_onkG
-    this->psi_init->tabulate();
+    // this->psi_init->tabulate();
+
+
     ModuleBase::timer::tick("PSIInit", "prepare_init");
 }
 
@@ -138,7 +142,10 @@ void PSIInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf)
 {
     if (this->use_psiinitializer)
     {
-    }    // do not need to do anything because the interpolate table is unchanged
+        // do not need to do anything because the interpolate table is unchanged
+        // what ???
+        this->psi_init->tabulate();
+    }
     else // old initialization method, used in EXX calculation
     {
         this->wf_old.init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
