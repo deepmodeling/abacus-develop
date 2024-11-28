@@ -23,6 +23,7 @@ ESolver_OF::ESolver_OF()
 {
     this->classname = "ESolver_OF";
     this->task_ = new char[60];
+    this->p_locpp = &this->locpp;
 }
 
 ESolver_OF::~ESolver_OF()
