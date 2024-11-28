@@ -72,7 +72,7 @@ public:
 	// NAME : getNatom
 	// NAME : getAdjaentTau
 	//==========================================================
-	const int& getAdjacentNum(void)const { return adj_info.adj_num; }
+	const int& getAdjacentNum()const { return adj_info.adj_num; }
 	const int& getType(const int i) const { return adj_info.ntype[i]; }
 	const int& getNatom(const int i) const { return adj_info.natom[i]; }
 	const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const { return adj_info.adjacent_tau[i]; } 
