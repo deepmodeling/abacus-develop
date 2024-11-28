@@ -366,8 +366,7 @@ OBJS_MD=fire.o\
     run_md.o\
     verlet.o\
 
-OBJS_NEIGHBOR=sltk_adjacent_set.o\
-    sltk_atom.o\
+OBJS_NEIGHBOR=sltk_atom.o\
     sltk_atom_arrange.o\
     sltk_atom_input.o\
     sltk_grid.o\

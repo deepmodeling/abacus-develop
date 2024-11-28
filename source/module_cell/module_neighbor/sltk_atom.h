@@ -3,7 +3,6 @@
 
 #include <memory>
 #include "sltk_util.h"
-#include "sltk_adjacent_set.h"
 #include "module_base/timer.h"
 #include <list>
 
