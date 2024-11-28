@@ -152,7 +152,9 @@ class DiagoBPCGPrepare
                 hpsi_out, ld_psi);
         };
         bpcg.init_iter(nband, npw);
-        bpcg.diag(hpsi_func, psi_local.get_pointer(), en); 
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en);
+        bpcg.diag(hpsi_func, psi_local.get_pointer(), en);
         // bpcg.diag(ha,psi_local,en); 
         // bpcg.diag(ha,psi_local,en); 
         // bpcg.diag(ha,psi_local,en); 
