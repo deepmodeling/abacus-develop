@@ -1,0 +1,20 @@
+ATOMIC_SPECIES
+Mg 24.305  ../../PP_ORB/Mg_ONCV_PBE-1.0.upf  # element name, atomic mass, pseudopotential file
+
+NUMERICAL_ORBITAL
+../../PP_ORB/Mg_gga_8au_100Ry_4s2p1d.orb
+
+LATTICE_CONSTANT
+1.889725989 #1.889725989
+
+LATTICE_VECTORS
+3.55  0      0
+0     3.55   0
+0     0      3.55
+
+ATOMIC_POSITIONS
+Direct
+Mg
+0.0
+1
+0.0  0.0  0.0

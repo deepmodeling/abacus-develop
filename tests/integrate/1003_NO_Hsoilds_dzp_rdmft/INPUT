@@ -1,0 +1,19 @@
+INPUT_PARAMETERS
+suffix                  autotest
+ntype                   1
+calculation             scf
+basis_type              lcao
+ecutwfc                 40
+scf_thr                 1e-6
+scf_nmax                100
+gamma_only              0
+symmetry                1
+smearing_method         gaussian
+smearing_sigma          0.02
+
+
+rdmft                   1
+mixing_gg0              0
+dft_functional          cwp22
+rdmft_power_alpha       0.3
+
