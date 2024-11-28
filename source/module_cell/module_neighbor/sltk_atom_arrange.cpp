@@ -169,23 +169,5 @@ void atom_arrange::delete_vector(
 
 	grid_d.delete_vector(at2);
 
-	if (grid_d.init_cell_flag)
-	{
-		for (int i = 0;i < grid_d.dx;i++)
-		{
-			for (int j = 0;j < grid_d.dy;j++)
-			{
-				delete[] grid_d.Cell[i][j];
-			}
-		}
-
-		for (int i = 0;i < grid_d.dx;i++)
-		{
-			delete[] grid_d.Cell[i];
-		}
-
-		delete[] grid_d.Cell;
-		grid_d.init_cell_flag = false;
-	}
-	return;
+	grid_d.delete_Cell();
 }

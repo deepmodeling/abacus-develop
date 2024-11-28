@@ -90,7 +90,7 @@ public:
 	int true_cell_y;
 	int true_cell_z;
 
-	CellSet ***Cell; //dx , dy ,dz is cell number in each direction,respectly.
+	std::vector<std::vector<std::vector<CellSet>>> Cell; //dx , dy ,dz is cell number in each direction,respectly.
 	void delete_Cell() //it will replace by container soon!
 	{
 		if (this->init_cell_flag)
@@ -99,16 +99,16 @@ public:
 			{
 				for (int j = 0;j < this->dy;j++)
 				{
-					delete[] this->Cell[i][j];
+					this->Cell[i][j].clear();
 				}
 			}
 
 			for (int i = 0;i < this->dx;i++)
 			{
-				delete[] this->Cell[i];
+				this->Cell[i].clear();
 			}
 
-			delete[] this->Cell;
+			this->Cell.clear();
 			this->init_cell_flag = false;
 		}
 	}
@@ -127,10 +127,6 @@ public:
     const int& getCellX(void) const {return dx;}
     const int& getCellY(void) const {return dy;}
     const int& getCellZ(void) const {return dz;}
-
-	// Inner Function
-protected:
-	AtomMap all_atom_map;
 
 private:
 
