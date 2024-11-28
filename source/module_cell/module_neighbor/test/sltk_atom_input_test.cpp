@@ -229,9 +229,6 @@ TEST_F(SltkAtomInputTest, ConstructorNoExpand)
     radius = 0;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     EXPECT_FALSE(Atom_inp.getExpandFlag());
-    // call set_FAtom and Load_atom
-    FAtom fa;
-    EXPECT_NO_THROW(Atom_inp.set_FAtom(*ucell, fa));
     ofs.close();
     ifs.open("test.out");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -257,9 +254,6 @@ TEST_F(SltkAtomInputTest, ConstructorSmallSearchRadius)
     radius = 0.5;
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     EXPECT_TRUE(Atom_inp.getExpandFlag());
-    // call set_FAtom and Load_atom
-    FAtom fa;
-    EXPECT_NO_THROW(Atom_inp.set_FAtom(*ucell, fa));
     ofs.close();
     ifs.open("test.out");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

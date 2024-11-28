@@ -21,10 +21,6 @@ public:
 		const int &test_atom_in = 0	//caoyu reconst 2021-05-24
 	);
 	~Atom_input();
-//==========================================================
-// Manipulators
-//==========================================================
-	void set_FAtom(const UnitCell &ucell, FAtom& a)const ;
 
 	double vec1[3];
 	double vec2[3];
