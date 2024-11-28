@@ -35,10 +35,11 @@ class PSIInit
                       const int nks,                   //< number of k-points in the current pool
                       const int* ngk,                  //< number of G-vectors in the current pool
                       const int npwx,                  //< max number of plane waves of all pools
-                      Structure_Factor* p_sf);         //< structure factor
+                      Structure_Factor* p_sf,          //< structure factor
+                      pseudopot_cell_vnl* p_ppcell);   //< nonlocal pseudopotential
 
     // make interpolate table
-    void make_table(const int nks, Structure_Factor* p_sf);
+    void make_table(const int nks, Structure_Factor* p_sf, pseudopot_cell_vnl* p_ppcell);
 
     //------------------------ only for psi_initializer --------------------
     /**
@@ -52,6 +53,7 @@ class PSIInit
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,
                         hamilt::Hamilt<T, Device>* p_hamilt,
+                        const pseudopot_cell_vnl& nlpp,
                         std::ofstream& ofs_running,
                         const bool is_already_initpsi);
 

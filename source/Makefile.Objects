@@ -438,7 +438,6 @@ OBJS_SURCHEM=surchem.o\
     cal_totn.o\
     cal_vcav.o\
     cal_vel.o\
-    corrected_energy.o\
     minimize_cg.o\
     sol_force.o\
 

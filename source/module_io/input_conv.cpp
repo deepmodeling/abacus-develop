@@ -441,7 +441,6 @@ void Input_Conv::Convert()
     }
 #endif                                                   // __LCAO
 #endif                                                   // __EXX
-    GlobalC::ppcell.cell_factor = PARAM.inp.cell_factor; // LiuXh add 20180619
 
     //----------------------------------------------------------
     // reset symmetry flag to avoid error

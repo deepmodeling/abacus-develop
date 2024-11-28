@@ -44,6 +44,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 
 void ElecState::init_scf(const int istep,
                          const ModuleBase::ComplexMatrix& strucfac,
+                         const bool*,
                          ModuleSymmetry::Symmetry&,
                          const void*)
 {

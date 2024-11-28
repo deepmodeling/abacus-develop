@@ -252,7 +252,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
 
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm);
+    this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {

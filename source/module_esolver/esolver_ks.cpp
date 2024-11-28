@@ -68,6 +68,8 @@ ESolver_KS<T, Device>::ESolver_KS()
     ///----------------------------------------------------------
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
+    this->ppcell.cell_factor = PARAM.inp.cell_factor;
+    this->p_locpp = &this->ppcell;
 }
 
 //------------------------------------------------------------------------------
@@ -81,6 +83,7 @@ ESolver_KS<T, Device>::~ESolver_KS()
     delete this->pw_wfc;
     delete this->p_hamilt;
     delete this->p_chgmix;
+    this->ppcell.release_memory();
 }
 
 //------------------------------------------------------------------------------
@@ -209,7 +212,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
     }
 
     //! 6) Setup the k points according to symmetry.
-    this->kv.set(ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 

@@ -17,6 +17,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                                             ModulePW::PW_Basis* rho_basis,
                                             const Structure_Factor* p_sf,
                                             const bool is_pw,
+											const bool *numeric,
                                             const Charge* const chr)
 {
     ModuleBase::TITLE("Stress_Func","stress_cc");
@@ -111,7 +112,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 		{
 			//drhoc();
 			this->deriv_drhoc(
-				GlobalC::ppcell.numeric,
+				numeric,
 				GlobalC::ucell.atoms[nt].ncpp.msh,
 				GlobalC::ucell.atoms[nt].ncpp.r.data(),
 				GlobalC::ucell.atoms[nt].ncpp.rab.data(),
@@ -136,7 +137,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                 sigmadiag += local_sigmadiag.real();
             }
 			this->deriv_drhoc (
-				GlobalC::ppcell.numeric,
+				numeric,
 				GlobalC::ucell.atoms[nt].ncpp.msh,
 				GlobalC::ucell.atoms[nt].ncpp.r.data(),
 				GlobalC::ucell.atoms[nt].ncpp.rab.data(),
