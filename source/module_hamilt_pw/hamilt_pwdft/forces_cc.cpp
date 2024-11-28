@@ -71,10 +71,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        if (PARAM.inp.nspin == 4) 
-        {
-            elecstate::cal_ux(ucell_in);
-        }
+        elecstate::cal_ux(ucell_in);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in);
 
         // etxc = std::get<0>(etxc_vtxc_v);

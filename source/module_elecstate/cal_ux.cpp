@@ -1,8 +1,14 @@
 #include "cal_ux.h"
+#include "module_parameter/parameter.h"
 
 namespace elecstate {
 
 void cal_ux(UnitCell& ucell) {
+    if (PARAM.inp.nspin != 4)
+    {
+        return;
+    }
+
     double amag, uxmod;
     int starting_it = 0;
     int starting_ia = 0;

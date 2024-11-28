@@ -1035,6 +1035,7 @@ TEST_F(UcellTest, CalUx1)
     ucell->atoms[0].m_loc_[0].set(0, -1, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_FALSE(ucell->magnet.lsign_);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0], 0);
@@ -1051,6 +1052,7 @@ TEST_F(UcellTest, CalUx2)
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     //(0,0,0) is also parallel to (1,1,1)
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_TRUE(ucell->magnet.lsign_);
     EXPECT_NEAR(ucell->magnet.ux_[0], 0.57735, 1e-5);

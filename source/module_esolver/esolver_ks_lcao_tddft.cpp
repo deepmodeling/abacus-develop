@@ -238,10 +238,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const i
     // Calculate new potential according to new Charge Density
     if (!this->conv_esolver)
     {
-        if (PARAM.inp.nspin == 4)
-        {
-            elecstate::cal_ux(ucell);
-        }
+        elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
