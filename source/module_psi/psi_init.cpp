@@ -152,8 +152,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         psi::Psi<T, Device>* kspw_psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
                                         const pseudopot_cell_vnl& nlpp,
-                                        std::ofstream& ofs_running,
-                                        const bool is_already_initpsi)
+                                        std::ofstream& ofs_running)
 {
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
 
@@ -255,8 +254,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     }
     else
     {
-        //! note: is_already_initpsi will be false in init_after_vc when vc changes.
-        if (PARAM.inp.basis_type == "pw" && is_already_initpsi == false)
+        if (PARAM.inp.basis_type == "pw")
         {
             for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
             {

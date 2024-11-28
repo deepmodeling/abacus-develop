@@ -48,14 +48,12 @@ class PSIInit
      * @param psi store the wavefunction
      * @param p_hamilt Hamiltonian operator
      * @param ofs_running output stream for running information
-     * @param is_already_initpsi whether psi has been initialized
      */
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,
                         hamilt::Hamilt<T, Device>* p_hamilt,
                         const pseudopot_cell_vnl& nlpp,
-                        std::ofstream& ofs_running,
-                        const bool is_already_initpsi);
+                        std::ofstream& ofs_running);
 
     /**
      * @brief get the psi_initializer

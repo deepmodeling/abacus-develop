@@ -376,13 +376,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                                         this->kspw_psi,
                                         this->p_hamilt,
                                         this->ppcell,
-                                        GlobalV::ofs_running,
-                                        this->already_initpsi);
-
-        if (this->already_initpsi == false)
-        {
-            this->already_initpsi = true;
-        }
+                                        GlobalV::ofs_running);
     }
 }
 
