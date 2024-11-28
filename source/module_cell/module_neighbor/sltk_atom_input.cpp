@@ -34,14 +34,18 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 {
 	ModuleBase::TITLE("Atom_input", "Atom_input");
 
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "ntype", ntype);
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "Amount(atom number)", amount);
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "Periodic_boundary", periodic_boundary);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in, "ntype", ntype);
+}
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in, "Amount(atom number)", amount);
+}
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in, "Periodic_boundary", periodic_boundary);
+}
 
 //----------------------------------------------------------
 // EXPLAIN : check searching raidus
 //----------------------------------------------------------
-	if(test_atom_input)ModuleBase::GlobalFunc::OUT(ofs_in, "Searching radius(lat0)", radius);
+	if(test_atom_input) {ModuleBase::GlobalFunc::OUT(ofs_in, "Searching radius(lat0)", radius);
+}
 
 	if (radius < 0)
 	{
@@ -88,13 +92,15 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 	clength1 = sqrt(vec2[0] * vec2[0] + vec2[1] * vec2[1] + vec2[2] * vec2[2]) ;
 	clength2 = sqrt(vec3[0] * vec3[0] + vec3[1] * vec3[1] + vec3[2] * vec3[2]) ;
 
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in,"CellLength(unit: lat0)",clength0,clength1,clength2);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in,"CellLength(unit: lat0)",clength0,clength1,clength2);
+}
 	//==============================
 	// set lattice constant
 	//==============================
 	lat_now = ucell.lat0;
 
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "lat0_now (Bohr)", lat_now);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in, "lat0_now (Bohr)", lat_now);
+}
 
 	// random selection, in order to estimate again.
 	this->x_min = ucell.atoms[0].tau[0].x;
@@ -109,12 +115,18 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 	{
 		for (int j = 0;j < ucell.atoms[i].na;j++)
 		{
-			if (ucell.atoms[i].tau[j].x < x_min) this->x_min = ucell.atoms[i].tau[j].x;
-			if (ucell.atoms[i].tau[j].y < y_min) this->y_min = ucell.atoms[i].tau[j].y;
-			if (ucell.atoms[i].tau[j].z < z_min) this->z_min = ucell.atoms[i].tau[j].z;
-			if (ucell.atoms[i].tau[j].x > x_max) this->x_max = ucell.atoms[i].tau[j].x;
-			if (ucell.atoms[i].tau[j].y > y_max) this->y_max = ucell.atoms[i].tau[j].y;
-			if (ucell.atoms[i].tau[j].z > z_max) this->z_max = ucell.atoms[i].tau[j].z;
+			if (ucell.atoms[i].tau[j].x < x_min) { this->x_min = ucell.atoms[i].tau[j].x;
+}
+			if (ucell.atoms[i].tau[j].y < y_min) { this->y_min = ucell.atoms[i].tau[j].y;
+}
+			if (ucell.atoms[i].tau[j].z < z_min) { this->z_min = ucell.atoms[i].tau[j].z;
+}
+			if (ucell.atoms[i].tau[j].x > x_max) { this->x_max = ucell.atoms[i].tau[j].x;
+}
+			if (ucell.atoms[i].tau[j].y > y_max) { this->y_max = ucell.atoms[i].tau[j].y;
+}
+			if (ucell.atoms[i].tau[j].z > z_max) { this->z_max = ucell.atoms[i].tau[j].z;
+}
 		}
 	}
 
@@ -122,8 +134,10 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 	{
 		ofs_in << " Find the coordinate range of the input atom(unit:lat0)." << std::endl;
 	}
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in,"min_tau", x_min, y_min, z_min);
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in,"max_tau", x_max, y_max, z_max);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in,"min_tau", x_min, y_min, z_min);
+}
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in,"max_tau", x_max, y_max, z_max);
+}
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -146,8 +160,10 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 	//glayerY_minus-=2;
 	//glayerZ_minus-=2;
 
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in,"glayer+",glayerX,glayerY,glayerZ);
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in,"glayer-",glayerX_minus,glayerY_minus,glayerZ_minus);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in,"glayer+",glayerX,glayerY,glayerZ);
+}
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in,"glayer-",glayerX_minus,glayerY_minus,glayerZ_minus);
+}
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -161,7 +177,8 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 		this->Expand_Grid(ucell, ntype);
 	}
 
-	if(PARAM.inp.test_grid) ModuleBase::GlobalFunc::OUT(ofs_in, "expand_flag", expand_flag);
+	if(PARAM.inp.test_grid) { ModuleBase::GlobalFunc::OUT(ofs_in, "expand_flag", expand_flag);
+}
 
 //----------------------------------------------------------
 // CALL MEMBER FUNCTION :
@@ -169,7 +186,8 @@ Atom_input::Atom_input(std::ofstream &ofs_in,
 // Calculate how many cells we need in each direction.
 //----------------------------------------------------------
 	this->calculate_cells();
-	if(test_atom_input) ModuleBase::GlobalFunc::OUT(ofs_in, "CellDim", cell_nx, cell_ny, cell_nz);
+	if(test_atom_input) { ModuleBase::GlobalFunc::OUT(ofs_in, "CellDim", cell_nx, cell_ny, cell_nz);
+}
 	return;
 }
 
@@ -186,7 +204,8 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 {
 //	ModuleBase::TITLE(GlobalV::ofs_running, "Atom_input", "Check_Expand_Condition");
 
-	if (!periodic_boundary) return;
+	if (!periodic_boundary) { return;
+}
 
 	// mohan update 2011-04-14
 	// d stands for direct coordinates.
@@ -230,7 +249,8 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	}
 
 
-	if(test_atom_input)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Radius",radius);
+	if(test_atom_input) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Radius",radius);
+}
 
 /*2016-07-19, LiuXh
 	// the unit of extent_1DX,Y,Z is lat0.
@@ -306,7 +326,8 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	double extend_d1 = extend_v/ucell.omega*ucell.lat0*ucell.lat0*ucell.lat0;
 	int extend_d11 = static_cast<int>(extend_d1);
 	//2016-09-05, LiuXh
-	if(extend_d1 - extend_d11 > 0.0) extend_d11 += 1;
+	if(extend_d1 - extend_d11 > 0.0) { extend_d11 += 1;
+}
 
 	double a31_1 = ucell.latvec.e32*ucell.latvec.e13 - ucell.latvec.e33*ucell.latvec.e12;
 	double a31_2 = ucell.latvec.e31*ucell.latvec.e13 - ucell.latvec.e33*ucell.latvec.e11;
@@ -315,7 +336,8 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	double extend_d2 = a31_norm*radius/ucell.omega*ucell.lat0*ucell.lat0*ucell.lat0;
 	int extend_d22 = static_cast<int>(extend_d2);
 	//2016-09-05, LiuXh
-	if(extend_d2 - extend_d22 > 0.0) extend_d22 += 1;
+	if(extend_d2 - extend_d22 > 0.0) { extend_d22 += 1;
+}
 
 	double a12_1 = ucell.latvec.e12*ucell.latvec.e23 - ucell.latvec.e13*ucell.latvec.e22;
 	double a12_2 = ucell.latvec.e11*ucell.latvec.e23 - ucell.latvec.e13*ucell.latvec.e21;
@@ -324,7 +346,8 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	double extend_d3 = a12_norm * radius/ucell.omega*ucell.lat0*ucell.lat0*ucell.lat0;
 	int extend_d33 = static_cast<int>(extend_d3);
 	//2016-09-05, LiuXh
-	if(extend_d3 - extend_d33 > 0.0) extend_d33 += 1;
+	if(extend_d3 - extend_d33 > 0.0) { extend_d33 += 1;
+}
 
 	glayerX = extend_d11 +1;
 	glayerY = extend_d22 +1;
@@ -338,12 +361,18 @@ void Atom_input::Check_Expand_Condition(const UnitCell &ucell)
 	glayerZ_minus = extend_d33;
 	//End, 2016-09-05, LiuXh
 
-	if(glayerX==1) glayerX++;
-	if(glayerY==1) glayerY++;
-	if(glayerZ==1) glayerZ++;
-	if(glayerX_minus==1) glayerX_minus++;
-	if(glayerY_minus==1) glayerY_minus++;
-	if(glayerZ_minus==1) glayerZ_minus++;
+	if(glayerX==1) { glayerX++;
+}
+	if(glayerY==1) { glayerY++;
+}
+	if(glayerZ==1) { glayerZ++;
+}
+	if(glayerX_minus==1) { glayerX_minus++;
+}
+	if(glayerY_minus==1) { glayerY_minus++;
+}
+	if(glayerZ_minus==1) { glayerZ_minus++;
+}
 	//End, 2016-07-19, LiuXh
 /*	
 	if(test_atom_input)
@@ -394,11 +423,13 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 	    (glayerY + glayerY_minus) *
 	    (glayerZ + glayerZ_minus) ;
 
-	if(test_atom_input)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Grid_copy_times",gcopy);
+	if(test_atom_input) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Grid_copy_times",gcopy);
+}
 
 	this->d_amount_expand = d_amount * gcopy;
 
-	if(test_atom_input)ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Atom_number_now",d_amount_expand);
+	if(test_atom_input) {ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Atom_number_now",d_amount_expand);
+}
 
 	// store new atom positions.
 
@@ -474,7 +505,7 @@ void Atom_input::Expand_Grid(const UnitCell &ucell, const int ntype)
 	return;
 }
 
-void Atom_input::calculate_cells(void)
+void Atom_input::calculate_cells()
 {
 	ModuleBase::TITLE("Atom_input", "calculate_cells");
 //----------------------------------------------------------
