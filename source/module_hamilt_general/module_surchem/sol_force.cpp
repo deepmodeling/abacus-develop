@@ -2,7 +2,10 @@
 #include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 
-void force_cor_one(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
+void force_cor_one(const UnitCell& cell,
+                   const ModulePW::PW_Basis* rho_basis,
+                   const ModuleBase::matrix& vloc,
+                   ModuleBase::matrix& forcesol)
 {
    
    
@@ -26,7 +29,7 @@ void force_cor_one(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, Mo
             {   
                 complex<double> phase = exp( ModuleBase::NEG_IMAG_UNIT *ModuleBase::TWO_PI * ( rho_basis->gcar[ig] * cell.atoms[it].tau[ia]));
                 //vloc for each atom
-                vloc_at[ig] = GlobalC::ppcell.vloc(it, rho_basis->ig2igg[ig]) * phase;
+                vloc_at[ig] = vloc(it, rho_basis->ig2igg[ig]) * phase;
                 if(rho_basis->ig_gge0 == ig)
                 {
                     N[ig] = GlobalC::ucell.atoms[it].ncpp.zv / GlobalC::ucell.omega;
@@ -146,7 +149,10 @@ void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, Mo
 
 }
 
-void surchem::cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol)
+void surchem::cal_force_sol(const UnitCell& cell,
+                            const ModulePW::PW_Basis* rho_basis,
+                            const ModuleBase::matrix& vloc,
+                            ModuleBase::matrix& forcesol)
 {
     ModuleBase::TITLE("surchem", "cal_force_sol");
     ModuleBase::timer::tick("surchem", "cal_force_sol");
@@ -155,7 +161,7 @@ void surchem::cal_force_sol(const UnitCell& cell, const ModulePW::PW_Basis* rho_
 	ModuleBase::matrix force1(nat, 3);
     ModuleBase::matrix force2(nat, 3);
     
-    force_cor_one(cell, rho_basis,force1);
+    force_cor_one(cell, rho_basis, vloc, force1);
     force_cor_two(cell, rho_basis,force2);
     
     int iat = 0;

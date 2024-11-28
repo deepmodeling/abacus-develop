@@ -11,6 +11,7 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
                               UnitCell& ucell,
                               ModuleSymmetry::Symmetry* p_symm,
+                              const pseudopot_cell_vl& locpp,
                               Structure_Factor* p_sf,
                               K_Vectors* p_kv)
 {
@@ -75,10 +76,10 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     stress_gga(sigmaxc, this->rhopw, pelec->charge);
 
     // local contribution
-    stress_loc(sigmaloc, this->rhopw, p_sf, true, pelec->charge);
+    stress_loc(sigmaloc, this->rhopw, locpp.vloc, p_sf, true, pelec->charge);
 
     // nlcc
-    stress_cc(sigmaxcc, this->rhopw, p_sf, true, pelec->charge);
+    stress_cc(sigmaxcc, this->rhopw, p_sf, true, locpp.numeric, pelec->charge);
 
     // vdw term
     stress_vdw(sigmavdw, ucell);

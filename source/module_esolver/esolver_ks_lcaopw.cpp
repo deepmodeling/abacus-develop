@@ -64,7 +64,7 @@ namespace ModuleESolver
     template <typename T>
     void ESolver_KS_LIP<T>::allocate_hamilt()
     {
-        this->p_hamilt = new hamilt::HamiltLIP<T>(this->pelec->pot, this->pw_wfc, &this->kv
+        this->p_hamilt = new hamilt::HamiltLIP<T>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell
 #ifdef __EXX
             , *this->exx_lip
 #endif
@@ -250,7 +250,7 @@ namespace ModuleESolver
                                 *this->pw_wfc,
                                 *this->pw_rho,
                                 *this->pw_rhod,
-                                GlobalC::ppcell.vloc,
+                                this->ppcell.vloc,
                                 *this->pelec->charge,
                                 this->kv,
                                 this->pelec->wg

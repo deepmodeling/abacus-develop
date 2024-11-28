@@ -60,7 +60,7 @@ void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
 void ModulePW::PW_Basis::distribute_r()
 {
 }
-void Charge::set_rho_core(ModuleBase::ComplexMatrix const&)
+void Charge::set_rho_core(ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
 void Charge::set_rho_core_paw()
@@ -249,7 +249,7 @@ TEST_F(ElecStateTest, InitSCF)
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
     ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac, symm));
+    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac, nullptr, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

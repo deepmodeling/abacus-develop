@@ -28,7 +28,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                 this->pw_rho,
                                                 &ucell,
-                                                &(GlobalC::ppcell.vloc),
+                                                &(this->locpp.vloc),
                                                 &(this->sf),
                                                 &(this->pelec->f_en.etxc),
                                                 &(this->pelec->f_en.vtxc));

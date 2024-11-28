@@ -53,6 +53,9 @@ namespace ModuleESolver
 
         ModulePW::PW_Basis* pw_rho;
 
+        //! pointer to pseudopotential
+        pseudopot_cell_vl* p_locpp = nullptr;
+
         /**
          * @brief same as pw_rho for ncpp. Here 'd' stands for 'dense'
          * dense grid for for uspp, used for ultrasoft augmented charge density.

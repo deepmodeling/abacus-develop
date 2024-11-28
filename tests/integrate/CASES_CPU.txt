@@ -224,7 +224,7 @@
 311_NO_GO_elec_minus
 311_NO_GO_S2_elec_minus
 312_NO_GO_wfc_file
-312_NO_GO_wfc_get_wf
+#312_NO_GO_wfc_get_wf
 312_NO_GO_wfc_get_pchg
 312_NO_GO_wfc_out
 313_NO_GO_mulliken

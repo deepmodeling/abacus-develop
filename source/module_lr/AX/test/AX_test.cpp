@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
+#ifdef __MPI
 #include "mpi.h"
+#endif
 #include "../AX.h"
 
 #include "module_lr/utils/lr_util.h"
@@ -206,9 +208,13 @@ TEST_F(AXTest, ComplexParallel)
 int main(int argc, char** argv)
 {
     srand(time(nullptr));  // for random number generator
+#ifdef __MPI
     MPI_Init(&argc, &argv);
+#endif
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
+#ifdef __MPI
     MPI_Finalize();
+#endif
     return result;
 }
