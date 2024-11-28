@@ -6,7 +6,6 @@
 #include "sltk_adjacent_set.h"
 #include "module_base/timer.h"
 #include <list>
-class AdjacentSet;
 
 // a class contains the atom position, 
 // the type and the index,

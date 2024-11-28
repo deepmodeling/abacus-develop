@@ -67,7 +67,7 @@ void Grid::setMemberVariables(
 
 	this->delete_Cell();
 	// mohan add 2010-09-05
-	AdjacentSet::call_times = 0;
+	// AdjacentSet::call_times = 0;
 
 	this->natom = input.getAmount();
 	if(test_grid) {ModuleBase::GlobalFunc::OUT(ofs_in, "natom", natom);
@@ -138,14 +138,14 @@ void Grid::setMemberVariables(
 }
 
 
-	Cell = new CellSet**[dx];
+	Cell.resize(dx);
 	for (int i = 0;i < dx;i++)
 	{
-		Cell[i] = new CellSet*[dy];
+		Cell[i].resize(dy);
 
 		for (int j = 0;j < dy;j++)
 		{
-			Cell[i][j] = new CellSet[dz];
+			Cell[i][j].resize(dz);
 		}
 	}
 	this->init_cell_flag = true;
@@ -175,9 +175,7 @@ void Grid::setBoundaryAdjacent(
 	{
 		this->Construct_Adjacent_begin();
 	}
-
-	if(test_grid) {ModuleBase::GlobalFunc::OUT(ofs_in,"Adjacent_set call times",AdjacentSet::call_times);
-}
+	//if(test_grid)ModuleBase::GlobalFunc::OUT(ofs_in,"Adjacent_set call times",AdjacentSet::call_times);
 
 	//if (test_grid)ModuleBase::GlobalFunc::DONE(ofs_in, "Construct_Adjacent");
 
@@ -234,7 +232,6 @@ void Grid::Build_Hash_Table(const UnitCell &ucell, const Atom_input &input)
 	for (int i = 0; i < input.getAmount(); ++i)
 	{
 		const FAtom &atom = input.getFakeAtom(i);
-		all_atom_map[{atom.x(), atom.y(), atom.z()}] = atom;
 
 		int a, b, c;
 		this->In_Which_Cell(ucell, a, b, c, atom);
@@ -261,7 +258,7 @@ void Grid::Construct_Adjacent_expand(
 //----------------------------------------------------------
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 
-	AdjacentSet::setExpandFlag(this->expand_flag);
+/* 	AdjacentSet::setExpandFlag(this->expand_flag);
 
 	AdjacentSet::setDx(this->dx);
 
@@ -279,7 +276,7 @@ void Grid::Construct_Adjacent_expand(
 
 	AdjacentSet::setCenter(true_i * dy * dz + true_j * dz + true_k);
 	
-
+ */
 //	if(test_grid)OUT(ofs_running,"GridCenter",true_i,true_j,true_k);
 //	if(test_grid)OUT(ofs_running,"GridDim",dx,dy,dz);
 
