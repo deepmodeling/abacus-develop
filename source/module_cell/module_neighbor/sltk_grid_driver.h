@@ -25,6 +25,14 @@ public:
 	std::vector<int> natom;
 	std::vector<ModuleBase::Vector3<double>> adjacent_tau;
 	std::vector<ModuleBase::Vector3<int>> box;
+	void clear()
+	{
+		adj_num = 0;
+		ntype.clear();
+		natom.clear();
+		adjacent_tau.clear();
+		box.clear();
+	}
 };
 
 void filter_adjs(const std::vector<bool>& is_adj, AdjacentAtomInfo& adjs);
@@ -88,7 +96,7 @@ private:
 // MEMBER FUNCTIONS :
 // NAME : Calculate_adjacent_site
 //==========================================================
-	ModuleBase::Vector3<double> Calculate_adjacent_site(const FAtom &atom,
+	ModuleBase::Vector3<double> Calculate_adjacent_site(const double x, const double y, const double z,
 							const double &box11, const double &box12, const double &box13,
 							const double &box21, const double &box22, const double &box23,
 							const double &box31, const double &box32, const double &box33,
