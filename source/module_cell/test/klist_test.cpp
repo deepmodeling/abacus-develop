@@ -339,7 +339,7 @@ TEST_F(KlistTest, ReadKpointsInvalidKspacing3values)
     PARAM.input.kspacing[2] = 0.07;     // 0.52918/Bohr = 1/A
     std::string k_file = "./support/KPT3";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->read_kpoints(k_file), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(kv->read_kpoints(k_file), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     PARAM.input.kspacing[0] = 0.0;
     PARAM.input.kspacing[1] = 0.0;
@@ -628,7 +628,7 @@ TEST_F(KlistTest, PrintKlistsWarnigQuit)
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(kv->print_klists(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nkstot < nks"));
 }

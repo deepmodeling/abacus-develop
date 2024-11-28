@@ -12,6 +12,9 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_io/output_mat_sparse.h"
 
+// added by jghan for rdmft calculation
+#include "module_rdmft/rdmft.h"
+
 #include <memory>
 
 namespace LR
@@ -67,6 +70,8 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     Grid_Technique GridT;
 
     TwoCenterBundle two_center_bundle_;
+
+    rdmft::RDMFT<TK, TR> rdmft_solver;  // added by jghan for rdmft calculation, 2024-03-16
 
     // temporary introduced during removing GlobalC::ORB
     LCAO_Orbitals orb_;

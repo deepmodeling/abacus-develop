@@ -40,6 +40,7 @@
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
+#include "module_elecstate/cal_ux.h"
 
 #include <memory>
 #ifdef __EXX
@@ -61,6 +62,10 @@
 // function used by deepks
 // #include "module_elecstate/cal_dm.h"
 //---------------------------------------------------
+
+// test RDMFT
+#include "module_rdmft/rdmft.h"
+#include <iostream>
 
 namespace ModuleESolver
 {
@@ -247,6 +252,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%\n";
         }
+    }
+
+    // 14) initialize rdmft, added by jghan
+    if( PARAM.inp.rdmft == true )
+    {
+        rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
+                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -593,7 +605,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
             if (PARAM.inp.nspin == 4)
             {
-                ucell.cal_ux();
+                elecstate::cal_ux(ucell);
             }
 
             //! update the potentials by using new electron charge density
@@ -829,7 +841,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     {
         if (PARAM.inp.nspin == 4)
         {
-            ucell.cal_ux();
+            elecstate::cal_ux(ucell);
         }
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
@@ -838,6 +850,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     {
         this->pelec->cal_converged();
     }
+
 }
 
 //------------------------------------------------------------------------------
@@ -1041,6 +1054,23 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
 #endif
 
+    /******** test RDMFT *********/
+    if ( PARAM.inp.rdmft == true ) // rdmft, added by jghan, 2024-10-17
+    {
+        ModuleBase::matrix occ_number_ks(this->pelec->wg);
+        for(int ik=0; ik < occ_number_ks.nr; ++ik) { for(int inb=0; inb < occ_number_ks.nc; ++inb) occ_number_ks(ik, inb) /= this->kv.wk[ik]; }
+        this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
+
+        //initialize the gradients of Etotal on occupation numbers and wfc, and set all elements to 0. 
+        ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
+        psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis()); 
+        dE_dWfc.zero_out();
+
+        double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);
+    }
+    /******** test RDMFT *********/
+
+
 #ifdef __EXX
     // 11) write rpa information
     if (PARAM.inp.rpa)
@@ -1226,6 +1256,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 }
+
 
 //------------------------------------------------------------------------------
 //! the 20th,21th,22th functions of ESolver_KS_LCAO

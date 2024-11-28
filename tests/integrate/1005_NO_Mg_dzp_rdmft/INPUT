@@ -1,0 +1,14 @@
+INPUT_PARAMETERS
+suffix                  autotest
+calculation             scf
+
+#Parameters (Accuracy)
+ecutwfc			60
+scf_nmax		100
+scf_thr         1e-6
+basis_type		lcao
+printe           1
+
+
+rdmft                   1
+

@@ -53,7 +53,7 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
 {
     // Warning 1: atomCounts is not set
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("atomCounts is not set"));
     // Warning 2: nat < 0
@@ -63,7 +63,7 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     };
     this->sc.set_atomCounts(atomCounts);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nat <= 0"));
     // Warning 3: itype out of range
@@ -73,7 +73,7 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     };
     this->sc.set_atomCounts(atomCounts1);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("itype out of range [0, ntype)"));
     // Warning 4: number of atoms <= 0 for some element
@@ -83,7 +83,7 @@ TYPED_TEST(SpinConstrainTest, CheckAtomCounts)
     };
     this->sc.set_atomCounts(atomCounts2);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.check_atomCounts(), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("number of atoms <= 0 for some element"));
 }
@@ -103,12 +103,12 @@ TYPED_TEST(SpinConstrainTest, AtomCounts)
     EXPECT_EQ(this->sc.get_iat(1, 4), 9); // atom_index starts from 0
     // warning 1: itype out of range
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.get_iat(3, 0);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.get_iat(3, 0);, ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("itype out of range [0, ntype)"));
     // warning 2: atom_index out of range
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.get_iat(0, 5);, ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.get_iat(0, 5);, ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("atom index out of range [0, nat)"));
 }
@@ -123,7 +123,7 @@ TYPED_TEST(SpinConstrainTest, NSPIN)
 TYPED_TEST(SpinConstrainTest, NSPINwarning)
 {
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.set_nspin(1), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.set_nspin(1), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nspin must be 2 or 4"));
 }
@@ -163,7 +163,7 @@ TYPED_TEST(SpinConstrainTest, SetParaV)
     // warning 1
     paraV.nloc = 0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(this->sc.set_ParaV(&paraV), ::testing::ExitedWithCode(0), "");
+    EXPECT_EXIT(this->sc.set_ParaV(&paraV), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("nloc <= 0"));
     // normal set

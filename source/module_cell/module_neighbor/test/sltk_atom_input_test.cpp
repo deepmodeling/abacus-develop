@@ -162,7 +162,7 @@ TEST_F(SltkAtomInputDeathTest, ConstructorWarning1)
     radius = -1;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("search radius < 0,forbidden"));
@@ -178,7 +178,7 @@ TEST_F(SltkAtomInputDeathTest, ConstructorWarning2)
     ucell->atoms[0].taud[1].x = -0.25;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("dminX<0.0"));
@@ -194,7 +194,7 @@ TEST_F(SltkAtomInputDeathTest, ConstructorWarning3)
     ucell->atoms[0].taud[1].y = -0.25;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("dminY<0.0"));
@@ -210,7 +210,7 @@ TEST_F(SltkAtomInputDeathTest, ConstructorWarning4)
     ucell->atoms[0].taud[1].z = -0.25;
     testing::internal::CaptureStdout();
     EXPECT_EXIT(Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in),
-                ::testing::ExitedWithCode(0),
+                ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("dminZ<0.0"));

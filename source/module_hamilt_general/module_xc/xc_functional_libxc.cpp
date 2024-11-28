@@ -135,6 +135,20 @@ std::vector<xc_func_type> XC_Functional_Libxc::init_func(const std::vector<int> 
 				GlobalC::exx_info.info_global.hse_omega };
 			xc_func_set_ext_params(&funcs.back(), parameter_hse);
 		}
+        // added by jghan, 2024-07-06
+		else if( id == XC_GGA_X_ITYH ) // short-range of B88_X
+		{
+			add_func( XC_GGA_X_ITYH );
+			double parameter_omega[1] = {PARAM.inp.exx_hse_omega}; // GlobalC::exx_info.info_global.hse_omega
+			xc_func_set_ext_params(&funcs.back(), parameter_omega);	
+		}
+		else if( id == XC_GGA_C_LYPR ) // short-range of LYP_C
+		{
+			add_func( XC_GGA_C_LYPR );
+            // the first six parameters come from libxc, and may need to be modified in some cases
+			double parameter_lypr[7] = {0.04918, 0.132, 0.2533, 0.349, 0.35/2.29, 2.0/2.29, PARAM.inp.exx_hse_omega};
+			xc_func_set_ext_params(&funcs.back(), parameter_lypr);	
+		}
 #endif
 		else
 		{

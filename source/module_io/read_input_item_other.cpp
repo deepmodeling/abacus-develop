@@ -494,5 +494,37 @@ void ReadInput::item_others()
         sync_intvec(input.aims_nbasis, para.input.aims_nbasis.size(), 0);
         this->add_item(item);
     }
+
+    // RDMFT, added by jghan, 2024-10-16
+    {
+        Input_Item item("rdmft");
+        item.annotation = "whether to perform rdmft calculation, default is false";
+        read_sync_bool(input.rdmft);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rdmft_power_alpha");
+        item.annotation = "the alpha parameter of power-functional, g(occ_number) = occ_number^alpha"
+                          " used in exx-type functionals such as muller and power";
+        read_sync_double(input.rdmft_power_alpha);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
+            {
+                para.input.rdmft_power_alpha = 1.0;
+            }
+            else if( para.input.dft_functional == "muller" )
+            {
+                para.input.rdmft_power_alpha = 0.5;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if( (para.input.rdmft_power_alpha < 0) || (para.input.rdmft_power_alpha > 1) )
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "rdmft_power_alpha should be greater than 0.0 and less than 1.0");
+            }
+        };
+        this->add_item(item);
+    }
+
 }
 } // namespace ModuleIO

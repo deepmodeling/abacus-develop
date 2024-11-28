@@ -135,11 +135,6 @@ void ElecStatePW<T, Device>::parallelK()
 {
 #ifdef __MPI
     this->charge->rho_mpi();
-    if(PARAM.inp.esolver_type == "sdft") //qinarui add it 2021-7-21
-	{
-        this->f_en.eband /= GlobalV::NPROC_IN_POOL;
-        MPI_Allreduce(MPI_IN_PLACE, &this->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-    }
 #endif
 }
 

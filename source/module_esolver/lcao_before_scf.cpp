@@ -3,6 +3,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_elecstate/cal_ux.h"
 //
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
@@ -246,7 +247,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     //=========================================================
     if (PARAM.inp.nspin == 4)
     {
-        ucell.cal_ux();
+        elecstate::cal_ux(ucell);
     }
 
     // Peize Lin add 2016-12-03
@@ -369,6 +370,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     this->p_hamilt->non_first_scf = istep;
+
+    // update in ion-step
+    if( PARAM.inp.rdmft == true )
+    {
+        // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
+        rdmft_solver.update_ion(ucell, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac);   // add by jghan, 2024-03-16/2024-10-08
+    }
+
     return;
 }
 

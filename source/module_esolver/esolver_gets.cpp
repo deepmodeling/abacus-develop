@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_io/print_info.h"
 #include "module_io/write_HS_R.h"
+#include "module_io/cal_r_overlap_R.h"
 
 namespace ModuleESolver
 {
@@ -103,16 +104,36 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 
     if (this->p_hamilt == nullptr)
     {
-        this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
-                                                                              this->kv,
-                                                                              *(two_center_bundle_.overlap_orb),
-                                                                              orb_.cutoffs());
-        dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+        if (PARAM.inp.nspin == 4)
+        {
+            this->p_hamilt
+                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->pv,
+                                                                                     this->kv,
+                                                                                     *(two_center_bundle_.overlap_orb),
+                                                                                     orb_.cutoffs());
+            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>*>(this->p_hamilt->ops)
+                ->contributeHR();
+        }
+        else
+        {
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
+                                                                                  this->kv,
+                                                                                  *(two_center_bundle_.overlap_orb),
+                                                                                  orb_.cutoffs());
+            dynamic_cast<hamilt::OperatorLCAO<std::complex<double>, double>*>(this->p_hamilt->ops)->contributeHR();
+        }
     }
 
     const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
     std::cout << " The file is saved in " << fn << std::endl;
     ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
+
+    if (PARAM.inp.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(pv, orb_);
+        r_matrix.out_rR(istep);
+    }
 
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }

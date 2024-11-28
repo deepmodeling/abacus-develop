@@ -38,7 +38,6 @@
 #define protected public
 #define private public
 #include "../pw_basis.h"
-#include "../fft.h"
 #undef private
 #undef protected
 
