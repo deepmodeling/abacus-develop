@@ -27,7 +27,6 @@ DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
 template<typename T, typename Device>
 DiagoBPCG<T, Device>::~DiagoBPCG() {
     // Note, we do not need to free the h_prec and psi pointer as they are refs to the outside data
-    // delete this->grad_wrapper;
 }
 
 template<typename T, typename Device>

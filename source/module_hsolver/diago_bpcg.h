@@ -319,8 +319,6 @@ class DiagoBPCG
      */
     bool test_error(const ct::Tensor& err_in, Real thr_in);
 
-    // using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
-
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;
     using resmem_var_op = ct::kernels::resize_memory<Real, ct_Device>;
