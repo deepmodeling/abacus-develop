@@ -25,6 +25,15 @@ PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
     this->basis_type = basis_type_in;
     this->use_psiinitializer = use_psiinitializer_in;
     this->pw_wfc = pw_wfc_in;
+
+    if (PARAM.inp.init_wfc == "file" || PARAM.inp.device == "gpu")
+    {
+        this->init_psi_method = "old"; // old method;
+    }
+    else
+    {
+        this->init_psi_method = "new"; // new method;
+    }
 }
 
 template <typename T, typename Device>
@@ -37,53 +46,60 @@ void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
 #endif
                                       pseudopot_cell_vnl* p_ppcell)
 {
-    if (!this->use_psiinitializer)
+    if (this->init_psi_method == "old")
     {
         return;
     }
-    // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
-    // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
-    ModuleBase::timer::tick("PSIInit", "prepare_init");
-    if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
-    }
-    else if (this->init_wfc == "atomic")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
-    }
-    else if (this->init_wfc == "random")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
-    }
-    else if (this->init_wfc == "nao")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao<T, Device>());
-    }
-    else if (this->init_wfc == "atomic+random")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
-    }
-    else if (this->init_wfc == "nao+random")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao_random<T, Device>());
-    }
     else
     {
-        ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
-    }
+        ModuleBase::timer::tick("PSIInit", "prepare_init");
 
-    //! function polymorphism is moved from constructor to function initialize.
-    //! Two slightly different implementation are for MPI and serial case, respectively.
+        // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
+        // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
+
+        if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
+        {
+            this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+        }
+        else if (this->init_wfc == "atomic")
+        {
+            this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
+        }
+        else if (this->init_wfc == "random")
+        {
+            this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+        }
+        else if (this->init_wfc == "nao")
+        {
+            this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao<T, Device>());
+        }
+        else if (this->init_wfc == "atomic+random")
+        {
+            this->psi_init
+                = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
+        }
+        else if (this->init_wfc == "nao+random")
+        {
+            this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao_random<T, Device>());
+        }
+        else
+        {
+            ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
+        }
+
+        //! function polymorphism is moved from constructor to function initialize.
+        //! Two slightly different implementation are for MPI and serial case, respectively.
 #ifdef __MPI
-    this->psi_init->initialize(p_sf, pw_wfc, p_ucell, p_parak, random_seed, p_ppcell, rank);
+        this->psi_init->initialize(p_sf, pw_wfc, p_ucell, p_parak, random_seed, p_ppcell, rank);
 #else
-    this->psi_init->initialize(p_sf, pw_wfc, p_ucell, random_seed, p_ppcell);
+        this->psi_init->initialize(p_sf, pw_wfc, p_ucell, random_seed, p_ppcell);
 #endif
 
-    // always new->initialize->tabulate->allocate->proj_ao_onkG
-    this->psi_init->tabulate();
-    ModuleBase::timer::tick("PSIInit", "prepare_init");
+        // always new->initialize->tabulate->allocate->proj_ao_onkG
+        this->psi_init->tabulate();
+
+        ModuleBase::timer::tick("PSIInit", "prepare_init");
+    }
 }
 
 template <typename T, typename Device>
@@ -108,7 +124,7 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
     // the basis (representation) with operator (hamiltonian) and solver (diagonalization).
     // This feature requires feasible Linear Algebra library in-built in ABACUS, which
     // is not ready yet.
-    if (this->use_psiinitializer) // new method
+    if (this->init_psi_method == "new") // new method
     {
         // psi_initializer drag initialization of pw wavefunction out of HSolver, make psi
         // initialization decoupled with HSolver (diagonalization) procedure.
@@ -137,13 +153,15 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
 template <typename T, typename Device>
 void PSIInit<T, Device>::make_table(const int nks, Structure_Factor* p_sf, pseudopot_cell_vnl* p_ppcell)
 {
-    if (this->use_psiinitializer)
+    if (this->init_psi_method == "new")
     {
     }    // do not need to do anything because the interpolate table is unchanged
     else // old initialization method, used in EXX calculation
     {
         this->wf_old.init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
-        this->wf_old.init_at_1(p_sf, &p_ppcell->tab_at);    // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
+        this->wf_old.init_at_1(
+            p_sf,
+            &p_ppcell->tab_at); // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
     }
 }
 
@@ -157,7 +175,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 {
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
 
-    if (PARAM.inp.psi_initializer)
+    if (this->init_psi_method == "new")
     {
         // if psig is not allocated before, allocate it
         if (!this->psi_init->psig_use_count())
