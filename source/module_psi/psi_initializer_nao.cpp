@@ -276,7 +276,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
     std::vector<double> qnorm(npw);
     std::vector<ModuleBase::Vector3<double>> q(npw);
     
-    #pragma omp parallel for schedule(static, 4096 / sizeof(double))
+    // #pragma omp parallel for schedule(static, 4096 / sizeof(double))
     for (int ig = 0; ig < npw; ig++)
     {
         q[ig] = this->pw_wfc_->getgpluskcar(ik, ig);
@@ -335,13 +335,13 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                                 for (int m = 0; m < 2 * L + 1; m++)
                                 {
                                     const int lm = L * L + m;
-                                    #pragma omp parallel for
+                                    // #pragma omp parallel for
                                     for (int ig = 0; ig < npw; ig++)
                                     {
                                         aux[ig] = sk[ig] * ylm(lm, ig) * Jlfq[ig];
                                     }
 
-                                    #pragma omp parallel for
+                                    // #pragma omp parallel for
                                     for (int ig = 0; ig < npw; ig++)
                                     {
                                         fup = cos(0.5 * alpha) * aux[ig];
@@ -374,7 +374,7 @@ void psi_initializer_nao<T, Device>::proj_ao_onkG(const int ik)
                         for (int m = 0; m < 2 * L + 1; m++)
                         {
                             const int lm = L * L + m;
-                            #pragma omp parallel for
+                            // #pragma omp parallel for
                             for (int ig = 0; ig < npw; ig++)
                             {
                                 (*(this->psig_))(ibasis, ig)

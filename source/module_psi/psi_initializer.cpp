@@ -171,7 +171,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
-                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                // #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
@@ -192,7 +192,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         {
             T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]); // get the memory to write directly. For nspin 4, nbasis*2
 
-            #pragma omp parallel for schedule(static, 4096/sizeof(T))
+            // #pragma omp parallel for schedule(static, 4096/sizeof(T))
             for (int ig = 0; ig < ng; ig++)
             {
                 const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
@@ -202,7 +202,7 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
             }
             if(PARAM.globalv.npol == 2) // additionally for nspin 4...
             {
-                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+                // #pragma omp parallel for schedule(static, 4096/sizeof(T))
                 for (int ig = this->pw_wfc_->npwk_max; ig < this->pw_wfc_->npwk_max + ng; ig++)
                 {
                     const double rr = std::rand()/double(RAND_MAX);

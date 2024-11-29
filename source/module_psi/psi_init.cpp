@@ -26,13 +26,21 @@ PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
     this->use_psiinitializer = use_psiinitializer_in;
     this->pw_wfc = pw_wfc_in;
 
-    if (PARAM.inp.init_wfc == "file" || PARAM.inp.device == "gpu")
+    if (PARAM.inp.psi_initializer == true)
     {
-        this->init_psi_method = "old"; // old method;
+        this->init_psi_method = "new";
     }
     else
     {
-        this->init_psi_method = "new"; // new method;
+        if (PARAM.inp.init_wfc == "file" || PARAM.inp.init_wfc == "atomic" || PARAM.inp.device == "gpu"
+            || PARAM.inp.esolver_type == "sdft")
+        {
+            this->init_psi_method = "old"; // old method;
+        }
+        else
+        {
+            this->init_psi_method = "new"; // new method;
+        }
     }
 }
 
