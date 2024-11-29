@@ -186,176 +186,28 @@ int wavefunc::get_starting_nw() const
 namespace hamilt
 {
 
-void diago_PAO_in_pw_k2(const int& ik,
-                        psi::Psi<std::complex<float>>& wvf,
+template <>
+void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
                         const ModuleBase::realArray& tab_at,
                         const int& lmaxkb,
-                        hamilt::Hamilt<std::complex<float>>* phm_in)
+                        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in)
 {
-    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
-
-    const int nbasis = wvf.get_nbasis();
-    const int nbands = wvf.get_nbands();
-    const int current_nbasis = wfc_basis->npwk[ik];
-
-    if (PARAM.inp.init_wfc == "file")
-    {
-        ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
-        std::stringstream filename;
-        int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
-        ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
-
-        std::vector<std::complex<float>> s_wfcatom(nbands * nbasis);
-        castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, nbands * nbasis);
-
-        if (PARAM.inp.ks_solver == "cg")
-        {
-            std::vector<float> etfile(nbands, 0.0);
-            if (phm_in != nullptr)
-            {
-                hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
-                                                                                   s_wfcatom.data(),
-                                                                                   wfcatom.nr,
-                                                                                   wfcatom.nc,
-                                                                                   wvf,
-                                                                                   etfile.data());
-                return;
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("wavefunc", "Psi does not exist!");
-            }
-        }
-
-        assert(nbands <= wfcatom.nr);
-        for (int ib = 0; ib < nbands; ib++)
-        {
-            for (int ig = 0; ig < nbasis; ig++)
-            {
-                wvf(ib, ig) = s_wfcatom[ib * nbasis + ig];
-            }
-        }
-        return;
-    }
-
-    const int starting_nw = p_wf->get_starting_nw();
-    if (starting_nw == 0)
-    {
-        return;
-    }
-    assert(starting_nw > 0);
-    std::vector<float> etatom(starting_nw, 0.0);
-
-    // special case here! use Psi(k-1) for the initialization of Psi(k)
-    // this method should be tested.
-    /*if(PARAM.inp.calculation == "nscf" && GlobalC::ucell.natomwfc == 0 && ik>0)
-    {
-        //this is memsaver case
-        if(wvf.get_nk() == 1)
-        {
-            return;
-        }
-        else
-        {
-            ModuleBase::GlobalFunc::COPYARRAY(&wvf(ik-1, 0, 0), &wvf(ik, 0, 0), wvf.get_nbasis()* wvf.get_nbands());
-            return;
-        }
-    }
-    */
-
-    if (PARAM.inp.init_wfc == "random" || (PARAM.inp.init_wfc.substr(0, 6) == "atomic" && GlobalC::ucell.natomwfc == 0))
-    {
-        p_wf->random(wvf.get_pointer(), 0, nbands, ik, wfc_basis);
-
-        if (PARAM.inp.ks_solver == "cg") // xiaohui add 2013-09-02
-        {
-            if (phm_in != nullptr)
-            {
-                hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace(phm_in, wvf, wvf, etatom.data());
-                return;
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("wavefunc", "Hamiltonian does not exist!");
-            }
-        }
-    }
-    else if (PARAM.inp.init_wfc.substr(0, 6) == "atomic")
-    {
-        ModuleBase::ComplexMatrix wfcatom(starting_nw, nbasis); // added by zhengdy-soc
-        if (PARAM.inp.test_wf)
-        {
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-        }
-
-        p_wf->atomic_wfc(ik,
-                         current_nbasis,
-                         GlobalC::ucell.lmax_ppwf,
-                         lmaxkb,
-                         wfc_basis,
-                         wfcatom,
-                         tab_at,
-                         PARAM.globalv.nqx,
-                         PARAM.globalv.dq);
-
-        if (PARAM.inp.init_wfc == "atomic+random"
-            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
-        {
-            p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
-        }
-
-        //====================================================
-        // If not enough atomic wfc are available, complete
-        // with random wfcs
-        //====================================================
-        p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
-
-        // (7) Diago with cg method.
-        std::vector<std::complex<float>> s_wfcatom(starting_nw * nbasis);
-        castmem_z2c_h2h_op()(cpu_ctx, cpu_ctx, s_wfcatom.data(), wfcatom.c, starting_nw * nbasis);
-
-        // if(GlobalV::DIAGO_TYPE == "cg") xiaohui modify 2013-09-02
-        if (PARAM.inp.ks_solver == "cg") // xiaohui add 2013-09-02
-        {
-            if (phm_in != nullptr)
-            {
-                hsolver::DiagoIterAssist<std::complex<float>>::diagH_subspace_init(phm_in,
-                                                                                   s_wfcatom.data(),
-                                                                                   wfcatom.nr,
-                                                                                   wfcatom.nc,
-                                                                                   wvf,
-                                                                                   etatom.data());
-                return;
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("wavefunc", "Psi does not exist!");
-                // this diagonalization method is obsoleted now
-                // GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
-            }
-        }
-
-        assert(nbands <= wfcatom.nr);
-        for (int ib = 0; ib < nbands; ib++)
-        {
-            for (int ig = 0; ig < nbasis; ig++)
-            {
-                wvf(ib, ig) = s_wfcatom[ib * nbasis + ig];
-            }
-        }
-    }
+    // TODO float func
 }
 
-void diago_PAO_in_pw_k2(const int& ik,
-                        psi::Psi<std::complex<double>>& wvf,
+template <>
+void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
+                        const int& ik,
+                        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
                         const ModuleBase::realArray& tab_at,
                         const int& lmaxkb,
-                        hamilt::Hamilt<std::complex<double>>* phm_in)
+                        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in)
 {
     ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
 
@@ -490,33 +342,8 @@ void diago_PAO_in_pw_k2(const int& ik,
     }
 }
 
-template <>
-void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
-                        const int& ik,
-                        psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
-                        ModulePW::PW_Basis_K* wfc_basis,
-                        wavefunc* p_wf,
-                        const ModuleBase::realArray& tab_at,
-                        const int& lmaxkb,
-                        hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in)
-{
-    diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, tab_at, lmaxkb, phm_in);
-}
-
-template <>
-void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
-                        const int& ik,
-                        psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
-                        ModulePW::PW_Basis_K* wfc_basis,
-                        wavefunc* p_wf,
-                        const ModuleBase::realArray& tab_at,
-                        const int& lmaxkb,
-                        hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in)
-{
-    diago_PAO_in_pw_k2(ik, wvf, wfc_basis, p_wf, tab_at, lmaxkb, phm_in);
-}
-
 #if ((defined __CUDA) || (defined __ROCM))
+
 template <>
 void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         const int& ik,
@@ -625,6 +452,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
         delmem_cd_op()(gpu_ctx, c_wfcatom);
     }
 }
+
 template <>
 void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         const int& ik,
@@ -733,6 +561,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
         delmem_zd_op()(gpu_ctx, z_wfcatom);
     }
 }
+
 #endif
 
 } // namespace hamilt
