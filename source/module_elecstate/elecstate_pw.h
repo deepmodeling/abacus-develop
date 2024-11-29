@@ -39,7 +39,7 @@ class ElecStatePW : public ElecState
 
     //! init rho_data and kin_r_data
     void init_rho_data();
-    Real** rho = nullptr, 
+    Real** rho = nullptr; 
     Real** kin_r = nullptr; //[Device] [spin][nrxx] rho and kin_r
 
   protected:
@@ -75,9 +75,9 @@ class ElecStatePW : public ElecState
 
     mutable T* vkb = nullptr;
 
-    Real* rho_data = nullptr, 
+    Real* rho_data = nullptr; 
     Real* kin_r_data = nullptr;
-    T* wfcr = nullptr, 
+    T* wfcr = nullptr; 
     T* wfcr_another_spin = nullptr;
 
   private:
