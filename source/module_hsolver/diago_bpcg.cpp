@@ -31,7 +31,7 @@ DiagoBPCG<T, Device>::~DiagoBPCG() {
 }
 
 template<typename T, typename Device>
-void DiagoBPCG<T, Device>::init_iter(/*const T *psi_in,*/ const int nband, const int nbasis) {
+void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
     // this->n_band        = psi_in.get_nbands();
     // this->n_basis       = psi_in.get_nbasis();
@@ -178,9 +178,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hpsi_with_block(
-        // hamilt::Hamilt<T, Device>* hamilt_in,
         const HPsiFunc& hpsi_func,
-        // const psi::Psi<T, Device>& psi_in,
         T *psi_in,
         ct::Tensor& hpsi_out)
 {
@@ -214,9 +212,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::calc_hsub_with_block(
-        // hamilt::Hamilt<T, Device>* hamilt_in,
         const HPsiFunc& hpsi_func,
-        // const psi::Psi<T, Device>& psi_in,
         T *psi_in,
         ct::Tensor& psi_out,
         ct::Tensor& hpsi_out,
@@ -259,9 +255,7 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
 
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::diag(
-        // hamilt::Hamilt<T, Device>* hamilt_in,
         const HPsiFunc& hpsi_func,
-        // psi::Psi<T, Device>& psi_in,
         T *psi_in,
         Real* eigenvalue_in)
 {
