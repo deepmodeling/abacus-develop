@@ -467,8 +467,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     }
     else if (this->method == "bpcg")
     {
-        const int nband        = psi.get_nbands();
-        const int nbasis       = psi.get_nbasis();
+        const int nband  = psi.get_nbands();
+        const int nbasis = psi.get_nbasis();
         auto ngk_pointer = psi.get_ngk_pointer();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, ngk_pointer](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
