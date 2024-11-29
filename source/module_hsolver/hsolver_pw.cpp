@@ -486,9 +486,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
-        // bpcg.init_iter(psi);
         bpcg.init_iter(nband, nbasis);
-        // bpcg.diag(hm, psi, eigenvalue);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue);
     }
     else if (this->method == "dav_subspace")

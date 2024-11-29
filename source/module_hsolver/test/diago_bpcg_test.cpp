@@ -241,30 +241,6 @@ TEST(DiagoBPCGTest, Hamilt)
     }
 }*/
 
-// This test will not work for now!
-// bpcg for a 2x2 matrix
-// #ifdef __MPI
-// #else
-// TEST(DiagoBPCGTest, TwoByTwo)
-// {
-//     int dim = 2;
-//     int nband = 2;
-//     ModuleBase::ComplexMatrix hm(2, 2);
-//     hm(0, 0) = std::complex<double>{4.0, 0.0};
-//     hm(0, 1) = std::complex<double>{1.0, 0.0};
-//     hm(1, 0) = std::complex<double>{1.0, 0.0};
-//     hm(1, 1) = std::complex<double>{3.0, 0.0};
-//     // nband, npw, sub, sparsity, reorder, eps, maxiter, threshold
-//     DiagoBPCGPrepare dcp(nband, dim, 0, true, 1e-4, 50, 1e-10);
-//     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX = dcp.maxiter;
-//     hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR = dcp.eps;
-//     HPsi<std::complex<double>> hpsi;
-//     hpsi.create(nband, dim);
-//     DIAGOTEST::hmatrix = hm;
-//     DIAGOTEST::npw = dim;
-//     dcp.CompareEigen(hpsi.precond());
-// }
-// #endif
 
 TEST(DiagoBPCGTest, readH)
 {

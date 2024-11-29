@@ -33,8 +33,6 @@ DiagoBPCG<T, Device>::~DiagoBPCG() {
 template<typename T, typename Device>
 void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
-    // this->n_band        = psi_in.get_nbands();
-    // this->n_basis       = psi_in.get_nbasis();
     this->n_band        = nband;
     this->n_basis       = nbasis;
 
@@ -54,9 +52,6 @@ void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis) {
 
     this->prec          = std::move(ct::Tensor(r_type, device_type, {this->n_basis}));
 
-    //TODO: Remove class Psi, using ct::Tensor instead!
-    // this->grad_wrapper  = new psi::Psi<T, Device>(1, this->n_band, this->n_basis, psi_in.get_ngk_pointer());
-    // this->grad          = std::move(ct::TensorMap(grad_wrapper->get_pointer(), t_type, device_type, {this->n_band, this->n_basis}));
     this->grad          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_basis}));
 }
 
@@ -183,12 +178,7 @@ void DiagoBPCG<T, Device>::calc_hpsi_with_block(
         ct::Tensor& hpsi_out)
 {
     // calculate all-band hpsi
-    // psi::Range all_bands_range(1, psi_in.get_current_k(), 0, psi_in.get_nbands() - 1);
-    // hpsi_info info(&psi_in, all_bands_range, hpsi_out.data<T>());
-    // hamilt_in->ops->hPsi(info);
     hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band);
-
-    // return;
 }
 
 template<typename T, typename Device>
