@@ -290,6 +290,10 @@ void ReadInput::item_elec_stru()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
             }
+            else if(para.input.nspin == 4 && !para.input.noncolin && !para.input.lspinorb)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 4 only when noncolin or lspinorb is true.");
+            }
         };
         this->add_item(item);
     }
