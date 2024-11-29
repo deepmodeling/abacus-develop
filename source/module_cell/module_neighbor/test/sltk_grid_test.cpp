@@ -109,8 +109,8 @@ TEST_F(SltkGridTest, InitSmall)
     EXPECT_EQ(LatGrid.natom, 128);
     EXPECT_EQ(LatGrid.pbc, Atom_inp.getBoundary());
     EXPECT_TRUE(LatGrid.pbc);
-    EXPECT_DOUBLE_EQ(LatGrid.sradius, Atom_inp.getRadius());
-    EXPECT_DOUBLE_EQ(LatGrid.sradius, 0.5);
+    EXPECT_DOUBLE_EQ(LatGrid.sradius2, Atom_inp.getRadius() * Atom_inp.getRadius());
+    EXPECT_DOUBLE_EQ(LatGrid.sradius2, 0.5 * 0.5);
     for (int i = 0; i < 3; i++)
     {
         EXPECT_DOUBLE_EQ(LatGrid.vec1[i], Atom_inp.vec1[i]);

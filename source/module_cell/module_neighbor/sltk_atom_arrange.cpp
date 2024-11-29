@@ -128,6 +128,9 @@ void atom_arrange::search(
 	// test the adjacent atoms and the box.
 	if(test_only)
 	{
+		std::cout << "radius_lat0unit = " << radius_lat0unit << std::endl;
+		std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
+
 		ofs_in << " " << std::setw(5) << "Type" << std::setw(5) << "Atom" << std::setw(8) << "AdjNum" << std::endl;
         std::cout << std::setw(8) << "Labels" << std::setw(15) << "tau.x" << std::setw(15) << "tau.y" << std::setw(15)
                   << "tau.z" << std::setw(8) << "box.x" << std::setw(8) << "box.y" << std::setw(8) << "box.z"

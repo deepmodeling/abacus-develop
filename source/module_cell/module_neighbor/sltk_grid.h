@@ -11,25 +11,7 @@
 #include <unordered_map>
 #include <tuple>
 
-struct KeyHash {
-    std::size_t operator()(const std::tuple<double, double, double>& key) const {
-        auto h1 = std::hash<double>{}(std::get<0>(key));
-        auto h2 = std::hash<double>{}(std::get<1>(key));
-        auto h3 = std::hash<double>{}(std::get<2>(key));
-        return h1 ^ (h2 << 1) ^ (h3 << 2); // a hash combine
-    }
-};
-
-struct KeyEqual {
-    bool operator()(const std::tuple<double, double, double>& lhs,
-                    const std::tuple<double, double, double>& rhs) const {
-        return std::get<0>(lhs) == std::get<0>(rhs) &&
-               std::get<1>(lhs) == std::get<1>(rhs) &&
-               std::get<2>(lhs) == std::get<2>(rhs);
-    }
-};
-
-typedef std::unordered_map<std::tuple<double, double, double>, FAtom, KeyHash, KeyEqual> AtomMap;
+typedef std::vector<std::vector<FAtom>> AtomMap;
 
 struct CellSet
 {
@@ -75,7 +57,7 @@ public:
 	int natom;// Total atoms.
 	bool pbc; // periodic boundary condition
 	bool expand_flag;
-	double sradius;// searching radius
+	double sradius2;// searching radius
 	double d_minX;// origin of all cells
 	double d_minY;
 	double d_minZ;

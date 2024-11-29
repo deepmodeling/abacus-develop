@@ -4,7 +4,7 @@
 #include <memory>
 #include "sltk_util.h"
 #include "module_base/timer.h"
-#include <list>
+#include <vector>
 
 // a class contains the atom position, 
 // the type and the index,
@@ -14,7 +14,7 @@ private:
 	double d_x;
 	double d_y;
 	double d_z;
-	std::list<FAtom *> adjacent;
+	std::vector<FAtom *> adjacent;
 
 	int type;
 	int natom;
@@ -50,7 +50,7 @@ public:
 	{
 		adjacent.push_back( &atom_in);
 	}
-	const std::list<FAtom *>& getAdjacent() const { return adjacent; }
+	const std::vector<FAtom *>& getAdjacent() const { return adjacent; }
 	void clearAdjacent() { adjacent.clear(); }
 //==========================================================
 // MEMBER FUNCTION :
