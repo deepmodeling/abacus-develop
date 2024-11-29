@@ -250,7 +250,6 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_CPU* ctx,
                 wvf(ib, ig) = wfcatom(ib, ig);
             }
         }
-        return;
     }
     else if (PARAM.inp.init_wfc == "random"
              || (PARAM.inp.init_wfc.substr(0, 6) == "atomic" && GlobalC::ucell.natomwfc == 0))
@@ -354,103 +353,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         const int& lmaxkb,
                         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* phm_in)
 {
-    ModuleBase::TITLE("wavefunc", "diago_PAO_in_pw_k2");
-
-    const int nbasis = wvf.get_nbasis();
-    const int nbands = wvf.get_nbands();
-    const int current_nbasis = wfc_basis->npwk[ik];
-    int starting_nw = nbands;
-
-    ModuleBase::ComplexMatrix wfcatom(nbands, nbasis);
-    if (PARAM.inp.init_wfc == "file")
-    {
-        std::stringstream filename;
-        int ik_tot = K_Vectors::get_ik_global(ik, p_wf->nkstot);
-        filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
-        ModuleIO::read_wfc_pw(filename.str(), wfc_basis, ik, p_wf->nkstot, wfcatom);
-    }
-
-    starting_nw = p_wf->get_starting_nw();
-    if (starting_nw == 0)
-        return;
-    assert(starting_nw > 0);
-    wfcatom.create(starting_nw, nbasis); // added by zhengdy-soc
-    if (PARAM.inp.test_wf)
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "starting_nw", starting_nw);
-
-    if (PARAM.inp.init_wfc.substr(0, 6) == "atomic")
-    {
-        p_wf->atomic_wfc(ik,
-                         current_nbasis,
-                         GlobalC::ucell.lmax_ppwf,
-                         lmaxkb,
-                         wfc_basis,
-                         wfcatom,
-                         tab_at,
-                         PARAM.globalv.nqx,
-                         PARAM.globalv.dq);
-        if (PARAM.inp.init_wfc == "atomic+random"
-            && starting_nw == GlobalC::ucell.natomwfc) // added by qianrui 2021-5-16
-        {
-            p_wf->atomicrandom(wfcatom, 0, starting_nw, ik, wfc_basis);
-        }
-
-        //====================================================
-        // If not enough atomic wfc are available, complete
-        // with random wfcs
-        //====================================================
-        p_wf->random(wfcatom.c, GlobalC::ucell.natomwfc, nbands, ik, wfc_basis);
-    }
-    else if (PARAM.inp.init_wfc == "random")
-    {
-        p_wf->random(wfcatom.c, 0, nbands, ik, wfc_basis);
-    }
-
-    std::complex<float>* c_wfcatom = nullptr;
-    if (PARAM.inp.ks_solver != "bpcg")
-    {
-        // store wfcatom on the GPU
-        resmem_cd_op()(gpu_ctx, c_wfcatom, wfcatom.nr * wfcatom.nc);
-        castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, c_wfcatom, wfcatom.c, wfcatom.nr * wfcatom.nc);
-    }
-    if (PARAM.inp.ks_solver == "cg") // xiaohui add 2013-09-02
-    {
-        // (7) Diago with cg method.
-        if (phm_in != nullptr)
-        {
-            std::vector<float> etatom(starting_nw, 0.0);
-            hsolver::DiagoIterAssist<std::complex<float>, base_device::DEVICE_GPU>::diagH_subspace_init(phm_in,
-                                                                                                        c_wfcatom,
-                                                                                                        wfcatom.nr,
-                                                                                                        wfcatom.nc,
-                                                                                                        wvf,
-                                                                                                        etatom.data());
-        }
-        else
-        {
-            // this diagonalization method is obsoleted now
-            // GlobalC::hm.diagH_subspace(ik ,starting_nw, nbands, wfcatom, wfcatom, etatom.data());
-        }
-    }
-    else if (PARAM.inp.ks_solver == "dav" || PARAM.inp.ks_solver == "dav_subspace")
-    {
-        assert(nbands <= wfcatom.nr);
-        // replace by haozhihan 2022-11-23
-        hsolver::matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>()(gpu_ctx,
-                                                                                    nbands,
-                                                                                    c_wfcatom,
-                                                                                    wfcatom.nc,
-                                                                                    &wvf(0, 0),
-                                                                                    nbasis);
-    }
-    else if (PARAM.inp.ks_solver == "bpcg")
-    {
-        castmem_z2c_h2d_op()(gpu_ctx, cpu_ctx, &wvf(0, 0), wfcatom.c, wfcatom.nr * wfcatom.nc);
-    }
-    if (PARAM.inp.ks_solver != "bpcg")
-    {
-        delmem_cd_op()(gpu_ctx, c_wfcatom);
-    }
+    // TODO float 
 }
 
 template <>
