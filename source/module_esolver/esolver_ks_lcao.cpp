@@ -605,10 +605,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             // rho1 and rho2 are the same rho.
             // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-            if (PARAM.inp.nspin == 4)
-            {
-                elecstate::cal_ux(ucell);
-            }
+            elecstate::cal_ux(ucell);
 
             //! update the potentials by using new electron charge density
             this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
@@ -841,10 +838,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
 
     if (!this->conv_esolver)
     {
-        if (PARAM.inp.nspin == 4)
-        {
-            elecstate::cal_ux(ucell);
-        }
+        elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }

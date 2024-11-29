@@ -310,10 +310,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
-    if (PARAM.inp.nspin == 4)
-    {
-        elecstate::cal_ux(ucell);
-    }
+    elecstate::cal_ux(ucell);
 
     this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
     this->kinetic_potential(pelec->charge->rho,

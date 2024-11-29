@@ -298,10 +298,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     //! cal_ux should be called before init_scf because
     //! the direction of ux is used in noncoline_rho
-    if (PARAM.inp.nspin == 4)
-    {
-        elecstate::cal_ux(ucell);
-    }
+    elecstate::cal_ux(ucell);
 
     //! calculate the total local pseudopotential in real space
     this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
@@ -472,10 +469,7 @@ void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, cons
 {
     if (!this->conv_esolver)
     {
-        if (PARAM.inp.nspin == 4)
-        {
-            elecstate::cal_ux(ucell);
-        }
+        elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
 #ifdef __MPI
