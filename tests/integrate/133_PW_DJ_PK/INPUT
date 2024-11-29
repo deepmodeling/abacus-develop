@@ -12,8 +12,6 @@ scf_nmax			20
 basis_type		pw
 relax_nmax                   1
 
-#init_wfc       random
-
 ks_solver           cg
 mixing_type         broyden
 mixing_beta         0.7

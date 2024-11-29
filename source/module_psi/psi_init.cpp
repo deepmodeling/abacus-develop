@@ -32,7 +32,7 @@ PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
     }
     else
     {
-        if (PARAM.inp.init_wfc == "file" || PARAM.inp.init_wfc == "atomic" || PARAM.inp.device == "gpu"
+        if (PARAM.inp.init_wfc == "file" || PARAM.inp.init_wfc == "random" || PARAM.inp.device == "gpu"
             || PARAM.inp.esolver_type == "sdft")
         {
             this->init_psi_method = "old"; // old method;
