@@ -107,7 +107,6 @@ class DiagoBPCG
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
 
-    // psi::Psi<T, Device>* grad_wrapper;
     /**
      * @brief Update the precondition array.
      *
