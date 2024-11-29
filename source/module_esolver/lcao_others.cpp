@@ -246,10 +246,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (PARAM.inp.nspin == 4)
-    {
-        elecstate::cal_ux(ucell);
-    }
+    elecstate::cal_ux(ucell);
 
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
