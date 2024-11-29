@@ -52,7 +52,7 @@ class DiagoBPCG
      *
      * @param psi_in The input wavefunction psi.
      */
-    void init_iter(/*const T *psi_in,*/ const int nband, const int nbasis);
+    void init_iter(const int nband, const int nbasis);
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
@@ -65,10 +65,7 @@ class DiagoBPCG
      * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(// hamilt::Hamilt<T, Device> *phm_in,
-        const HPsiFunc& hpsi_func, 
-        // psi::Psi<T, Device>& psi_in,
-        T *psi_in, Real *eigenvalue_in);
+    void diag(const HPsiFunc& hpsi_func, T *psi_in, Real *eigenvalue_in);
 
 
   private:
@@ -144,9 +141,7 @@ class DiagoBPCG
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
     void calc_hpsi_with_block(
-        // hamilt::Hamilt<T, Device>* hamilt_in,
         const HPsiFunc& hpsi_func,
-        // const psi::Psi<T, Device>& psi_in,
         T *psi_in, 
         ct::Tensor& hpsi_out);
 
@@ -235,9 +230,7 @@ class DiagoBPCG
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        // hamilt::Hamilt<T, Device>* hamilt_in,
         const HPsiFunc& hpsi_func,
-        // const psi::Psi<T, Device>& psi_in,
         T *psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,
