@@ -47,27 +47,21 @@ public:
 				const Atom_input &input);
 
 	//2015-05-07
-	void delete_vector(const Atom_input &input);
-
-
-	//Static data
-	static const char* const ERROR[3];
+	void delete_vector(int i, int j, int k);
 
 	//Data
-	int natom;// Total atoms.
 	bool pbc; // periodic boundary condition
 	bool expand_flag;
-	double sradius2;// searching radius
+	double sradius2;// searching radius squared
+	double sradius;// searching radius
 	double d_minX;// origin of all cells
 	double d_minY;
 	double d_minZ;
-	int dx;
-	int dy;
-	int dz;
+	int cell_nx;
+	int cell_ny;
+	int cell_nz;
 	int layer;
-	double cell_x_length;
-	double cell_y_length;
-	double cell_z_length;
+
 	int true_cell_x;
 	int true_cell_y;
 	int true_cell_z;
@@ -77,15 +71,15 @@ public:
 	{
 		if (this->init_cell_flag)
 		{
-			for (int i = 0;i < this->dx;i++)
+			for (int i = 0;i < this->cell_nx;i++)
 			{
-				for (int j = 0;j < this->dy;j++)
+				for (int j = 0;j < this->cell_ny;j++)
 				{
 					this->Cell[i][j].clear();
 				}
 			}
 
-			for (int i = 0;i < this->dx;i++)
+			for (int i = 0;i < this->cell_nx;i++)
 			{
 				this->Cell[i].clear();
 			}
@@ -94,21 +88,15 @@ public:
 			this->init_cell_flag = false;
 		}
 	}
-
-	double grid_length[3];
-	double vec1[3];
-	double vec2[3];
-	double vec3[3];
-	double lat_now;
 	bool init_cell_flag;
     //LiuXh add 2019-07-15
     const double& getD_minX(void) const {return d_minX;}
     const double& getD_minY(void) const {return d_minY;}
     const double& getD_minZ(void) const {return d_minZ;}
 
-    const int& getCellX(void) const {return dx;}
-    const int& getCellY(void) const {return dy;}
-    const int& getCellZ(void) const {return dz;}
+    const int& getCellX(void) const {return cell_nx;}
+    const int& getCellY(void) const {return cell_ny;}
+    const int& getCellZ(void) const {return cell_nz;}
 
 private:
 
@@ -129,8 +117,6 @@ private:
 								const Atom_input &input);
 
 //==========================================================
-
-	void In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FAtom &atom)const;
 	void Build_Hash_Table(const UnitCell &ucell, const Atom_input &input);
 
 //==========================================================

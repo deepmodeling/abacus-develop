@@ -181,7 +181,7 @@ void atom_arrange::delete_vector(
 		radius_lat0unit2, 
 		test_atom_in);
 
-	grid_d.delete_vector(at2);
+	grid_d.delete_vector(at2.getGrid_layerX_minus(),at2.getGrid_layerY_minus(),at2.getGrid_layerZ_minus());
 
 	grid_d.delete_Cell();
 }

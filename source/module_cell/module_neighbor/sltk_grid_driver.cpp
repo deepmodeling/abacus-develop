@@ -41,6 +41,11 @@ void Grid_Driver::Find_atom(
 	local_adjs->clear();
 	const std::vector<FAtom *> & all_atom = Cell[this->true_cell_x][this->true_cell_y][this->true_cell_z].atom_map[ntype][nnumber].getAdjacent();
 	//std::cout << "ntype = "<< ntype << "  atom size = " << all_atom.size() << std::endl;
+
+	ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
+	ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
+	ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
+
 	for(const FAtom * atom : all_atom)
 	{
 		// std::cout << "atom type = " << atom.getType() << " number = " << atom.getNatom() << " box = " << atom.getCellX() << " " << atom.getCellY() << " " << atom.getCellZ() 
