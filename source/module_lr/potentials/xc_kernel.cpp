@@ -115,7 +115,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-            for (int ir = 0; ir < nrxx; ++ir) rhor[ir] = rho[ir * nspin + is];
+            for (int ir = 0; ir < nrxx; ++ir) { rhor[ir] = rho[ir * nspin + is];
+}
             gradrho[is].resize(nrxx);
             LR_Util::grad(rhor.data(), gradrho[is].data(), rho_basis_, tpiba);
         }
@@ -126,8 +127,9 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
-            for (int ir = 0; ir < nrxx; ++ir)
+            for (int ir = 0; ir < nrxx; ++ir) {
                 sigma[ir] = gradrho[0][ir] * gradrho[0][ir];
+}
         }
         else
         {
@@ -224,9 +226,9 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
     }
-    if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) return;
+    if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) { return;
     // else if (4 == PARAM.inp.nspin)
-    else//NSPIN != 1,2,4 is not supported
+    } else//NSPIN != 1,2,4 is not supported
     {
         throw std::domain_error("PARAM.inp.nspin =" + std::to_string(PARAM.inp.nspin)
             + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
