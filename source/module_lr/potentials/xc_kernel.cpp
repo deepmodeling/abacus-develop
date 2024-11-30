@@ -21,7 +21,8 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     const Parallel_Grid& pgrid,
     const int& nspin,
     const std::string& kernel_name,
-    const std::vector<std::string>& lr_init_xc_kernel) :rho_basis_(rho_basis)
+    const std::vector<std::string>& lr_init_xc_kernel,
+    const bool openshell) :rho_basis_(rho_basis), openshell_(openshell)
 {
     if (!std::set<std::string>({ "lda", "pwlda", "pbe", "hse" }).count(kernel_name)) { return; }
     XC_Functional::set_xc_type(kernel_name);    // for hse, (1-alpha) and omega are set here
@@ -239,8 +240,6 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         if (nspin == 1)
         {
-            // 0. drho
-            this->drho_gs_ = gradrho[0];
             // 1. $2f^{\rho\sigma}*\nabla\rho$
             this->v2rhosigma_2drho_.resize(nrxx);
 #ifdef _OPENMP
@@ -263,21 +262,57 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         }
         else if (2 == nspin)    //close-shell
         {
-            this->drho_gs_ = gradrho[0];
-            this->v2rhosigma_drho_singlet_.resize(nrxx);
-            this->v2sigma2_drho_singlet_.resize(nrxx);
-            this->v2rhosigma_drho_triplet_.resize(nrxx);
-            this->v2sigma2_drho_triplet_.resize(nrxx);
+            if (!openshell_)
+            {
+                this->v2rhosigma_drho_singlet_.resize(nrxx);
+                this->v2sigma2_drho_singlet_.resize(nrxx);
+                this->v2rhosigma_drho_triplet_.resize(nrxx);
+                this->v2sigma2_drho_triplet_.resize(nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
-            for (int i = 0;i < nrxx;++i)
+                for (int i = 0;i < nrxx;++i)
+                {
+                    const int istart = i * 6;
+                    this->v2rhosigma_drho_singlet_[i] = gradrho[0][i] * (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
+                    this->v2sigma2_drho_singlet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
+                    this->v2rhosigma_drho_triplet_[i] = gradrho[0][i] * (v2rs[istart] - v2rs[istart + 2]) * 2.;
+                    this->v2sigma2_drho_triplet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
+                }
+            }
+            else
             {
-                const int istart = i * 6;
-                this->v2rhosigma_drho_singlet_[i] = gradrho[0][i] * (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
-                this->v2sigma2_drho_singlet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
-                this->v2rhosigma_drho_triplet_[i] = gradrho[0][i] * (v2rs[istart] - v2rs[istart + 2]) * 2.;
-                this->v2sigma2_drho_triplet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
+                this->v2rhosigma_drho_uu_.resize(nrxx);
+                this->v2rhosigma_drho_ud_.resize(nrxx);
+                this->v2rhosigma_drho_du_.resize(nrxx);
+                this->v2rhosigma_drho_dd_.resize(nrxx);
+                this->v2sigma2_drho_uu_u_.resize(nrxx);
+                this->v2sigma2_drho_uu_d_.resize(nrxx);
+                this->v2sigma2_drho_ud_u_.resize(nrxx);
+                this->v2sigma2_drho_ud_d_.resize(nrxx);
+                this->v2sigma2_drho_du_u_.resize(nrxx);
+                this->v2sigma2_drho_du_d_.resize(nrxx);
+                this->v2sigma2_drho_dd_u_.resize(nrxx);
+                this->v2sigma2_drho_dd_d_.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+                for (int i = 0;i < nrxx;++i)
+                {
+                    const int istart = i * 6;
+                    this->v2rhosigma_drho_uu_[i] = gradrho[0][i] * v2rs[istart] * 2. + gradrho[1][i] * v2rs[istart + 1];
+                    this->v2rhosigma_drho_ud_[i] = gradrho[0][i] * v2rs[istart + 1] + gradrho[1][i] * v2rs[istart + 2] * 2.;
+                    this->v2rhosigma_drho_du_[i] = gradrho[0][i] * v2rs[istart + 3] * 2. + gradrho[1][i] * v2rs[istart + 4];
+                    this->v2rhosigma_drho_dd_[i] = gradrho[0][i] * v2rs[istart + 4] + gradrho[1][i] * v2rs[istart + 5] * 2.;
+                    this->v2sigma2_drho_uu_u_[i] = gradrho[0][i] * v2s2[istart] * 4. + gradrho[1][i] * v2s2[istart + 1] * 2.;
+                    this->v2sigma2_drho_uu_d_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_ud_u_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_ud_d_[i] = gradrho[0][i] * v2s2[istart + 2] * 4. + gradrho[1][i] * v2s2[istart + 4] * 2.;
+                    this->v2sigma2_drho_du_u_[i] = gradrho[1][i] * v2s2[istart + 2] * 4. + gradrho[0][i] * v2s2[istart + 1] * 2.;
+                    this->v2sigma2_drho_du_d_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_dd_u_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_dd_d_[i] = gradrho[1][i] * v2s2[istart + 5] * 4. + gradrho[0][i] * v2s2[istart + 4] * 2.;
+                }
             }
         }
         else
@@ -285,6 +320,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             throw std::domain_error("nspin =" + std::to_string(nspin)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
+        this->drho_gs_ = std::move(gradrho);
     }
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
         return;
