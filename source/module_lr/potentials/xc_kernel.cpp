@@ -144,13 +144,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     }
     // -----------------------------------------------------------------------------------
     //==================== XC Kernels (f_xc)=============================
-    this->vrho_.resize(nspin * nrxx);
-    this->v2rho2_.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
+    this->vrho_.resize(nspin * nrxx, 0.);
+    this->v2rho2_.resize(((1 == nspin) ? 1 : 3) * nrxx, 0.);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
     if (is_gga)
     {
-        this->vsigma_.resize(((1 == nspin) ? 1 : 3) * nrxx);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->v2rhosigma_.resize(((1 == nspin) ? 1 : 6) * nrxx); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
-        this->v2sigma2_.resize(((1 == nspin) ? 1 : 6) * nrxx);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
+        this->vsigma_.resize(((1 == nspin) ? 1 : 3) * nrxx, 0.);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2rhosigma_.resize(((1 == nspin) ? 1 : 6) * nrxx, 0.); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
+        this->v2sigma2_.resize(((1 == nspin) ? 1 : 6) * nrxx, 0.);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
     }
     //MetaGGA ...
 
@@ -163,102 +163,67 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         //cut off grho if not LDA (future subfunc)
 
+        // Libxc interfaces overwrite (instead of add onto) the output arrays, so we need temporary copies
+        std::vector<double> vrho_tmp(this->vrho_.size());
+        std::vector<double> v2rho2_tmp(this->v2rho2_.size());
+        std::vector<double> vsigma_tmp(this->vsigma_.size());
+        std::vector<double> v2rhosigma_tmp(this->v2rhosigma_.size());
+        std::vector<double> v2sigma2_tmp(this->v2sigma2_.size());
         switch (func.info->family)
         {
         case XC_FAMILY_LDA:
-            xc_lda_vxc(&func, nrxx, rho.data(), vrho_.data());
-            xc_lda_fxc(&func, nrxx, rho.data(), v2rho2_.data());
+            xc_lda_vxc(&func, nrxx, rho.data(), vrho_tmp.data());
+            xc_lda_fxc(&func, nrxx, rho.data(), v2rho2_tmp.data());
             break;
         case XC_FAMILY_GGA:
         case XC_FAMILY_HYB_GGA:
-            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho_.data(), vsigma_.data());
-            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_.data(), v2rhosigma_.data(), v2sigma2_.data());
+            xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho_tmp.data(), vsigma_tmp.data());
+            xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
             break;
         default:
             throw std::domain_error("func.info->family =" + std::to_string(func.info->family)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
             break;
         }
-        // some formulas for GGA
-        if (func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
-        {
-            const std::vector<double>& v2r2 = this->v2rho2_;
-            const std::vector<double>& v2rs = this->v2rhosigma_;
-            const std::vector<double>& v2s2 = this->v2sigma2_;
-            const std::vector<double>& vs = this->vsigma_;
-            const double tpiba2 = tpiba * tpiba;
-
-            if (1 == nspin)
-            {
-                using V3 = ModuleBase::Vector3<double>;
-                // 0. drho
-                this->drho_gs_ = gradrho[0];
-                // 1. $2f^{\rho\sigma}*\nabla\rho$
-                this->v2rhosigma_2drho_.resize(nrxx);
-                std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho_.begin(),
-                    [](const V3& a, const V3& b) {return a * b * 2.; });
-                // 2. $4f^{\sigma\sigma}*\nabla\rho$
-                this->v2sigma2_4drho_.resize(nrxx);
-                std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho_.begin(),
-                    [](const V3& a, const V3& b) {return a * b * 4.; });
-            }
-            // else if (2 == nspin)    // wrong, to be fixed
-            // {
-            //     // 1. $\nabla\cdot(f^{\rho\sigma}*\nabla\rho)$
-            //     std::vector<double> div_v2rhosigma_gdrho_r(3 * nrxx);
-            //     std::vector<ModuleBase::Vector3<double>> v2rhosigma_gdrho_r(3 * nrxx);
-            //     for (int ir = 0; ir < nrxx; ++ir)
-            //     {
-            //         v2rhosigma_gdrho_r[ir] = gradrho[0][ir] * v2rs.at(ir * 6) * 4.0
-            //             + gradrho[1][ir] * v2rs.at(ir * 6 + 1) * 2.0;   //up-up
-            //         v2rhosigma_gdrho_r[nrxx + ir] = gradrho[0][ir] * (v2rs.at(ir * 6 + 3) * 2.0 + v2rs.at(ir * 6 + 1))
-            //             + gradrho[1][ir] * (v2rs.at(ir * 6 + 2) * 2.0 + v2rs.at(ir * 6 + 4));   //up-down
-            //         v2rhosigma_gdrho_r[2 * nrxx + ir] = gradrho[1][ir] * v2rs.at(ir * 6 + 5) * 4.0
-            //             + gradrho[0][ir] * v2rs.at(ir * 6 + 4) * 2.0;   //down-down
-            //     }
-            //     for (int isig = 0;isig < 3;++isig)
-            //         XC_Functional::grad_dot(v2rhosigma_gdrho_r.data() + isig * nrxx, div_v2rhosigma_gdrho_r.data() + isig * nrxx, chg_gs.rhopw, tpiba);
-            //     // 2. $\nabla^2(f^{\sigma\sigma}*\sigma)$
-            //     std::vector<double> v2sigma2_sigma_r(3 * nrxx);
-            //     for (int ir = 0; ir < nrxx; ++ir)
-            //     {
-            //         v2sigma2_sigma_r[ir] = v2s2.at(ir * 6) * sigma[ir * 3] * 4.0
-            //             + v2s2.at(ir * 6 + 1) * sigma[ir * 3 + 1] * 4.0
-            //             + v2s2.at(ir * 6 + 3) * sigma[ir * 3 + 2];   //up-up
-            //         v2sigma2_sigma_r[nrxx + ir] = v2s2.at(ir * 6 + 1) * sigma[ir * 3] * 2.0
-            //             + v2s2.at(ir * 6 + 4) * sigma[ir * 3 + 2] * 2.0
-            //             + (v2s2.at(ir * 6 + 2) * 4.0 + v2s2.at(ir * 6 + 3)) * sigma[ir * 3 + 1];   //up-down
-            //         v2sigma2_sigma_r[2 * nrxx + ir] = v2s2.at(ir * 6 + 5) * sigma[ir * 3 + 2] * 4.0
-            //             + v2s2.at(ir * 6 + 4) * sigma[ir * 3 + 1] * 4.0
-            //             + v2s2.at(ir * 6 + 3) * sigma[ir * 3];   //down-down
-            //     }
-            //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::lapl(v2sigma2_sigma_r.data() + isig * nrxx, v2sigma2_sigma_r.data() + isig * nrxx, *(chg_gs.rhopw), tpiba2);
-            //     // 3. $\nabla^2(v^\sigma)$
-            //     std::vector<double> lap_vsigma(3 * nrxx);
-            //     for (int ir = 0;ir < nrxx;++ir)
-            //     {
-            //         lap_vsigma[ir] = vs.at(ir * 3) * 2.0;
-            //         lap_vsigma[nrxx + ir] = vs.at(ir * 3 + 1);
-            //         lap_vsigma[2 * nrxx + ir] = vs.at(ir * 3 + 2) * 2.0;
-            //     }
-            //     for (int isig = 0;isig < 3;++isig)
-            //         LR_Util::lapl(lap_vsigma.data() + isig * nrxx, lap_vsigma.data() + isig * nrxx, *(chg_gs.rhopw), tpiba2);
-            //     // add to v2rho2_
-            //     BlasConnector::axpy(3 * nrxx, 1.0, v2r2.data(), 1, to_mul_rho_.data(), 1);
-            //     BlasConnector::axpy(3 * nrxx, -1.0, div_v2rhosigma_gdrho_r.data(), 1, to_mul_rho_.data(), 1);
-            //     BlasConnector::axpy(3 * nrxx, 1.0, v2sigma2_sigma_r.data(), 1, to_mul_rho_.data(), 1);
-            //     BlasConnector::axpy(3 * nrxx, 1.0, lap_vsigma.data(), 1, to_mul_rho_.data(), 1);
-            // }
-            else
-            {
-                throw std::domain_error("nspin =" + std::to_string(nspin)
-                    + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
-            }
-        }
+        // add onto the total components
+        std::transform(vrho_tmp.begin(), vrho_tmp.end(), this->vrho_.begin(), this->vrho_.begin(), std::plus<double>());
+        std::transform(v2rho2_tmp.begin(), v2rho2_tmp.end(), this->v2rho2_.begin(), this->v2rho2_.begin(), std::plus<double>());
+        std::transform(vsigma_tmp.begin(), vsigma_tmp.end(), this->vsigma_.begin(), this->vsigma_.begin(), std::plus<double>());
+        std::transform(v2rhosigma_tmp.begin(), v2rhosigma_tmp.end(), this->v2rhosigma_.begin(), this->v2rhosigma_.begin(), std::plus<double>());
+        std::transform(v2sigma2_tmp.begin(), v2sigma2_tmp.end(), this->v2sigma2_.begin(), this->v2sigma2_.begin(), std::plus<double>());
     } // end for( xc_func_type &func : funcs )
+
     XC_Functional_Libxc::finish_func(funcs);
 
+    // some postprocess if there're GGA funcs in the list
+    if (is_gga)
+    {
+        const std::vector<double>& v2r2 = this->v2rho2_;
+        const std::vector<double>& v2rs = this->v2rhosigma_;
+        const std::vector<double>& v2s2 = this->v2sigma2_;
+        const std::vector<double>& vs = this->vsigma_;
+        const double tpiba2 = tpiba * tpiba;
+
+        if (1 == nspin)
+        {
+            using V3 = ModuleBase::Vector3<double>;
+            // 0. drho
+            this->drho_gs_ = gradrho[0];
+            // 1. $2f^{\rho\sigma}*\nabla\rho$
+            this->v2rhosigma_2drho_.resize(nrxx);
+            std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho_.begin(),
+                [](const V3& a, const V3& b) {return a * b * 2.; });
+            // 2. $4f^{\sigma\sigma}*\nabla\rho$
+            this->v2sigma2_4drho_.resize(nrxx);
+            std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho_.begin(),
+                [](const V3& a, const V3& b) {return a * b * 4.; });
+        }
+        else
+        {
+            throw std::domain_error("nspin =" + std::to_string(nspin)
+                + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+        }
+    }
     if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) return;
     // else if (4 == PARAM.inp.nspin)
     else//NSPIN != 1,2,4 is not supported
