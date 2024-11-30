@@ -353,7 +353,7 @@ void diago_PAO_in_pw_k2(const base_device::DEVICE_GPU* ctx,
                         const int& lmaxkb,
                         hamilt::Hamilt<std::complex<float>, base_device::DEVICE_GPU>* phm_in)
 {
-    // TODO float 
+    // TODO float
 }
 
 template <>
