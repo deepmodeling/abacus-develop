@@ -3,6 +3,7 @@
 
 namespace Gint
 {
+    
     UnitCellInfo::UnitCellInfo(
         const Vector3& unitcell_vec1,
         const Vector3& unitcell_vec2,
@@ -23,57 +24,4 @@ namespace Gint
                 nmx/nbx, nmy/nby, nmz/nbz);
         }
     
-    //----------------------------------
-    // functions related to the big grid
-    //----------------------------------
-
-    ModuleBase::Vector3<int> UnitCellInfo::biggrid_idx_1Dto3D(const int index_1d) const
-    {
-        return Gint::index1Dto3D(index_1d, nbx_, nby_, nbz_);
-    }
-
-    int UnitCellInfo::biggrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const
-    {
-        return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
-    }
-
-    Vector3 UnitCellInfo::get_biggrid_coord(ModuleBase::Vector3<int> index_3d) const
-    {
-        return index_3d * biggrid_info_->get_latvec0();
-    }
-
-    Vector3 UnitCellInfo::get_biggrid_coord(int index_1d) const
-    {
-        return get_biggrid_coord(biggrid_idx_1Dto3D(index_1d));
-    }
-
-    Vector3 UnitCellInfo::get_relative_coord(int index_1d_a, int index_1d_b) const
-    {
-        return get_biggrid_coord(index_1d_a) - get_biggrid_coord(index_1d_b);
-    }
-    
-    //----------------------------------
-    // functions related to the meshgrid
-    //----------------------------------
-
-    ModuleBase::Vector3<int> UnitCellInfo::meshgrid_idx_1Dto3D(const int index_1d) const
-    {
-        return Gint::index1Dto3D(index_1d, nmx_, nmy_, nmz_);
-    }
-
-    int UnitCellInfo::meshgrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const
-    {
-        return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
-    }
-
-    Vector3 UnitCellInfo::get_meshgrid_coord(ModuleBase::Vector3<int> index_3d) const
-    {
-        return index_3d * biggrid_info_->get_meshgrid_info()->get_latvec0();
-    }
-
-    Vector3 UnitCellInfo::get_meshgrid_coord(int index_1d) const
-    {
-        return get_meshgrid_coord(meshgrid_idx_1Dto3D(index_1d));
-    }
-
 }
