@@ -188,11 +188,19 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             break;
         }
         // add onto the total components
-        std::transform(vrho_tmp.begin(), vrho_tmp.end(), this->vrho_.begin(), this->vrho_.begin(), std::plus<double>());
-        std::transform(v2rho2_tmp.begin(), v2rho2_tmp.end(), this->v2rho2_.begin(), this->v2rho2_.begin(), std::plus<double>());
-        std::transform(vsigma_tmp.begin(), vsigma_tmp.end(), this->vsigma_.begin(), this->vsigma_.begin(), std::plus<double>());
-        std::transform(v2rhosigma_tmp.begin(), v2rhosigma_tmp.end(), this->v2rhosigma_.begin(), this->v2rhosigma_.begin(), std::plus<double>());
-        std::transform(v2sigma2_tmp.begin(), v2sigma2_tmp.end(), this->v2sigma2_.begin(), this->v2sigma2_.begin(), std::plus<double>());
+        auto omp_add_vector = [](const std::vector<double>& src, std::vector<double>& dst)
+            {
+                assert(src.size() == dst.size());
+#ifdef _OPENMP
+#pragma omp parallel for 
+#endif
+                for (size_t i = 0; i < src.size(); ++i) { dst[i] += src[i]; }
+            };
+        omp_add_vector(vrho_tmp, this->vrho_);
+        omp_add_vector(v2rho2_tmp, this->v2rho2_);
+        omp_add_vector(vsigma_tmp, this->vsigma_);
+        omp_add_vector(v2rhosigma_tmp, this->v2rhosigma_);
+        omp_add_vector(v2sigma2_tmp, this->v2sigma2_);
     } // end for( xc_func_type &func : funcs )
 
     XC_Functional_Libxc::finish_func(funcs);
@@ -213,12 +221,17 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             this->drho_gs_ = gradrho[0];
             // 1. $2f^{\rho\sigma}*\nabla\rho$
             this->v2rhosigma_2drho_.resize(nrxx);
-            std::transform(gradrho[0].begin(), gradrho[0].end(), v2rs.begin(), this->v2rhosigma_2drho_.begin(),
-                [](const V3& a, const V3& b) {return a * b * 2.; });
+#ifdef _OPENMP
+#pragma omp parallel for 
+#endif
+            for (size_t i = 0; i < nrxx; ++i) { this->v2rhosigma_2drho_[i] = gradrho[0][i] * v2rs[i] * 2.; }
+
             // 2. $4f^{\sigma\sigma}*\nabla\rho$
             this->v2sigma2_4drho_.resize(nrxx);
-            std::transform(sigma.begin(), sigma.end(), v2s2.begin(), v2sigma2_4drho_.begin(),
-                [](const V3& a, const V3& b) {return a * b * 4.; });
+#ifdef _OPENMP
+#pragma omp parallel for 
+#endif
+            for (size_t i = 0; i < nrxx; ++i) { this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.; }
         }
         else
         {
