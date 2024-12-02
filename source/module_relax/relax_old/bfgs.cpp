@@ -6,7 +6,7 @@
 
 void BFGS::allocate(const int _size) // initialize H0、H、pos0、force0、force
 {
-    alpha=70;
+    alpha=70;//default value in ase is 70
     maxstep=PARAM.inp.relax_bfgs_rmax;
     size=_size;
     sign =true;
@@ -24,7 +24,7 @@ void BFGS::allocate(const int _size) // initialize H0、H、pos0、force0、forc
     steplength = std::vector<double>(size, 0.0);  
 }
 
-void BFGS::relax_step(ModuleBase::matrix& _force,UnitCell& ucell) 
+void BFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell) 
 {
     GetPos(ucell,pos);  
     GetPostaud(ucell,pos_taud);
@@ -359,7 +359,7 @@ void BFGS::IsRestrain(std::vector<std::vector<double>>& dpos)
     Ions_Move_Basic::converged = Ions_Move_Basic::largest_grad * ModuleBase::Ry_to_eV / 0.529177<PARAM.inp.force_thr_ev;
 }
 
-void BFGS::CalculateLargestGrad(ModuleBase::matrix& _force,UnitCell& ucell)
+void BFGS::CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell)
 {
     std::vector<double> grad= std::vector<double>(3*size, 0.0);
     int iat = 0;
