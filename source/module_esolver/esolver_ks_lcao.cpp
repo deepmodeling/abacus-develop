@@ -164,7 +164,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 5) initialize Hamilt in LCAO
     // * allocate H and S matrices according to computational resources
     // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, pv, this->kv.get_nks(), orb_);
+    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, ucell , pv, this->kv.get_nks(), orb_);
 
 #ifdef __EXX
     // 6) initialize exx
@@ -294,6 +294,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        PARAM.inp.cal_stress,
                        PARAM.inp.test_force,
                        PARAM.inp.test_stress,
+                       ucell,
                        this->pv,
                        this->pelec,
                        this->psi,
@@ -643,7 +644,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             GlobalC::dftu.set_dmr(dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
         }
         // Calculate U and J if Yukawa potential is used
-        GlobalC::dftu.cal_slater_UJ(this->pelec->charge->rho, this->pw_rho->nrxx);
+        GlobalC::dftu.cal_slater_UJ(ucell,this->pelec->charge->rho, this->pw_rho->nrxx);
     }
 
 #ifdef __DEEPKS
@@ -874,11 +875,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
             {
                 const std::vector<std::vector<TK>>& tmp_dm
                     = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
-                ModuleDFTU::dftu_cal_occup_m(iter, tmp_dm, this->kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
+                ModuleDFTU::dftu_cal_occup_m(iter, ucell,tmp_dm, this->kv, this->p_chgmix->get_mixing_beta(), this->p_hamilt);
             }
-            GlobalC::dftu.cal_energy_correction(istep);
+            GlobalC::dftu.cal_energy_correction(ucell,istep);
         }
-        GlobalC::dftu.output();
+        GlobalC::dftu.output(ucell);
     }
 
     // (7) for deepks, calculate delta_e

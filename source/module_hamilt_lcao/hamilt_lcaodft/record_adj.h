@@ -21,13 +21,13 @@ class Record_adj
 	// This will record the orbitals according to
 	// HPSEPS's 2D block division.
 	//--------------------------------------------
-	void for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vector<double>& orb_cutoff);
+	void for_2d(const UnitCell& ucell, Parallel_Orbitals &pv, bool gamma_only, const std::vector<double>& orb_cutoff);
 
 	//--------------------------------------------
 	// This will record the orbitals according to
 	// grid division (cut along z direction) 
 	//--------------------------------------------
-	void for_grid(const Grid_Technique &gt, const std::vector<double>& orb_cutoff);
+	void for_grid(const UnitCell& ucell, const Grid_Technique &gt, const std::vector<double>& orb_cutoff);
 
 	void delete_grid();
 

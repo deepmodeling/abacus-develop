@@ -25,6 +25,7 @@ class cal_totn_test : public testing::Test
 {
   protected:
     surchem solvent_model;
+    UnitCell ucell;
 };
 
 TEST_F(cal_totn_test, cal_totn)
@@ -40,7 +41,7 @@ TEST_F(cal_totn_test, cal_totn)
     double wfcecut;
     bool gamma_only;
 
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     wfcecut = 80;
     gamma_only = false;
@@ -59,7 +60,7 @@ TEST_F(cal_totn_test, cal_totn)
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -87,7 +88,7 @@ TEST_F(cal_totn_test, cal_totn)
         vloc[i] = 0.1;
     }
 
-    solvent_model.cal_totn(GlobalC::ucell, GlobalC::rhopw, Porter_g, N, TOTN, vloc);
+    solvent_model.cal_totn(ucell, GlobalC::rhopw, Porter_g, N, TOTN, vloc);
 
     EXPECT_NEAR(TOTN[0].real(), -0.0999496256, 1e-10);
     EXPECT_NEAR(TOTN[0].imag(), -1.299621928166352e-7, 1e-10);
@@ -103,7 +104,8 @@ TEST_F(cal_totn_test, induced_charge)
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
-
+    Setcell::setupcell(ucell);
+    
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
@@ -128,7 +130,7 @@ TEST_F(cal_totn_test, induced_charge)
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -136,7 +138,7 @@ TEST_F(cal_totn_test, induced_charge)
     GlobalC::rhopw->collect_uniqgg();
 
     double fac;
-    fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (GlobalC::ucell.tpiba2 * GlobalC::rhopw->gg[0]);
+    fac = ModuleBase::e2 * ModuleBase::FOUR_PI / (ucell.tpiba2 * GlobalC::rhopw->gg[0]);
     complex<double> delta_phi{-2.0347933860e-05, 4.5900395826e-07};
     complex<double> induced_charge;
     induced_charge = -delta_phi / fac;

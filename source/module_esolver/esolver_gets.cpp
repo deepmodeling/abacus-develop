@@ -101,14 +101,15 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell,this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {
         if (PARAM.inp.nspin == 4)
         {
             this->p_hamilt
-                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->pv,
+                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
+                                                                                     &this->pv,
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
                                                                                      orb_.cutoffs());
@@ -117,7 +118,8 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
         else
         {
-            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
+                                                                                  &this->pv,
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
                                                                                   orb_.cutoffs());

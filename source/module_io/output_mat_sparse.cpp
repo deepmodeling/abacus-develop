@@ -60,6 +60,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
         output_dHR(istep,
                    v_eff,
                    gint_k, // mohan add 2024-04-01
+                   ucell,
                    pv,
                    HS_Arrays,
                    grid, // mohan add 2024-04-06

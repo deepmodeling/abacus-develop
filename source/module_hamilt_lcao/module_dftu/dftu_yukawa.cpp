@@ -62,13 +62,15 @@ void DFTU::cal_yukawa_lambda(double** rho, const int& nrxx)
     return;
 }
 
-void DFTU::cal_slater_Fk(const int L, const int T)
+void DFTU::cal_slater_Fk(const UnitCell& ucell,
+                         const int L, 
+                         const int T)
 {
     ModuleBase::TITLE("DFTU", "cal_slater_Fk");
 
     if (Yukawa)
     {
-        for (int chi = 0; chi < GlobalC::ucell.atoms[T].l_nchi[L]; chi++)
+        for (int chi = 0; chi < ucell.atoms[T].l_nchi[L]; chi++)
         {
             //	if(chi!=0) continue;
             const int mesh = ptr_orb_->Phi[T].PhiLN(L, chi).getNr();
@@ -110,7 +112,7 @@ void DFTU::cal_slater_Fk(const int L, const int T)
     return;
 }
 
-void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
+void DFTU::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("DFTU", "cal_slater_UJ");
     if (!Yukawa) {
@@ -119,13 +121,13 @@ void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
 
     this->cal_yukawa_lambda(rho, nrxx);
 
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        const int NL = GlobalC::ucell.atoms[it].nwl + 1;
+        const int NL = ucell.atoms[it].nwl + 1;
 
         for (int l = 0; l < NL; l++)
         {
-            int N = GlobalC::ucell.atoms[it].l_nchi[l];
+            int N = ucell.atoms[it].l_nchi[l];
             for (int n = 0; n < N; n++)
             {
                 ModuleBase::GlobalFunc::ZEROS(ModuleBase::GlobalFunc::VECTOR_TO_PTR(this->Fk[it][l][n]), l + 1);
@@ -133,20 +135,20 @@ void DFTU::cal_slater_UJ(double** rho, const int& nrxx)
         }
     }
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        const int NL = GlobalC::ucell.atoms[T].nwl + 1;
+        const int NL = ucell.atoms[T].nwl + 1;
 
         for (int L = 0; L < NL; L++)
         {
-            const int N = GlobalC::ucell.atoms[T].l_nchi[L];
+            const int N = ucell.atoms[T].l_nchi[L];
 
             if (L >= PARAM.inp.orbital_corr[T] && PARAM.inp.orbital_corr[T] != -1)
             {
                 if (L != PARAM.inp.orbital_corr[T]) {
                     continue;
 }
-                this->cal_slater_Fk(L, T);
+                this->cal_slater_Fk(ucell,L, T);
 
                 for (int n = 0; n < N; n++)
                 {

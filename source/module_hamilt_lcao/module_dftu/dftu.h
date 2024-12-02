@@ -45,7 +45,7 @@ class DFTU
               );
 
     // calculate the energy correction
-    void cal_energy_correction(const int istep);
+    void cal_energy_correction(const UnitCell& ucell, const int istep);
     double get_energy(){return EU;}
     void uramping_update(); // update U by uramping
     bool u_converged(); // check if U is converged
@@ -89,16 +89,25 @@ class DFTU
     //=============================================================
   public:
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter, const std::vector<std::vector<std::complex<double>>>& dm_k, const K_Vectors& kv, const double& mixing_beta, hamilt::Hamilt<std::complex<double>>* p_ham);
-    void cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>>& dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham);
+    void cal_occup_m_k(const int iter, 
+                       const UnitCell& ucell,
+                       const std::vector<std::vector<std::complex<double>>>& dm_k, 
+                       const K_Vectors& kv, 
+                       const double& mixing_beta, 
+                       hamilt::Hamilt<std::complex<double>>* p_ham);
+    void cal_occup_m_gamma(const int iter, 
+                           const UnitCell& ucell,
+                           const std::vector<std::vector<double>>& dm_gamma, 
+                           const double& mixing_beta, 
+                           hamilt::Hamilt<double>* p_ham);
 
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
   private:
-    void copy_locale();
-    void zero_locale();
-    void mix_locale(const double& mixing_beta);
+    void copy_locale(const UnitCell& ucell);
+    void zero_locale(const UnitCell& ucell);
+    void mix_locale(const UnitCell& ucell,const double& mixing_beta);
 
 public:
     // local occupancy matrix of the correlated subspace
@@ -147,13 +156,14 @@ private:
     // dim = 4-6 : dS * dR, for stress
 
     void folding_matrix_k(
+        const UnitCell &ucell,
         ForceStressArrays &fsr,
         const Parallel_Orbitals &pv,
-		const int ik, 
-		const int dim1, 
-		const int dim2, 
-		std::complex<double>* mat_k, 
-		const std::vector<ModuleBase::Vector3<double>> &kvec_d);
+        const int ik, 
+        const int dim1, 
+        const int dim2, 
+        std::complex<double>* mat_k, 
+        const std::vector<ModuleBase::Vector3<double>> &kvec_d);
 
 
     /**
@@ -169,24 +179,26 @@ private:
     //=============================================================
   public:
 
-   void force_stress(const elecstate::ElecState* pelec,
-		   const Parallel_Orbitals& pv,
-		   ForceStressArrays& fsr,
-		   ModuleBase::matrix& force_dftu,
-		   ModuleBase::matrix& stress_dftu,
-		   const K_Vectors& kv);
+   void force_stress(const UnitCell& ucell,
+                     const elecstate::ElecState* pelec,
+                     const Parallel_Orbitals& pv,
+                     ForceStressArrays& fsr,
+                     ModuleBase::matrix& force_dftu,
+                     ModuleBase::matrix& stress_dftu,
+                     const K_Vectors& kv);
 
   private:
 
-   void cal_force_k(
-		   ForceStressArrays &fsr,
-		   const Parallel_Orbitals &pv,
-		   const int ik,
-		   const std::complex<double>* rho_VU,
-		   ModuleBase::matrix& force_dftu,
-		   const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+   void cal_force_k(const UnitCell &ucell,
+                    ForceStressArrays &fsr,
+                    const Parallel_Orbitals &pv,
+                    const int ik,
+                    const std::complex<double>* rho_VU,
+                    ModuleBase::matrix& force_dftu,
+                    const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     void cal_stress_k(
+      const UnitCell &ucell,
 			ForceStressArrays &fsr,
 			const Parallel_Orbitals &pv,
 			const int ik,
@@ -194,13 +206,13 @@ private:
 			ModuleBase::matrix& stress_dftu,
 			const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-	void cal_force_gamma(
-			const double* rho_VU, 
-			const Parallel_Orbitals &pv,
-			double* dsloc_x,
-			double* dsloc_y,
-			double* dsloc_z,
-			ModuleBase::matrix& force_dftu);
+	void cal_force_gamma(const UnitCell &ucell,
+                       const double* rho_VU, 
+                       const Parallel_Orbitals &pv,
+                       double* dsloc_x,
+                       double* dsloc_y,
+                       double* dsloc_z,
+                       ModuleBase::matrix& force_dftu);
 
 	void cal_stress_gamma(
 			const UnitCell &ucell,
@@ -218,12 +230,15 @@ private:
     // For reading/writing/broadcasting/copying relevant data structures
     //=============================================================
   public:
-    void output();
+    void output(const UnitCell& ucell);
 
   private:
-    void write_occup_m(std::ofstream& ofs, bool diag=false);
-    void read_occup_m(const std::string& fn);
-    void local_occup_bcast();
+    void write_occup_m(const UnitCell& ucell,
+                       std::ofstream& ofs, 
+                       bool diag=false);
+    void read_occup_m(const UnitCell& ucell,
+                      const std::string& fn);
+    void local_occup_bcast(const UnitCell& ucell);
 
     //=============================================================
     // In dftu_yukawa.cpp
@@ -232,7 +247,7 @@ private:
 
   public:
     bool Yukawa; // 1:use Yukawa potential; 0: do not use Yukawa potential
-    void cal_slater_UJ(double** rho, const int& nrxx);
+    void cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx);
 
   private:
     double lambda; // the parameter in Yukawa potential
@@ -240,7 +255,7 @@ private:
     std::vector<std::vector<std::vector<double>>> U_Yukawa; // U_Yukawa[T][L][N]
     std::vector<std::vector<std::vector<double>>> J_Yukawa; // J_Yukawa[T][L][N]
 
-    void cal_slater_Fk(const int L, const int T); // L:angular momnet, T:atom type
+    void cal_slater_Fk(const UnitCell& ucell,const int L, const int T); // L:angular momnet, T:atom type
     void cal_yukawa_lambda(double** rho, const int& nrxx);
 
     double spherical_Bessel(const int k, const double r, const double lambda);
@@ -267,6 +282,7 @@ private:
 
 template <typename T>
 void dftu_cal_occup_m(const int iter,
+                      const UnitCell& ucell,
                       const std::vector<std::vector<T>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,

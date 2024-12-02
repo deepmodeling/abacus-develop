@@ -6,19 +6,19 @@
 namespace ModuleDFTU
 {
 
-void DFTU::output()
+void DFTU::output(const UnitCell &ucell)
 {
     ModuleBase::TITLE("DFTU", "output");
 
     GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        const int NL = GlobalC::ucell.atoms[T].nwl + 1;
+        const int NL = ucell.atoms[T].nwl + 1;
 
         for (int L = 0; L < NL; L++)
         {
-            const int N = GlobalC::ucell.atoms[T].l_nchi[L];
+            const int N = ucell.atoms[T].l_nchi[L];
 
             if (L >= orbital_corr[T] && orbital_corr[T] != -1)
             {
@@ -50,7 +50,7 @@ void DFTU::output()
     }
 
     GlobalV::ofs_running << "Local occupation matrices" << std::endl;
-    this->write_occup_m(GlobalV::ofs_running, true);
+    this->write_occup_m(ucell,GlobalV::ofs_running, true);
     GlobalV::ofs_running << "//=======================================================//" << std::endl;
     
     //Write onsite.dm
@@ -64,7 +64,7 @@ void DFTU::output()
       std::cout << "DFTU::write_occup_m. Can't create file onsite.dm!" << std::endl;
       exit(0);
     } 
-    this->write_occup_m(ofdftu);
+    this->write_occup_m(ucell,ofdftu);
     ofdftu.close();
 
     return;
@@ -73,24 +73,26 @@ void DFTU::output()
 // define the function calculate the eigenvalues of a matrix
 std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n);
 
-void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
+void DFTU::write_occup_m(const UnitCell& ucell,
+                         std::ofstream &ofs, 
+                         bool diag)
 {
     ModuleBase::TITLE("DFTU", "write_occup_m");
 
     if(GlobalV::MY_RANK != 0) { return;
 }
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
         if (orbital_corr[T] == -1) {
             continue;
 }
-        const int NL = GlobalC::ucell.atoms[T].nwl + 1;
+        const int NL = ucell.atoms[T].nwl + 1;
         const int LC = orbital_corr[T];
 
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
             ofs << "atoms"
                 << "  " << iat << std::endl;
 
@@ -100,7 +102,7 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
                     continue;
 }
 
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+                const int N = ucell.atoms[T].l_nchi[l];
                 ofs << "L"
                     << "  " << l << std::endl;
 
@@ -220,7 +222,8 @@ void DFTU::write_occup_m(std::ofstream &ofs, bool diag)
     return;
 }
 
-void DFTU::read_occup_m(const std::string &fn)
+void DFTU::read_occup_m(const UnitCell& ucell,
+                        const std::string &fn)
 {
     ModuleBase::TITLE("DFTU", "read_occup_m");
 
@@ -270,8 +273,8 @@ void DFTU::read_occup_m(const std::string &fn)
             ifdftu >> iat;
             ifdftu.ignore(150, '\n');
 
-            T = GlobalC::ucell.iat2it[iat];
-            const int NL = GlobalC::ucell.atoms[T].nwl + 1;
+            T = ucell.iat2it[iat];
+            const int NL = ucell.atoms[T].nwl + 1;
             const int LC = orbital_corr[T];
 
             for (int l = 0; l < NL; l++)
@@ -287,7 +290,7 @@ void DFTU::read_occup_m(const std::string &fn)
                     ifdftu >> L;
                     ifdftu.ignore(150, '\n');
 
-                    const int N = GlobalC::ucell.atoms[T].l_nchi[L];
+                    const int N = ucell.atoms[T].l_nchi[L];
                     for (int n = 0; n < N; n++)
                     {
                         // if(!Yukawa && n!=0) continue;
@@ -384,28 +387,28 @@ void DFTU::read_occup_m(const std::string &fn)
     return;
 }
 
-void DFTU::local_occup_bcast()
+void DFTU::local_occup_bcast(const UnitCell& ucell)
 {
     ModuleBase::TITLE("DFTU", "local_occup_bcast");
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
         if (orbital_corr[T] == -1) {
             continue;
 }
 
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
             const int L = orbital_corr[T];
 
-            for (int l = 0; l <= GlobalC::ucell.atoms[T].nwl; l++)
+            for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
                 if (l != orbital_corr[T]) {
                     continue;
 }
 
-                for (int n = 0; n < GlobalC::ucell.atoms[T].l_nchi[l]; n++)
+                for (int n = 0; n < ucell.atoms[T].l_nchi[l]; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
                     if (n != 0) {
