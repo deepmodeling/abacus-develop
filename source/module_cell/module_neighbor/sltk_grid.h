@@ -90,13 +90,17 @@ public:
 	}
 	bool init_cell_flag;
     //LiuXh add 2019-07-15
-    const double& getD_minX(void) const {return d_minX;}
-    const double& getD_minY(void) const {return d_minY;}
-    const double& getD_minZ(void) const {return d_minZ;}
+    double getD_minX() const {return d_minX;}
+    double getD_minY() const {return d_minY;}
+    double getD_minZ() const {return d_minZ;}
 
-    const int& getCellX(void) const {return cell_nx;}
-    const int& getCellY(void) const {return cell_ny;}
-    const int& getCellZ(void) const {return cell_nz;}
+
+    int getCellX() const {return cell_nx;}
+    int getCellY() const {return cell_ny;}
+    int getCellZ() const {return cell_nz;}
+	int getTrueCellX() const {return true_cell_x;}
+    int getTrueCellY() const {return true_cell_y;}
+    int getTrueCellZ() const {return true_cell_z;}
 
 private:
 

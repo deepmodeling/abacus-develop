@@ -304,9 +304,9 @@ void toWannier90_LCAO::initialize_orb_table()
 
 void toWannier90_LCAO::set_R_coor()
 {
-    int R_minX = int(GlobalC::GridD.getD_minX());
-    int R_minY = int(GlobalC::GridD.getD_minY());
-    int R_minZ = int(GlobalC::GridD.getD_minZ());
+    int R_minX = int(-GlobalC::GridD.getTrueCellX());
+    int R_minY = int(-GlobalC::GridD.getTrueCellY());
+    int R_minZ = int(-GlobalC::GridD.getTrueCellZ());
 
     int R_x = GlobalC::GridD.getCellX();
     int R_y = GlobalC::GridD.getCellY();
