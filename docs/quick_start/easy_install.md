@@ -47,9 +47,9 @@ automatically and suitable for machine characteristic in an online or offline wa
 The toolchain can be downloaded with ABACUS repo, which is easily used and can
 have a convenient installation under HPC environment in both `GNU` or `Intel-oneAPI` toolchain.
 Sometimes, ABACUS by toolchain installation may have highly efficient performance.
-A Tutorial for using this toolchain can be accessed in [bohrium-notebook](https://nb.bohrium.dp.tech/detail/5215742477)
+Users should read the README in toolchain directory for most of the information before use, and a tutorial for using this toolchain can be accessed in [bohrium-notebook](https://nb.bohrium.dp.tech/detail/5215742477) as reference.
 
-> Notice: the toolchain is under development, please let me know if you encounter any problem in using this toolchain.
+> Notice: the toolchain is under development, please let we know if you encounter any problem in using this toolchain by raising issue or contacting us.
 
 
 ## Get ABACUS source code
