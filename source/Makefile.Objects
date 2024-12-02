@@ -229,6 +229,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_TDDFT_pw.o\
     pot_xc.o\
     cal_ux.o\
+    cal_nelec_nband.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\

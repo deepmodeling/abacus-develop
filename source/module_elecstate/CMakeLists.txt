@@ -32,6 +32,7 @@ list(APPEND objects
     magnetism.cpp
     occupy.cpp
     cal_ux.cpp
+    cal_nelec_nband.cpp
 )
 
 if(ENABLE_LCAO)
