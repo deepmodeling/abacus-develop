@@ -208,13 +208,14 @@ void ElecState::calEBand()
 
 void ElecState::init_scf(const int istep, 
                          const ModuleBase::ComplexMatrix& strucfac, 
+                         const bool* numeric,
                          ModuleSymmetry::Symmetry& symm, 
                          const void* wfcpw)
 {
     //! core correction potential.
     if (!PARAM.inp.use_paw)
     {
-        this->charge->set_rho_core(strucfac);
+        this->charge->set_rho_core(strucfac, numeric);
     }
     else
     {

@@ -26,7 +26,8 @@
 #endif
 
 template <>
-void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
+void Force_LCAO<std::complex<double>>::allocate(const UnitCell& ucell,
+                                                const Parallel_Orbitals& pv,
                                                 ForceStressArrays& fsr, // mohan add 2024-06-15
                                                 const TwoCenterBundle& two_center_bundle,
                                                 const LCAO_Orbitals& orb,
@@ -93,7 +94,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               'S',
                               cal_deri,
                               PARAM.inp.cal_stress,
-                              GlobalC::ucell,
+                              ucell,
                               orb,
                               pv,
                               two_center_bundle,
@@ -124,7 +125,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                               'T',
                               cal_deri,
                               PARAM.inp.cal_stress,
-                              GlobalC::ucell,
+                              ucell,
                               orb,
                               pv,
                               two_center_bundle,
@@ -143,7 +144,7 @@ void Force_LCAO<std::complex<double>>::allocate(const Parallel_Orbitals& pv,
                                   'S',
                                   cal_deri,
                                   PARAM.inp.cal_stress,
-                                  GlobalC::ucell,
+                                  ucell,
                                   orb,
                                   pv,
                                   two_center_bundle,
@@ -210,19 +211,19 @@ void Force_LCAO<std::complex<double>>::finish_ftable(ForceStressArrays& fsr)
 //    test = new double[PARAM.globalv.nlocal * PARAM.globalv.nlocal];
 //    ModuleBase::GlobalFunc::ZEROS(test, PARAM.globalv.nlocal * PARAM.globalv.nlocal);
 //
-//    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+//    for (int T1 = 0; T1 < ucell.ntype; T1++)
 //    {
-//        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+//        Atom* atom1 = &ucell.atoms[T1];
 //        for (int I1 = 0; I1 < atom1->na; I1++)
 //        {
-//            // const int iat = GlobalC::ucell.itia2iat(T1,I1);
-//            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+//            // const int iat = ucell.itia2iat(T1,I1);
+//            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 //            for (int cb = 0; cb < RA.na_each[ca]; cb++)
 //            {
 //                const int T2 = RA.info[ca][cb][3];
 //                const int I2 = RA.info[ca][cb][4];
-//                Atom* atom2 = &GlobalC::ucell.atoms[T2];
-//                const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+//                Atom* atom2 = &ucell.atoms[T2];
+//                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 //
 //                for (int jj = 0; jj < atom1->nw; jj++)
 //                {
@@ -296,7 +297,8 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     elecstate::DensityMatrix<complex<double>, double>* dm
         = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)->get_DM();
 
-    this->allocate(pv,
+    this->allocate(ucell,
+                   pv,
                    fsr, // mohan add 2024-06-16
                    two_center_bundle,
                    orb,

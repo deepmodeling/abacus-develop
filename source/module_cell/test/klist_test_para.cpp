@@ -146,62 +146,62 @@ class KlistParaTest : public testing::Test
     std::ofstream ofs;
     std::ofstream ofs_running;
     std::string output;
-
+    UnitCell ucell;
     // used to construct cell and analyse its symmetry
     void construct_ucell(stru_& stru)
     {
         std::vector<atomtype_> coord = stru.all_type;
-        GlobalC::ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
-        GlobalC::ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
-        GlobalC::ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
-        GlobalC::ucell.ntype = stru.all_type.size();
-        GlobalC::ucell.atoms = new Atom[GlobalC::ucell.ntype];
-        GlobalC::ucell.nat = 0;
-        GlobalC::ucell.latvec.e11 = GlobalC::ucell.a1.x;
-        GlobalC::ucell.latvec.e12 = GlobalC::ucell.a1.y;
-        GlobalC::ucell.latvec.e13 = GlobalC::ucell.a1.z;
-        GlobalC::ucell.latvec.e21 = GlobalC::ucell.a2.x;
-        GlobalC::ucell.latvec.e22 = GlobalC::ucell.a2.y;
-        GlobalC::ucell.latvec.e23 = GlobalC::ucell.a2.z;
-        GlobalC::ucell.latvec.e31 = GlobalC::ucell.a3.x;
-        GlobalC::ucell.latvec.e32 = GlobalC::ucell.a3.y;
-        GlobalC::ucell.latvec.e33 = GlobalC::ucell.a3.z;
-        GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-        GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
-        GlobalC::ucell.lat0 = 1.8897261254578281;
+        ucell.a1 = ModuleBase::Vector3<double>(stru.cell[0], stru.cell[1], stru.cell[2]);
+        ucell.a2 = ModuleBase::Vector3<double>(stru.cell[3], stru.cell[4], stru.cell[5]);
+        ucell.a3 = ModuleBase::Vector3<double>(stru.cell[6], stru.cell[7], stru.cell[8]);
+        ucell.ntype = stru.all_type.size();
+        ucell.atoms = new Atom[ucell.ntype];
+        ucell.nat = 0;
+        ucell.latvec.e11 = ucell.a1.x;
+        ucell.latvec.e12 = ucell.a1.y;
+        ucell.latvec.e13 = ucell.a1.z;
+        ucell.latvec.e21 = ucell.a2.x;
+        ucell.latvec.e22 = ucell.a2.y;
+        ucell.latvec.e23 = ucell.a2.z;
+        ucell.latvec.e31 = ucell.a3.x;
+        ucell.latvec.e32 = ucell.a3.y;
+        ucell.latvec.e33 = ucell.a3.z;
+        ucell.GT = ucell.latvec.Inverse();
+        ucell.G = ucell.GT.Transpose();
+        ucell.lat0 = 1.8897261254578281;
         for (int i = 0; i < coord.size(); i++)
         {
-            GlobalC::ucell.atoms[i].label = coord[i].atomname;
-            GlobalC::ucell.atoms[i].na = coord[i].coordinate.size();
-            GlobalC::ucell.atoms[i].tau.resize(GlobalC::ucell.atoms[i].na);
-            GlobalC::ucell.atoms[i].taud.resize(GlobalC::ucell.atoms[i].na);
-            for (int j = 0; j < GlobalC::ucell.atoms[i].na; j++)
+            ucell.atoms[i].label = coord[i].atomname;
+            ucell.atoms[i].na = coord[i].coordinate.size();
+            ucell.atoms[i].tau.resize(ucell.atoms[i].na);
+            ucell.atoms[i].taud.resize(ucell.atoms[i].na);
+            for (int j = 0; j < ucell.atoms[i].na; j++)
             {
                 std::vector<double> this_atom = coord[i].coordinate[j];
-                GlobalC::ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
-                ModuleBase::Mathzone::Cartesian_to_Direct(GlobalC::ucell.atoms[i].tau[j].x,
-                                                          GlobalC::ucell.atoms[i].tau[j].y,
-                                                          GlobalC::ucell.atoms[i].tau[j].z,
-                                                          GlobalC::ucell.a1.x,
-                                                          GlobalC::ucell.a1.y,
-                                                          GlobalC::ucell.a1.z,
-                                                          GlobalC::ucell.a2.x,
-                                                          GlobalC::ucell.a2.y,
-                                                          GlobalC::ucell.a2.z,
-                                                          GlobalC::ucell.a3.x,
-                                                          GlobalC::ucell.a3.y,
-                                                          GlobalC::ucell.a3.z,
-                                                          GlobalC::ucell.atoms[i].taud[j].x,
-                                                          GlobalC::ucell.atoms[i].taud[j].y,
-                                                          GlobalC::ucell.atoms[i].taud[j].z);
+                ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
+                ModuleBase::Mathzone::Cartesian_to_Direct(ucell.atoms[i].tau[j].x,
+                                                          ucell.atoms[i].tau[j].y,
+                                                          ucell.atoms[i].tau[j].z,
+                                                          ucell.a1.x,
+                                                          ucell.a1.y,
+                                                          ucell.a1.z,
+                                                          ucell.a2.x,
+                                                          ucell.a2.y,
+                                                          ucell.a2.z,
+                                                          ucell.a3.x,
+                                                          ucell.a3.y,
+                                                          ucell.a3.z,
+                                                          ucell.atoms[i].taud[j].x,
+                                                          ucell.atoms[i].taud[j].y,
+                                                          ucell.atoms[i].taud[j].z);
             }
-            GlobalC::ucell.nat += GlobalC::ucell.atoms[i].na;
+            ucell.nat += ucell.atoms[i].na;
         }
     }
-    // clear GlobalC::ucell
+    // clear ucell
     void ClearUcell()
     {
-        delete[] GlobalC::ucell.atoms;
+        delete[] ucell.atoms;
     }
 };
 
@@ -214,7 +214,7 @@ TEST_F(KlistParaTest, Set)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_5");
 }
-    symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist
@@ -235,7 +235,7 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(symm, k_file, kv->nspin, GlobalC::ucell.G, GlobalC::ucell.latvec, GlobalV::ofs_running);
+    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec,  GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
@@ -271,7 +271,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_6");
 }
-    symm.analy_sys(GlobalC::ucell.lat, GlobalC::ucell.st, GlobalC::ucell.atoms, GlobalV::ofs_running);
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist
@@ -292,7 +292,7 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
-    kv->set(symm, k_file, kv->nspin, GlobalC::ucell.G, GlobalC::ucell.latvec, GlobalV::ofs_running);
+    kv->set(ucell,symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
@@ -313,7 +313,7 @@ TEST_F(KlistParaTest, SetAfterVC)
     }
     // call set_after_vc here
     kv->kc_done = false;
-    kv->set_after_vc(kv->nspin, GlobalC::ucell.G, GlobalC::ucell.latvec);
+    kv->set_after_vc(kv->nspin, ucell.G, ucell.latvec);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);
     // clear

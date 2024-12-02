@@ -22,10 +22,10 @@ public:
 
 	// structure factor (ntype, ngmc)
     ModuleBase::ComplexMatrix strucFac;
-    void setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis); // Calculate structure factors
+    void setup_structure_factor(const UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis); // Calculate structure factors
     void bspline_sf(
         const int,
-        UnitCell* Ucell,
+        const UnitCell* Ucell,
         const ModulePW::PW_Basis* rho_basis); // calculate structure factors through Cardinal B-spline interpolation
     void bsplinecoef(std::complex<double> *b1, std::complex<double> *b2, std::complex<double> *b3, 
                     const int nx, const int ny, const int nz, const int norder);

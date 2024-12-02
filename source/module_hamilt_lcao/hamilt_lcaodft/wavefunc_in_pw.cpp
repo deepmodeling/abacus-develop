@@ -9,17 +9,18 @@
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
 
 void Wavefunc_in_pw::make_table_q(
+	const UnitCell &ucell,
 	std::vector<std::string> &fn, 
 	ModuleBase::realArray &table_local)
 {
 	ModuleBase::TITLE("Wavefunc_in_pw","make_table_q");
 
-	if( fn.size() != static_cast<size_t>(GlobalC::ucell.ntype) )
+	if( fn.size() != static_cast<size_t>(ucell.ntype) )
 	{
 		ModuleBase::WARNING_QUIT("Wavefunc_in_pw::make_table_q","maybe NUMERICAL_ORBITAL is not read in, please check.");
 	}
 
-	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	for(int it=0; it<ucell.ntype; it++)
 	{
 		std::ifstream in(fn[it].c_str());
 		if(!in)
@@ -30,19 +31,19 @@ void Wavefunc_in_pw::make_table_q(
 		else
 		{
 			std::stringstream ss;
-			ss << "Orbital of species " << GlobalC::ucell.atoms[it].label;
+			ss << "Orbital of species " << ucell.atoms[it].label;
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,ss.str(),fn[it]);
 		}
 		in.close();
 	}
 
 	table_local.zero_out();
-	for(int it=0; it<GlobalC::ucell.ntype; it++)
+	for(int it=0; it<ucell.ntype; it++)
 	{
 		int ic=0;
-		for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
+		for(int L=0; L<ucell.atoms[it].nwl+1; L++)
 		{
-			for(int N=0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+			for(int N=0; N<ucell.atoms[it].l_nchi[L]; N++)
 			{
 				GlobalV::ofs_running << " L=" << L << " N=" << N;
 				std::ifstream in(fn[it].c_str());
@@ -133,7 +134,7 @@ void Wavefunc_in_pw::make_table_q(
 					}
 				}
 				double* table = new double[PARAM.globalv.nqx];
-				Wavefunc_in_pw::integral(meshr, psir, radial, rab, L, table);
+				Wavefunc_in_pw::integral(ucell,meshr, psir, radial, rab, L, table);
 				for(int iq=0; iq<PARAM.globalv.nqx; iq++)
 				{
 					//double energy_q = pow(iq * PARAM.globalv.dq,2);
@@ -152,19 +153,19 @@ void Wavefunc_in_pw::make_table_q(
 
 	if(GlobalV::MY_RANK==0)
 	{
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		for(int it=0; it<ucell.ntype; it++)
 		{
 			std::stringstream ss;
-			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/LOCAL_G.dat";
+			ss << PARAM.globalv.global_out_dir << ucell.atoms[it].label << "/LOCAL_G.dat";
 			std::ofstream ofs(ss.str().c_str());
 			for(int iq=0; iq<PARAM.globalv.nqx; iq++)
 			{
 				int ic=0;
 				double energy_q = pow((double)iq*PARAM.globalv.dq,2);
 				ofs << energy_q; // unit (Ry)
-				for(int L=0; L<GlobalC::ucell.atoms[it].nwl+1; L++)
+				for(int L=0; L<ucell.atoms[it].nwl+1; L++)
 				{
-					for(int N=0; N<GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+					for(int N=0; N<ucell.atoms[it].l_nchi[L]; N++)
 					{
 						ofs << " " << table_local(it,ic,iq);
 						++ic;
@@ -211,10 +212,15 @@ double Wavefunc_in_pw::smearing(const double &energy_x,
 }
 
 
-void Wavefunc_in_pw::integral(const int meshr, const double *psir, const double *r,
-const double *rab, const int &l, double* table)
+void Wavefunc_in_pw::integral(const UnitCell& ucell,
+							  const int meshr, 
+							  const double *psir, 
+							  const double *r,
+							  const double *rab, 
+							  const int &l, 
+							  double* table)
 {
-	const double pref = ModuleBase::FOUR_PI / sqrt(GlobalC::ucell.omega);
+	const double pref = ModuleBase::FOUR_PI / sqrt(ucell.omega);
 
 	double *inner_part = new double[meshr];
 	for(int ir=0; ir<meshr; ir++)
@@ -248,7 +254,8 @@ const double *rab, const int &l, double* table)
 	return;
 }
 
-void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
+void Wavefunc_in_pw::produce_local_basis_in_pw(const UnitCell& ucell,
+											   const int& ik,
                                                const ModulePW::PW_Basis_K* wfc_basis,
                                                const Structure_Factor& sf,
                                                ModuleBase::ComplexMatrix& psi,
@@ -257,7 +264,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 	ModuleBase::TITLE("Wavefunc_in_pw","produce_local_basis_in_pw");
 	assert(ik>=0);
 	const int npw = wfc_basis->npwk[ik];
-	const int total_lm = ( GlobalC::ucell.lmax + 1) * ( GlobalC::ucell.lmax + 1);
+	const int total_lm = ( ucell.lmax + 1) * ( ucell.lmax + 1);
 	ModuleBase::matrix ylm(total_lm, npw);
 	std::complex<double> *aux = new std::complex<double>[npw];
 	double *chiaux = nullptr;
@@ -273,23 +280,23 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 	//int index = 0;
 	double *flq = new double[npw];
 	int iwall=0;
-	for (int it = 0;it < GlobalC::ucell.ntype;it++)
+	for (int it = 0;it < ucell.ntype;it++)
 	{
-		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
+		for (int ia = 0;ia < ucell.atoms[it].na;ia++)
 		{
             std::complex<double>* sk = sf.get_sk(ik, it, ia, wfc_basis);
             int ic = 0;
-            for(int L = 0; L < GlobalC::ucell.atoms[it].nwl+1; L++)
+            for(int L = 0; L < ucell.atoms[it].nwl+1; L++)
 			{
 				std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, L); //mohan 2010-04-19
-				for(int N=0; N < GlobalC::ucell.atoms[it].l_nchi[L]; N++)
+				for(int N=0; N < ucell.atoms[it].l_nchi[L]; N++)
 				{
 //					GlobalV::ofs_running << " it=" << it << " ia=" << ia << " L=" << L << " N=" << N << std::endl;
 
 					for(int ig=0; ig<npw; ig++)
 					{
 						flq[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-						it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
+						it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * ucell.tpiba );
 					}
 
 					if(PARAM.inp.nspin==4)
@@ -297,8 +304,8 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 /*						for(int is_N = 0; is_N < 2; is_N++)*/  //for rotate base
 						for(int is_N = 0; is_N < 1; is_N++)
 						{
-							if(L==0 && is_N==1) continue;
-							if(GlobalC::ucell.atoms[it].ncpp.has_so)
+							if(L==0 && is_N==1) { continue;}
+							if(ucell.atoms[it].ncpp.has_so)
 							{
 								const double j = std::abs(double(L+is_N) - 0.5);
 								if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
@@ -325,19 +332,20 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 									std::complex<double> fup,fdown;
                               		//int nc;
                               		//This routine creates two functions only in the case j=l+1/2 or exit in the other case
-									if(fabs(j-L+0.5)<1e-4) continue;
+									if(fabs(j-L+0.5)<1e-4) { continue;
+}
 									delete[] chiaux;
 									chiaux = new double [npw];
                               		//Find the functions j= l- 1/2
-									if(L==0)
+									if(L==0) {
 									for(int ig=0;ig<npw;ig++){
 										chiaux[ig] = flq[ig];
 									}
-									else
+									} else
 									{
-										/*for(int ib = 0;ib < GlobalC::ucell.atoms[it].nchi;ib++)
+										/*for(int ib = 0;ib < ucell.atoms[it].nchi;ib++)
 										{
-											if((GlobalC::ucell.atoms[it].lchi[ib] == L)&&(fabs(GlobalC::ucell.atoms[it].jjj[ib]-L+0.5)<1e-4))
+											if((ucell.atoms[it].lchi[ib] == L)&&(fabs(ucell.atoms[it].jjj[ib]-L+0.5)<1e-4))
 											{
 											nc=ib;
 											break;
@@ -347,22 +355,25 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
 										{//Average the two functions
 											chiaux[ig] =  L *
 												ModuleBase::PolyInt::Polynomial_Interpolation(table_local,
-												it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba );
+												it, ic, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * ucell.tpiba );
 
 											chiaux[ig] += flq[ig] * (L+1.0) ;
 											chiaux[ig] *= 1/(2.0*L+1.0);
 										}
 									}
 									//and construct the starting wavefunctions as in the noncollinear case.
-									//alpha = GlobalC::ucell.magnet.angle1_[it];
-									//gamma = -1 * GlobalC::ucell.magnet.angle2_[it] + 0.5 * ModuleBase::PI;
-									alpha = GlobalC::ucell.atoms[it].angle1[ia];
-									gamma = -1 * GlobalC::ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
+									//alpha = ucell.magnet.angle1_[it];
+									//gamma = -1 * ucell.magnet.angle2_[it] + 0.5 * ModuleBase::PI;
+									alpha = ucell.atoms[it].angle1[ia];
+									gamma = -1 * ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
 									for(int m = 0;m<2*L+1;m++)
 									{
 										const int lm = L*L +m;
-                                        if (iwall + 2 * L + 1 > GlobalC::ucell.natomwfc)
+
+                                        if (iwall + 2 * L + 1 > ucell.natomwfc) 
+                                        {
                                             ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()", "error: too many wfcs");
+                                        }
                                         for (int ig = 0; ig < npw; ig++)
                                         {
                                             aux[ig] = sk[ig] * ylm(lm,ig) * chiaux[ig];
@@ -389,19 +400,19 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
                                     }
 									iwall += 2*L +1;
 								} // end else INPUT.starting_spin_angle || !PARAM.globalv.domag
-							} // end if GlobalC::ucell.atoms[it].has_so
+							} // end if ucell.atoms[it].has_so
 							else
 							{//atomic_wfc_nc
 								double alpha, gamman;
 								std::complex<double> fup, fdown;
-								//alpha = GlobalC::ucell.magnet.angle1_[it];
-								//gamman = -GlobalC::ucell.magnet.angle2_[it] + 0.5*ModuleBase::PI;
-								alpha = GlobalC::ucell.atoms[it].angle1[ia];
-								gamman = -GlobalC::ucell.atoms[it].angle2[ia] + 0.5*ModuleBase::PI;
+								//alpha = ucell.magnet.angle1_[it];
+								//gamman = -ucell.magnet.angle2_[it] + 0.5*ModuleBase::PI;
+								alpha = ucell.atoms[it].angle1[ia];
+								gamman = -ucell.atoms[it].angle2[ia] + 0.5*ModuleBase::PI;
 								for(int m = 0;m<2*L+1;m++)
 								{
 									const int lm = L*L +m;
-									if (iwall + 2 * L + 1 > GlobalC::ucell.natomwfc)
+									if (iwall + 2 * L + 1 > ucell.natomwfc)
 									{
 										ModuleBase::WARNING_QUIT("this->wf.atomic_wfc()", "error: too many wfcs");
 									}
@@ -430,7 +441,7 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const int& ik,
                                     iwall++;
                                 } // end m
 								iwall += 2*L+1;
-							} // end else GlobalC::ucell.atoms[it].has_so
+							} // end else ucell.atoms[it].has_so
 						} // end for is_N
                     } // end if PARAM.inp.noncolin
 					else

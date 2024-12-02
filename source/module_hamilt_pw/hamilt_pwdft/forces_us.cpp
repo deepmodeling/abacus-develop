@@ -16,7 +16,7 @@
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
                                           ModulePW::PW_Basis* rho_basis,
-                                          pseudopot_cell_vnl* ppcell_in,
+                                          const pseudopot_cell_vnl& nlpp,
                                           const elecstate::ElecState& elec,
                                           const UnitCell& ucell)
 {
@@ -24,7 +24,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
     ModuleBase::timer::tick("Forces", "cal_force_us");
 
     const int npw = rho_basis->npw;
-    const int nh_tot = ppcell_in->nhm * (ppcell_in->nhm + 1) / 2;
+    const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
     double* becsum = static_cast<const elecstate::ElecStatePW<std::complex<FPTYPE>, Device>&>(elec).becsum;
@@ -39,8 +39,8 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
         rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
 
-    ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
-    ModuleBase::YlmReal::Ylm_Real(ppcell_in->lmaxq * ppcell_in->lmaxq, npw, rho_basis->gcar, ylmk0);
+    ModuleBase::matrix ylmk0(nlpp.lmaxq * nlpp.lmaxq, npw);
+    ModuleBase::YlmReal::Ylm_Real(nlpp.lmaxq * nlpp.lmaxq, npw, rho_basis->gcar, ylmk0);
 
     double* qnorm = new double[npw];
     for (int ig = 0; ig < npw; ig++)
@@ -65,7 +65,7 @@ void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
             {
                 for (int jh = ih; jh < atom->ncpp.nh; jh++)
                 {
-                    ppcell_in->radial_fft_q(npw, ih, jh, it, qnorm, ylmk0, &qgm(ijh, 0));
+                    nlpp.radial_fft_q(npw, ih, jh, it, qnorm, ylmk0, &qgm(ijh, 0));
                     ijh++;
                 }
             }

@@ -50,7 +50,8 @@ public:
      *       it will output a warning and suggest possible solutions.
      * @note Only available for nspin = 1 or 2 or 4.
      */
-    void set(const ModuleSymmetry::Symmetry& symm,
+    void set(const UnitCell& ucell,
+        const ModuleSymmetry::Symmetry& symm,
         const std::string& k_file_name,
         const int& nspin,
         const ModuleBase::Matrix3& reciprocal_vec,
@@ -204,7 +205,8 @@ private:
      * @note If the k-points type is Line mode and the symmetry flag is 1, it will quit with a warning.
      * @note If the number of k-points is greater than 100000, it will quit with a warning.
      */
-    bool read_kpoints(const std::string& fn); // return 0: something wrong.
+    bool read_kpoints(const UnitCell& ucell,
+                      const std::string& fn); // return 0: something wrong.
 
     /**
      * @brief Adds k-points linearly between special points.

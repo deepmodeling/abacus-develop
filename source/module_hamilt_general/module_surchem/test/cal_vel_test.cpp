@@ -31,6 +31,7 @@ class cal_vel_test : public testing::Test
 {
   protected:
     surchem solvent_model;
+    UnitCell ucell;
 };
 
 TEST_F(cal_vel_test, shape_gradn)
@@ -69,7 +70,7 @@ TEST_F(cal_vel_test, shape_gradn)
 
 TEST_F(cal_vel_test, eps_pot)
 {
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
@@ -97,7 +98,7 @@ TEST_F(cal_vel_test, eps_pot)
 #ifdef __MPI
     GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -142,7 +143,7 @@ TEST_F(cal_vel_test, eps_pot)
     ModuleBase::Vector3<double>* nabla_phi = new ModuleBase::Vector3<double>[nrxx];
     double* phisq = new double[nrxx];
 
-    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, GlobalC::ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, GlobalC::rhopw, ucell.tpiba);
 
     for (int ir = 0; ir < nrxx; ir++)
     {
@@ -167,7 +168,7 @@ TEST_F(cal_vel_test, eps_pot)
 
 TEST_F(cal_vel_test, cal_vel)
 {
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
@@ -195,7 +196,7 @@ TEST_F(cal_vel_test, cal_vel)
 #ifdef __MPI
     GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -220,7 +221,7 @@ TEST_F(cal_vel_test, cal_vel)
     solvent_model.TOTN_real = new double[nrxx];
     solvent_model.delta_phi = new double[nrxx];
 
-    solvent_model.cal_vel(GlobalC::ucell, GlobalC::rhopw, TOTN, PS_TOTN, nspin);
+    solvent_model.cal_vel(ucell, GlobalC::rhopw, TOTN, PS_TOTN, nspin);
 
     EXPECT_NEAR(solvent_model.Vel(0, 0), 0.0532168705, 1e-10);
     EXPECT_NEAR(solvent_model.Vel(0, 1), 0.0447818244, 1e-10);

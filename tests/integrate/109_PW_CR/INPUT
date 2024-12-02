@@ -1,7 +1,7 @@
 INPUT_PARAMETERS
 #Parameters	(General)
 suffix              autotest
-pseudo_dir	../../PP_ORB
+pseudo_dir		../../PP_ORB
 	
 nbands			8
 calculation             cell-relax
@@ -13,7 +13,7 @@ nspin 2
 
 basis_type		pw
 relax_nmax                   2
-relax_new 0
+relax_new                    0
 
 cal_stress                  1
 stress_thr              1e-6

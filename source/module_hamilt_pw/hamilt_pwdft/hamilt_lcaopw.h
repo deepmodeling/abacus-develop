@@ -13,12 +13,19 @@ namespace hamilt
     class HamiltLIP : public HamiltPW<T, base_device::DEVICE_CPU>
     {
     public:
-        HamiltLIP(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv)
-            : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv) {};
+      HamiltLIP(elecstate::Potential* pot_in,
+                ModulePW::PW_Basis_K* wfc_basis,
+                K_Vectors* p_kv,
+                pseudopot_cell_vnl* nlpp)
+          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp){};
 #ifdef __EXX
-        HamiltLIP(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, Exx_Lip<T>& exx_lip_in)
-            : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv), exx_lip(exx_lip_in) {};
-        Exx_Lip<T>& exx_lip;
+      HamiltLIP(elecstate::Potential* pot_in,
+                ModulePW::PW_Basis_K* wfc_basis,
+                K_Vectors* p_kv,
+                pseudopot_cell_vnl* nlpp,
+                Exx_Lip<T>& exx_lip_in)
+          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp), exx_lip(exx_lip_in){};
+      Exx_Lip<T>& exx_lip;
 #endif
     };
 

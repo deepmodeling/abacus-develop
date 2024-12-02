@@ -59,7 +59,8 @@ int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
     }
 }
 
-void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
+void K_Vectors::set(const UnitCell& ucell,
+                    const ModuleSymmetry::Symmetry& symm,
                     const std::string& k_file_name,
                     const int& nspin_in,
                     const ModuleBase::Matrix3& reciprocal_vec,
@@ -93,7 +94,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     this->nspin = (this->nspin == 4) ? 1 : this->nspin;
 
     // read KPT file and generate K-point grid
-    bool read_succesfully = this->read_kpoints(k_file_name);
+    bool read_succesfully = this->read_kpoints(ucell,k_file_name);
 #ifdef __MPI
     Parallel_Common::bcast_bool(read_succesfully);
 #endif
@@ -113,7 +114,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
     {
         bool match = true;
         // calculate kpoints in IBZ and reduce kpoints according to symmetry
-        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+        this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, ucell, match);
 #ifdef __MPI
         Parallel_Common::bcast_bool(match);
 #endif
@@ -128,7 +129,7 @@ void K_Vectors::set(const ModuleSymmetry::Symmetry& symm,
                 std::cout << "Automatically set symmetry to 0 and continue ..." << std::endl;
                 ModuleSymmetry::Symmetry::symm_flag = 0;
                 match = true;
-                this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, GlobalC::ucell, match);
+                this->ibz_kpoint(symm, ModuleSymmetry::Symmetry::symm_flag, skpt1, ucell, match);
             } else {
                 ModuleBase::WARNING_QUIT("K_Vectors::ibz_kpoint",
                                          "Possible solutions: \n \
@@ -209,7 +210,8 @@ void K_Vectors::renew(const int& kpoint_number)
 
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
 // Generate K-point grid according to different parameters of the KPT file
-bool K_Vectors::read_kpoints(const std::string& fn)
+bool K_Vectors::read_kpoints(const UnitCell& ucell,
+                             const std::string& fn)
 {
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
@@ -236,16 +238,16 @@ bool K_Vectors::read_kpoints(const std::string& fn)
             ModuleBase::WARNING_QUIT("K_Vectors", "kspacing should > 0");
         };
         // number of K points = max(1,int(|bi|/KSPACING+1))
-        ModuleBase::Matrix3 btmp = GlobalC::ucell.G;
+        ModuleBase::Matrix3 btmp = ucell.G;
         double b1 = sqrt(btmp.e11 * btmp.e11 + btmp.e12 * btmp.e12 + btmp.e13 * btmp.e13);
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
         int nk1
-            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / ucell.lat0 + 1));
         int nk2
-            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / ucell.lat0 + 1));
         int nk3
-            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / GlobalC::ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());

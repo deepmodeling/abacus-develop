@@ -258,7 +258,6 @@ namespace GlobalC
 #ifdef __EXX
     extern Exx_Info exx_info;
 #endif
-extern pseudopot_cell_vnl ppcell;
 } // namespace GlobalC
 
 #include "module_cell/parallel_kpoints.h"

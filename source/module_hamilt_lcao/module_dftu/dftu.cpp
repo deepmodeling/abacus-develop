@@ -179,13 +179,13 @@ void DFTU::init(UnitCell& cell, // unitcell class
     {
         std::stringstream sst;
         sst << "initial_onsite.dm";
-        this->read_occup_m(sst.str());
+        this->read_occup_m(cell,sst.str());
 #ifdef __MPI
-        this->local_occup_bcast();
+        this->local_occup_bcast(cell);
 #endif
 
         initialed_locale = true;
-        this->copy_locale();
+        this->copy_locale(cell);
     }
     else
     {
@@ -193,15 +193,15 @@ void DFTU::init(UnitCell& cell, // unitcell class
         {
             std::stringstream sst;
             sst << PARAM.globalv.global_out_dir << "onsite.dm";
-            this->read_occup_m(sst.str());
+            this->read_occup_m(cell,sst.str());
 #ifdef __MPI
-            this->local_occup_bcast();
+            this->local_occup_bcast(cell);
 #endif
             initialed_locale = true;
         }
         else
         {
-            this->zero_locale();
+            this->zero_locale(cell);
         }
     }
 
@@ -209,7 +209,8 @@ void DFTU::init(UnitCell& cell, // unitcell class
     return;
 }
 
-void DFTU::cal_energy_correction(const int istep)
+void DFTU::cal_energy_correction(const UnitCell& ucell,
+                                 const int istep)
 {
     ModuleBase::TITLE("DFTU", "cal_energy_correction");
     ModuleBase::timer::tick("DFTU", "cal_energy_correction");
@@ -221,18 +222,18 @@ void DFTU::cal_energy_correction(const int istep)
     this->EU = 0.0;
     double EU_dc = 0.0;
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        const int NL = GlobalC::ucell.atoms[T].nwl + 1;
+        const int NL = ucell.atoms[T].nwl + 1;
         const int LC = orbital_corr[T];
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             if (LC == -1)
             {
                 continue;
             }
 
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
             const int L = orbital_corr[T];
 
             for (int l = 0; l < NL; l++)
@@ -242,7 +243,7 @@ void DFTU::cal_energy_correction(const int istep)
                     continue;
                 }
 
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+                const int N = ucell.atoms[T].l_nchi[l];
 
                 const int m_tot = 2 * l + 1;
 
@@ -422,22 +423,24 @@ const hamilt::HContainer<double>* DFTU::get_dmr(int ispin) const
 //! dftu occupation matrix for gamma only using dm(double)
 template <>
 void dftu_cal_occup_m(const int iter,
+                      const UnitCell& ucell,
                       const std::vector<std::vector<double>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
                       hamilt::Hamilt<double>* p_ham)
 {
-    GlobalC::dftu.cal_occup_m_gamma(iter, dm, mixing_beta, p_ham);
+    GlobalC::dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
 }
 
 //! dftu occupation matrix for multiple k-points using dm(complex)
 template <>
 void dftu_cal_occup_m(const int iter,
+                      const UnitCell& ucell,
                       const std::vector<std::vector<std::complex<double>>>& dm,
                       const K_Vectors& kv,
                       const double& mixing_beta,
                       hamilt::Hamilt<std::complex<double>>* p_ham)
 {
-    GlobalC::dftu.cal_occup_m_k(iter, dm, kv, mixing_beta, p_ham);
+    GlobalC::dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
 }
 } // namespace ModuleDFTU

@@ -8,7 +8,6 @@ add_library(
     cal_totn.cpp
     cal_vcav.cpp
     cal_vel.cpp
-    corrected_energy.cpp
     minimize_cg.cpp
     sol_force.cpp
 )

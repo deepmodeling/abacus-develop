@@ -8,7 +8,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
-                                           pseudopot_cell_vnl* nlpp,
+                                           const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
                                            ModuleSymmetry::Symmetry* p_symm,
                                            Structure_Factor* p_sf,
@@ -89,10 +89,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, p_sf, 1, pelec->charge);
+    this->stress_loc(sigmaloc, rho_basis, nlpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, nlpp.numeric, pelec->charge);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
@@ -100,7 +100,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // add US term from augmentation charge derivatives
     if (PARAM.globalv.use_uspp)
     {
-        this->stress_us(sigmanl, rho_basis, &GlobalC::ppcell, ucell);
+        this->stress_us(sigmanl, rho_basis, nlpp, ucell);
     }
 
     // vdw term

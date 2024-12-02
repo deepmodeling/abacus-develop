@@ -430,6 +430,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     relax_old.o\
     relax.o\
     line_search.o\
+    bfgs.o\
+    
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\
@@ -438,7 +440,6 @@ OBJS_SURCHEM=surchem.o\
     cal_totn.o\
     cal_vcav.o\
     cal_vel.o\
-    corrected_energy.o\
     minimize_cg.o\
     sol_force.o\
 

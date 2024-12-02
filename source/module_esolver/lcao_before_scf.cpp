@@ -127,7 +127,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell,this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     // 2. density matrix extrapolation
 
@@ -174,7 +174,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, orb_, *this->pw_rho, *this->pw_big);
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -188,6 +188,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
             PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
+            ucell,
             &this->pv,
             this->pelec->pot,
             this->kv,
@@ -262,7 +263,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac, ucell.symm);
+    this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -372,7 +373,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     if( PARAM.inp.rdmft == true )
     {
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
-        rdmft_solver.update_ion(ucell, *(this->pw_rho), GlobalC::ppcell.vloc, this->sf.strucFac);   // add by jghan, 2024-03-16/2024-10-08
+        rdmft_solver.update_ion(ucell, *(this->pw_rho), this->ppcell.vloc, this->sf.strucFac);   // add by jghan, 2024-03-16/2024-10-08
     }
 
     return;

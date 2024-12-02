@@ -5,6 +5,7 @@
 #include "ions_move_bfgs.h"
 #include "ions_move_cg.h"
 #include "ions_move_sd.h"
+#include "bfgs.h"
 
 class Ions_Move_Methods
 {
@@ -20,23 +21,23 @@ class Ions_Move_Methods
                       const double &etot,
                       UnitCell &ucell);
 
-    bool get_converged(void) const
+    bool get_converged() const
     {
         return Ions_Move_Basic::converged;
     }
-    double get_ediff(void) const
+    double get_ediff() const
     {
         return Ions_Move_Basic::ediff;
     }
-    double get_largest_grad(void) const
+    double get_largest_grad() const
     {
         return Ions_Move_Basic::largest_grad;
     }
-    double get_trust_radius(void) const
+    double get_trust_radius() const
     {
         return Ions_Move_Basic::trust_radius;
     }
-    double get_update_iter(void) const
+    double get_update_iter() const
     {
         return Ions_Move_Basic::update_iter;
     }
@@ -45,5 +46,6 @@ class Ions_Move_Methods
     Ions_Move_BFGS bfgs;
     Ions_Move_CG cg;
     Ions_Move_SD sd;
+    BFGS bfgs_trad;
 };
 #endif

@@ -30,6 +30,7 @@ class HamiltLCAO : public Hamilt<TK>
       using TAC = std::pair<int, std::array<int, 3>>;
       HamiltLCAO(Gint_Gamma* GG_in,
           Gint_k* GK_in,
+          const UnitCell& ucell,
           const Parallel_Orbitals* paraV,
           elecstate::Potential* pot_in,
           const K_Vectors& kv_in,
@@ -46,7 +47,11 @@ class HamiltLCAO : public Hamilt<TK>
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb, const std::vector<double>& orb_cutoff);
+    HamiltLCAO(const UnitCell& ucell,  
+               const Parallel_Orbitals* paraV, 
+               const K_Vectors& kv_in, 
+               const TwoCenterIntegrator& intor_overlap_orb, 
+               const std::vector<double>& orb_cutoff);
 
     ~HamiltLCAO()
     {

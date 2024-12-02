@@ -32,6 +32,10 @@ void Ions_Move_Methods::allocate(const int &natom)
         this->cg.allocate();
         this->bfgs.allocate(); // added by pengfei  13-8-8
     }
+    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    {
+        this->bfgs_trad.allocate(natom);       
+    }
     else
     {
         ModuleBase::WARNING("Ions_Move_Methods::init", "the parameter Ions_Move_Basic::relax_method is not correct.");
@@ -69,6 +73,10 @@ void Ions_Move_Methods::cal_movement(const int &istep,
     else if (Ions_Move_Basic::relax_method == "cg_bfgs")
     {
         cg.start(ucell, f, etot); // added by pengfei 13-8-10
+    }
+    else if(Ions_Move_Basic::relax_method == "bfgs_trad")
+    {
+        bfgs_trad.relax_step(f,ucell);        
     }
     else
     {
