@@ -38,7 +38,10 @@ void Record_adj::delete_grid()
 // If multi-k, calculate nnr at the same time.
 // be called only once in an ion-step.
 //--------------------------------------------
-void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vector<double>& orb_cutoff)
+void Record_adj::for_2d(Grid_Driver& grid_d,
+                        Parallel_Orbitals& pv,
+                        bool gamma_only,
+                        const std::vector<double>& orb_cutoff)
 {
 	ModuleBase::TITLE("Record_adj","for_2d");
 	ModuleBase::timer::tick("Record_adj","for_2d");
@@ -73,82 +76,89 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vecto
 		for (int I1 = 0; I1 < atom1->na; ++I1)
 		{
 			tau1 = atom1->tau[I1];
-			//GlobalC::GridD.Find_atom( tau1 );
-			GlobalC::GridD.Find_atom(GlobalC::ucell,  tau1 ,T1, I1);
-			const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            // grid_d.Find_atom( tau1 );
+            grid_d.Find_atom(GlobalC::ucell, tau1, T1, I1);
+            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
             if(!gamma_only) { pv.nlocstart[iat] = pv.nnr;
 }
             
             // (2) search among all adjacent atoms.
-			for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum()+1; ++ad)
-			{
-				const int T2 = GlobalC::GridD.getType(ad);
-				const int I2 = GlobalC::GridD.getNatom(ad);
-				const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
-				tau2 = GlobalC::GridD.getAdjacentTau(ad);
-				dtau = tau2 - tau1;
-				double distance = dtau.norm() * GlobalC::ucell.lat0;
-				double rcut = orb_cutoff[T1] + orb_cutoff[T2];
+for (int ad = 0; ad < grid_d.getAdjacentNum() + 1; ++ad)
+{
+    const int T2 = grid_d.getType(ad);
+    const int I2 = grid_d.getNatom(ad);
+    const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+    tau2 = grid_d.getAdjacentTau(ad);
+    dtau = tau2 - tau1;
+    double distance = dtau.norm() * GlobalC::ucell.lat0;
+    double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
-				bool is_adj = false;
-                if (distance < rcut) { is_adj = true;
-                // there is another possibility that i and j are adjacent atoms.
-				// which is that <i|beta> are adjacents while <beta|j> are also
-				// adjacents, these considerations are only considered in k-point
-				// algorithm, 
-                } else if (distance >= rcut)
-				{
-					for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-					{
-						const int T0 = GlobalC::GridD.getType(ad0);
-						//const int I0 = GlobalC::GridD.getNatom(ad0);
-						//const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
+    bool is_adj = false;
+    if (distance < rcut)
+    {
+        is_adj = true;
+        // there is another possibility that i and j are adjacent atoms.
+        // which is that <i|beta> are adjacents while <beta|j> are also
+        // adjacents, these considerations are only considered in k-point
+        // algorithm,
+    }
+    else if (distance >= rcut)
+    {
+        for (int ad0 = 0; ad0 < grid_d.getAdjacentNum() + 1; ++ad0)
+        {
+            const int T0 = grid_d.getType(ad0);
+            // const int I0 = grid_d.getNatom(ad0);
+            // const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
+            // const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-						tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-						dtau1 = tau0 - tau1;
-						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+            tau0 = grid_d.getAdjacentTau(ad0);
+            dtau1 = tau0 - tau1;
+            double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
+            double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
-						dtau2 = tau0 - tau2;
-						double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
-						double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+            dtau2 = tau0 - tau2;
+            double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+            double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
-						if( distance1 < rcut1 && distance2 < rcut2 )
-						{
-							is_adj = true;
-							break;
-						} // dis1, dis2
-					}
-				}
+            if (distance1 < rcut1 && distance2 < rcut2)
+            {
+                is_adj = true;
+                break;
+            } // dis1, dis2
+        }
+    }
 
-				if(is_adj)
-				{
-                    ++na_each[iat];
-                    if (!gamma_only)
+    if (is_adj)
+    {
+        ++na_each[iat];
+        if (!gamma_only)
+        {
+            for (int ii = 0; ii < atom1->nw * PARAM.globalv.npol; ++ii)
+            {
+                // the index of orbitals in this processor
+                const int iw1_all = start1 + ii;
+                const int mu = pv.global2local_row(iw1_all);
+                if (mu < 0)
+                {
+                    continue;
+                }
+
+                for (int jj = 0; jj < GlobalC::ucell.atoms[T2].nw * PARAM.globalv.npol; ++jj)
+                {
+                    const int iw2_all = start2 + jj;
+                    const int nu = pv.global2local_col(iw2_all);
+                    if (nu < 0)
                     {
-                        for(int ii=0; ii<atom1->nw * PARAM.globalv.npol; ++ii)
-                        {
-                            // the index of orbitals in this processor
-                            const int iw1_all = start1 + ii;
-                            const int mu = pv.global2local_row(iw1_all);
-                            if(mu<0) {continue;
-}
-
-                            for(int jj=0; jj<GlobalC::ucell.atoms[T2].nw * PARAM.globalv.npol; ++jj)
-                            {
-                                const int iw2_all = start2 + jj;
-                                const int nu = pv.global2local_col(iw2_all);
-                                if(nu<0) {continue;
-}
-                                
-                                pv.nlocdim[iat]++;
-                                ++(pv.nnr);
-                            }
-                        }
+                        continue;
                     }
-                }//end is_adj
-            }//end ad
+
+                    pv.nlocdim[iat]++;
+                    ++(pv.nnr);
+                }
+            }
+        }
+    } // end is_adj
+} // end ad
             ++iat;
 		}//end I1
 	}//end T1
@@ -197,12 +207,12 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vecto
 		const int I1 = GlobalC::ucell.iat2ia[iat];
 		{
 			tau1 = atom1->tau[I1];
-			//GlobalC::GridD.Find_atom( tau1 );
-			AdjacentAtomInfo adjs;
-			GlobalC::GridD.Find_atom(GlobalC::ucell,  tau1 ,T1, I1, &adjs);
+            // grid_d.Find_atom( tau1 );
+            AdjacentAtomInfo adjs;
+            grid_d.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
 
-			// (2) search among all adjacent atoms.
-			int cb = 0;
+            // (2) search among all adjacent atoms.
+            int cb = 0;
 			for (int ad = 0; ad < adjs.adj_num+1; ++ad)
 			{
 				const int T2 = adjs.ntype[ad];
@@ -220,12 +230,12 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vecto
 					for (int ad0 = 0; ad0 < adjs.adj_num+1; ++ad0)
 					{
 						const int T0 = adjs.ntype[ad0];
-						//const int I0 = GlobalC::GridD.getNatom(ad0);
-						//const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-						//const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
+                        // const int I0 = grid_d.getNatom(ad0);
+                        // const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
+                        // const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-						tau0 = adjs.adjacent_tau[ad0];
-						dtau1 = tau0 - tau1;
+                        tau0 = adjs.adjacent_tau[ad0];
+                        dtau1 = tau0 - tau1;
 						double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
 						double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
@@ -267,7 +277,7 @@ void Record_adj::for_2d(Parallel_Orbitals &pv, bool gamma_only, const std::vecto
 // This will record the orbitals according to
 // grid division (cut along z direction) 
 //--------------------------------------------
-void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& orb_cutoff)
+void Record_adj::for_grid(Grid_Driver& grid_d, const Grid_Technique& gt, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("Record_adj","for_grid");
 	ModuleBase::timer::tick("Record_adj","for_grid");
@@ -312,11 +322,11 @@ void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& o
 			if(gt.in_this_processor[iat])
 			{	
 				tau1 = atom1->tau[I1];
-				//GlobalC::GridD.Find_atom(tau1);
-				AdjacentAtomInfo adjs;
-				GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
-				for (int ad = 0; ad < adjs.adj_num+1; ad++)
-				{
+                // grid_d.Find_atom(tau1);
+                AdjacentAtomInfo adjs;
+                grid_d.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
+                for (int ad = 0; ad < adjs.adj_num + 1; ad++)
+                {
 					const int T2 = adjs.ntype[ad];
 					const int I2 = adjs.natom[ad];
 					const int iat2 = GlobalC::ucell.itia2iat(T2, I2);
@@ -332,41 +342,41 @@ void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& o
 						bool is_adj = false;
 						if(distance < rcut) { is_adj = true;
 }
-						/*
-						else if(distance >= rcut)
-						{
-                            for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
-                            {
-                                const int T0 = GlobalC::GridD.getType(ad0);
-                                const int I0 = GlobalC::GridD.getNatom(ad0);
-                                const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
-                                const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
+/*
+else if(distance >= rcut)
+{
+    for (int ad0 = 0; ad0 < grid_d.getAdjacentNum()+1; ++ad0)
+    {
+        const int T0 = grid_d.getType(ad0);
+        const int I0 = grid_d.getNatom(ad0);
+        const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
+        const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-                                tau0 = GlobalC::GridD.getAdjacentTau(ad0);
-                                dtau1 = tau0 - tau1;
-                                dtau2 = tau0 - tau2;
+        tau0 = grid_d.getAdjacentTau(ad0);
+        dtau1 = tau0 - tau1;
+        dtau2 = tau0 - tau2;
 
-                                double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                                double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
+        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
 
-                                double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                                double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+        double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+        double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
 
-                                if( distance1 < rcut1 && distance2 < rcut2 )
-                                {
-                                   	is_adj = true; 
-                                    break;
-								} // dis1, dis2
-							}
-						}
-						*/
+        if( distance1 < rcut1 && distance2 < rcut2 )
+        {
+            is_adj = true;
+            break;
+        } // dis1, dis2
+    }
+}
+*/
 
-						// check the distance
-						if(is_adj)
-						{
-							++na_each[ca];
-						}
-					}//end judge 2
+// check the distance
+if (is_adj)
+{
+    ++na_each[ca];
+}
+                    }//end judge 2
 				}//end ad
 			}//end judge 1
 		}//end I1
@@ -402,12 +412,12 @@ void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& o
 			if(gt.in_this_processor[iat])
 			{
 				tau1 = atom1->tau[I1];
-				//GlobalC::GridD.Find_atom(tau1);
-				AdjacentAtomInfo adjs;
-				GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
+                // grid_d.Find_atom(tau1);
+                AdjacentAtomInfo adjs;
+                grid_d.Find_atom(GlobalC::ucell, tau1, T1, I1, &adjs);
 
-				int cb = 0;
-				for (int ad = 0; ad < adjs.adj_num+1; ad++)
+                int cb = 0;
+                for (int ad = 0; ad < adjs.adj_num+1; ad++)
 				{
 					const int T2 = adjs.ntype[ad];
 					const int I2 = adjs.natom[ad];
@@ -432,17 +442,17 @@ void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& o
 							info[ca][cb][4] = I2;
 							++cb;
 						}
-						/*
+                        /*
                         else if(distance >= rcut)
                         {
-                            for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum()+1; ++ad0)
+                            for (int ad0 = 0; ad0 < grid_d.getAdjacentNum()+1; ++ad0)
                             {
-                                const int T0 = GlobalC::GridD.getType(ad0);
-                                const int I0 = GlobalC::GridD.getNatom(ad0);
+                                const int T0 = grid_d.getType(ad0);
+                                const int I0 = grid_d.getNatom(ad0);
                                 const int iat0 = GlobalC::ucell.itia2iat(T0, I0);
                                 const int start0 = GlobalC::ucell.itiaiw2iwt(T0, I0, 0);
 
-                                tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+                                tau0 = grid_d.getAdjacentTau(ad0);
                                 dtau1 = tau0 - tau1;
                                 dtau2 = tau0 - tau2;
 
@@ -454,19 +464,19 @@ void Record_adj::for_grid(const Grid_Technique &gt, const std::vector<double>& o
 
                                 if( distance1 < rcut1 && distance2 < rcut2 )
                                 {
-									info[ca][cb][0] = GlobalC::GridD.getBox(ad).x; 
-									info[ca][cb][1] = GlobalC::GridD.getBox(ad).y; 
-									info[ca][cb][2] = GlobalC::GridD.getBox(ad).z; 
-									info[ca][cb][3] = T2;
-									info[ca][cb][4] = I2;
-									++cb;
-									break;
-								} // dis1, dis2
-							}
+                                    info[ca][cb][0] = grid_d.getBox(ad).x;
+                                    info[ca][cb][1] = grid_d.getBox(ad).y;
+                                    info[ca][cb][2] = grid_d.getBox(ad).z;
+                                    info[ca][cb][3] = T2;
+                                    info[ca][cb][4] = I2;
+                                    ++cb;
+                                    break;
+                                } // dis1, dis2
+                            }
                         }
-						*/
-					}
-				}// end ad
+                        */
+                    }
+                }// end ad
 
 				assert(cb == na_each[ca]);
 			}

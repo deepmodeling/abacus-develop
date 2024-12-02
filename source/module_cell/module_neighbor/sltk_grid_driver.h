@@ -39,43 +39,55 @@ public:
 	//		adjacent of this atom,and store the information
 	//		in 'adj_num','ntype','natom'
 	//==========================================================
-	Grid_Driver():test_deconstructor(0){};
-	Grid_Driver(
-		const int &test_d_in, 
-		const int &test_grid_in);
+  Grid_Driver() : test_deconstructor(0) {};
+  Grid_Driver(const int& test_d_in, const int& test_grid_in);
 
-	~Grid_Driver();
+  ~Grid_Driver();
 
-	//==========================================================
-	// EXPLAIN FOR default parameter `adjs = nullptr`
-	//
-	// This design make Grid_Driver compatible with multi-thread usage
-	// 1. Find_atom store results in Grid_Driver::adj_info
-	//     by default.
-	// 2. And store results into parameter adjs when adjs is
-	//     NOT NULL
-	//==========================================================
-	void Find_atom(
-		const UnitCell &ucell, 
-		const ModuleBase::Vector3<double> &cartesian_posi, 
-		const int &ntype, 
-		const int &nnumber,
-		AdjacentAtomInfo *adjs = nullptr);
+  //==========================================================
+  // EXPLAIN FOR default parameter `adjs = nullptr`
+  //
+  // This design make Grid_Driver compatible with multi-thread usage
+  // 1. Find_atom store results in Grid_Driver::adj_info
+  //     by default.
+  // 2. And store results into parameter adjs when adjs is
+  //     NOT NULL
+  //==========================================================
+  void Find_atom(const UnitCell& ucell,
+                 const ModuleBase::Vector3<double>& cartesian_posi,
+                 const int& ntype,
+                 const int& nnumber,
+                 AdjacentAtomInfo* adjs = nullptr);
 
-	//==========================================================
-	// EXPLAIN : The adjacent information for the input 
-	// cartesian_pos
-	// MEMBER VARIABLES : 
-	// NAME : getAdjacentNum
-	// NAME : getNtype
-	// NAME : getNatom
-	// NAME : getAdjaentTau
-	//==========================================================
-	const int& getAdjacentNum(void)const { return adj_info.adj_num; }
-	const int& getType(const int i) const { return adj_info.ntype[i]; }
-	const int& getNatom(const int i) const { return adj_info.natom[i]; }
-	const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const { return adj_info.adjacent_tau[i]; } 
-	const ModuleBase::Vector3<int>& getBox(const int i) const {return adj_info.box[i];}
+  //==========================================================
+  // EXPLAIN : The adjacent information for the input
+  // cartesian_pos
+  // MEMBER VARIABLES :
+  // NAME : getAdjacentNum
+  // NAME : getNtype
+  // NAME : getNatom
+  // NAME : getAdjaentTau
+  //==========================================================
+  const int& getAdjacentNum(void) const
+  {
+      return adj_info.adj_num;
+  }
+  const int& getType(const int i) const
+  {
+      return adj_info.ntype[i];
+  }
+  const int& getNatom(const int i) const
+  {
+      return adj_info.natom[i];
+  }
+  const ModuleBase::Vector3<double>& getAdjacentTau(const int i) const
+  {
+      return adj_info.adjacent_tau[i];
+  }
+  const ModuleBase::Vector3<int>& getBox(const int i) const
+  {
+      return adj_info.box[i];
+  }
 
 private:
 

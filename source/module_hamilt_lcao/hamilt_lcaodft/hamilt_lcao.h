@@ -3,13 +3,15 @@
 
 #include "module_basis/module_nao/two_center_bundle.h"
 #include "module_cell/klist.h"
+#include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+
 #include <vector>
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
@@ -29,35 +31,41 @@ class HamiltLCAO : public Hamilt<TK>
      */
       using TAC = std::pair<int, std::array<int, 3>>;
       HamiltLCAO(Gint_Gamma* GG_in,
-          Gint_k* GK_in,
-          const Parallel_Orbitals* paraV,
-          elecstate::Potential* pot_in,
-          const K_Vectors& kv_in,
-          const TwoCenterBundle& two_center_bundle,
-          const LCAO_Orbitals& orb,
-          elecstate::DensityMatrix<TK, double>* DM_in
+                 Gint_k* GK_in,
+                 Grid_Driver& grid_d,
+                 const Parallel_Orbitals* paraV,
+                 elecstate::Potential* pot_in,
+                 const K_Vectors& kv_in,
+                 const TwoCenterBundle& two_center_bundle,
+                 const LCAO_Orbitals& orb,
+                 elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
-          , const int istep
-          , int* exx_two_level_step = nullptr
-          , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
-          , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                 ,
+                 const int istep,
+                 int* exx_two_level_step = nullptr,
+                 std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+                 std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
       );
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-    HamiltLCAO(const Parallel_Orbitals* paraV, const K_Vectors& kv_in, const TwoCenterIntegrator& intor_overlap_orb, const std::vector<double>& orb_cutoff);
+      HamiltLCAO(Grid_Driver& grid_d,
+                 const Parallel_Orbitals* paraV,
+                 const K_Vectors& kv_in,
+                 const TwoCenterIntegrator& intor_overlap_orb,
+                 const std::vector<double>& orb_cutoff);
 
-    ~HamiltLCAO()
-    {
-        if (this->ops != nullptr)
-        {
-            delete this->ops;
-        }
-        delete this->hR;
-        delete this->sR;
-        delete this->hsk;
-    }
+      ~HamiltLCAO()
+      {
+          if (this->ops != nullptr)
+          {
+              delete this->ops;
+          }
+          delete this->hR;
+          delete this->sR;
+          delete this->hsk;
+      }
 
     /// get pointer of Operator<TK> ops
     Operator<TK>*& getOperator();
