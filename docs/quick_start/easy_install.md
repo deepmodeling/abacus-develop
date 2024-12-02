@@ -54,10 +54,10 @@ Please refer to our [guide](https://github.com/deepmodeling/abacus-develop/wiki/
 
 We offer a set of [toolchain](https://github.com/deepmodeling/abacus-develop/tree/develop/toolchain)
 scripts to compile and install all the requirements
-automatically and suitable for machine characteristic in an online or offline way.
-The toolchain can be downloaded with ABACUS repo, which is easily used and can
-have a convenient installation under HPC environment in both `GNU` or `Intel-oneAPI` toolchain.
-Sometimes, ABACUS by toolchain installation may have highly efficient performance.
+automatically and suitable for machine characteristic in an online or offline way. 
+The toolchain can be downloaded with ABACUS repo, and users can easily compile the requirements by running *toolchain_[gnu,intel].sh* and ABACUS itself by running *build_abacus_[gnu,intel].sh* script in the toolchain directory in both `GNU` and `Intel-oneAPI` toolchain.
+Sometimes, ABACUS by toolchain installation may have better efficient performance due to the suitable compiled dependencies.
+
 Users should read the README in toolchain directory for most of the information before use, and a tutorial for using this toolchain can be accessed in [bohrium-notebook](https://nb.bohrium.dp.tech/detail/5215742477) as reference.
 
 > Notice: the toolchain is under development, please let we know if you encounter any problem in using this toolchain by raising issue or contacting us.
@@ -157,6 +157,12 @@ If ABACUS is installed into a custom directory using `CMAKE_INSTALL_PREFIX`, ple
 
 ```bash
 export PATH=/my-install-dir/:$PATH
+```
+
+If ABACUS is installed by toolchain, there will be an environment script in the toolchain directory named as *abacus_env.sh*. You can source it to set the environment variables.
+
+```bash
+source /path/to/abacus/toolchain/abacus_env.sh
 ```
 
 Please set OpenMP threads by setting environment variable:
