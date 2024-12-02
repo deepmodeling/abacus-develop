@@ -25,9 +25,12 @@ Atom_input::Atom_input(std::ofstream& ofs_in,
         ModuleBase::GlobalFunc::OUT(ofs_in, "Amount(atom number)", amount);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Periodic_boundary", periodic_boundary);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Searching radius(lat0)", radius);
-        ModuleBase::WARNING_QUIT("atom_arrange::init", " search radius < 0,forbidden");
     }
 
+    if (radius < 0.0)
+    {
+        ModuleBase::WARNING_QUIT("atom_arrange::init", " search radius < 0,forbidden");
+    }
     // random selection, in order to estimate again.
     this->x_min = ucell.atoms[0].tau[0].x;
     this->y_min = ucell.atoms[0].tau[0].y;
