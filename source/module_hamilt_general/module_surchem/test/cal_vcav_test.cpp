@@ -30,10 +30,11 @@ class cal_vcav_test : public testing::Test
 {
   protected:
     surchem solvent_model;
+    UnitCell ucell;
 };
 TEST_F(cal_vcav_test, lapl_rho)
 {
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
@@ -61,7 +62,7 @@ TEST_F(cal_vcav_test, lapl_rho)
 #ifdef __MPI
     GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -93,7 +94,7 @@ TEST_F(cal_vcav_test, lapl_rho)
         GlobalC::rhopw->recip2real(aux, aux);
         for (int ir = 0; ir < nrxx; ir++)
         {
-            lapn[ir] -= aux[ir].real() * GlobalC::ucell.tpiba2;
+            lapn[ir] -= aux[ir].real() * ucell.tpiba2;
         }
     }
 
@@ -140,7 +141,7 @@ TEST_F(cal_vcav_test, shape_gradn)
 
 TEST_F(cal_vcav_test, createcavity)
 {
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
@@ -168,7 +169,7 @@ TEST_F(cal_vcav_test, createcavity)
 #ifdef __MPI
     GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -190,7 +191,7 @@ TEST_F(cal_vcav_test, createcavity)
         PS_TOTN[ig] = 1e-7;
     }
 
-    solvent_model.createcavity(GlobalC::ucell, GlobalC::rhopw, PS_TOTN, vwork);
+    solvent_model.createcavity(ucell, GlobalC::rhopw, PS_TOTN, vwork);
 
     EXPECT_NEAR(vwork[0], 4.8556305312, 1e-10);
     EXPECT_NEAR(vwork[1], -2.1006480538, 1e-10);
@@ -201,7 +202,7 @@ TEST_F(cal_vcav_test, createcavity)
 
 TEST_F(cal_vcav_test, cal_vcav)
 {
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     std::string precision_flag, device_flag;
     precision_flag = "double";
@@ -229,7 +230,7 @@ TEST_F(cal_vcav_test, cal_vcav)
 #ifdef __MPI
     GlobalC::rhopw->initmpi(1, 0, POOL_WORLD);
 #endif
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -252,7 +253,7 @@ TEST_F(cal_vcav_test, cal_vcav)
     int nspin = 2;
     solvent_model.Vcav.create(nspin, nrxx);
 
-    solvent_model.cal_vcav(GlobalC::ucell, GlobalC::rhopw, PS_TOTN, nspin);
+    solvent_model.cal_vcav(ucell, GlobalC::rhopw, PS_TOTN, nspin);
 
     EXPECT_NEAR(solvent_model.Vcav(0, 0), 4.8556305312, 1e-10);
     EXPECT_NEAR(solvent_model.Vcav(0, 1), -2.1006480538, 1e-10);

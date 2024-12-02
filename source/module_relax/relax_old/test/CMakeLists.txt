@@ -1,6 +1,7 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
 
+
 AddTest(
   TARGET lattice_change_methods_test
   LIBS parameter ${math_libs} base device 
@@ -25,13 +26,14 @@ AddTest(
 AddTest(
   TARGET bfgs_basic_test
   LIBS parameter ${math_libs} base device 
-  SOURCES bfgs_basic_test.cpp ../bfgs_basic.cpp
+  SOURCES bfgs_basic_test.cpp ../bfgs_basic.cpp 
 )
 
+
 AddTest(
-  TARGET ions_move_methods_test
+  TARGET bfgs_test
   LIBS parameter ${math_libs} base device 
-  SOURCES ions_move_methods_test.cpp ../ions_move_methods.cpp ../ions_move_basic.cpp ../ions_move_bfgs.cpp ../ions_move_cg.cpp ../ions_move_sd.cpp ../bfgs_basic.cpp
+  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp
 )
 
 AddTest(

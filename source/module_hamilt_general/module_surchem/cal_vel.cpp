@@ -17,6 +17,7 @@ void shape_gradn(const double* PS_TOTN_real, const ModulePW::PW_Basis* rho_basis
 }
 
 void eps_pot(const double* PS_TOTN_real,
+             const double& tpiba,
              const complex<double>* phi,
              const ModulePW::PW_Basis* rho_basis,
              double* d_eps,
@@ -36,7 +37,7 @@ void eps_pot(const double* PS_TOTN_real,
     double *phisq = new double[rho_basis->nrxx];
 
     // nabla phi
-    XC_Functional::grad_rho(phi, nabla_phi, rho_basis, GlobalC::ucell.tpiba);
+    XC_Functional::grad_rho(phi, nabla_phi, rho_basis, tpiba);
 
     for (int ir = 0; ir < rho_basis->nrxx; ir++)
     {
@@ -118,7 +119,7 @@ ModuleBase::matrix surchem::cal_vel(const UnitCell& cell,
     this->Ael *= cell.omega / rho_basis->nxyz;
 
     // the 2nd item of tmp_Vel
-    eps_pot(PS_TOTN_real, Sol_phi, rho_basis, epsilon, epspot);
+    eps_pot(PS_TOTN_real, cell.tpiba, Sol_phi, rho_basis, epsilon, epspot);
 
     for (int i = 0; i < rho_basis->nrxx; i++)
     {

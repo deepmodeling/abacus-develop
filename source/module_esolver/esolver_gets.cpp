@@ -39,7 +39,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // 1.3) Setup k-points according to symmetry.
-    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec,GlobalV::ofs_running);
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::setup_parameters(ucell, this->kv);
@@ -101,14 +101,15 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                          PARAM.inp.test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(GlobalC::GridD, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell, GlobalC::GridD, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {
         if (PARAM.inp.nspin == 4)
         {
             this->p_hamilt
-                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(GlobalC::GridD,
+                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
+                                                                                     GlobalC::GridD,
                                                                                      &this->pv,
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
@@ -118,7 +119,8 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
         else
         {
-            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(GlobalC::GridD,
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
+                                                                                  GlobalC::GridD,
                                                                                   &this->pv,
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),

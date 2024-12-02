@@ -26,6 +26,7 @@ class cal_pseudo_test : public testing::Test
 {
   protected:
     surchem solvent_model;
+    UnitCell ucell;
 };
 
 TEST_F(cal_pseudo_test, gauss_charge)
@@ -41,7 +42,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
     double wfcecut;
     bool gamma_only;
 
-    Setcell::setupcell(GlobalC::ucell);
+    Setcell::setupcell(ucell);
 
     wfcecut = 80;
     gamma_only = false;
@@ -60,7 +61,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
 
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
@@ -75,7 +76,7 @@ TEST_F(cal_pseudo_test, gauss_charge)
     Structure_Factor sf;
     sf.nbspline = -1;
 
-    solvent_model.gauss_charge(GlobalC::ucell, GlobalC::rhopw, N, &sf);
+    solvent_model.gauss_charge(ucell, GlobalC::rhopw, N, &sf);
 
     EXPECT_NEAR(N[14].real(), 0.002, 1e-9);
     EXPECT_NEAR(N[16].real(), -0.001573534, 1e-9);
@@ -88,7 +89,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     std::string precision_flag, device_flag;
     precision_flag = "double";
     device_flag = "cpu";
-
+    Setcell::setupcell(ucell);
     ModulePW::PW_Basis pwtest(device_flag, precision_flag);
     GlobalC::rhopw = &pwtest;
     ModuleBase::Matrix3 latvec;
@@ -115,7 +116,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
 #endif
     // pwtest.initgrids(lat0,latvec,wfcecut);
 
-    GlobalC::rhopw->initgrids(GlobalC::ucell.lat0, GlobalC::ucell.latvec, wfcecut);
+    GlobalC::rhopw->initgrids(ucell.lat0, ucell.latvec, wfcecut);
     GlobalC::rhopw->initparameters(gamma_only, wfcecut, distribution_type, xprime);
     GlobalC::rhopw->setuptransform();
     GlobalC::rhopw->collect_local_pw();
@@ -135,7 +136,7 @@ TEST_F(cal_pseudo_test, cal_pseudo)
     }
 
     complex<double>* PS_TOTN = new complex<double>[npw];
-    solvent_model.cal_pseudo(GlobalC::ucell, GlobalC::rhopw, Porter_g, PS_TOTN, &sf);
+    solvent_model.cal_pseudo(ucell, GlobalC::rhopw, Porter_g, PS_TOTN, &sf);
 
     EXPECT_NEAR(PS_TOTN[16].real(), 0.098426466, 1e-9);
     EXPECT_NEAR(PS_TOTN[14].real(), 0.102, 1e-9);

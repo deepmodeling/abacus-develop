@@ -163,7 +163,7 @@ struct Input_para
     double press3 = 0;
     double relax_bfgs_w1 = 0.01;     ///< wolfe condition 1
     double relax_bfgs_w2 = 0.5;      ///< wolfe condition 2
-    double relax_bfgs_rmax = 0.8;    ///< trust radius max
+    double relax_bfgs_rmax = 0.2;    ///< trust radius max
     double relax_bfgs_rmin = 1e-05;  ///< trust radius min
     double relax_bfgs_init = 0.5;    ///< initial move
     std::string fixed_axes = "None"; ///< which axes are fixed

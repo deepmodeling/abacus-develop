@@ -87,7 +87,7 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
 {
 }
 

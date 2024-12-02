@@ -8,7 +8,7 @@ void surchem::gauss_charge(const UnitCell& cell,
                            complex<double>* N,
                            Structure_Factor* sf)
 {
-    sf->setup_structure_factor(&GlobalC::ucell, rho_basis); // call strucFac(ntype,ngmc)
+    sf->setup_structure_factor(&cell, rho_basis); // call strucFac(ntype,ngmc)
     for (int it = 0; it < cell.ntype; it++)
     {
         double RCS = GetAtom.atom_RCS[cell.atoms[it].ncpp.psd];

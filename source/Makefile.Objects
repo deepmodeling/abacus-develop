@@ -430,6 +430,8 @@ OBJS_RELAXATION=bfgs_basic.o\
     relax_old.o\
     relax.o\
     line_search.o\
+    bfgs.o\
+    
 
 OBJS_SURCHEM=surchem.o\
     H_correction_pw.o\

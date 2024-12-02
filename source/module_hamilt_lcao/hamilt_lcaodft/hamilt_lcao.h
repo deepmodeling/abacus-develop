@@ -29,55 +29,72 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of Hamiltonian for LCAO base
      * HR and SR will be allocated with Operators
      */
-      using TAC = std::pair<int, std::array<int, 3>>;
-      HamiltLCAO(Gint_Gamma* GG_in,
-                 Gint_k* GK_in,
-                 Grid_Driver& grid_d,
-                 const Parallel_Orbitals* paraV,
-                 elecstate::Potential* pot_in,
-                 const K_Vectors& kv_in,
-                 const TwoCenterBundle& two_center_bundle,
-                 const LCAO_Orbitals& orb,
-                 elecstate::DensityMatrix<TK, double>* DM_in
+    using TAC = std::pair<int, std::array<int, 3>>;
+    HamiltLCAO(Gint_Gamma* GG_in,
+               Gint_k* GK_in,
+               const UnitCell& ucell,
+               Grid_Driver& grid_d,
+               const Parallel_Orbitals* paraV,
+               elecstate::Potential* pot_in,
+               const K_Vectors& kv_in,
+               const TwoCenterBundle& two_center_bundle,
+               const LCAO_Orbitals& orb,
+               elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __EXX
-                 ,
-                 const int istep,
-                 int* exx_two_level_step = nullptr,
-                 std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-                 std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+               ,
+               const int istep,
+               int* exx_two_level_step = nullptr,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
-      );
+    );
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
-      HamiltLCAO(Grid_Driver& grid_d,
-                 const Parallel_Orbitals* paraV,
-                 const K_Vectors& kv_in,
-                 const TwoCenterIntegrator& intor_overlap_orb,
-                 const std::vector<double>& orb_cutoff);
+    HamiltLCAO(const UnitCell& ucell,
+               Grid_Driver& grid_d,
+               const Parallel_Orbitals* paraV,
+               const K_Vectors& kv_in,
+               const TwoCenterIntegrator& intor_overlap_orb,
+               const std::vector<double>& orb_cutoff);
 
-      ~HamiltLCAO()
-      {
-          if (this->ops != nullptr)
-          {
-              delete this->ops;
-          }
-          delete this->hR;
-          delete this->sR;
-          delete this->hsk;
-      }
+    ~HamiltLCAO()
+    {
+        if (this->ops != nullptr)
+        {
+            delete this->ops;
+        }
+        delete this->hR;
+        delete this->sR;
+        delete this->hsk;
+    }
 
     /// get pointer of Operator<TK> ops
     Operator<TK>*& getOperator();
     /// get hk-pointer
-    TK* getHk() const{return this->hsk->get_hk();}
+    TK* getHk() const
+    {
+        return this->hsk->get_hk();
+    }
     /// get sk-pointer
-    TK* getSk() const{return this->hsk->get_sk();}
-    int get_size_hsk() const{return this->hsk->get_size();}
+    TK* getSk() const
+    {
+        return this->hsk->get_sk();
+    }
+    int get_size_hsk() const
+    {
+        return this->hsk->get_size();
+    }
     /// get HR pointer of *this->hR, which is a HContainer<TR> and contains H(R)
-    HContainer<TR>*& getHR(){return this->hR;}
+    HContainer<TR>*& getHR()
+    {
+        return this->hR;
+    }
     /// get SR pointer of *this->sR, which is a HContainer<TR> and contains S(R)
-    HContainer<TR>*& getSR(){return this->sR;}
+    HContainer<TR>*& getSR()
+    {
+        return this->sR;
+    }
     /// refresh the status of HR
     void refresh() override;
 

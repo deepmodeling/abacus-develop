@@ -181,7 +181,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     {
         this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
         this->eig_ks.create(this->kv.get_nks(), this->nbands);
-        const int start_band = this->nocc_max - std::max(nocc[0], nocc[1]);
+        const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
         for (int ik = 0;ik < this->kv.get_nks();++ik)
         {
             Cpxgemr2d(this->nbasis, this->nbands, &(*ks_sol.psi)(ik, 0, 0), 1, start_band + 1, ks_sol.pv.desc_wfc,
