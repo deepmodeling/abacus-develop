@@ -447,7 +447,9 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
                          this->pelec->ekb.c,
                          GlobalV::RANK_IN_POOL,
                          GlobalV::NPROC_IN_POOL,
-                         skip_charge);
+                         skip_charge,
+                         ucell.tpiba,
+                         ucell.nat);
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)

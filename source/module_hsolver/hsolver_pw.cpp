@@ -28,7 +28,8 @@ namespace hsolver
 
 #ifdef USE_PAW
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
+void HSolverPW<T, Device>::paw_func_in_kloop(const int ik,
+                                             const double tpiba)
 {
     if (this->use_paw)
     {
@@ -68,7 +69,7 @@ void HSolverPW<T, Device>::paw_func_in_kloop(const int ik)
                                     this->wfc_basis->get_ig2iy(ik).data(),
                                     this->wfc_basis->get_ig2iz(ik).data(),
                                     (const double**)kpg,
-                                    GlobalC::ucell.tpiba,
+                                    tpiba,
                                     (const double**)gcar);
 
         std::vector<double>().swap(kpt);
@@ -96,7 +97,10 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes)
+void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, 
+                                                elecstate::ElecState* pes,
+                                                const double tpiba,
+                                                const int nat)
 {
     if (this->use_paw)
     {
@@ -144,7 +148,7 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
                                         this->wfc_basis->get_ig2iy(ik).data(),
                                         this->wfc_basis->get_ig2iz(ik).data(),
                                         (const double**)kpg,
-                                        GlobalC::ucell.tpiba,
+                                        tpiba,
                                         (const double**)gcar);
 
             std::vector<double>().swap(kpt);
@@ -177,7 +181,7 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
         {
             GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-            for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+            for (int iat = 0; iat < nat; iat++)
             {
                 GlobalC::paw_cell.set_rhoij(iat,
                                             nrhoijsel[iat],
@@ -189,7 +193,7 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, elecst
 #else
         GlobalC::paw_cell.get_rhoijp(rhoijp, rhoijselect, nrhoijsel);
 
-        for (int iat = 0; iat < GlobalC::ucell.nat; iat++)
+        for (int iat = 0; iat < nat; iat++)
         {
             GlobalC::paw_cell.set_rhoij(iat,
                                         nrhoijsel[iat],
@@ -255,7 +259,9 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  double* out_eigenvalues,
                                  const int rank_in_pool_in,
                                  const int nproc_in_pool_in,
-                                 const bool skip_charge)
+                                 const bool skip_charge,
+                                 const double tpiba,
+                                 const int nat)
 {
     ModuleBase::TITLE("HSolverPW", "solve");
     ModuleBase::timer::tick("HSolverPW", "solve");
@@ -282,7 +288,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         pHamilt->updateHk(ik);
 
 #ifdef USE_PAW
-        this->paw_func_in_kloop(ik);
+        this->paw_func_in_kloop(ik,tpiba);
 #endif
 
         /// update psi pointer for each k point
@@ -341,7 +347,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
-        this->paw_func_after_kloop(psi, pes);
+        this->paw_func_after_kloop(psi, pes,tpiba,nat);
 #endif
 
         ModuleBase::timer::tick("HSolverPW", "solve");

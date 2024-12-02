@@ -47,7 +47,9 @@ class HSolverPW
                double* out_eigenvalues,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
-               const bool skip_charge);
+               const bool skip_charge,
+               const double tpiba,
+               const int nat);
 
   protected:
     // diago caller
@@ -89,11 +91,12 @@ class HSolverPW
     std::vector<double> ethr_band;
 
 #ifdef USE_PAW
-    void paw_func_in_kloop(const int ik);
+    void paw_func_in_kloop(const int ik,
+                           const double tpiba);
 
     void call_paw_cell_set_currentk(const int ik);
 
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
 #endif
 };
 
