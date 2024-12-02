@@ -13,9 +13,9 @@ class MeshGridInfo
     public:
         // constructor
         MeshGridInfo(
-            const Vector3& meshgrid_vec1,
-            const Vector3& meshgrid_vec2,
-            const Vector3& meshgrid_vec3)
+            const Vec3d& meshgrid_vec1,
+            const Vec3d& meshgrid_vec2,
+            const Vec3d& meshgrid_vec3)
             : meshgrid_vec1_(meshgrid_vec1),
               meshgrid_vec2_(meshgrid_vec2),
               meshgrid_vec3_(meshgrid_vec3)
@@ -38,17 +38,17 @@ class MeshGridInfo
             };
         
         // getter functions
-        const Vector3 &get_vec1() const { return meshgrid_vec1_; };
-        const Vector3 &get_vec2() const { return meshgrid_vec2_; };
-        const Vector3 &get_vec3() const { return meshgrid_vec3_; };
+        const Vec3d &get_vec1() const { return meshgrid_vec1_; };
+        const Vec3d &get_vec2() const { return meshgrid_vec2_; };
+        const Vec3d &get_vec3() const { return meshgrid_vec3_; };
         const Matrix3 &get_latvec0() const { return meshgrid_latvec0_; };
         const Matrix3 &get_GT() const { return meshgrid_GT_; };
 
     private:
         // basis vectors of meshgrid
-        Vector3 meshgrid_vec1_;
-        Vector3 meshgrid_vec2_;
-        Vector3 meshgrid_vec3_;
+        Vec3d meshgrid_vec1_;
+        Vec3d meshgrid_vec2_;
+        Vec3d meshgrid_vec3_;
 
         // used to convert the (i, j, k) index of the meshgrid to the Cartesian coordinate
         // if meshrid_vec1_ is row vector,

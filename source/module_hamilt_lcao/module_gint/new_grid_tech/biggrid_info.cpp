@@ -5,9 +5,9 @@ namespace Gint
 {
 
 BigGridInfo::BigGridInfo(
-    const Vector3& biggrid_vec1,
-    const Vector3& biggrid_vec2,
-    const Vector3& biggrid_vec3,
+    const Vec3d& biggrid_vec1,
+    const Vec3d& biggrid_vec2,
+    const Vec3d& biggrid_vec3,
     const int nmx, const int nmy, const int nmz)
     : biggrid_vec1_(biggrid_vec1),
       biggrid_vec2_(biggrid_vec2),

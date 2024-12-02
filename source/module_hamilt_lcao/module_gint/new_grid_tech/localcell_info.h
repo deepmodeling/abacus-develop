@@ -32,16 +32,16 @@ class LocalCellInfo
         //----------------------------------
 
         // transform the 3D index of a big grid in the local cell to the 3D index in the local cell
-        int biggrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const;
+        int biggrid_idx_3Dto1D(const Vec3i index_3d) const;
 
         // transform the 1D index of a big grid in the local cell to the 1D index in the local cell
-        ModuleBase::Vector3<int> biggrid_idx_1Dto3D(const int index_1d) const;
+        Vec3i biggrid_idx_1Dto3D(const int index_1d) const;
 
         // transform the 3D index of a big grid in the local cell to the 3D index in the unit cell
-        ModuleBase::Vector3<int> get_biggrid_global_idx(const ModuleBase::Vector3<int> index_3d) const;
+        Vec3i get_biggrid_ucell_idx(const Vec3i index_3d) const;
 
         // transform the 1D index of a big grid in the local cell to the 1D index in the unit cell
-        int get_biggrid_global_idx(const int index_1d) const;
+        int get_biggrid_ucell_idx(const int index_1d) const;
 
 
         //-----------------------------------
@@ -49,16 +49,16 @@ class LocalCellInfo
         //-----------------------------------
 
         // transform the 3D index of a meshgrid in the local cell to the 3D index in the local cell
-        int meshgrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const;
+        int meshgrid_idx_3Dto1D(const Vec3i index_3d) const;
 
         // transform the 1D index of a meshgrid in the local cell to the 1D index in the local cell
-        ModuleBase::Vector3<int> meshgrid_idx_1Dto3D(const int index_1d) const;
+        Vec3i meshgrid_idx_1Dto3D(const int index_1d) const;
 
         // transform the 3D index of a meshgrid in the local cell to the 3D index in the unit cell
-        ModuleBase::Vector3<int> get_meshgrid_global_idx(const ModuleBase::Vector3<int> index_3d) const;
+        Vec3i get_meshgrid_ucell_idx(const Vec3i index_3d) const;
 
         // transform the 1D index of a meshgrid in the local cell to the 1D index in the unit cell
-        int get_meshgrid_global_idx(const int index_1d) const;
+        int get_meshgrid_ucell_idx(const int index_1d) const;
 
     private:
         //-------------------------------

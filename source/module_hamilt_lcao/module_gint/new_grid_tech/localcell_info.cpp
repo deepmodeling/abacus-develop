@@ -23,56 +23,56 @@ namespace Gint
     // functions related to the big grid
     //----------------------------------
 
-    int LocalCellInfo::biggrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const
+    int LocalCellInfo::biggrid_idx_3Dto1D(const Vec3i index_3d) const
     {
         return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
     }
 
-    ModuleBase::Vector3<int> LocalCellInfo::biggrid_idx_1Dto3D(const int index_1d) const
+    Vec3i LocalCellInfo::biggrid_idx_1Dto3D(const int index_1d) const
     {
         return Gint::index1Dto3D(index_1d, nbx_, nby_, nbz_);
     }
 
-    ModuleBase::Vector3<int> LocalCellInfo::get_biggrid_global_idx(const ModuleBase::Vector3<int> index_3d) const
+    Vec3i LocalCellInfo::get_biggrid_ucell_idx(const Vec3i index_3d) const
     {
-        return ModuleBase::Vector3<int>(
+        return Vec3i(
             startind_bx_ + index_3d.x,
             startind_by_ + index_3d.y,
             startind_bz_ + index_3d.z);
     }
 
-    int LocalCellInfo::get_biggrid_global_idx(const int index_1d) const
+    int LocalCellInfo::get_biggrid_ucell_idx(const int index_1d) const
     {
-        ModuleBase::Vector3<int> global_idx_3d = get_biggrid_global_idx(biggrid_idx_1Dto3D(index_1d));
-        return unitcell_info_->biggrid_idx_3Dto1D(global_idx_3d);
+        Vec3i ucell_idx_3d = get_biggrid_ucell_idx(biggrid_idx_1Dto3D(index_1d));
+        return unitcell_info_->biggrid_idx_3Dto1D(ucell_idx_3d);
     }
 
     //----------------------------------
     // functions related to the meshgrid
     //----------------------------------
 
-    int LocalCellInfo::meshgrid_idx_3Dto1D(const ModuleBase::Vector3<int> index_3d) const
+    int LocalCellInfo::meshgrid_idx_3Dto1D(const Vec3i index_3d) const
     {
         return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
     }
 
-    ModuleBase::Vector3<int> LocalCellInfo::meshgrid_idx_1Dto3D(const int index_1d) const
+    Vec3i LocalCellInfo::meshgrid_idx_1Dto3D(const int index_1d) const
     {
         return Gint::index1Dto3D(index_1d, nmx_, nmy_, nmz_);
     }
 
-    ModuleBase::Vector3<int> LocalCellInfo::get_meshgrid_global_idx(const ModuleBase::Vector3<int> index_3d) const
+    Vec3i LocalCellInfo::get_meshgrid_ucell_idx(const Vec3i index_3d) const
     {
-        return ModuleBase::Vector3<int>(
+        return Vec3i(
             startind_mx_ + index_3d.x,
             startind_my_ + index_3d.y,
             startind_mz_ + index_3d.z);
     }
 
-    int LocalCellInfo::get_meshgrid_global_idx(const int index_1d) const
+    int LocalCellInfo::get_meshgrid_ucell_idx(const int index_1d) const
     {
-        ModuleBase::Vector3<int> global_idx_3d = get_meshgrid_global_idx(meshgrid_idx_1Dto3D(index_1d));
-        return unitcell_info_->meshgrid_idx_3Dto1D(global_idx_3d);
+        Vec3i ucell_idx_3d = get_meshgrid_ucell_idx(meshgrid_idx_1Dto3D(index_1d));
+        return unitcell_info_->meshgrid_idx_3Dto1D(ucell_idx_3d);
     }
 
 
