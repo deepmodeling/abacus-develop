@@ -47,6 +47,7 @@ list(APPEND depend_files
   ../../module_base/parallel_reduce.cpp
   ../../module_base/parallel_global.cpp
   ../../module_base/parallel_comm.cpp
+  ../../module_elecstate/read_pseudo.cpp
 )
 
 AddTest(

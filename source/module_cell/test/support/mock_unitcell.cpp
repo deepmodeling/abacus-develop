@@ -68,8 +68,6 @@ int UnitCell::read_atom_species(std::ifstream& ifa,
                                 std::ofstream& ofs_running) {
     return 0;
 }
-void UnitCell::read_cell_pseudopots(const std::string& pp_dir,
-                                    std::ofstream& log) {}
 bool UnitCell::read_atom_positions(std::ifstream& ifpos,
                                    std::ofstream& ofs_running,
                                    std::ofstream& ofs_warning) {
@@ -94,7 +92,6 @@ void UnitCell::read_orb_file(int it,
                              std::string& orb_file,
                              std::ofstream& ofs_running,
                              Atom* atom) {}
-void UnitCell::read_pseudo(std::ofstream& ofs) {}
 int UnitCell::find_type(const std::string& label) { return 0; }
 void UnitCell::print_tau() const {}
 void UnitCell::print_stru_file(const std::string& fn,

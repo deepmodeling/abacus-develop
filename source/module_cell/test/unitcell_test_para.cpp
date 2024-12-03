@@ -7,6 +7,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "module_cell/unitcell.h"
+#include "module_elecstate/read_pseudo.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -93,7 +94,7 @@ class UcellTest : public ::testing::Test
 #ifdef __MPI
 TEST_F(UcellTest, BcastUnitcell2)
 {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     ucell->bcast_unitcell2();
     if (GlobalV::MY_RANK != 0)
     {
@@ -153,7 +154,7 @@ TEST_F(UcellTest, ReadPseudo)
 {
     PARAM.input.pseudo_dir = pp_dir;
     PARAM.input.out_element_info = true;
-    ucell->read_pseudo(ofs);
+    elecstate::read_pseudo(ofs, *ucell);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

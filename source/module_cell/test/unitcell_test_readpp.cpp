@@ -8,6 +8,7 @@
 #include "module_base/mathzone.h"
 #include "module_cell/check_atomic_stru.h"
 #include "module_cell/unitcell.h"
+#include "module_elecstate/read_pseudo.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -136,7 +137,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning1) {
     PARAM.input.lspinorb = true;
     ucell->pseudo_fn[1] = "H_sr.upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -147,7 +148,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning1) {
 TEST_F(UcellDeathTest, ReadCellPPWarning2) {
     pp_dir = "./arbitrary/";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -158,7 +159,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning2) {
 TEST_F(UcellDeathTest, ReadCellPPWarning3) {
     ucell->pseudo_type[0] = "upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -169,7 +170,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning3) {
 TEST_F(UcellDeathTest, ReadCellPPWarning4) {
     PARAM.input.dft_functional = "LDA";
     testing::internal::CaptureStdout();
-    EXPECT_NO_THROW(ucell->read_cell_pseudopots(pp_dir, ofs));
+    EXPECT_NO_THROW(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("dft_functional readin is: LDA"));
     EXPECT_THAT(output,
@@ -181,7 +182,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning4) {
 TEST_F(UcellDeathTest, ReadCellPPWarning5) {
     ucell->pseudo_type[0] = "upf0000";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_cell_pseudopots(pp_dir, ofs),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -190,7 +191,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning5) {
 
 TEST_F(UcellTest, ReadCellPP) {
     ucell->atoms[1].flag_empty_element = true;
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_EQ(ucell->atoms[0].ncpp.pp_type, "NC");
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so); // becomes false in average_p
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -213,7 +214,7 @@ TEST_F(UcellTest, ReadCellPP) {
 }
 
 TEST_F(UcellTest, CalMeshx) {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     ucell->cal_meshx();
     EXPECT_EQ(ucell->atoms[0].ncpp.msh, 1247);
     EXPECT_EQ(ucell->atoms[1].ncpp.msh, 1165);
@@ -221,7 +222,7 @@ TEST_F(UcellTest, CalMeshx) {
 }
 
 TEST_F(UcellTest, CalNatomwfc1) {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     ucell->cal_natomwfc(ofs);
@@ -235,7 +236,7 @@ TEST_F(UcellTest, CalNatomwfc1) {
 TEST_F(UcellTest, CalNatomwfc2) {
     PARAM.input.lspinorb = false;
     PARAM.input.nspin = 4;
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     ucell->cal_natomwfc(ofs);
@@ -249,7 +250,7 @@ TEST_F(UcellTest, CalNatomwfc2) {
 TEST_F(UcellTest, CalNatomwfc3) {
     PARAM.input.lspinorb = true;
     PARAM.input.nspin = 4;
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
     ucell->cal_natomwfc(ofs);
@@ -262,7 +263,7 @@ TEST_F(UcellTest, CalNatomwfc3) {
 }
 
 TEST_F(UcellTest, CalNwfc1) {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9;
@@ -328,7 +329,7 @@ TEST_F(UcellTest, CalNwfc1) {
 TEST_F(UcellTest, CalNwfc2) {
     PARAM.input.nspin = 4;
     PARAM.input.basis_type = "lcao";
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9 * 2;
@@ -336,7 +337,7 @@ TEST_F(UcellTest, CalNwfc2) {
 }
 
 TEST_F(UcellDeathTest, CheckStructure) {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     // trial 1
@@ -379,7 +380,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1) {
     PARAM.input.out_element_info = true;
     ucell->pseudo_fn[1] = "H_sr_lda.upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_pseudo(ofs), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::read_pseudo(ofs, *ucell), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("All DFT functional must consistent."));
@@ -390,7 +391,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2) {
     PARAM.input.out_element_info = true;
     ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
     testing::internal::CaptureStdout();
-    EXPECT_NO_THROW(ucell->read_pseudo(ofs));
+    EXPECT_NO_THROW(elecstate::read_pseudo(ofs, *ucell));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
@@ -399,7 +400,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2) {
 }
 
 TEST_F(UcellTest, CalNelec) {
-    ucell->read_cell_pseudopots(pp_dir, ofs);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_EQ(4, ucell->atoms[0].ncpp.zv);
     EXPECT_EQ(1, ucell->atoms[1].ncpp.zv);
     EXPECT_EQ(1, ucell->atoms[0].na);
