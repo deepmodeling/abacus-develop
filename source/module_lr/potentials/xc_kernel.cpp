@@ -70,6 +70,29 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
 #endif
 }
 
+template <typename T>
+inline void add_op(const T* const src1, const T* const src2, T* const dst, const int size)
+{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (int i = 0;i < size;++i)
+    {
+        dst[i] = src1[i] + src2[i];
+    }
+}
+template <typename T>
+inline void add_op(const std::vector<T>& src1, const std::vector<T>& src2, std::vector<T>& dst)
+{
+    assert(dst.size() >= src1.size() && src2.size() >= src1.size());
+    add_op(src1.data(), src2.data(), dst.data(), src1.size());
+}
+template <typename T>
+inline void add_assign_op(const std::vector<T>& src, std::vector<T>& dst)
+{
+    add_op(src, dst, dst);
+}
+
 #ifdef USE_LIBXC
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
 {
@@ -192,20 +215,12 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             break;
         }
         // add onto the total components
-        auto omp_add_vector = [](const std::vector<double>& src, std::vector<double>& dst)
-            {
-                assert(src.size() == dst.size());
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096)
-#endif
-                for (size_t i = 0; i < src.size(); ++i) { dst[i] += src[i]; }
-            };
         // auto start = std::chrono::high_resolution_clock::now();
-        omp_add_vector(vrho_tmp, this->vrho_);
-        omp_add_vector(v2rho2_tmp, this->v2rho2_);
-        omp_add_vector(vsigma_tmp, this->vsigma_);
-        omp_add_vector(v2rhosigma_tmp, this->v2rhosigma_);
-        omp_add_vector(v2sigma2_tmp, this->v2sigma2_);
+        add_assign_op(vrho_tmp, this->vrho_);
+        add_assign_op(v2rho2_tmp, this->v2rho2_);
+        add_assign_op(vsigma_tmp, this->vsigma_);
+        add_assign_op(v2rhosigma_tmp, this->v2rhosigma_);
+        add_assign_op(v2sigma2_tmp, this->v2sigma2_);
         // auto end = std::chrono::high_resolution_clock::now();
         // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         // std::cout << "Time elapsed adding XC components: " << duration.count() << " ms\n";
@@ -229,14 +244,14 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             // 1. $2f^{\rho\sigma}*\nabla\rho$
             this->v2rhosigma_2drho_.resize(nrxx);
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for schedule(static, 4096)
 #endif
             for (size_t i = 0; i < nrxx; ++i) { this->v2rhosigma_2drho_[i] = gradrho[0][i] * v2rs[i] * 2.; }
 
             // 2. $4f^{\sigma\sigma}*\nabla\rho$
             this->v2sigma2_4drho_.resize(nrxx);
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for schedule(static, 4096)
 #endif
             for (size_t i = 0; i < nrxx; ++i) { this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.; }
         }
