@@ -39,20 +39,20 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->sto_stress_kin(sigmakin, wg, p_symm, p_kv, wfc_basis, psi_in, stowf);
 
     // hartree contribution
-    this->stress_har(sigmahar, rho_basis, true, chr);
+    this->stress_har(ucell_in,sigmahar, rho_basis, true, chr);
 
     // ewald contribution
-    this->stress_ewa(sigmaewa, rho_basis, true);
+    this->stress_ewa(ucell_in,sigmaewa, rho_basis, true);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; ++i)
     {
         sigmaxc(i, i) = -(elec.f_en.etxc - elec.f_en.vtxc) / this->ucell->omega;
     }
-    this->stress_gga(sigmaxc, rho_basis, chr);
+    this->stress_gga(ucell_in,sigmaxc, rho_basis, chr);
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, nlpp->vloc, p_sf, true, chr);
+    this->stress_loc(ucell_in,sigmaloc, rho_basis, nlpp->vloc, p_sf, true, chr);
 
     // nlcc
     this->stress_cc(sigmaxcc, rho_basis, p_sf, true, nlpp->numeric, chr);

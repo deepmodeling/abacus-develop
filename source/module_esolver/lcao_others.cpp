@@ -1,9 +1,9 @@
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/cal_ux.h"
 //
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
@@ -128,7 +128,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(ucell,this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, GlobalC::GridD, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     // 2. density matrix extrapolation
 
@@ -175,7 +175,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
 
     // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell,orb_, *this->pw_rho, *this->pw_big);
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -190,6 +190,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
             PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
             ucell,
+            GlobalC::GridD,
             &this->pv,
             this->pelec->pot,
             this->kv,

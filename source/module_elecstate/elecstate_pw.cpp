@@ -263,7 +263,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         // get |beta>
         if (this->ppcell->nkb > 0)
         {
-            this->ppcell->getvnl(this->ctx, ik, this->vkb);
+            this->ppcell->getvnl(this->ctx, *ucell,ik, this->vkb);
         }
 
         // becp = <beta|psi>

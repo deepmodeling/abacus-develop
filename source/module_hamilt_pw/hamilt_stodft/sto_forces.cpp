@@ -41,8 +41,8 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::matrix forcecc(this->nat, 3);
     ModuleBase::matrix forcenl(this->nat, 3);
     ModuleBase::matrix forcescc(this->nat, 3);
-    this->cal_force_loc(forcelc, rho_basis, nlpp.vloc, chr);
-    this->cal_force_ew(forceion, rho_basis, p_sf);
+    this->cal_force_loc(ucell,forcelc, rho_basis, nlpp.vloc, chr);
+    this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
     this->cal_force_cc(forcecc, rho_basis, chr, nlpp.numeric, ucell);
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, nlpp.numeric, ucell);

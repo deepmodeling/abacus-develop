@@ -115,9 +115,9 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::allocate_hamilt()
+void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
-    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell);
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot, this->pw_wfc, &this->kv, &this->ppcell, &ucell);
 }
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::deallocate_hamilt()
@@ -202,10 +202,10 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     //! init pseudopotential
-    this->ppcell.init(ucell.ntype, &this->sf, this->pw_wfc);
+    this->ppcell.init(ucell,&this->sf, this->pw_wfc);
 
     //! initalize local pseudopotential
-    this->ppcell.init_vloc(this->pw_rhod);
+    this->ppcell.init_vloc(ucell,this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! Initalize non-local pseudopotential
@@ -279,7 +279,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->deallocate_hamilt();
 
     // allocate HamiltPW
-    this->allocate_hamilt();
+    this->allocate_hamilt(ucell);
 
     //----------------------------------------------------------
     // about vdw, jiyy add vdwd3 and linpz add vdwd2
@@ -447,7 +447,9 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
                          this->pelec->ekb.c,
                          GlobalV::RANK_IN_POOL,
                          GlobalV::NPROC_IN_POOL,
-                         skip_charge);
+                         skip_charge,
+                         ucell.tpiba,
+                         ucell.nat);
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -619,7 +621,8 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
 
     // Calculate forces
-    ff.cal_force(force,
+    ff.cal_force(ucell,
+                 force,
                  *this->pelec,
                  this->pw_rhod,
                  &ucell.symm,

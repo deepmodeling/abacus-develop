@@ -197,7 +197,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 8) initialize ppcell
-    this->ppcell.init_vloc(this->pw_rho);
+    this->ppcell.init_vloc(ucell,this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     // 9) inititlize the charge density

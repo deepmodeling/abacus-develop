@@ -100,6 +100,7 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                                                          this->pw_wfc,
                                                          &this->kv,
                                                          &this->ppcell,
+                                                         &ucell, 
                                                          PARAM.globalv.npol,
                                                          &this->stoche.emin_sto,
                                                          &this->stoche.emax_sto);
@@ -166,7 +167,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
                                                            hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
-    hsolver_pw_sdft_obj.solve(this->p_hamilt,
+    hsolver_pw_sdft_obj.solve(ucell,
+                              this->p_hamilt,
                               this->kspw_psi[0],
                               this->psi[0],
                               this->pelec,

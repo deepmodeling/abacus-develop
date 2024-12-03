@@ -16,7 +16,7 @@ namespace hamilt {
         /// \param pol : loop of [0, 1, 2]
         /// \param npw : number of planewaves of current k point
         /// \param npwx : number of planewaves of all k points
-        /// \param tpiba : GlobalC::ucell.tpiba
+        /// \param tpiba : ucell.tpiba
         /// \param gcar : wfcpw->gcar
         /// \param kvec_c : wfcpw->kvec_c
         /// \param in : input hpsi

@@ -244,9 +244,9 @@ void cal_r_overlap_R::out_rR(const int& istep)
 
     int step = istep;
     // set R coor range
-    int R_minX = int(GlobalC::GridD.getD_minX());
-    int R_minY = int(GlobalC::GridD.getD_minY());
-    int R_minZ = int(GlobalC::GridD.getD_minZ());
+    int R_minX = int(-GlobalC::GridD.getTrueCellX());
+    int R_minY = int(-GlobalC::GridD.getTrueCellY());
+    int R_minZ = int(-GlobalC::GridD.getTrueCellZ());
 
     int R_x = GlobalC::GridD.getCellX();
     int R_y = GlobalC::GridD.getCellY();

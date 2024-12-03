@@ -24,10 +24,10 @@ class pseudopot_cell_vnl : public pseudopot_cell_vl
   public:
     pseudopot_cell_vnl();
     ~pseudopot_cell_vnl();
-    void init(const int ntype,
+    void init(const UnitCell& cell,
               Structure_Factor* psf_in,
               const ModulePW::PW_Basis_K* wfc_basis = nullptr,
-              const bool allocate_vkb = 1);
+              const bool allocate_vkb = true);
 
     double cell_factor; // LiuXh add 20180619
 
@@ -38,17 +38,23 @@ class pseudopot_cell_vnl : public pseudopot_cell_vl
     void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
     template <typename FPTYPE, typename Device>
-    void getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const;
+    void getvnl(Device* ctx, 
+                const UnitCell& ucell,
+                const int& ik, 
+                std::complex<FPTYPE>* vkb_in) const;
 
-    void getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const;
+    void getvnl(const int& ik, 
+                const UnitCell& ucell,
+                ModuleBase::ComplexMatrix& vkb_in) const;
 
     // void getvnl_alpha(const int &ik);
 
-    void init_vnl_alpha(void);
+    void init_vnl_alpha(const UnitCell& cell);
 
     void initgradq_vnl(const UnitCell& cell);
 
-    void getgradq_vnl(const int ik);
+    void getgradq_vnl(const UnitCell& ucell,
+                      const int ik);
 
     //===============================================================
     // MEMBER VARIABLES :
