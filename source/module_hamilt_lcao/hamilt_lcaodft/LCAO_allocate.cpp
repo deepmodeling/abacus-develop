@@ -27,6 +27,7 @@ void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbit
         GlobalC::ld.init(orb,
                          ucell.nat,
                          ucell.ntype,
+                         nks,
                          pv,
                          na);
 

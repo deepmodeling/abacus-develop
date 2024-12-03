@@ -7,6 +7,7 @@
 #include <vector>
 #include "module_base/tool_title.h"
 #include "module_base/matrix.h"
+#include "module_base/complexmatrix.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>
@@ -119,6 +120,13 @@ void save_npy_h(const ModuleBase::matrix &hamilt,
 		const std::string &h_file,
 		const int nlocal,
 		const int rank);
+
+/// for multi-k
+void save_npy_h(const std::vector<ModuleBase::ComplexMatrix> &hamilt,
+        const std::string &h_file,
+        const int nlocal,
+        const int nks,
+        const int rank);
 
 void save_npy_v_delta_precalc(const int nat,
 		const int nks,

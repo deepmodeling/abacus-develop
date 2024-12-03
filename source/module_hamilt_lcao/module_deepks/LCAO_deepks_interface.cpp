@@ -291,7 +291,7 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
 
             if (PARAM.inp.deepks_scf)
             {
-                int nocc = PARAM.inp.nelec / 2;
+                int nocc = PARAM.inp.nelec / 2; // redundant!
                 ModuleBase::matrix wg_hl;
                 wg_hl.create(nks, PARAM.inp.nbands);
                 std::vector<std::vector<ModuleBase::ComplexMatrix>> dm_bandgap_k;
@@ -333,7 +333,94 @@ void LCAO_Deepks_Interface::out_deepks_labels(const double& etot,
         } // end bandgap label
         if(deepks_v_delta)
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "V_delta label has not been developed for multi-k now!");
+            std::vector<ModuleBase::ComplexMatrix> h_tot(nks);
+            for (int ik = 0; ik < nks; ik++)
+            {
+                h_tot[ik].create(nlocal, nlocal);
+            }
+
+            DeePKS_domain::collect_h_mat(*ParaV, ld->h_mat_k,h_tot,nlocal,nks);
+
+            const std::string file_htot = PARAM.globalv.global_out_dir + "deepks_htot.npy";
+            LCAO_deepks_io::save_npy_h(h_tot, file_htot, nlocal, nks, my_rank);
+
+            if(PARAM.inp.deepks_scf)
+            {
+                std::vector<ModuleBase::ComplexMatrix> v_delta(nks);
+                std::vector<ModuleBase::ComplexMatrix> hbase(nks);
+                for (int ik = 0; ik < nks; ik++)
+                {
+                    v_delta[ik].create(nlocal, nlocal);
+                    hbase[ik].create(nlocal, nlocal);
+                }
+                DeePKS_domain::collect_h_mat(*ParaV, ld->H_V_delta_k,v_delta,nlocal,nks); 
+
+                const std::string file_hbase = PARAM.globalv.global_out_dir + "deepks_hbase.npy";
+                for (int ik = 0; ik < nks; ik++)
+                {
+                    hbase[ik] = h_tot[ik] - v_delta[ik];
+                }
+                LCAO_deepks_io::save_npy_h(hbase, file_hbase, nlocal, nks, my_rank);
+
+                const std::string file_vdelta = PARAM.globalv.global_out_dir + "deepks_vdelta.npy";
+                LCAO_deepks_io::save_npy_h(v_delta, file_vdelta, nlocal, nks, my_rank);
+
+                if(deepks_v_delta==1)//v_delta_precalc storage method 1
+                {
+                    ld->cal_v_delta_precalc_k(nlocal,
+                            nat,
+                            nks,
+                            kvec_d,
+                            ucell,
+                            orb,
+                            GridD);
+                
+                    LCAO_deepks_io::save_npy_v_delta_precalc(
+                      nat, 
+                      nks, 
+                      nlocal,
+                      ld->des_per_atom,
+                      ld->v_delta_precalc_tensor,
+                      PARAM.globalv.global_out_dir,
+                      my_rank);
+
+                }
+                else if(deepks_v_delta==2)//v_delta_precalc storage method 2
+                {
+                    ld->prepare_psialpha_k(nlocal,
+                                nat,
+                                nks,
+                                kvec_d,
+                                ucell,
+                                orb,
+                                GridD);
+                    
+                    LCAO_deepks_io::save_npy_psialpha(nat, 
+                                nks, 
+                                nlocal,
+                                ld->inlmax,
+                                ld->lmaxd,
+                                ld->psialpha_tensor,
+                                PARAM.globalv.global_out_dir,
+                                my_rank);
+
+                    ld->prepare_gevdm(
+                                nat,
+                                orb);
+
+                    LCAO_deepks_io::save_npy_gevdm(nat,
+                      ld->inlmax,
+                      ld->lmaxd,
+                      ld->gevdm_tensor,
+                      PARAM.globalv.global_out_dir,
+                      my_rank);
+                }
+            }
+            else //deepks_scf == 0
+            {
+                const std::string file_hbase = PARAM.globalv.global_out_dir + "deepks_hbase.npy";
+                LCAO_deepks_io::save_npy_h(h_tot, file_hbase, nlocal, nks, my_rank);
+            }
         }
     }  // end deepks_out_labels
 

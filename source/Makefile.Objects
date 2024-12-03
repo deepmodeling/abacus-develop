@@ -208,6 +208,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         cal_gvx.o\
         cal_descriptor.o\
         v_delta_precalc.o\
+        v_delta_precalc_k.o\
         
 
 OBJS_ELECSTAT=elecstate.o\

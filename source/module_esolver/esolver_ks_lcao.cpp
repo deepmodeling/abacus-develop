@@ -817,7 +817,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
 #ifdef __DEEPKS
                 if (PARAM.inp.deepks_out_labels && PARAM.inp.deepks_v_delta)
                 {
-                    DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc);
+                    DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc, ik);
                 }
 #endif
             }

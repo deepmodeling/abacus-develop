@@ -74,6 +74,7 @@ void LCAO_Deepks::init(
     const LCAO_Orbitals& orb,
     const int nat,
     const int ntype,
+    const int nks,
     const Parallel_Orbitals& pv_in,
     std::vector<int> na)
 {
@@ -97,13 +98,13 @@ void LCAO_Deepks::init(
     this->nmaxd = nm;
     
     GlobalV::ofs_running << " lmax of descriptor = " << this->lmaxd << std::endl;
-    GlobalV::ofs_running << " nmax of descriptor= " << nmaxd << std::endl;
+    GlobalV::ofs_running << " nmax of descriptor = " << nmaxd << std::endl;
 
     int pdm_size = 0;
     this->inlmax = tot_inl;
     if(!PARAM.inp.deepks_equiv)
     {
-        GlobalV::ofs_running << " total basis (all atoms) for descriptor= " << std::endl;
+        GlobalV::ofs_running << " total basis (all atoms) for descriptor = " << std::endl;
 
         //init pdm**
         pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
@@ -149,6 +150,15 @@ void LCAO_Deepks::init(
         {
             int nloc=this->pv->nloc;
             this->h_mat.resize(nloc,0.0);
+        }
+        else
+        {
+            int nloc=this->pv->nloc;
+            this->h_mat_k.resize(nks);
+            for (int ik = 0; ik < nks; ik++)
+            {
+                this->h_mat_k[ik].resize(nloc,std::complex<double>(0.0,0.0));
+            }
         }
     }
 
@@ -431,27 +441,51 @@ void LCAO_Deepks::del_orbital_pdm_shell(const int nks)
 
 void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
 {
-    
-    this->v_delta_pdm_shell = new double**** [nks];
-
     const int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
-    for (int iks=0; iks<nks; iks++)
-    {
-        this->v_delta_pdm_shell[iks] = new double*** [nlocal];
-
-        for (int mu=0; mu<nlocal; mu++)
+    if (nks==1){
+        this->v_delta_pdm_shell = new double**** [nks];
+        for (int iks=0; iks<nks; iks++)
         {
-            this->v_delta_pdm_shell[iks][mu] = new double** [nlocal];
+            this->v_delta_pdm_shell[iks] = new double*** [nlocal];
 
-            for (int nu=0; nu<nlocal; nu++)
+            for (int mu=0; mu<nlocal; mu++)
             {
-                this->v_delta_pdm_shell[iks][mu][nu] = new double* [this->inlmax];
+                this->v_delta_pdm_shell[iks][mu] = new double** [nlocal];
 
-                for(int inl = 0; inl < this->inlmax; inl++)
+                for (int nu=0; nu<nlocal; nu++)
                 {
-                    this->v_delta_pdm_shell[iks][mu][nu][inl] = new double [mn_size];
-                    ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], mn_size);
-                }                
+                    this->v_delta_pdm_shell[iks][mu][nu] = new double* [this->inlmax];
+
+                    for(int inl = 0; inl < this->inlmax; inl++)
+                    {
+                        this->v_delta_pdm_shell[iks][mu][nu][inl] = new double [mn_size];
+                        ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], mn_size);
+                    }                
+                }
+            }
+        }
+    }
+    else
+    {
+        this->v_delta_pdm_shell_complex = new std::complex<double>**** [nks];
+        for (int iks=0; iks<nks; iks++)
+        {
+            this->v_delta_pdm_shell_complex[iks] = new std::complex<double>*** [nlocal];
+
+            for (int mu=0; mu<nlocal; mu++)
+            {
+                this->v_delta_pdm_shell_complex[iks][mu] = new std::complex<double>** [nlocal];
+
+                for (int nu=0; nu<nlocal; nu++)
+                {
+                    this->v_delta_pdm_shell_complex[iks][mu][nu] = new std::complex<double>* [this->inlmax];
+
+                    for(int inl = 0; inl < this->inlmax; inl++)
+                    {
+                        this->v_delta_pdm_shell_complex[iks][mu][nu][inl] = new std::complex<double> [mn_size];
+                        ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell_complex[iks][mu][nu][inl], mn_size);
+                    }                
+                }
             }
         }
     }
@@ -461,23 +495,46 @@ void LCAO_Deepks::init_v_delta_pdm_shell(const int nks,const int nlocal)
 
 void LCAO_Deepks::del_v_delta_pdm_shell(const int nks,const int nlocal)
 {
-    for (int iks=0; iks<nks; iks++)
+    if (nks==1)
     {
-        for (int mu=0; mu<nlocal; mu++)
+        for (int iks=0; iks<nks; iks++)
         {
-            for (int nu=0; nu<nlocal; nu++)
+            for (int mu=0; mu<nlocal; mu++)
             {
-                for (int inl = 0;inl < this->inlmax; inl++)
+                for (int nu=0; nu<nlocal; nu++)
                 {
-                    delete[] this->v_delta_pdm_shell[iks][mu][nu][inl];
+                    for (int inl = 0;inl < this->inlmax; inl++)
+                    {
+                        delete[] this->v_delta_pdm_shell[iks][mu][nu][inl];
+                    }
+                    delete[] this->v_delta_pdm_shell[iks][mu][nu];                
                 }
-                delete[] this->v_delta_pdm_shell[iks][mu][nu];                
+                delete[] this->v_delta_pdm_shell[iks][mu]; 
             }
-            delete[] this->v_delta_pdm_shell[iks][mu]; 
+            delete[] this->v_delta_pdm_shell[iks]; 
         }
-        delete[] this->v_delta_pdm_shell[iks]; 
+        delete[] this->v_delta_pdm_shell;    
     }
-    delete[] this->v_delta_pdm_shell;    
+    else
+    {
+        for (int iks=0; iks<nks; iks++)
+        {
+            for (int mu=0; mu<nlocal; mu++)
+            {
+                for (int nu=0; nu<nlocal; nu++)
+                {
+                    for (int inl = 0;inl < this->inlmax; inl++)
+                    {
+                        delete[] this->v_delta_pdm_shell_complex[iks][mu][nu][inl];
+                    }
+                    delete[] this->v_delta_pdm_shell_complex[iks][mu][nu];                
+                }
+                delete[] this->v_delta_pdm_shell_complex[iks][mu]; 
+            }
+            delete[] this->v_delta_pdm_shell_complex[iks]; 
+        }
+        delete[] this->v_delta_pdm_shell_complex;    
+    }
 
     return;
 }

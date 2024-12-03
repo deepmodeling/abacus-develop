@@ -20,6 +20,7 @@ if(ENABLE_DEEPKS)
       cal_gvx.cpp      
       cal_descriptor.cpp
       v_delta_precalc.cpp
+      v_delta_precalc_k.cpp
   )
 
   add_library(
