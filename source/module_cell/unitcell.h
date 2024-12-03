@@ -252,7 +252,6 @@ class UnitCell {
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning); // read in atomic positions
 
-    void read_pseudo(std::ofstream& ofs);
     int find_type(const std::string& label);
     void print_tau() const;
     /**
@@ -283,9 +282,6 @@ class UnitCell {
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
     void remake_cell();
-
-    // read in pseudopotential from files for each type of atom
-    void read_cell_pseudopots(const std::string& fn, std::ofstream& log);
 
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions
