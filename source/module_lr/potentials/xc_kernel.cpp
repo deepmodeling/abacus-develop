@@ -246,14 +246,20 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
-            for (size_t i = 0; i < nrxx; ++i) { this->v2rhosigma_2drho_[i] = gradrho[0][i] * v2rs[i] * 2.; }
+            for (size_t i = 0; i < nrxx; ++i)
+            {
+                this->v2rhosigma_2drho_[i] = gradrho[0][i] * v2rs[i] * 2.;
+            }
 
             // 2. $4f^{\sigma\sigma}*\nabla\rho$
             this->v2sigma2_4drho_.resize(nrxx);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
-            for (size_t i = 0; i < nrxx; ++i) { this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.; }
+            for (size_t i = 0; i < nrxx; ++i)
+            {
+                this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
+            }
         }
         else
         {
