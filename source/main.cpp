@@ -52,8 +52,9 @@ int main(int argc, char** argv)
     fftw_cleanup_threads();
 #endif
 
-    if(true)
+    if(true) {
         std::cout<<true<<std::endl;
+}
 
     return 0;
 }
