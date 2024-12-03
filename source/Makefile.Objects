@@ -182,7 +182,6 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_vwr.o\
     unitcell.o\
     read_atoms.o\
-    read_cell_pseudopots.o\
     setup_nonlocal.o\
     klist.o\
     cell_index.o\
@@ -229,6 +228,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_TDDFT_pw.o\
     pot_xc.o\
     cal_ux.o\
+    read_pseudo.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\

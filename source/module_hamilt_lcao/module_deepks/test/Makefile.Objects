@@ -73,3 +73,5 @@ sltk_atom.o\
 sltk_atom_input.o\
 sltk_grid.o\
 sltk_grid_driver.o
+
+OBJS_ELECSTATE=read_pseudo.o\
