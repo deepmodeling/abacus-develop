@@ -291,7 +291,6 @@ class UnitCell {
     void cal_nwfc(std::ofstream& log);
     void cal_meshx();
     void cal_natomwfc(std::ofstream& log);
-    void print_unitcell_pseudo(const std::string& fn);
     bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;

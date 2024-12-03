@@ -351,5 +351,22 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
     return;
 }
 
+void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
+{
+    if (PARAM.inp.test_pseudo_cell) 
+    {
+        ModuleBase::TITLE("UnitCell", "print_unitcell_pseudo");
+    }
+    std::ofstream ofs(fn.c_str());
+
+    ucell.print_cell(ofs);
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        ucell.atoms[i].print_Atom(ofs);
+    }
+
+    ofs.close();
+    return;
+}
 
 }
