@@ -5,7 +5,8 @@
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
+void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
+											 ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
                                              const Charge* const chr)
 {
@@ -26,7 +27,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(ModuleBase::matrix& sigma,
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
 	// is not used here, so dummy variables are used.
-    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &GlobalC::ucell, stress_gga, 1);
+    XC_Functional::gradcorr(dum1, dum2, dum3, chr, rho_basis, &ucell, stress_gga, 1);
 
     for(int l = 0;l< 3;l++)
 	{

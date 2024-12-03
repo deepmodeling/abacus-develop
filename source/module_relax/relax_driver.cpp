@@ -79,7 +79,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             {
                 if (PARAM.inp.relax_new)
                 {
-                    stop = rl.relax_step(force, stress, this->etot);
+                    stop = rl.relax_step(ucell,force, stress, this->etot);
                 }
                 else
                 {

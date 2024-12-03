@@ -112,7 +112,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     // initialize local pseudopotential
-    this->locpp.init_vloc(pw_rho);
+    this->locpp.init_vloc(ucell,pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
 
@@ -538,7 +538,7 @@ double ESolver_OF::cal_energy()
 void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
-    ff.cal_force(force, *pelec, this->pw_rho, &ucell.symm, &sf, &this->locpp);
+    ff.cal_force(ucell,force, *pelec, this->pw_rho, &ucell.symm, &sf, &this->locpp);
 }
 
 /**
