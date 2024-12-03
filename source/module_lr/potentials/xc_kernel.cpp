@@ -5,10 +5,14 @@
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_xc.hpp"
 #include <set>
+#include <chrono>
 #include "module_io/cube_io.h"
 #ifdef USE_LIBXC
 #include <xc.h>
 #include "module_hamilt_general/module_xc/xc_functional_libxc.h"
+#endif
+#ifdef _OPENMP
+#include <omp.h>
 #endif
 
 LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
@@ -192,15 +196,19 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             {
                 assert(src.size() == dst.size());
 #ifdef _OPENMP
-#pragma omp parallel for 
+#pragma omp parallel for schedule(static, 4096)
 #endif
                 for (size_t i = 0; i < src.size(); ++i) { dst[i] += src[i]; }
             };
+        // auto start = std::chrono::high_resolution_clock::now();
         omp_add_vector(vrho_tmp, this->vrho_);
         omp_add_vector(v2rho2_tmp, this->v2rho2_);
         omp_add_vector(vsigma_tmp, this->vsigma_);
         omp_add_vector(v2rhosigma_tmp, this->v2rhosigma_);
         omp_add_vector(v2sigma2_tmp, this->v2sigma2_);
+        // auto end = std::chrono::high_resolution_clock::now();
+        // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        // std::cout << "Time elapsed adding XC components: " << duration.count() << " ms\n";
     } // end for( xc_func_type &func : funcs )
 
     XC_Functional_Libxc::finish_func(funcs);
@@ -216,7 +224,6 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         if (1 == nspin)
         {
-            using V3 = ModuleBase::Vector3<double>;
             // 0. drho
             this->drho_gs_ = gradrho[0];
             // 1. $2f^{\rho\sigma}*\nabla\rho$
