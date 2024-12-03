@@ -237,7 +237,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         const std::vector<double>& vs = this->vsigma_;
         const double tpiba2 = tpiba * tpiba;
 
-        if (1 == nspin)
+        if (nspin == 1)
         {
             // 0. drho
             this->drho_gs_ = gradrho[0];
@@ -267,7 +267,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
     }
-    if (1 == PARAM.inp.nspin || 2 == PARAM.inp.nspin) { return;
+    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
+        return;
     // else if (4 == PARAM.inp.nspin)
     } else//NSPIN != 1,2,4 is not supported
     {
