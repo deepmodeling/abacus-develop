@@ -173,68 +173,6 @@ void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& i
 
 void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
-    // print Hamiltonian and Overlap matrix
-    if (this->conv_esolver)
-    {
-        if (!PARAM.globalv.gamma_only_local)
-        {
-            this->GK.renew(true);
-        }
-        for (int ik = 0; ik < kv.get_nks(); ++ik)
-        {
-            if (PARAM.inp.out_mat_hs[0])
-            {
-                this->p_hamilt->updateHk(ik);
-            }
-            bool bit = false; // LiuXh, 2017-03-21
-            // if set bit = true, there would be error in soc-multi-core
-            // calculation, noted by zhengdy-soc
-            if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
-            {
-                hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
-                this->p_hamilt->matrix(h_mat, s_mat);
-                if (PARAM.inp.out_mat_hs[0])
-                {
-                    ModuleIO::save_mat(istep,
-                                       h_mat.p,
-                                       PARAM.globalv.nlocal,
-                                       bit,
-                                       PARAM.inp.out_mat_hs[1],
-                                       1,
-                                       PARAM.inp.out_app_flag,
-                                       "H",
-                                       "data-" + std::to_string(ik),
-                                       this->pv,
-                                       GlobalV::DRANK);
-
-                    ModuleIO::save_mat(istep,
-                                       s_mat.p,
-                                       PARAM.globalv.nlocal,
-                                       bit,
-                                       PARAM.inp.out_mat_hs[1],
-                                       1,
-                                       PARAM.inp.out_app_flag,
-                                       "S",
-                                       "data-" + std::to_string(ik),
-                                       this->pv,
-                                       GlobalV::DRANK);
-                }
-            }
-        }
-    }
-
-    if (elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao
-        && (this->conv_esolver || iter == PARAM.inp.scf_nmax) && (istep % PARAM.inp.out_interval == 0))
-    {
-        ModuleIO::write_wfc_nao(elecstate::ElecStateLCAO<std::complex<double>>::out_wfc_lcao,
-                                this->psi[0],
-                                this->pelec->ekb,
-                                this->pelec->wg,
-                                this->pelec->klist->kvec_c,
-                                this->pv,
-                                istep);
-    }
-
     // Calculate new potential according to new Charge Density
     if (!this->conv_esolver)
     {
