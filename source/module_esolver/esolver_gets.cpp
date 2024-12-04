@@ -143,4 +143,9 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
 
+void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
+double ESolver_GetS::cal_energy() {};
+void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
+void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
+
 } // namespace ModuleESolver

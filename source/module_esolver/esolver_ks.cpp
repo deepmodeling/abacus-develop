@@ -476,6 +476,15 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
 };
 
 template <typename T, typename Device>
+void ESolver_KS<T, Device>::before_scf(UnitCell& ucell, const int istep)
+{
+    ModuleBase::TITLE("ESolver_KS", "before_scf");
+
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(ucell, istep);
+}
+
+template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
     ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
