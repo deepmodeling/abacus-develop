@@ -12,6 +12,8 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 
+#include "cublas_v2.h"
+
 static cublasHandle_t cublas_handle = nullptr;
 
 void createGpuBlasHandle(){
