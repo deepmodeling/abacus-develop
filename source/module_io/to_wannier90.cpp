@@ -70,7 +70,7 @@ void toWannier90::calculate()
 {
 }
 
-void toWannier90::read_nnkp(const K_Vectors& kv)
+void toWannier90::read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 {
     // read *.nnkp file
     GlobalV::ofs_running << "reading the " << wannier_file_name << ".nnkp file." << std::endl;
@@ -78,7 +78,7 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
     bool read_success = false;
     if (GlobalV::MY_RANK == 0)
     {
-        read_success = try_read_nnkp(kv);
+        read_success = try_read_nnkp(ucell,kv);
     }
 
 #ifdef __MPI
@@ -87,7 +87,7 @@ void toWannier90::read_nnkp(const K_Vectors& kv)
 
     if (GlobalV::MY_RANK != 0 && read_success)
     {
-        read_success = try_read_nnkp(kv);
+        read_success = try_read_nnkp(ucell,kv);
     }
 
 #ifdef __MPI
@@ -129,7 +129,7 @@ void toWannier90::cal_Mmn()
 {
 }
 
-bool toWannier90::try_read_nnkp(const K_Vectors& kv)
+bool toWannier90::try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv)
 {
     std::ifstream nnkp_read(nnkpfile.c_str(), std::ios::in);
 
@@ -144,17 +144,17 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
         nnkp_read >> real_lattice_nnkp.e11 >> real_lattice_nnkp.e12 >> real_lattice_nnkp.e13 >> real_lattice_nnkp.e21
             >> real_lattice_nnkp.e22 >> real_lattice_nnkp.e23 >> real_lattice_nnkp.e31 >> real_lattice_nnkp.e32
             >> real_lattice_nnkp.e33;
-        real_lattice_nnkp = real_lattice_nnkp / GlobalC::ucell.lat0_angstrom;
+        real_lattice_nnkp = real_lattice_nnkp / ucell.lat0_angstrom;
 
-        if (std::abs(real_lattice_nnkp.e11 - GlobalC::ucell.latvec.e11) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e12 - GlobalC::ucell.latvec.e12) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e13 - GlobalC::ucell.latvec.e13) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e21 - GlobalC::ucell.latvec.e21) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e22 - GlobalC::ucell.latvec.e22) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e23 - GlobalC::ucell.latvec.e23) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e31 - GlobalC::ucell.latvec.e31) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e32 - GlobalC::ucell.latvec.e32) > 1.0e-4
-            || std::abs(real_lattice_nnkp.e33 - GlobalC::ucell.latvec.e33) > 1.0e-4)
+        if (std::abs(real_lattice_nnkp.e11 - ucell.latvec.e11) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e12 - ucell.latvec.e12) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e13 - ucell.latvec.e13) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e21 - ucell.latvec.e21) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e22 - ucell.latvec.e22) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e23 - ucell.latvec.e23) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e31 - ucell.latvec.e31) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e32 - ucell.latvec.e32) > 1.0e-4
+            || std::abs(real_lattice_nnkp.e33 - ucell.latvec.e33) > 1.0e-4)
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error real_lattice in *.nnkp file");
         }
@@ -170,18 +170,18 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
         nnkp_read >> recip_lattice_nnkp.e11 >> recip_lattice_nnkp.e12 >> recip_lattice_nnkp.e13
             >> recip_lattice_nnkp.e21 >> recip_lattice_nnkp.e22 >> recip_lattice_nnkp.e23 >> recip_lattice_nnkp.e31
             >> recip_lattice_nnkp.e32 >> recip_lattice_nnkp.e33;
-        const double tpiba_angstrom = ModuleBase::TWO_PI / GlobalC::ucell.lat0_angstrom;
+        const double tpiba_angstrom = ModuleBase::TWO_PI / ucell.lat0_angstrom;
         recip_lattice_nnkp = recip_lattice_nnkp / tpiba_angstrom;
 
-        if (std::abs(recip_lattice_nnkp.e11 - GlobalC::ucell.G.e11) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e12 - GlobalC::ucell.G.e12) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e13 - GlobalC::ucell.G.e13) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e21 - GlobalC::ucell.G.e21) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e22 - GlobalC::ucell.G.e22) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e23 - GlobalC::ucell.G.e23) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e31 - GlobalC::ucell.G.e31) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e32 - GlobalC::ucell.G.e32) > 1.0e-4
-            || std::abs(recip_lattice_nnkp.e33 - GlobalC::ucell.G.e33) > 1.0e-4)
+        if (std::abs(recip_lattice_nnkp.e11 - ucell.G.e11) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e12 - ucell.G.e12) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e13 - ucell.G.e13) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e21 - ucell.G.e21) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e22 - ucell.G.e22) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e23 - ucell.G.e23) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e31 - ucell.G.e31) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e32 - ucell.G.e32) > 1.0e-4
+            || std::abs(recip_lattice_nnkp.e33 - ucell.G.e33) > 1.0e-4)
         {
             ModuleBase::WARNING_QUIT("toWannier90::read_nnkp", "Error recip_lattice in *.nnkp file");
         }
@@ -313,7 +313,7 @@ bool toWannier90::try_read_nnkp(const K_Vectors& kv)
 
         for (int i = 0; i < num_wannier; i++)
         {
-            R_centre[i] = R_centre[i] * GlobalC::ucell.latvec;
+            R_centre[i] = R_centre[i] * ucell.latvec;
             m[i] = m[i] - 1;
         }
 

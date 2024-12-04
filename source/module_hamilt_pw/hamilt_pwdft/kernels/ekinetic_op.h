@@ -14,7 +14,7 @@ struct ekinetic_pw_op {
   /// \param nband : nbands
   /// \param npw : number of planewaves of current k point
   /// \param max_npw : max number of planewaves of all k points
-  /// \param tpiba2 : GlobalC::ucell.tpiba2
+  /// \param tpiba2 : ucell.tpiba2
   /// \param spin : current spin
   /// \param gk2_ik : GlobalC::wfcpw->gk2
   /// \param tmpsi_in : intermediate array

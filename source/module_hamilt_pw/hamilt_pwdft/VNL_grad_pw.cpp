@@ -58,7 +58,8 @@ void pseudopot_cell_vnl::initgradq_vnl(const UnitCell &cell)
 
 }
 
-void pseudopot_cell_vnl::getgradq_vnl(const int ik)
+void pseudopot_cell_vnl::getgradq_vnl(const UnitCell& ucell,
+									  const int ik)
 {
     if(PARAM.inp.test_pp) ModuleBase::TITLE("pseudopot_cell_vnl","getvnl");
 	ModuleBase::timer::tick("pp_cell_vnl","getvnl");
@@ -91,11 +92,11 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 	ModuleBase::YlmReal::grad_Ylm_Real(x1, npw, gk, ylm, dylm[0], dylm[1], dylm[2]);
 
 	int jkb = 0;
-	for(int it = 0;it < GlobalC::ucell.ntype;it++)
+	for(int it = 0;it < ucell.ntype;it++)
 	{
 		// calculate beta in G-space using an interpolation table
-		const int nbeta = GlobalC::ucell.atoms[it].ncpp.nbeta;
-		const int nh = GlobalC::ucell.atoms[it].ncpp.nh;
+		const int nbeta = ucell.atoms[it].ncpp.nbeta;
+		const int nh = ucell.atoms[it].ncpp.nh;
         int nb0 = -1;
         for( int ih = 0; ih < nh; ++ih)
         {
@@ -104,7 +105,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
             {
                 for (int ig = 0;ig < npw;++ig)
 			    {
-			    	const double gnorm = gk[ig].norm() * GlobalC::ucell.tpiba;
+			    	const double gnorm = gk[ig].norm() * ucell.tpiba;
 			    	vq [ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
 			    			this->tab, it, nb, PARAM.globalv.nqx, PARAM.globalv.dq, gnorm );
 			    	dvq[ig] =ModuleBase::PolyInt::Polynomial_Interpolation(
@@ -146,7 +147,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 
 		// vkb1 contains all betas including angular part for type nt
 		// now add the structure factor and factor (-i)^l
-		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++) 
+		for (int ia=0; ia<ucell.atoms[it].na; ia++) 
 		{
             std::complex<double> *sk = this->psf->get_sk(ik, it, ia, this->wfcpw);
 
@@ -161,7 +162,7 @@ void pseudopot_cell_vnl::getgradq_vnl(const int ik)
 					{
                 	    std::complex<double> skig = sk[ig];
                 	    pvkb[ig] = tmpvkb(ih, ig) * skig * pref;
-						// std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (GlobalC::ucell.atoms[it].tau[ia][id] * this->wfcpw->lat0) * skig;
+						// std::complex<double> dskig = ModuleBase::NEG_IMAG_UNIT * (ucell.atoms[it].tau[ia][id] * this->wfcpw->lat0) * skig;
 						// pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref +  tmpvkb(ih, ig) * dskig * pref;
 						// The second term will be eliminate when doing <psi|beta>Dij<beta|psi> or we can say (\nabla_q+\nabla_q')S(q'-q) = 0
 						pgvkb[ig] = tmpgradvkb(id, ih, ig) * skig * pref;

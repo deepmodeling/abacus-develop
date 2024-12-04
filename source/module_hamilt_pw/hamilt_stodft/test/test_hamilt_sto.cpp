@@ -11,7 +11,7 @@ void elecstate::Potential::cal_v_eff(Charge const*, UnitCell const*, ModuleBase:
 void elecstate::Potential::cal_fixed_v(double*){}
 
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl*){}
+hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* p_kv, pseudopot_cell_vnl*,const UnitCell*){}
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){
     delete this->ops;
@@ -70,7 +70,7 @@ class TestHamiltSto : public ::testing::Test
         p_kv = new K_Vectors();
         std::vector<int> ngk = {2};
         p_kv->ngk = ngk;
-        hamilt_sto = new hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>(pot, wfc_basis, p_kv, nullptr, npol, &emin, &emax);
+        hamilt_sto = new hamilt::HamiltSdftPW<std::complex<double>, base_device::DEVICE_CPU>(pot, wfc_basis, p_kv, nullptr, nullptr, npol, &emin, &emax);
         hamilt_sto->ops = new TestOp<std::complex<double>, base_device::DEVICE_CPU>();
     }
 

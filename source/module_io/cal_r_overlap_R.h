@@ -13,7 +13,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "single_R_io.h"
-
+#include "module_cell/unitcell.h"
 #include <map>
 #include <set>
 #include <vector>
@@ -30,13 +30,13 @@ class cal_r_overlap_R
     double sparse_threshold = 1e-10;
     bool binary = false;
 
-    void init(const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void out_rR(const int& istep);
-    void out_rR_other(const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
+    void init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    void out_rR(const UnitCell& ucell, const int& istep);
+    void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
   private:
-    void initialize_orb_table(const LCAO_Orbitals& orb);
-    void construct_orbs_and_orb_r(const LCAO_Orbitals& orb);
+    void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void construct_orbs_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;

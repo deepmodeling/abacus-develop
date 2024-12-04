@@ -349,7 +349,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
         {
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
-            ModuleIO::write_dipole(pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
+            ModuleIO::write_dipole(ucell,pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
         }
     }
     if (TD_Velocity::out_current == true)
@@ -357,7 +357,8 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
         elecstate::DensityMatrix<std::complex<double>, double>* tmp_DM
             = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
 
-        ModuleIO::write_current(istep,
+        ModuleIO::write_current(ucell,
+                                istep,
                                 this->psi,
                                 pelec,
                                 kv,

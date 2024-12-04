@@ -36,7 +36,7 @@ class Gint_Gamma : public Gint
 
     //! in gint_gamma_env.cpp 
 	//! calcualte the electronic wave functions via grid integral
-	void cal_env(const double* wfc, double* rho,UnitCell &ucell);
+	void cal_env(const double* wfc, double* rho,const UnitCell &ucell);
 
     //! transfer this->hRGint to Veff::hR
     void transfer_pvpR(hamilt::HContainer<double>* hR,const UnitCell* ucell);

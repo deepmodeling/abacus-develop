@@ -56,9 +56,9 @@ struct cal_force_nl_op
     /// @param forcenl_nc - the second dimension of matrix forcenl
     /// @param nbands - NBANDS
     /// @param nkb - number of k point
-    /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
-    /// @param atom_na - GlobalC::ucell.atoms[ii].na
-    /// @param tpiba - GlobalC::ucell.tpiba
+    /// @param atom_nh - ucell.atoms[ii].ncpp.nh
+    /// @param atom_na - ucell.atoms[ii].na
+    /// @param tpiba - ucell.tpiba
     /// @param d_wg - input parameter wg
     /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb

@@ -23,7 +23,8 @@ namespace ModuleIO
 // write ||wfc_r|| for all k-points and all bands
 // Input: wfc_g(ik, ib, ig)
 // loop order is for(z){for(y){for(x)}}
-void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
+void write_psi_r_1(const UnitCell& ucell,
+                   const psi::Psi<std::complex<double>>& wfc_g,
                    const ModulePW::PW_Basis_K* wfcpw,
                    const std::string& folder_name,
                    const bool& square,
@@ -66,18 +67,16 @@ void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
                     wfc_imag[ir] = wfc_r[ir].imag();
                 }
             }
-            const std::string file_name = outdir + "wfc_realspace_" + ModuleBase::GlobalFunc::TO_STRING(ik_out) + "_"
-                                          + ModuleBase::GlobalFunc::TO_STRING(ib);
+            const std::string file_name_base = outdir + "wfc_realspace_" + 
+                                         ModuleBase::GlobalFunc::TO_STRING(ik_out) + "_" + 
+                                         ModuleBase::GlobalFunc::TO_STRING(ib);
+            const std::string file_name = square ?  file_name_base : file_name_base + "_imag";
 #ifdef __MPI
             // Use write_chg_r_1 to output the real and imaginary parts of the wave function to file
             mpi_requests.push_back({});
-            write_chg_r_1(wfcpw, wfc_real, file_name, mpi_requests.back());
-            if (!square)
-            {
-                write_chg_r_1(wfcpw, wfc_imag, file_name + "_imag", mpi_requests.back());
-            }
+            write_chg_r_1(ucell,wfcpw, wfc_real, file_name, mpi_requests.back());
 #else
-            write_chg_r_1(wfcpw, wfc_real, file_name);
+            write_chg_r_1(ucell,wfcpw, wfc_real, file_name);
             // if (!square)
             // write_chg_r_1(wfc_imag, file_name + "_imag", mpi_requests.back());
 #endif
@@ -115,14 +114,14 @@ std::vector<std::complex<double>> cal_wfc_r(const ModulePW::PW_Basis_K* wfcpw,
 }
 
 // Input: chg_r[ir]
-#ifdef __MPI
-void write_chg_r_1(const ModulePW::PW_Basis_K* wfcpw,
+void write_chg_r_1(const UnitCell& ucell,
+                   const ModulePW::PW_Basis_K* wfcpw,
                    const std::vector<double>& chg_r,
-                   const std::string& file_name,
-                   MPI_Request& mpi_request)
-#else
-void write_chg_r_1(const ModulePW::PW_Basis_K* wfcpw, const std::vector<double>& chg_r, const std::string& file_name)
-#endif
+                   const std::string& file_name
+                   #ifdef __MPI
+                   ,MPI_Request& mpi_request
+                   #endif
+                  )
 {
     ModuleBase::timer::tick("ModuleIO", "write_chg_r_1");
     std::ofstream ofs;
@@ -135,32 +134,32 @@ void write_chg_r_1(const ModulePW::PW_Basis_K* wfcpw, const std::vector<double>&
         ofs.open(file_name);
 
         ofs << "calculated by ABACUS" << std::endl;
-        ofs << GlobalC::ucell.lat0_angstrom << std::endl;
-        ofs << GlobalC::ucell.latvec.e11 << " " << GlobalC::ucell.latvec.e12 << " " << GlobalC::ucell.latvec.e13
+        ofs << ucell.lat0_angstrom << std::endl;
+        ofs << ucell.latvec.e11 << " " << ucell.latvec.e12 << " " << ucell.latvec.e13
             << std::endl
-            << GlobalC::ucell.latvec.e21 << " " << GlobalC::ucell.latvec.e22 << " " << GlobalC::ucell.latvec.e23
+            << ucell.latvec.e21 << " " << ucell.latvec.e22 << " " << ucell.latvec.e23
             << std::endl
-            << GlobalC::ucell.latvec.e31 << " " << GlobalC::ucell.latvec.e32 << " " << GlobalC::ucell.latvec.e33
+            << ucell.latvec.e31 << " " << ucell.latvec.e32 << " " << ucell.latvec.e33
             << std::endl;
 
-        for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it)
         {
-            ofs << GlobalC::ucell.atoms[it].label << "\t";
+            ofs << ucell.atoms[it].label << "\t";
         }
         ofs << std::endl;
-        for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it)
         {
-            ofs << GlobalC::ucell.atoms[it].na << "\t";
+            ofs << ucell.atoms[it].na << "\t";
         }
         ofs << std::endl;
 
         ofs << "Direct" << std::endl;
-        for (int it = 0; it < GlobalC::ucell.ntype; ++it)
+        for (int it = 0; it < ucell.ntype; ++it)
         {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ++ia)
+            for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
             {
-                ofs << GlobalC::ucell.atoms[it].taud[ia].x << " " << GlobalC::ucell.atoms[it].taud[ia].y << " "
-                    << GlobalC::ucell.atoms[it].taud[ia].z << std::endl;
+                ofs << ucell.atoms[it].taud[ia].x << " " << ucell.atoms[it].taud[ia].y << " "
+                    << ucell.atoms[it].taud[ia].z << std::endl;
             }
         }
         ofs << std::endl;

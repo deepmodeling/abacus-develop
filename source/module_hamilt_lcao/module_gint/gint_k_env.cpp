@@ -13,7 +13,7 @@ void Gint_k::cal_env_k(int ik,
                        double* rho,
                        const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                       UnitCell& ucell)
+                       const UnitCell& ucell)
 {
     ModuleBase::TITLE("Gint_k", "cal_env_k");
     ModuleBase::timer::tick("Gint_k", "cal_env_k");

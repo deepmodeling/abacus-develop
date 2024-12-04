@@ -14,6 +14,7 @@ class Test_SETGRAD : public testing::Test
         Relax rl;
         std::vector<double> result;
         Input_para& input = PARAM.input;
+        UnitCell ucell;
 
         void SetUp()
         {
@@ -34,95 +35,95 @@ class Test_SETGRAD : public testing::Test
             stress_in(1,0) = 4; stress_in(1,1) = 5; stress_in(1,2)= 6;
             stress_in(2,0) = 7; stress_in(2,1) = 8; stress_in(2,2)= 9;
 
-            GlobalC::ucell.ntype = 1;
-            GlobalC::ucell.nat = nat;
-            GlobalC::ucell.atoms = new Atom[1];
-            GlobalC::ucell.atoms[0].na = nat;
-            GlobalC::ucell.omega = 1.0;
-            GlobalC::ucell.lat0 = 1.0;
+            ucell.ntype = 1;
+            ucell.nat = nat;
+            ucell.atoms = new Atom[1];
+            ucell.atoms[0].na = nat;
+            ucell.omega = 1.0;
+            ucell.lat0 = 1.0;
             
-            GlobalC::ucell.iat2it = new int[nat];
-            GlobalC::ucell.iat2ia = new int[nat];
-            GlobalC::ucell.atoms[0].mbl.resize(nat);
-            GlobalC::ucell.atoms[0].taud.resize(nat);
-            GlobalC::ucell.lc = new int[3];
+            ucell.iat2it = new int[nat];
+            ucell.iat2ia = new int[nat];
+            ucell.atoms[0].mbl.resize(nat);
+            ucell.atoms[0].taud.resize(nat);
+            ucell.lc = new int[3];
 
-            GlobalC::ucell.iat2it[0] = 0;
-            GlobalC::ucell.iat2it[1] = 0;
-            GlobalC::ucell.iat2it[2] = 0;
+            ucell.iat2it[0] = 0;
+            ucell.iat2it[1] = 0;
+            ucell.iat2it[2] = 0;
 
-            GlobalC::ucell.iat2ia[0] = 0;
-            GlobalC::ucell.iat2ia[1] = 1;
-            GlobalC::ucell.iat2ia[2] = 2;
+            ucell.iat2ia[0] = 0;
+            ucell.iat2ia[1] = 1;
+            ucell.iat2ia[2] = 2;
 
-            GlobalC::ucell.atoms[0].mbl[0].x = 0;
-            GlobalC::ucell.atoms[0].mbl[0].y = 0;
-            GlobalC::ucell.atoms[0].mbl[0].z = 1;
+            ucell.atoms[0].mbl[0].x = 0;
+            ucell.atoms[0].mbl[0].y = 0;
+            ucell.atoms[0].mbl[0].z = 1;
 
-            GlobalC::ucell.atoms[0].mbl[1].x = 0;
-            GlobalC::ucell.atoms[0].mbl[1].y = 1;
-            GlobalC::ucell.atoms[0].mbl[1].z = 0;
+            ucell.atoms[0].mbl[1].x = 0;
+            ucell.atoms[0].mbl[1].y = 1;
+            ucell.atoms[0].mbl[1].z = 0;
 
-            GlobalC::ucell.atoms[0].mbl[2].x = 1;
-            GlobalC::ucell.atoms[0].mbl[2].y = 0;
-            GlobalC::ucell.atoms[0].mbl[2].z = 0;
+            ucell.atoms[0].mbl[2].x = 1;
+            ucell.atoms[0].mbl[2].y = 0;
+            ucell.atoms[0].mbl[2].z = 0;
 
-            GlobalC::ucell.atoms[0].taud[0] = 0.0;
-            GlobalC::ucell.atoms[0].taud[1] = 0.0;
-            GlobalC::ucell.atoms[0].taud[2] = 0.0;
+            ucell.atoms[0].taud[0] = 0.0;
+            ucell.atoms[0].taud[1] = 0.0;
+            ucell.atoms[0].taud[2] = 0.0;
 
-            GlobalC::ucell.lc[0] = 1;
-            GlobalC::ucell.lc[1] = 1;
-            GlobalC::ucell.lc[2] = 1;
+            ucell.lc[0] = 1;
+            ucell.lc[1] = 1;
+            ucell.lc[2] = 1;
 
             rl.init_relax(nat);
-            rl.relax_step(force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0);
 
             for(int i=0;i<3;i++)
             {
-                result.push_back(GlobalC::ucell.atoms[0].taud[i].x);
-                result.push_back(GlobalC::ucell.atoms[0].taud[i].y);
-                result.push_back(GlobalC::ucell.atoms[0].taud[i].z);
+                result.push_back(ucell.atoms[0].taud[i].x);
+                result.push_back(ucell.atoms[0].taud[i].y);
+                result.push_back(ucell.atoms[0].taud[i].z);
             }
             push_result();
 
             //reset lattice vector
-            GlobalC::ucell.latvec.Identity();
+            ucell.latvec.Identity();
             input.fixed_axes = "shape";
             rl.init_relax(nat);
-            rl.relax_step(force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0);
             push_result();
 
             //reset lattice vector
-            GlobalC::ucell.latvec.Identity();
+            ucell.latvec.Identity();
             input.fixed_axes = "volume";
             rl.init_relax(nat);
-            rl.relax_step(force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0);
             push_result();
 
             //reset lattice vector
-            GlobalC::ucell.latvec.Identity();
+            ucell.latvec.Identity();
             input.fixed_axes = "a"; //anything other than "None"
             input.fixed_ibrav = true;
-            GlobalC::ucell.lc[0] = 0;
-            GlobalC::ucell.lc[1] = 0;
-            GlobalC::ucell.lc[2] = 0;
+            ucell.lc[0] = 0;
+            ucell.lc[1] = 0;
+            ucell.lc[2] = 0;
             rl.init_relax(nat);
-            rl.relax_step(force_in,stress_in,0.0);
+            rl.relax_step(ucell,force_in,stress_in,0.0);
             push_result();
         }
 
         void push_result()
         {
-            result.push_back(GlobalC::ucell.latvec.e11);
-            result.push_back(GlobalC::ucell.latvec.e12);
-            result.push_back(GlobalC::ucell.latvec.e13);
-            result.push_back(GlobalC::ucell.latvec.e21);
-            result.push_back(GlobalC::ucell.latvec.e22);
-            result.push_back(GlobalC::ucell.latvec.e23);
-            result.push_back(GlobalC::ucell.latvec.e31);
-            result.push_back(GlobalC::ucell.latvec.e32);
-            result.push_back(GlobalC::ucell.latvec.e33);             
+            result.push_back(ucell.latvec.e11);
+            result.push_back(ucell.latvec.e12);
+            result.push_back(ucell.latvec.e13);
+            result.push_back(ucell.latvec.e21);
+            result.push_back(ucell.latvec.e22);
+            result.push_back(ucell.latvec.e23);
+            result.push_back(ucell.latvec.e31);
+            result.push_back(ucell.latvec.e32);
+            result.push_back(ucell.latvec.e33);             
         }
 
 };
@@ -150,6 +151,7 @@ class Test_RELAX : public testing::Test
     protected:
         Relax rl;
         std::vector<double> result;
+        UnitCell ucell;
 
         void SetUp()
         {
@@ -190,92 +192,92 @@ class Test_RELAX : public testing::Test
 
                 energy_file >> energy;
 
-                rl.relax_step(force_in,stress_in,energy);
+                rl.relax_step(ucell,force_in,stress_in,energy);
 
-                result.push_back(GlobalC::ucell.atoms[0].taud[0].x);
-                result.push_back(GlobalC::ucell.atoms[0].taud[0].y);
-                result.push_back(GlobalC::ucell.atoms[0].taud[0].z);
-                result.push_back(GlobalC::ucell.atoms[1].taud[0].x);
-                result.push_back(GlobalC::ucell.atoms[1].taud[0].y);
-                result.push_back(GlobalC::ucell.atoms[1].taud[0].z);
-                result.push_back(GlobalC::ucell.atoms[2].taud[0].x);
-                result.push_back(GlobalC::ucell.atoms[2].taud[0].y);
-                result.push_back(GlobalC::ucell.atoms[2].taud[0].z);
-                result.push_back(GlobalC::ucell.atoms[2].taud[1].x);
-                result.push_back(GlobalC::ucell.atoms[2].taud[1].y);
-                result.push_back(GlobalC::ucell.atoms[2].taud[1].z);
-                result.push_back(GlobalC::ucell.atoms[2].taud[2].x);
-                result.push_back(GlobalC::ucell.atoms[2].taud[2].y);
-                result.push_back(GlobalC::ucell.atoms[2].taud[2].z);
-                result.push_back(GlobalC::ucell.latvec.e11);
-                result.push_back(GlobalC::ucell.latvec.e12);
-                result.push_back(GlobalC::ucell.latvec.e13);
-                result.push_back(GlobalC::ucell.latvec.e21);
-                result.push_back(GlobalC::ucell.latvec.e22);
-                result.push_back(GlobalC::ucell.latvec.e23);
-                result.push_back(GlobalC::ucell.latvec.e31);
-                result.push_back(GlobalC::ucell.latvec.e32);
-                result.push_back(GlobalC::ucell.latvec.e33);
+                result.push_back(ucell.atoms[0].taud[0].x);
+                result.push_back(ucell.atoms[0].taud[0].y);
+                result.push_back(ucell.atoms[0].taud[0].z);
+                result.push_back(ucell.atoms[1].taud[0].x);
+                result.push_back(ucell.atoms[1].taud[0].y);
+                result.push_back(ucell.atoms[1].taud[0].z);
+                result.push_back(ucell.atoms[2].taud[0].x);
+                result.push_back(ucell.atoms[2].taud[0].y);
+                result.push_back(ucell.atoms[2].taud[0].z);
+                result.push_back(ucell.atoms[2].taud[1].x);
+                result.push_back(ucell.atoms[2].taud[1].y);
+                result.push_back(ucell.atoms[2].taud[1].z);
+                result.push_back(ucell.atoms[2].taud[2].x);
+                result.push_back(ucell.atoms[2].taud[2].y);
+                result.push_back(ucell.atoms[2].taud[2].z);
+                result.push_back(ucell.latvec.e11);
+                result.push_back(ucell.latvec.e12);
+                result.push_back(ucell.latvec.e13);
+                result.push_back(ucell.latvec.e21);
+                result.push_back(ucell.latvec.e22);
+                result.push_back(ucell.latvec.e23);
+                result.push_back(ucell.latvec.e31);
+                result.push_back(ucell.latvec.e32);
+                result.push_back(ucell.latvec.e33);
             }
         }
 
         void setup_cell()
         {
             int ntype = 3, nat = 5;
-            GlobalC::ucell.ntype = ntype;
-            GlobalC::ucell.nat = nat;
+            ucell.ntype = ntype;
+            ucell.nat = nat;
 
-            GlobalC::ucell.omega = 452.590903143121;
-            GlobalC::ucell.lat0 = 1.8897259886;
-            GlobalC::ucell.iat2it = new int[nat];
-            GlobalC::ucell.iat2ia = new int[nat];
-            GlobalC::ucell.iat2it[0] = 0;
-            GlobalC::ucell.iat2it[1] = 1;
-            GlobalC::ucell.iat2it[2] = 2;
-            GlobalC::ucell.iat2it[3] = 2;
-            GlobalC::ucell.iat2it[4] = 2;
+            ucell.omega = 452.590903143121;
+            ucell.lat0 = 1.8897259886;
+            ucell.iat2it = new int[nat];
+            ucell.iat2ia = new int[nat];
+            ucell.iat2it[0] = 0;
+            ucell.iat2it[1] = 1;
+            ucell.iat2it[2] = 2;
+            ucell.iat2it[3] = 2;
+            ucell.iat2it[4] = 2;
 
-            GlobalC::ucell.iat2ia[0] = 0;
-            GlobalC::ucell.iat2ia[1] = 0;
-            GlobalC::ucell.iat2ia[2] = 0;
-            GlobalC::ucell.iat2ia[3] = 1;
-            GlobalC::ucell.iat2ia[4] = 2;
+            ucell.iat2ia[0] = 0;
+            ucell.iat2ia[1] = 0;
+            ucell.iat2ia[2] = 0;
+            ucell.iat2ia[3] = 1;
+            ucell.iat2ia[4] = 2;
 
-            GlobalC::ucell.atoms = new Atom[ntype];
-            GlobalC::ucell.atoms[0].na = 1;
-            GlobalC::ucell.atoms[1].na = 1;
-            GlobalC::ucell.atoms[2].na = 3;
+            ucell.atoms = new Atom[ntype];
+            ucell.atoms[0].na = 1;
+            ucell.atoms[1].na = 1;
+            ucell.atoms[2].na = 3;
             
             for(int i=0;i<ntype;i++)
             {
-                int na = GlobalC::ucell.atoms[i].na;
-                GlobalC::ucell.atoms[i].mbl.resize(na);
-                GlobalC::ucell.atoms[i].taud.resize(na);
+                int na = ucell.atoms[i].na;
+                ucell.atoms[i].mbl.resize(na);
+                ucell.atoms[i].taud.resize(na);
                 for (int j=0;j<na;j++)
                 {
-                    GlobalC::ucell.atoms[i].mbl[j] = {1,1,1};
+                    ucell.atoms[i].mbl[j] = {1,1,1};
                 }
             }
-            GlobalC::ucell.atoms[0].taud[0] = {0.5,0.5,0.00413599999956205};
-            GlobalC::ucell.atoms[1].taud[0] = {0  ,0  ,0.524312999999893  };
-            GlobalC::ucell.atoms[2].taud[0] = {0  ,0.5,0.479348999999274  };
-            GlobalC::ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
-            GlobalC::ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
+            ucell.atoms[0].taud[0] = {0.5,0.5,0.00413599999956205};
+            ucell.atoms[1].taud[0] = {0  ,0  ,0.524312999999893  };
+            ucell.atoms[2].taud[0] = {0  ,0.5,0.479348999999274  };
+            ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
+            ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            GlobalC::ucell.lc = new int[3];
-            GlobalC::ucell.lc[0] = 1;
-            GlobalC::ucell.lc[1] = 1;
-            GlobalC::ucell.lc[2] = 1;
+            ucell.lc = new int[3];
+            ucell.lc[0] = 1;
+            ucell.lc[1] = 1;
+            ucell.lc[2] = 1;
 
-            GlobalC::ucell.latvec.e11 = 3.96;
-            GlobalC::ucell.latvec.e12 = 0;
-            GlobalC::ucell.latvec.e13 = 0;
-            GlobalC::ucell.latvec.e21 = 0;
-            GlobalC::ucell.latvec.e22 = 3.96;
-            GlobalC::ucell.latvec.e23 = 0;
-            GlobalC::ucell.latvec.e31 = 0;
-            GlobalC::ucell.latvec.e32 = 0;
-            GlobalC::ucell.latvec.e33 = 4.2768;
+            ucell.latvec.e11 = 3.96;
+            ucell.latvec.e12 = 0;
+            ucell.latvec.e13 = 0;
+            ucell.latvec.e21 = 0;
+            ucell.latvec.e22 = 3.96;
+            ucell.latvec.e23 = 0;
+            ucell.latvec.e31 = 0;
+            ucell.latvec.e32 = 0;
+            ucell.latvec.e33 = 4.2768;
         }
 };
 

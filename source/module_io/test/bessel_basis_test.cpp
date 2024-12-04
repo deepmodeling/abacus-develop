@@ -514,8 +514,8 @@ TEST_F(TestBesselBasis, PolynomialInterpolationTest) {
      /*
       manipulate Bessel_Basis::init_Faln function 
       because for(int it=0; it<ntype; it++)
-      then        for(int il=0; il<GlobalC::ucell.atoms[it].nwl+1; il++)
-      and             for(int in=0; in<GlobalC::ucell.atoms[it].l_nchi[il]; in++)
+      then        for(int il=0; il<ucell.atoms[it].nwl+1; il++)
+      and             for(int in=0; in<ucell.atoms[it].l_nchi[il]; in++)
       Parameter ntype is controlled by input, but
       Parameter nwl, l_nchi are controlled by GlobalC, and will determine exact dimension of Faln
     */

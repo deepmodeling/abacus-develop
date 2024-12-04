@@ -73,14 +73,14 @@ void output_mat_sparse(const bool& out_mat_hsR,
     if (out_mat_r)
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(pv, orb);
+        r_matrix.init(ucell, pv, orb);
         if (out_mat_hsR)
         {
-            r_matrix.out_rR_other(istep, HS_Arrays.output_R_coor);
+            r_matrix.out_rR_other(ucell,istep, HS_Arrays.output_R_coor);
         }
         else
         {
-            r_matrix.out_rR(istep);
+            r_matrix.out_rR(ucell,istep);
         }
     }
 

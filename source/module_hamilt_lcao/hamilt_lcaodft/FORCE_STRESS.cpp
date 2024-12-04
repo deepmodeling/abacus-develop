@@ -869,11 +869,11 @@ void Force_Stress_LCAO<T>::calForcePwPart(const UnitCell& ucell,
     // local pseudopotential force:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    f_pw.cal_force_loc(fvl_dvl, rhopw, nlpp.vloc, chr);
+    f_pw.cal_force_loc(ucell,fvl_dvl, rhopw, nlpp.vloc, chr);
     //--------------------------------------------------------
     // ewald force: use plane wave only.
     //--------------------------------------------------------
-    f_pw.cal_force_ew(fewalds, rhopw, &sf); // remain problem
+    f_pw.cal_force_ew(ucell,fewalds, rhopw, &sf); // remain problem
 
     //--------------------------------------------------------
     // force due to core correlation.
@@ -1009,17 +1009,17 @@ void Force_Stress_LCAO<T>::calStressPwPart(const UnitCell& ucell,
     // local pseudopotential stress:
     // use charge density; plane wave; local pseudopotential;
     //--------------------------------------------------------
-    sc_pw.stress_loc(sigmadvl, rhopw, nlpp.vloc, &sf, 0, chr);
+    sc_pw.stress_loc(ucell,sigmadvl, rhopw, nlpp.vloc, &sf, 0, chr);
 
     //--------------------------------------------------------
     // hartree term
     //--------------------------------------------------------
-    sc_pw.stress_har(sigmahar, rhopw, 0, chr);
+    sc_pw.stress_har(ucell,sigmahar, rhopw, 0, chr);
 
     //--------------------------------------------------------
     // ewald stress: use plane wave only.
     //--------------------------------------------------------
-    sc_pw.stress_ewa(sigmaewa, rhopw, 0); // remain problem
+    sc_pw.stress_ewa(ucell,sigmaewa, rhopw, 0); // remain problem
 
     //--------------------------------------------------------
     // stress due to core correlation.
@@ -1034,7 +1034,7 @@ void Force_Stress_LCAO<T>::calStressPwPart(const UnitCell& ucell,
         sigmaxc(i, i) = -etxc / ucell.omega;
     }
     // Exchange-correlation for PBE
-    sc_pw.stress_gga(sigmaxc, rhopw, chr);
+    sc_pw.stress_gga(ucell,sigmaxc, rhopw, chr);
 
     return;
 }

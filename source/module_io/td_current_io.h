@@ -10,7 +10,8 @@ namespace ModuleIO
 {
 #ifdef __LCAO
 /// @brief func to output current, only used in tddft
-void write_current(const int istep,
+void write_current(const UnitCell& ucell,
+                   const int istep,
                    const psi::Psi<std::complex<double>>* psi,
                    const elecstate::ElecState* pelec,
                    const K_Vectors& kv,
