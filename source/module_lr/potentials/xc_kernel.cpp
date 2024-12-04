@@ -93,6 +93,23 @@ inline void add_assign_op(const std::vector<T>& src, std::vector<T>& dst)
 {
     add_op(src, dst, dst);
 }
+template<typename Telement, typename Tscalar>
+inline void cutoff_grid_data_spin2(std::vector<Telement>& func, const std::vector<Tscalar>& mask)
+{
+    const int& nrxx = mask.size() / 2;
+    assert(func.size() % nrxx == 0 && func.size() / nrxx > 1);
+    const int n_component = func.size() / nrxx;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (int ir = 0;ir < nrxx;++ir)
+    {
+        const int& i2 = 2 * ir;
+        const int& istart = n_component * ir;
+        std::for_each(func.begin() + istart, func.begin() + istart + n_component - 1, [&](Telement& f) { f *= mask[i2]; });    //spin-up
+        std::for_each(func.begin() + istart + 1, func.begin() + istart + n_component, [&](Telement& f) { f *= mask[i2 + 1]; });    //spin-down
+    }
+}
 
 #ifdef USE_LIBXC
 void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core)
@@ -191,7 +208,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         xc_func_set_dens_threshold(&func, rho_threshold);
 
-        //cut off grho if not LDA (future subfunc)
+        //cut off function
+        const std::vector<double> sgn = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
 
         // Libxc interfaces overwrite (instead of add onto) the output arrays, so we need temporary copies
         std::vector<double> vrho_tmp(this->vrho_.size());
@@ -207,9 +225,19 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             break;
         case XC_FAMILY_GGA:
         case XC_FAMILY_HYB_GGA:
+        {
             xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho_tmp.data(), vsigma_tmp.data());
             xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
+            // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
+            // std::cout << "rho corresponding to max element of v2sigma2_tmp: " << rho[(std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) - v2sigma2_tmp.begin()) / 6] << std::endl;
+            // cut off by sgn
+            cutoff_grid_data_spin2(vrho_tmp, sgn);
+            cutoff_grid_data_spin2(vsigma_tmp, sgn);
+            cutoff_grid_data_spin2(v2rho2_tmp, sgn);
+            cutoff_grid_data_spin2(v2rhosigma_tmp, sgn);
+            cutoff_grid_data_spin2(v2sigma2_tmp, sgn);
             break;
+        }
         default:
             throw std::domain_error("func.info->family =" + std::to_string(func.info->family)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
