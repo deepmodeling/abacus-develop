@@ -511,7 +511,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
     if (iter == 1)
     {
-        this->p_chgmix->init_mixing(); // init mixing
+        this->p_chgmix->mix_reset(); // init mixing
         this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
         this->p_chgmix->mixing_restart_count = 0;
         // this output will be removed once the feeature is stable
