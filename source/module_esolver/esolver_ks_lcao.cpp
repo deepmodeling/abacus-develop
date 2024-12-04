@@ -959,7 +959,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
 #endif
 
     // 6) write Hamiltonian and Overlap matrix
-    if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta || PARAM.inp.esolver_type == 'tddft'))
+    if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta))
     {
         this->GK.renew(true);
     }
