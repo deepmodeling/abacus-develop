@@ -50,17 +50,24 @@ void Relax::init_relax(const int nat_in)
 }
 }
 
-bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in)
+bool Relax::relax_step(UnitCell& ucell,
+                       const ModuleBase::matrix& force, 
+                       const ModuleBase::matrix &stress, 
+                       const double etot_in)
 {
     ModuleBase::TITLE("Relax","relax_step");
 
     etot = etot_in * ModuleBase::Ry_to_eV; //convert to eV
-    if( istep == 0 ) { etot_p = etot;
-}
+    if( istep == 0 ) 
+    { 
+        etot_p = etot;
+    }
 
-    bool relax_done = this->setup_gradient(force, stress);
-    if(relax_done) { return relax_done;
-}
+    bool relax_done = this->setup_gradient(ucell,force, stress);
+    if(relax_done) 
+    { 
+        return relax_done;
+    }
 
     this->calculate_gamma();
 
@@ -69,12 +76,12 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
     if(ls_done)
     {
         this->new_direction();
-        this->move_cell_ions(true);
+        this->move_cell_ions(ucell,true);
     }
     else
     {
         this->perform_line_search();
-        this->move_cell_ions(false);
+        this->move_cell_ions(ucell,false);
         dmovel = dmove;
     }
 
@@ -83,57 +90,69 @@ bool Relax::relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix
     return relax_done;
 }
 
-bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::matrix &stress)
+bool Relax::setup_gradient(const UnitCell &ucell,
+                           const ModuleBase::matrix& force, 
+                           const ModuleBase::matrix &stress)
 {
     ModuleBase::TITLE("Relax","setup_gradient");
 
     //if not relax, then return converged
-    if( !( PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" ) ) { return true;
-}
+    if( !( PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" ) ) 
+    { 
+        return true;
+    }
 
     //indicating whether force & stress are converged
     bool force_converged = true;
     double max_grad = 0.0;
 
-//=========================================
-//set gradient for ions degrees of freedom
-//=========================================
+    //=========================================
+    //set gradient for ions degrees of freedom
+    //=========================================
 
     grad_ion.zero_out();
     ModuleBase::matrix force_eva = force * (ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A); //convert to eV/A
 
 	int iat=0;
-	for(int it = 0;it < GlobalC::ucell.ntype;it++)
+	for(int it = 0;it < ucell.ntype;it++)
 	{
-		Atom* atom = &GlobalC::ucell.atoms[it];
-		for(int ia =0;ia< GlobalC::ucell.atoms[it].na;ia++)
+		Atom* atom = &ucell.atoms[it];
+		for(int ia =0;ia< ucell.atoms[it].na;ia++)
 		{	
             double force2 = 0.0;
 			if(atom->mbl[ia].x == 1)
 			{
 				grad_ion(iat, 0) = force_eva(iat, 0);
-                if( std::abs(force_eva(iat,0)) > max_grad) { max_grad = std::abs(force_eva(iat,0));
-}
+                if( std::abs(force_eva(iat,0)) > max_grad) 
+                { 
+                    max_grad = std::abs(force_eva(iat,0));
+                }
 			}
 			if(atom->mbl[ia].y == 1)
 			{
 				grad_ion(iat, 1) = force_eva(iat, 1);
-                if( std::abs(force_eva(iat,1)) > max_grad) { max_grad = std::abs(force_eva(iat,1));
-}
+                if( std::abs(force_eva(iat,1)) > max_grad) 
+                { 
+                    max_grad = std::abs(force_eva(iat,1));
+                }
 			}
 			if(atom->mbl[ia].z == 1)
 			{
 				grad_ion(iat, 2) = force_eva(iat, 2);
-                if( std::abs(force_eva(iat,2)) > max_grad) { max_grad = std::abs(force_eva(iat,2));
-}
+                if( std::abs(force_eva(iat,2)) > max_grad) 
+                { 
+                    max_grad = std::abs(force_eva(iat,2));
+                }
 			}
 			++iat;
 		}
 	}
     assert(iat==nat);
 
-    if(max_grad > force_thr_eva) { force_converged = false;
-}
+    if(max_grad > force_thr_eva) 
+    { 
+        force_converged = false;
+    }
 	if(PARAM.inp.out_level=="ie")
 	{
         std::cout << " ETOT DIFF (eV)       : " << etot - etot_p << std::endl;
@@ -150,7 +169,7 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
     if(if_cell_moves)
     {
         grad_cell.zero_out();
-        ModuleBase::matrix stress_ev = stress * (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
+        ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
 
         if(PARAM.inp.fixed_axes == "shape")
         {
@@ -176,22 +195,22 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
             stress_cart.e21 = stress_ev(1,0); stress_cart.e22 = stress_ev(1,1); stress_cart.e23 = stress_ev(1,2);
             stress_cart.e31 = stress_ev(2,0); stress_cart.e32 = stress_ev(2,1); stress_cart.e33 = stress_ev(2,2);
 
-            stress_cart = GlobalC::ucell.latvec * stress_cart;
+            stress_cart = ucell.latvec * stress_cart;
 
-            if(GlobalC::ucell.lc[0] == 0)
+            if(ucell.lc[0] == 0)
             {
                 stress_cart.e11 = 0; stress_cart.e12 = 0; stress_cart.e13 = 0;
             }
-            if(GlobalC::ucell.lc[1] == 0)
+            if(ucell.lc[1] == 0)
             {
                 stress_cart.e21 = 0; stress_cart.e22 = 0; stress_cart.e23 = 0;
             }
-            if(GlobalC::ucell.lc[2] == 0)
+            if(ucell.lc[2] == 0)
             {
                 stress_cart.e31 = 0; stress_cart.e32 = 0; stress_cart.e33 = 0;
             }
 
-            stress_cart = GlobalC::ucell.GT * stress_cart;
+            stress_cart = ucell.GT * stress_cart;
             stress_ev(0,0) = stress_cart.e11; stress_ev(0,1) = stress_cart.e12; stress_ev(0,2) = stress_cart.e13;
             stress_ev(1,0) = stress_cart.e21; stress_ev(1,1) = stress_cart.e22; stress_ev(1,2) = stress_cart.e23;
             stress_ev(2,0) = stress_cart.e31; stress_ev(2,1) = stress_cart.e32; stress_ev(2,2) = stress_cart.e33;           
@@ -212,9 +231,11 @@ bool Relax::setup_gradient(const ModuleBase::matrix& force, const ModuleBase::ma
         {
             for (int j = 0; j < 3; j++)
             {
-                double grad = grad_cell(i,j) / (GlobalC::ucell.omega * ModuleBase::Ry_to_eV);
-                if ( largest_grad < std::abs(grad) ) { largest_grad = std::abs(grad);
-}
+                double grad = grad_cell(i,j) / (ucell.omega * ModuleBase::Ry_to_eV);
+                if ( largest_grad < std::abs(grad) ) 
+                { 
+                    largest_grad = std::abs(grad);
+                }
             }
         }
 
@@ -437,15 +458,18 @@ void Relax::new_direction()
     return;
 }
 
-void Relax::move_cell_ions(const bool is_new_dir)
+void Relax::move_cell_ions(UnitCell& ucell,
+                           const bool is_new_dir)
 {
     ModuleBase::TITLE("Relax","move_cell_ions");
 
     // I'm keeping this only because we have to
     // be compatible with old code
-    GlobalC::ucell.ionic_position_updated = true;
-    if(if_cell_moves) { GlobalC::ucell.cell_parameter_updated = true;
-}
+    ucell.ionic_position_updated = true;
+    if(if_cell_moves) 
+    { 
+        ucell.cell_parameter_updated = true;
+    }
 
     // Depending on whether this is a first step along CG new direction
     // or a line search step, the treatment is slightly different
@@ -492,47 +516,49 @@ void Relax::move_cell_ions(const bool is_new_dir)
             };
         cp_mat_to_mat3();
 
-        if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.nrotk > 0)
+        if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.nrotk > 0)
         {
             search_dr_cell = sr_dr_cell.Transpose().to_matrix();
-            GlobalC::ucell.symm.symmetrize_mat3(search_dr_cell, GlobalC::ucell.lat);
+            ucell.symm.symmetrize_mat3(search_dr_cell, ucell.lat);
             cp_mat_to_mat3();
             sr_dr_cell = sr_dr_cell.Transpose();
         }
 
         // The logic here is as follows: a line search is a continuation
-        // in the new direction; but GlobalC::ucell.latvec now is already
+        // in the new direction; but ucell.latvec now is already
         // different from when the current CG step starts;
         // as a result, we need to save latvec at the beginning of
         // each CG step
-        if(is_new_dir) { latvec_save = GlobalC::ucell.latvec;
-}
+        if(is_new_dir) 
+        { 
+            latvec_save = ucell.latvec;
+        }
 
         ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
 
         //should be close to 0, but set again to avoid numerical issues
-        if(GlobalC::ucell.lc[0] == 0)
+        if(ucell.lc[0] == 0)
         {
             move_cell.e11 = 0; move_cell.e12 = 0; move_cell.e13 = 0;
         }
-        if(GlobalC::ucell.lc[1] == 0)
+        if(ucell.lc[1] == 0)
         {
             move_cell.e21 = 0; move_cell.e22 = 0; move_cell.e23 = 0;
         }
-        if(GlobalC::ucell.lc[2] == 0)
+        if(ucell.lc[2] == 0)
         {
             move_cell.e31 = 0; move_cell.e32 = 0; move_cell.e33 = 0;
         }
-        GlobalC::ucell.latvec += move_cell * (step_size * fac * fac_stress);
+        ucell.latvec += move_cell * (step_size * fac * fac_stress);
 
         if(PARAM.inp.fixed_axes == "volume")
         {
-            double omega_new = std::abs(GlobalC::ucell.latvec.Det()) * pow(GlobalC::ucell.lat0, 3);
-            GlobalC::ucell.latvec *= pow(GlobalC::ucell.omega / omega_new, 1.0/3.0);
+            double omega_new = std::abs(ucell.latvec.Det()) * pow(ucell.lat0, 3);
+            ucell.latvec *= pow(ucell.omega / omega_new, 1.0/3.0);
         }
         if(PARAM.inp.fixed_ibrav)
         {
-            GlobalC::ucell.remake_cell();
+            ucell.remake_cell();
         }
     }
 
@@ -549,17 +575,17 @@ void Relax::move_cell_ions(const bool is_new_dir)
         //Cartesian coordinate
         //convert from Angstrom to unit of latvec (Bohr)
         ModuleBase::Vector3<double> move_ion_cart;
-        move_ion_cart.x = step_size * fac_force * search_dr_ion(iat,0) / ModuleBase::BOHR_TO_A / GlobalC::ucell.lat0;
-        move_ion_cart.y = step_size * fac_force * search_dr_ion(iat,1) / ModuleBase::BOHR_TO_A / GlobalC::ucell.lat0;
-        move_ion_cart.z = step_size * fac_force * search_dr_ion(iat,2) / ModuleBase::BOHR_TO_A / GlobalC::ucell.lat0;
+        move_ion_cart.x = step_size * fac_force * search_dr_ion(iat,0) / ModuleBase::BOHR_TO_A / ucell.lat0;
+        move_ion_cart.y = step_size * fac_force * search_dr_ion(iat,1) / ModuleBase::BOHR_TO_A / ucell.lat0;
+        move_ion_cart.z = step_size * fac_force * search_dr_ion(iat,2) / ModuleBase::BOHR_TO_A / ucell.lat0;
 
         //convert to Direct coordinate
         //note here the old GT is used
-        ModuleBase::Vector3<double> move_ion_dr = move_ion_cart * GlobalC::ucell.GT;
+        ModuleBase::Vector3<double> move_ion_dr = move_ion_cart * ucell.GT;
 
-        int it = GlobalC::ucell.iat2it[iat];
-        int ia = GlobalC::ucell.iat2ia[iat];
-        Atom* atom = &GlobalC::ucell.atoms[it];
+        int it = ucell.iat2it[iat];
+        int ia = ucell.iat2ia[iat];
+        Atom* atom = &ucell.atoms[it];
 
         if(atom->mbl[ia].x == 1)
         {
@@ -575,14 +601,15 @@ void Relax::move_cell_ions(const bool is_new_dir)
         }
     }
 
-    if (ModuleSymmetry::Symmetry::symm_flag && GlobalC::ucell.symm.all_mbl && GlobalC::ucell.symm.nrotk > 0) {
-        GlobalC::ucell.symm.symmetrize_vec3_nat(move_ion);
-}
+    if (ModuleSymmetry::Symmetry::symm_flag && ucell.symm.all_mbl && ucell.symm.nrotk > 0) 
+    {
+        ucell.symm.symmetrize_vec3_nat(move_ion);
+    }
 
-	GlobalC::ucell.update_pos_taud(move_ion);
+	ucell.update_pos_taud(move_ion);
 
 	// Print the structure file.
-	GlobalC::ucell.print_tau();
+	ucell.print_tau();
 
     // =================================================================
     // Step 4 : update G,GT and other stuff
@@ -590,47 +617,47 @@ void Relax::move_cell_ions(const bool is_new_dir)
 
     if(if_cell_moves)
     {
-        GlobalC::ucell.a1.x = GlobalC::ucell.latvec.e11;
-        GlobalC::ucell.a1.y = GlobalC::ucell.latvec.e12;
-        GlobalC::ucell.a1.z = GlobalC::ucell.latvec.e13;
-        GlobalC::ucell.a2.x = GlobalC::ucell.latvec.e21;
-        GlobalC::ucell.a2.y = GlobalC::ucell.latvec.e22;
-        GlobalC::ucell.a2.z = GlobalC::ucell.latvec.e23;
-        GlobalC::ucell.a3.x = GlobalC::ucell.latvec.e31;
-        GlobalC::ucell.a3.y = GlobalC::ucell.latvec.e32;
-        GlobalC::ucell.a3.z = GlobalC::ucell.latvec.e33;
+        ucell.a1.x = ucell.latvec.e11;
+        ucell.a1.y = ucell.latvec.e12;
+        ucell.a1.z = ucell.latvec.e13;
+        ucell.a2.x = ucell.latvec.e21;
+        ucell.a2.y = ucell.latvec.e22;
+        ucell.a2.z = ucell.latvec.e23;
+        ucell.a3.x = ucell.latvec.e31;
+        ucell.a3.y = ucell.latvec.e32;
+        ucell.a3.z = ucell.latvec.e33;
 
 #ifdef __MPI
         // distribute lattice vectors.
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e11);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e12);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e13);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e21);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e22);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e23);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e31);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e32);
-        Parallel_Common::bcast_double(GlobalC::ucell.latvec.e33);
+        Parallel_Common::bcast_double(ucell.latvec.e11);
+        Parallel_Common::bcast_double(ucell.latvec.e12);
+        Parallel_Common::bcast_double(ucell.latvec.e13);
+        Parallel_Common::bcast_double(ucell.latvec.e21);
+        Parallel_Common::bcast_double(ucell.latvec.e22);
+        Parallel_Common::bcast_double(ucell.latvec.e23);
+        Parallel_Common::bcast_double(ucell.latvec.e31);
+        Parallel_Common::bcast_double(ucell.latvec.e32);
+        Parallel_Common::bcast_double(ucell.latvec.e33);
 
         // distribute lattice vectors.
-        Parallel_Common::bcast_double(GlobalC::ucell.a1.x);
-        Parallel_Common::bcast_double(GlobalC::ucell.a1.y);
-        Parallel_Common::bcast_double(GlobalC::ucell.a1.z);
-        Parallel_Common::bcast_double(GlobalC::ucell.a2.x);
-        Parallel_Common::bcast_double(GlobalC::ucell.a2.y);
-        Parallel_Common::bcast_double(GlobalC::ucell.a2.z);
-        Parallel_Common::bcast_double(GlobalC::ucell.a3.x);
-        Parallel_Common::bcast_double(GlobalC::ucell.a3.y);
-        Parallel_Common::bcast_double(GlobalC::ucell.a3.z);
+        Parallel_Common::bcast_double(ucell.a1.x);
+        Parallel_Common::bcast_double(ucell.a1.y);
+        Parallel_Common::bcast_double(ucell.a1.z);
+        Parallel_Common::bcast_double(ucell.a2.x);
+        Parallel_Common::bcast_double(ucell.a2.y);
+        Parallel_Common::bcast_double(ucell.a2.z);
+        Parallel_Common::bcast_double(ucell.a3.x);
+        Parallel_Common::bcast_double(ucell.a3.y);
+        Parallel_Common::bcast_double(ucell.a3.z);
 #endif
 
-        GlobalC::ucell.omega
-            = std::abs(GlobalC::ucell.latvec.Det()) * GlobalC::ucell.lat0 * GlobalC::ucell.lat0 * GlobalC::ucell.lat0;
+        ucell.omega
+            = std::abs(ucell.latvec.Det()) * ucell.lat0 * ucell.lat0 * ucell.lat0;
 
-        GlobalC::ucell.GT = GlobalC::ucell.latvec.Inverse();
-        GlobalC::ucell.G = GlobalC::ucell.GT.Transpose();
-        GlobalC::ucell.GGT = GlobalC::ucell.G * GlobalC::ucell.GT;
-        GlobalC::ucell.invGGT = GlobalC::ucell.GGT.Inverse();
+        ucell.GT = ucell.latvec.Inverse();
+        ucell.G = ucell.GT.Transpose();
+        ucell.GGT = ucell.G * ucell.GT;
+        ucell.invGGT = ucell.GGT.Inverse();
     }
 
     // =================================================================
@@ -642,7 +669,7 @@ void Relax::move_cell_ions(const bool is_new_dir)
     //I do not want to change it
     if(if_cell_moves)
     {
-        GlobalC::ucell.setup_cell_after_vc(GlobalV::ofs_running);
+        ucell.setup_cell_after_vc(GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
     }
 }

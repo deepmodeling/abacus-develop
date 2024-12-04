@@ -136,8 +136,8 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     if (PARAM.inp.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(pv, orb_);
-        r_matrix.out_rR(istep);
+        r_matrix.init(ucell,pv, orb_);
+        r_matrix.out_rR(ucell,istep);
     }
 
     ModuleBase::timer::tick("ESolver_GetS", "runner");

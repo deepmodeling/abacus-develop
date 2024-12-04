@@ -23,7 +23,7 @@ struct cal_dbecp_noevc_nl_op
     /// @param npw - number of planewaves
     /// @param npwx - max number of planewaves
     /// @param ik - the current k point
-    /// @param tpiba - GlobalC::ucell.tpiba
+    /// @param tpiba - ucell.tpiba
     /// @param gcar - GlobalC::wfcpw->gcar
     /// @param kvec_c - GlobalC::wfcpw->kvec_c
     /// @param vkbi - _vkb0[ipol]
@@ -69,8 +69,8 @@ struct cal_stress_nl_op
     /// @param deeq_2 - the second dimension of deeq
     /// @param deeq_3 - the third dimension of deeq
     /// @param deeq_4 - the forth dimension of deeq
-    /// @param atom_nh - GlobalC::ucell.atoms[ii].ncpp.nh
-    /// @param atom_na - GlobalC::ucell.atoms[ii].na
+    /// @param atom_nh - ucell.atoms[ii].ncpp.nh
+    /// @param atom_na - ucell.atoms[ii].na
     /// @param d_wg - input parameter wg
     /// @param occ - if use the occupation of the bands
     /// @param d_ekb - input parameter ekb

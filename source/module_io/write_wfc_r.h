@@ -25,7 +25,8 @@ namespace ModuleIO
 	// write ||wfc_r|| for all k-points and all bands
 	// Input: wfc_g[ik](ib,ig)
 	// loop order is for(z){for(y){for(x)}}
-void write_psi_r_1(const psi::Psi<std::complex<double>>& wfc_g,
+void write_psi_r_1(const UnitCell& ucell,
+                   const psi::Psi<std::complex<double>>& wfc_g,
                    const ModulePW::PW_Basis_K* wfcpw,
                    const std::string& folder_name,
                    const bool& square,
@@ -39,14 +40,14 @@ std::vector<std::complex<double>> cal_wfc_r(const ModulePW::PW_Basis_K* wfcpw,
                                             const int ib);
 
 // Input: chg_r[ir]
-#ifdef __MPI
-void write_chg_r_1(const ModulePW::PW_Basis_K* wfcpw,
+void write_chg_r_1(const UnitCell& ucell,
+                   const ModulePW::PW_Basis_K* wfcpw,
                    const std::vector<double>& chg_r,
-                   const std::string& file_name,
-                   MPI_Request& mpi_request);
-#else
-void write_chg_r_1(const ModulePW::PW_Basis_K* wfcpw, const std::vector<double>& chg_r, const std::string& file_name);
-#endif
+                   const std::string& file_name
+                   #ifdef __MPI
+                   ,MPI_Request& mpi_request
+                   #endif
+                   );
 }
 
 #endif

@@ -37,11 +37,12 @@ class berryphase
 
     void get_occupation_bands();
 #ifdef __LCAO
-    void lcao_init(const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb);
+    void lcao_init(const UnitCell& ucell, const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb);
 #endif
     void set_kpoints(const K_Vectors& kv, const int direction);
 
-    double stringPhase(int index_str,
+    double stringPhase(const UnitCell& ucell,
+                       int index_str,
                        int nbands,
                        const int npwx,
                        const psi::Psi<std::complex<double>>* psi_in,
@@ -49,7 +50,8 @@ class berryphase
                        const ModulePW::PW_Basis_K* wfcpw,
                        const K_Vectors& kv);
 
-    void Berry_Phase(int nbands,
+    void Berry_Phase(const UnitCell& ucell,
+                     int nbands,
                      double& pdl_elec_tot,
                      int& mod_elec_tot,
                      const int npwx,
@@ -58,7 +60,8 @@ class berryphase
                      const ModulePW::PW_Basis_K* wfcpw,
                      const K_Vectors& kv);
 
-    void Macroscopic_polarization(const int npwx,
+    void Macroscopic_polarization(const UnitCell& ucell,
+                                  const int npwx,
                                   const psi::Psi<double>* psi_in,
                                   const ModulePW::PW_Basis* rhopw,
                                   const ModulePW::PW_Basis_K* wfcpw,
@@ -66,7 +69,8 @@ class berryphase
     {
         throw std::logic_error("berry phase supports only multi-k");
     };
-    void Macroscopic_polarization(const int npwx,
+    void Macroscopic_polarization(const UnitCell& ucell,
+                                  const int npwx,
                                   const psi::Psi<std::complex<double>>* psi_in,
                                   const ModulePW::PW_Basis* rhopw,
                                   const ModulePW::PW_Basis_K* wfcpw,

@@ -5,6 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix.h"
 #include "module_basis/module_pw/pw_basis.h"
+#include "module_cell/unitcell.h"
 
 class pseudopot_cell_vl
 {
@@ -19,7 +20,8 @@ public:
      * @param rho_basis pw basis
      * @return this->vloc 
      */
-    void init_vloc(const ModulePW::PW_Basis* rho_basis);
+    void init_vloc(const UnitCell& ucell,
+                   const ModulePW::PW_Basis* rho_basis);
 
     ModuleBase::matrix vloc;   //(ntype,ngl),the local potential for each atom type(ntype,ngl)
 	bool *numeric; //[ntype], =true
@@ -28,12 +30,16 @@ private:
 
 	double *zp;   // (npsx),the charge of the pseudopotential
 
-	void allocate(const int ngg);
+	void allocate(const UnitCell& ucell,
+                  const int ngg);
     /**
      * @brief compute the coulomb potential in reciprocal space
      *        v(g) = -\frac{4pi}{V} * zp*e^2 / G^2
      */
-    void vloc_coulomb(const double& zp, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) const;
+    void vloc_coulomb(const UnitCell& ucell,
+                      const double& zp, 
+                      double* vloc_1d, 
+                      const ModulePW::PW_Basis* rho_basis) const;
 	// generate vloc for a particular atom type.
     void vloc_of_g(const int& msh,
                    const double* rab,
@@ -41,9 +47,11 @@ private:
                    const double* vloc_at,
                    const double& zp,
                    double* vloc,
+                   const UnitCell& ucell,
                    const ModulePW::PW_Basis* rho_basis) const;
 
-    void print_vloc(const ModulePW::PW_Basis* rho_basis) const;
+    void print_vloc(const UnitCell& ucell,
+                    const ModulePW::PW_Basis* rho_basis) const;
 };
 
 #endif // VL_IN_PW 

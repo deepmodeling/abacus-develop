@@ -24,6 +24,7 @@ class HamiltSdftPW : public HamiltPW<T, Device>
                  ModulePW::PW_Basis_K* wfc_basis,
                  K_Vectors* p_kv,
                  pseudopot_cell_vnl* nlpp,
+                 const UnitCell* ucell,
                  const int& npol,
                  double* emin_in,
                  double* emax_in);
