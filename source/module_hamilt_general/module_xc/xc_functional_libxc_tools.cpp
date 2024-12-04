@@ -15,9 +15,11 @@ std::vector<double> XC_Functional_Libxc::convert_rho(
 	#ifdef _OPENMP
 	#pragma omp parallel for collapse(2) schedule(static, 1024)
 	#endif
-	for( int is=0; is<nspin; ++is )
-		for( int ir=0; ir<nrxx; ++ir )
+	for( int is=0; is<nspin; ++is ) {
+		for( int ir=0; ir<nrxx; ++ir ) {
 			rho[ir*nspin+is] = chr->rho[is][ir] + 1.0/nspin*chr->rho_core[ir];
+}
+}
 	return rho;
 }
 
@@ -63,8 +65,9 @@ XC_Functional_Libxc::cal_gdr(
 		#ifdef _OPENMP
 		#pragma omp parallel for schedule(static, 1024)
 		#endif
-		for(std::size_t ir=0; ir<nrxx; ++ir)
+		for(std::size_t ir=0; ir<nrxx; ++ir) {
 			rhor[ir] = rho[ir*nspin+is];
+}
 		//------------------------------------------
 		// initialize the charge density array in reciprocal space
 		// bring electron charge density from real space to reciprocal space
@@ -89,8 +92,9 @@ std::vector<double> XC_Functional_Libxc::convert_sigma(
 	const std::size_t nspin = gdr.size();
 	assert(nspin>0);
 	const std::size_t nrxx = gdr[0].size();
-	for(std::size_t is=1; is<nspin; ++is)
+	for(std::size_t is=1; is<nspin; ++is) {
 		assert(nrxx==gdr[is].size());
+}
 
 	std::vector<double> sigma( nrxx * ((1==nspin)?1:3) );
 	if( 1==nspin )
@@ -98,8 +102,9 @@ std::vector<double> XC_Functional_Libxc::convert_sigma(
 		#ifdef _OPENMP
 		#pragma omp parallel for schedule(static, 1024)
 		#endif
-		for( std::size_t ir=0; ir<nrxx; ++ir )
+		for( std::size_t ir=0; ir<nrxx; ++ir ) {
 			sigma[ir] = gdr[0][ir]*gdr[0][ir];
+}
 	}
 	else
 	{
@@ -132,10 +137,12 @@ std::vector<double> XC_Functional_Libxc::cal_sgn(
 #endif
     for (int ir = 0; ir < nrxx; ++ir)
     {
-        if (rho[ir * 2] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3])) < grho_threshold)
+        if (rho[ir * 2] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3])) < grho_threshold) {
             sgn[ir * 2] = 0.0;
-        if (rho[ir * 2 + 1] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3 + 2])) < grho_threshold)
+}
+        if (rho[ir * 2 + 1] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3 + 2])) < grho_threshold) {
             sgn[ir * 2 + 1] = 0.0;
+}
     }
 	return sgn;
 }
@@ -152,9 +159,11 @@ double XC_Functional_Libxc::convert_etxc(
 	#ifdef _OPENMP
 	#pragma omp parallel for collapse(2) reduction(+:etxc) schedule(static, 256)
 	#endif
-	for( int is=0; is<nspin; ++is )
-		for( int ir=0; ir<nrxx; ++ir )
+	for( int is=0; is<nspin; ++is ) {
+		for( int ir=0; ir<nrxx; ++ir ) {
 			etxc += ModuleBase::e2 * exc[ir] * rho[ir*nspin+is] * sgn[ir*nspin+is];
+}
+}
 	return etxc;
 }
 
@@ -229,8 +238,9 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 		#ifdef _OPENMP
 		#pragma omp parallel for schedule(static, 1024)
 		#endif
-		for( std::size_t ir=0; ir<nrxx; ++ir )
+		for( std::size_t ir=0; ir<nrxx; ++ir ) {
 			h[0][ir] = 2.0 * gdr[0][ir] * vsigma[ir] * 2.0 * sgn[ir];
+}
 	}
 	else
 	{
@@ -248,8 +258,9 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh(
 
 	// define two dimensional array dh [ nspin, nrxx ]
 	std::vector<std::vector<double>> dh(nspin, std::vector<double>(nrxx));
-	for( int is=0; is!=nspin; ++is )
+	for( int is=0; is!=nspin; ++is ) {
 		XC_Functional::grad_dot( h[is].data(), dh[is].data(), chr->rhopw, tpiba);
+}
 
 	return dh;
 }
@@ -265,8 +276,9 @@ ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 	assert(PARAM.inp.nspin==4);
 	constexpr double vanishing_charge = 1.0e-10;
 	ModuleBase::matrix v_nspin4(PARAM.inp.nspin, nrxx);
-	for( int ir=0; ir<nrxx; ++ir )
+	for( int ir=0; ir<nrxx; ++ir ) {
 		v_nspin4(0,ir) = 0.5 * (v(0,ir)+v(1,ir));
+}
 	if(PARAM.globalv.domag || PARAM.globalv.domag_z)
 	{
 		for( int ir=0; ir<nrxx; ++ir )
@@ -274,8 +286,9 @@ ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 			if ( amag[ir] > vanishing_charge )
 			{
 				const double vs = 0.5 * (v(0,ir)-v(1,ir));
-				for(int ipol=1; ipol<PARAM.inp.nspin; ++ipol)
+				for(int ipol=1; ipol<PARAM.inp.nspin; ++ipol) {
 					v_nspin4(ipol,ir) = vs * chr->rho[ipol][ir] / amag[ir];
+}
 			}
 		}
 	}
