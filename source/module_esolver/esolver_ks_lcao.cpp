@@ -920,6 +920,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                         PARAM.inp.out_dm1,
                         false,
                         PARAM.inp.out_app_flag,
+                        ucell.get_iat2iwt(),
+                        &ucell.nat,
                         istep);
 
     //! 4) write density matrix
@@ -1228,7 +1230,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                              PARAM.inp.nnkpfile,
                                              PARAM.inp.wannier_spin);
 
-            myWannier.calculate(this->pelec->ekb, 
+            myWannier.calculate(ucell,
+                                this->pelec->ekb, 
                                 this->pw_wfc, 
                                 this->pw_big, 
                                 this->sf, 
@@ -1247,7 +1250,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                        PARAM.inp.wannier_spin,
                                        orb_);
 
-            myWannier.calculate(this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
+            myWannier.calculate(ucell,this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
     }
@@ -1259,12 +1262,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&(this->pv));
-        bp.lcao_init(this->kv,
+        bp.lcao_init(ucell,
+                     this->kv,
                      this->GridT,
                      orb_); // additional step before calling
                             // macroscopic_polarization (why capitalize
                             // the function name?)
-        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        bp.Macroscopic_polarization(ucell,this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
 }

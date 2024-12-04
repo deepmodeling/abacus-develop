@@ -585,8 +585,8 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
                            PARAM.inp.out_wannier_wvfn_formatted,
                            PARAM.inp.nnkpfile,
                            PARAM.inp.wannier_spin);
-
-        wan.calculate(this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
+        wan.set_tpiba_omega(ucell.tpiba, ucell.omega);
+        wan.calculate(ucell,this->pelec->ekb, this->pw_wfc, this->pw_big, this->kv, this->psi);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
@@ -595,7 +595,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
         berryphase bp;
-        bp.Macroscopic_polarization(this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
+        bp.Macroscopic_polarization(ucell,this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 }
@@ -783,7 +783,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     //! 6) Print out electronic wave functions in real space
     if (PARAM.inp.out_wfc_r == 1) // Peize Lin add 2021.11.21
     {
-        ModuleIO::write_psi_r_1(this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
+        ModuleIO::write_psi_r_1(ucell,this->psi[0], this->pw_wfc, "wfc_realspace", true, this->kv);
     }
 
     //! 7) Use Kubo-Greenwood method to compute conductivities

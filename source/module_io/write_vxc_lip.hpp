@@ -197,7 +197,7 @@ namespace ModuleIO
         // for (int ir = 0;ir < potxc->get_veff_smooth().nc;++ir)
         //     exc_by_rho += potxc->get_veff_smooth()(0, ir) * chg.rho[0][ir];
         // Parallel_Reduce::reduce_all(exc_by_rho);
-        // exc_by_rho *= ((FPTYPE)GlobalC::ucell.omega * (FPTYPE)GlobalV::NPROC / (FPTYPE)potxc->get_veff_smooth().nc);
+        // exc_by_rho *= ((FPTYPE)ucell.omega * (FPTYPE)GlobalV::NPROC / (FPTYPE)potxc->get_veff_smooth().nc);
         // std::cout << "xc all-bands energy by rho =" << exc_by_rho << std::endl;
         //===== test total xc energy =======
         //===== test total exx energy =======

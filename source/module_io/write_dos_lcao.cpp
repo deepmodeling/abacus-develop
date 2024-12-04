@@ -27,7 +27,8 @@
 #include "module_base/scalapack_connector.h"
 
 template <>
-void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
+void ModuleIO::write_dos_lcao(const UnitCell& ucell,
+                              const psi::Psi<double>* psi,
                               const Parallel_Orbitals& pv,
                               const ModuleBase::matrix& ekb,
                               const ModuleBase::matrix& wg,
@@ -254,24 +255,24 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
                 out << std::setw(20) << en << std::endl;
             }
             out << "</energy_values>" << std::endl;
-            for (int i = 0; i < GlobalC::ucell.nat; i++)
+            for (int i = 0; i < ucell.nat; i++)
             {
-                int a = GlobalC::ucell.iat2ia[i];
-                int t = GlobalC::ucell.iat2it[i];
-                Atom* atom1 = &GlobalC::ucell.atoms[t];
-                const int s0 = GlobalC::ucell.itiaiw2iwt(t, a, 0);
+                int a = ucell.iat2ia[i];
+                int t = ucell.iat2it[i];
+                Atom* atom1 = &ucell.atoms[t];
+                const int s0 = ucell.itiaiw2iwt(t, a, 0);
                 for (int j = 0; j < atom1->nw; ++j)
                 {
                     const int L1 = atom1->iw2l[j];
                     const int N1 = atom1->iw2n[j];
                     const int m1 = atom1->iw2m[j];
-                    const int w = GlobalC::ucell.itiaiw2iwt(t, a, j);
+                    const int w = ucell.itiaiw2iwt(t, a, j);
 
                     // out << "</energy_values>" <<std::endl;
                     out << "<orbital" << std::endl;
                     out << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
                     out << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
-                    out << std::setw(8) << "species=\"" << GlobalC::ucell.atoms[t].label << "\"" << std::endl;
+                    out << std::setw(8) << "species=\"" << ucell.atoms[t].label << "\"" << std::endl;
                     out << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
                     out << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
                     out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
@@ -309,7 +310,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
             out << "</pdos>" << std::endl;
             out.close();
         }
-        ModuleIO::write_orb_info(&(GlobalC::ucell));
+        ModuleIO::write_orb_info(&(ucell));
     }
     delete[] pdos;
 
@@ -341,7 +342,8 @@ void ModuleIO::write_dos_lcao(const psi::Psi<double>* psi,
 }
 
 template <>
-void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
+void ModuleIO::write_dos_lcao(const UnitCell& ucell,
+                              const psi::Psi<std::complex<double>>* psi,
                               const Parallel_Orbitals& pv,
                               const ModuleBase::matrix& ekb,
                               const ModuleBase::matrix& wg,
@@ -604,24 +606,24 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                     out << std::setw(20) << en << std::endl;
                 }
                 out << "</energy_values>" << std::endl;
-                for (int i = 0; i < GlobalC::ucell.nat; i++)
+                for (int i = 0; i < ucell.nat; i++)
                 {
-                    int a = GlobalC::ucell.iat2ia[i];
-                    int t = GlobalC::ucell.iat2it[i];
-                    Atom* atom1 = &GlobalC::ucell.atoms[t];
-                    const int s0 = GlobalC::ucell.itiaiw2iwt(t, a, 0);
+                    int a = ucell.iat2ia[i];
+                    int t = ucell.iat2it[i];
+                    Atom* atom1 = &ucell.atoms[t];
+                    const int s0 = ucell.itiaiw2iwt(t, a, 0);
                     for (int j = 0; j < atom1->nw; ++j)
                     {
                         const int L1 = atom1->iw2l[j];
                         const int N1 = atom1->iw2n[j];
                         const int m1 = atom1->iw2m[j];
-                        const int w = GlobalC::ucell.itiaiw2iwt(t, a, j);
+                        const int w = ucell.itiaiw2iwt(t, a, j);
 
                         // out << "</energy_values>" <<std::endl;
                         out << "<orbital" << std::endl;
                         out << std::setw(6) << "index=\"" << std::setw(40) << w + 1 << "\"" << std::endl;
                         out << std::setw(5) << "atom_index=\"" << std::setw(40) << i + 1 << "\"" << std::endl;
-                        out << std::setw(8) << "species=\"" << GlobalC::ucell.atoms[t].label << "\"" << std::endl;
+                        out << std::setw(8) << "species=\"" << ucell.atoms[t].label << "\"" << std::endl;
                         out << std::setw(2) << "l=\"" << std::setw(40) << L1 << "\"" << std::endl;
                         out << std::setw(2) << "m=\"" << std::setw(40) << m1 << "\"" << std::endl;
                         out << std::setw(2) << "z=\"" << std::setw(40) << N1 + 1 << "\"" << std::endl;
@@ -658,7 +660,7 @@ void ModuleIO::write_dos_lcao(const psi::Psi<std::complex<double>>* psi,
                 out << "</pdos>" << std::endl;
                 out.close();
             }
-            ModuleIO::write_orb_info(&(GlobalC::ucell));
+            ModuleIO::write_orb_info(&(ucell));
         }
         delete[] pdos;
     }

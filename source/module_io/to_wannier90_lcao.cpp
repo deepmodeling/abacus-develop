@@ -38,14 +38,15 @@ toWannier90_LCAO::~toWannier90_LCAO()
 {
 }
 
-void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
+void toWannier90_LCAO::calculate(const UnitCell& ucell,
+                                 const ModuleBase::matrix& ekb,
                                  const K_Vectors& kv,
                                  const psi::Psi<std::complex<double>>& psi,
                                  const Parallel_Orbitals* pv)
 {
     this->ParaV = pv;
 
-    read_nnkp(kv);
+    read_nnkp(ucell,kv);
 
     if (PARAM.inp.nspin == 2)
     {
@@ -74,11 +75,11 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
 
         std::map<size_t, std::map<size_t, std::map<size_t, size_t>>> temp_orb_index;
         int count = 0;
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            for (int iL = 0; iL < GlobalC::ucell.atoms[it].nwl + 1; iL++)
+            for (int iL = 0; iL < ucell.atoms[it].nwl + 1; iL++)
             {
-                for (int iN = 0; iN < GlobalC::ucell.atoms[it].l_nchi[iL]; iN++)
+                for (int iN = 0; iN < ucell.atoms[it].l_nchi[iL]; iN++)
                 {
                     temp_orb_index[it][iL][iN] = count;
                     count++;
@@ -87,13 +88,13 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
         }
 
         int iw = 0;
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                for (int iL = 0; iL < GlobalC::ucell.atoms[it].nwl + 1; iL++)
+                for (int iL = 0; iL < ucell.atoms[it].nwl + 1; iL++)
                 {
-                    for (int iN = 0; iN < GlobalC::ucell.atoms[it].l_nchi[iL]; iN++)
+                    for (int iN = 0; iN < ucell.atoms[it].l_nchi[iL]; iN++)
                     {
                         for (int im = 0; im < (2 * iL + 1); im++)
                         {
@@ -111,10 +112,10 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
             }
         }
 
-        initialize_orb_table();
+        initialize_orb_table(ucell);
         produce_basis_orb();
-        set_R_coor();
-        count_delta_k(kv);
+        set_R_coor(ucell);
+        count_delta_k(ucell,kv);
     }
 
     if (out_wannier_eig)
@@ -137,16 +138,16 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
                 return exp_idkr;
             };
 
-            FR[i].set_parameters(fr_ptr[i], &GlobalC::ucell, &orb_, &GlobalC::GridD, ParaV, 140, 110);
+            FR[i].set_parameters(fr_ptr[i], &ucell, &orb_, &GlobalC::GridD, ParaV, 140, 110);
             FR[i].calculate_FR();
         }
 
-        cal_Mmn(kv, psi);
+        cal_Mmn(ucell,kv, psi);
     }
 
     if (out_wannier_amn)
     {
-        cal_Amn(kv, psi);
+        cal_Amn(ucell,kv, psi);
     }
 
     if (out_wannier_unk)
@@ -155,7 +156,7 @@ void toWannier90_LCAO::calculate(const ModuleBase::matrix& ekb,
     }
 }
 
-void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi)
+void toWannier90_LCAO::cal_Mmn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi)
 {
     // write .mmn file
     std::ofstream mmn_file;
@@ -180,7 +181,7 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
 
             int cal_ik = ik + start_k_index;
             int cal_ikb = ikb + start_k_index;
-            unkdotkb(kv, psi, cal_ik, cal_ikb, phase_G, Mmn);
+            unkdotkb(ucell,kv, psi, cal_ik, cal_ikb, phase_G, Mmn);
 
             if (GlobalV::MY_RANK == 0)
             {
@@ -209,11 +210,11 @@ void toWannier90_LCAO::cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<
 }
 }
 
-void toWannier90_LCAO::cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi)
+void toWannier90_LCAO::cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi)
 {
     produce_trial_in_lcao();
     construct_overlap_table_project();
-    cal_orbA_overlap_R();
+    cal_orbA_overlap_R(ucell);
 
     // write .amn file
     std::ofstream Amn_file;
@@ -261,7 +262,7 @@ void toWannier90_LCAO::out_unk(const psi::Psi<std::complex<double>>& psi)
 {
 }
 
-void toWannier90_LCAO::initialize_orb_table()
+void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 {
     int Lmax_used = 0;
     int Lmax = 0;
@@ -276,7 +277,7 @@ void toWannier90_LCAO::initialize_orb_table()
     for (int it = 0; it < ntype; it++)
     {
         lmax_orb = std::max(lmax_orb, orb_.Phi[it].getLmax());
-        lmax_beta = std::max(lmax_beta, GlobalC::ucell.infoNL.Beta[it].getLmax());
+        lmax_beta = std::max(lmax_beta, ucell.infoNL.Beta[it].getLmax());
     }
     const double dr = orb_.get_dR();
     const double dk = orb_.get_dk();
@@ -302,7 +303,7 @@ void toWannier90_LCAO::initialize_orb_table()
 #endif
 }
 
-void toWannier90_LCAO::set_R_coor()
+void toWannier90_LCAO::set_R_coor(const UnitCell& ucell)
 {
     int R_minX = int(-GlobalC::GridD.getTrueCellX());
     int R_minY = int(-GlobalC::GridD.getTrueCellY());
@@ -323,14 +324,14 @@ void toWannier90_LCAO::set_R_coor()
             for (int iz = 0; iz < R_z; iz++)
             {
                 ModuleBase::Vector3<double> tmpR(ix + R_minX, iy + R_minY, iz + R_minZ);
-                R_coor_car[count] = tmpR * GlobalC::ucell.latvec;
+                R_coor_car[count] = tmpR * ucell.latvec;
                 count++;
             }
         }
     }
 }
 
-void toWannier90_LCAO::count_delta_k(const K_Vectors& kv)
+void toWannier90_LCAO::count_delta_k(const UnitCell& ucell, const K_Vectors& kv)
 {
     std::set<Coordinate_3D> delta_k_all_tmp;
     for (int ik = 0; ik < cal_num_kpts; ik++)
@@ -344,8 +345,8 @@ void toWannier90_LCAO::count_delta_k(const K_Vectors& kv)
             int cal_ikb = ikb + start_k_index;
 
             ModuleBase::Vector3<double> ik_car = kv.kvec_c[ik];
-            ModuleBase::Vector3<double> ikb_car = kv.kvec_c[ikb] + G * GlobalC::ucell.G;
-            Abfs::Vector3_Order<double> dk = (ikb_car - ik_car) * GlobalC::ucell.tpiba;
+            ModuleBase::Vector3<double> ikb_car = kv.kvec_c[ikb] + G * ucell.G;
+            Abfs::Vector3_Order<double> dk = (ikb_car - ik_car) * ucell.tpiba;
             Coordinate_3D temp_dk(dk.x, dk.y, dk.z);
             delta_k_all_tmp.insert(temp_dk);
         }
@@ -362,7 +363,8 @@ void toWannier90_LCAO::count_delta_k(const K_Vectors& kv)
     }
 }
 
-void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
+void toWannier90_LCAO::unkdotkb(const UnitCell& ucell,
+                                const K_Vectors& kv,
                                 const psi::Psi<std::complex<double>>& psi_in,
                                 const int& ik,
                                 const int& ikb,
@@ -379,8 +381,8 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
 
     int R_num = R_coor_car.size();
     ModuleBase::Vector3<double> ik_car = kv.kvec_c[ik];
-    ModuleBase::Vector3<double> ikb_car = kv.kvec_c[ikb] + G * GlobalC::ucell.G;
-    Abfs::Vector3_Order<double> dk = (ikb_car - ik_car) * GlobalC::ucell.tpiba;
+    ModuleBase::Vector3<double> ikb_car = kv.kvec_c[ikb] + G * ucell.G;
+    Abfs::Vector3_Order<double> dk = (ikb_car - ik_car) * ucell.tpiba;
     Coordinate_3D temp_dk(dk.x, dk.y, dk.z);
     int delta_k_index = delta_k_all_index[temp_dk];
 
@@ -401,7 +403,7 @@ void toWannier90_LCAO::unkdotkb(const K_Vectors& kv,
             auto& matrix = tmp_FR_container->get_atom_pair(iap).get_HR_values(iR);
             const ModuleBase::Vector3<int> r_index = tmp_FR_container->get_atom_pair(iap).get_R_index(iR);
             ModuleBase::Vector3<double> dR
-                = ModuleBase::Vector3<double>(r_index.x, r_index.y, r_index.z) * GlobalC::ucell.latvec;
+                = ModuleBase::Vector3<double>(r_index.x, r_index.y, r_index.z) * ucell.latvec;
             double phase = ikb_car * dR * ModuleBase::TWO_PI;
             std::complex<double> kRn_phase = std::exp(ModuleBase::IMAG_UNIT * phase);
             for (int i = 0; i < row_size; ++i)
@@ -741,7 +743,7 @@ void toWannier90_LCAO::construct_overlap_table_project()
     }
 }
 
-void toWannier90_LCAO::cal_orbA_overlap_R()
+void toWannier90_LCAO::cal_orbA_overlap_R(const UnitCell& ucell)
 {
     int row = this->ParaV->get_row_size();
     int R_num = R_coor_car.size();
@@ -781,8 +783,8 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                 {
                     ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                     ModuleBase::Vector3<double> orb_center
-                        = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
-                    ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                        = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
+                    ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * ucell.lat0;
 
                     double overlap_o
                         = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(orb_center,
@@ -808,8 +810,8 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     {
                         ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                         ModuleBase::Vector3<double> orb_center
-                            = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
-                        ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                            = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
+                        ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * ucell.lat0;
 
                         double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                             orb_center,
@@ -838,9 +840,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -863,9 +865,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -906,8 +908,8 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                     {
                         ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                         ModuleBase::Vector3<double> orb_center
-                            = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
-                        ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                            = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
+                        ModuleBase::Vector3<double> project_orb_center = R_centre[wannier_index] * ucell.lat0;
 
                         double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                             orb_center,
@@ -947,9 +949,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -972,9 +974,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -998,9 +1000,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_pz = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index]
                                                     .at(1)
@@ -1030,9 +1032,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -1067,9 +1069,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,
@@ -1101,9 +1103,9 @@ void toWannier90_LCAO::cal_orbA_overlap_R()
                         {
                             ModuleBase::Vector3<double> R_car = R_coor_car[iR];
                             ModuleBase::Vector3<double> orb_center
-                                = (GlobalC::ucell.atoms[it1].tau[ia1] + R_car) * GlobalC::ucell.lat0;
+                                = (ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
                             ModuleBase::Vector3<double> project_orb_center
-                                = R_centre[wannier_index] * GlobalC::ucell.lat0;
+                                = R_centre[wannier_index] * ucell.lat0;
 
                             double overlap_s = center2_orb11_A[iw2iorb[orb_index_row]][wannier_index].at(0).cal_overlap(
                                 orb_center,

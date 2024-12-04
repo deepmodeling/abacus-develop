@@ -46,7 +46,8 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
                            const std::string& wannier_spin);
     ~toWannier90_LCAO_IN_PW();
 
-    void calculate(const ModuleBase::matrix& ekb,
+    void calculate(UnitCell& ucell,
+                   const ModuleBase::matrix& ekb,
                    const ModulePW::PW_Basis_K* wfcpw,
                    const ModulePW::PW_Basis_Big* bigpw,
                    const Structure_Factor& sf,
@@ -54,7 +55,8 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
                    const psi::Psi<std::complex<double>>* psi,
                    const Parallel_Orbitals* pv);
 
-    void calculate(const ModuleBase::matrix& ekb,
+    void calculate(UnitCell& ucell,
+                   const ModuleBase::matrix& ekb,
                    const ModulePW::PW_Basis_K* wfcpw,
                    const ModulePW::PW_Basis_Big* bigpw,
                    const Structure_Factor& sf,
@@ -76,7 +78,8 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     /// @param sf [in] computational methods instance, structure factor calculator
     /// @param kv [in] data carrier, storing kpoints information
     /// @return psi::Psi<std::complex<double>>*
-    psi::Psi<std::complex<double>>* get_unk_from_lcao(const psi::Psi<std::complex<double>>& psi_in,
+    psi::Psi<std::complex<double>>* get_unk_from_lcao(const UnitCell& ucell,
+                                                      const psi::Psi<std::complex<double>>& psi_in,
                                                       const ModulePW::PW_Basis_K* wfcpw,
                                                       const Structure_Factor& sf,
                                                       const K_Vectors& kv);

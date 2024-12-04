@@ -79,12 +79,14 @@ class toWannier90_LCAO : public toWannier90
                      );
     ~toWannier90_LCAO();
 
-    void calculate(const ModuleBase::matrix& ekb,
+    void calculate(const UnitCell& ucell,
+                   const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<std::complex<double>>& psi,
                    const Parallel_Orbitals* pv);
 
-    void calculate(const ModuleBase::matrix& ekb,
+    void calculate(const UnitCell& ucell,
+                   const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<double>& psi,
                    const Parallel_Orbitals* pv)
@@ -92,8 +94,8 @@ class toWannier90_LCAO : public toWannier90
         throw std::logic_error("The wave function of toWannier90_LCAO_IN_PW is generally a std::complex<double> type.");
     }
 
-    void cal_Amn(const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
-    void cal_Mmn(const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
+    void cal_Amn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
+    void cal_Mmn(const UnitCell& ucell, const K_Vectors& kv, const psi::Psi<std::complex<double>>& psi);
     void out_unk(const psi::Psi<std::complex<double>>& psi);
 
   protected:
@@ -127,15 +129,16 @@ class toWannier90_LCAO : public toWannier90
 
     const Parallel_Orbitals* ParaV;
 
-    void initialize_orb_table();
+    void initialize_orb_table(const UnitCell& ucell);
     void produce_basis_orb();
-    void set_R_coor();
-    void count_delta_k(const K_Vectors& kv);
+    void set_R_coor(const UnitCell& ucell);
+    void count_delta_k(const UnitCell& ucell, const K_Vectors& kv);
 
     std::vector<Coordinate_3D> delta_k_all;
     std::map<Coordinate_3D, int> delta_k_all_index;
 
-    void unkdotkb(const K_Vectors& kv,
+    void unkdotkb(const UnitCell& ucell,
+                  const K_Vectors& kv,
                   const psi::Psi<std::complex<double>>& psi_in,
                   const int& ik,
                   const int& ikb,
@@ -144,7 +147,7 @@ class toWannier90_LCAO : public toWannier90
 
     void produce_trial_in_lcao();
     void construct_overlap_table_project();
-    void cal_orbA_overlap_R();
+    void cal_orbA_overlap_R(const UnitCell& ucell);
 
     void unkdotA(const K_Vectors& kv,
                  const psi::Psi<std::complex<double>>& psi_in,

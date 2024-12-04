@@ -6,18 +6,18 @@
 namespace ModuleIO
 {
     /// @brief manege the output of dos in numerical atomic basis case
-/// @param[in] psi
-/// @param[in] pv
-/// @param[in] ekb
-/// @param[in] wg
-/// @param[in] dos_edelta_ev
-/// @param[in] dos_scale
-/// @param[in] dos_sigma
-/// @param[in] kv
-/// @param[in] Pkpoints
-/// @param[in] ucell
-/// @param[in] eferm
-/// @param[in] nbands
+    /// @param[in] psi
+    /// @param[in] pv
+    /// @param[in] ekb
+    /// @param[in] wg
+    /// @param[in] dos_edelta_ev
+    /// @param[in] dos_scale
+    /// @param[in] dos_sigma
+    /// @param[in] kv
+    /// @param[in] Pkpoints
+    /// @param[in] ucell
+    /// @param[in] eferm
+    /// @param[in] nbands
     template<typename T>
 		void out_dos_nao(
 				const psi::Psi<T>* psi,
@@ -36,7 +36,7 @@ namespace ModuleIO
 {
     ModuleBase::TITLE("Module_IO", "out_dos_nao");
 
-    write_dos_lcao(psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
+    write_dos_lcao(ucell,psi, pv, ekb, wg, dos_edelta_ev, dos_scale, dos_sigma, kv, p_ham);
 
     int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
     if (PARAM.inp.out_dos == 3)

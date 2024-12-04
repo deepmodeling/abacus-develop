@@ -134,7 +134,7 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     Symmetry_rho srho;
     for (int is = 0; is < nspin; is++)
     {
-        srho.begin(is, chg, chg.rhopw, GlobalC::ucell.symm);
+        srho.begin(is, chg, chg.rhopw, symm);
     }
 
     ModuleBase::timer::tick("ModuleIO", "read_wfc_pw_to_rho");

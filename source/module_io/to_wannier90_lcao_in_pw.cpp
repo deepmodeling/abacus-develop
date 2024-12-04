@@ -30,6 +30,7 @@ toWannier90_LCAO_IN_PW::~toWannier90_LCAO_IN_PW()
 }
 
 void toWannier90_LCAO_IN_PW::calculate(
+    UnitCell& ucell,
     const ModuleBase::matrix& ekb,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
@@ -45,13 +46,13 @@ void toWannier90_LCAO_IN_PW::calculate(
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
     this->psi_init_ = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
 #ifdef __MPI
-    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &ucell, &(GlobalC::Pkpoints), 1, nullptr, GlobalV::MY_RANK);
     #else
-    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(GlobalC::ucell), 1, nullptr);
+    this->psi_init_->initialize(sf_ptr, wfcpw_ptr, &(ucell), 1, nullptr);
     #endif
     this->psi_init_->tabulate();
     this->psi_init_->allocate(true);
-    read_nnkp(kv);
+    read_nnkp(ucell,kv);
 
     if (PARAM.inp.nspin == 2)
     {
@@ -69,7 +70,7 @@ void toWannier90_LCAO_IN_PW::calculate(
         }
     }
 
-    psi::Psi<std::complex<double>> *unk_inLcao = get_unk_from_lcao(*psi, wfcpw, sf, kv);
+    psi::Psi<std::complex<double>> *unk_inLcao = get_unk_from_lcao(ucell,*psi, wfcpw, sf, kv);
 
     if (out_wannier_eig)
     {
@@ -106,6 +107,7 @@ void toWannier90_LCAO_IN_PW::calculate(
 }
 
 psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
+    const UnitCell& ucell,
     const psi::Psi<std::complex<double>>& psi_in, 
     const ModulePW::PW_Basis_K* wfcpw,
     const Structure_Factor& sf,
@@ -118,7 +120,7 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     unk_inLcao->zero_out();
 
     // Orbital projection to plane wave
-    ModuleBase::realArray table_local(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
+    ModuleBase::realArray table_local(ucell.ntype, ucell.nmax_total, PARAM.globalv.nqx);
 
     for (int ik = 0; ik < num_kpts; ik++)
     {

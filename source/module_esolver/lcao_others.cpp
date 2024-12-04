@@ -48,7 +48,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     if (cal_type == "test_memory")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing memory");
-        Cal_Test::test_memory(this->pw_rho,
+        Cal_Test::test_memory(ucell.nat,
+                              ucell.ntype,
+                              ucell.GGT,
+                              this->pw_rho,
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
@@ -324,7 +327,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         IState_Envelope IEP(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            IEP.begin(this->psi,
+            IEP.begin(ucell,
+                      this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
@@ -344,7 +348,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            IEP.begin(this->psi,
+            IEP.begin(ucell,
+                      this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
