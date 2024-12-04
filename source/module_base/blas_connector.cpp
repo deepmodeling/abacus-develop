@@ -11,6 +11,7 @@
 #include <thrust/complex.h>
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
+#include "module_base/tool_quit.h"
 
 #include "cublas_v2.h"
 
