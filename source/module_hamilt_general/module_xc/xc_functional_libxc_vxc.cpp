@@ -86,7 +86,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         xc_func_set_dens_threshold(&func, rho_threshold);
 
         // sgn for threshold mask
-        const std::vector<double> sgn = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
+        const std::vector<double> sgn = (nspin == 2 && func.info->family != XC_FAMILY_LDA && func.info->kind == XC_CORRELATION)
+            ? XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, nrxx, rho, sigma)
+            : std::vector<double>(nrxx * nspin, 1.0);
 
         std::vector<double> exc   ( nrxx                    );
         std::vector<double> vrho  ( nrxx * nspin            );

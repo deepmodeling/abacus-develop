@@ -119,29 +119,24 @@ std::vector<double> XC_Functional_Libxc::convert_sigma(
 // sgn for threshold mask
 std::vector<double> XC_Functional_Libxc::cal_sgn(
 	const double rho_threshold,
-	const double grho_threshold,
-	const xc_func_type &func,
-	const int nspin,
+    const double grho_threshold,
 	const std::size_t nrxx,
 	const std::vector<double> &rho,
 	const std::vector<double> &sigma)
 {
-	std::vector<double> sgn(nrxx*nspin, 1.0);
+    std::vector<double> sgn(nrxx * 2, 1.0); // to be consistent with "ir*2" in the following code 
 	// in the case of GGA correlation for polarized case,
-	// a cutoff for grho is required to ensure that libxc gives reasonable results
-	if(nspin==2 && func.info->family != XC_FAMILY_LDA && func.info->kind==XC_CORRELATION)
-	{
-		#ifdef _OPENMP
-		#pragma omp parallel for schedule(static, 512)
-		#endif
-		for( int ir=0; ir<nrxx; ++ir )
-		{
-			if ( rho[ir*2]<rho_threshold || std::sqrt(std::abs(sigma[ir*3]))<grho_threshold )
-				sgn[ir*2] = 0.0;
-			if ( rho[ir*2+1]<rho_threshold || std::sqrt(std::abs(sigma[ir*3+2]))<grho_threshold )
-				sgn[ir*2+1] = 0.0;
-		}
-	}
+    // a cutoff for grho is required to ensure that libxc gives reasonable results
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 512)
+#endif
+    for (int ir = 0; ir < nrxx; ++ir)
+    {
+        if (rho[ir * 2] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3])) < grho_threshold)
+            sgn[ir * 2] = 0.0;
+        if (rho[ir * 2 + 1] < rho_threshold || std::sqrt(std::abs(sigma[ir * 3 + 2])) < grho_threshold)
+            sgn[ir * 2 + 1] = 0.0;
+    }
 	return sgn;
 }
 
