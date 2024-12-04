@@ -44,8 +44,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
 
-    //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(ucell, istep);
+    //! 1) call before_scf() of ESolver_KS
+    ESolver_KS<TK>::before_scf(ucell, istep);
 
     if (ucell.ionic_position_updated)
     {
