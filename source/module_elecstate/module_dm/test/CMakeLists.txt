@@ -15,7 +15,6 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
   ${ABACUS_SOURCE_DIR}/module_io/output.cpp
 )
@@ -27,7 +26,6 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
 )
 
@@ -38,7 +36,6 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
 )
 
@@ -49,6 +46,5 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/module_hamilt_lcao/module_hcontainer/atom_pair.cpp
-  ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_2d.cpp
   ${ABACUS_SOURCE_DIR}/module_basis/module_ao/parallel_orbitals.cpp
 )
