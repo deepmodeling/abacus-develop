@@ -51,7 +51,7 @@ void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radiu
     }
 
     this->Build_Hash_Table(ucell);
-    this->setBoundaryAdjacent(ofs_in);
+    this->Construct_Adjacent_expand(ucell);
 }
 void Grid::Check_Expand_Condition(const UnitCell& ucell)
 {
@@ -61,42 +61,33 @@ void Grid::Check_Expand_Condition(const UnitCell& ucell)
     {
         return;
     }
+    double lat03 = ucell.lat0 * ucell.lat0 * ucell.lat0;
     double a23_1 = ucell.latvec.e22 * ucell.latvec.e33 - ucell.latvec.e23 * ucell.latvec.e32;
     double a23_2 = ucell.latvec.e21 * ucell.latvec.e33 - ucell.latvec.e23 * ucell.latvec.e31;
     double a23_3 = ucell.latvec.e21 * ucell.latvec.e32 - ucell.latvec.e22 * ucell.latvec.e31;
     double a23_norm = sqrt(a23_1 * a23_1 + a23_2 * a23_2 + a23_3 * a23_3);
-    double extend_v = a23_norm * sradius;
-    double extend_d1 = extend_v / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
-    int extend_d11 = static_cast<int>(extend_d1);
-    // 2016-09-05, LiuXh
-    if (extend_d1 - extend_d11 > 0.0)
-    {
-        extend_d11 += 1;
-    }
+    double extend_d1 = a23_norm * sradius;
+    extend_d1 = extend_d1 / ucell.omega;
+    extend_d1 = extend_d1 * lat03;
+    int extend_d11 = std::ceil(extend_d1);
 
     double a31_1 = ucell.latvec.e32 * ucell.latvec.e13 - ucell.latvec.e33 * ucell.latvec.e12;
     double a31_2 = ucell.latvec.e31 * ucell.latvec.e13 - ucell.latvec.e33 * ucell.latvec.e11;
     double a31_3 = ucell.latvec.e31 * ucell.latvec.e12 - ucell.latvec.e32 * ucell.latvec.e11;
     double a31_norm = sqrt(a31_1 * a31_1 + a31_2 * a31_2 + a31_3 * a31_3);
-    double extend_d2 = a31_norm * sradius / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
-    int extend_d22 = static_cast<int>(extend_d2);
-    // 2016-09-05, LiuXh
-    if (extend_d2 - extend_d22 > 0.0)
-    {
-        extend_d22 += 1;
-    }
+    double extend_d2 = a31_norm * sradius;
+    extend_d2 = extend_d2 / ucell.omega;
+    extend_d2 = extend_d2 * lat03;
+    int extend_d22 = std::ceil(extend_d2);
 
     double a12_1 = ucell.latvec.e12 * ucell.latvec.e23 - ucell.latvec.e13 * ucell.latvec.e22;
     double a12_2 = ucell.latvec.e11 * ucell.latvec.e23 - ucell.latvec.e13 * ucell.latvec.e21;
     double a12_3 = ucell.latvec.e11 * ucell.latvec.e22 - ucell.latvec.e12 * ucell.latvec.e21;
     double a12_norm = sqrt(a12_1 * a12_1 + a12_2 * a12_2 + a12_3 * a12_3);
-    double extend_d3 = a12_norm * sradius / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
-    int extend_d33 = static_cast<int>(extend_d3);
-    // 2016-09-05, LiuXh
-    if (extend_d3 - extend_d33 > 0.0)
-    {
-        extend_d33 += 1;
-    }
+    double extend_d3 = a12_norm * sradius;
+    extend_d3 = extend_d3 / ucell.omega;
+    extend_d3 = extend_d3* lat03;
+    int extend_d33 = std::ceil(extend_d3);
 
     glayerX = extend_d11 + 1;
     glayerY = extend_d22 + 1;
@@ -154,11 +145,6 @@ void Grid::setMemberVariables(std::ofstream& ofs_in)
 
 }
 
-void Grid::setBoundaryAdjacent(std::ofstream& ofs_in)
-{
-    this->Construct_Adjacent_expand(true_cell_x, true_cell_y, true_cell_z);
-}
-
 void Grid::Build_Hash_Table(const UnitCell& ucell)
 {
     ModuleBase::timer::tick("Grid", "Build_Hash_Table");
@@ -195,18 +181,22 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
     ModuleBase::timer::tick("Grid", "Build_Hash_Table");
 }
 
-void Grid::Construct_Adjacent_expand(const int true_i, const int true_j, const int true_k)
+void Grid::Construct_Adjacent_expand(const UnitCell & ucell)
 {
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 
-    for (auto& fatom: this->Cell[true_i][true_j][true_k])
+    for (int i = 0; i < ucell.ntype; i++)
     {
-        Construct_Adjacent_expand_periodic(true_i, true_j, true_k, fatom);
+        for (int j = 0; j < ucell.atoms[i].na; j++)
+        {
+            FAtom fatom(ucell.atoms[i].tau[j].x, ucell.atoms[i].tau[j].y, ucell.atoms[i].tau[j].z, i, j, 0, 0, 0);
+            Construct_Adjacent_expand_periodic(fatom);
+        }
     }
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 }
 
-void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j, const int true_k, FAtom& fatom)
+void Grid::Construct_Adjacent_expand_periodic(const FAtom& fatom)
 {
     //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Construct_Adjacent_expand_periodic");
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand_periodic");
@@ -219,7 +209,7 @@ void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j
             {
                 for (auto& fatom2: this->Cell[i][j][k])
                 {
-                    Construct_Adjacent_final(true_i, true_j, true_k, fatom, i, j, k, fatom2);
+                    Construct_Adjacent_final(fatom, fatom2);
                 }
             }
         }
@@ -228,14 +218,7 @@ void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j
 }
 
 
-void Grid::Construct_Adjacent_final(const int i,
-                                    const int j,
-                                    const int k,
-                                    FAtom& fatom1,
-                                    const int i2,
-                                    const int j2,
-                                    const int k2,
-                                    FAtom& fatom2)
+void Grid::Construct_Adjacent_final(const FAtom& fatom1, FAtom& fatom2)
 {
     const double x = fatom1.x;
     const double y = fatom1.y;

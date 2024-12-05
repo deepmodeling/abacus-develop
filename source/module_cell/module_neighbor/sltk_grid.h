@@ -88,17 +88,11 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
 
     //==========================================================
 
-    void Construct_Adjacent_expand(const int i, const int j, const int k);
+    void Construct_Adjacent_expand(const UnitCell & ucell);
 
-    void Construct_Adjacent_expand_periodic(const int i, const int j, const int k, FAtom& fatom);
+    void Construct_Adjacent_expand_periodic(const FAtom& fatom);
 
-    void Construct_Adjacent_final(const int i,
-                                  const int j,
-                                  const int k,
-                                  FAtom& fatom1,
-                                  const int i2,
-                                  const int j2,
-                                  const int k2,
+    void Construct_Adjacent_final(const FAtom& fatom1,
                                   FAtom& fatom2);
 };
 
