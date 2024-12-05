@@ -40,20 +40,15 @@ void Grid_Driver::Find_atom(
 	AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
 	local_adjs->clear();
 	const std::vector<FAtom *> & all_atom = Cell[this->true_cell_x][this->true_cell_y][this->true_cell_z].atom_map[ntype][nnumber].getAdjacent();
-	//std::cout << "ntype = "<< ntype << "  atom size = " << all_atom.size() << std::endl;
-
-	ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
-	ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
-	ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
 
 	for(const FAtom * atom : all_atom)
 	{
 		// std::cout << "atom type = " << atom.getType() << " number = " << atom.getNatom() << " box = " << atom.getCellX() << " " << atom.getCellY() << " " << atom.getCellZ() 
 		// << " tau = " << atom.x() << " " << atom.y() << " " << atom.z() << std::endl;
-		local_adjs->ntype.push_back(atom->getType());
-		local_adjs->natom.push_back(atom->getNatom());
-		local_adjs->box.push_back(ModuleBase::Vector3<int>(atom->getCellX(), atom->getCellY(), atom->getCellZ()));
-			local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(atom->x(), atom->y(), atom->z()));
+		local_adjs->ntype.push_back(atom->type);
+		local_adjs->natom.push_back(atom->natom);
+		local_adjs->box.push_back(ModuleBase::Vector3<int>(atom->cell_x, atom->cell_y, atom->cell_z));
+		local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(atom->x, atom->y, atom->z));
 		local_adjs->adj_num++;
 	}
 	local_adjs->ntype.push_back(ntype);
@@ -61,23 +56,8 @@ void Grid_Driver::Find_atom(
 	local_adjs->box.push_back(ModuleBase::Vector3<int>(0, 0, 0));
 	local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(cartesian_pos.x, cartesian_pos.y, cartesian_pos.z));
 
-
 	ModuleBase::timer::tick("Grid_Driver","Find_atom");
 	return;
-}
-
-ModuleBase::Vector3<double> Grid_Driver::Calculate_adjacent_site(const double x, const double y, const double z,
-																	const double &box11, const double &box12, const double &box13,
-																	const double &box21, const double &box22, const double &box23,
-																	const double &box31, const double &box32, const double &box33,
-																	const short box_x, const short box_y, const short box_z) const
-{
-	ModuleBase::Vector3<double> adjacent_site(0, 0, 0);
-	adjacent_site.x = x + box_x * box11 + box_y * box12 + box_z * box13;
-	adjacent_site.y = y + box_x * box21 + box_y * box22 + box_z * box23;
-	adjacent_site.z = z + box_x * box31 + box_y * box32 + box_z * box33;
-
-	return adjacent_site;
 }
 
 // filter_adjs delete not adjacent atoms in adjs

@@ -10,10 +10,10 @@
 // the type and the index,
 class FAtom
 {
-private:
-	double d_x;
-	double d_y;
-	double d_z;
+public:
+	double x;
+	double y;
+	double z;
 	std::vector<FAtom *> adjacent;
 
 	int type;
@@ -22,19 +22,15 @@ private:
 	int cell_x;
 	int cell_y;
 	int cell_z;
-public:
-//==========================================================
-// Default Constructor and deconstructor
-//==========================================================
 
 	FAtom();
 	FAtom(const double& x_in, const double& y_in, const double& z_in, 
 			const int& type_in, const int& natom_in, 
 			const int& cell_x_in, const int& cell_y_in, const int& cell_z_in)
 	{
-		d_x = x_in;
-		d_y = y_in;
-		d_z = z_in;
+		x = x_in;
+		y = y_in;
+		z = z_in;
 		type = type_in;
 		natom = natom_in;
 		cell_x = cell_x_in;
@@ -52,18 +48,6 @@ public:
 	}
 	const std::vector<FAtom *>& getAdjacent() const { return adjacent; }
 	void clearAdjacent() { adjacent.clear(); }
-//==========================================================
-// MEMBER FUNCTION :
-// EXPLAIN : get value
-//==========================================================
-	const double& x() const { return d_x; }
-	const double& y() const { return d_y; }
-	const double& z() const { return d_z; }
-	const int& getType() const { return type;}
-	const int& getNatom() const { return natom;}
-	const int& getCellX() const { return cell_x; }
-	const int& getCellY() const { return cell_y; }
-	const int& getCellZ() const { return cell_z; }
 };
 
 #endif

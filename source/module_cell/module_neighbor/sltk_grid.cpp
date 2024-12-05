@@ -199,11 +199,11 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
                         double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
                         FAtom atom(x, y, z, i, j, ix, iy, iz);
                         int a, b, c;
-                        a = atom.getCellX() + true_cell_x;
-                        b = atom.getCellY() + true_cell_y;
-                        c = atom.getCellZ() + true_cell_z;
+                        a = ix + glayerX_minus;
+                        b = iy + glayerY_minus;
+                        c = iz + glayerZ_minus;
 
-                        this->Cell[a][b][c].atom_map[atom.getType()][atom.getNatom()] = atom;
+                        this->Cell[a][b][c].atom_map[atom.type][atom.natom] = atom;
                     }
                 }
             }
@@ -260,12 +260,12 @@ void Grid::Construct_Adjacent_final(const int i,
                                     const int k2,
                                     FAtom& fatom2)
 {
-    const double x = fatom1.x();
-    const double y = fatom1.y();
-    const double z = fatom1.z();
-    double x2 = fatom2.x();
-    double y2 = fatom2.y();
-    double z2 = fatom2.z();
+    const double x = fatom1.x;
+    const double y = fatom1.y;
+    const double z = fatom1.z;
+    double x2 = fatom2.x;
+    double y2 = fatom2.y;
+    double z2 = fatom2.z;
 
     double delta_x = x - x2;
     double delta_y = y - y2;
