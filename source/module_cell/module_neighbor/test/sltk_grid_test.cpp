@@ -108,12 +108,12 @@ TEST_F(SltkGridTest, InitSmall)
     EXPECT_DOUBLE_EQ(LatGrid.sradius2, 0.5 * 0.5);
     EXPECT_DOUBLE_EQ(LatGrid.sradius, 0.5);
     
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_x, 2);
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_y, 2);
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_z, 2);
-    EXPECT_EQ(LatGrid.cell_nx, 4);
-    EXPECT_EQ(LatGrid.cell_ny, 4);
-    EXPECT_EQ(LatGrid.cell_nz, 4);
+    EXPECT_DOUBLE_EQ(LatGrid.true_cell_x, 1);
+    EXPECT_DOUBLE_EQ(LatGrid.true_cell_y, 1);
+    EXPECT_DOUBLE_EQ(LatGrid.true_cell_z, 1);
+    EXPECT_EQ(LatGrid.cell_nx, 3);
+    EXPECT_EQ(LatGrid.cell_ny, 3);
+    EXPECT_EQ(LatGrid.cell_nz, 3);
     // init cell flag
 
     ofs.close();

@@ -163,21 +163,6 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
 {
     ModuleBase::timer::tick("Grid", "Build_Hash_Table");
 
-    // TODO in case expand == false, the following code is over malloc
-    for (int i = 0; i < cell_nx; i++)
-    {
-        for (int j = 0; j < cell_ny; j++)
-        {
-            for (int k = 0; k < cell_nz; k++)
-            {
-                Cell[i][j][k].resize(ucell.ntype);
-                for (int it = 0; it < ucell.ntype; ++it)
-                {
-                    Cell[i][j][k][it].resize(ucell.atoms[it].na);
-                }
-            }
-        }
-    }
     ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
     ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
@@ -201,7 +186,7 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
                         b = iy + glayerY_minus;
                         c = iz + glayerZ_minus;
 
-                        this->Cell[a][b][c][atom.type][atom.natom] = atom;
+                        this->Cell[a][b][c].push_back(atom);
                     }
                 }
             }
@@ -214,12 +199,9 @@ void Grid::Construct_Adjacent_expand(const int true_i, const int true_j, const i
 {
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 
-    for (auto& atom_vector: this->Cell[true_i][true_j][true_k])
+    for (auto& fatom: this->Cell[true_i][true_j][true_k])
     {
-        for (auto& fatom: atom_vector)
-        {
-            Construct_Adjacent_expand_periodic(true_i, true_j, true_k, fatom);
-        }
+        Construct_Adjacent_expand_periodic(true_i, true_j, true_k, fatom);
     }
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 }
@@ -235,12 +217,9 @@ void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j
         {
             for (int k = 0; k < this->cell_nz; k++)
             {
-                for (auto& atom_vector: this->Cell[i][j][k])
+                for (auto& fatom2: this->Cell[i][j][k])
                 {
-                    for (auto& fatom2: atom_vector)
-                    {
-                        Construct_Adjacent_final(true_i, true_j, true_k, fatom, i, j, k, fatom2);
-                    }
+                    Construct_Adjacent_final(true_i, true_j, true_k, fatom, i, j, k, fatom2);
                 }
             }
         }

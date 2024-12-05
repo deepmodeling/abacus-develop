@@ -10,18 +10,6 @@
 #include <tuple>
 #include <unordered_map>
 
-typedef std::vector<std::vector<FAtom>> AtomMap;
-
-//==========================================================
-// CLASS NAME :
-// Atom_input : defined elsewhere
-//==========================================================
-
-//==========================================================
-// CLASS NAME :
-// Grid :
-//==========================================================
-
 class Grid
 {
   public:
@@ -61,7 +49,7 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
     int glayerZ;
     int glayerZ_minus;
 
-    std::vector<std::vector<std::vector<AtomMap>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
+    std::vector<std::vector<std::vector<std::vector<FAtom>>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
     std::vector<std::vector<std::vector<FAtom *>>> all_adj_info;
     int getCellX() const
     {
