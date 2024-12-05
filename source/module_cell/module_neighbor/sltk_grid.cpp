@@ -152,8 +152,8 @@ void Grid::setMemberVariables(std::ofstream& ofs_in)
     }
 
     this->true_cell_x = glayerX_minus;
-    this->true_cell_y = glayerX_minus;
-    this->true_cell_z = glayerX_minus;
+    this->true_cell_y = glayerY_minus;
+    this->true_cell_z = glayerZ_minus;
 }
 
 void Grid::setBoundaryAdjacent(std::ofstream& ofs_in)
