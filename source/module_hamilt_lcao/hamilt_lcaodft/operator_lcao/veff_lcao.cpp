@@ -75,7 +75,6 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     // pvpR = < phi0 | v(spin) | phiR> for a new spin.
     //--------------------------------------------
     // GlobalV::ofs_running << " (spin change)" << std::endl;
-    this->GK->reset_spin(this->current_spin);
 
     // if you change the place of the following code,
     // rememeber to delete the #include

@@ -23,24 +23,6 @@ class Gint_k : public Gint {
     // pvpR and reset_spin/get_spin : auxilliary methods
     // for calculating hamiltonian
 
-    // reset the spin.
-    void reset_spin(const int& spin_now_in) { this->spin_now = spin_now_in; };
-    // get the spin.
-    int get_spin() const { return spin_now; }
-
-    // renew gint index for new iteration
-    void renew(const bool& soft = false) {
-        if (soft
-            && this->spin_now
-                   == 0) { // in this case, gint will not be recalculated
-            return;
-        } else if (this->spin_now != -1) {
-            int start_spin = -1;
-            this->reset_spin(start_spin);
-        }
-        return;
-    }
-
     // allocate the <phi_0 | V | dphi_R> matrix element.
     void allocate_pvdpR();
     // destroy the temporary <phi_0 | V | dphi_R> matrix element.
@@ -102,9 +84,6 @@ class Gint_k : public Gint {
     //----------------------------
     // key variable
     //----------------------------
-
-    // used only in vlocal.
-    int spin_now = -1;
 };
 
 #endif
