@@ -39,7 +39,7 @@ void Grid_Driver::Find_atom(
 	// store result in member adj_info when parameter adjs is NULL
 	AdjacentAtomInfo* local_adjs = adjs == nullptr ? &this->adj_info : adjs;
 	local_adjs->clear();
-	const std::vector<FAtom *> & all_atom = Cell[this->true_cell_x][this->true_cell_y][this->true_cell_z].atom_map[ntype][nnumber].getAdjacent();
+	const std::vector<FAtom *> & all_atom = all_adj_info[ntype][nnumber];
 
 	for(const FAtom * atom : all_atom)
 	{

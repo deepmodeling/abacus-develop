@@ -14,7 +14,6 @@ public:
 	double x;
 	double y;
 	double z;
-	std::vector<FAtom *> adjacent;
 
 	int type;
 	int natom;
@@ -39,15 +38,8 @@ public:
 	}
 	~FAtom()
 	{
-		adjacent.clear();
 	}
 
-	void addAdjacent(FAtom& atom_in)
-	{
-		adjacent.push_back( &atom_in);
-	}
-	const std::vector<FAtom *>& getAdjacent() const { return adjacent; }
-	void clearAdjacent() { adjacent.clear(); }
 };
 
 #endif

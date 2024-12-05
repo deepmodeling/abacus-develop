@@ -27,15 +27,6 @@ protected:
     FAtom test;
 };
 
-TEST_F(SltkAtomTest, AllocateAdjacentSet)
-{
-    test.clearAdjacent();
-    FAtom test_temp(1.0, 2.0, 3.0, 4, 5, 0, 1, 2);
-    test.addAdjacent(test_temp);
-    EXPECT_EQ(test.getAdjacent().front()->type, 4);
-}
-
-
 TEST_F(SltkAtomTest, SetterGetters)
 {
     FAtom test_temp(1.0, 2.0, 3.0, 4, 5, 0, 1, 2);

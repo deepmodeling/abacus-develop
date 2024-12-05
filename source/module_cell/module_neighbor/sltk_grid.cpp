@@ -53,6 +53,13 @@ void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radiu
     }
     this->Check_Expand_Condition(ucell);
     this->setMemberVariables(ofs_in);
+
+    all_adj_info.resize(ucell.ntype);
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        all_adj_info[i].resize(ucell.atoms[i].na);
+    }
+
     this->Build_Hash_Table(ucell);
     this->setBoundaryAdjacent(ofs_in);
 }
@@ -154,6 +161,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in)
     this->true_cell_x = glayerX_minus;
     this->true_cell_y = glayerY_minus;
     this->true_cell_z = glayerZ_minus;
+
 }
 
 void Grid::setBoundaryAdjacent(std::ofstream& ofs_in)
@@ -275,7 +283,7 @@ void Grid::Construct_Adjacent_final(const int i,
 
     if (dr != 0.0 && dr <= this->sradius2)
     {
-        fatom1.addAdjacent(fatom2);
+        all_adj_info[fatom1.type][fatom1.natom].push_back(&fatom2);
     }
 }
 
