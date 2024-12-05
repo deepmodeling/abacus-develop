@@ -111,9 +111,6 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
 
     void Construct_Adjacent_expand_periodic(const int i, const int j, const int k, FAtom& fatom);
 
-    void Construct_Adjacent_begin();
-    void Construct_Adjacent_nature(const int i, const int j, const int k, FAtom& fatom1);
-    void Construct_Adjacent_periodic(const int i, const int j, const int k, FAtom& fatom1);
     void Construct_Adjacent_final(const int i,
                                   const int j,
                                   const int k,
