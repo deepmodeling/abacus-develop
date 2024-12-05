@@ -1,5 +1,4 @@
 #include "sltk_atom_arrange.h"
-#include "sltk_atom_input.h"
 #include "module_parameter/parameter.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
@@ -79,52 +78,18 @@ void atom_arrange::search(
 {
 	ModuleBase::TITLE("atom_arrange", "search");
 	ModuleBase::timer::tick("atom_arrange","search");
-/* 	std::cout << "pbc_flag = " << pbc_flag << std::endl;
-	std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
-	std::cout << "test_atom_in = " << test_atom_in << std::endl;
-	std::cout << "test_only = " << test_only << std::endl;
- */
 	assert( search_radius_bohr > 0.0 );
-
-//	OUT(ofs_in,"Atom coordinates reading from",PARAM.inp.stru_file);
-//	OUT(ofs_in,"The coordinate type",ucell.Coordinate);
-//	OUT(ofs_in,"Use cartesian(unit:lat0) coordinate","TRUE");
-//	if(PARAM.inp.out_level != "m") OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);
-//	if(PARAM.inp.out_level != "m") OUT(ofs_in,"searching radius unit is (Bohr))",ucell.lat0);
 
 	ModuleBase::GlobalFunc::OUT(ofs_in,"searching radius is (Bohr))", search_radius_bohr);
 	ModuleBase::GlobalFunc::OUT(ofs_in,"searching radius unit is (Bohr))",ucell.lat0);
 
 	assert(ucell.nat > 0);
-	//=============================
-	// Initial Atom information
-	//=============================
 
 	const double radius_lat0unit = search_radius_bohr / ucell.lat0;
-    ModuleBase::timer::tick("atom_arrange", "Atom_input");
-
-	Atom_input at(
-		ofs_in,
-		ucell, 
-		ucell.nat, 
-		ucell.ntype, 
-		pbc_flag, 
-		radius_lat0unit, 
-		test_atom_in);
-    ModuleBase::timer::tick("atom_arrange", "Atom_input");
-
-	//===========================================
-	// Print important information in Atom_input
-	//===========================================
-//	at.print(std::cout);
-//	at.print_xyz_format("1.xyz");
-	//=========================================
-	// Construct Grid , Cells , Adjacent atoms
-	//=========================================
 
     ModuleBase::timer::tick("atom_arrange", "grid_d.init");
 
-	grid_d.init(ofs_in, ucell, at);
+	grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
     ModuleBase::timer::tick("atom_arrange", "grid_d.init");
 
     ModuleBase::timer::tick("atom_arrange", "search");
@@ -162,30 +127,4 @@ void atom_arrange::search(
     }
 
     return;
-}
-
-
-//2015-05-07
-void atom_arrange::delete_vector(
-	std::ofstream &ofs_in,
-	const bool pbc_flag, // GlobalV::SEARCH_PBC
-	Grid_Driver &grid_d, 
-	const UnitCell &ucell, 
-	const double &search_radius_bohr, 
-	const int &test_atom_in)
-{
-	const double radius_lat0unit2 = search_radius_bohr / ucell.lat0;
-
-	Atom_input at2(
-		ofs_in,
-		ucell, 
-		ucell.nat, 
-		ucell.ntype, 
-		pbc_flag, 
-		radius_lat0unit2, 
-		test_atom_in);
-
-	grid_d.delete_vector(at2.getGrid_layerX_minus(),at2.getGrid_layerY_minus(),at2.getGrid_layerZ_minus());
-
-	grid_d.delete_Cell();
 }

@@ -7,7 +7,6 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "sltk_atom.h"
-#include "sltk_atom_input.h"
 #include "sltk_grid.h"
 
 #include <memory>

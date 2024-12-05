@@ -368,7 +368,6 @@ OBJS_MD=fire.o\
 
 OBJS_NEIGHBOR=sltk_atom.o\
     sltk_atom_arrange.o\
-    sltk_atom_input.o\
     sltk_grid.o\
     sltk_grid_driver.o\
 

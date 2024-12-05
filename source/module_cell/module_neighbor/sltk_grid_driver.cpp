@@ -53,18 +53,7 @@ void Grid_Driver::Find_atom(
 		local_adjs->ntype.push_back(atom->getType());
 		local_adjs->natom.push_back(atom->getNatom());
 		local_adjs->box.push_back(ModuleBase::Vector3<int>(atom->getCellX(), atom->getCellY(), atom->getCellZ()));
-		if (expand_flag)
-		{
 			local_adjs->adjacent_tau.push_back(ModuleBase::Vector3<double>(atom->x(), atom->y(), atom->z()));
-		}
-		else
-		{
-			local_adjs->adjacent_tau.push_back(Calculate_adjacent_site(atom->x(), atom->y(), atom->z(),
-			                  vec1[0], vec2[0], vec3[0],
-			                  vec1[1], vec2[1], vec3[1],
-			                  vec1[2], vec2[2], vec3[2],
-			                  atom->getCellX(), atom->getCellY(), atom->getCellZ()));
-		}//end if expand_flag
 		local_adjs->adj_num++;
 	}
 	local_adjs->ntype.push_back(ntype);
