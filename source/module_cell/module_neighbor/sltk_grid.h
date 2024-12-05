@@ -47,7 +47,7 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
     int glayerZ_minus;
 
     std::vector<std::vector<std::vector<std::vector<FAtom>>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
-    std::vector<std::vector<std::vector<FAtom *>>> all_adj_info;
+    std::vector<std::vector<std::vector<FAtom>>> all_adj_info;
 
     int getGlayerX()
     {
