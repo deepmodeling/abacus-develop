@@ -31,9 +31,6 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
     int cell_ny;
     int cell_nz;
 
-    int true_cell_x;
-    int true_cell_y;
-    int true_cell_z;
     double x_min;
     double y_min;
     double z_min;
@@ -51,6 +48,33 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
 
     std::vector<std::vector<std::vector<std::vector<FAtom>>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
     std::vector<std::vector<std::vector<FAtom *>>> all_adj_info;
+
+    int getGlayerX()
+    {
+        return glayerX;
+    }
+    int getGlayerY()
+    {
+        return glayerY;
+    }
+    int getGlayerZ()
+    {
+        return glayerZ;
+    }
+    int getGlayerX_minus()
+    {
+        return glayerX_minus;
+    }
+    int getGlayerY_minus()
+    {
+        return glayerY_minus;
+    }
+    int getGlayerZ_minus()
+    {
+        return glayerZ_minus;
+    }
+    
+
     int getCellX() const
     {
         return cell_nx;
@@ -63,30 +87,12 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
     {
         return cell_nz;
     }
-    int getTrueCellX() const
-    {
-        return true_cell_x;
-    }
-    int getTrueCellY() const
-    {
-        return true_cell_y;
-    }
-    int getTrueCellZ() const
-    {
-        return true_cell_z;
-    }
 
   private:
     const int test_grid;
 
     void setMemberVariables(std::ofstream& ofs_in);
-
-    void setBoundaryAdjacent(std::ofstream& ofs_in);
-
-    //==========================================================
     void Build_Hash_Table(const UnitCell& ucell);
-
-    //==========================================================
 
     void Construct_Adjacent_expand(const UnitCell & ucell);
 

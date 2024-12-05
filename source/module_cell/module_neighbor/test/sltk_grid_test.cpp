@@ -86,9 +86,6 @@ TEST_F(SltkGridTest, Init)
     EXPECT_EQ(LatGrid.getCellX(), 11);
     EXPECT_EQ(LatGrid.getCellY(), 11);
     EXPECT_EQ(LatGrid.getCellZ(), 11);
-    EXPECT_EQ(LatGrid.getTrueCellX(), 5);
-    EXPECT_EQ(LatGrid.getTrueCellY(), 5);
-    EXPECT_EQ(LatGrid.getTrueCellZ(), 5);
     ofs.close();
     remove("test.out");
 }
@@ -108,9 +105,6 @@ TEST_F(SltkGridTest, InitSmall)
     EXPECT_DOUBLE_EQ(LatGrid.sradius2, 0.5 * 0.5);
     EXPECT_DOUBLE_EQ(LatGrid.sradius, 0.5);
     
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_x, 1);
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_y, 1);
-    EXPECT_DOUBLE_EQ(LatGrid.true_cell_z, 1);
     EXPECT_EQ(LatGrid.cell_nx, 3);
     EXPECT_EQ(LatGrid.cell_ny, 3);
     EXPECT_EQ(LatGrid.cell_nz, 3);

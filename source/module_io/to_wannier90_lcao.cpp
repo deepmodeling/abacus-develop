@@ -305,26 +305,15 @@ void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 
 void toWannier90_LCAO::set_R_coor(const UnitCell& ucell)
 {
-    int R_minX = int(-GlobalC::GridD.getTrueCellX());
-    int R_minY = int(-GlobalC::GridD.getTrueCellY());
-    int R_minZ = int(-GlobalC::GridD.getTrueCellZ());
-
-    int R_x = GlobalC::GridD.getCellX();
-    int R_y = GlobalC::GridD.getCellY();
-    int R_z = GlobalC::GridD.getCellZ();
-
-    int R_num = R_x * R_y * R_z;
-    R_coor_car.resize(R_num);
-
     int count = 0;
-    for (int ix = 0; ix < R_x; ix++)
+    for (int ix = -GlobalC::GridD.getGlayerX_minus(); ix < GlobalC::GridD.getGlayerX(); ix++)
     {
-        for (int iy = 0; iy < R_y; iy++)
+        for (int iy = -GlobalC::GridD.getGlayerY_minus(); iy < GlobalC::GridD.getGlayerY(); iy++)
         {
-            for (int iz = 0; iz < R_z; iz++)
+            for (int iz = -GlobalC::GridD.getGlayerZ_minus(); iz < GlobalC::GridD.getGlayerZ(); iz++)
             {
-                ModuleBase::Vector3<double> tmpR(ix + R_minX, iy + R_minY, iz + R_minZ);
-                R_coor_car[count] = tmpR * ucell.latvec;
+                Abfs::Vector3_Order<int> temp_R(ix, iy, iz);
+                R_coor_car.push_back(temp_R * ucell.latvec);
                 count++;
             }
         }

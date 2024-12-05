@@ -245,23 +245,15 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const int& istep)
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");
 
     int step = istep;
-    // set R coor range
-    int R_minX = int(-GlobalC::GridD.getTrueCellX());
-    int R_minY = int(-GlobalC::GridD.getTrueCellY());
-    int R_minZ = int(-GlobalC::GridD.getTrueCellZ());
-
-    int R_x = GlobalC::GridD.getCellX();
-    int R_y = GlobalC::GridD.getCellY();
-    int R_z = GlobalC::GridD.getCellZ();
 
     std::set<Abfs::Vector3_Order<int>> all_R_coor;
-    for (int ix = 0; ix < R_x; ix++)
+    for (int ix = -GlobalC::GridD.getGlayerX_minus(); ix < GlobalC::GridD.getGlayerX(); ix++)
     {
-        for (int iy = 0; iy < R_y; iy++)
+        for (int iy = -GlobalC::GridD.getGlayerY_minus(); iy < GlobalC::GridD.getGlayerY(); iy++)
         {
-            for (int iz = 0; iz < R_z; iz++)
+            for (int iz = -GlobalC::GridD.getGlayerZ_minus(); iz < GlobalC::GridD.getGlayerZ(); iz++)
             {
-                Abfs::Vector3_Order<int> temp_R(ix + R_minX, iy + R_minY, iz + R_minZ);
+                Abfs::Vector3_Order<int> temp_R(ix, iy, iz);
                 all_R_coor.insert(temp_R);
             }
         }

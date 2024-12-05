@@ -138,11 +138,6 @@ void Grid::setMemberVariables(std::ofstream& ofs_in)
             Cell[i][j].resize(cell_nz);
         }
     }
-
-    this->true_cell_x = glayerX_minus;
-    this->true_cell_y = glayerY_minus;
-    this->true_cell_z = glayerZ_minus;
-
 }
 
 void Grid::Build_Hash_Table(const UnitCell& ucell)
