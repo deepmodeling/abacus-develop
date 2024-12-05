@@ -5,16 +5,6 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 
-//==================
-// Class CellSet
-//==================
-CellSet::CellSet()
-{
-    in_grid[0] = 0;
-    in_grid[1] = 0;
-    in_grid[2] = 0;
-}
-
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 {
 }
@@ -180,10 +170,10 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
         {
             for (int k = 0; k < cell_nz; k++)
             {
-                Cell[i][j][k].atom_map.resize(ucell.ntype);
+                Cell[i][j][k].resize(ucell.ntype);
                 for (int it = 0; it < ucell.ntype; ++it)
                 {
-                    Cell[i][j][k].atom_map[it].resize(ucell.atoms[it].na);
+                    Cell[i][j][k][it].resize(ucell.atoms[it].na);
                 }
             }
         }
@@ -211,7 +201,7 @@ void Grid::Build_Hash_Table(const UnitCell& ucell)
                         b = iy + glayerY_minus;
                         c = iz + glayerZ_minus;
 
-                        this->Cell[a][b][c].atom_map[atom.type][atom.natom] = atom;
+                        this->Cell[a][b][c][atom.type][atom.natom] = atom;
                     }
                 }
             }
@@ -224,7 +214,7 @@ void Grid::Construct_Adjacent_expand(const int true_i, const int true_j, const i
 {
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 
-    for (auto& atom_vector: this->Cell[true_i][true_j][true_k].atom_map)
+    for (auto& atom_vector: this->Cell[true_i][true_j][true_k])
     {
         for (auto& fatom: atom_vector)
         {
@@ -245,7 +235,7 @@ void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j
         {
             for (int k = 0; k < this->cell_nz; k++)
             {
-                for (auto& atom_vector: this->Cell[i][j][k].atom_map)
+                for (auto& atom_vector: this->Cell[i][j][k])
                 {
                     for (auto& fatom2: atom_vector)
                     {

@@ -12,13 +12,6 @@
 
 typedef std::vector<std::vector<FAtom>> AtomMap;
 
-struct CellSet
-{
-    AtomMap atom_map;
-    int in_grid[3];
-    CellSet();
-};
-
 //==========================================================
 // CLASS NAME :
 // Atom_input : defined elsewhere
@@ -68,7 +61,7 @@ void init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius, boo
     int glayerZ;
     int glayerZ_minus;
 
-    std::vector<std::vector<std::vector<CellSet>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
+    std::vector<std::vector<std::vector<AtomMap>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
     std::vector<std::vector<std::vector<FAtom *>>> all_adj_info;
     int getCellX() const
     {
