@@ -346,15 +346,16 @@ void Parallel_Global::divide_pools(const int& NPROC,
     NPROC_IN_POOL = bndpar_group.nprocs_in_group;
     RANK_IN_POOL = bndpar_group.rank_in_group;
     MY_POOL = kpar_group.my_group;
-    // INTER_POOL = kpar_group.inter_comm;
-    // POOL_WORLD = bndpar_group.group_comm;
     MPI_Comm_dup(bndpar_group.group_comm, &POOL_WORLD);
-    MPI_Comm_dup(kpar_group.inter_comm, &INTER_POOL);
-
-    if (KPAR > 1)
+    if(kpar_group.inter_comm != MPI_COMM_NULL)
+    {
+        MPI_Comm_dup(kpar_group.inter_comm, &INTER_POOL);
+    }
+    
+    if(BNDPAR > 1)
     {
         NPROC_IN_STOGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
-        RANK_IN_STOGROUP = kpar_group.rank_in_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
+        RANK_IN_STOGROUP = kpar_group.my_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
         MY_STOGROUP = bndpar_group.my_group;
         MPI_Comm_split(MPI_COMM_WORLD, MY_STOGROUP, RANK_IN_STOGROUP, &STO_WORLD);
         MPI_Comm_dup(bndpar_group.inter_comm, &PARAPW_WORLD);
@@ -364,7 +365,6 @@ void Parallel_Global::divide_pools(const int& NPROC,
         NPROC_IN_STOGROUP = NPROC;
         RANK_IN_STOGROUP = MY_RANK;
         MY_STOGROUP = 0;
-        // STO_WORLD = MPI_COMM_WORLD;
         MPI_Comm_dup(MPI_COMM_WORLD, &STO_WORLD);
         MPI_Comm_split(MPI_COMM_WORLD, MY_RANK, 0, &PARAPW_WORLD);
     }
