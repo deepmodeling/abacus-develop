@@ -26,6 +26,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
     ../../module_elecstate/read_pseudo.cpp
+    ../../module_elecstate/cal_nelec_nband.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})

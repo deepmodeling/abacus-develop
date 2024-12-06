@@ -75,3 +75,4 @@ sltk_grid.o\
 sltk_grid_driver.o
 
 OBJS_ELECSTATE=read_pseudo.o\
+cal_nelec_nband.o\

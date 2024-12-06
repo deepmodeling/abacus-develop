@@ -2,7 +2,6 @@
 #include "module_parameter/parameter.h"
 #include "module_base/global_file.h"
 #include "module_cell/read_pp.h"
-#include "module_cell/cal_atoms_info.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/parallel_common.h"
 
