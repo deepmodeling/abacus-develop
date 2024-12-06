@@ -201,7 +201,7 @@ bool Line_Search::brent(
 {
     ls_step ++;
 
-    double xd,xe,xm;
+    double xd = 0.0,xe = 0.0 ,xm = 0.0;
     // if no zero is between xa and xb
     if(!bracked)
     {
