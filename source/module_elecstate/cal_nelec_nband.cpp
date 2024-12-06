@@ -1,6 +1,9 @@
 #include "cal_nelec_nband.h"
 #include "module_base/constants.h"
 #include "module_parameter/parameter.h"
+#ifdef USE_PAW
+#include "module_cell/module_paw/paw_cell.h"
+#endif
 
 namespace elecstate {
 
