@@ -22,7 +22,7 @@ std::string ModuleIO::wfc_nao_gen_fname(const int out_type,
                                          const int ik,
                                          const int istep)
 {
-      return "WFC_NAO_GAMMA1.txt";
+      return "WFC_NAO_GAMMA2.txt";
 }
 
 /************************************************
@@ -50,11 +50,15 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       int nlocal = 3;
       PARAM.sys.global_readin_dir = "./support/";
       int nks = 1;
+      int my_rank = 0;
 
       Parallel_Orbitals ParaV;
 #ifdef __MPI
-      ParaV.init(nlocal, nlocal, 1);      
-      ParaV.set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
+      MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+      std::ofstream ofs_running, ofs_warning;
+      ParaV.init(nlocal, nlocal, 1, MPI_COMM_WORLD);   
+      ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning);   
+      ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.nrow);
 #else
       ParaV.set_serial(nlocal, nlocal);
       ParaV.nrow_bands = nlocal;
@@ -70,7 +74,10 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
       // Assert
       EXPECT_NEAR(pelec.ekb(0,1),0.31482195194888534794941393,1e-5);
       EXPECT_NEAR(pelec.wg(0,1),0.0,1e-5);
-      EXPECT_NEAR(psid(0,1,1),0.59595655928,1e-5);
+      if (my_rank == 0)
+      {
+            EXPECT_NEAR(psid(0,0,0),5.3759239842e-01,1e-5);
+      }
 }
 TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 {
@@ -80,11 +87,15 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     const int nlocal = 3;
     PARAM.sys.global_readin_dir = "./support/";
     const int nks = 1;
+    int my_rank = 0;
 
     Parallel_Orbitals ParaV;
 #ifdef __MPI
-    ParaV.init(nlocal, nlocal, 1);
-    ParaV.set_desc_wfc_Eij(nlocal, nbands, pv->nrow);
+    MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+    std::ofstream ofs_running, ofs_warning;
+    ParaV.init(nlocal, nlocal, 1, MPI_COMM_WORLD);
+    ParaV.set_nloc_wfc_Eij(nbands, ofs_running, ofs_warning); 
+    ParaV.set_desc_wfc_Eij(nlocal, nbands, ParaV.nrow);
 #else
     ParaV.set_serial(nlocal, nlocal);
     ParaV.nrow_bands = nlocal;
@@ -99,5 +110,39 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
     ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, &(pelec), /*skip_band=*/1);
     // Assert
     EXPECT_NEAR(pelec.ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
-    EXPECT_NEAR(psid(0, 1, 1), 5.6401881891e-01, 1e-5);
+    if (my_rank == 0)
+    {
+        EXPECT_NEAR(psid(0, 0, 0), 1.8587183851, 1e-5);
+    }
 }
+
+
+
+#ifdef __MPI
+int main(int argc, char** argv)
+{
+    GlobalV::MY_RANK = 0;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+
+    testing::InitGoogleTest(&argc, argv);
+    ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
+
+    if (GlobalV::MY_RANK != 0) {
+        delete listeners.Release(listeners.default_result_printer());
+    }
+
+    int result = RUN_ALL_TESTS();
+    MPI_Bcast(&result, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (GlobalV::MY_RANK == 0 && result != 0)
+    {
+        std::cout << "ERROR:some tests are not passed" << std::endl;
+	}
+
+    MPI_Finalize();
+    return result;
+}
+#endif

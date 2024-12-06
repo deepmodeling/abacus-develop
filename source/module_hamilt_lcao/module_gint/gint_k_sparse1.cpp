@@ -322,7 +322,7 @@ void Gint_k::cal_dvlocal_R_sparseMatrix(const int& current_spin,
                                         const double& sparse_threshold,
                                         LCAO_HS_Arrays& HS_Arrays,
                                         const Parallel_Orbitals* pv,
-                                        UnitCell& ucell,
+                                        const UnitCell& ucell,
                                         Grid_Driver& gdriver)
 {
     ModuleBase::TITLE("Gint_k", "cal_dvlocal_R_sparseMatrix");

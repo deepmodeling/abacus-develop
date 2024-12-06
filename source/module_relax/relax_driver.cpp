@@ -14,7 +14,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
 
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
+    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" )
     {
         if (!PARAM.inp.relax_new)
         {
@@ -25,7 +25,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             rl.init_relax(ucell.nat);
         }
     }
-
+    
     this->istep = 1;
     int force_step = 1; // pengfei Li 2018-05-14
     int stress_step = 1;
@@ -79,7 +79,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             {
                 if (PARAM.inp.relax_new)
                 {
-                    stop = rl.relax_step(force, stress, this->etot);
+                    stop = rl.relax_step(ucell,force, stress, this->etot);
                 }
                 else
                 {
@@ -90,7 +90,7 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                              stress,
                                              force_step,
                                              stress_step); // pengfei Li 2018-05-14
-                }
+                }         
                 // print structure
                 // changelog 20240509
                 // because I move out the dependence on GlobalV from UnitCell::print_stru_file

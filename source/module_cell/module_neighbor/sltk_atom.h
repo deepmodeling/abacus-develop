@@ -3,9 +3,8 @@
 
 #include <memory>
 #include "sltk_util.h"
-#include "sltk_adjacent_set.h"
-
-class AdjacentSet;
+#include "module_base/timer.h"
+#include <vector>
 
 // a class contains the atom position, 
 // the type and the index,
@@ -15,7 +14,7 @@ private:
 	double d_x;
 	double d_y;
 	double d_z;
-	std::shared_ptr<AdjacentSet> as;
+	std::vector<FAtom *> adjacent;
 
 	int type;
 	int natom;
@@ -42,30 +41,17 @@ public:
 		cell_y = cell_y_in;
 		cell_z = cell_z_in;
 	}
-	~FAtom();
-//2015-05-07
-	void delete_vector();
+	~FAtom()
+	{
+		adjacent.clear();
+	}
 
-//	static int count1;
-//	static int count2;
-
-//==========================================================
-// MEMBER FUNCTION :
-// NAME : setAdjacent
-// Dangerous but high performance interface function!
-// no exception test.
-//
-// NAME : getAdjacentSet
-//
-// NAME : setAdjacentSet
-//==========================================================
-
-	std::shared_ptr<AdjacentSet> getAdjacentSet() const
-	{ return this->as; }
-
-	void allocate_AdjacentSet()
-	{ this->as = std::make_shared<AdjacentSet>(); }
-
+	void addAdjacent(FAtom& atom_in)
+	{
+		adjacent.push_back( &atom_in);
+	}
+	const std::vector<FAtom *>& getAdjacent() const { return adjacent; }
+	void clearAdjacent() { adjacent.clear(); }
 //==========================================================
 // MEMBER FUNCTION :
 // EXPLAIN : get value
@@ -77,7 +63,7 @@ public:
 	const int& getNatom() const { return natom;}
 	const int& getCellX() const { return cell_x; }
 	const int& getCellY() const { return cell_y; }
-	const int& getCellZ() const { return cell_z; }	
+	const int& getCellZ() const { return cell_z; }
 };
 
 #endif

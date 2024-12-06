@@ -1,9 +1,9 @@
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_elecstate/cal_ux.h"
 //
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
@@ -44,8 +44,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
 
-    //! 1) call before_scf() of ESolver_FP
-    ESolver_FP::before_scf(ucell, istep);
+    //! 1) call before_scf() of ESolver_KS
+    ESolver_KS<TK>::before_scf(ucell, istep);
 
     if (ucell.ionic_position_updated)
     {
@@ -127,7 +127,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // (2)For each atom, calculate the adjacent atoms in different cells
     // and allocate the space for H(R) and S(R).
     // If k point is used here, allocate HlocR after atom_arrange.
-    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    this->RA.for_2d(ucell, GlobalC::GridD, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     // 2. density matrix extrapolation
 
@@ -174,7 +174,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
     // prepare grid in Gint
-    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, orb_, *this->pw_rho, *this->pw_big);
+    LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 
     // init Hamiltonian
     if (this->p_hamilt != nullptr)
@@ -188,6 +188,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             PARAM.globalv.gamma_only_local ? &(this->GG) : nullptr,
             PARAM.globalv.gamma_only_local ? nullptr : &(this->GK),
+            ucell,
+            GlobalC::GridD,
             &this->pv,
             this->pelec->pot,
             this->kv,
@@ -245,10 +247,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    if (PARAM.inp.nspin == 4)
-    {
-        elecstate::cal_ux(ucell);
-    }
+    elecstate::cal_ux(ucell);
 
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
@@ -313,11 +312,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // two cases are considered:
     // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
-    if(istep > 0)
+    if (istep > 0)
     {
-        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
-            ->get_DM()
-            ->cal_DMR();
+        dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->cal_DMR();
     }
 
     if (PARAM.inp.dm_to_rho)
@@ -372,15 +369,17 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     this->p_hamilt->non_first_scf = istep;
 
     // update in ion-step
-    if( PARAM.inp.rdmft == true )
+    if (PARAM.inp.rdmft == true)
     {
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
-        rdmft_solver.update_ion(ucell, *(this->pw_rho), this->ppcell.vloc, this->sf.strucFac);   // add by jghan, 2024-03-16/2024-10-08
+        rdmft_solver.update_ion(ucell,
+                                *(this->pw_rho),
+                                this->ppcell.vloc,
+                                this->sf.strucFac); // add by jghan, 2024-03-16/2024-10-08
     }
 
     return;
 }
-
 
 template class ESolver_KS_LCAO<double, double>;
 template class ESolver_KS_LCAO<std::complex<double>, double>;

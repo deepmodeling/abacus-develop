@@ -42,12 +42,16 @@ double atom_arrange::set_sr_NL(
 
 	
 	//xiaohui add 'output_level' line, 2015-09-16
-	if(output_level != "m") ofs_in << "\n SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
-	if(output_level != "m") ofs_in << std::setprecision(3);
-	if(output_level != "m") ModuleBase::GlobalFunc::OUT(ofs_in,"longest orb rcut (Bohr)",rcutmax_Phi);
+	if(output_level != "m") { ofs_in << "\n SETUP SEARCHING RADIUS FOR PROGRAM TO SEARCH ADJACENT ATOMS" << std::endl;
+}
+	if(output_level != "m") { ofs_in << std::setprecision(3);
+}
+	if(output_level != "m") { ModuleBase::GlobalFunc::OUT(ofs_in,"longest orb rcut (Bohr)",rcutmax_Phi);
+}
 
 //	std::cout << " LONGEST NL PROJ RCUT : " << longest_nl_proj_rcut << std::endl;
-	if(output_level != "m") ModuleBase::GlobalFunc::OUT(ofs_in,"longest nonlocal projector rcut (Bohr)", rcutmax_Beta);
+	if(output_level != "m") { ModuleBase::GlobalFunc::OUT(ofs_in,"longest nonlocal projector rcut (Bohr)", rcutmax_Beta);
+}
 
 	// check in use_overlap_matrix, 
 	double sr = 0.0;
@@ -75,7 +79,11 @@ void atom_arrange::search(
 {
 	ModuleBase::TITLE("atom_arrange", "search");
 	ModuleBase::timer::tick("atom_arrange","search");
-
+/* 	std::cout << "pbc_flag = " << pbc_flag << std::endl;
+	std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
+	std::cout << "test_atom_in = " << test_atom_in << std::endl;
+	std::cout << "test_only = " << test_only << std::endl;
+ */
 	assert( search_radius_bohr > 0.0 );
 
 //	OUT(ofs_in,"Atom coordinates reading from",PARAM.inp.stru_file);
@@ -93,6 +101,7 @@ void atom_arrange::search(
 	//=============================
 
 	const double radius_lat0unit = search_radius_bohr / ucell.lat0;
+    ModuleBase::timer::tick("atom_arrange", "Atom_input");
 
 	Atom_input at(
 		ofs_in,
@@ -102,6 +111,7 @@ void atom_arrange::search(
 		pbc_flag, 
 		radius_lat0unit, 
 		test_atom_in);
+    ModuleBase::timer::tick("atom_arrange", "Atom_input");
 
 	//===========================================
 	// Print important information in Atom_input
@@ -111,11 +121,20 @@ void atom_arrange::search(
 	//=========================================
 	// Construct Grid , Cells , Adjacent atoms
 	//=========================================
+
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+
 	grid_d.init(ofs_in, ucell, at);
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+
+    ModuleBase::timer::tick("atom_arrange", "search");
 
 	// test the adjacent atoms and the box.
 	if(test_only)
 	{
+		std::cout << "radius_lat0unit = " << radius_lat0unit << std::endl;
+		std::cout << "search_radius_bohr = " << search_radius_bohr << std::endl;
+
 		ofs_in << " " << std::setw(5) << "Type" << std::setw(5) << "Atom" << std::setw(8) << "AdjNum" << std::endl;
         std::cout << std::setw(8) << "Labels" << std::setw(15) << "tau.x" << std::setw(15) << "tau.y" << std::setw(15)
                   << "tau.z" << std::setw(8) << "box.x" << std::setw(8) << "box.y" << std::setw(8) << "box.z"
@@ -142,7 +161,6 @@ void atom_arrange::search(
         ofs_in << "search neighboring atoms done." << std::endl;
     }
 
-    ModuleBase::timer::tick("atom_arrange", "search");
     return;
 }
 
@@ -167,25 +185,7 @@ void atom_arrange::delete_vector(
 		radius_lat0unit2, 
 		test_atom_in);
 
-	grid_d.delete_vector(at2);
+	grid_d.delete_vector(at2.getGrid_layerX_minus(),at2.getGrid_layerY_minus(),at2.getGrid_layerZ_minus());
 
-	if (grid_d.init_cell_flag)
-	{
-		for (int i = 0;i < grid_d.dx;i++)
-		{
-			for (int j = 0;j < grid_d.dy;j++)
-			{
-				delete[] grid_d.Cell[i][j];
-			}
-		}
-
-		for (int i = 0;i < grid_d.dx;i++)
-		{
-			delete[] grid_d.Cell[i];
-		}
-
-		delete[] grid_d.Cell;
-		grid_d.init_cell_flag = false;
-	}
-	return;
+	grid_d.delete_Cell();
 }

@@ -27,12 +27,12 @@ mixing_type             pulay
 mixing_beta             0.4
 mixing_gg0 0
 
-dft_functional lda
+dft_functional hf
 exx_real_number 1
 exx_ccp_rmesh_times 1
 
 lr_nstates 3
-xc_kernel lda
+xc_kernel hf
 lr_solver lapack
 lr_thr 1e-2
 lr_unrestricted 1

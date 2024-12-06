@@ -29,23 +29,24 @@ extern "C"
 
 namespace ModuleDFTU
 {
-void DFTU::copy_locale()
+void DFTU::copy_locale(const UnitCell& ucell)
 {
     ModuleBase::TITLE("DFTU", "copy_locale");
     ModuleBase::timer::tick("DFTU", "copy_locale");
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (orbital_corr[T] == -1) {
             continue;
+}
 
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
 
-            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
+            for (int l = 0; l < ucell.atoms[T].nwl + 1; l++)
             {
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+                const int N = ucell.atoms[T].l_nchi[l];
 
                 for (int n = 0; n < N; n++)
                 {
@@ -65,22 +66,23 @@ void DFTU::copy_locale()
     ModuleBase::timer::tick("DFTU", "copy_locale");
 }
 
-void DFTU::zero_locale()
+void DFTU::zero_locale(const UnitCell& ucell)
 {
     ModuleBase::TITLE("DFTU", "zero_locale");
     ModuleBase::timer::tick("DFTU", "zero_locale");
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1) continue;
+        if (orbital_corr[T] == -1) { continue;
+}
 
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
 
-            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
+            for (int l = 0; l < ucell.atoms[T].nwl + 1; l++)
             {
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+                const int N = ucell.atoms[T].l_nchi[l];
 
                 for (int n = 0; n < N; n++)
                 {
@@ -100,25 +102,27 @@ void DFTU::zero_locale()
     ModuleBase::timer::tick("DFTU", "zero_locale");
 }
 
-void DFTU::mix_locale(const double& mixing_beta)
+void DFTU::mix_locale(const UnitCell& ucell,
+                      const double& mixing_beta)
 {
     ModuleBase::TITLE("DFTU", "mix_locale");
     ModuleBase::timer::tick("DFTU", "mix_locale");
 
     double beta = mixing_beta;
 
-    for (int T = 0; T < GlobalC::ucell.ntype; T++)
+    for (int T = 0; T < ucell.ntype; T++)
     {
-        if (orbital_corr[T] == -1)
+        if (orbital_corr[T] == -1) {
             continue;
+}
 
-        for (int I = 0; I < GlobalC::ucell.atoms[T].na; I++)
+        for (int I = 0; I < ucell.atoms[T].na; I++)
         {
-            const int iat = GlobalC::ucell.itia2iat(T, I);
+            const int iat = ucell.itia2iat(T, I);
 
-            for (int l = 0; l < GlobalC::ucell.atoms[T].nwl + 1; l++)
+            for (int l = 0; l < ucell.atoms[T].nwl + 1; l++)
             {
-                const int N = GlobalC::ucell.atoms[T].l_nchi[l];
+                const int N = ucell.atoms[T].l_nchi[l];
 
                 for (int n = 0; n < N; n++)
                 {
@@ -139,16 +143,17 @@ void DFTU::mix_locale(const double& mixing_beta)
 }
 
 void DFTU::cal_occup_m_k(const int iter, 
-                        const std::vector<std::vector<std::complex<double>>>& dm_k,
-                        const K_Vectors& kv,
-                        const double& mixing_beta,
-                        hamilt::Hamilt<std::complex<double>>* p_ham)
+                         const UnitCell& ucell,
+                         const std::vector<std::vector<std::complex<double>>>& dm_k,
+                         const K_Vectors& kv,
+                         const double& mixing_beta,
+                         hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_k");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_k");
 
-    this->copy_locale();
-    this->zero_locale();
+    this->copy_locale(ucell);
+    this->zero_locale(ucell);
 
     //=================Part 1======================
     // call SCALAPACK routine to calculate the product of the S and density matrix
@@ -196,30 +201,33 @@ void DFTU::cal_occup_m_k(const int iter,
 #endif
 
         const int spin = kv.isk[ik];
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            const int NL = GlobalC::ucell.atoms[it].nwl + 1;
+            const int NL = ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
-            if (LC == -1)
+            if (LC == -1) {
                 continue;
+}
 
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                const int iat = GlobalC::ucell.itia2iat(it, ia);
+                const int iat = ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != orbital_corr[it]) {
                         continue;
+}
 
-                    const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+                    const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
                         // if(!Yukawa && n!=0) continue;
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
 
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
@@ -260,30 +268,33 @@ void DFTU::cal_occup_m_k(const int iter,
         } // end it
     } // ik
 
-    for (int it = 0; it < GlobalC::ucell.ntype; it++)
+    for (int it = 0; it < ucell.ntype; it++)
     {
-        const int NL = GlobalC::ucell.atoms[it].nwl + 1;
+        const int NL = ucell.atoms[it].nwl + 1;
         const int LC = orbital_corr[it];
 
-        if (LC == -1)
+        if (LC == -1) {
             continue;
+}
 
-        for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            const int iat = GlobalC::ucell.itia2iat(it, ia);
+            const int iat = ucell.itia2iat(it, ia);
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != orbital_corr[it])
+                if (l != orbital_corr[it]) {
                     continue;
+}
 
-                const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+                const int N = ucell.atoms[it].l_nchi[l];
 
                 for (int n = 0; n < N; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-                    if (n != 0)
+                    if (n != 0) {
                         continue;
+}
                         // set the local occupation mumber matrix of spin up and down zeros
 
 #ifdef __MPI
@@ -346,7 +357,7 @@ void DFTU::cal_occup_m_k(const int iter,
 
     if(mixing_dftu && initialed_locale)
     {
-        this->mix_locale(mixing_beta);
+        this->mix_locale(ucell,mixing_beta);
     }
 
     this->initialed_locale = true;
@@ -354,12 +365,16 @@ void DFTU::cal_occup_m_k(const int iter,
     return;
 }
 
-void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<double>> &dm_gamma, const double& mixing_beta, hamilt::Hamilt<double>* p_ham)
+void DFTU::cal_occup_m_gamma(const int iter,
+                             const UnitCell &ucell,
+                             const std::vector<std::vector<double>> &dm_gamma, 
+                             const double& mixing_beta, 
+                             hamilt::Hamilt<double>* p_ham)
 {
     ModuleBase::TITLE("DFTU", "cal_occup_m_gamma");
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
-    this->copy_locale();
-    this->zero_locale();
+    this->copy_locale(ucell);
+    this->zero_locale(ucell);
 
     //=================Part 1======================
     // call PBLAS routine to calculate the product of the S and density matrix
@@ -396,26 +411,29 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
                 this->paraV->desc);
 #endif
 
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            const int NL = GlobalC::ucell.atoms[it].nwl + 1;
-            if (orbital_corr[it] == -1)
+            const int NL = ucell.atoms[it].nwl + 1;
+            if (orbital_corr[it] == -1) {
                 continue;
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+}
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                const int iat = GlobalC::ucell.itia2iat(it, ia);
+                const int iat = ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != orbital_corr[it])
+                    if (l != orbital_corr[it]) {
                         continue;
+}
 
-                    const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+                    const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
-                        if (n != 0)
+                        if (n != 0) {
                             continue;
+}
 
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
@@ -494,7 +512,7 @@ void DFTU::cal_occup_m_gamma(const int iter, const std::vector<std::vector<doubl
 
     if(mixing_dftu && initialed_locale)
     {
-        this->mix_locale(mixing_beta);
+        this->mix_locale(ucell,mixing_beta);
     }
 
     this->initialed_locale = true;

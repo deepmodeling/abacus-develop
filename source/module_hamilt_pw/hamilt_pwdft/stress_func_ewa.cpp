@@ -11,15 +11,18 @@
 
 //calcualte the Ewald stress term in PW and LCAO
 template<typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW::PW_Basis* rho_basis, const bool is_pw)
+void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
+											 ModuleBase::matrix& sigma, 
+											 ModulePW::PW_Basis* rho_basis, 
+											 const bool is_pw)
 {
     ModuleBase::TITLE("Stress_Func","stress_ewa");
     ModuleBase::timer::tick("Stress_Func","stress_ewa");
 
     FPTYPE charge=0;
-    for(int it=0; it < GlobalC::ucell.ntype; it++)
+    for(int it=0; it < ucell.ntype; it++)
 	{
-		charge = charge + GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[it].na;
+		charge = charge + ucell.atoms[it].ncpp.zv * ucell.atoms[it].na;
 	}
     //choose alpha in order to have convergence in the sum over G
     //upperbound is a safe upper bound for the error ON THE ENERGY
@@ -30,7 +33,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
        alpha-=0.1;
        if(alpha==0.0)
           ModuleBase::WARNING_QUIT("stres_ew", "optimal alpha not found");
-       upperbound =ModuleBase::e2 * pow(charge,2) * sqrt( 2 * alpha / (ModuleBase::TWO_PI)) * erfc(sqrt(GlobalC::ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
+       upperbound =ModuleBase::e2 * pow(charge,2) * sqrt( 2 * alpha / (ModuleBase::TWO_PI)) * erfc(sqrt(ucell.tpiba2 * rho_basis->ggecut / 4.0 / alpha));
     }
     while(upperbound>1e-7);
 
@@ -40,7 +43,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 	const int ig0 = rho_basis->ig_gge0;
     if( ig0 >= 0)
 	{
-       sdewald = (ModuleBase::TWO_PI) * ModuleBase::e2 / 4.0 / alpha * pow(charge/GlobalC::ucell.omega,2);
+       sdewald = (ModuleBase::TWO_PI) * ModuleBase::e2 / 4.0 / alpha * pow(charge/ucell.omega,2);
     }
     else 
 	{
@@ -79,27 +82,27 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
     for(; ig < ig_end; ig++)
 	{
 		if(ig == ig0)  continue;
-		g2 = rho_basis->gg[ig]* GlobalC::ucell.tpiba2;
+		g2 = rho_basis->gg[ig]* ucell.tpiba2;
 		g2a = g2 /4.0/alpha;
 		rhostar=std::complex<FPTYPE>(0.0,0.0);
-		for(int it=0; it < GlobalC::ucell.ntype; it++)
+		for(int it=0; it < ucell.ntype; it++)
 		{
-			for(int i=0; i<GlobalC::ucell.atoms[it].na; i++)
+			for(int i=0; i<ucell.atoms[it].na; i++)
 			{
-				arg = (rho_basis->gcar[ig] * GlobalC::ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
+				arg = (rho_basis->gcar[ig] * ucell.atoms[it].tau[i]) * (ModuleBase::TWO_PI);
 				FPTYPE sinp, cosp;
                 ModuleBase::libm::sincos(arg, &sinp, &cosp);
-				rhostar = rhostar + std::complex<FPTYPE>(GlobalC::ucell.atoms[it].ncpp.zv * cosp,GlobalC::ucell.atoms[it].ncpp.zv * sinp);
+				rhostar = rhostar + std::complex<FPTYPE>(ucell.atoms[it].ncpp.zv * cosp,ucell.atoms[it].ncpp.zv * sinp);
 			}
 		}
-		rhostar /= GlobalC::ucell.omega;
+		rhostar /= ucell.omega;
 		sewald = fact* (ModuleBase::TWO_PI) * ModuleBase::e2 * ModuleBase::libm::exp(-g2a) / g2 * pow(std::abs(rhostar),2);
 		local_sdewald -= sewald;
 		for(int l=0;l<3;l++)
 		{
 			for(int m=0;m<l+1;m++)
 			{
-				local_sigma(l, m) += sewald * GlobalC::ucell.tpiba2 * 2.0 * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / g2 * (g2a + 1);
+				local_sigma(l, m) += sewald * ucell.tpiba2 * 2.0 * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / g2 * (g2a + 1);
 			}
 		}
 	}
@@ -123,25 +126,25 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 
 		FPTYPE sqa = sqrt(alpha);
 		FPTYPE sq8a_2pi = sqrt(8 * alpha / (ModuleBase::TWO_PI));
-		rmax = 4.0/sqa/GlobalC::ucell.lat0;
+		rmax = 4.0/sqa/ucell.lat0;
 
 		// collapse it, ia, jt, ja loop into a single loop
 		long long ijat, ijat_end;
 		int it, i, jt, j;
-		ModuleBase::TASK_DIST_1D(num_threads, thread_id, (long long)GlobalC::ucell.nat * GlobalC::ucell.nat, ijat, ijat_end);
+		ModuleBase::TASK_DIST_1D(num_threads, thread_id, (long long)ucell.nat * ucell.nat, ijat, ijat_end);
 		ijat_end = ijat + ijat_end;
-		GlobalC::ucell.ijat2iaitjajt(ijat, &i, &it, &j, &jt);
+		ucell.ijat2iaitjajt(ijat, &i, &it, &j, &jt);
 
 		while (ijat < ijat_end)
 		{
 			//calculate tau[na]-tau[nb]
-			d_tau = GlobalC::ucell.atoms[it].tau[i] - GlobalC::ucell.atoms[jt].tau[j];
+			d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
 			//generates nearest-neighbors shells 
-			H_Ewald_pw::rgen(d_tau, rmax, irr, GlobalC::ucell.latvec, GlobalC::ucell.G, r, r2, nrm);
+			H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
 			for(int nr=0 ; nr<nrm ; nr++)
 			{
-				rr=sqrt(r2[nr]) * GlobalC::ucell.lat0;
-				fac = -ModuleBase::e2/2.0/GlobalC::ucell.omega*pow(GlobalC::ucell.lat0,2)*GlobalC::ucell.atoms[it].ncpp.zv * GlobalC::ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
+				rr=sqrt(r2[nr]) * ucell.lat0;
+				fac = -ModuleBase::e2/2.0/ucell.omega*pow(ucell.lat0,2)*ucell.atoms[it].ncpp.zv * ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
 				for(int l=0; l<3; l++)
 				{
 					for(int m=0; m<l+1; m++)
@@ -155,7 +158,7 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(ModuleBase::matrix& sigma, ModulePW
 			}//end nr
 
 			++ijat;
-			GlobalC::ucell.step_jajtiait(&j, &jt, &i, &it);
+			ucell.step_jajtiait(&j, &jt, &i, &it);
 		}
 
 		delete[] r;

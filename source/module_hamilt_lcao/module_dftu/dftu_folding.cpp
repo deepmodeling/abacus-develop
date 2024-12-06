@@ -126,6 +126,7 @@ void DFTU::fold_dSR_gamma(
 }
 
 void DFTU::folding_matrix_k(
+        const UnitCell &ucell,
         ForceStressArrays &fsr,
         const Parallel_Orbitals &pv,
 		const int ik, 
@@ -153,26 +154,26 @@ void DFTU::folding_matrix_k(
     ModuleBase::Vector3<double> dtau2;
     ModuleBase::Vector3<double> tau0;
 
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+        Atom* atom1 = &ucell.atoms[T1];
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1);
+            Atom* atom1 = &ucell.atoms[T1];
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 
             // (2) search among all adjacent atoms.
             for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
             {
                 const int T2 = GlobalC::GridD.getType(ad);
                 const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                Atom* atom2 = &ucell.atoms[T2];
 
                 tau2 = GlobalC::GridD.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
+                double distance = dtau.norm() * ucell.lat0;
                 double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
 
                 bool adj = false;
@@ -192,11 +193,11 @@ void DFTU::folding_matrix_k(
                         dtau1 = tau0 - tau1;
                         dtau2 = tau0 - tau2;
 
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+                        double distance1 = dtau1.norm() * ucell.lat0;
+                        double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff_[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff_[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -209,7 +210,7 @@ void DFTU::folding_matrix_k(
                 if (adj)
                 {
                     // (3) calculate the nu of atom (T2, I2)
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                     //------------------------------------------------
                     // exp(k dot dR)
                     // dR is the index of box in Crystal coordinates

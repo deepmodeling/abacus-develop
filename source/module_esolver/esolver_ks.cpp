@@ -109,6 +109,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
                          PARAM.inp.mixing_gg0_min,
                          PARAM.inp.mixing_angle,
                          PARAM.inp.mixing_dmr);
+    p_chgmix->init_mixing();
 
     /// PAW Section
 #ifdef USE_PAW
@@ -474,6 +475,15 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick(this->classname, "runner");
     return;
 };
+
+template <typename T, typename Device>
+void ESolver_KS<T, Device>::before_scf(UnitCell& ucell, const int istep)
+{
+    ModuleBase::TITLE("ESolver_KS", "before_scf");
+
+    //! 1) call before_scf() of ESolver_FP
+    ESolver_FP::before_scf(ucell, istep);
+}
 
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const int iter)

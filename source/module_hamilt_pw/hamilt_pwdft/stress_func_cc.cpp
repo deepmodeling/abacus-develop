@@ -65,10 +65,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 	else
 	{
-		if(PARAM.inp.nspin==4) 
-		{
-			elecstate::cal_ux(GlobalC::ucell);
-		}
+		elecstate::cal_ux(GlobalC::ucell);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?
         // vtxc = std::get<1>(etxc_vtxc_v); // may delete?

@@ -72,7 +72,8 @@ class Force_LCAO
                 Record_adj* ra = nullptr);
 
     // get the ds, dt, dvnl.
-    void allocate(const Parallel_Orbitals& pv,
+    void allocate(const UnitCell& ucell,
+                  const Parallel_Orbitals& pv,
                   ForceStressArrays& fsr, // mohan add 2024-06-15
                   const TwoCenterBundle& two_center_bundle,
                   const LCAO_Orbitals& orb,

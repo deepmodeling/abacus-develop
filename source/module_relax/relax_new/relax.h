@@ -6,6 +6,7 @@
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
 #include "line_search.h"
+#include "module_cell/unitcell.h"
 
 class Relax
 {
@@ -17,7 +18,10 @@ class Relax
     //prepare for relaxation
     void init_relax(const int nat_in);
     //perform a single relaxation step
-    bool relax_step(const ModuleBase::matrix& force, const ModuleBase::matrix &stress, const double etot_in);
+    bool relax_step(UnitCell& ucell,
+                    const ModuleBase::matrix& force, 
+                    const ModuleBase::matrix &stress, 
+                    const double etot_in);
 
     private:
 
@@ -27,7 +31,9 @@ class Relax
     //constraints are considered here
     //also check if relaxation has converged
     //based on threshold in force & stress
-    bool setup_gradient(const ModuleBase::matrix& force, const ModuleBase::matrix &stress);
+    bool setup_gradient(const UnitCell &ucell,
+                        const ModuleBase::matrix& force, 
+                        const ModuleBase::matrix &stress);
 
     //check whether previous line search is done
     bool check_line_search();
@@ -39,7 +45,8 @@ class Relax
     void new_direction();
 
     //move ions and lattice vectors
-    void move_cell_ions(const bool is_new_dir);
+    void move_cell_ions(UnitCell& ucell,
+                        const bool is_new_dir);
 
     int nat; // number of atoms
     bool ltrial; // if last step is trial step

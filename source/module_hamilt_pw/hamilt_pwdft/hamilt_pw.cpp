@@ -22,15 +22,16 @@ template <typename T, typename Device>
 HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               ModulePW::PW_Basis_K* wfc_basis,
                               K_Vectors* pkv,
-                              pseudopot_cell_vnl* nlpp)
+                              pseudopot_cell_vnl* nlpp,
+                              const UnitCell* ucell): ucell(ucell)
 {
     this->classname = "HamiltPW";
     this->ppcell = nlpp;
     this->qq_nt = this->ppcell->template get_qq_nt_data<Real>();
     this->qq_so = this->ppcell->template get_qq_so_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-    const auto tpiba2 = static_cast<Real>(GlobalC::ucell.tpiba2);
-    const auto tpiba = static_cast<Real>(GlobalC::ucell.tpiba);
+    const auto tpiba2 = static_cast<Real>(ucell->tpiba2);
+    const auto tpiba = static_cast<Real>(ucell->tpiba);
     const int* isk = pkv->isk.data();
     const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
@@ -103,7 +104,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     if (PARAM.inp.vnl_in_h)
     {
         Operator<T, Device>* nonlocal
-            = new Nonlocal<OperatorPW<T, Device>>(isk, this->ppcell, &GlobalC::ucell, wfc_basis);
+            = new Nonlocal<OperatorPW<T, Device>>(isk, this->ppcell, ucell, wfc_basis);
         if(this->ops == nullptr)
         {
             this->ops = nonlocal;
@@ -290,9 +291,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             // qq <beta|psi>
             char transa = 'N';
             char transb = 'N';
-            for (int it = 0; it < GlobalC::ucell.ntype; it++)
+            for (int it = 0; it < ucell->ntype; it++)
             {
-                Atom* atoms = &GlobalC::ucell.atoms[it];
+                Atom* atoms = &ucell->atoms[it];
                 if (atoms->ncpp.tvanp)
                 {
                     const int nh = atoms->ncpp.nh;
@@ -309,7 +310,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     }
                     for (int ia = 0; ia < atoms->na; ia++)
                     {
-                        const int iat = GlobalC::ucell.itia2iat(it, ia);
+                        const int iat = ucell->itia2iat(it, ia);
                         gemm_op()(this->ctx,
                                   transa,
                                   transb,

@@ -249,8 +249,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
         = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
-    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,
-        transform_test_cf, true);
+    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)
     {
@@ -261,7 +260,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true);
+    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cd.size(); i++)
     {

@@ -25,7 +25,7 @@ Numerical_Descriptor::~Numerical_Descriptor()
 }
 
 
-void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in, const int nks_in)
+void Numerical_Descriptor::output_descriptor(const UnitCell& ucell, const psi::Psi<std::complex<double>> &psi, const int &lmax_in, const double &rcut_in, const double &tol_in, const int nks_in)
 {
 	ModuleBase::TITLE("Numerical_Descriptor","output_descriptor");
 	ModuleBase::GlobalFunc::NEW_PART("DeepKS descriptor: D_{Inl}");
@@ -49,16 +49,16 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
     this->bessel_basis.init(
 		false,
 		std::stod(PARAM.inp.bessel_descriptor_ecut),
-		GlobalC::ucell.ntype,
+		ucell.ntype,
 		this->lmax,
 		PARAM.inp.bessel_descriptor_smooth,
 		PARAM.inp.bessel_descriptor_sigma,
 		rcut_in,
 		tol_in,
-        GlobalC::ucell
+        ucell
         );
 	this->nmax = Numerical_Descriptor::bessel_basis.get_ecut_number();
-    this->init_mu_index();
+    this->init_mu_index(ucell);
     this->init_label = true;
 
 	assert(nmax>0);
@@ -129,10 +129,10 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 	// 5. Generate descriptors for each atom 
 	//-------------------------------------
 	
-	for (int it=0; it<GlobalC::ucell.ntype; it++)
+	for (int it=0; it<ucell.ntype; it++)
 	{
-		GlobalV::ofs_running << GlobalC::ucell.atoms[it].label << " label" << std::endl;
-		for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+		GlobalV::ofs_running << ucell.atoms[it].label << " label" << std::endl;
+		for (int ia=0; ia<ucell.atoms[it].na; ia++)
 		{
 			//--------------------------------------------------
 			// compute the number of descriptors for each atom
@@ -151,7 +151,7 @@ void Numerical_Descriptor::output_descriptor(const psi::Psi<std::complex<double>
 			// for each 'lmax' we have 'n' up to 'ecut_number'
 			this->generate_descriptor(overlap_Q1, overlap_Q2, it ,ia, d, nd);
 
-			ofs << GlobalC::ucell.atoms[it].label << " atom_index " << ia+1 << " n_descriptor " << nd << std::endl;
+			ofs << ucell.atoms[it].label << " atom_index " << ia+1 << " n_descriptor " << nd << std::endl;
 			for(int id=0; id<nd; ++id)
 			{
 				if(id>0 && id%8==0) ofs << std::endl;
@@ -264,7 +264,7 @@ void Numerical_Descriptor::jlq3d_overlap(
     GlobalV::ofs_running << " OUTPUT THE OVERLAP BETWEEN SPHERICAL BESSEL FUNCTIONS AND BLOCH WAVE FUNCTIONS" <<
 std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << std::endl;
 
-    const double normalization = (4 * ModuleBase::PI) / sqrt(GlobalC::ucell.omega);// Peize Lin add normalization
+    const double normalization = (4 * ModuleBase::PI) / sqrt(ucell.omega);// Peize Lin add normalization
 2015-12-29
 
     const int total_lm = ( this->lmax + 1) * ( this->lmax + 1);
@@ -286,15 +286,15 @@ std::endl; GlobalV::ofs_running << " Q = < J_it_ia_il_in_im | Psi_n, k > " << st
 
     double *flq = new double[np];
     std::complex<double> overlapQ = ModuleBase::ZERO;
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; T1++)
+    for (int T1 = 0; T1 < ucell.ntype; T1++)
     {
-        for (int I1 = 0; I1 < GlobalC::ucell.atoms[T1].na; I1++)
+        for (int I1 = 0; I1 < ucell.atoms[T1].na; I1++)
         {
             std::complex<double> *sk = sf.get_sk(ik, T1, I1,wfcpw);
             for (int L=0; L< lmax+1; L++)
             {
                 GlobalV::ofs_running << " " << std::setw(5) << ik+1
-                            << std::setw(8) << GlobalC::ucell.atoms[T1].label
+                            << std::setw(8) << ucell.atoms[T1].label
                             << std::setw(8) << I1+1
                             << std::setw(8) << L
                             << std::endl;
@@ -305,7 +305,7 @@ normalization 2015-12-29 for (int ie=0; ie < nmax; ie++)
                     for (int ig=0; ig<np; ig++)
                     {
                         flq[ig] = Numerical_Descriptor::bessel_basis.Polynomial_Interpolation2
-                                  (L, ie, gk[ig].norm() * GlobalC::ucell.tpiba );
+                                  (L, ie, gk[ig].norm() * ucell.tpiba );
                     }
 
                     for (int m=0; m<2*L+1; m++)
@@ -336,32 +336,32 @@ normalization 2015-12-29 for (int ie=0; ie < nmax; ie++)
 }
 */
 
-void Numerical_Descriptor::init_mu_index()
+void Numerical_Descriptor::init_mu_index(const UnitCell& ucell)
 {
 	GlobalV::ofs_running << " Initialize the mu index for deepks" << std::endl;
 	GlobalV::ofs_running << " lmax = " << this->lmax << std::endl;
 	GlobalV::ofs_running << " nmax = " << this->nmax << std::endl;
-    Numerical_Descriptor::mu_index = new ModuleBase::IntArray[GlobalC::ucell.ntype];
+    Numerical_Descriptor::mu_index = new ModuleBase::IntArray[ucell.ntype];
 
 	assert(lmax>=0);
 	assert(nmax>0);
 	
 	int mu=0;
-	for (int it=0; it<GlobalC::ucell.ntype; ++it)
+	for (int it=0; it<ucell.ntype; ++it)
 	{
 		this->mu_index[it].create(
-			GlobalC::ucell.atoms[it].na,
+			ucell.atoms[it].na,
 			lmax+1, // l starts from 0
 			nmax,
 			2*lmax+1); // m ==> 2*l+1
 
 		GlobalV::ofs_running << "Type " << it+1 
-		<< " number_of_atoms " << GlobalC::ucell.atoms[it].na
+		<< " number_of_atoms " << ucell.atoms[it].na
 		<< " number_of_L " << lmax+1
 		<< " number_of_n " << nmax
 		<< " number_of_m " << 2*lmax+1 << std::endl;
 
-        for (int ia=0; ia<GlobalC::ucell.atoms[it].na; ia++)
+        for (int ia=0; ia<ucell.atoms[it].na; ia++)
 		{
 				for (int l=0; l<lmax+1; l++)
 				{

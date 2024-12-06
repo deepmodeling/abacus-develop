@@ -32,7 +32,7 @@ void force_cor_one(const UnitCell& cell,
                 vloc_at[ig] = vloc(it, rho_basis->ig2igg[ig]) * phase;
                 if(rho_basis->ig_gge0 == ig)
                 {
-                    N[ig] = GlobalC::ucell.atoms[it].ncpp.zv / GlobalC::ucell.omega;
+                    N[ig] = cell.atoms[it].ncpp.zv / cell.omega;
                 }
                 else
                 {
@@ -48,9 +48,9 @@ void force_cor_one(const UnitCell& cell,
                 forcesol(iat, 2) += rho_basis->gcar[ig][2] * imag(conj(delta_phi_g[ig]) * N[ig]);
             }
                 
-                forcesol(iat, 0) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
-                forcesol(iat, 1) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
-                forcesol(iat, 2) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
+                forcesol(iat, 0) *= (cell.tpiba * cell.omega);
+                forcesol(iat, 1) *= (cell.tpiba * cell.omega);
+                forcesol(iat, 2) *= (cell.tpiba * cell.omega);
             //unit Ry/Bohr
                 forcesol(iat, 0) *= 2 ;
                 forcesol(iat, 1) *= 2 ;
@@ -128,9 +128,9 @@ void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, Mo
                 forcesol(iat, 2) -= rho_basis->gcar[ig][2] * imag(conj(Vcav_g[ig]+Vel_g[ig]) * n_pseudo[ig]);
             }
 
-                forcesol(iat, 0) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
-                forcesol(iat, 1) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
-                forcesol(iat, 2) *= (GlobalC::ucell.tpiba * GlobalC::ucell.omega);
+                forcesol(iat, 0) *= (cell.tpiba * cell.omega);
+                forcesol(iat, 1) *= (cell.tpiba * cell.omega);
+                forcesol(iat, 2) *= (cell.tpiba * cell.omega);
             //eV/Ang
                 forcesol(iat, 0) *= 2 ;
                 forcesol(iat, 1) *= 2 ;
@@ -157,7 +157,7 @@ void surchem::cal_force_sol(const UnitCell& cell,
     ModuleBase::TITLE("surchem", "cal_force_sol");
     ModuleBase::timer::tick("surchem", "cal_force_sol");
 
-    int nat = GlobalC::ucell.nat;
+    int nat = cell.nat;
 	ModuleBase::matrix force1(nat, 3);
     ModuleBase::matrix force2(nat, 3);
     
@@ -165,9 +165,9 @@ void surchem::cal_force_sol(const UnitCell& cell,
     force_cor_two(cell, rho_basis,force2);
     
     int iat = 0;
-    for (int it = 0;it < GlobalC::ucell.ntype;it++)
+    for (int it = 0;it < cell.ntype;it++)
 	{
-		for (int ia = 0;ia < GlobalC::ucell.atoms[it].na;ia++)
+		for (int ia = 0;ia < cell.atoms[it].na;ia++)
 		{
             for(int ipol = 0; ipol < 3; ipol++)
             {

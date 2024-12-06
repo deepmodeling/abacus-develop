@@ -37,7 +37,7 @@ class toWannier90
     ~toWannier90();
 
     void calculate();
-    void read_nnkp(const K_Vectors& kv);
+    void read_nnkp(const UnitCell& ucell, const K_Vectors& kv);
 
     void out_eig(const ModuleBase::matrix& ekb);
     void cal_Amn();
@@ -45,7 +45,7 @@ class toWannier90
     void out_unk();
 
   protected:
-    bool try_read_nnkp(const K_Vectors& kv);
+    bool try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv);
 
     // Parameters related to k point
     int num_kpts;

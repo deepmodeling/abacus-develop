@@ -255,7 +255,7 @@ void Input_Conv::Convert()
         GlobalC::dftu.U0 = PARAM.globalv.hubbard_u;
         if (PARAM.globalv.uramping > 0.01)
         {
-            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), GlobalC::ucell.ntype);
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), PARAM.inp.ntype);
         }
     }
 #endif

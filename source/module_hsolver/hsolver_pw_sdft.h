@@ -42,7 +42,8 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
 
-    void solve(hamilt::Hamilt<T, Device>* pHamilt,
+    void solve(const UnitCell& ucell,
+               hamilt::Hamilt<T, Device>* pHamilt,
                psi::Psi<T, Device>& psi,
                psi::Psi<T>& psi_cpu,
                elecstate::ElecState* pes,

@@ -7,7 +7,7 @@
 namespace LCAO_domain
 {
 
-void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks, const LCAO_Orbitals& orb) {
+void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv,const int& nks, const LCAO_Orbitals& orb) {
     ModuleBase::TITLE("LCAO_domain", "divide_HS_in_frag");
 
     //(1), (2): set up matrix division have been moved into ESolver_KS_LCAO::init_basis_lcao
@@ -19,22 +19,22 @@ void divide_HS_in_frag(const bool isGamma, Parallel_Orbitals& pv,const int& nks,
     if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf) {
         // allocate relevant data structures for calculating descriptors
         std::vector<int> na;
-        na.resize(GlobalC::ucell.ntype);
-        for (int it = 0; it < GlobalC::ucell.ntype; it++) {
-            na[it] = GlobalC::ucell.atoms[it].na;
+        na.resize(ucell.ntype);
+        for (int it = 0; it < ucell.ntype; it++) {
+            na[it] = ucell.atoms[it].na;
         }
 
         GlobalC::ld.init(orb,
-                         GlobalC::ucell.nat,
-                         GlobalC::ucell.ntype,
+                         ucell.nat,
+                         ucell.ntype,
                          pv,
                          na);
 
         if (PARAM.inp.deepks_scf) {
             if (isGamma) {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat);
+                GlobalC::ld.allocate_V_delta(ucell.nat);
             } else {
-                GlobalC::ld.allocate_V_delta(GlobalC::ucell.nat, nks);
+                GlobalC::ld.allocate_V_delta(ucell.nat, nks);
             }
         }
     }

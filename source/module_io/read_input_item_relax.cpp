@@ -12,8 +12,8 @@ void ReadInput::item_relax()
         item.annotation = "cg; bfgs; sd; cg; cg_bfgs;";
         read_sync_string(input.relax_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs"};
-            if (std::find(relax_methods.begin(), relax_methods.end(), para.input.relax_method) == relax_methods.end())
+            const std::vector<std::string> relax_methods = {"cg", "bfgs", "sd", "cg_bfgs","bfgs_trad"};
+            if (std::find(relax_methods.begin(),relax_methods.end(), para.input.relax_method)==relax_methods.end())
             {
                 const std::string warningstr = nofound_str(relax_methods, "relax_method");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);

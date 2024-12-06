@@ -16,15 +16,17 @@ namespace hamilt
       HamiltLIP(elecstate::Potential* pot_in,
                 ModulePW::PW_Basis_K* wfc_basis,
                 K_Vectors* p_kv,
-                pseudopot_cell_vnl* nlpp)
-          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp){};
+                pseudopot_cell_vnl* nlpp,
+                const UnitCell* ucell)
+          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp,ucell){};
 #ifdef __EXX
       HamiltLIP(elecstate::Potential* pot_in,
                 ModulePW::PW_Basis_K* wfc_basis,
                 K_Vectors* p_kv,
                 pseudopot_cell_vnl* nlpp,
+                const UnitCell* ucell,
                 Exx_Lip<T>& exx_lip_in)
-          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp), exx_lip(exx_lip_in){};
+          : HamiltPW<T, base_device::DEVICE_CPU>(pot_in, wfc_basis, p_kv, nlpp,ucell), exx_lip(exx_lip_in){};
       Exx_Lip<T>& exx_lip;
 #endif
     };

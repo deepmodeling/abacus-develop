@@ -65,7 +65,7 @@ class Gint_k : public Gint {
                    double* rho,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                   UnitCell& ucell);
+                   const UnitCell& ucell);
 
     //------------------------------------------------------
     // in gint_k_sparse1.cpp
@@ -95,7 +95,7 @@ class Gint_k : public Gint {
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
-                                    UnitCell& ucell,
+                                    const UnitCell& ucell,
                                     Grid_Driver& gdriver);
 
   private:

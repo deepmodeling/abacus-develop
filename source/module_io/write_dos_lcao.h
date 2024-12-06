@@ -12,6 +12,7 @@ namespace ModuleIO
 	/// @brief calculate density of states(DOS) and partial density of states(PDOS) and mulliken charge for LCAO base
     template <typename T>
     void write_dos_lcao(
+        const UnitCell& ucell,
         const psi::Psi<T>* psi,
         const Parallel_Orbitals &pv, 
         const ModuleBase::matrix& ekb,

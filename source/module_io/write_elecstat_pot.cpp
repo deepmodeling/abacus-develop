@@ -100,7 +100,7 @@ void write_elecstat_pot(
         istep,
         fn,
         ef_tmp,
-        &(GlobalC::ucell),
+        ucell,
         precision,
         out_fermi);
 

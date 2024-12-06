@@ -5,6 +5,7 @@
 #undef private
 #include "module_cell/unitcell.h"
 #include "module_elecstate/cal_ux.h"
+#include "module_elecstate/read_pseudo.h"
 
 #include "memory"
 #include "module_base/global_variable.h"
@@ -822,7 +823,7 @@ TEST_F(UcellTest, PrintUnitcellPseudo)
     ucell = utp.SetUcellInfo();
     PARAM.input.test_pseudo_cell = 1;
     std::string fn = "printcell.log";
-    ucell->print_unitcell_pseudo(fn);
+    elecstate::print_unitcell_pseudo(fn, *ucell);
     std::ifstream ifs;
     ifs.open("printcell.log");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -1035,6 +1036,7 @@ TEST_F(UcellTest, CalUx1)
     ucell->atoms[0].m_loc_[0].set(0, -1, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_FALSE(ucell->magnet.lsign_);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0], 0);
@@ -1051,6 +1053,7 @@ TEST_F(UcellTest, CalUx2)
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     //(0,0,0) is also parallel to (1,1,1)
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_TRUE(ucell->magnet.lsign_);
     EXPECT_NEAR(ucell->magnet.ux_[0], 0.57735, 1e-5);

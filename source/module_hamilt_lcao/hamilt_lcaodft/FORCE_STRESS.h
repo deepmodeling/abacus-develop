@@ -33,6 +33,7 @@ class Force_Stress_LCAO
                         const bool isstress,
                         const bool istestf,
                         const bool istests,
+                        const UnitCell& ucell,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
                         const psi::Psi<T>* psi,
@@ -59,9 +60,12 @@ class Force_Stress_LCAO
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;
 
-    void forceSymmetry(ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
+    void forceSymmetry(const UnitCell& ucell, 
+                       ModuleBase::matrix& fcs, 
+                       ModuleSymmetry::Symmetry* symm);
 
-    void calForcePwPart(ModuleBase::matrix& fvl_dvl,
+    void calForcePwPart(const UnitCell& ucell,
+                        ModuleBase::matrix& fvl_dvl,
                         ModuleBase::matrix& fewalds,
                         ModuleBase::matrix& fcc,
                         ModuleBase::matrix& fscc,
@@ -76,6 +80,7 @@ class Force_Stress_LCAO
     void integral_part(const bool isGammaOnly,
                        const bool isforce,
                        const bool isstress,
+                       const UnitCell& ucell,
                        ForceStressArrays& fsr, // mohan add 2024-06-15
                        const elecstate::ElecState* pelec,
                        const psi::Psi<T>* psi,
@@ -97,7 +102,8 @@ class Force_Stress_LCAO
                        const Parallel_Orbitals& pv,
                        const K_Vectors& kv);
 
-    void calStressPwPart(ModuleBase::matrix& sigmadvl,
+    void calStressPwPart(const UnitCell& ucell,
+                         ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
                          ModuleBase::matrix& sigmaewa,
                          ModuleBase::matrix& sigmacc,

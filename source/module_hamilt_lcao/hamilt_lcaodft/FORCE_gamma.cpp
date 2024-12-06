@@ -16,7 +16,8 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress.h"
 
 template <>
-void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
+void Force_LCAO<double>::allocate(const UnitCell& ucell,
+                                  const Parallel_Orbitals& pv,
                                   ForceStressArrays& fsr, // mohan add 2024-06-15
                                   const TwoCenterBundle& two_center_bundle,
                                   const LCAO_Orbitals& orb,
@@ -75,7 +76,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               'S',
                               cal_deri,
                               PARAM.inp.cal_stress,
-                              GlobalC::ucell,
+                              ucell,
                               orb,
                               pv,
                               two_center_bundle,
@@ -99,7 +100,7 @@ void Force_LCAO<double>::allocate(const Parallel_Orbitals& pv,
                               'T',
                               cal_deri,
                               PARAM.inp.cal_stress,
-                              GlobalC::ucell,
+                              ucell,
                               orb,
                               pv,
                               two_center_bundle,
@@ -205,7 +206,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(pv, fsr, two_center_bundle, orb);
+    this->allocate(ucell,pv, fsr, two_center_bundle, orb);
 
     const double* dSx[3] = { fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z };
     const double* dSxy[6] = { fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33 };

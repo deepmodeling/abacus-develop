@@ -4,7 +4,7 @@
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_basis/module_ao/parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include "module_base/scalapack_connector.h"
 #include "module_base/global_variable.h"
 #include "binstream.h"

@@ -32,7 +32,7 @@ void Velocity::init(const int ik_in)
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0 && this->nonlocal) 
 	{
-        this->ppcell->getgradq_vnl(ik_in);
+        this->ppcell->getgradq_vnl(*this->ucell,ik_in);
 	}
 
 }

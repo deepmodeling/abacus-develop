@@ -9,7 +9,8 @@
 
 // calculate the Pulay term of mGGA stress correction in PW
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
+void Stress_Func<FPTYPE, Device>::stress_mgga(const UnitCell& ucell,
+                                              ModuleBase::matrix& sigma,
                                               const ModuleBase::matrix& wg,
                                               const ModuleBase::matrix& v_ofk,
                                               const Charge* const chr,
@@ -52,9 +53,9 @@ void Stress_Func<FPTYPE, Device>::stress_mgga(ModuleBase::matrix& sigma,
 
         for (int ibnd = 0; ibnd < PARAM.inp.nbands; ibnd++)
         {
-            const FPTYPE w1 = wg(ik, ibnd) / GlobalC::ucell.omega;
+            const FPTYPE w1 = wg(ik, ibnd) / ucell.omega;
             const std::complex<FPTYPE>* psi = &psi_in[0](ik, ibnd, 0);
-            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, GlobalC::ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
+            XC_Functional::grad_wfc<std::complex<FPTYPE>, Device>(ik, ucell.tpiba, wfc_basis, psi, gradwfc.data<std::complex<FPTYPE>>());
             cal_stress_mgga_solver(
                 current_spin, nrxx, w1, gradwfc.data<std::complex<FPTYPE>>(), crosstaus.data<FPTYPE>());
         } // band loop
