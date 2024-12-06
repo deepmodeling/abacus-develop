@@ -5,12 +5,19 @@
 
 namespace Cal_Test
 {
-	void test_memory(const ModulePW::PW_Basis* rhopw,
-		const ModulePW::PW_Basis_K* wfcpw,
-		const std::string chr_mixing_mode,
-		const int chr_mixing_ndim);
+	void test_memory(const int nat,
+					const int ntype,
+					const ModuleBase::Matrix3& GGT,
+					const ModulePW::PW_Basis* rhopw,
+		            const ModulePW::PW_Basis_K* wfcpw,
+		            const std::string chr_mixing_mode,
+		            const int chr_mixing_ndim);
 
-	int cal_np(const double &ggcut, const int &n1, const int &n2, const int &n3);
+	int cal_np(const ModuleBase::Matrix3& GGT,
+			   const double &ggcut, 
+			   const int &n1, 
+			   const int &n2, 
+			   const int &n3);
 
 	void print_mem(const int &nproc);
 

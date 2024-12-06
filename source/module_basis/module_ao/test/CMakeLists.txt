@@ -27,13 +27,13 @@ list(APPEND depend_files
   ../../../module_base/libm/sincos.cpp
   ../../../module_base/spherical_bessel_transformer.cpp
   ../../../module_base/cubic_spline.cpp
+  ../../../module_base/parallel_2d.cpp
   ../ORB_read.cpp
   ../ORB_atomic.cpp
   ../ORB_atomic_lm.cpp
   ../ORB_nonlocal.cpp
   ../ORB_nonlocal_lm.cpp
   ../ORB_gaunt_table.cpp
-  ../parallel_2d.cpp
   ../parallel_orbitals.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.cpp
   ../../../module_hamilt_lcao/hamilt_lcaodft/center2_orb.cpp
@@ -76,21 +76,8 @@ AddTest(
 
 
 AddTest(
-    TARGET parallel_2d_test
-    SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
-    LIBS parameter ${math_libs} device base
-)
-
-install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-find_program(BASH bash)
-add_test(NAME parallel_2d_test_para
-      COMMAND ${BASH} parallel_2d_test.sh
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-AddTest(
     TARGET parallel_orbitals_test 
-    SOURCES parallel_orbitals_test.cpp ../parallel_2d.cpp ../parallel_orbitals.cpp
+    SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
     LIBS parameter ${math_libs} device base
 )
 

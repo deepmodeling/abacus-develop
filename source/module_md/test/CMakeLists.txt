@@ -8,7 +8,6 @@ list(APPEND depend_files
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
   ../../module_cell/read_atoms.cpp
-  ../../module_cell/read_cell_pseudopots.cpp
   ../../module_cell/pseudo.cpp
   ../../module_cell/read_pp.cpp
   ../../module_cell/read_pp_complete.cpp
@@ -35,7 +34,6 @@ list(APPEND depend_files
   ../../module_base/libm/branred.cpp
   ../../module_base/libm/sincos.cpp
   ../../module_base/math_integral.cpp
-  ../../module_cell/module_neighbor/sltk_adjacent_set.cpp
   ../../module_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../module_cell/module_neighbor/sltk_atom.cpp
   ../../module_cell/module_neighbor/sltk_atom_input.cpp
@@ -48,6 +46,7 @@ list(APPEND depend_files
   ../../module_base/parallel_reduce.cpp
   ../../module_base/parallel_global.cpp
   ../../module_base/parallel_comm.cpp
+  ../../module_elecstate/read_pseudo.cpp
 )
 
 AddTest(

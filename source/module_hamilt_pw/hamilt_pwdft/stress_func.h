@@ -70,19 +70,22 @@ class Stress_Func
                     const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr); // electron kinetic part in PW basis
 
     // 2) the stress from the Hartree term
-    void stress_har(ModuleBase::matrix& sigma,
+    void stress_har(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const bool is_pw,
                     const Charge* const chr); // hartree part in PW or LCAO basis
 
     // 3) the stress from the ewald term (ion-ion intraction under
     //		periodic boundary conditions).
-    void stress_ewa(ModuleBase::matrix& sigma,
+    void stress_ewa(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const bool is_pw); // ewald part in PW or LCAO basis
 
     // 4) the stress from the local pseudopotentials
-    void stress_loc(ModuleBase::matrix& sigma,
+    void stress_loc(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const ModuleBase::matrix& vloc,
                     const Structure_Factor* p_sf,
@@ -103,7 +106,8 @@ class Stress_Func
      *        D V(g^2) / D g^2 = 4pi e^2/omegai /G^4
      *
      */
-    void dvloc_coulomb(const FPTYPE& zp,
+    void dvloc_coulomb(const UnitCell& ucell,
+                       const FPTYPE& zp,
                        FPTYPE* dvloc,
                        ModulePW::PW_Basis* rho_basis); // used in local pseudopotential stress
 
@@ -125,10 +129,12 @@ class Stress_Func
                      int type); // used in nonlinear core correction stress
                      
     // 6) the stress from the exchange-correlation functional term
-    void stress_gga(ModuleBase::matrix& sigma,
+    void stress_gga(const UnitCell& ucell,
+                    ModuleBase::matrix& sigma,
                     ModulePW::PW_Basis* rho_basis,
                     const Charge* const chr); // gga part in both PW and LCAO basis
-    void stress_mgga(ModuleBase::matrix& sigma,
+    void stress_mgga(const UnitCell& ucell,
+                     ModuleBase::matrix& sigma,
                      const ModuleBase::matrix& wg,
                      const ModuleBase::matrix& v_ofk,
                      const Charge* const chr,

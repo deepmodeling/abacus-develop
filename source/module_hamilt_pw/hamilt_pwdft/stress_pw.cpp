@@ -66,20 +66,21 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
 
     // hartree contribution
-    this->stress_har(sigmahar, rho_basis, 1, pelec->charge);
+    this->stress_har(ucell,sigmahar, rho_basis, 1, pelec->charge);
 
     // ewald contribution
-    this->stress_ewa(sigmaewa, rho_basis, 1);
+    this->stress_ewa(ucell,sigmaewa, rho_basis, 1);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(sigmaxc, rho_basis, pelec->charge);
+    this->stress_gga(ucell,sigmaxc, rho_basis, pelec->charge);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        this->stress_mgga(sigmaxc,
+        this->stress_mgga(ucell,
+                          sigmaxc,
                           this->pelec->wg,
                           this->pelec->pot->get_effective_vofk(),
                           pelec->charge,
@@ -89,7 +90,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // local contribution
-    this->stress_loc(sigmaloc, rho_basis, nlpp.vloc, p_sf, 1, pelec->charge);
+    this->stress_loc(ucell,sigmaloc, rho_basis, nlpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
     this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, nlpp.numeric, pelec->charge);

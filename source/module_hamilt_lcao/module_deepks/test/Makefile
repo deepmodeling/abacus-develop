@@ -51,6 +51,7 @@ VPATH=../../module_base\
 :../../module_basis/module_ao\
 :../../module_neighbor\
 :../../module_cell\
+:../../module_elecstate\
 :../../\
 :../\
 :./\
@@ -70,6 +71,7 @@ $(OBJS_CELL)\
 $(OBJS_ORB)\
 $(OBJS_NEIGHBOR)\
 $(OBJS_PW)\
+$(OBJS_ELECSTATE)\
 
 FP_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${FP_OBJS_0})
 

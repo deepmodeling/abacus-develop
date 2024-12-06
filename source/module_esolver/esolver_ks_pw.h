@@ -46,7 +46,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void allocate_hamilt();
+    virtual void allocate_hamilt(const UnitCell& ucell);
     virtual void deallocate_hamilt();
 
     //! hide the psi in ESolver_KS for tmp use

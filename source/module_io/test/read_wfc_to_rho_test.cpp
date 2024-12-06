@@ -91,7 +91,6 @@ int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
 
 namespace GlobalC
 {
-UnitCell ucell;
 Parallel_Grid Pgrid;
 } // namespace GlobalC
 
@@ -109,7 +108,7 @@ class ReadWfcRhoTest : public ::testing::Test
     K_Vectors* kv = nullptr;
     psi::Psi<std::complex<double>>* psi = nullptr;
     Charge chg;
-
+    ModuleSymmetry::Symmetry symm;
     virtual void SetUp()
     {
         wfcpw = new ModulePW::PW_Basis_K;
@@ -231,7 +230,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    ModuleIO::read_wfc_to_rho(wfcpw, GlobalC::ucell.symm, nkstot, kv->isk, chg);
+    ModuleIO::read_wfc_to_rho(wfcpw, symm, nkstot, kv->isk, chg);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)

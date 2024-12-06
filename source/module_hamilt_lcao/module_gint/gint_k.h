@@ -65,7 +65,7 @@ class Gint_k : public Gint {
                    double* rho,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                   UnitCell& ucell);
+                   const UnitCell& ucell);
 
     //------------------------------------------------------
     // in gint_k_sparse1.cpp

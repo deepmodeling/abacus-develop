@@ -6,6 +6,7 @@
 #include "module_io/write_orb_info.h"
 #include "module_cell/unitcell.h"
 #include "prepare_unitcell.h"
+#include "module_elecstate/read_pseudo.h"
 
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal(){}
@@ -50,7 +51,7 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.input.basis_type = "pw";
     PARAM.input.dft_functional = "default";
     PARAM.sys.nlocal = 18;
-    ucell->read_cell_pseudopots(pp_dir,ofs);
+    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
     ucell->cal_nwfc(ofs);
     ModuleIO::write_orb_info(ucell);
     ofs.close();

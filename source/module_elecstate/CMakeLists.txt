@@ -33,6 +33,7 @@ list(APPEND objects
     occupy.cpp
     cal_ux.cpp
     cal_nelec_nband.cpp
+    read_pseudo.cpp
 )
 
 if(ENABLE_LCAO)

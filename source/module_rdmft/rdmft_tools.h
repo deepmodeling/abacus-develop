@@ -14,7 +14,7 @@
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_base/blas_connector.h"
 #include "module_base/scalapack_connector.h"
-#include "module_basis/module_ao/parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_base/parallel_reduce.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
