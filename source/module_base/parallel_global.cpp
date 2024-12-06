@@ -328,7 +328,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
     //       and MY_STOGROUP will be the same as well.
     if(BNDPAR > 1 && NPROC %(BNDPAR * KPAR) != 0)
     {
-        std::cout << "Error: When " << BNDPAR << " > 1, number of processes (" << NPROC << ") must be divisible by the number of groups ("
+        std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC << ") must be divisible by the number of groups ("
                   << BNDPAR * KPAR << ")." << std::endl;
         exit(1);
     }
@@ -342,7 +342,7 @@ void Parallel_Global::divide_pools(const int& NPROC,
     
     // Set parallel index.
     // In previous versions, the order of k-point parallelization and band parallelization is reversed.
-    // So the following code is kept for compatibility.
+    // So we need to keep some variables for compatibility.
     NPROC_IN_POOL = bndpar_group.nprocs_in_group;
     RANK_IN_POOL = bndpar_group.rank_in_group;
     MY_POOL = kpar_group.my_group;
@@ -350,6 +350,10 @@ void Parallel_Global::divide_pools(const int& NPROC,
     if(kpar_group.inter_comm != MPI_COMM_NULL)
     {
         MPI_Comm_dup(kpar_group.inter_comm, &INTER_POOL);
+    }
+    else
+    {
+        INTER_POOL = MPI_COMM_NULL;
     }
     
     if(BNDPAR > 1)

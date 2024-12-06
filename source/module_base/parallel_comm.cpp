@@ -4,7 +4,7 @@
 #include "parallel_global.h"
 
 MPI_Comm POOL_WORLD;
-MPI_Comm INTER_POOL = MPI_COMM_NULL; // communicator among different pools
+MPI_Comm INTER_POOL; // communicator among different pools
 MPI_Comm STO_WORLD;
 MPI_Comm PARAPW_WORLD;
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13
