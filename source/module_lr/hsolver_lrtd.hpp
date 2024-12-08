@@ -82,9 +82,15 @@ namespace LR
                     // converged.
                     const int notconv_max = ("nscf" == PARAM.inp.calculation) ? 0 : 5;
                     // do diag and add davidson iteration counts up to avg_iter
-                    hsolver::DiagoDavid<T> david(precondition.data(), nband, dim, PARAM.inp.pw_diag_ndim, PARAM.inp.use_paw, comm_info);
+                    hsolver::DiagoDavid<T> david(precondition.data(),
+                                                 nband,
+                                                 dim,
+                                                 PARAM.inp.pw_diag_ndim,
+                                                 PARAM.inp.use_paw,
+                                                 comm_info);
+                    std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter += static_cast<double>(david.diag(hpsi_func, spsi_func,
-                        dim, psi, eigenvalue.data(), diag_ethr, maxiter, ntry_max, 0));
+                        dim, psi, eigenvalue.data(), ethr_band, maxiter, ntry_max, 0));
                 }
                 else if (method == "dav_subspace") //need refactor
                 {

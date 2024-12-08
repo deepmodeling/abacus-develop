@@ -589,7 +589,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                                                                ld_psi,
                                                                                psi.get_pointer(),
                                                                                eigenvalue,
-                                                                               david_diag_thr,
+                                                                               this->ethr_band,
                                                                                david_maxiter,
                                                                                ntry_max,
                                                                                notconv_max));
