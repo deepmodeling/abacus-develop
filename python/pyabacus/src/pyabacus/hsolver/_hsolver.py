@@ -117,6 +117,7 @@ def davidson(
     precondition: NDArray[np.float64],
     dav_ndim: int = 2,
     tol: float = 1e-2,
+    diag_ethr: Union[List[float], None] = None,
     max_iter: int = 1000,
     use_paw: bool = False,
     # scf_type: bool = False
@@ -164,12 +165,16 @@ def davidson(
     _diago_obj_david.init_eigenvalue()
     
     comm_info = diag_comm_info(0, 1)
+
+    if diag_ethr is None:
+        diag_ethr = [tol] * num_eigs
     
     _ = _diago_obj_david.diag(
         mvv_op,
         precondition,
         dav_ndim,
         tol,
+        diag_ethr,
         max_iter,
         use_paw,
         comm_info
