@@ -102,7 +102,7 @@ namespace LR
                             hpsi_func, psi,
                             dim,
                             eigenvalue.data(),
-                            ethr_band.data(),
+                            ethr_band,
                             false /*scf*/));
                 }
                 else if (method == "cg")
