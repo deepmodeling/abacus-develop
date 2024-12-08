@@ -117,8 +117,8 @@ def davidson(
     precondition: NDArray[np.float64],
     dav_ndim: int = 2,
     tol: float = 1e-2,
-    diag_ethr: Union[List[float], None] = None,
     max_iter: int = 1000,
+    diag_ethr: Union[List[float], None] = None,
     use_paw: bool = False,
     # scf_type: bool = False
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
@@ -144,6 +144,8 @@ def davidson(
         The tolerance for the convergence, by default 1e-2.
     max_iter : int, optional    
         The maximum number of iterations, by default 1000.
+    diag_ethr : List[float] | None, optional
+        The list of thresholds of bands, by default None.    
     use_paw : bool, optional
         Whether to use projector augmented wave (PAW) method, by default False.
     
