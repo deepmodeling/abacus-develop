@@ -141,7 +141,7 @@ public:
             comm_info
         );
 
-        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr.data(), scf_type);
+        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
     }
 
 private:
