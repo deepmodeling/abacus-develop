@@ -316,7 +316,7 @@ class LCAO_Deepks
                           const LCAO_Orbitals& orb,
                           Grid_Driver& GridD);
 
-    void cal_projected_DM_k(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+    void cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
                             const UnitCell& ucell,
                             const LCAO_Orbitals& orb,
                             Grid_Driver& GridD);
@@ -381,10 +381,10 @@ class LCAO_Deepks
   public:
     /// calculate tr(\rho V_delta)
     // void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    void cal_e_delta_band(const std::vector<std::vector<double>>& dm /**<[in] density matrix*/);
+    void cal_e_delta_band(const std::vector<std::vector<double>>& dm /**<[in] density matrix*/, const int /*nks*/);
     // void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
     //     const int nks);
-    void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
+    void cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
                             const int nks);
 
     //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k

@@ -317,7 +317,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
     return;
 }
 
-void LCAO_Deepks::cal_projected_DM_k(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD)

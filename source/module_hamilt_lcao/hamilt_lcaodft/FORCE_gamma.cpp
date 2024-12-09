@@ -268,7 +268,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
             GlobalC::ld.check_gedm();
 
-            GlobalC::ld.cal_e_delta_band(dm_gamma);
+            GlobalC::ld.cal_e_delta_band(dm_gamma,1);
 
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;

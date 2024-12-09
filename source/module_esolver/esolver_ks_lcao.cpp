@@ -961,13 +961,13 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
 #endif
 
     // 6) write Hamiltonian and Overlap matrix
-    if (!PARAM.globalv.gamma_only_local && (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta))
+    if (!PARAM.globalv.gamma_only_local && PARAM.inp.out_mat_hs[0])
     {
         this->GK.renew(true);
     }
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        if (PARAM.inp.out_mat_hs[0] || PARAM.inp.deepks_v_delta)
+        if (PARAM.inp.out_mat_hs[0])
         {
             this->p_hamilt->updateHk(ik);
         }
@@ -1006,12 +1006,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                     this->pv,
                                     GlobalV::DRANK);
             }
-#ifdef __DEEPKS
-            if (PARAM.inp.deepks_out_labels && PARAM.inp.deepks_v_delta)
-            {
-                DeePKS_domain::save_h_mat(h_mat.p, this->pv.nloc, ik);
-            }
-#endif
         }
     }
 
@@ -1029,24 +1023,30 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
 
     //! 8) Write DeePKS information
 #ifdef __DEEPKS
-    std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld, [](LCAO_Deepks*) {});
-    LCAO_Deepks_Interface LDI = LCAO_Deepks_Interface(ld_shared_ptr);
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
-    LDI.out_deepks_labels(this->pelec->f_en.etot,
-                          this->pelec->klist->get_nks(),
-                          ucell.nat,
-                          PARAM.globalv.nlocal,
-                          this->pelec->ekb,
-                          this->pelec->klist->kvec_d,
-                          ucell,
-                          orb_,
-                          GlobalC::GridD,
-                          &(this->pv),
-                          *(this->psi),
-                          dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                          PARAM.inp.deepks_v_delta);
+    if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
+    {
+        hamilt::HamiltLCAO<TK, TR>* p_ham_deepks
+            = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
+        std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld, [](LCAO_Deepks*) {});
+        LCAO_Deepks_Interface<TK, TR> LDI(ld_shared_ptr);
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
+        LDI.out_deepks_labels(this->pelec->f_en.etot,
+                            this->pelec->klist->get_nks(),
+                            ucell.nat,
+                            PARAM.globalv.nlocal,
+                            this->pelec->ekb,
+                            this->pelec->klist->kvec_d,
+                            ucell,
+                            orb_,
+                            GlobalC::GridD,
+                            &(this->pv),
+                            *(this->psi),
+                            dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
+                            p_ham_deepks);
+
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
+    }
 #endif
 
     //! 9) Perform RDMFT calculations
