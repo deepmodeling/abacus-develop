@@ -101,10 +101,10 @@ public:
 
     int diag(
         std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
-        std::vector<double> precond_vec,
+        std::vector<double>& precond_vec,
         int dav_ndim,
         double tol,
-        std::vector<double> diag_ethr,
+        std::vector<double>& diag_ethr,
         int max_iter,
         bool use_paw,
         hsolver::diag_comm_info comm_info
