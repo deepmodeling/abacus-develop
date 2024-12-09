@@ -46,7 +46,7 @@ void split_grid_world(const int diag_np, const int& nproc, const int& my_rank, i
  */
 void init_pools(const int& NPROC,
                 const int& MY_RANK,
-                const int& NSTOGROUP,
+                const int& BNDPAR,
                 const int& KPAR,
                 int& NPROC_IN_STOGROUP,
                 int& RANK_IN_STOGROUP,
@@ -57,7 +57,7 @@ void init_pools(const int& NPROC,
 
 void divide_pools(const int& NPROC,
                   const int& MY_RANK,
-                  const int& NSTOGROUP,
+                  const int& BNDPAR,
                   const int& KPAR,
                   int& NPROC_IN_STOGROUP,
                   int& RANK_IN_STOGROUP,

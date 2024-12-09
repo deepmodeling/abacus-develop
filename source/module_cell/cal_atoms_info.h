@@ -1,7 +1,7 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
 #include "module_parameter/parameter.h"
-#include "unitcell.h"
+#include "module_elecstate/cal_nelec_nband.h"
 class CalAtomsInfo
 {
   public:
@@ -58,7 +58,7 @@ class CalAtomsInfo
         }
 
         // calculate the total number of electrons
-        cal_nelec(atoms, ntype, para.input.nelec);
+        elecstate::cal_nelec(atoms, ntype, para.input.nelec);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
@@ -67,7 +67,7 @@ class CalAtomsInfo
             nelec_spin[0] = (para.inp.nelec + para.inp.nupdown ) / 2.0;
             nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
         }
-        cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
+        elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
         return;
     }
 };

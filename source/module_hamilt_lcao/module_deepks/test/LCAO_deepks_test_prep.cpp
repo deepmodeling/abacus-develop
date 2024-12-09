@@ -1,5 +1,6 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
+#include "module_elecstate/read_pseudo.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
@@ -126,7 +127,7 @@ void test_deepks::set_ekcut()
 void test_deepks::setup_cell()
 {
     ucell.setup_cell("STRU", GlobalV::ofs_running);
-    ucell.read_pseudo(GlobalV::ofs_running);
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
     return;
 }

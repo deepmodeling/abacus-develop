@@ -4,7 +4,7 @@
 #include <utility>
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
-#include "module_basis/module_ao/parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include "module_psi/psi.h"
 #include <ATen/core/tensor.h>
 #include "module_basis/module_pw/pw_basis.h"

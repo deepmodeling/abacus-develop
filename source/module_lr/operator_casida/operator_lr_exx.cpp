@@ -65,7 +65,7 @@ namespace LR
         for (auto cell : this->BvK_cells)
         {
             std::complex<double> frac = RI::Global_Func::convert<std::complex<double>>(std::exp(
-                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (this->kv.kvec_c.at(ik) * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (this->kv.kvec_c.at(ik) * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
             for (int it1 = 0;it1 < ucell.ntype;++it1)
                 for (int ia1 = 0; ia1 < ucell.atoms[it1].na; ++ia1)
                     for (int it2 = 0;it2 < ucell.ntype;++it2)

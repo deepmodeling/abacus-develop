@@ -252,7 +252,6 @@ class UnitCell {
         std::ofstream& ofs_running,
         std::ofstream& ofs_warning); // read in atomic positions
 
-    void read_pseudo(std::ofstream& ofs);
     int find_type(const std::string& label);
     void print_tau() const;
     /**
@@ -284,9 +283,6 @@ class UnitCell {
     // is fixed, adjust the lattice vectors
     void remake_cell();
 
-    // read in pseudopotential from files for each type of atom
-    void read_cell_pseudopots(const std::string& fn, std::ofstream& log);
-
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions
     // cal_nwfc     : calculate total number of local basis and lmax
@@ -295,7 +291,6 @@ class UnitCell {
     void cal_nwfc(std::ofstream& log);
     void cal_meshx();
     void cal_natomwfc(std::ofstream& log);
-    void print_unitcell_pseudo(const std::string& fn);
     bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
@@ -333,24 +328,5 @@ class UnitCell {
     /// @brief get constrain for deltaspin
     std::vector<ModuleBase::Vector3<int>> get_constrain() const;
 };
-
-/**
- * @brief calculate the total number of electrons in system
- *
- * @param atoms [in] atom pointer
- * @param ntype [in] number of atom types
- * @param nelec [out] total number of electrons
- */
-void cal_nelec(const Atom* atoms, const int& ntype, double& nelec);
-
-/**
- * @brief Calculate the number of bands.
- *
- * @param nelec [in] total number of electrons
- * @param nlocal [in] total number of local basis
- * @param nelec_spin [in] number of electrons for each spin
- * @param nbands  [out] number of bands
- */
-void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& nelec_spin, int& nbands);
 
 #endif // unitcell class

@@ -68,7 +68,7 @@ namespace LR
 
         // 3. v_hxc = f_hxc * rho_trans
         ModuleBase::matrix vr_hxc(1, nrxx);   //grid
-        this->pot.lock()->cal_v_eff(rho_trans, GlobalC::ucell, vr_hxc, ispin_ks);
+        this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);
         LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
 
         // 4. V^{Hxc}_{\mu,\nu}=\int{dr} \phi_\mu(r) v_{Hxc}(r) \phi_\mu(r)
@@ -76,7 +76,7 @@ namespace LR
         this->gint->get_hRGint()->set_zero();
         this->gint->cal_gint(&inout_vlocal);
         this->hR->set_zero();   // clear hR for each bands
-        this->gint->transfer_pvpR(&*this->hR, &GlobalC::ucell);    //grid to 2d block
+        this->gint->transfer_pvpR(&*this->hR, &ucell);    //grid to 2d block
         ModuleBase::timer::tick("OperatorLRHxc", "grid_calculation");
     }
 
@@ -88,7 +88,7 @@ namespace LR
 
         elecstate::DensityMatrix<std::complex<double>, double> DM_trans_real_imag(&pmat, 1, kv.kvec_d, kv.get_nks() / nspin);
         DM_trans_real_imag.init_DMR(*this->hR);
-        hamilt::HContainer<double> HR_real_imag(GlobalC::ucell, &this->pmat);
+        hamilt::HContainer<double> HR_real_imag(ucell, &this->pmat);
         LR_Util::initialize_HR<std::complex<double>, double>(HR_real_imag, ucell, gd, orb_cutoff_);
 
         auto dmR_to_hR = [&, this](const char& type) -> void
@@ -111,7 +111,7 @@ namespace LR
 
                 // 3. v_hxc = f_hxc * rho_trans
                 ModuleBase::matrix vr_hxc(1, nrxx);   //grid
-                this->pot.lock()->cal_v_eff(rho_trans, GlobalC::ucell, vr_hxc, ispin_ks);
+                this->pot.lock()->cal_v_eff(rho_trans, ucell, vr_hxc, ispin_ks);
                 // print_grid_nonzero(vr_hxc.c, this->poticab->nrxx, 10, "vr_hxc");
 
                 LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
@@ -123,9 +123,9 @@ namespace LR
 
                 // LR_Util::print_HR(*this->gint->get_hRGint(), this->ucell.nat, "VR(grid)");
                 HR_real_imag.set_zero();
-                this->gint->transfer_pvpR(&HR_real_imag, &GlobalC::ucell, &GlobalC::GridD);
+                this->gint->transfer_pvpR(&HR_real_imag, &ucell, &GlobalC::GridD);
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
-                LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, GlobalC::ucell.nat, type);
+                LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, ucell.nat, type);
             };
         this->hR->set_zero();
         dmR_to_hR('R');   //real

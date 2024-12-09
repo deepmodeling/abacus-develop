@@ -50,21 +50,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET io_dmk_io
-  LIBS parameter ${math_libs} base device cell_info 
-  SOURCES io_dmk_test.cpp ../io_dmk.cpp ../output.cpp ../../module_basis/module_ao/parallel_2d.cpp
-)
-
-AddTest(
   TARGET io_nscf_band
   LIBS parameter ${math_libs} base device
   SOURCES nscf_band_test.cpp ../nscf_band.cpp
-)
-
-AddTest(
-  TARGET io_read_wfc_nao_test
-  LIBS parameter ${math_libs} base device
-  SOURCES read_wfc_nao_test.cpp ../read_wfc_nao.cpp ../../module_psi/psi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../../module_basis/module_ao/parallel_2d.cpp
 )
 
 AddTest(

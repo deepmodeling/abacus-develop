@@ -72,7 +72,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + GlobalV::MY_RANK * 10000);
+        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_STOGROUP * GlobalV::NPROC_IN_STOGROUP + GlobalV::RANK_IN_STOGROUP) * 10000);
     }
 
     this->allocate_chi0();

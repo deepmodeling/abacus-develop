@@ -159,16 +159,6 @@ void RDMFT<TK, TR>::update_charge()
         srho.begin(is, *(this->charge), rho_basis, GlobalC::ucell.symm);
     }
 
-    // what this? it seems that it needs to be updated at each iteration
-    if (PARAM.inp.vl_in_h)
-    {
-        // update Gint_K
-        if (!PARAM.globalv.gamma_only_local)
-        {
-            this->GK->renew();
-        }
-    }
-
 }
 
 

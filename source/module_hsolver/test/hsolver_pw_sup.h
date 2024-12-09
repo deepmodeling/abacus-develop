@@ -192,6 +192,7 @@ void diago_PAO_in_pw_k2(
     wavefunc* p_wf,
     const ModuleBase::realArray& tab_at,
     const int& lmaxkb,
+    const UnitCell& ucell,
     hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in) {
     for (int i = 0; i < wvf.size(); i++) {
         wvf.get_pointer()[i] = std::complex<float>((float)i + 1, 0);
@@ -207,6 +208,7 @@ void diago_PAO_in_pw_k2(
     wavefunc* p_wf,
     const ModuleBase::realArray& tab_at,
     const int& lmaxkb,
+    const UnitCell& ucell,
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in) {
     for (int i = 0; i < wvf.size(); i++) {
         wvf.get_pointer()[i] = std::complex<double>((double)i + 1, 0);

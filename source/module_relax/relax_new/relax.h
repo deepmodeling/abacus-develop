@@ -1,57 +1,52 @@
-//Wenfei Li, November 2022
-//A new implementation of CG relaxation
+// Wenfei Li, November 2022
+// A new implementation of CG relaxation
 #ifndef RELAX1_H
 #define RELAX1_H
 
+#include "line_search.h"
 #include "module_base/matrix.h"
 #include "module_base/matrix3.h"
-#include "line_search.h"
 #include "module_cell/unitcell.h"
 
 class Relax
 {
-    public:
+  public:
+    Relax() {};
+    ~Relax() {};
 
-    Relax(){};
-    ~Relax(){};
-
-    //prepare for relaxation
+    // prepare for relaxation
     void init_relax(const int nat_in);
-    //perform a single relaxation step
+    // perform a single relaxation step
     bool relax_step(UnitCell& ucell,
-                    const ModuleBase::matrix& force, 
-                    const ModuleBase::matrix &stress, 
+                    const ModuleBase::matrix& force,
+                    const ModuleBase::matrix& stress,
                     const double etot_in);
 
-    private:
+  private:
+    int istep = 0; // count ionic step
 
-    int istep; //count ionic step
+    // setup gradient based on force and stress
+    // constraints are considered here
+    // also check if relaxation has converged
+    // based on threshold in force & stress
+    bool setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& force, const ModuleBase::matrix& stress);
 
-    //setup gradient based on force and stress
-    //constraints are considered here
-    //also check if relaxation has converged
-    //based on threshold in force & stress
-    bool setup_gradient(const UnitCell &ucell,
-                        const ModuleBase::matrix& force, 
-                        const ModuleBase::matrix &stress);
-
-    //check whether previous line search is done
+    // check whether previous line search is done
     bool check_line_search();
 
-    //if line search not done : perform line search
+    // if line search not done : perform line search
     void perform_line_search();
 
-    //if line search done: find new search direction and make a trial move
+    // if line search done: find new search direction and make a trial move
     void new_direction();
 
-    //move ions and lattice vectors
-    void move_cell_ions(UnitCell& ucell,
-                        const bool is_new_dir);
+    // move ions and lattice vectors
+    void move_cell_ions(UnitCell& ucell, const bool is_new_dir);
 
-    int nat; // number of atoms
-    bool ltrial; // if last step is trial step
+    int nat = 0;         // number of atoms
+    bool ltrial = false; // if last step is trial step
 
-    double step_size;
+    double step_size = 0.0;
 
     // Gradients; _p means previous step
     ModuleBase::matrix grad_ion;
@@ -66,32 +61,41 @@ class Relax
     ModuleBase::matrix search_dr_cell_p;
 
     // Used for applyting constraints
-    bool if_cell_moves;
+    bool if_cell_moves = false;
 
-    //Keeps track of how many CG trial steps have been performed,
-    //namely the number of CG directions followed
-    //Note : this should not be confused with number of ionic steps
-    //which includes both trial and line search steps
-    int cg_step;
+    // Keeps track of how many CG trial steps have been performed,
+    // namely the number of CG directions followed
+    // Note : this should not be confused with number of ionic steps
+    // which includes both trial and line search steps
+    int cg_step = 0;
 
-    //in CG, search_dr = search_dr_p + grad * gamma
-    double gamma;
+    // in CG, search_dr = search_dr_p + grad * gamma
+    double gamma = 0.0;
     void calculate_gamma();
 
-    //Intermediate variables
-    //I put them here because they are used across different subroutines
-    double sr_sr, srp_srp; //inner/cross products between search directions
-    double gr_gr, gr_grp, grp_grp; //inner/cross products between gradients
-    double gr_sr; //cross product between search direction and gradient
-    double e1ord1, e1ord2, e2ord, e2ord2;
-    double dmove,dmovel,dmoveh;
-    double etot, etot_p;
-    double force_thr_eva;
+    // Intermediate variables
+    // I put them here because they are used across different subroutines
+    double sr_sr = 0.0;
+    double srp_srp = 0.0; // inner/cross products between search directions
+    double gr_gr = 0.0;
+    double gr_grp = 0.0;
+    double grp_grp = 0.0; // inner/cross products between gradients
+    double gr_sr = 0.0;   // cross product between search direction and gradient
+    double e1ord1 = 0.0;
+    double e1ord2 = 0.0;
+    double e2ord = 0.0;
+    double e2ord2 = 0.0;
+    double dmove = 0.0;
+    double dmovel = 0.0;
+    double dmoveh = 0.0;
+    double etot = 0.0;
+    double etot_p = 0.0;
+    double force_thr_eva = 0.0;
 
-    bool brent_done; //if brent line search is finished
+    bool brent_done = false; // if brent line search is finished
 
-    double fac_force;
-    double fac_stress;
+    double fac_force = 0.0;
+    double fac_stress = 0.0;
 
     ModuleBase::Matrix3 latvec_save;
     Line_Search ls;

@@ -61,7 +61,7 @@ void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Modul
     ModuleBase::TITLE("PW_Basis","setup_structure_factor");
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
-
+    this->ucell = Ucell;
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
     ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 

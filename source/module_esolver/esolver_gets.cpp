@@ -3,6 +3,7 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/read_pseudo.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
@@ -29,7 +30,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    ucell.read_pseudo(GlobalV::ofs_running);
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)

@@ -18,7 +18,6 @@ add_library(
     read_pp_vwr.cpp
     unitcell.cpp
     read_atoms.cpp
-    read_cell_pseudopots.cpp
     setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp

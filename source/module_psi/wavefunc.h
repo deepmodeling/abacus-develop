@@ -21,7 +21,7 @@ class wavefunc : public WF_atomic
 
     void wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K* wfc_basis);
 
-    int get_starting_nw(void) const;
+    int get_starting_nw(const int natomwfc) const;
 
     void init_after_vc(const int nks); // LiuXh 20180515
 };
@@ -57,6 +57,7 @@ void diago_PAO_in_pw_k2(const Device* ctx,
                         wavefunc* p_wf,
                         const ModuleBase::realArray& tab_at,
                         const int& lmaxkb,
+                        const UnitCell& ucell,
                         hamilt::Hamilt<std::complex<FPTYPE>, Device>* phm_in = nullptr);
 } // namespace hamilt
 
