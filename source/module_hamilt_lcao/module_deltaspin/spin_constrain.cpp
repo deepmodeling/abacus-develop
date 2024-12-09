@@ -490,14 +490,12 @@ template <typename FPTYPE>
 void SpinConstrain<FPTYPE>::set_solver_parameters(K_Vectors& kv_in,
                                                   void* p_hamilt_in,
                                                   void* psi_in,
-                                                  elecstate::ElecState* pelec_in,
-                                                  std::string KS_SOLVER_in)
+                                                  elecstate::ElecState* pelec_in)
 {
     this->kv_ = kv_in;
     this->p_hamilt = p_hamilt_in;
     this->psi = psi_in;
     this->pelec = pelec_in;
-    this->KS_SOLVER = KS_SOLVER_in;
 }
 
 /// @brief  set ParaV

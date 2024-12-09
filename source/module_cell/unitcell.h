@@ -216,7 +216,7 @@ class UnitCell {
     std::string* pseudo_fn;
     std::string* pseudo_type; // pseudopotential types for each elements,
                               // sunliang added 2022-09-15.
-    std::string* orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
+    std::string* orbital_fn = nullptr;  // filenames of orbitals, liuyu add 2022-10-19
     std::string
         descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 

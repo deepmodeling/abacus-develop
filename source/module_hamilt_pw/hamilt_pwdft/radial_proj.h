@@ -155,30 +155,41 @@ namespace RadialProjection
                                 const double* r,
                                 const std::vector<double*>& radials,
                                 const std::vector<int>& l,
-                                const int nq,                             //< PARAM.globalv.dq
-                                const double& dq);                        //< PARAM.globalv.nqx
+                                const int nq,                             //< GlobalV::DQ
+                                const double& dq);                        //< GlobalV::NQX
             void _build_sbt_tab(const std::vector<double>& r,
                                 const std::vector<std::vector<double>>& radials,
                                 const std::vector<int>& l,
-                                const int nq,                             //< PARAM.globalv.dq
-                                const double& dq);                        //< PARAM.globalv.nqx
-
+                                const int nq,                             //< GlobalV::DQ
+                                const double& dq);                        //< GlobalV::NQX
+            // compatibility concern: for FS_Nonlocal_tools. Will not call sbtft so need omega
+            void _build_sbt_tab(const std::vector<int>& nproj,
+                                const std::vector<double>& r,
+                                const std::vector<std::vector<double>>& radials,
+                                const std::vector<int>& l,
+                                const int nq,                             //< GlobalV::DQ
+                                const double& dq,                         //< GlobalV::NQX
+                                const double& omega,
+                                const int npol,
+                                ModuleBase::realArray& tab,
+                                ModuleBase::matrix& nhtol);
             /**
              * @brief perform analytical version of the Fourier transform:
              * F(q) = int(f(r)*exp(-iq.r) d^3r)
-             *      = 4*pi/sqrt(omega) * i^l * Jl[f](q) * Ylm(q)
+             *      = 4*pi/sqrt(omega) * (-i)^l * Jl[f](q) * Ylm(q)
              * , where Ylm(q) is real spherical harmonic function, and Jl[f](q) is 
              * the Spherial Bessel Transform of f(r):
              * Jl[f](q) = int(f(r)*j_l(q*r)*r^2 dr)
              * , where j_l(q*r) is the spherical Bessel function of the first kind.
-             * 
+             * . If use another notation, F(q) = <q|f>, this is denoted as type
+             * "r" for ket |>, and "l" for bra <|.
              */
             
             void sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
                        std::vector<std::complex<double>>& out,
-                       const char type = 'r',
+                       const char type = 'r',                                   // 'r' for ket |>, 'l' for bra <|
                        const double& omega = 1.0,
-                       const double& tpiba = 1.0); // 'r' for ket |>, 'l' for bra <|
+                       const double& tpiba = 1.0);                                  // 'n' for no gradient, 'x', 'y', 'z' for gradient in x, y, z direction
             
             void sbfft(); // interface for SBFFT
 

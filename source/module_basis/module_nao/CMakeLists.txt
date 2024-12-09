@@ -14,7 +14,6 @@ if(ENABLE_LCAO)
     two_center_table.cpp
     two_center_integrator.cpp
     two_center_bundle.cpp
-    projgen.cpp
   )
 
   if(ENABLE_COVERAGE)

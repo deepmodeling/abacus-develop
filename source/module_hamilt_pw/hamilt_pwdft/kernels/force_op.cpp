@@ -278,6 +278,149 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
 #ifdef _OPENMP
         }
 #endif
+    };
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const std::complex<FPTYPE>* vu,
+                    const int* orbital_corr,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force)
+    {
+        int iat0 = 0;
+        int sum0 = 0;
+        for (int it = 0; it < ntype; it++)
+        {
+            const int orbital_l = orbital_corr[it];
+            const int nproj = atom_nh[it];
+            if(orbital_l == -1)
+            {
+                sum0 += nproj * atom_na[it];
+                continue;
+            }
+            const int ip_begin = orbital_l * orbital_l;
+            const int ip_end = (orbital_l + 1) * (orbital_l + 1);
+            const int tlp1 = 2 * orbital_l + 1;
+            const int tlp1_2 = tlp1 * tlp1;
+            for (int ia = 0; ia < atom_na[it]; ia++)
+            {
+                for (int ib = 0; ib < nbands_occ; ib++)
+                {
+                    const int ib2 = ib*2;
+                    FPTYPE local_force[3] = {0, 0, 0};
+                    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
+                    int iat = iat0 + ia;
+                    int sum = sum0 + ia * nproj;
+                    for (int ip = ip_begin; ip < ip_end; ip++)
+                    {
+                        const int inkb = sum + ip;
+                        const int m = ip - ip_begin;
+                        // out<<"\n ps = "<<ps;
+                        for (int ip2 = ip_begin; ip2 < ip_end; ip2++)
+                        {
+                            const int jnkb = sum + ip2;
+                            const int m2 = ip2 - ip_begin;
+                            std::complex<FPTYPE> ps[4];
+                            for(int i = 0; i < 4; i++)
+                            {
+                                ps[i] = vu[(i * tlp1_2 + m * tlp1 + m2)];
+                            }
+
+                            for (int ipol = 0; ipol < 3; ipol++)
+                            {
+                                const int index0 = ipol * nbands * 2 * nkb + ib2 * nkb + inkb;
+                                const int index1 = ib2 * nkb + jnkb;
+                                const std::complex<FPTYPE> dbb0 = conj(dbecp[index0]) * becp[index1];
+                                const std::complex<FPTYPE> dbb1 = conj(dbecp[index0]) * becp[index1 + nkb];
+                                const std::complex<FPTYPE> dbb2 = conj(dbecp[index0 + nkb]) * becp[index1];
+                                const std::complex<FPTYPE> dbb3 = conj(dbecp[index0 + nkb]) * becp[index1 + nkb];
+
+                                local_force[ipol] -= fac * (ps[0] * dbb0 + ps[1] * dbb1 + ps[2] * dbb2 + ps[3] * dbb3).real();
+                            }
+                        }
+                    }
+                    for (int ipol = 0; ipol < 3; ++ipol)
+                    {
+                        force[iat * forcenl_nc + ipol] += local_force[ipol];
+                    }
+                }
+                vu += 4 * tlp1_2;// step for vu
+            } // end ia
+            iat0 += atom_na[it];
+            sum0 += atom_na[it] * nproj;
+        } // end it
+    };
+
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* lambda,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force)
+    {
+        int iat0 = 0;
+        int sum0 = 0;
+        for (int it = 0; it < ntype; it++)
+        {
+            const int nproj = atom_nh[it];
+            for (int ia = 0; ia < atom_na[it]; ia++)
+            {
+                int iat = iat0 + ia;
+                int sum = sum0 + ia * nproj;
+                const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
+                const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+                for (int ib = 0; ib < nbands_occ; ib++)
+                {
+                    const int ib2 = ib*2;
+                    FPTYPE local_force[3] = {0, 0, 0};
+                    FPTYPE fac = d_wg[ik * wg_nc + ib] * 2.0 * tpiba;
+                    for (int ip = 0; ip < nproj; ip++)
+                    {
+                        const int inkb = sum + ip;
+
+                        for (int ipol = 0; ipol < 3; ipol++)
+                        {
+                            const int index0 = ipol * nbands * 2 * nkb + ib2 * nkb + inkb;
+                            const int index1 = ib2 * nkb + inkb;
+                            const std::complex<FPTYPE> dbb0 = conj(dbecp[index0]) * becp[index1];
+                            const std::complex<FPTYPE> dbb1 = conj(dbecp[index0]) * becp[index1 + nkb];
+                            const std::complex<FPTYPE> dbb2 = conj(dbecp[index0 + nkb]) * becp[index1];
+                            const std::complex<FPTYPE> dbb3 = conj(dbecp[index0 + nkb]) * becp[index1 + nkb];
+
+                            local_force[ipol] -= fac * (coefficients0 * dbb0 + coefficients1 * dbb1 + coefficients2 * dbb2 + coefficients3 * dbb3).real();
+                        }
+                    }//ip
+                    for (int ipol = 0; ipol < 3; ++ipol)
+                    {
+                        force[iat * forcenl_nc + ipol] += local_force[ipol];
+                    }
+                } // end ib
+            } // ia
+            iat0 += atom_na[it];
+            sum0 += atom_na[it] * nproj;
+        }//it
     }
 };
 
