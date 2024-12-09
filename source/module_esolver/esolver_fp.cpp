@@ -2,6 +2,7 @@
 
 #include "module_base/global_variable.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/read_pseudo.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
@@ -59,7 +60,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     //! 1) read pseudopotentials
     if (!PARAM.inp.use_paw)
     {
-        ucell.read_pseudo(GlobalV::ofs_running);
+        elecstate::read_pseudo(GlobalV::ofs_running, ucell);
     }
 
     //! 2) initialie the plane wave basis for rho

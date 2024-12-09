@@ -7,7 +7,7 @@ if (ENABLE_MPI)
   AddTest(
     TARGET hsolver_parak2d_test
     LIBS parameter  ${math_libs} base device MPI::MPI_CXX
-    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../module_cell/parallel_kpoints.cpp  ../../module_basis/module_ao/parallel_2d.cpp
+    SOURCES parallel_k2d_test.cpp ../parallel_k2d.cpp ../../module_cell/parallel_kpoints.cpp
   )
   AddTest(
     TARGET HSolver_bpcg
@@ -105,7 +105,7 @@ if (ENABLE_MPI)
     AddTest(
       TARGET HSolver_LCAO_PEXSI
       LIBS parameter  ${math_libs} ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} MPI::MPI_CXX base psi device pexsi
-      SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp ../../module_basis/module_ao/parallel_2d.cpp
+      SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../module_basis/module_ao/parallel_orbitals.cpp
     )
     endif()
   endif()

@@ -66,7 +66,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
     if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
     {
         GlobalV::KPAR = 2;
-        Parallel_Global::divide_pools(GlobalV::NPROC,
+        Parallel_Global::init_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
                                       PARAM.input.bndpar,
                                       GlobalV::KPAR,

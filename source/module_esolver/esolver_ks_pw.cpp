@@ -219,7 +219,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                   this->kv.ngk.data(),
                                   this->pw_wfc->npwk_max,
                                   &this->sf,
-                                  &this->ppcell);
+                                  &this->ppcell,
+                                  ucell);
 
     this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
@@ -257,7 +258,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
         this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
 
-        this->p_wf_init->make_table(this->kv.get_nks(), &this->sf, &this->ppcell);
+        this->p_wf_init->make_table(this->kv.get_nks(), &this->sf, &this->ppcell,ucell);
     }
     if (ucell.ionic_position_updated)
     {
@@ -373,6 +374,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
                                         this->kspw_psi,
                                         this->p_hamilt,
                                         this->ppcell,
+                                        ucell,
                                         GlobalV::ofs_running,
                                         this->already_initpsi);
 

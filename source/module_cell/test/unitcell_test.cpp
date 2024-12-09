@@ -5,6 +5,7 @@
 #undef private
 #include "module_cell/unitcell.h"
 #include "module_elecstate/cal_ux.h"
+#include "module_elecstate/read_pseudo.h"
 
 #include "memory"
 #include "module_base/global_variable.h"
@@ -822,7 +823,7 @@ TEST_F(UcellTest, PrintUnitcellPseudo)
     ucell = utp.SetUcellInfo();
     PARAM.input.test_pseudo_cell = 1;
     std::string fn = "printcell.log";
-    ucell->print_unitcell_pseudo(fn);
+    elecstate::print_unitcell_pseudo(fn, *ucell);
     std::ifstream ifs;
     ifs.open("printcell.log");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

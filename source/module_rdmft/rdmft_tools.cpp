@@ -247,8 +247,6 @@ void Veff_rdmft<TK, TR>::contributeHR()
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
 
-    this->GK->reset_spin(this->current_spin);
-
     double* vr_eff_rdmft = nullptr;
 
     // calculate v_hartree(r) or v_local(r) or v_xc(r)

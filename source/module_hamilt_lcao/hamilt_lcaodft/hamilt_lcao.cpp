@@ -262,9 +262,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                      orb.cutoffs(),
                                                                      &grid_d,
                                                                      PARAM.inp.nspin);
-                // reset spin index and real space Hamiltonian matrix
-                int start_spin = -1;
-                GK_in->reset_spin(start_spin);
+
             }
         }
 

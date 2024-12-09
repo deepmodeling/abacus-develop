@@ -8,7 +8,6 @@ list(APPEND depend_files
   ../../module_cell/atom_spec.cpp
   ../../module_cell/atom_pseudo.cpp
   ../../module_cell/read_atoms.cpp
-  ../../module_cell/read_cell_pseudopots.cpp
   ../../module_cell/pseudo.cpp
   ../../module_cell/read_pp.cpp
   ../../module_cell/read_pp_complete.cpp
@@ -47,6 +46,8 @@ list(APPEND depend_files
   ../../module_base/parallel_reduce.cpp
   ../../module_base/parallel_global.cpp
   ../../module_base/parallel_comm.cpp
+  ../../module_elecstate/read_pseudo.cpp
+  ../../module_elecstate/cal_nelec_nband.cpp
 )
 
 AddTest(

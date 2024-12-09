@@ -8,7 +8,7 @@
 #ifdef __MPI
 void Charge::init_chgmpi()
 {
-    if (GlobalV::NPROC_IN_STOGROUP % GlobalV::KPAR == 0)
+    if (INTER_POOL != MPI_COMM_NULL)
     {
         this->use_intel_pool = true;
     }

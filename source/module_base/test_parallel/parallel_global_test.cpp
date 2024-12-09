@@ -4,6 +4,7 @@
 #include "mpi.h"
 
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #include <complex>
 #include <cstring>
 #include <string>
@@ -165,8 +166,8 @@ TEST_F(ParaGlobal, InitPools)
     mpi.kpar = 3;
     mpi.nstogroup = 3;
     my_rank = 5;
-
-    Parallel_Global::init_pools(nproc,
+    testing::internal::CaptureStdout();
+    EXPECT_EXIT(Parallel_Global::init_pools(nproc,
                                 my_rank,
                                 mpi.nstogroup,
                                 mpi.kpar,
@@ -175,45 +176,11 @@ TEST_F(ParaGlobal, InitPools)
                                 mpi.my_stogroup,
                                 mpi.nproc_in_pool,
                                 mpi.rank_in_pool,
-                                mpi.my_pool);
-    EXPECT_EQ(mpi.nproc_in_stogroup, 4);
-    EXPECT_EQ(mpi.my_stogroup, 1);
-    EXPECT_EQ(mpi.rank_in_stogroup, 1);
-    EXPECT_EQ(mpi.my_pool, 0);
-    EXPECT_EQ(mpi.rank_in_pool, 1);
-    EXPECT_EQ(mpi.nproc_in_pool, 2);
-    EXPECT_EQ(MPI_COMM_WORLD != STO_WORLD, true);
-    EXPECT_EQ(STO_WORLD != POOL_WORLD, true);
-    EXPECT_EQ(MPI_COMM_WORLD != PARAPW_WORLD, true);
+                                mpi.my_pool), ::testing::ExitedWithCode(1), "");
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("Error:"));
 }
 
-TEST_F(ParaGlobal, DividePools)
-{
-    nproc = 12;
-    mpi.kpar = 3;
-    mpi.nstogroup = 3;
-    this->my_rank = 5;
-
-    Parallel_Global::divide_pools(nproc,
-                                  this->my_rank,
-                                  mpi.nstogroup,
-                                  mpi.kpar,
-                                  mpi.nproc_in_stogroup,
-                                  mpi.rank_in_stogroup,
-                                  mpi.my_stogroup,
-                                  mpi.nproc_in_pool,
-                                  mpi.rank_in_pool,
-                                  mpi.my_pool);
-    EXPECT_EQ(mpi.nproc_in_stogroup, 4);
-    EXPECT_EQ(mpi.my_stogroup, 1);
-    EXPECT_EQ(mpi.rank_in_stogroup, 1);
-    EXPECT_EQ(mpi.my_pool, 0);
-    EXPECT_EQ(mpi.rank_in_pool, 1);
-    EXPECT_EQ(mpi.nproc_in_pool, 2);
-    EXPECT_EQ(MPI_COMM_WORLD != STO_WORLD, true);
-    EXPECT_EQ(STO_WORLD != POOL_WORLD, true);
-    EXPECT_EQ(MPI_COMM_WORLD != PARAPW_WORLD, true);
-}
 
 TEST_F(ParaGlobal, DivideMPIPools)
 {

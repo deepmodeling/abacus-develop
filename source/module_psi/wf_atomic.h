@@ -35,16 +35,18 @@ class WF_atomic
      * @param sf_in [out] the structure factor
      * @param tab_at [out] atomic table
      */
-    void init_at_1(Structure_Factor* sf_in, ModuleBase::realArray* tab_at);
+    void init_at_1(const UnitCell& ucell,
+                   Structure_Factor* sf_in, 
+                   ModuleBase::realArray* tab_at);
 
-    void print_PAOs() const;
+    void print_PAOs(const UnitCell& ucell) const;
 
   public: // template change to public, will be refactor later. added by zhengdy 20230302
     int* irindex = nullptr;
 
-    void atomic_wfc(const int& ik,
+    void atomic_wfc(const UnitCell& ucell,
+                    const int& ik,
                     const int& np,
-                    const int& lmax_wfc,
                     const int& lmaxkb,
                     const ModulePW::PW_Basis_K* wfc_basis,
                     ModuleBase::ComplexMatrix& wfcatom,

@@ -53,6 +53,7 @@ public:
                                   ModuleBase::Vector3<double> q);
 
   private:
+    const UnitCell* ucell; 
     std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
     std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
     const ModulePW::PW_Basis* rho_basis = nullptr;
