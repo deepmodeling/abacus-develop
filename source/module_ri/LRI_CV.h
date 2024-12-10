@@ -34,6 +34,7 @@ public:
 	~LRI_CV();
 
 	void set_orbitals(
+		const UnitCell &ucell,
         const LCAO_Orbitals& orb,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos_in,
 		const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
@@ -42,17 +43,20 @@ public:
 		const double &ccp_rmesh_times_in);
 	inline std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
 	cal_Vs(
+		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_Vws"
 	inline std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>
 	cal_dVs(
+		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "writable_dVws"
 	std::pair<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,
 	          std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3>>
 	cal_Cs_dCs(
+		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
@@ -91,6 +95,7 @@ private:
 	template<typename Tresult>
 	std::map<TA,std::map<TAC,Tresult>>
 	cal_datas(
+		const UnitCell &ucell,
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags,

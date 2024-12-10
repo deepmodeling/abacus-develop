@@ -28,6 +28,7 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 public:
     OperatorEXX<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
         hamilt::HContainer<TR>* hR_in,
+        const UnitCell& ucell,
         const K_Vectors& kv_in,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
@@ -58,7 +59,9 @@ public:
       const int istep = 0; // the ion step
 
       void add_loaded_Hexx(const int ik);
-
+     
+      const UnitCell& ucell;
+      
       const K_Vectors& kv;
 
       // if k points has no shift, use cell_nearest to reduce the memory cost

@@ -90,7 +90,7 @@ class RDMFT
 
     //! update in elec-step
     // Or we can use rdmft_solver.wfc/occ_number directly when optimizing, so that the update_elec() function does not require parameters.
-    void update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in = nullptr);
+    void update_elec(const UnitCell& ucell, const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in = nullptr);
 
     //! obtain the gradient of total energy with respect to occupation number and wfc
     double cal_E_grad_wfc_occ_num();
@@ -117,7 +117,7 @@ class RDMFT
     void cal_V_hartree();
 
     //! construct V_XC based on different XC_functional( i.e. RDMFT class member XC_func_rdmft)
-    void cal_V_XC();
+    void cal_V_XC(const UnitCell& ucell);
 
     //! get the total Hamilton in k-space
     void cal_Hk_Hpsi();

@@ -55,7 +55,7 @@ void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis) {
 }
 
 template<typename T, typename Device>
-bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, Real thr_in)
+bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band)
 {
     const Real * _err_st = err_in.data<Real>();
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
@@ -63,7 +63,7 @@ bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, Real thr_in)
         _err_st = h_err_in.data<Real>();
     }
     for (int ii = 0; ii < this->n_band; ii++) {
-        if (_err_st[ii] > thr_in) {
+        if (_err_st[ii] > ethr_band[ii]) {
             return true;
         }
     }
@@ -242,11 +242,11 @@ void DiagoBPCG<T, Device>::calc_hsub_with_block_exit(
     return;
 }
 
-template<typename T, typename Device>
-void DiagoBPCG<T, Device>::diag(
-        const HPsiFunc& hpsi_func,
-        T *psi_in,
-        Real* eigenvalue_in)
+template <typename T, typename Device>
+void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
+                                T* psi_in,
+                                Real* eigenvalue_in,
+                                const std::vector<double>& ethr_band)
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
     // Get the pointer of the input psi
@@ -301,7 +301,7 @@ void DiagoBPCG<T, Device>::diag(
         if (current_scf_iter == 1 && ntry % this->nline == 0) {
             this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
         }
-    } while (ntry < max_iter && this->test_error(this->err_st, this->all_band_cg_thr));
+    } while (ntry < max_iter && this->test_error(this->err_st, ethr_band));
 
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 

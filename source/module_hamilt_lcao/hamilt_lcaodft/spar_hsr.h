@@ -5,7 +5,8 @@
 
 namespace sparse_format {
     using TAC = std::pair<int, std::array<int, 3>>;
-    void cal_HSR(const Parallel_Orbitals& pv,
+    void cal_HSR(const UnitCell& ucell,
+        const Parallel_Orbitals& pv,
         LCAO_HS_Arrays& HS_Arrays,
         Grid_Driver& grid,
         const int& current_spin,

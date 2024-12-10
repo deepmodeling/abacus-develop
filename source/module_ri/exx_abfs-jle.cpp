@@ -12,11 +12,13 @@ int Exx_Abfs::Jle::Lmax = 2;
 double Exx_Abfs::Jle::Ecut_exx = 60;
 double Exx_Abfs::Jle::tolerence = 1.0e-12;	
 
-void Exx_Abfs::Jle::init_jle( const double kmesh_times, const LCAO_Orbitals& orb )
+void Exx_Abfs::Jle::init_jle(const double kmesh_times, 
+							 const UnitCell& ucell,
+							 const LCAO_Orbitals& orb)
 {
-	jle.resize( GlobalC::ucell.ntype );
+	jle.resize( ucell.ntype );
 
-	for (int T = 0;  T < GlobalC::ucell.ntype ; T++)
+	for (int T = 0;  T < ucell.ntype ; T++)
 	{
 		jle[T].resize( Lmax+1 );
 		for (int L=0; L <= Lmax ; ++L)

@@ -321,13 +321,13 @@ namespace ModuleSymmetry
                             ofs << gmatc[isym].e21 << " " << gmatc[isym].e22 << " " << gmatc[isym].e23 << std::endl;
                             ofs << gmatc[isym].e31 << " " << gmatc[isym].e32 << " " << gmatc[isym].e33 << std::endl;
                             ofs << "gmatrix_direct=" << std::endl;
-                            ofs << GlobalC::ucell.symm.gmatrix[isym].e11 << " " << GlobalC::ucell.symm.gmatrix[isym].e12 << " " << GlobalC::ucell.symm.gmatrix[isym].e13 << std::endl;
-                            ofs << GlobalC::ucell.symm.gmatrix[isym].e21 << " " << GlobalC::ucell.symm.gmatrix[isym].e22 << " " << GlobalC::ucell.symm.gmatrix[isym].e23 << std::endl;
-                            ofs << GlobalC::ucell.symm.gmatrix[isym].e31 << " " << GlobalC::ucell.symm.gmatrix[isym].e32 << " " << GlobalC::ucell.symm.gmatrix[isym].e33 << std::endl;
+                            ofs << ucell.symm.gmatrix[isym].e11 << " " << ucell.symm.gmatrix[isym].e12 << " " << ucell.symm.gmatrix[isym].e13 << std::endl;
+                            ofs << ucell.symm.gmatrix[isym].e21 << " " << ucell.symm.gmatrix[isym].e22 << " " << ucell.symm.gmatrix[isym].e23 << std::endl;
+                            ofs << ucell.symm.gmatrix[isym].e31 << " " << ucell.symm.gmatrix[isym].e32 << " " << ucell.symm.gmatrix[isym].e33 << std::endl;
                             ofs << "kgmatrix_direct=" << std::endl;
-                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e11 << " " << GlobalC::ucell.symm.kgmatrix[isym].e12 << " " << GlobalC::ucell.symm.kgmatrix[isym].e13 << std::endl;
-                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e21 << " " << GlobalC::ucell.symm.kgmatrix[isym].e22 << " " << GlobalC::ucell.symm.kgmatrix[isym].e23 << std::endl;
-                            ofs << GlobalC::ucell.symm.kgmatrix[isym].e31 << " " << GlobalC::ucell.symm.kgmatrix[isym].e32 << " " << GlobalC::ucell.symm.kgmatrix[isym].e33 << std::endl;
+                            ofs << ucell.symm.kgmatrix[isym].e11 << " " << ucell.symm.kgmatrix[isym].e12 << " " << ucell.symm.kgmatrix[isym].e13 << std::endl;
+                            ofs << ucell.symm.kgmatrix[isym].e21 << " " << ucell.symm.kgmatrix[isym].e22 << " " << ucell.symm.kgmatrix[isym].e23 << std::endl;
+                            ofs << ucell.symm.kgmatrix[isym].e31 << " " << ucell.symm.kgmatrix[isym].e32 << " " << ucell.symm.kgmatrix[isym].e33 << std::endl;
                             ofs << "euler_angle/pi: " << euler_angles_test[isym].x / ModuleBase::PI << " "
                                 << euler_angles_test[isym].y / ModuleBase::PI << " " << euler_angles_test[isym].z / ModuleBase::PI << std::endl;
                             for (int l = 0;l <= lmax;++l)

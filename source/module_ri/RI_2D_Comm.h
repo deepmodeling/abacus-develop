@@ -31,14 +31,20 @@ namespace RI_2D_Comm
 //public:
 	template<typename Tdata, typename Tmatrix>
 	extern std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
-        split_m2D_ktoR(const K_Vectors& kv, const std::vector<const Tmatrix*>& mks_2D, const Parallel_2D& pv, const int nspin, const bool spgsym = false);
+        split_m2D_ktoR(const UnitCell& ucell,
+					   const K_Vectors& kv, 
+					   const std::vector<const Tmatrix*>& mks_2D, 
+					   const Parallel_2D& pv, 
+					   const int nspin, 
+					   const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
 	extern std::vector<std::tuple<std::set<TA>, std::set<TA>>>
-        get_2D_judge(const Parallel_2D& pv);
+        get_2D_judge(const UnitCell& ucell, const Parallel_2D& pv);
 
     template<typename Tdata, typename TK>
     extern void add_Hexx(
+		const UnitCell& ucell,
         const K_Vectors& kv,
         const int ik,
         const double alpha,
@@ -72,10 +78,10 @@ namespace RI_2D_Comm
 
 //private:
 	extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);
-	extern inline std::tuple<int,int,int> get_iat_iw_is_block(const int iwt);
+	extern inline std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);
 	extern inline int get_is_block(const int is_k, const int is_row_b, const int is_col_b);
 	extern inline std::tuple<int,int> split_is_block(const int is_b);
-	extern inline int get_iwt(const int iat, const int iw_b, const int is_b);
+	extern inline int get_iwt(const UnitCell& ucell, const int iat, const int iw_b, const int is_b);
 }
 
 #include "RI_2D_Comm.hpp"

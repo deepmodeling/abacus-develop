@@ -54,8 +54,11 @@ class LCAO_Deepks
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
     ModuleBase::matrix o_delta;
 
-    ///(Unit: Ry) Hamiltonian matrix
+    ///(Unit: Ry) Hamiltonian matrix in k space
+    /// for gamma only
     std::vector<double> h_mat;    
+    /// for multi-k
+    std::vector<std::vector<std::complex<double>>> h_mat_k;
 
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
     std::vector<double> H_V_delta;
@@ -159,13 +162,14 @@ class LCAO_Deepks
     // dD/dX, tensor form of gdmx
     std::vector<torch::Tensor> gdmr_vector;
 
-    // orbital_pdm_shell:[1,Inl,nm*nm]; \langle \phi_\mu|\alpha\rangle\langle\alpha|\phi_\nu\rnalge
+    // orbital_pdm_shell:[1,Inl,nm*nm]; \langle \phi_\mu|\alpha\rangle\langle\alpha|\phi_\nu\ranlge
     double**** orbital_pdm_shell;
     // orbital_precalc:[1,NAt,NDscrpt]; gvdm*orbital_pdm_shell
     torch::Tensor orbital_precalc_tensor;
 
     // v_delta_pdm_shell[nks,nlocal,nlocal,Inl,nm*nm] = overlap * overlap
     double***** v_delta_pdm_shell;
+    std::complex<double>***** v_delta_pdm_shell_complex; // for multi-k
     // v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm_shell;
     torch::Tensor v_delta_precalc_tensor;
     //for v_delta==2 , new v_delta_precalc storage method
@@ -220,6 +224,7 @@ class LCAO_Deepks
     void init(const LCAO_Orbitals& orb,
               const int nat,
               const int ntype,
+              const int nks,
               const Parallel_Orbitals& pv_in,
               std::vector<int> na);
 
@@ -437,12 +442,15 @@ class LCAO_Deepks
     // 11. cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label,
     //                          for multi-k case, which equals gvdm * orbital_pdm_shell,
     //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
-    //12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
+    // 12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
-    //13. check_v_delta_precalc : check v_delta_precalc
-    //14. prepare_psialpha : prepare psialpha for outputting npy file
-    //15. prepare_gevdm : prepare gevdm for outputting npy file
+    // 13. cal_v_delta_precalc_k : v_delta_precalc is used for training with v_delta label,
+    //                         for multi-k case, which equals ???
+    //                         ???
+    // 14. check_v_delta_precalc : check v_delta_precalc
+    // 15. prepare_psialpha : prepare psialpha for outputting npy file
+    // 16. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
     /// Calculates descriptors
@@ -500,11 +508,26 @@ class LCAO_Deepks
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
 
+    void cal_v_delta_precalc_k(const int nlocal,
+        const int nat,
+        const int nks,
+        const std::vector<ModuleBase::Vector3<double>> &kvec_d,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver &GridD);
+
     void check_v_delta_precalc(const int nat, const int nks,const int nlocal);
 
     // prepare psialpha for outputting npy file
     void prepare_psialpha(const int nlocal,
         const int nat,
+        const UnitCell &ucell,
+        const LCAO_Orbitals &orb,
+        Grid_Driver &GridD);
+    void prepare_psialpha_k(const int nlocal,
+        const int nat,
+        const int nks,
+        const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);

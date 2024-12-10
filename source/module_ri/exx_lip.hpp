@@ -334,12 +334,16 @@ void Exx_Lip<T, Device>::qkg2_exp(const int ik, const int iq)
             this->sum2_factor += this->recip_qkg2[ig] * std::exp(-info.lambda * qkg2);
             this->recip_qkg2[ig] = sqrt(this->recip_qkg2[ig]);
         }
-        else if (Conv_Coulomb_Pot_K::Ccp_Type::Hse == info.ccp_type)
+        else if (Conv_Coulomb_Pot_K::Ccp_Type::Erfc == info.ccp_type)
         {
             if (std::abs(qkg2) < 1e-10)
                 { this->recip_qkg2[ig] = 1.0 / (2 * info.hse_omega); }
             else
                 { this->recip_qkg2[ig] = sqrt((1 - std::exp(-qkg2 / (4 * info.hse_omega * info.hse_omega))) / qkg2); }
+        }
+        else
+        {
+            throw( std::string(__FILE__) + " line " + std::to_string(__LINE__) );
         }
     }
     ModuleBase::timer::tick("Exx_Lip", "qkg2_exp");
@@ -540,7 +544,7 @@ void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry& symm,
                              this->q_pack->kv_ptr->ngk.data(),
                              this->wfc_basis->npwk_max); // mohan update 2021-02-25
     //	this->q_pack->wf_ptr->init(this->q_pack->kv_ptr->get_nks(),this->q_pack->kv_ptr,this->ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-    this->q_pack->wf_ptr->table_local.create(GlobalC::ucell.ntype, GlobalC::ucell.nmax_total, PARAM.globalv.nqx);
+    this->q_pack->wf_ptr->table_local.create(ucell.ntype, ucell.nmax_total, PARAM.globalv.nqx);
     // this->q_pack->wf_ptr->table_local.create(this->q_pack->wf_ptr->this->ucell_ptr->ntype, this->q_pack->wf_ptr->this->ucell_ptr->nmax_total, PARAM.globalv.nqx);
   #ifdef __LCAO
     Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->q_pack->wf_ptr->table_local);

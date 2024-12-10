@@ -67,8 +67,10 @@ class DiagoBPCG
      * @param psi_in Pointer to input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(const HPsiFunc& hpsi_func, T *psi_in, Real *eigenvalue_in);
-
+    void diag(const HPsiFunc& hpsi_func,
+              T* psi_in,
+              Real* eigenvalue_in,
+              const std::vector<double>& ethr_band);
 
   private:
     /// the number of rows of the input psi
@@ -77,8 +79,6 @@ class DiagoBPCG
     int n_basis = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
-    /// cg convergence thr
-    Real all_band_cg_thr = 1E-5;
 
     ct::DataType r_type  = ct::DataType::DT_INVALID;
     ct::DataType t_type  = ct::DataType::DT_INVALID;
@@ -316,7 +316,7 @@ class DiagoBPCG
      * @param thr_in The threshold.
      * @return Returns true if all error values are less than or equal to the threshold, false otherwise.
      */
-    bool test_error(const ct::Tensor& err_in, Real thr_in);
+    bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;
