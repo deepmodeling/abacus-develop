@@ -88,7 +88,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                             T* psi_in,
                                             const int psi_in_dmax,
                                             Real* eigenvalue_in_hsolver,
-                                            const double* ethr_band)
+                                            const std::vector<double>& ethr_band)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_once");
 
@@ -726,7 +726,7 @@ int Diago_DavSubspace<T, Device>::diag(const HPsiFunc& hpsi_func,
                                        T* psi_in,
                                        const int psi_in_dmax,
                                        Real* eigenvalue_in_hsolver,
-                                       const double* ethr_band,
+                                       const std::vector<double>& ethr_band,
                                        const bool& scf_type)
 {
     /// record the times of trying iterative diagonalization

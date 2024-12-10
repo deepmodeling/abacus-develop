@@ -121,6 +121,8 @@ void bind_hsolver(py::module& m)
                 eigenvectors to be calculated.
             tol : double
                 The tolerance for the convergence.
+            diag_ethr: np.ndarray
+                The tolerance vector.
             max_iter : int
                 The maximum number of iterations.
             use_paw : bool
@@ -130,6 +132,7 @@ void bind_hsolver(py::module& m)
         "precond_vec"_a, 
         "dav_ndim"_a, 
         "tol"_a, 
+        "diag_ethr"_a,
         "max_iter"_a, 
         "use_paw"_a, 
         "comm_info"_a)

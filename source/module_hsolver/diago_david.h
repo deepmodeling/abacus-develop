@@ -79,7 +79,7 @@ class DiagoDavid
       const int ld_psi,           // Leading dimension of the psi input
       T *psi_in,                  // Pointer to eigenvectors
       Real* eigenvalue_in,        // Pointer to store the resulting eigenvalues
-      const Real david_diag_thr,  // Convergence threshold for the Davidson iteration
+      const std::vector<double>& ethr_band, // Convergence threshold for the Davidson iteration
       const int david_maxiter,    // Maximum allowed iterations for the Davidson method
       const int ntry_max = 5,     // Maximum number of diagonalization attempts (5 by default)
       const int notconv_max = 0); // Maximum number of allowed non-converged eigenvectors
@@ -134,7 +134,7 @@ class DiagoDavid
                   const int ld_psi,
                   T *psi_in,
                   Real* eigenvalue_in,
-                  const Real david_diag_thr,
+                  const std::vector<double>& ethr_band,
                   const int david_maxiter);
 
     void cal_grad(const HPsiFunc& hpsi_func,
