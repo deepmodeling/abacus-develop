@@ -412,9 +412,10 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
 
 
 //just for gamma only
-void LCAO_deepks_io::save_npy_h(const ModuleBase::matrix &hamilt,
+void LCAO_deepks_io::save_npy_h(const std::vector<ModuleBase::matrix> &hamilt,
                                 const std::string &h_file,
                                 const int nlocal,
+                                const int nks,
                                 const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_h");
@@ -422,7 +423,6 @@ void LCAO_deepks_io::save_npy_h(const ModuleBase::matrix &hamilt,
 	{
 		return;
 	}
-    int nks=1;
 
     const long unsigned hshape[] = {static_cast<unsigned long>(nks),
                                     static_cast<unsigned long>(nlocal), 
@@ -435,7 +435,7 @@ void LCAO_deepks_io::save_npy_h(const ModuleBase::matrix &hamilt,
         {
             for (int j=0; j<nlocal; j++)
             {
-                npy_h.push_back(hamilt(i,j));
+                npy_h.push_back(hamilt[k](i,j));
             }
         }         
     }

@@ -143,25 +143,6 @@ void LCAO_Deepks::init(
 
     this->pv = &pv_in;
 
-    if(PARAM.inp.deepks_v_delta)
-    {
-        //allocate and init h_mat
-        if(PARAM.globalv.gamma_only_local)
-        {
-            int nloc=this->pv->nloc;
-            this->h_mat.resize(nloc,0.0);
-        }
-        else
-        {
-            int nloc=this->pv->nloc;
-            this->h_mat_k.resize(nks);
-            for (int ik = 0; ik < nks; ik++)
-            {
-                this->h_mat_k[ik].resize(nloc,std::complex<double>(0.0,0.0));
-            }
-        }
-    }
-
     return;
 }
 
@@ -335,8 +316,9 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     //initialize the H matrix H_V_delta
     if(PARAM.globalv.gamma_only_local)
     {
-        this->H_V_delta.resize(pv->nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nloc);
+        H_V_delta.resize(1);
+        this->H_V_delta[0].resize(pv->nloc);
+        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta[0].data(), pv->nloc);
     }
     else
     {

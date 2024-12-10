@@ -54,14 +54,8 @@ class LCAO_Deepks
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
     ModuleBase::matrix o_delta;
 
-    ///(Unit: Ry) Hamiltonian matrix in k space
-    /// for gamma only
-    std::vector<double> h_mat;    
-    /// for multi-k
-    std::vector<std::vector<std::complex<double>>> h_mat_k;
-
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
-    std::vector<double> H_V_delta;
+    std::vector<std::vector<double>> H_V_delta;
     /// Correction term to Hamiltonian, for multi-k
     /// In R space:
     double* H_V_deltaR;
@@ -404,8 +398,9 @@ class LCAO_Deepks
 
   public:
     void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>&
-                         dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/);
-    void cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>&
+                         dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
+                     const int nks);
+    void cal_o_delta(const std::vector<std::vector<ModuleBase::ComplexMatrix>>&
                            dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
                        const int nks);
 

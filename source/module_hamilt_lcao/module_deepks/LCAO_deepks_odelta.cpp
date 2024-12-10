@@ -13,7 +13,7 @@
 #include "LCAO_deepks.h"
 #include "module_base/parallel_reduce.h"
 
-void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl)
+void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_o_delta");
     this->o_delta.zero_out();
@@ -31,7 +31,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
                     const int index = nu * pv->nrow + mu;
                     for (int is = 0; is < PARAM.inp.nspin; ++is)
                     {
-                        this->o_delta(0,hl) += dm_hl[hl][is](nu, mu) * this->H_V_delta[index];
+                        this->o_delta(0,hl) += dm_hl[hl][is](nu, mu) * this->H_V_delta[0][index];
                     }
                 }
             }
@@ -44,7 +44,7 @@ void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>
 
 //calculating the correction of (LUMO-HOMO) energies, i.e., band gap corrections
 //for multi_k calculations
-void LCAO_Deepks::cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl,
+void LCAO_Deepks::cal_o_delta(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl,
     const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_o_delta_k");

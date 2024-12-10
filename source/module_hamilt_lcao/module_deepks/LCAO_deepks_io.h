@@ -116,9 +116,10 @@ void save_npy_orbital_precalc(const int nat,
 
 /// xinyuan added on 2023-2-20
 /// for gamma only
-void save_npy_h(const ModuleBase::matrix &hamilt,
+void save_npy_h(const std::vector<ModuleBase::matrix> &hamilt,
 		const std::string &h_file,
 		const int nlocal,
+        const int nks,
 		const int rank);
 
 /// for multi-k

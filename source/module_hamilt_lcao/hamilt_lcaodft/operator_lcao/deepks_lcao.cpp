@@ -497,7 +497,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
 
 inline void get_h_delta_k(int ik, double*& h_delta_k)
 {
-    h_delta_k = GlobalC::ld.H_V_delta.data();
+    h_delta_k = GlobalC::ld.H_V_delta[0].data();
     return;
 }
 inline void get_h_delta_k(int ik, std::complex<double>*& h_delta_k)

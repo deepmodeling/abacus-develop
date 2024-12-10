@@ -35,7 +35,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm, c
                 for (int is = 0; is < dm.size(); ++is)  //dm.size() == PARAM.inp.nspin
                 {
                     //this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
-					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[index];
+					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[0][index];
                 }
             }
         }
