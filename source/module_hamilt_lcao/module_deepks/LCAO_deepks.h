@@ -440,12 +440,9 @@ class LCAO_Deepks
     // 12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
-    // 13. cal_v_delta_precalc_k : v_delta_precalc is used for training with v_delta label,
-    //                         for multi-k case, which equals ???
-    //                         ???
-    // 14. check_v_delta_precalc : check v_delta_precalc
-    // 15. prepare_psialpha : prepare psialpha for outputting npy file
-    // 16. prepare_gevdm : prepare gevdm for outputting npy file
+    // 13. check_v_delta_precalc : check v_delta_precalc
+    // 14. prepare_psialpha : prepare psialpha for outputting npy file
+    // 15. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
     /// Calculates descriptors
@@ -497,13 +494,8 @@ class LCAO_Deepks
         Grid_Driver& GridD);
 
     //calculates v_delta_precalc
+    template <typename TK>
     void cal_v_delta_precalc(const int nlocal,
-        const int nat,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
-
-    void cal_v_delta_precalc_k(const int nlocal,
         const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,

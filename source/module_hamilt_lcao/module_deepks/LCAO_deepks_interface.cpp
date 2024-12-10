@@ -200,14 +200,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
 
                 if(PARAM.inp.deepks_v_delta==1)//v_delta_precalc storage method 1
                 {
-                    if (std::is_same<TK, double>::value)
-                    {
-                        ld->cal_v_delta_precalc(nlocal, nat, ucell, orb, GridD);
-                    }
-                    else
-                    {
-                        ld->cal_v_delta_precalc_k(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
-                    }
+                    ld->cal_v_delta_precalc<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
                 
                     LCAO_deepks_io::save_npy_v_delta_precalc(
                       nat, 
