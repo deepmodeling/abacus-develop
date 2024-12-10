@@ -129,6 +129,7 @@ void save_npy_h(const std::vector<ModuleBase::ComplexMatrix> &hamilt,
         const int nks,
         const int rank);
 
+template <typename TK>
 void save_npy_v_delta_precalc(const int nat,
 		const int nks,
 		const int nlocal,
@@ -137,6 +138,7 @@ void save_npy_v_delta_precalc(const int nat,
 		const std::string& out_dir,
 		const int rank);
 
+template <typename TK>
 void save_npy_psialpha(const int nat,
 		const int nks,
 		const int nlocal,

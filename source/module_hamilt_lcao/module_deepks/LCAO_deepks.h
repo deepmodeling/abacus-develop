@@ -503,21 +503,20 @@ class LCAO_Deepks
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
 
-    void check_v_delta_precalc(const int nat, const int nks,const int nlocal);
+    template <typename TK>
+    void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
 
     // prepare psialpha for outputting npy file
+    template <typename TK>
     void prepare_psialpha(const int nlocal,
-        const int nat,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
-    void prepare_psialpha_k(const int nlocal,
         const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
+
+    template <typename TK>
     void check_vdp_psialpha(const int nat, const int nks, const int nlocal);
     
     // prepare gevdm for outputting npy file

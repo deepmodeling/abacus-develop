@@ -211,7 +211,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     for(int nl = 0; nl < nlmax; ++nl)
     {
         std::vector<torch::Tensor> kuuammv;
-        for(int iks = 0; iks < 1; ++iks)
+        for(int iks = 0; iks < nks; ++iks)
         {
             std::vector<torch::Tensor> uuammv;
             for(int mu = 0; mu < nlocal; ++mu)
@@ -291,6 +291,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     return;
 }
 
+template <typename TK>
 void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int nlocal)
 {
     std::ofstream ofs("v_delta_precalc.dat");
@@ -305,7 +306,15 @@ void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int n
                 {
                     for(int p=0; p<this->des_per_atom; ++p)
                     {
-                        ofs<<this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p }).item().toDouble()<<" ";
+                        if constexpr (std::is_same<TK, double>::value)
+                        {
+                            ofs << this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p }).item().toDouble() << " " ;
+                        }
+                        else
+                        {
+                            auto tensor_value = this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p});
+                            ofs << std::complex<double>(torch::real(tensor_value).item<double>(), torch::imag(tensor_value).item<double>()) << " " ;
+                        }
                     }
                 }
                 ofs << std::endl;                
@@ -330,5 +339,8 @@ template void LCAO_Deepks::cal_v_delta_precalc<std::complex<double>>(const int n
                                                                     const UnitCell &ucell,
                                                                     const LCAO_Orbitals &orb,
                                                                     Grid_Driver &GridD);
+
+template void LCAO_Deepks::check_v_delta_precalc<double>(const int nat, const int nks, const int nlocal);
+template void LCAO_Deepks::check_v_delta_precalc<std::complex<double>>(const int nat, const int nks, const int nlocal);
 
 #endif

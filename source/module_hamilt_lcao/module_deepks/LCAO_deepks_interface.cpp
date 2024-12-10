@@ -147,7 +147,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
             // How to save H(R)?
         }
 
-        if(PARAM.inp.deepks_v_delta)//gamma only now
+        if(PARAM.inp.deepks_v_delta)
         {
             std::vector<TH> h_tot(nks);
             std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(ParaV->nloc));
@@ -201,45 +201,36 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                 if(PARAM.inp.deepks_v_delta==1)//v_delta_precalc storage method 1
                 {
                     ld->cal_v_delta_precalc<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
-                
-                    LCAO_deepks_io::save_npy_v_delta_precalc(
-                      nat, 
-                      nks, 
-                      nlocal,
-                      ld->des_per_atom,
-                      ld->v_delta_precalc_tensor,
-                      PARAM.globalv.global_out_dir,
-                      my_rank);
+
+                    LCAO_deepks_io::save_npy_v_delta_precalc<TK>(nat, 
+                                                                 nks, 
+                                                                 nlocal,
+                                                                 ld->des_per_atom,
+                                                                 ld->v_delta_precalc_tensor,
+                                                                 PARAM.globalv.global_out_dir,
+                                                                 my_rank);
                 }
                 else if(PARAM.inp.deepks_v_delta==2)//v_delta_precalc storage method 2
                 {
-                    if (std::is_same<TK, double>::value)
-                    {
-                        ld->prepare_psialpha(nlocal, nat, ucell, orb, GridD);
-                    }
-                    else
-                    {
-                        ld->prepare_psialpha_k(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
-                    }
-                    LCAO_deepks_io::save_npy_psialpha(nat, 
-                                nks, 
-                                nlocal,
-                                ld->inlmax,
-                                ld->lmaxd,
-                                ld->psialpha_tensor,
-                                PARAM.globalv.global_out_dir,
-                                my_rank);
+                    ld->prepare_psialpha<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
 
-                    ld->prepare_gevdm(
-                                nat,
-                                orb);
+                    LCAO_deepks_io::save_npy_psialpha<TK>(nat, 
+                                                          nks, 
+                                                          nlocal,
+                                                          ld->inlmax,
+                                                          ld->lmaxd,
+                                                          ld->psialpha_tensor,
+                                                          PARAM.globalv.global_out_dir,
+                                                          my_rank);
+
+                    ld->prepare_gevdm(nat, orb);
 
                     LCAO_deepks_io::save_npy_gevdm(nat,
-                      ld->inlmax,
-                      ld->lmaxd,
-                      ld->gevdm_tensor,
-                      PARAM.globalv.global_out_dir,
-                      my_rank);
+                                                   ld->inlmax,
+                                                   ld->lmaxd,
+                                                   ld->gevdm_tensor,
+                                                   PARAM.globalv.global_out_dir,
+                                                   my_rank);
                 }
             }
             else //deepks_scf == 0
