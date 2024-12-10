@@ -493,7 +493,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(nband, nbasis);
-        bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue);
+        bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")
     {
