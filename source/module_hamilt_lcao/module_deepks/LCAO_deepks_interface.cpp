@@ -162,7 +162,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                 }
             }
 
-            DeePKS_domain::collect_h_mat(*ParaV, h_mat, h_tot, nlocal, nks);
+            DeePKS_domain::collect_h_mat<TK,TH>(*ParaV, h_mat, h_tot, nlocal, nks);
 
             const std::string file_htot = PARAM.globalv.global_out_dir + "deepks_htot.npy";
             LCAO_deepks_io::save_npy_h(h_tot, file_htot, nlocal, nks, my_rank);
@@ -185,7 +185,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                 {
                     H_V_delta = &ld->H_V_delta_k;
                 }
-                DeePKS_domain::collect_h_mat(*ParaV, *H_V_delta,v_delta,nlocal,nks); 
+                DeePKS_domain::collect_h_mat<TK,TH>(*ParaV, *H_V_delta,v_delta,nlocal,nks); 
 
                 // save v_delta and h_base
                 const std::string file_hbase = PARAM.globalv.global_out_dir + "deepks_hbase.npy";
