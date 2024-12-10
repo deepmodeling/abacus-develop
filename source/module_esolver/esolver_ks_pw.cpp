@@ -482,7 +482,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    if (PARAM.inp.dft_plus_u)
+    if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         // only old DFT+U method should calculated energy correction in esolver,
