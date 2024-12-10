@@ -37,7 +37,7 @@ LRI_CV<Tdata>::~LRI_CV()
 
 template<typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
-    const LCAO_Orbitals& orb,
+	const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
@@ -47,7 +47,7 @@ void LRI_CV<Tdata>::set_orbitals(
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
-    this->orb_cutoff_ = orb.cutoffs();
+	this->orb_cutoff_ = orb.cutoffs();
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
 	this->abfs_ccp = abfs_ccp_in;
@@ -109,11 +109,11 @@ auto LRI_CV<Tdata>::cal_datas(
 			if( R_delta.norm()*GlobalC::ucell.lat0 < Rcut )
 			{
 				const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
-//				if(Data.norm(std::numeric_limits<double>::max()) > threshold)
-//				{
+				// if(Data.norm(std::numeric_limits<double>::max()) > threshold)
+				// {
 					#pragma omp critical(LRI_CV_cal_datas)
 					Datas[list_A0[i0]][list_A1[i1]] = Data;
-//				}
+				// }
 			}
 		}
 	}

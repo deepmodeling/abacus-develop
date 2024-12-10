@@ -153,9 +153,9 @@ template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
                                 const std::function<void(T*, T*, const int, const int)>& spsi_func,
                                 const int ld_psi,
-                                T *psi_in,
+                                T* psi_in,
                                 Real* eigenvalue_in,
-                                const Real david_diag_thr,
+                                const std::vector<double>& ethr_band,
                                 const int david_maxiter,
                                 const int ntry_max,
                                 const int notconv_max) {
