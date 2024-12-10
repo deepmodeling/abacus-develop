@@ -244,6 +244,8 @@ def cg(
         if init_v.ndim == 2:
             init_v = init_v.T
         init_v = init_v.flatten().astype(np.complex128, order='C')
+
+    diag_ethr = [tol] * num_eigs
     
     _diago_obj_cg = diago_cg(dim, num_eigs)
     _diago_obj_cg.set_psi(init_v)
@@ -255,6 +257,7 @@ def cg(
         mvv_op,
         max_iter, 
         tol,
+        diag_ethr
         need_subspace,
         scf_type,
         nproc_in_pool
