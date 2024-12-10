@@ -156,7 +156,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
                                      const int ld_psi,
                                      T *psi_in,
                                      Real* eigenvalue_in,
-                                     const Real david_diag_thr,
+                                     const std::vector<double>& ethr_band,
                                      const int david_maxiter)
 {
     if (test_david == 1)
@@ -273,7 +273,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
         this->notconv = 0;
         for (int m = 0; m < nband; m++)
         {
-            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < david_diag_thr);
+            convflag[m] = (std::abs(this->eigenvalue[m] - eigenvalue_in[m]) < ethr_band[m]);
             if (!convflag[m])
             {
                 unconv[this->notconv] = m;
@@ -1177,7 +1177,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
                                 const int ld_psi,
                                 T *psi_in,
                                 Real* eigenvalue_in,
-                                const Real david_diag_thr,
+                                const std::vector<double>& ethr_band,
                                 const int david_maxiter,
                                 const int ntry_max,
                                 const int notconv_max)
@@ -1189,7 +1189,7 @@ int DiagoDavid<T, Device>::diag(const HPsiFunc& hpsi_func,
     int sum_dav_iter = 0;
     do
     {
-        sum_dav_iter += this->diag_once(hpsi_func, spsi_func, dim, nband, ld_psi, psi_in, eigenvalue_in, david_diag_thr, david_maxiter);
+        sum_dav_iter += this->diag_once(hpsi_func, spsi_func, dim, nband, ld_psi, psi_in, eigenvalue_in, ethr_band, david_maxiter);
         ++ntry;
     } while (!check_block_conv(ntry, this->notconv, ntry_max, notconv_max));
 

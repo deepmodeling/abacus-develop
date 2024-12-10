@@ -375,12 +375,12 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                exx_lri_double.cal_exx_force();
+                exx_lri_double.cal_exx_force(ucell.nat);
                 force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.force_exx;
             }
             else
             {
-                exx_lri_complex.cal_exx_force();
+                exx_lri_complex.cal_exx_force(ucell.nat);
                 force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.force_exx;
             }
         }
@@ -388,12 +388,12 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
         {
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                exx_lri_double.cal_exx_stress();
+                exx_lri_double.cal_exx_stress(ucell.omega,ucell.lat0);
                 stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_double.stress_exx;
             }
             else
             {
-                exx_lri_complex.cal_exx_stress();
+                exx_lri_complex.cal_exx_stress(ucell.omega,ucell.lat0);
                 stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_lri_complex.stress_exx;
             }
         }

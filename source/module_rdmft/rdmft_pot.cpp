@@ -175,7 +175,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::cal_V_XC()
+void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
 {
     // // //test
     // DM_XC_pass = DM_XC;
@@ -274,23 +274,24 @@ void RDMFT<TK, TR>::cal_V_XC()
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<double>>>> 
                 Ds_XC_d = std::is_same<TK, double>::value //gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<double>(*kv, DM_XC_pointer, *ParaV, nspin)
-                : RI_2D_Comm::split_m2D_ktoR<double>(*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
+                ? RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, *ParaV, nspin)
+                : RI_2D_Comm::split_m2D_ktoR<double>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
 
             // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
             {
-                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV, &this->symrot_exx);
+                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell,*ParaV, &this->symrot_exx);
             }
             else
             {
-                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, *ParaV);
+                Vxc_fromRI_d->cal_exx_elec(Ds_XC_d, ucell,*ParaV);
             }
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
             V_exx_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 hsk_exx_XC,
                 HR_exx_XC,
+                ucell,
                 *kv,
                 &Vxc_fromRI_d->Hexxs,
                 nullptr,
@@ -302,23 +303,24 @@ void RDMFT<TK, TR>::cal_V_XC()
             // transfer the DM_XC to appropriate format
             std::vector<std::map<int,std::map<std::pair<int,std::array<int,3>>,RI::Tensor<std::complex<double>>>>> 
                 Ds_XC_c = std::is_same<TK, double>::value //gamma_only_local
-                ? RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV, nspin)
-                : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
+                ? RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, *ParaV, nspin)
+                : RI_2D_Comm::split_m2D_ktoR<std::complex<double>>(ucell,*kv, DM_XC_pointer, *ParaV, nspin, this->exx_spacegroup_symmetry);
 
             // // provide the Ds_XC to Vxc_fromRI(V_exx_XC)
             if (this->exx_spacegroup_symmetry && GlobalC::exx_info.info_global.exx_symmetry_realspace)
             {
-                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV, &this->symrot_exx);
+                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell,*ParaV, &this->symrot_exx);
             }
             else
             {
-                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, *ParaV);
+                Vxc_fromRI_c->cal_exx_elec(Ds_XC_c, ucell,*ParaV);
             }
 
             // when we doing V_exx_XC.contributeHk(ik), we get HK_XC constructed by the special DM_XC
             V_exx_XC = new hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>>(
                 hsk_exx_XC,
                 HR_exx_XC,
+                ucell,
                 *kv,
                 nullptr,
                 &Vxc_fromRI_c->Hexxs,

@@ -45,7 +45,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (out_mat_hsR)
     {
-        output_HSR(istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
+        output_HSR(ucell,istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix

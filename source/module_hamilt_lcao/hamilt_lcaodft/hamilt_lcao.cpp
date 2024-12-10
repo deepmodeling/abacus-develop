@@ -403,6 +403,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
         // and calculate Cs, Vs
         Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
                                                                   this->hR,
+                                                                  ucell,
                                                                   *this->kv,
                                                                   Hexxd,
                                                                   Hexxc,

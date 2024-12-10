@@ -37,7 +37,8 @@ LRI_CV<Tdata>::~LRI_CV()
 
 template<typename Tdata>
 void LRI_CV<Tdata>::set_orbitals(
-    const LCAO_Orbitals& orb,
+	const UnitCell &ucell,
+	const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &lcaos_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_in,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs_ccp_in,
@@ -47,7 +48,7 @@ void LRI_CV<Tdata>::set_orbitals(
 	ModuleBase::TITLE("LRI_CV", "set_orbitals");
 	ModuleBase::timer::tick("LRI_CV", "set_orbitals");
 
-    this->orb_cutoff_ = orb.cutoffs();
+	this->orb_cutoff_ = orb.cutoffs();
 	this->lcaos = lcaos_in;
 	this->abfs = abfs_in;
 	this->abfs_ccp = abfs_ccp_in;
@@ -61,11 +62,11 @@ void LRI_CV<Tdata>::set_orbitals(
 		range_abfs = Exx_Abfs::Abfs_Index::construct_range( abfs );
 	this->index_abfs = ModuleBase::Element_Basis_Index::construct_index( range_abfs );
 
-	this->m_abfs_abfs.init( 2, orb, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
+	this->m_abfs_abfs.init( 2, ucell,orb, kmesh_times, (1+this->ccp_rmesh_times)/2.0 );
 	this->m_abfs_abfs.init_radial( this->abfs_ccp, this->abfs );
 	this->m_abfs_abfs.init_radial_table();
 
-	this->m_abfslcaos_lcaos.init( 1, orb, kmesh_times, 1 );
+	this->m_abfslcaos_lcaos.init( 1, ucell , orb, kmesh_times, 1 );
 	this->m_abfslcaos_lcaos.init_radial( this->abfs_ccp, this->lcaos, this->lcaos );
 	this->m_abfslcaos_lcaos.init_radial_table();
 
@@ -76,6 +77,7 @@ void LRI_CV<Tdata>::set_orbitals(
 
 template<typename Tdata> template<typename Tresult>
 auto LRI_CV<Tdata>::cal_datas(
+	const UnitCell &ucell,
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags,
@@ -96,24 +98,24 @@ auto LRI_CV<Tdata>::cal_datas(
 			const TA iat0 = list_A0[i0];
 			const TA iat1 = list_A1[i1].first;
 			const TC &cell1 = list_A1[i1].second;
-			const int it0 = GlobalC::ucell.iat2it[iat0];
-			const int ia0 = GlobalC::ucell.iat2ia[iat0];
-			const int it1 = GlobalC::ucell.iat2it[iat1];
-			const int ia1 = GlobalC::ucell.iat2ia[iat1];
-			const ModuleBase::Vector3<double> tau0 = GlobalC::ucell.atoms[it0].tau[ia0];
-			const ModuleBase::Vector3<double> tau1 = GlobalC::ucell.atoms[it1].tau[ia1];
+			const int it0 = ucell.iat2it[iat0];
+			const int ia0 = ucell.iat2ia[iat0];
+			const int it1 = ucell.iat2it[iat1];
+			const int ia1 = ucell.iat2ia[iat1];
+			const ModuleBase::Vector3<double> tau0 = ucell.atoms[it0].tau[ia0];
+			const ModuleBase::Vector3<double> tau1 = ucell.atoms[it1].tau[ia1];
 			const double Rcut = std::min(
 				orb_cutoff_[it0] * rmesh_times + orb_cutoff_[it1],
 				orb_cutoff_[it1] * rmesh_times + orb_cutoff_[it0]);
-			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec);
-			if( R_delta.norm()*GlobalC::ucell.lat0 < Rcut )
+			const Abfs::Vector3_Order<double> R_delta = -tau0+tau1+(RI_Util::array3_to_Vector3(cell1)*ucell.latvec);
+			if( R_delta.norm()*ucell.lat0 < Rcut )
 			{
 				const Tresult Data = func_DPcal_data(it0, it1, R_delta, flags);
-//				if(Data.norm(std::numeric_limits<double>::max()) > threshold)
-//				{
+				// if(Data.norm(std::numeric_limits<double>::max()) > threshold)
+				// {
 					#pragma omp critical(LRI_CV_cal_datas)
 					Datas[list_A0[i0]][list_A1[i1]] = Data;
-//				}
+				// }
 			}
 		}
 	}
@@ -124,6 +126,7 @@ auto LRI_CV<Tdata>::cal_datas(
 
 template<typename Tdata>
 auto LRI_CV<Tdata>::cal_Vs(
+	const UnitCell &ucell,
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// + "writable_Vws"
@@ -134,11 +137,12 @@ auto LRI_CV<Tdata>::cal_Vs(
 		func_DPcal_V = std::bind(
 			&LRI_CV<Tdata>::DPcal_V, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	return this->cal_datas(list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_V);
+	return this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_V);
 }
 
 template<typename Tdata>
 auto LRI_CV<Tdata>::cal_dVs(
+	const UnitCell &ucell,
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// + "writable_dVws"
@@ -150,11 +154,12 @@ auto LRI_CV<Tdata>::cal_dVs(
 			&LRI_CV<Tdata>::DPcal_dV, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 	return LRI_CV_Tools::change_order(
-		this->cal_datas(list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_dV));
+		this->cal_datas(ucell,list_A0, list_A1, flags, this->ccp_rmesh_times, func_DPcal_dV));
 }
 
 template<typename Tdata>
 auto LRI_CV<Tdata>::cal_Cs_dCs(
+	const UnitCell &ucell,
 	const std::vector<TA> &list_A0,
 	const std::vector<TAC> &list_A1,
 	const std::map<std::string,bool> &flags)					// "cal_dC" + "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
@@ -166,7 +171,7 @@ auto LRI_CV<Tdata>::cal_Cs_dCs(
 			&LRI_CV<Tdata>::DPcal_C_dC, this,
 			std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
 	std::map<TA,std::map<TAC, std::pair<RI::Tensor<Tdata>, std::array<RI::Tensor<Tdata>,3>>>>
-		Cs_dCs_tmp = this->cal_datas(list_A0, list_A1, flags, std::min(1.0,this->ccp_rmesh_times), func_DPcal_C_dC);
+		Cs_dCs_tmp = this->cal_datas(ucell,list_A0, list_A1, flags, std::min(1.0,this->ccp_rmesh_times), func_DPcal_C_dC);
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Cs;
 	std::array<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>,3> dCs;

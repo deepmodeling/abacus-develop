@@ -7,7 +7,8 @@
 #include "spar_exx.h"
 #include "spar_u.h"
 
-void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
+void sparse_format::cal_HSR(const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,
     Grid_Driver& grid,
     const int& current_spin,
@@ -99,7 +100,8 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
     if (GlobalC::exx_info.info_global.cal_exx) {
         if (Hexxd && GlobalC::exx_info.info_ri.real_number)
         {
-            sparse_format::cal_HR_exx(pv,
+            sparse_format::cal_HR_exx(ucell,
+                pv,
                 HS_Arrays,
                 current_spin,
                 sparse_thr,
@@ -108,7 +110,8 @@ void sparse_format::cal_HSR(const Parallel_Orbitals& pv,
         }
         else if (Hexxc && !GlobalC::exx_info.info_ri.real_number)
         {
-            sparse_format::cal_HR_exx(pv,
+            sparse_format::cal_HR_exx(ucell,
+                pv,
                 HS_Arrays,
                 current_spin,
                 sparse_thr,

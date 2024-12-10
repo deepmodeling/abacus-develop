@@ -80,20 +80,25 @@ namespace LRI_CV_Tools
 		std::map<TkeyA,std::map<TkeyB,std::array<Tvalue,N>>> && ds_in);
 
 	template<typename Tcell>
-	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times, const std::vector<double>& orb_cutoff);
+	extern std::array<Tcell,3> cal_latvec_range(const double &rcut_times, 
+												const UnitCell &ucell,
+												const std::vector<double>& orb_cutoff);
 
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>>
 	get_CVws(
+		const UnitCell &ucell,
 		const std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>> &CVs);
 	template<typename TA, typename Tcell, typename Tdata>
 	extern std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,std::array<RI::Tensor<Tdata>,3>>>>
 	get_dCVws(
+		const UnitCell &ucell,
 		const std::array<std::map<TA,std::map<std::pair<TA,std::array<Tcell,3>>,RI::Tensor<Tdata>>>,3> &dCVs);
 
 	template<typename TA, typename TC, typename Tdata>
 	extern std::array<std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3>,3>
 	cal_dMRs(
+		const UnitCell &ucell,
 		const std::array<std::map<TA,std::map<std::pair<TA,TC>,RI::Tensor<Tdata>>>,3> &dMs);
 
     using TC = std::array<int, 3>;

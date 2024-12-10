@@ -178,12 +178,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
             // initialize 2-center radial tables for EXX-LRI
             if (GlobalC::exx_info.info_ri.real_number)
             {
-                this->exx_lri_double->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exx_lri_double->init(MPI_COMM_WORLD, ucell,this->kv, orb_);
                 this->exd->exx_before_all_runners(this->kv, ucell, this->pv);
             }
             else
             {
-                this->exx_lri_complex->init(MPI_COMM_WORLD, this->kv, orb_);
+                this->exx_lri_complex->init(MPI_COMM_WORLD, ucell,this->kv, orb_);
                 this->exc->exx_before_all_runners(this->kv, ucell, this->pv);
             }
         }
@@ -623,6 +623,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         if (GlobalC::exx_info.info_ri.real_number)
         {
             this->exd->exx_eachiterinit(istep,
+                                        ucell,
                                         *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                         this->kv,
                                         iter);
@@ -630,6 +631,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
         else
         {
             this->exc->exx_eachiterinit(istep,
+                                        ucell,
                                         *dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                         this->kv,
                                         iter);
@@ -1052,7 +1054,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                 occ_number_ks(ik, inb) /= this->kv.wk[ik];
             }
         }
-        this->rdmft_solver.update_elec(occ_number_ks, *(this->psi));
+        this->rdmft_solver.update_elec(ucell,occ_number_ks, *(this->psi));
 
         //! initialize the gradients of Etotal with respect to occupation numbers and wfc, 
         //! and set all elements to 0. 
@@ -1074,10 +1076,11 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
         rpa_lri_double.cal_postSCF_exx(*dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                                        MPI_COMM_WORLD,
+                                       ucell,
                                        this->kv,
                                        orb_);
         rpa_lri_double.init(MPI_COMM_WORLD, this->kv, orb_.cutoffs());
-        rpa_lri_double.out_for_RPA(this->pv, *(this->psi), this->pelec);
+        rpa_lri_double.out_for_RPA(ucell,this->pv, *(this->psi), this->pelec);
     }
 #endif
 

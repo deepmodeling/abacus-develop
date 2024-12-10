@@ -11,7 +11,8 @@
 namespace ModuleIO
 {
     using TAC = std::pair<int, std::array<int, 3>>;
-void output_HSR(const int& istep,
+void output_HSR(const UnitCell& ucell,
+    const int& istep,
     const ModuleBase::matrix& v_eff,
     const Parallel_Orbitals& pv,
     LCAO_HS_Arrays& HS_Arrays,

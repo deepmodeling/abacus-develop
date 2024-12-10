@@ -16,8 +16,10 @@ namespace rdmft
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis_in,
-                                ModuleBase::matrix& vloc_in, ModuleBase::ComplexMatrix& sf_in)
+void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, 
+                               ModulePW::PW_Basis& rho_basis_in,
+                               ModuleBase::matrix& vloc_in, 
+                               ModuleBase::ComplexMatrix& sf_in)
 {
     ucell = &ucell_in;
     rho_basis = &rho_basis_in;
@@ -31,11 +33,11 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
-            Vxc_fromRI_d->cal_exx_ions();
+            Vxc_fromRI_d->cal_exx_ions(ucell_in);
         }
         else
         {
-            Vxc_fromRI_c->cal_exx_ions();
+            Vxc_fromRI_c->cal_exx_ions(ucell_in);
         }
     }
 #endif
@@ -45,7 +47,9 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis
 
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const psi::Psi<TK>& wfc_in, const Charge* charge_in)
+void RDMFT<TK, TR>::update_elec(const UnitCell& ucell,
+                                const ModuleBase::matrix& occ_number_in, 
+                                const psi::Psi<TK>& wfc_in, const Charge* charge_in)
 {
     // update occ_number, wg, wk_fun_occNum
     occ_number = (occ_number_in);
@@ -74,11 +78,11 @@ void RDMFT<TK, TR>::update_elec(const ModuleBase::matrix& occ_number_in, const p
     if( this->cal_E_type != 1 )
     {
         // the second cal_E_type need the complete pot to get effctive_V to calEband and so on.
-        this->pelec->pot->update_from_charge(charge, ucell);
+        this->pelec->pot->update_from_charge(charge, &ucell);
     }
 
     this->cal_V_hartree();
-    this->cal_V_XC();
+    this->cal_V_XC(ucell);
     // this->cal_Hk_Hpsi();
 
     std::cout << "\n******\n" << "update elec in rdmft successfully" << "\n******\n" << std::endl;

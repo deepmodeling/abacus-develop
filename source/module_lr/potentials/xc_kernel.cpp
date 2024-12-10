@@ -21,7 +21,8 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     const Parallel_Grid& pgrid,
     const int& nspin,
     const std::string& kernel_name,
-    const std::vector<std::string>& lr_init_xc_kernel) :rho_basis_(rho_basis)
+    const std::vector<std::string>& lr_init_xc_kernel,
+    const bool openshell) :rho_basis_(rho_basis), openshell_(openshell)
 {
     if (!std::set<std::string>({ "lda", "pwlda", "pbe", "hse" }).count(kernel_name)) { return; }
     XC_Functional::set_xc_type(kernel_name);    // for hse, (1-alpha) and omega are set here
@@ -91,6 +92,23 @@ template <typename T>
 inline void add_assign_op(const std::vector<T>& src, std::vector<T>& dst)
 {
     add_op(src, dst, dst);
+}
+template<typename Telement, typename Tscalar>
+inline void cutoff_grid_data_spin2(std::vector<Telement>& func, const std::vector<Tscalar>& mask)
+{
+    const int& nrxx = mask.size() / 2;
+    assert(func.size() % nrxx == 0 && func.size() / nrxx > 1);
+    const int n_component = func.size() / nrxx;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (int ir = 0;ir < nrxx;++ir)
+    {
+        const int& i2 = 2 * ir;
+        const int& istart = n_component * ir;
+        std::for_each(func.begin() + istart, func.begin() + istart + n_component - 1, [&](Telement& f) { f *= mask[i2]; });    //spin-up
+        std::for_each(func.begin() + istart + 1, func.begin() + istart + n_component, [&](Telement& f) { f *= mask[i2 + 1]; });    //spin-down
+    }
 }
 
 #ifdef USE_LIBXC
@@ -190,7 +208,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         xc_func_set_dens_threshold(&func, rho_threshold);
 
-        //cut off grho if not LDA (future subfunc)
+        //cut off function
+        const std::vector<double> sgn = XC_Functional_Libxc::cal_sgn(rho_threshold, grho_threshold, func, nspin, nrxx, rho, sigma);
 
         // Libxc interfaces overwrite (instead of add onto) the output arrays, so we need temporary copies
         std::vector<double> vrho_tmp(this->vrho_.size());
@@ -206,9 +225,19 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             break;
         case XC_FAMILY_GGA:
         case XC_FAMILY_HYB_GGA:
+        {
             xc_gga_vxc(&func, nrxx, rho.data(), sigma.data(), vrho_tmp.data(), vsigma_tmp.data());
             xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
+            // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
+            // std::cout << "rho corresponding to max element of v2sigma2_tmp: " << rho[(std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) - v2sigma2_tmp.begin()) / 6] << std::endl;
+            // cut off by sgn
+            cutoff_grid_data_spin2(vrho_tmp, sgn);
+            cutoff_grid_data_spin2(vsigma_tmp, sgn);
+            cutoff_grid_data_spin2(v2rho2_tmp, sgn);
+            cutoff_grid_data_spin2(v2rhosigma_tmp, sgn);
+            cutoff_grid_data_spin2(v2sigma2_tmp, sgn);
             break;
+        }
         default:
             throw std::domain_error("func.info->family =" + std::to_string(func.info->family)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
@@ -239,8 +268,6 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
         if (nspin == 1)
         {
-            // 0. drho
-            this->drho_gs_ = gradrho[0];
             // 1. $2f^{\rho\sigma}*\nabla\rho$
             this->v2rhosigma_2drho_.resize(nrxx);
 #ifdef _OPENMP
@@ -261,11 +288,67 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
             }
         }
+        else if (2 == nspin)    //close-shell
+        {
+            if (!openshell_)
+            {
+                this->v2rhosigma_drho_singlet_.resize(nrxx);
+                this->v2sigma2_drho_singlet_.resize(nrxx);
+                this->v2rhosigma_drho_triplet_.resize(nrxx);
+                this->v2sigma2_drho_triplet_.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+                for (int i = 0;i < nrxx;++i)
+                {
+                    const int istart = i * 6;
+                    this->v2rhosigma_drho_singlet_[i] = gradrho[0][i] * (v2rs[istart] + v2rs[istart + 1] + v2rs[istart + 2]) * 2.;
+                    this->v2sigma2_drho_singlet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] * 3. + v2s2[istart + 2] * 2. + v2s2[istart + 3] + v2s2[istart + 4]) * 2.;
+                    this->v2rhosigma_drho_triplet_[i] = gradrho[0][i] * (v2rs[istart] - v2rs[istart + 2]) * 2.;
+                    this->v2sigma2_drho_triplet_[i] = gradrho[0][i] * (v2s2[istart] * 2. + v2s2[istart + 1] - v2s2[istart + 2] * 2. - v2s2[istart + 4]) * 2.;
+                }
+            }
+            else
+            {
+                this->v2rhosigma_drho_uu_.resize(nrxx);
+                this->v2rhosigma_drho_ud_.resize(nrxx);
+                this->v2rhosigma_drho_du_.resize(nrxx);
+                this->v2rhosigma_drho_dd_.resize(nrxx);
+                this->v2sigma2_drho_uu_u_.resize(nrxx);
+                this->v2sigma2_drho_uu_d_.resize(nrxx);
+                this->v2sigma2_drho_ud_u_.resize(nrxx);
+                this->v2sigma2_drho_ud_d_.resize(nrxx);
+                this->v2sigma2_drho_du_u_.resize(nrxx);
+                this->v2sigma2_drho_du_d_.resize(nrxx);
+                this->v2sigma2_drho_dd_u_.resize(nrxx);
+                this->v2sigma2_drho_dd_d_.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+                for (int i = 0;i < nrxx;++i)
+                {
+                    const int istart = i * 6;
+                    this->v2rhosigma_drho_uu_[i] = gradrho[0][i] * v2rs[istart] * 2. + gradrho[1][i] * v2rs[istart + 1];
+                    this->v2rhosigma_drho_ud_[i] = gradrho[0][i] * v2rs[istart + 1] + gradrho[1][i] * v2rs[istart + 2] * 2.;
+                    this->v2rhosigma_drho_du_[i] = gradrho[0][i] * v2rs[istart + 3] * 2. + gradrho[1][i] * v2rs[istart + 4];
+                    this->v2rhosigma_drho_dd_[i] = gradrho[0][i] * v2rs[istart + 4] + gradrho[1][i] * v2rs[istart + 5] * 2.;
+                    this->v2sigma2_drho_uu_u_[i] = gradrho[0][i] * v2s2[istart] * 4. + gradrho[1][i] * v2s2[istart + 1] * 2.;
+                    this->v2sigma2_drho_uu_d_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_ud_u_[i] = gradrho[0][i] * v2s2[istart + 1] * 2. + gradrho[1][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_ud_d_[i] = gradrho[0][i] * v2s2[istart + 2] * 4. + gradrho[1][i] * v2s2[istart + 4] * 2.;
+                    this->v2sigma2_drho_du_u_[i] = gradrho[1][i] * v2s2[istart + 2] * 4. + gradrho[0][i] * v2s2[istart + 1] * 2.;
+                    this->v2sigma2_drho_du_d_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_dd_u_[i] = gradrho[1][i] * v2s2[istart + 4] * 2. + gradrho[0][i] * v2s2[istart + 3];
+                    this->v2sigma2_drho_dd_d_[i] = gradrho[1][i] * v2s2[istart + 5] * 4. + gradrho[0][i] * v2s2[istart + 4] * 2.;
+                }
+            }
+        }
         else
         {
             throw std::domain_error("nspin =" + std::to_string(nspin)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
+        this->drho_gs_ = std::move(gradrho);
     }
     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) {
         return;

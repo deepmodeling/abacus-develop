@@ -10,8 +10,8 @@ namespace Conv_Coulomb_Pot_K
 	enum class Ccp_Type{		//	parameter:
 		Ccp,					//
 		Hf,						//		"hf_Rcut"
-		Hse,					//		"hse_omega"
-		erf};					//		"hse_omega"
+		Erfc,					//		"hse_omega"
+		Erf};					//		"hse_omega", "hf_Rcut"
 
 	template<typename T> T cal_orbs_ccp(
 		const T &orbs,

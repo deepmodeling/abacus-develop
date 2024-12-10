@@ -88,6 +88,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 
 // P = f * Y
 std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_Orbs::abfs_same_atom(
+	const UnitCell &ucell,
     const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	const double kmesh_times_mot,
@@ -111,7 +112,7 @@ std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> Exx_Abfs::Construct_
 	#endif
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>>
-		abfs_same_atom_pca_psi = pca( orb, abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
+		abfs_same_atom_pca_psi = pca(ucell,orb, abfs_same_atom, orbs, kmesh_times_mot, times_threshold );
 
 	#if TEST_EXX_LCAO==1
 		print_orbs(abfs_same_atom_pca_psi,"abfs_same_atom_pca_psi.dat");
@@ -267,6 +268,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 }
 
 std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_Orbs::pca(
+	const UnitCell &ucell,
     const LCAO_Orbitals& orb,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &abfs,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
@@ -277,7 +279,7 @@ std::vector<std::vector<std::vector<std::vector<double>>>> Exx_Abfs::Construct_O
 		return std::vector<std::vector<std::vector<std::vector<double>>>>(abfs.size());
 
 	const std::vector<std::vector<std::pair<std::vector<double>,RI::Tensor<double>>>>
-		eig = ABFs_Construct::PCA::cal_PCA( orb, orbs, abfs, kmesh_times_mot );
+		eig = ABFs_Construct::PCA::cal_PCA(ucell, orb, orbs, abfs, kmesh_times_mot );
 
 	const std::vector<std::vector<std::vector<std::vector<double>>>> psis = get_psi( abfs );
 	std::vector<std::vector<std::vector<std::vector<double>>>> psis_new( psis.size() );
@@ -479,6 +481,7 @@ inline const Numerical_Orbital_Lm &Exx_Abfs::Construct_Orbs::get_orbital(
 */
 
 void Exx_Abfs::Construct_Orbs::print_orbs_size(
+	const UnitCell& ucell,
 	const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> &orbs,
 	std::ostream &os)
 {
@@ -486,7 +489,7 @@ void Exx_Abfs::Construct_Orbs::print_orbs_size(
 	const std::vector<char> L_labels = {'s', 'p', 'd'};
 	for(std::size_t T=0; T<orbs.size(); ++T)
 	{
-		os<<"\t\t"<<GlobalC::ucell.atoms[T].label<<"\t\t";
+		os<<"\t\t"<<ucell.atoms[T].label<<"\t\t";
 		for(std::size_t L=0; L<orbs[T].size(); ++L)
 		{
 			const char L_label =

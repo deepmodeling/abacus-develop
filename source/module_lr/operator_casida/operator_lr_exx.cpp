@@ -89,11 +89,17 @@ namespace LR
     }
 
     template<typename T>
-    void OperatorLREXX<T>::act(const int nbands, const int nbasis, const int npol, const T* psi_in, T* hpsi, const int ngk_ik, const bool is_first_node)const
+    void OperatorLREXX<T>::act(const int nbands, 
+                               const int nbasis, 
+                               const int npol, 
+                               const T* psi_in, 
+                               T* hpsi, 
+                               const int ngk_ik, 
+                               const bool is_first_node)const
     {
         ModuleBase::TITLE("OperatorLREXX", "act");
         // convert parallel info to LibRI interfaces
-        std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(this->pmat);
+        std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell,this->pmat);
 
         // suppose Cs，Vs, have already been calculated in the ion-step of ground state
         // and DM_trans has been calculated in hPsi() outside.
@@ -107,7 +113,7 @@ namespace LR
         // if multi-k, DM_trans(TR=double) -> Ds_trans(TR=T=complex<double>)
         std::vector<std::map<TA, std::map<TAC, RI::Tensor<T>>>> Ds_trans =
             aims_nbasis.empty() ?
-            RI_2D_Comm::split_m2D_ktoR<T>(this->kv, DMk_trans_pointer, this->pmat, 1)
+            RI_2D_Comm::split_m2D_ktoR<T>(ucell,this->kv, DMk_trans_pointer, this->pmat, 1)
             : RI_Benchmark::split_Ds(DMk_trans_vector, aims_nbasis, ucell); //0.5 will be multiplied
         // LR_Util::print_CV(Ds_trans[0], "Ds_trans in OperatorLREXX", 1e-10);
         // 2. cal_Hs

@@ -101,12 +101,12 @@ public:
 
     int diag(
         std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
-        std::vector<double> precond_vec,
+        std::vector<double>& precond_vec,
         int dav_ndim,
         double tol,
         int max_iter,
         bool need_subspace,
-        std::vector<double> diag_ethr,
+        std::vector<double>& diag_ethr,
         bool scf_type,
         hsolver::diag_comm_info comm_info
     ) {
@@ -141,7 +141,7 @@ public:
             comm_info
         );
 
-        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr.data(), scf_type);
+        return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);
     }
 
 private:

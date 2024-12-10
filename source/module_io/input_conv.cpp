@@ -377,7 +377,7 @@ void Input_Conv::Convert()
     } else if (dft_functional_lower == "hse") {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type
-            = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
+            = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
     } else if (dft_functional_lower == "opt_orb") {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
@@ -391,12 +391,12 @@ void Input_Conv::Convert()
     else if ( dft_functional_lower == "wp22" )
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::erf; // use the error function erf(w|r-r'|), exx just has the long-range part
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf; // use the error function erf(w|r-r'|), exx just has the long-range part
     }
     else if ( dft_functional_lower == "cwp22" )
     {
         GlobalC::exx_info.info_global.cal_exx = true;
-        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hse; // use the erfc(w|r-r'|), exx just has the short-range part
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; // use the erfc(w|r-r'|), exx just has the short-range part
     }
     else {
         GlobalC::exx_info.info_global.cal_exx = false;
