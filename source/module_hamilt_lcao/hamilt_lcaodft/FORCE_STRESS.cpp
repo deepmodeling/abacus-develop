@@ -532,12 +532,12 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                   ->get_DMK_vector();
 
                         GlobalC::ld.cal_gdmx(dm_k,
-                                               ucell,
-                                               orb,
-                                               GlobalC::GridD,
-                                               kv.get_nks(),
-                                               kv.kvec_d,
-                                               isstress);
+                                             ucell,
+                                             orb,
+                                             GlobalC::GridD,
+                                             kv.get_nks(),
+                                             kv.kvec_d,
+                                             isstress);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {
