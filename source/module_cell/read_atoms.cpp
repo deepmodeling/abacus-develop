@@ -504,7 +504,18 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                 ModuleBase::WARNING("read_atom_positions", " atom number < 0.");
                 return false;
             }
-            if (na > 0)
+            else if (na == 0)
+            {
+                std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+                std::cout << " Warning: atom number is 0 for atom type: " << atoms[it].label << std::endl;
+                std::cout << " If you are confident that this is not a mistake, please ignore this warning." << std::endl;
+                std::cout << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+                ofs_running << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+                ofs_running << " Warning: atom number is 0 for atom type: " << atoms[it].label << std::endl;
+                ofs_running << " If you are confident that this is not a mistake, please ignore this warning." << std::endl;
+                ofs_running << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+            }
+            else if (na > 0)
             {
                 atoms[it].tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
                 atoms[it].dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
@@ -890,6 +901,12 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
 
     ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(ofs_running,"TOTAL ATOM NUMBER",nat);
+
+    if (nat == 0)
+    {
+        ModuleBase::WARNING("read_atom_positions","no atom in the system!");
+        return false;
+    }
 
     // mohan add 2010-06-30    
     //xiaohui modify 2015-03-15, cancel outputfile "STRU_READIN.xyz"
