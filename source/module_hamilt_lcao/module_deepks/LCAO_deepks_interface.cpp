@@ -98,7 +98,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                         }
                     }
 
-                    ld->cal_orbital_precalc(dm_bandgap, nat, ucell, orb, GridD);
+                    ld->cal_orbital_precalc<TK,TH>(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
                 }
                 else // for multi-k
                 {
@@ -117,7 +117,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                         elecstate::cal_dm(ParaV, wg_hl, psi, dm_bandgap[ib]);
                     }
                     // ld->cal_o_delta(dm_bandgap, ParaV, nks);
-                    ld->cal_orbital_precalc_k(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
+                    ld->cal_orbital_precalc<TK,TH>(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
                 }
                 ld->cal_o_delta(dm_bandgap, nks);
 

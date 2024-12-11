@@ -428,15 +428,12 @@ class LCAO_Deepks
     // 10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
     //                          which equals gvdm * orbital_pdm_shell,
     //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl * overlap * overlap
-    // 11. cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label,
-    //                          for multi-k case, which equals gvdm * orbital_pdm_shell,
-    //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
-    // 12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
+    // 11. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
-    // 13. check_v_delta_precalc : check v_delta_precalc
-    // 14. prepare_psialpha : prepare psialpha for outputting npy file
-    // 15. prepare_gevdm : prepare gevdm for outputting npy file
+    // 12. check_v_delta_precalc : check v_delta_precalc
+    // 13. prepare_psialpha : prepare psialpha for outputting npy file
+    // 14. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
     /// Calculates descriptors
@@ -471,21 +468,14 @@ class LCAO_Deepks
     void cal_gedm_equiv(const int nat);
 
     // calculates orbital_precalc
-    void cal_orbital_precalc(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl /**<[in] density matrix*/,
+    template <typename TK, typename TH>
+    void cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl /**<[in] density matrix*/,
                              const int nat,
+                             const int nks,
+                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              Grid_Driver& GridD);
-
-    // calculates orbital_precalc for multi-k case
-    void cal_orbital_precalc_k(
-        const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl /**<[in] density matrix*/,
-        const int nat,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD);
 
     //calculates v_delta_precalc
     template <typename TK>

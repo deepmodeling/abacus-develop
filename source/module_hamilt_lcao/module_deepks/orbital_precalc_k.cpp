@@ -68,30 +68,32 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                 const int ibt1 = ucell.itia2iat(T1, I1);
                 const ModuleBase::Vector3<double> tau1
                     = GridD.getAdjacentTau(ad1);
-                const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
+                const Atom* atom1 = &ucell.atoms[T1];
+                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
                 const double Rcut_AO1 = orb.Phi[T1].getRcut();
+
+                const double dist1 = (tau1 - tau0).norm() * ucell.lat0;
+                
                 if (dist1 >= Rcut_Alpha + Rcut_AO1) 
                 {
                     continue;
                 }
 
-                const Atom* atom1 = &ucell.atoms[T1];
-                const int nw1_tot = atom1->nw * PARAM.globalv.npol;
-
                 ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x,
                                                 GridD.getBox(ad1).y,
                                                 GridD.getBox(ad1).z);
 
-                auto row_indexes = pv->get_indexes_row(ibt1);
-                const int row_size = row_indexes.size();
-                if (row_size == 0) 
+                key_tuple key_1(ibt1, dR1.x, dR1.y, dR1.z);
+                
+                if (this->nlm_save_k[iat].find(key_1)
+                    == this->nlm_save_k[iat].end()) 
                 {
                     continue;
                 }
 
-                key_tuple key_1(ibt1, dR1.x, dR1.y, dR1.z);
-                if (this->nlm_save_k[iat].find(key_1)
-                    == this->nlm_save_k[iat].end()) 
+                auto row_indexes = pv->get_indexes_row(ibt1);
+                const int row_size = row_indexes.size();
+                if (row_size == 0) 
                 {
                     continue;
                 }
@@ -125,12 +127,7 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                         = GridD.getAdjacentTau(ad2);
 
                     const Atom* atom2 = &ucell.atoms[T2];
-
                     const int nw2_tot = atom2->nw * PARAM.globalv.npol;
-
-                    ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x,
-                                                    GridD.getBox(ad2).y,
-                                                    GridD.getBox(ad2).z);
 
                     const double Rcut_AO2 = orb.Phi[T2].getRcut();
                     const double dist2 = (tau2 - tau0).norm() * ucell.lat0;
@@ -140,6 +137,18 @@ void LCAO_Deepks::cal_orbital_precalc_k(
                         continue;
                     }
 
+                    ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x,
+                                                    GridD.getBox(ad2).y,
+                                                    GridD.getBox(ad2).z);
+
+                    key_tuple key_2(ibt2, dR2.x, dR2.y, dR2.z);
+
+					if (this->nlm_save_k[iat].find(key_2)
+							== this->nlm_save_k[iat].end()) 
+					{
+						continue;
+					}
+
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
 					if (col_size == 0) 
@@ -148,13 +157,6 @@ void LCAO_Deepks::cal_orbital_precalc_k(
 					}
 
                     std::vector<double> s_2t(trace_alpha_size * col_size);
-                    key_tuple key_2(ibt2, dR2.x, dR2.y, dR2.z);
-
-					if (this->nlm_save_k[iat].find(key_2)
-							== this->nlm_save_k[iat].end()) 
-					{
-						continue;
-					}
 
                     for (int icol = 0; icol < col_size; icol++) 
                     {
