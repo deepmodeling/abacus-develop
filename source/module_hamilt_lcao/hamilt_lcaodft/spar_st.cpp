@@ -79,7 +79,7 @@ void sparse_format::cal_TR(const UnitCell& ucell,
                               orb,
                               pv,
                               two_center_bundle,
-                              &(GlobalC::GridD),
+                              &(grid),
                               HS_Arrays.Hloc_fixedR.data());
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);

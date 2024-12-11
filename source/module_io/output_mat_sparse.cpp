@@ -80,7 +80,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
         }
         else
         {
-            r_matrix.out_rR(ucell,istep);
+            r_matrix.out_rR(ucell, grid, istep);
         }
     }
 

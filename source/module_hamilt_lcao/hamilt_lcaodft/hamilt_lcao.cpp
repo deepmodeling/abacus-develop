@@ -192,7 +192,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     this->hR, // no explicit call yet
                                                                     &ucell,
                                                                     orb.cutoffs(),
-                                                                    &GlobalC::GridD,
+                                                                    &grid_d,
                                                                     PARAM.inp.nspin);
                 this->getOperator()->add(veff);
             }

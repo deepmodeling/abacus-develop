@@ -93,6 +93,7 @@ void cal_mag(Parallel_Orbitals* pv,
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,
              UnitCell& ucell,
+             Grid_Driver& gd,
              const int istep,
              const bool print)
 {
@@ -134,15 +135,14 @@ void cal_mag(Parallel_Orbitals* pv,
         auto atomLabels = ucell.get_atomLabels();
         if(PARAM.inp.nspin == 2)
         {
-            auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(
-                    nullptr,
-                    kv.kvec_d,
-                    nullptr,
-                    ucell,
-                    &GlobalC::GridD,
-                    two_center_bundle.overlap_orb_onsite.get(),
-                    orb.cutoffs()
-            );
+            auto sc_lambda
+                = new hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, double>>(nullptr,
+                                                                          kv.kvec_d,
+                                                                          nullptr,
+                                                                          ucell,
+                                                                          &gd,
+                                                                          two_center_bundle.overlap_orb_onsite.get(),
+                                                                          orb.cutoffs());
             dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(2);
             moments = sc_lambda->cal_moment(dmr, constrain);
             dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(pelec)->get_DM()->switch_dmr(0);
@@ -162,14 +162,13 @@ void cal_mag(Parallel_Orbitals* pv,
         else if(PARAM.inp.nspin == 4)
         {
             auto sc_lambda = new hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>(
-                    nullptr,
-                    kv.kvec_d,
-                    nullptr,
-                    ucell,
-                    &GlobalC::GridD,
-                    two_center_bundle.overlap_orb_onsite.get(),
-                    orb.cutoffs()
-            );
+                nullptr,
+                kv.kvec_d,
+                nullptr,
+                ucell,
+                &gd,
+                two_center_bundle.overlap_orb_onsite.get(),
+                orb.cutoffs());
             moments = sc_lambda->cal_moment(dmr, constrain);
             delete sc_lambda;
             //const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};

@@ -259,8 +259,17 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 14) initialize rdmft, added by jghan
     if( PARAM.inp.rdmft == true )
     {
-        rdmft_solver.init( this->GG, this->GK, this->pv, ucell, this->kv, *(this->pelec),
-                                this->orb_, two_center_bundle_, PARAM.inp.dft_functional, PARAM.inp.rdmft_power_alpha);
+        rdmft_solver.init(this->GG,
+                          this->GK,
+                          this->pv,
+                          ucell,
+                          this->gd,
+                          this->kv,
+                          *(this->pelec),
+                          this->orb_,
+                          two_center_bundle_,
+                          PARAM.inp.dft_functional,
+                          PARAM.inp.rdmft_power_alpha);
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "before_all_runners");
@@ -296,6 +305,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        PARAM.inp.test_force,
                        PARAM.inp.test_stress,
                        ucell,
+                       this->gd,
                        this->pv,
                        this->pelec,
                        this->psi,
@@ -458,7 +468,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     this->kv,
                                     orb_.cutoffs(),
                                     this->pelec->wg,
-                                    GlobalC::GridD
+                                    this->gd
 #ifdef __EXX
                                     ,
                                     this->exx_lri_double ? &this->exx_lri_double->Hexxs : nullptr,
@@ -484,7 +494,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             this->GK,
                                             this->kv,
                                             this->pelec->wg,
-                                            GlobalC::GridD,
+                                            this->gd,
                                             orb_.cutoffs(),
                                             this->two_center_bundle_
 #ifdef __EXX
@@ -1036,7 +1046,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                           this->pelec->klist->kvec_d,
                           ucell,
                           orb_,
-                          GlobalC::GridD,
+                          this->gd,
                           &(this->pv),
                           *(this->psi),
                           dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
@@ -1136,14 +1146,23 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                     two_center_bundle_,
                                     orb_,
                                     ucell,
-                                    GlobalC::GridD,
+                                    this->gd,
                                     this->kv,
                                     this->p_hamilt);
-        
+
         //! Perform Mulliken charge analysis
         if (PARAM.inp.out_mul)
         {
-            ModuleIO::cal_mag(&(this->pv), this->p_hamilt, this->kv, this->pelec, this->two_center_bundle_, this->orb_, ucell, istep, true);
+            ModuleIO::cal_mag(&(this->pv),
+                              this->p_hamilt,
+                              this->kv,
+                              this->pelec,
+                              this->two_center_bundle_,
+                              this->orb_,
+                              ucell,
+                              this->gd,
+                              istep,
+                              true);
         }
     }
 
@@ -1189,7 +1208,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                                                     &hR,
                                                                     &ucell,
                                                                     orb_.cutoffs(),
-                                                                    &GlobalC::GridD,
+                                                                    &this->gd,
                                                                     two_center_bundle_.kinetic_orb.get());
 
         const int nspin_k = (PARAM.inp.nspin == 2 ? 2 : 1);
@@ -1228,12 +1247,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                              PARAM.inp.wannier_spin);
 
             myWannier.calculate(ucell,
-                                this->pelec->ekb, 
-                                this->pw_wfc, 
-                                this->pw_big, 
-                                this->sf, 
-                                this->kv, 
-                                this->psi, 
+                                this->pelec->ekb,
+                                this->pw_wfc,
+                                this->pw_big,
+                                this->sf,
+                                this->kv,
+                                this->psi,
                                 &(this->pv));
         }
         else if (PARAM.inp.wannier_method == 2)
@@ -1247,7 +1266,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                        PARAM.inp.wannier_spin,
                                        orb_);
 
-            myWannier.calculate(ucell,this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
+            myWannier.calculate(ucell, this->gd, this->pelec->ekb, this->kv, *(this->psi), &(this->pv));
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wave function to Wannier90");
     }
@@ -1259,12 +1278,10 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase calculation");
         berryphase bp(&(this->pv));
-        bp.lcao_init(ucell,
-                     this->kv,
-                     this->GridT,
-                     orb_); // additional step before calling
-                            // macroscopic_polarization (why capitalize
-                            // the function name?)
+        bp.lcao_init(ucell, this->gd, this->kv, this->GridT, orb_);
+        // additional step before calling
+        // macroscopic_polarization (why capitalize
+        // the function name?)
         bp.Macroscopic_polarization(ucell,this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }

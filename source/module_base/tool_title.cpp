@@ -17,10 +17,10 @@ namespace ModuleBase
 
 void TITLE(const std::string &class_name,const std::string &function_name,const bool disable)
 {
-    if (disable)
-    {
-        return;//no output
-    }
+    // if (disable)
+    // {
+    //     return;//no output
+    // }
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_name<<"::"<<function_name<<"\t"
 		   <<ModuleBase::GlobalFunc::MemAvailable()/1024.0/1024<<" GB\t"
@@ -37,10 +37,10 @@ void TITLE(const std::string &class_name,const std::string &function_name,const 
 
 void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &function_name,const bool disable)
 {
-    if (disable)
-    {
-        return;//no output
-    }
+    // if (disable)
+    // {
+    //     return;//no output
+    // }
 #ifdef __NORMAL
     std::cout<<"\n\n ==> "<<class_name<<"::"<<function_name<<"\t"
 		   <<ModuleBase::GlobalFunc::MemAvailable()/1024.0/1024<<" GB\t"

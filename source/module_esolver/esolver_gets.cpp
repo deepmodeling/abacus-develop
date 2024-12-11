@@ -94,15 +94,17 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                             ucell.infoNL.get_rcutmax_Beta(),
                                             PARAM.globalv.gamma_only_local);
 
+    Grid_Driver gd;
+
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
-                         GlobalC::GridD,
+                         gd,
                          ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
 
     Record_adj RA;
-    RA.for_2d(ucell, GlobalC::GridD, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {
@@ -110,7 +112,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         {
             this->p_hamilt
                 = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
-                                                                                     GlobalC::GridD,
+                                                                                     gd,
                                                                                      &this->pv,
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
@@ -121,7 +123,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         else
         {
             this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
-                                                                                  GlobalC::GridD,
+                                                                                  gd,
                                                                                   &this->pv,
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
@@ -132,13 +134,13 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 
     const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
     std::cout << " The file is saved in " << fn << std::endl;
-    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(pv, gd, this->p_hamilt, fn);
 
     if (PARAM.inp.out_mat_r)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell,pv, orb_);
-        r_matrix.out_rR(ucell,istep);
+        r_matrix.out_rR(ucell, gd, istep);
     }
 
     ModuleBase::timer::tick("ESolver_GetS", "runner");

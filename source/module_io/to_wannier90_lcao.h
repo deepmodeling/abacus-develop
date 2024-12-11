@@ -80,12 +80,14 @@ class toWannier90_LCAO : public toWannier90
     ~toWannier90_LCAO();
 
     void calculate(const UnitCell& ucell,
+                   Grid_Driver& gd,
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<std::complex<double>>& psi,
                    const Parallel_Orbitals* pv);
 
     void calculate(const UnitCell& ucell,
+                   Grid_Driver& gd,
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<double>& psi,
@@ -131,7 +133,7 @@ class toWannier90_LCAO : public toWannier90
 
     void initialize_orb_table(const UnitCell& ucell);
     void produce_basis_orb();
-    void set_R_coor(const UnitCell& ucell);
+    void set_R_coor(const UnitCell& ucell, const Grid_Driver& gd);
     void count_delta_k(const UnitCell& ucell, const K_Vectors& kv);
 
     std::vector<Coordinate_3D> delta_k_all;

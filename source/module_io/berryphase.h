@@ -37,7 +37,11 @@ class berryphase
 
     void get_occupation_bands();
 #ifdef __LCAO
-    void lcao_init(const UnitCell& ucell, const K_Vectors& kv, const Grid_Technique& grid_tech, const LCAO_Orbitals& orb);
+    void lcao_init(const UnitCell& ucell,
+                   Grid_Driver& gd,
+                   const K_Vectors& kv,
+                   const Grid_Technique& grid_tech,
+                   const LCAO_Orbitals& orb);
 #endif
     void set_kpoints(const K_Vectors& kv, const int direction);
 

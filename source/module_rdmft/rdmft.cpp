@@ -55,15 +55,16 @@ RDMFT<TK, TR>::~RDMFT()
 }
 
 template <typename TK, typename TR>
-void RDMFT<TK, TR>::init(Gint_Gamma& GG_in, 
-                         Gint_k& GK_in, 
-                         Parallel_Orbitals& ParaV_in, 
+void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
+                         Gint_k& GK_in,
+                         Parallel_Orbitals& ParaV_in,
                          UnitCell& ucell_in,
-                         K_Vectors& kv_in, 
-                         elecstate::ElecState& pelec_in, 
-                         LCAO_Orbitals& orb_in, 
-                         TwoCenterBundle& two_center_bundle_in, 
-                         std::string XC_func_rdmft_in, 
+                         Grid_Driver& gd_in,
+                         K_Vectors& kv_in,
+                         elecstate::ElecState& pelec_in,
+                         LCAO_Orbitals& orb_in,
+                         TwoCenterBundle& two_center_bundle_in,
+                         std::string XC_func_rdmft_in,
                          double alpha_power_in)
 {
     GG = &GG_in;
@@ -74,6 +75,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
     charge = pelec_in.charge;
     pelec = &pelec_in;
     orb = &orb_in;
+    gd = &gd_in;
     two_center_bundle = &two_center_bundle_in;
     XC_func_rdmft = XC_func_rdmft_in;
     alpha_power = alpha_power_in;

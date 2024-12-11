@@ -9,11 +9,13 @@
 #include "module_basis/module_ao/ORB_gaunt_table.h"
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_basis/module_ao/parallel_orbitals.h"
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb11.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb-orb21.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/center2_orb.h"
 #include "single_R_io.h"
-#include "module_cell/unitcell.h"
+
 #include <map>
 #include <set>
 #include <vector>
@@ -31,7 +33,7 @@ class cal_r_overlap_R
     bool binary = false;
 
     void init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void out_rR(const UnitCell& ucell, const int& istep);
+    void out_rR(const UnitCell& ucell, Grid_Driver& gd, const int& istep);
     void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
   private:

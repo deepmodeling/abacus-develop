@@ -360,7 +360,7 @@ int unkOverlap_lcao::iw2im(const UnitCell& ucell, int iw)
 }
 
 // search for the nearest neighbor atoms
-void unkOverlap_lcao::cal_R_number(const UnitCell& ucell)
+void unkOverlap_lcao::cal_R_number(const UnitCell& ucell, Grid_Driver& gd)
 {
     // The number of overlaps between atomic orbitals 1 and atomic orbitals 2,
     // or the number of R, is empty when there is no overlap
@@ -377,18 +377,18 @@ void unkOverlap_lcao::cal_R_number(const UnitCell& ucell)
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1);
+            gd.Find_atom(ucell, tau1, T1, I1);
 
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
+            for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad)
             {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
+                const int T2 = gd.getType(ad);
+                const int I2 = gd.getNatom(ad);
                 Atom* atom2 = &ucell.atoms[T2];
-                const double R_direct_x = (double)GlobalC::GridD.getBox(ad).x;
-                const double R_direct_y = (double)GlobalC::GridD.getBox(ad).y;
-                const double R_direct_z = (double)GlobalC::GridD.getBox(ad).z;
+                const double R_direct_x = (double)gd.getBox(ad).x;
+                const double R_direct_y = (double)gd.getBox(ad).y;
+                const double R_direct_z = (double)gd.getBox(ad).z;
 
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
+                tau2 = gd.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
                 double rcut = rcut_orb_[T1] + rcut_orb_[T2];

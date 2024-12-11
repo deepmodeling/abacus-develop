@@ -17,6 +17,7 @@
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
+                                  Grid_Driver& gd,
                                   const Parallel_Orbitals& pv,
                                   ForceStressArrays& fsr, // mohan add 2024-06-15
                                   const TwoCenterBundle& two_center_bundle,
@@ -80,7 +81,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               orb,
                               pv,
                               two_center_bundle,
-                              &GlobalC::GridD,
+                              &gd,
                               nullptr);
 
     // calculate dT in LCAP
@@ -104,7 +105,7 @@ void Force_LCAO<double>::allocate(const UnitCell& ucell,
                               orb,
                               pv,
                               two_center_bundle,
-                              &GlobalC::GridD,
+                              &gd,
                               nullptr);
 
     // calculate asynchronous S matrix to output for Hefei-NAMD
@@ -175,6 +176,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const bool isstress,
                                 ForceStressArrays& fsr, // mohan add 2024-06-16
                                 const UnitCell& ucell,
+                                Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
                                 const elecstate::ElecState* pelec,
                                 ModuleBase::matrix& foverlap,
@@ -206,7 +208,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
     // allocate DSloc_x, DSloc_y, DSloc_z
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
-    this->allocate(ucell,pv, fsr, two_center_bundle, orb);
+    this->allocate(ucell, gd, pv, fsr, two_center_bundle, orb);
 
     const double* dSx[3] = { fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z };
     const double* dSxy[6] = { fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33 };
@@ -229,25 +231,24 @@ void Force_LCAO<double>::ftable(const bool isforce,
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        //GlobalC::ld.cal_projected_DM(dm, ucell, orb, GlobalC::GridD);
+        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
-		DeePKS_domain::cal_f_delta_gamma(
-				dm_gamma, 
-				ucell, 
-				orb, 
-				GlobalC::GridD, 
-                *this->ParaV,
-                GlobalC::ld.lmaxd,
-                GlobalC::ld.nlm_save,
-                GlobalC::ld.gedm,
-                GlobalC::ld.inl_index,
-                GlobalC::ld.F_delta,
-				isstress, 
-				svnl_dalpha);
+        DeePKS_domain::cal_f_delta_gamma(dm_gamma,
+                                         ucell,
+                                         orb,
+                                         gd,
+                                         *this->ParaV,
+                                         GlobalC::ld.lmaxd,
+                                         GlobalC::ld.nlm_save,
+                                         GlobalC::ld.gedm,
+                                         GlobalC::ld.inl_index,
+                                         GlobalC::ld.F_delta,
+                                         isstress,
+                                         svnl_dalpha);
 
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);

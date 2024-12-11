@@ -125,9 +125,4 @@ class Grid_Driver : public Grid
                                                         const short box_y,
                                                         const short box_z) const;
 };
-
-namespace GlobalC
-{
-extern Grid_Driver GridD;
-}
 #endif

@@ -118,6 +118,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
 }
 
 void ModuleIO::write_current(const UnitCell& ucell,
+                             Grid_Driver& gd,
                              const int istep,
                              const psi::Psi<std::complex<double>>* psi,
                              const elecstate::ElecState* pelec,
@@ -134,7 +135,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     if (!TD_Velocity::tddft_velocity)
     {
-        cal_current = new TD_current(&ucell, &GlobalC::GridD, pv, orb, intor);
+        cal_current = new TD_current(&ucell, &gd, pv, orb, intor);
         cal_current->calculate_vcomm_r();
         cal_current->calculate_grad_term();
         for (int dir = 0; dir < 3; dir++)

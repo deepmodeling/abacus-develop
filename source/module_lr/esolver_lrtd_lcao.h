@@ -49,6 +49,7 @@ namespace LR
       protected:
         const Input_para& input;
         const UnitCell& ucell;
+        Grid_Driver gd;
         std::vector<double> orb_cutoff_;
 
         // not to use ElecState because 2-particle state is quite different from 1-particle state.

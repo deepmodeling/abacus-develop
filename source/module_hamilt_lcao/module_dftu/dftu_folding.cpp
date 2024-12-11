@@ -126,25 +126,33 @@ void DFTU::fold_dSR_gamma(
     return;
 }
 
-void DFTU::folding_matrix_k(
-        const UnitCell &ucell,
-        ForceStressArrays &fsr,
-        const Parallel_Orbitals &pv,
-		const int ik, 
-		const int dim1, 
-		const int dim2, 
-		std::complex<double>* mat_k, 
-		const std::vector<ModuleBase::Vector3<double>> &kvec_d)
+void DFTU::folding_matrix_k(const UnitCell& ucell,
+                            Grid_Driver& gd,
+                            ForceStressArrays& fsr,
+                            const Parallel_Orbitals& pv,
+                            const int ik,
+                            const int dim1,
+                            const int dim2,
+                            std::complex<double>* mat_k,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr;
-    if      (dim1 == 1 || dim1 == 4) { mat_ptr = fsr.DSloc_Rx;
-    } else if (dim1 == 2 || dim1 == 5) { mat_ptr = fsr.DSloc_Ry;
-    } else if (dim1 == 3 || dim1 == 6) { mat_ptr = fsr.DSloc_Rz;
-}
+    if (dim1 == 1 || dim1 == 4)
+    {
+        mat_ptr = fsr.DSloc_Rx;
+    }
+    else if (dim1 == 2 || dim1 == 5)
+    {
+        mat_ptr = fsr.DSloc_Ry;
+    }
+    else if (dim1 == 3 || dim1 == 6)
+    {
+        mat_ptr = fsr.DSloc_Rz;
+    }
 
     int nnr = 0;
     ModuleBase::Vector3<double> dtau;
@@ -161,18 +169,18 @@ void DFTU::folding_matrix_k(
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(ucell, tau1, T1, I1);
+            gd.Find_atom(ucell, tau1, T1, I1);
             Atom* atom1 = &ucell.atoms[T1];
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 
             // (2) search among all adjacent atoms.
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
+            for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad)
             {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
+                const int T2 = gd.getType(ad);
+                const int I2 = gd.getNatom(ad);
                 Atom* atom2 = &ucell.atoms[T2];
 
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
+                tau2 = gd.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
                 double distance = dtau.norm() * ucell.lat0;
                 double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
@@ -185,12 +193,12 @@ void DFTU::folding_matrix_k(
                 }
                 else if (distance >= rcut)
                 {
-                    for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1; ++ad0)
+                    for (int ad0 = 0; ad0 < gd.getAdjacentNum() + 1; ++ad0)
                     {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-                        const int I0 = GlobalC::GridD.getNatom(ad0);
+                        const int T0 = gd.getType(ad0);
+                        const int I0 = gd.getNatom(ad0);
 
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+                        tau0 = gd.getAdjacentTau(ad0);
                         dtau1 = tau0 - tau1;
                         dtau2 = tau0 - tau2;
 
@@ -216,9 +224,7 @@ void DFTU::folding_matrix_k(
                     // exp(k dot dR)
                     // dR is the index of box in Crystal coordinates
                     //------------------------------------------------
-                    ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x,
-                                                   GlobalC::GridD.getBox(ad).y,
-                                                   GlobalC::GridD.getBox(ad).z);
+                    ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
                     const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 

@@ -180,16 +180,15 @@ private:
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
 
-    void folding_matrix_k(
-        const UnitCell &ucell,
-        ForceStressArrays &fsr,
-        const Parallel_Orbitals &pv,
-        const int ik, 
-        const int dim1, 
-        const int dim2, 
-        std::complex<double>* mat_k, 
-        const std::vector<ModuleBase::Vector3<double>> &kvec_d);
-
+    void folding_matrix_k(const UnitCell& ucell,
+                          Grid_Driver& gd,
+                          ForceStressArrays& fsr,
+                          const Parallel_Orbitals& pv,
+                          const int ik,
+                          const int dim1,
+                          const int dim2,
+                          std::complex<double>* mat_k,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
     /**
      * @brief new function of folding_S_matrix
@@ -202,9 +201,9 @@ private:
     // In dftu_force.cpp
     // For calculating force and stress fomr DFT+U
     //=============================================================
-  public:
-
+ public:
    void force_stress(const UnitCell& ucell,
+                     Grid_Driver& gd,
                      const elecstate::ElecState* pelec,
                      const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
@@ -212,43 +211,42 @@ private:
                      ModuleBase::matrix& stress_dftu,
                      const K_Vectors& kv);
 
-  private:
-
-   void cal_force_k(const UnitCell &ucell,
-                    ForceStressArrays &fsr,
-                    const Parallel_Orbitals &pv,
+ private:
+   void cal_force_k(const UnitCell& ucell,
+                    Grid_Driver& gd,
+                    ForceStressArrays& fsr,
+                    const Parallel_Orbitals& pv,
                     const int ik,
                     const std::complex<double>* rho_VU,
                     ModuleBase::matrix& force_dftu,
                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-    void cal_stress_k(
-      const UnitCell &ucell,
-			ForceStressArrays &fsr,
-			const Parallel_Orbitals &pv,
-			const int ik,
-			const std::complex<double>* rho_VU,
-			ModuleBase::matrix& stress_dftu,
-			const std::vector<ModuleBase::Vector3<double>>& kvec_d);
+   void cal_stress_k(const UnitCell& ucell,
+                     Grid_Driver& gd,
+                     ForceStressArrays& fsr,
+                     const Parallel_Orbitals& pv,
+                     const int ik,
+                     const std::complex<double>* rho_VU,
+                     ModuleBase::matrix& stress_dftu,
+                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
-	void cal_force_gamma(const UnitCell &ucell,
-                       const double* rho_VU, 
-                       const Parallel_Orbitals &pv,
-                       double* dsloc_x,
-                       double* dsloc_y,
-                       double* dsloc_z,
-                       ModuleBase::matrix& force_dftu);
+   void cal_force_gamma(const UnitCell& ucell,
+                        const double* rho_VU,
+                        const Parallel_Orbitals& pv,
+                        double* dsloc_x,
+                        double* dsloc_y,
+                        double* dsloc_z,
+                        ModuleBase::matrix& force_dftu);
 
-	void cal_stress_gamma(
-			const UnitCell &ucell,
-			const Parallel_Orbitals &pv,
-			Grid_Driver* gd,
-			double* dsloc_x,
-			double* dsloc_y,
-			double* dsloc_z,
-			double* dh_r,
-			const double* rho_VU, 
-			ModuleBase::matrix& stress_dftu);
+   void cal_stress_gamma(const UnitCell& ucell,
+                         const Parallel_Orbitals& pv,
+                         Grid_Driver* gd,
+                         double* dsloc_x,
+                         double* dsloc_y,
+                         double* dsloc_z,
+                         double* dh_r,
+                         const double* rho_VU,
+                         ModuleBase::matrix& stress_dftu);
 #endif
 
     //=============================================================

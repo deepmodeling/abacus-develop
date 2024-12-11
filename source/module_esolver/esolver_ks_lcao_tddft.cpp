@@ -299,6 +299,7 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
             = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)->get_DM();
 
         ModuleIO::write_current(ucell,
+                                this->gd,
                                 istep,
                                 this->psi,
                                 pelec,

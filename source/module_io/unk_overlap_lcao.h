@@ -54,7 +54,7 @@ class unkOverlap_lcao
     int iw2iL(const UnitCell& ucell, int iw);
     int iw2iN(const UnitCell& ucell, int iw);
     int iw2im(const UnitCell& ucell, int iw);
-    void cal_R_number(const UnitCell& ucell);
+    void cal_R_number(const UnitCell& ucell, Grid_Driver& gd);
     void cal_orb_overlap(const UnitCell& ucell);
     void prepare_midmatrix_pblas(const UnitCell& ucell,
                                  const int ik_L,

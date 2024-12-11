@@ -59,6 +59,8 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     const UnitCell* ucell = nullptr;
 
+    Grid_Driver* gd = nullptr;
+
     HContainer<TR>* H_V_delta = nullptr;
 
     // the following variable is introduced temporarily during LCAO refactoring
