@@ -99,6 +99,14 @@ TEST_F(InputTest, Item_test)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // smearing_method
+        auto it = find_label("smearing_method", readinput.input_lists);
+        param.input.smearing_method = "fix";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // kspacing
         auto it = find_label("kspacing", readinput.input_lists);
         it->second.str_values = {"1"};
