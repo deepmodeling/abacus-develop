@@ -1224,7 +1224,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                                              PARAM.inp.out_wannier_wvfn_formatted,
                                              PARAM.inp.nnkpfile,
                                              PARAM.inp.wannier_spin);
-
+            myWannier.set_tpiba_omega(ucell.tpiba, ucell.omega);
             myWannier.calculate(ucell,
                                 this->pelec->ekb, 
                                 this->pw_wfc, 
