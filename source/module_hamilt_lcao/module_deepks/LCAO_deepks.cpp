@@ -89,7 +89,8 @@ void LCAO_Deepks::init(
     
     int tot_inl = tot_inl_per_atom * nat;
 
-    if(PARAM.inp.deepks_equiv) tot_inl = nat;
+    if(PARAM.inp.deepks_equiv) { tot_inl = nat;
+}
 
     this->lmaxd = lm;
     this->nmaxd = nm;
