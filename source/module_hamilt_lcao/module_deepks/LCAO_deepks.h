@@ -57,9 +57,6 @@ class LCAO_Deepks
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
     std::vector<std::vector<double>> H_V_delta;
     /// Correction term to Hamiltonian, for multi-k
-    /// In R space:
-    double* H_V_deltaR;
-    /// In k space:
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
     // F_delta will be deleted soon, mohan 2024-07-25
@@ -207,7 +204,6 @@ class LCAO_Deepks
     // 3. subroutines that are related to V_delta:
     //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
     //       init_gdmx, as well as allocating F_delta
-    //   - allocate_V_deltaR : allcoates H_V_deltaR, for multi-k calculations
 
   public:
     explicit LCAO_Deepks();
@@ -224,8 +220,6 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
-
-    void allocate_V_deltaR(const int nnr);
 
     // array for storing gdmx, used for calculating gvx
     void init_gdmx(const int nat);

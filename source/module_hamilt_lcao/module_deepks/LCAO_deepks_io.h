@@ -52,18 +52,6 @@ void load_npy_gedm(const int nat,
 		double& e_delta,
 		const int rank);
 
-    ///----------------------------------------------------------------------
-    /// The following 4 functions save the `[dm_eig], [e_base], [f_base], [grad_vx]`
-    /// of current configuration as `.npy` file, when `deepks_scf = 1`.
-    /// After a full group of consfigurations are calculated,
-    /// we need a python script to `load` and `torch.cat` these `.npy` files,
-    /// and get `l_e_delta,npy` and `l_f_delta.npy` corresponding to the exact E, F data.
-    ///
-    /// Unit of energy: Ry
-    ///
-    /// Unit of force: Ry/Bohr
-    ///----------------------------------------------------------------------
-
 /// save descriptor
 void save_npy_d(const int nat,
 		const int des_per_atom,

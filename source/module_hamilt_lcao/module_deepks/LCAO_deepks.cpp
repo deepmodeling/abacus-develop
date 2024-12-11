@@ -17,7 +17,6 @@
 //4. subroutines that are related to V_delta:
 //  - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
 //      init_gdmx, as well as allocating F_delta
-//  - allocate_V_deltaR : allcoates H_V_deltaR, for multi-k calculations
 
 #ifdef __DEEPKS
 
@@ -35,7 +34,6 @@ LCAO_Deepks::LCAO_Deepks()
     alpha_index = new ModuleBase::IntArray[1];
     inl_index = new ModuleBase::IntArray[1];
     inl_l = nullptr;
-    H_V_deltaR = nullptr;
     gedm = nullptr;
 }
 
@@ -45,7 +43,6 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] alpha_index;
     delete[] inl_index;
     delete[] inl_l;
-    delete[] H_V_deltaR;
 
     //=======1. to use deepks, pdm is required==========
     //delete pdm**
@@ -367,15 +364,6 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     }
 
     return;
-}
-
-void LCAO_Deepks::allocate_V_deltaR(const int nnr)
-{
-    ModuleBase::TITLE("LCAO_Deepks", "allocate_V_deltaR");
-    GlobalV::ofs_running << nnr << std::endl;
-    delete[] H_V_deltaR;
-    H_V_deltaR = new double[nnr];
-    ModuleBase::GlobalFunc::ZEROS(H_V_deltaR, nnr);
 }
 
 void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
