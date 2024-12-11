@@ -51,21 +51,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET md_LJ_pot
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES lj_pot_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_func
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES md_func_test.cpp  
   ${depend_files}
 )
 
 AddTest(
   TARGET md_fire
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -74,7 +74,7 @@ AddTest(
 
 AddTest(
   TARGET md_verlet
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -83,7 +83,7 @@ AddTest(
 
 AddTest(
   TARGET md_nhc
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
@@ -92,7 +92,7 @@ AddTest(
 
 AddTest(
   TARGET md_msst
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
@@ -101,7 +101,7 @@ AddTest(
 
 AddTest(
   TARGET md_lgv
-  LIBS parameter ${math_libs} psi device 
+  LIBS parameter ${math_libs} psi base device 
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp

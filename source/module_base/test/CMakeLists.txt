@@ -2,7 +2,7 @@ remove_definitions(-D__MPI)
 install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET base_blas_connector
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES blas_connector_test.cpp ../blas_connector.cpp
 )
 AddTest(
@@ -31,7 +31,7 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
-  LIBS parameter ${math_libs} 
+  LIBS parameter ${math_libs} base device
   SOURCES global_function_test.cpp ../blas_connector.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
@@ -41,7 +41,7 @@ AddTest(
 )
 AddTest(
   TARGET base_matrix3
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
 )
 AddTest(
@@ -56,7 +56,7 @@ AddTest(
 )
 AddTest(
  TARGET base_matrix
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES matrix_test.cpp ../blas_connector.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
@@ -66,7 +66,7 @@ AddTest(
 )
 AddTest(
   TARGET base_complexmatrix
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES complexmatrix_test.cpp ../blas_connector.cpp ../complexmatrix.cpp ../matrix.cpp
 )
 AddTest(
@@ -93,12 +93,12 @@ AddTest(
 )
 AddTest(
   TARGET base_mathzone
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
 )
 AddTest(
   TARGET base_mathzone_add1
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES mathzone_add1_test.cpp ../blas_connector.cpp ../mathzone_add1.cpp ../math_sphbes.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
 )
 AddTest(
@@ -108,7 +108,7 @@ AddTest(
 )
 AddTest(
   TARGET base_gram_schmidt_orth
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES gram_schmidt_orth_test.cpp ../blas_connector.cpp ../gram_schmidt_orth.h ../gram_schmidt_orth-inl.h ../global_function.h ../math_integral.cpp
 )
 AddTest(
@@ -118,7 +118,7 @@ AddTest(
 )
 AddTest(
   TARGET base_inverse_matrix
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES inverse_matrix_test.cpp ../blas_connector.cpp ../inverse_matrix.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp 
 )
 AddTest(
@@ -140,19 +140,19 @@ AddTest(
 
 AddTest(
   TARGET base_lapack_connector
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES lapack_connector_test.cpp ../blas_connector.cpp ../lapack_connector.h
 )
 
 AddTest(
   TARGET base_opt_CG
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES opt_CG_test.cpp opt_test_tools.cpp ../blas_connector.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
   SOURCES opt_TN_test.cpp opt_test_tools.cpp ../blas_connector.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
 )
 
@@ -195,13 +195,13 @@ AddTest(
 AddTest(
   TARGET spherical_bessel_transformer
   SOURCES spherical_bessel_transformer_test.cpp ../blas_connector.cpp ../spherical_bessel_transformer.cpp ../math_sphbes.cpp ../math_integral.cpp ../timer.cpp
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
   TARGET cubic_spline
   SOURCES cubic_spline_test.cpp ../blas_connector.cpp ../cubic_spline.cpp
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
 )
 
 AddTest(
@@ -215,7 +215,7 @@ AddTest(
 AddTest(
   TARGET assoc_laguerre_test
   SOURCES assoc_laguerre_test.cpp ../blas_connector.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} device
 )
 
 AddTest(

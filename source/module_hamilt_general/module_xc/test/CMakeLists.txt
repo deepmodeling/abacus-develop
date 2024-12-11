@@ -29,7 +29,7 @@ list(APPEND FFT_SRC ../../../module_basis/module_pw/module_fft/fft_rocm.cpp)
 endif()
 AddTest(
   TARGET XCTest_GRADCORR
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi base device container 
   SOURCES test_xc3.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
     ../xc_functional_libxc.cpp
@@ -63,7 +63,7 @@ AddTest(
 
 AddTest(
   TARGET XCTest_VXC
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi base device container 
   SOURCES test_xc5.cpp ../xc_functional_gradcorr.cpp ../xc_functional.cpp
     ../xc_functional_wrapper_xc.cpp ../xc_functional_wrapper_gcxc.cpp
     ../xc_functional_libxc.cpp

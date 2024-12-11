@@ -5,7 +5,7 @@ remove_definitions(-D__EXX)
 
 AddTest(
   TARGET pwdft_soc
-  LIBS parameter  ${math_libs}
+  LIBS parameter  ${math_libs} base device
   SOURCES soc_test.cpp ../soc.cpp
   	../../../module_base/global_variable.cpp
   	../../../module_base/global_function.cpp
