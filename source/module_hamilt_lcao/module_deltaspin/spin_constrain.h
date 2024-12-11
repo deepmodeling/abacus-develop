@@ -37,17 +37,17 @@ public:
                Parallel_Orbitals* ParaV_in,
                int nspin_in,
                K_Vectors& kv_in,
-               std::string KS_SOLVER_in,
                void* p_hamilt_in,
                void* psi_in,
-               elecstate::ElecState* pelec_in);
+               elecstate::ElecState* pelec_in,
+               ModulePW::PW_Basis_K* pw_wfc_in = nullptr);
 
   /// @brief calculate the magnetization of each atom with real space projection method for LCAO base
   /// @param step : the step number of the SCF calculation
   /// @param print : print the magnetization of each atom if true
   void cal_mi_lcao(const int& step, bool print = false);
 
-  //void cal_mi_pw();
+  void cal_mi_pw();
 
   void cal_mw_from_lambda(int i_step, const ModuleBase::Vector3<double>* delta_lambda = nullptr);
 
@@ -108,7 +108,8 @@ public:
     void* p_hamilt = nullptr;
     void* psi = nullptr;
     elecstate::ElecState* pelec = nullptr;
-    std::string KS_SOLVER;
+    ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
+    double tpiba = 0.0; /// save ucell.tpiba
     const double meV_to_Ry = 7.349864435130999e-05;
     K_Vectors kv_;
     //--------------------------------------------------------------------------------
@@ -203,8 +204,7 @@ public:
     void set_solver_parameters(K_Vectors& kv_in,
                                void* p_hamilt_in,
                                void* psi_in,
-                               elecstate::ElecState* pelec_in,
-                               std::string KS_SOLVER_in);
+                               elecstate::ElecState* pelec_in);
 
   private:
     SpinConstrain(){};                               // Private constructor

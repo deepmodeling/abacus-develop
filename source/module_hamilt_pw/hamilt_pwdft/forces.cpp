@@ -50,6 +50,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
     ModuleBase::matrix forcenl(nat, 3);
     ModuleBase::matrix forcescc(nat, 3);
     ModuleBase::matrix forcepaw(nat, 3);
+    ModuleBase::matrix forceonsite(nat, 3);
 
     // Force due to local ionic potential
     // For PAW, calculated together in paw_cell.calculate_force
@@ -155,6 +156,11 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
                 delete[] epsilon;
             }
 #endif
+        }
+        // DFT+U and DeltaSpin
+        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        {
+            this->cal_force_onsite(forceonsite, wg, wfc_basis, GlobalC::ucell, psi_in);
         }
     }
 
@@ -317,6 +323,11 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
                     force(iat, ipol) = force(iat, ipol) + forcesol(iat, ipol);
                 }
 
+                if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+                {
+                    force(iat, ipol) += forceonsite(iat, ipol);
+                }
+
                 sum += force(iat, ipol);
 
                 iat++;
@@ -455,6 +466,14 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
                                   ucell,
                                   "IMP_SOL   FORCE (eV/Angstrom)",
                                   forcesol,
+                                  false);
+        }
+        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        {
+            ModuleIO::print_force(GlobalV::ofs_running,
+                                  ucell,
+                                  "ONSITE_PROJ    FORCE (eV/Angstrom)",
+                                  forceonsite,
                                   false);
         }
     }

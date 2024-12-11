@@ -38,8 +38,10 @@ DFTU::~DFTU()
 
 void DFTU::init(UnitCell& cell, // unitcell class
                 const Parallel_Orbitals* pv,
-                const int& nks,
-                const LCAO_Orbitals& orb
+                const int nks
+#ifdef __LCAO
+                , const LCAO_Orbitals* orb
+#endif
                 )
 {
     ModuleBase::TITLE("DFTU", "init");
@@ -50,9 +52,14 @@ void DFTU::init(UnitCell& cell, // unitcell class
 #endif
 
     this->paraV = pv;
-    
-    ptr_orb_ = &orb;
-    orb_cutoff_ = orb.cutoffs();
+
+#ifdef __LCAO    
+    ptr_orb_ = orb;
+    if(ptr_orb_ != nullptr)
+    {
+        orb_cutoff_ = orb->cutoffs();
+    }
+#endif
 
     // needs reconstructions in future
     // global parameters, need to be removed in future
@@ -64,6 +71,9 @@ void DFTU::init(UnitCell& cell, // unitcell class
 
     this->locale.resize(cell.nat);
     this->locale_save.resize(cell.nat);
+    // only for PW base
+    this->eff_pot_pw_index.resize(cell.nat);
+    int pot_index = 0;
 
     this->iatlnmipol2iwt.resize(cell.nat);
 
@@ -79,6 +89,10 @@ void DFTU::init(UnitCell& cell, // unitcell class
 
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
+
+            const int tlp1_npol = (this->orbital_corr[it]*2+1)*npol;
+            this->eff_pot_pw_index[iat] = pot_index;
+            pot_index += tlp1_npol * tlp1_npol;
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
@@ -143,6 +157,8 @@ void DFTU::init(UnitCell& cell, // unitcell class
             }
         }
     }
+    // allocate memory for eff_pot_pw
+    this->eff_pot_pw.resize(pot_index, 0.0);
 
     if (Yukawa)
     {
@@ -208,6 +224,8 @@ void DFTU::init(UnitCell& cell, // unitcell class
     ModuleBase::Memory::record("DFTU::locale", sizeof(double) * num_locale);
     return;
 }
+
+#ifdef __LCAO
 
 void DFTU::cal_energy_correction(const UnitCell& ucell,
                                  const int istep)
@@ -360,6 +378,8 @@ void DFTU::cal_energy_correction(const UnitCell& ucell,
     return;
 }
 
+#endif
+
 void DFTU::uramping_update()
 {
     // if uramping < 0.1, use the original U
@@ -391,6 +411,8 @@ bool DFTU::u_converged()
     }
     return true;
 }
+
+#ifdef __LCAO
 
 void DFTU::set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dmr)
 {
@@ -443,4 +465,7 @@ void dftu_cal_occup_m(const int iter,
 {
     GlobalC::dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
 }
+
+#endif
+
 } // namespace ModuleDFTU

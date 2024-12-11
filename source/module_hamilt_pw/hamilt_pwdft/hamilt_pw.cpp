@@ -10,6 +10,7 @@
 #include "operator_pw/ekinetic_pw.h"
 #include "operator_pw/meta_pw.h"
 #include "operator_pw/nonlocal_pw.h"
+#include "operator_pw/onsite_proj_pw.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -114,6 +115,12 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
             this->ops->add(nonlocal);
         }
     }
+    if(PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
+    {
+        Operator<T, Device>* onsite_proj
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, &GlobalC::ucell, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
+        this->ops->add(onsite_proj);
+    }
     return;
 }
 
@@ -190,6 +197,17 @@ HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             }
             else {
                 this->ops->add(meta);
+            }
+        }
+        else if (node->classname == "OnsiteProj") {
+            Operator<T, Device>* onsite_proj =
+                    new OnsiteProj<OperatorPW<T, Device>>(
+                            reinterpret_cast<const OnsiteProj<OperatorPW<T_in, Device_in>>*>(node));
+            if(this->ops == nullptr) {
+                this->ops = onsite_proj;
+            }
+            else {
+                this->ops->add(onsite_proj);
             }
         }
         else {

@@ -54,6 +54,10 @@
 #include "module_base/kernels/dsp/dsp_connector.h"
 #endif
 
+#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
+
 namespace ModuleESolver
 {
 
@@ -359,6 +363,46 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
 
+    if(PARAM.inp.onsite_radius > 0) 
+    {
+        auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+        onsite_p->init(PARAM.inp.orbital_dir,
+                       &ucell,
+                       *(this->kspw_psi),
+                       this->kv,
+                       *(this->pw_wfc), 
+                       this->sf,
+                       PARAM.inp.onsite_radius,
+                       PARAM.globalv.nqx,
+                       PARAM.globalv.dq,
+                       this->pelec->wg,
+                       this->pelec->ekb);
+    }
+
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        sc.init_sc(PARAM.inp.sc_thr,
+                   PARAM.inp.nsc,
+                   PARAM.inp.nsc_min,
+                   PARAM.inp.alpha_trial,
+                   PARAM.inp.sccut,
+                   PARAM.inp.sc_drop_thr,
+                   ucell,
+                   nullptr,
+                   PARAM.inp.nspin,
+                   this->kv,
+                   this->p_hamilt,
+                   this->kspw_psi,
+                   this->pelec,
+                   this->pw_wfc);
+    }
+
+    if(PARAM.inp.dft_plus_u)
+    {
+        auto* dftu = ModuleDFTU::DFTU::get_instance();
+        dftu->init(ucell, nullptr, this->kv.get_nks());
+    }
     // after init_rho (in pelec->init_scf), we have rho now.
     // before hamilt2density, we update Hk and initialize psi
 
@@ -400,10 +444,55 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     if (iter == this->p_chgmix->mixing_restart_step && PARAM.inp.mixing_restart > 0.0)
     {
         this->p_chgmix->init_mixing();
+        this->p_chgmix->mixing_restart_count++;
+        if (PARAM.inp.dft_plus_u)
+        {
+            auto* dftu = ModuleDFTU::DFTU::get_instance();
+            if (dftu->uramping > 0.01 && !dftu->u_converged())
+            {
+                this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
+            }
+            if (dftu->uramping > 0.01)
+            {
+                bool do_uramping = true;
+                if (PARAM.inp.sc_mag_switch)
+                {
+                    spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+                    if(!sc.mag_converged())// skip uramping if mag not converged
+                    {
+                        do_uramping = false;
+                    }
+                }
+                if(do_uramping)
+                {
+                    dftu->uramping_update(); // update U by uramping if uramping > 0.01
+                    std::cout << " U-Ramping! Current U = ";
+                    for (int i = 0; i < dftu->U0.size(); i++)
+                    {
+                        std::cout << dftu->U[i] * ModuleBase::Ry_to_eV << " ";
+                    }
+                    std::cout << " eV " << std::endl;
+                }
+            }
+        }
     }
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
     this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
+
+    // update local occupations for DFT+U
+    // should before lambda loop in DeltaSpin
+    if (PARAM.inp.dft_plus_u && (iter != 1 || istep != 0))
+    {
+        auto* dftu = ModuleDFTU::DFTU::get_instance();
+        // only old DFT+U method should calculated energy correction in esolver,
+        // new DFT+U method will calculate energy in calculating Hamiltonian
+        if (dftu->omc != 2)
+        {
+            dftu->cal_occ_pw(iter, this->kspw_psi, this->pelec->wg, ucell, PARAM.inp.mixing_beta);
+        }
+        dftu->output(ucell);
+    }
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -431,27 +520,49 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
     }
     bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-    hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
-                                                 PARAM.inp.calculation,
-                                                 PARAM.inp.basis_type,
-                                                 PARAM.inp.ks_solver,
-                                                 PARAM.inp.use_paw,
-                                                 PARAM.globalv.use_uspp,
-                                                 PARAM.inp.nspin,
-                                                 hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
-                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
-                                                 hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<T, Device>::need_subspace);
+    // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
+    bool skip_solve = false;
+    if (PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        if(!sc.mag_converged() && this->drho>0 && this->drho < PARAM.inp.sc_scf_thr)
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            sc.set_mag_converged(true);
+            skip_solve = true;
+        }
+        else if(sc.mag_converged())
+        {
+            // optimize lambda to get target magnetic moments, but the lambda is not near target
+            sc.run_lambda_loop(iter-1);
+            skip_solve = true;
+        }
+    }
+    if(!skip_solve)
+    {
+        hsolver::HSolverPW<T, Device> hsolver_pw_obj(this->pw_wfc,
+                                                    PARAM.inp.calculation,
+                                                    PARAM.inp.basis_type,
+                                                    PARAM.inp.ks_solver,
+                                                    PARAM.inp.use_paw,
+                                                    PARAM.globalv.use_uspp,
+                                                    PARAM.inp.nspin,
+                                                    hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
+                                                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
+                                                    hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                                    hsolver::DiagoIterAssist<T, Device>::need_subspace);
 
-    hsolver_pw_obj.solve(this->p_hamilt,
-                         this->kspw_psi[0],
-                         this->pelec,
-                         this->pelec->ekb.c,
-                         GlobalV::RANK_IN_POOL,
-                         GlobalV::NPROC_IN_POOL,
-                         skip_charge,
-                         ucell.tpiba,
-                         ucell.nat);
+        hsolver_pw_obj.solve(this->p_hamilt,
+                            this->kspw_psi[0],
+                            this->pelec,
+                            this->pelec->ekb.c,
+                            GlobalV::RANK_IN_POOL,
+                            GlobalV::NPROC_IN_POOL,
+                            skip_charge,
+                            ucell.tpiba,
+                            ucell.nat);
+    }
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -515,6 +626,20 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
             ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
             // ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running,"write wave
             // functions into file WAVEFUNC.dat");
+        }
+    }
+    // 4) check if oscillate for delta_spin method
+    if(PARAM.inp.sc_mag_switch)
+    {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        if(!sc.higher_mag_prec)
+        {
+            sc.higher_mag_prec = 
+                this->p_chgmix->if_scf_oscillate(iter, this->drho, PARAM.inp.sc_os_ndim, PARAM.inp.scf_os_thr);
+            if(sc.higher_mag_prec)
+            { // if oscillate, increase the precision of magnetization and do mixing_restart in next iteration
+                this->p_chgmix->mixing_restart_step = iter + 1;
+            }
         }
     }
 }
@@ -599,6 +724,22 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
         berryphase bp;
         bp.Macroscopic_polarization(ucell,this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
+    }
+
+    // 8) write spin constrian results
+    // spin constrain calculations, write atomic magnetization and magnetic force.
+    if (PARAM.inp.sc_mag_switch) {
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        sc.cal_mi_pw();
+        sc.print_Mag_Force(GlobalV::ofs_running);
+    }
+
+    // 9) write onsite occupations for charge and magnetizations
+    if(PARAM.inp.onsite_radius > 0)
+    { // float type has not been implemented
+        auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
+        onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi), this->pelec->wg);
     }
 }
 

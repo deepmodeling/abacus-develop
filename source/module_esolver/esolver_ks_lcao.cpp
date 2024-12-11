@@ -193,7 +193,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // 7) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
-        GlobalC::dftu.init(ucell, &this->pv, this->kv.get_nks(), orb_);
+        auto* dftu = ModuleDFTU::DFTU::get_instance();
+        dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
     // 8) initialize ppcell
@@ -1140,7 +1141,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         //! Perform Mulliken charge analysis
         if (PARAM.inp.out_mul)
         {
-            ModuleIO::cal_mag(&(this->pv), this->p_hamilt, this->kv, this->pelec, ucell, istep, true);
+            ModuleIO::cal_mag(&(this->pv), this->p_hamilt, this->kv, this->pelec, this->two_center_bundle_, this->orb_, ucell, istep, true);
         }
     }
 

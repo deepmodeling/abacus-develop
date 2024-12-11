@@ -82,6 +82,17 @@ class Forces
                       const pseudopot_cell_vnl& nlpp_in,
                       const UnitCell& ucell_in,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
+    /// @brief atomic force for DFT+U and DeltaSpin
+    /// @param force_onsite , the output atomic force
+    /// @param wg , the weight of k points
+    /// @param wfc_basis , the plane wave basis
+    /// @param ucell_in , the unit cell
+    /// @param psi_in , the wave function
+    void cal_force_onsite(ModuleBase::matrix& force_onsite,
+                      const ModuleBase::matrix& wg,
+                      const ModulePW::PW_Basis_K* wfc_basis,
+                      const UnitCell& ucell_in,
+                      const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,

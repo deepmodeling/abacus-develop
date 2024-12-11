@@ -114,13 +114,13 @@ public:
         );
     }
 
-    void diag(
-        std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
-        int diag_ndim,
-        double tol,
-        bool need_subspace,
-        bool scf_type,
-        int nproc_in_pool = 1
+    void diag(std::function<py::array_t<std::complex<double>>(py::array_t<std::complex<double>>)> mm_op,
+              int diag_ndim,
+              double tol,
+              const std::vector<double>& diag_ethr,
+              bool need_subspace,
+              bool scf_type,
+              int nproc_in_pool = 1
     ) {
         const std::string basis_type = "pw";
         const std::string calculation = scf_type ? "scf" : "nscf";
@@ -171,7 +171,7 @@ public:
             nproc_in_pool
         );
 
-        cg->diag(hpsi_func, spsi_func, *psi, *eig, *prec);
+        cg->diag(hpsi_func, spsi_func, *psi, *eig, diag_ethr, *prec);
     }
 
 private:

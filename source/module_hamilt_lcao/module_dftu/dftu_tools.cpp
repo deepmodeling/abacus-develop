@@ -6,6 +6,7 @@
 namespace ModuleDFTU
 {
 
+#ifdef __LCAO
 void DFTU::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU)
 {
     ModuleBase::TITLE("DFTU", "cal_VU_pot_mat_complex");
@@ -203,4 +204,5 @@ double DFTU::get_onebody_eff_pot(const int T,
 
     return VU;
 }
+#endif
 } // namespace ModuleDFTU

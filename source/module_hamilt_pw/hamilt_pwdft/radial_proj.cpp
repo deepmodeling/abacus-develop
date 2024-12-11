@@ -8,6 +8,7 @@
 #include "module_base/matrix.h"
 #include "module_base/math_ylmreal.h"
 #include "module_base/spherical_bessel_transformer.h"
+#include "module_base/timer.h"
 
 void RadialProjection::RadialProjector::_build_backward_map(const std::vector<std::vector<int>>& it2iproj,
                                                             const std::vector<int>& iproj2l,
@@ -81,6 +82,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
                                                        const int nq,
                                                        const double& dq)
 {
+    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
     l_ = l;
     const int nrad = radials.size();
     assert(nrad == l.size());
@@ -104,6 +106,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
         std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x/pref;});
         cubspl_->add(_temp.data());
     }
+    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
 }
 
 void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>& r,
@@ -112,12 +115,81 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<double>
                                                        const int nq,
                                                        const double& dq)
 {
+    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
     const int nr = r.size();
     const int nrad = radials.size();
     for(int i = 0; i < nrad; i++) { assert(radials[i].size() == nr); }
     std::vector<double*> radptrs(radials.size());
     for(int i = 0; i < radials.size(); i++) { radptrs[i] = const_cast<double*>(radials[i].data()); }
+    ModuleBase::timer::tick("RadialProjection", "cubspl_tabulate_vq_each_radial");
     _build_sbt_tab(nr, r.data(), radptrs, l, nq, dq);
+}
+
+void RadialProjection::RadialProjector::_build_sbt_tab(const std::vector<int>& nproj,
+                                                       const std::vector<double>& r,
+                                                       const std::vector<std::vector<double>>& radials,
+                                                       const std::vector<int>& l,
+                                                       const int nq,                             //< GlobalV::DQ
+                                                       const double& dq,                         //< GlobalV::NQX
+                                                       const double& omega,
+                                                       const int npol,                           // for nspin 4
+                                                       ModuleBase::realArray& tab,
+                                                       ModuleBase::matrix& nhtol)                // output table
+{
+    int nprojmax = *std::max_element(nproj.begin(), nproj.end());
+    const int ntype = nproj.size();
+
+    tab.create(ntype, nprojmax*npol, nq);
+    tab.zero_out();
+
+    std::vector<double> qgrid(nq);
+    std::iota(qgrid.begin(), qgrid.end(), 0);
+    std::transform(qgrid.begin(), qgrid.end(), qgrid.begin(), [dq](const double& q){return q*dq;});
+
+    ModuleBase::SphericalBesselTransformer sbt_(true); // bool: enable cache
+    int iproj = 0;
+    int nchmax = 0;
+    const double pref = 4*M_PI/std::sqrt(omega) / std::sqrt(2.0/std::acos(-1.0));
+    for (int it = 0; it < ntype; it++)
+    {
+        int nch = 0;
+        const int nproj_it = nproj[it];
+        for (int ip = 0; ip < nproj_it; ip++)
+        {
+            const int l_ = l[iproj];
+            nch += 2*l_ + 1;
+            std::vector<double> _temp(nq);
+            sbt_.direct(l_, r.size(), r.data(), radials[iproj].data(), nq, qgrid.data(), _temp.data());
+            std::for_each(_temp.begin(), _temp.end(), [pref](double& x){x = x*pref;});
+            for (int iq = 0; iq < nq; iq++)
+            {
+                tab(it, ip, iq) = _temp[iq];
+                //std::cout << tab(it, ip, iq) << " ";
+            }
+            iproj++;
+        }
+        nchmax = std::max(nchmax, nch);
+    }
+    //std::cout << std::endl;
+    //ModuleBase::WARNING_QUIT("RadialProjection", "The following code is not implemented yet.");
+    
+    nhtol.create(ntype, nchmax);
+    nhtol.zero_out();
+    iproj = 0;
+    for (int it = 0; it < ntype; it++)
+    {
+        int ih = 0; // channel index, across all projectors of present type
+        for (int ip = 0; ip < nproj[it]; ip++)
+        {
+            const int l_ = l[iproj];
+            for (int m = -l_; m <= l_; m++)
+            {
+                nhtol(it, ih) = l_;
+                ih++;
+            }
+            iproj++;
+        }
+    }
 }
 
 void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vector3<double>>& qs,
@@ -126,6 +198,8 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
                                               const double& omega,
                                               const double& tpiba)
 {
+    ModuleBase::timer::tick("RadialProjection", "interp_sphbes_ft_flzYlm");
+    assert(type == 'r' || type == 'l'); // type must be one of 'r' or 'l'
     // first cache the Ylm values
     const int lmax_ = *std::max_element(l_.begin(), l_.end());
     const int total_lm = std::pow(lmax_+1, 2);
@@ -146,7 +220,11 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
     for(int i = 0; i < nrad; i++)
     {
         const int l = l_[i];
-        std::complex<double> pref = (type == 'r')? std::pow(ModuleBase::IMAG_UNIT, l) : std::pow(ModuleBase::NEG_IMAG_UNIT, l);
+        // here is bug-prone
+        // we define l as <p|G+k> and r as <G+k|p>. The former is int{p(r)exp(iqr)} and the latter is int{p(r)exp(-iqr)}
+        // , in which we have use G+k=q notation. So once do Ylm expansion on exp(iqr), will get a pure imaginary
+        // prefactor i^l.
+        std::complex<double> pref = (type == 'l')? std::pow(ModuleBase::IMAG_UNIT, l) : std::pow(ModuleBase::NEG_IMAG_UNIT, l);
         pref = pref * ModuleBase::FOUR_PI/std::sqrt(omega);
         cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, i);
         for(int m = -l; m <= l; m++)
@@ -159,6 +237,7 @@ void RadialProjection::RadialProjector::sbtft(const std::vector<ModuleBase::Vect
         }
     }
     assert(iproj == nchannel); // should write to inflate each radial to 2l+1 channels
+    ModuleBase::timer::tick("RadialProjection", "interp_sphbes_ft_flzYlm");
 }
 
 void RadialProjection::_mask_func(std::vector<double>& mask)

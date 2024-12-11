@@ -1235,6 +1235,12 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Description**: To determine the number of old iterations' `drho` used in slope calculations.
 - **Default**: `mixing_ndim`
 
+### sc_os_ndim
+
+- **Type**: int
+- **Description**: To determine the number of old iterations to judge oscillation, it occured,  more accurate lambda with DeltaSpin method would be calculated, only for PW base.
+- **Default**: 5
+
 ### chg_extrap
 
 - **Type**: String

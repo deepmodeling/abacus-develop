@@ -1428,21 +1428,6 @@ TEST_F(InputTest, Item_test2)
         param.input.orbital_corr = {-1, -1};
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.dft_plus_u, 0);
-
-        param.input.dft_plus_u = 1;
-        param.input.basis_type = "pw";
-        param.input.ks_solver = "genelpa";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-
-        param.input.basis_type = "lcao";
-        param.input.ks_solver = "test";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
     { // uramping
         auto it = find_label("uramping", readinput.input_lists);

@@ -578,6 +578,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("sc_os_ndim");
+        item.annotation = "number of old iterations used for oscillation detection, for Spin-Constrained DFT";
+        read_sync_int(input.sc_os_ndim);
+        this->add_item(item);
+    }
+    {
         Input_Item item("scf_thr_type");
         item.annotation = "type of the criterion of scf_thr, 1: reci drho for "
                           "pw, 2: real drho for lcao";

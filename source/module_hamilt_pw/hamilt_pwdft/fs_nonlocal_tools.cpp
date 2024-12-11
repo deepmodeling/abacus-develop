@@ -216,8 +216,8 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb(const int& ik, const int& nbdall
                     hd_vq);
 
         // prepare（-i）^l, size: nh
-        std::vector<std::complex<double>> pref = maths.cal_pref(it);
-        const int nh = pref.size();
+        const int nh = this->ucell_->atoms[it].ncpp.nh;
+        std::vector<std::complex<double>> pref = maths.cal_pref(it, nh);
         this->dvkb_indexes.resize(nh * 4);
         maths.cal_dvkb_index(this->ucell_->atoms[it].ncpp.nbeta,
                              this->nlpp_->nhtol.c,
@@ -369,8 +369,8 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_vkb_deri_s(const int& ik,
                          hd_vq_deri);
 
         // prepare（-i）^l, size: nh
-        std::vector<std::complex<double>> pref = maths.cal_pref(it);
-        int nh = pref.size();
+        const int nh = this->ucell_->atoms[it].ncpp.nh;
+        std::vector<std::complex<double>> pref = maths.cal_pref(it, nh);
         // prepare indexes for calculate vkb_deri
         this->dvkb_indexes.resize(nh * 4);
         maths.cal_dvkb_index(this->ucell_->atoms[it].ncpp.nbeta,

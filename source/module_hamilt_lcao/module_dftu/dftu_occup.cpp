@@ -2,7 +2,9 @@
 #include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#ifdef __LCAO
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+#endif
 
 extern "C"
 {
@@ -141,6 +143,8 @@ void DFTU::mix_locale(const UnitCell& ucell,
     }
     ModuleBase::timer::tick("DFTU", "mix_locale");
 }
+
+#ifdef __LCAO
 
 void DFTU::cal_occup_m_k(const int iter, 
                          const UnitCell& ucell,
@@ -519,4 +523,5 @@ void DFTU::cal_occup_m_gamma(const int iter,
     ModuleBase::timer::tick("DFTU", "cal_occup_m_gamma");
     return;
 }
+#endif
 } // namespace ModuleDFTU

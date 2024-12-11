@@ -45,6 +45,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // vdw stress
     ModuleBase::matrix sigmavdw;
     sigmavdw.create(3, 3);
+    // DFT+U and DeltaSpin stress
+    ModuleBase::matrix sigmaonsite;
+    sigmaonsite.create(3, 3);
 
     for (int i = 0; i < 3; i++)
     {
@@ -59,6 +62,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
             sigmaewa(i, j) = 0.0;
             sigmaxcc(i, j) = 0.0;
             sigmavdw(i, j) = 0.0;
+            sigmaonsite(i, j) = 0.0;
         }
     }
 
@@ -107,13 +111,19 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // vdw term
     stress_vdw(sigmavdw, ucell);
 
+    // DFT+U and DeltaSpin stress
+    if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+    {
+        this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
+    }
+
     for (int ipol = 0; ipol < 3; ipol++)
     {
         for (int jpol = 0; jpol < 3; jpol++)
         {
             sigmatot(ipol, jpol) = sigmakin(ipol, jpol) + sigmahar(ipol, jpol) + sigmanl(ipol, jpol)
                                    + sigmaxc(ipol, jpol) + sigmaxcc(ipol, jpol) + sigmaewa(ipol, jpol)
-                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol);
+                                   + sigmaloc(ipol, jpol) + sigmavdw(ipol, jpol) + sigmaonsite(ipol, jpol);
         }
     }
 
@@ -138,6 +148,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
+        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        {
+            ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, PARAM.inp.test_stress, ry);
+        }
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, PARAM.inp.test_stress, ry);
     }
     ModuleBase::timer::tick("Stress_PW", "cal_stress");

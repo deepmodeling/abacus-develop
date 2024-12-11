@@ -287,7 +287,6 @@ void ElecState::cal_energies(const int type)
     }
 
     //! spin constrained energy
-#ifdef __LCAO
     if (PARAM.inp.sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
@@ -298,7 +297,6 @@ void ElecState::cal_energies(const int type)
     {
         this->f_en.edftu = get_dftu_energy();
     }
-#endif
 
 #ifdef __DEEPKS
     // energy from deepks
