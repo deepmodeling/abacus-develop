@@ -539,26 +539,13 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
     auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) : std::vector<std::string>({ "updown" });
     for (int is = 0;is < this->X.size();++is)
     {
-        LR_Spectrum<T> spectrum(nspin,
-                                this->nbasis,
-                                this->nocc,
-                                this->nvirt,
-                                this->gint_,
-                                *this->pw_rho,
-                                *this->psi_ks,
-                                this->ucell,
-                                this->kv,
-                                this->gd,
-                                this->orb_cutoff_,
-                                this->paraX_,
-                                this->paraC_,
-                                this->paraMat_,
-                                &this->pelec->ekb.c[is * nstates],
-                                this->X[is].template data<T>(),
-                                nstates,
-                                openshell);
+        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, this->gint_, *this->pw_rho, *this->psi_ks,
+            this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
+            this->paraX_, this->paraC_, this->paraMat_,
+            &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell);
         spectrum.transition_analysis(spin_types[is]);
         spectrum.optical_absorption(freq, input.abs_broadening, spin_types[is]);
+        // spectrum.optical_absorption_velocity(freq, input.abs_broadening, spin_types[is], abs_wavelen_range);
     }
 }
 

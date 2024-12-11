@@ -731,6 +731,7 @@ OBJS_TENSOR=tensor.o\
     xc_kernel.o\
     pot_hxc_lrtd.o\
     lr_spectrum.o\
+    lr_spectrum_velocity.o\
     hamilt_casida.o\
     esolver_lrtd_lcao.o\
 
