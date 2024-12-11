@@ -233,7 +233,7 @@ void projectors::OnsiteProjector<T, Device>::init_proj(const std::string& orbita
             std::cout << "BECP_PW >> No projectors defined for type " << it << std::endl;
             continue;
         }
-        std::ifstream ifs(orbital_dir + "/" + orb_files[it]);
+        std::ifstream ifs(orbital_dir + orb_files[it]);
         std::string elem = "";
         double ecut = -1.0;
         int nr_ = -1;
