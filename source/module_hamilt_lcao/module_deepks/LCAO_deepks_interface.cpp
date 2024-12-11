@@ -32,7 +32,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
 
     // define TH for different types
-    using TH = std::conditional_t<std::is_same_v<TK, double>, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
+    using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
     const int my_rank = GlobalV::MY_RANK;
     const int nspin = PARAM.inp.nspin;
