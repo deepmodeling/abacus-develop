@@ -410,9 +410,8 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
     return;
 }
 
-
-//just for gamma only
-void LCAO_deepks_io::save_npy_h(const std::vector<ModuleBase::matrix> &hamilt,
+template <typename TK, typename TH>
+void LCAO_deepks_io::save_npy_h(const std::vector<TH> &hamilt,
                                 const std::string &h_file,
                                 const int nlocal,
                                 const int nks,
@@ -428,40 +427,7 @@ void LCAO_deepks_io::save_npy_h(const std::vector<ModuleBase::matrix> &hamilt,
                                     static_cast<unsigned long>(nlocal), 
                                     static_cast<unsigned long>(nlocal) };
 
-    std::vector<double> npy_h;
-    for(int k=0; k<nks; k++)
-    {
-        for (int i=0; i<nlocal; i++)
-        {
-            for (int j=0; j<nlocal; j++)
-            {
-                npy_h.push_back(hamilt[k](i,j));
-            }
-        }         
-    }
-
-    npy::SaveArrayAsNumpy(h_file, false, 3, hshape, npy_h);
-    return;    
-}
-
-// for multi-k, should be combined with gamma-only version in future
-void LCAO_deepks_io::save_npy_h(const std::vector<ModuleBase::ComplexMatrix> &hamilt,
-                                const std::string &h_file,
-                                const int nlocal,
-                                const int nks,
-                                const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_h");
-	if(rank!=0)
-	{
-		return;
-	}
-
-    const long unsigned hshape[] = {static_cast<unsigned long>(nks),
-                                    static_cast<unsigned long>(nlocal), 
-                                    static_cast<unsigned long>(nlocal) };
-
-    std::vector<std::complex<double>> npy_h;
+    std::vector<TK> npy_h;
     for(int k=0; k<nks; k++)
     {
         for (int i=0; i<nlocal; i++)
@@ -635,6 +601,18 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
     npy::SaveArrayAsNumpy(file_gevdm, false, 5, gshape, npy_gevdm);
     return;
 }
+
+template void LCAO_deepks_io::save_npy_h<double>(const std::vector<ModuleBase::matrix> &hamilt,
+                                                 const std::string &h_file,
+                                                 const int nlocal,
+                                                 const int nks,
+                                                 const int rank);
+
+template void LCAO_deepks_io::save_npy_h<std::complex<double>>(const std::vector<ModuleBase::ComplexMatrix> &hamilt,
+                                                               const std::string &h_file,
+                                                               const int nlocal,
+                                                               const int nks,
+                                                               const int rank);
 
 template void LCAO_deepks_io::save_npy_v_delta_precalc<double>(const int nat, 
                                                                const int nks,

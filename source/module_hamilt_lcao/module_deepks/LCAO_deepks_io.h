@@ -116,18 +116,12 @@ void save_npy_orbital_precalc(const int nat,
 
 /// xinyuan added on 2023-2-20
 /// for gamma only
-void save_npy_h(const std::vector<ModuleBase::matrix> &hamilt,
+template <typename TK, typename TH>
+void save_npy_h(const std::vector<TH> &hamilt,
 		const std::string &h_file,
 		const int nlocal,
         const int nks,
 		const int rank);
-
-/// for multi-k
-void save_npy_h(const std::vector<ModuleBase::ComplexMatrix> &hamilt,
-        const std::string &h_file,
-        const int nlocal,
-        const int nks,
-        const int rank);
 
 template <typename TK>
 void save_npy_v_delta_precalc(const int nat,
@@ -148,6 +142,7 @@ void save_npy_psialpha(const int nat,
 		const std::string& out_dir,
 		const int rank);
 
+// Always real, no need for template now
 void save_npy_gevdm(const int nat,
 		const int inlmax,
 		const int lmaxd,
