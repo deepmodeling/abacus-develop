@@ -137,25 +137,28 @@ void Stress_Func<FPTYPE, Device>::stress_ewa(const UnitCell& ucell,
 
 		while (ijat < ijat_end)
 		{
-			//calculate tau[na]-tau[nb]
-			d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
-			//generates nearest-neighbors shells 
-			H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
-			for(int nr=0 ; nr<nrm ; nr++)
+			if (ucell.atoms[it].na != 0 && ucell.atoms[jt].na != 0)
 			{
-				rr=sqrt(r2[nr]) * ucell.lat0;
-				fac = -ModuleBase::e2/2.0/ucell.omega*pow(ucell.lat0,2)*ucell.atoms[it].ncpp.zv * ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
-				for(int l=0; l<3; l++)
+				//calculate tau[na]-tau[nb]
+				d_tau = ucell.atoms[it].tau[i] - ucell.atoms[jt].tau[j];
+				//generates nearest-neighbors shells 
+				H_Ewald_pw::rgen(d_tau, rmax, irr, ucell.latvec, ucell.G, r, r2, nrm);
+				for(int nr=0 ; nr<nrm ; nr++)
 				{
-					for(int m=0; m<l+1; m++)
+					rr=sqrt(r2[nr]) * ucell.lat0;
+					fac = -ModuleBase::e2/2.0/ucell.omega*pow(ucell.lat0,2)*ucell.atoms[it].ncpp.zv * ucell.atoms[jt].ncpp.zv / pow(rr,3) * (erfc(sqa*rr)+rr * sq8a_2pi *  ModuleBase::libm::exp(-alpha * pow(rr,2)));
+					for(int l=0; l<3; l++)
 					{
-						r0[0] = r[nr].x;
-						r0[1] = r[nr].y;
-						r0[2] = r[nr].z;
-						local_sigma(l,m) += fac * r0[l] * r0[m];
-					}//end m
-				}//end l
-			}//end nr
+						for(int m=0; m<l+1; m++)
+						{
+							r0[0] = r[nr].x;
+							r0[1] = r[nr].y;
+							r0[2] = r[nr].z;
+							local_sigma(l,m) += fac * r0[l] * r0[m];
+						}//end m
+					}//end l
+				}//end nr
+			}
 
 			++ijat;
 			ucell.step_jajtiait(&j, &jt, &i, &it);
