@@ -287,8 +287,7 @@ class LCAO_Deepks
     // 3. check_projected_dm, which prints pdm to descriptor.dat
 
     // 4. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
-    // 5. cal_gdmx_k, counterpart of 3, for multi-k
-    // 6. check_gdmx, which prints gdmx to a series of .dat files
+    // 5. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
     /** 
@@ -323,21 +322,16 @@ class LCAO_Deepks
 
     // calculate the gradient of pdm with regard to atomic positions
     // d/dX D_{Inl,mm'}
+    template <typename TK>
     void cal_gdmx( // const ModuleBase::matrix& dm,
-        const std::vector<double>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const bool isstress);
-
-    void cal_gdmx_k( // const std::vector<ModuleBase::ComplexMatrix>& dm,
-        const std::vector<std::vector<std::complex<double>>>& dm,
+        const std::vector<std::vector<TK>>& dm,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,
         Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         const bool isstress);
+
     void check_gdmx(const int nat);
 
     /** 

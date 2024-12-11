@@ -126,11 +126,11 @@ void test_deepks::check_gdmx()
     this->ld.init_gdmx(ucell.nat);
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.cal_gdmx(dm_new[0], ucell, ORB, Test_Deepks::GridD, 0);
+        this->ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
     }
     else
     {
-        this->ld.cal_gdmx_k(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
+        this->ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
     }
     this->ld.check_gdmx(ucell.nat);
 

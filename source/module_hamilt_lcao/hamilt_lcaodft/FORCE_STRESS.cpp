@@ -522,7 +522,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        GlobalC::ld.cal_gdmx(dm_gamma[0], ucell, orb, GlobalC::GridD, isstress);
+                        GlobalC::ld.cal_gdmx(dm_gamma, ucell, orb, GlobalC::GridD, kv.get_nks(), kv.kvec_d, isstress);
                     }
                     else
                     {
@@ -531,7 +531,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld.cal_gdmx_k(dm_k,
+                        GlobalC::ld.cal_gdmx(dm_k,
                                                ucell,
                                                orb,
                                                GlobalC::GridD,

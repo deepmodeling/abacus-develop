@@ -14,8 +14,7 @@
 //3. check_projected_dm, which prints pdm to descriptor.dat
 
 //4. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
-//5. cal_gdmx_k, counterpart of 3, for multi-k
-//6. check_gdmx, which prints gdmx to a series of .dat files
+//5. check_gdmx, which prints gdmx to a series of .dat files
 
 #ifdef __DEEPKS
 
