@@ -259,7 +259,7 @@ def cg(
         mvv_op,
         max_iter, 
         tol,
-        diag_ethr
+        diag_ethr,
         need_subspace,
         scf_type,
         nproc_in_pool
