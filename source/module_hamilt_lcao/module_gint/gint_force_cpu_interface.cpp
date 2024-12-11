@@ -107,7 +107,7 @@ void Gint::gint_kernel_force(Gint_inout* inout) {
 
             //do integration to get stress
             this-> cal_meshball_stress(na_grid, block_index.data(), psir_vlbr3_DM.get_ptr_1D(), 
-                                        dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
+                                       dpsirr_ylm.get_ptr_1D(), svl_dphi_thread);
         }
     }
 #pragma omp critical(gint)

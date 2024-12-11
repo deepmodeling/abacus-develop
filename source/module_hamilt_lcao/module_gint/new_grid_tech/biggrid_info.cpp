@@ -1,14 +1,15 @@
 #include "biggrid_info.h"
 #include "gint_helper.h"
+#include "gint_type.h"
 
 namespace Gint
 {
 
 BigGridInfo::BigGridInfo(
-    const Vec3d& biggrid_vec1,
-    const Vec3d& biggrid_vec2,
-    const Vec3d& biggrid_vec3,
-    const int nmx, const int nmy, const int nmz)
+    Vec3d biggrid_vec1,
+    Vec3d biggrid_vec2,
+    Vec3d biggrid_vec3,
+    int nmx, int nmy, int nmz)
     : biggrid_vec1_(biggrid_vec1),
       biggrid_vec2_(biggrid_vec2),
       biggrid_vec3_(biggrid_vec3),

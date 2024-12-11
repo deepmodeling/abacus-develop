@@ -5,11 +5,11 @@ namespace Gint
 {
     
 UnitCellInfo::UnitCellInfo(
-    const Vec3d& unitcell_vec1,
-    const Vec3d& unitcell_vec2,
-    const Vec3d& unitcell_vec3,
-    const int nbx, const int nby, const int nbz,
-    const int nmx, const int nmy, const int nmz)
+    Vec3d unitcell_vec1,
+    Vec3d unitcell_vec2,
+    Vec3d unitcell_vec3,
+    int nbx, int nby, int nbz,
+    int nmx, int nmy, int nmz)
     : unitcell_vec1_(unitcell_vec1),
         unitcell_vec2_(unitcell_vec2),
         unitcell_vec3_(unitcell_vec3),

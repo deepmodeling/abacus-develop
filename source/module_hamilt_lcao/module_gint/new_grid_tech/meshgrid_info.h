@@ -1,8 +1,6 @@
-#ifndef MESH_GRID_INFO_H
-#define MESH_GRID_INFO_H
+#pragma once
 
-#include "module_base/vector3.h"
-#include "module_base/matrix3.h"
+#include "gint_type.h"
 #include "module_cell/unitcell.h"
 
 namespace Gint
@@ -13,9 +11,9 @@ class MeshGridInfo
     public:
         // constructor
         MeshGridInfo(
-            const Vec3d& meshgrid_vec1,
-            const Vec3d& meshgrid_vec2,
-            const Vec3d& meshgrid_vec3)
+            Vec3d meshgrid_vec1,
+            Vec3d meshgrid_vec2,
+            Vec3d meshgrid_vec3)
             : meshgrid_vec1_(meshgrid_vec1),
               meshgrid_vec2_(meshgrid_vec2),
               meshgrid_vec3_(meshgrid_vec3)
@@ -62,5 +60,4 @@ class MeshGridInfo
         Matrix3 meshgrid_GT_;
 };
 
-}
-#endif
+} // namespace Gint

@@ -1,9 +1,8 @@
-#ifndef BIGGIRD_INFO_H
-#define BIGGIRD_INFO_H
+#pragma once
 
 #include <memory>
-#include "module_base/vector3.h"
-#include "module_base/matrix3.h"
+#include "gint_type.h"
+#include "gint_helper.h"
 #include "meshgrid_info.h"
 
 namespace Gint
@@ -18,10 +17,10 @@ class BigGridInfo
     public:
         // constructor
         BigGridInfo(
-            const Vec3d& biggrid_vec1,
-            const Vec3d& biggrid_vec2,
-            const Vec3d& biggrid_vec3,
-            const int nmx, const int nmy, const int nmz);
+            Vec3d biggrid_vec1,
+            Vec3d biggrid_vec2,
+            Vec3d biggrid_vec3,
+            int nmx, int nmy, int nmz);
         
         // getter functions
         const Vec3d &get_vec1() const { return biggrid_vec1_; };
@@ -77,12 +76,12 @@ class BigGridInfo
         // (x, y, z) * biggrid_GT_ = (i, j, k)
         Matrix3 biggrid_GT_;
 
-        //-------------------------------------------
+        //======================================================
         // some member variables related to meshgrid 
-        //-------------------------------------------
+        //======================================================
 
         // basic attributes of meshgrid
-        std::shared_ptr<MeshGridInfo> meshgrid_info_;
+        std::shared_ptr<const MeshGridInfo> meshgrid_info_;
 
         // the number of meshgrids of a biggrid along the first basis vector
         // nmx may be a confusing name, because it is not the number of meshgrids along x axis
@@ -103,5 +102,4 @@ class BigGridInfo
         std::vector<Vec3d> meshgrid_coords_;
 };
 
-}
-#endif
+} // namespace Gint

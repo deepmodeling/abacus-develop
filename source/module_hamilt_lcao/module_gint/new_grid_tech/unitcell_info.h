@@ -1,11 +1,10 @@
-#ifndef UNITCELL_INFO_H
-#define UNITCELL_INFO_H
+#pragma once
 
 #include <memory>
-#include "module_base/vector3.h"
-#include "module_base/matrix3.h"
+#include <cmath>
 #include "biggrid_info.h"
 #include "gint_helper.h"
+#include "gint_type.h"
 
 namespace Gint
 {
@@ -15,11 +14,11 @@ class UnitCellInfo
     public:
         // constructor
         UnitCellInfo(
-            const Vec3d& unitcell_vec1,
-            const Vec3d& unitcell_vec2,
-            const Vec3d& unitcell_vec3,
-            const int nbx, const int nby, const int nbz,
-            const int nmx, const int nmy, const int nmz);
+            Vec3d unitcell_vec1,
+            Vec3d unitcell_vec2,
+            Vec3d unitcell_vec3,
+            int nbx, int nby, int nbz,
+            int nmx, int nmy, int nmz);
         
         // getter functions
         const Vec3d &get_vec1() const { return unitcell_vec1_; };
@@ -29,25 +28,16 @@ class UnitCellInfo
         int get_nby() const { return nby_; };
         int get_nbz() const { return nbz_; };
         int get_nbxyz() const { return nbxyz_; };
-
-        // get the number of meshcells along the first lattice vector of the unit cell
-        int get_nmx() const { return nbx_ * biggrid_info_->get_nmx(); };
-
-        // get the number of meshcells along the second lattice vector of the unit cell
-        int get_nmy() const { return nby_ * biggrid_info_->get_nmy(); };
-
-        // get the number of meshcells along the third lattice vector of the unit cell
-        int get_nmz() const { return nbz_ * biggrid_info_->get_nmz(); };
-
-        // get the total number of meshcells in the unit cell
-        int get_nmxyz() const { return nbxyz_ * biggrid_info_->get_nmxyz(); };
-
+        int get_nmx() const { return nmx_; };
+        int get_nmy() const { return nmy_; };
+        int get_nmz() const { return nmz_; };
+        int get_nmxyz() const { return nmxyz_; };
         std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return biggrid_info_; };
         std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return biggrid_info_->get_meshgrid_info(); };
 
-        //----------------------------------
+        //====================================================================
         // functions related to the big grid
-        //----------------------------------
+        //====================================================================
 
         // transform the 1D index of a big grid in the unit cell to the 3D index
         Vec3i biggrid_idx_1Dto3D(const int index_1d) const
@@ -73,16 +63,41 @@ class UnitCellInfo
             return get_biggrid_coord(biggrid_idx_1Dto3D(index_1d));
         };
 
+        // get the 3D index of a big grid in the unit cell from the cartesian coordinate
+        Vec3i get_biggrid_idx_3d(const Vec3d coord) const
+        {   
+            Vec3d biggrid_idx_double = coord * biggrid_info_->get_GT();
+            return Vec3i(
+                static_cast<int>(floor(biggrid_idx_double.x)),
+                static_cast<int>(floor(biggrid_idx_double.y)),
+                static_cast<int>(floor(biggrid_idx_double.z)));
+        };
+
         // Get the relative Cartesian coordinates of big grid A relative to big grid B
         // returned vector = coordinates of point A - coordinates of point B
+        // this function is more efficient than obtaining two 3D coordinates separately 
+        // through two 3D indices and then subtracting them
         Vec3d get_relative_coord(Vec3i index_3d_a, Vec3i index_3d_b) const
         {
             return get_biggrid_coord(index_3d_a - index_3d_b);
         };
 
-        //----------------------------------
+        // get the extended unitcell index of a big grid
+        Vec3i get_extcell_idx(const Vec3i index_3d) const
+        {
+            return Vec3i(index_3d.x / nbx_, index_3d.y / nby_, index_3d.z / nbz_);
+        };
+
+        // map the extended big grid index to the big grid index in unitcell
+        Vec3i map_ext_idx_to_ucell(const Vec3i index_3d) const
+        {
+            return Vec3i(index_3d.x % nbx_, index_3d.y % nby_, index_3d.z % nbz_);
+        };
+
+
+        //====================================================================
         // functions related to the meshgrid
-        //----------------------------------
+        //====================================================================
 
         // transform the 1D index of a meshgrid in the unit cell to the 3D index
         Vec3i meshgrid_idx_1Dto3D(const int index_1d) const
@@ -114,9 +129,9 @@ class UnitCellInfo
         Vec3d unitcell_vec2_;
         Vec3d unitcell_vec3_;
 
-        //----------------------------------------------
+        //====================================================================
         // member variables related to the Big Grid
-        //----------------------------------------------
+        //====================================================================
 
         // the number of big cells along the first lattice vector
         int nbx_;
@@ -131,11 +146,11 @@ class UnitCellInfo
         int nbxyz_;
 
         // basic attributes of the big grid
-        std::shared_ptr<BigGridInfo> biggrid_info_;
+        std::shared_ptr<const BigGridInfo> biggrid_info_;
 
-        //-------------------------------------------
+        //====================================================================
         // member variables related to meshgrid
-        //-------------------------------------------
+        //====================================================================
 
         // the number of meshgrids along the first lattice vector
         int nmx_;
@@ -151,6 +166,4 @@ class UnitCellInfo
 
 }
 
-}
-
-#endif
+} // namespace Gint
