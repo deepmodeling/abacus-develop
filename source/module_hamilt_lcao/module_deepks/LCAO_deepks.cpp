@@ -316,7 +316,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     //initialize the H matrix H_V_delta
     if(PARAM.globalv.gamma_only_local)
     {
-        H_V_delta.resize(1);
+        H_V_delta.resize(1); // the first dimension is for the consistence with H_V_delta_k
         this->H_V_delta[0].resize(pv->nloc);
         ModuleBase::GlobalFunc::ZEROS(this->H_V_delta[0].data(), pv->nloc);
     }
