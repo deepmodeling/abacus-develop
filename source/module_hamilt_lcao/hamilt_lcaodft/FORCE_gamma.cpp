@@ -260,7 +260,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            LCAO_deepks_io::print_dm(dm_gamma[0], PARAM.globalv.nlocal, this->ParaV->nrow);
+            LCAO_deepks_io::print_dm(1, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma); // 1 for gamma-only
 
             GlobalC::ld.check_projected_dm();
 

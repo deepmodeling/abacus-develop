@@ -28,28 +28,11 @@
 #include "LCAO_deepks_io.h"
 #include "npy.hpp"
 
-void LCAO_deepks_io::print_dm(const std::vector<double> &dm, 
-                              const int nlocal, 
-                              const int nrow)
-{
-    std::ofstream ofs("dm");
-    ofs << std::setprecision(15);
-
-    for (int mu=0; mu<nlocal; mu++)
-    {
-        for (int nu=0; nu<nlocal; nu++)
-        {
-            ofs << dm[mu * nrow + nu] << " ";
-        }
-        ofs << std::endl;
-    }
-}
-
-
-void LCAO_deepks_io::print_dm_k(const int nks, 
+template <typename TK>
+void LCAO_deepks_io::print_dm(const int nks, 
                                 const int nlocal,
                                 const int nrow,
-                                const std::vector<std::vector<std::complex<double>>>& dm)
+                                const std::vector<std::vector<TK>>& dm)
 {
     std::stringstream ss;
     for(int ik=0;ik<nks;ik++)
@@ -601,6 +584,17 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
     npy::SaveArrayAsNumpy(file_gevdm, false, 5, gshape, npy_gevdm);
     return;
 }
+
+
+template void LCAO_deepks_io::print_dm<double>(const int nks, 
+                                               const int nlocal,
+                                               const int nrow,
+                                               const std::vector<std::vector<double>>& dm);
+
+template void LCAO_deepks_io::print_dm<std::complex<double>>(const int nks, 
+                                                             const int nlocal,
+                                                             const int nrow,
+                                                             const std::vector<std::vector<std::complex<double>>>& dm);
 
 template void LCAO_deepks_io::save_npy_h<double>(const std::vector<ModuleBase::matrix> &hamilt,
                                                  const std::string &h_file,
