@@ -55,6 +55,8 @@ class Grid_Driver : public Grid
 
     ~Grid_Driver();
 
+    Grid_Driver& operator=(Grid_Driver&&) = default;
+
     //==========================================================
     // EXPLAIN FOR default parameter `adjs = nullptr`
     //
@@ -103,7 +105,7 @@ class Grid_Driver : public Grid
   private:
     mutable AdjacentAtomInfo adj_info;
 
-    const int test_deconstructor; // caoyu reconst 2021-05-24
+    int test_deconstructor = 0;
 
     //==========================================================
     // MEMBER FUNCTIONS :

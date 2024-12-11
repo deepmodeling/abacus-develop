@@ -16,20 +16,9 @@ CellSet::CellSet()
     in_grid[2] = 0;
 }
 
-Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
-{
-    //	ModuleBase::TITLE("Grid","Grid");
-    //----------------------------------------------------------
-    // EXPLAIN : init_cell_flag (use this flag in case memory
-    // leak)
-    //----------------------------------------------------------
-    init_cell_flag = false;
-}
+Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
 
-Grid::~Grid()
-{
-    this->delete_Cell();
-}
+Grid::~Grid() {}
 
 void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const Atom_input& input)
 {
@@ -49,7 +38,6 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 {
     ModuleBase::TITLE("SLTK_Grid", "setMemberVariables");
 
-    this->delete_Cell();
     // mohan add 2010-09-05
     // AdjacentSet::call_times = 0;
 
@@ -96,8 +84,6 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
             Cell[i][j].resize(cell_nz);
         }
     }
-    this->init_cell_flag = true;
-
     this->true_cell_x = input.getGrid_layerX_minus();
     this->true_cell_y = input.getGrid_layerY_minus();
     this->true_cell_z = input.getGrid_layerZ_minus();
@@ -506,16 +492,5 @@ void Grid::Construct_Adjacent_final(const int i,
     if (dr != 0.0 && dr <= this->sradius2)
     {
         fatom1.addAdjacent(fatom2);
-    }
-}
-// 2015-05-07
-void Grid::delete_vector(int i, int j, int k)
-{
-    if (expand_flag)
-    {
-        if (this->pbc)
-        {
-            this->Cell[i][j][k].atom_map.clear();
-        }
     }
 }

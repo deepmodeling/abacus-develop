@@ -163,29 +163,3 @@ void atom_arrange::search(
 
     return;
 }
-
-
-//2015-05-07
-void atom_arrange::delete_vector(
-	std::ofstream &ofs_in,
-	const bool pbc_flag, // GlobalV::SEARCH_PBC
-	Grid_Driver &grid_d, 
-	const UnitCell &ucell, 
-	const double &search_radius_bohr, 
-	const int &test_atom_in)
-{
-	const double radius_lat0unit2 = search_radius_bohr / ucell.lat0;
-
-	Atom_input at2(
-		ofs_in,
-		ucell, 
-		ucell.nat, 
-		ucell.ntype, 
-		pbc_flag, 
-		radius_lat0unit2, 
-		test_atom_in);
-
-	grid_d.delete_vector(at2.getGrid_layerX_minus(),at2.getGrid_layerY_minus(),at2.getGrid_layerZ_minus());
-
-	grid_d.delete_Cell();
-}
