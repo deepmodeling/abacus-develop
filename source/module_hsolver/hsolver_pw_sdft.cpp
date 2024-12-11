@@ -32,7 +32,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // prepare for the precondition of diagonalization
     std::vector<double> precondition(psi.get_nbasis(), 0.0);
 
-    this->ethr_band.resize(psi.get_nbands(), DiagoIterAssist<T, Device>::PW_DIAG_THR);
+    this->ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
     // report if the specified diagonalization method is not supported
     const std::initializer_list<std::string> _methods = {"cg", "dav", "dav_subspace", "bpcg"};
