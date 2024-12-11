@@ -158,7 +158,9 @@ void bind_hsolver(py::module& m)
             for invoking this class is a function defined in _hsolver.py, 
             which uses this class to perform the calculations.
         )pbdoc")
-        .def("diag", &py_hsolver::PyDiagoCG::diag, R"pbdoc(
+        .def("diag",
+             &py_hsolver::PyDiagoCG::diag,
+             R"pbdoc(
             Diagonalize the linear operator using the Conjugate Gradient Method.
 
             Parameters
@@ -179,6 +181,7 @@ void bind_hsolver(py::module& m)
         "mm_op"_a,
         "max_iter"_a,
         "tol"_a,
+        "diag_ethr"_a,  
         "need_subspace"_a,
         "scf_type"_a,
         "nproc_in_pool"_a)

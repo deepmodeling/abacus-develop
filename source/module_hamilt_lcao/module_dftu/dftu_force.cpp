@@ -3,6 +3,7 @@
 #include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
+#ifdef __LCAO
 #include "dftu.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -665,3 +666,4 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
     return;
 }
 } // namespace ModuleDFTU
+#endif

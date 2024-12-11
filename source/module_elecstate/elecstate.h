@@ -151,9 +151,7 @@ class ElecState
         return 0.0;
     }
 
-#ifdef __LCAO
     double get_dftu_energy();
-#endif
 
 #ifdef __DEEPKS
     double get_deepks_E_delta();

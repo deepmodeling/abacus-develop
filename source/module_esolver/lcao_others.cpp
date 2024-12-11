@@ -242,7 +242,6 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    &(this->pv),
                    PARAM.inp.nspin,
                    this->kv,
-                   PARAM.inp.ks_solver,
                    this->p_hamilt,
                    this->psi,
                    this->pelec);

@@ -17,6 +17,7 @@ enum class calculation_type
     pw_nonlocal,
     pw_veff,
     pw_meta,
+    pw_onsite,
     lcao_overlap,
     lcao_fixed,
     lcao_gint,

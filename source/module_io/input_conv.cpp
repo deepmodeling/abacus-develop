@@ -18,11 +18,11 @@
 #include "module_ri/exx_abfs-jle.h"
 #endif
 
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
@@ -243,7 +243,6 @@ void Input_Conv::Convert()
     // iteration (1/3)
     //----------------------------------------------------------
 
-#ifdef __LCAO
     if (PARAM.inp.dft_plus_u)
     {
         GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
@@ -258,7 +257,6 @@ void Input_Conv::Convert()
             ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), PARAM.inp.ntype);
         }
     }
-#endif
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18

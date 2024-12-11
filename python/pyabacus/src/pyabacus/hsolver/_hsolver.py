@@ -195,6 +195,7 @@ def cg(
     precondition: NDArray[np.float64],
     tol: float = 1e-2,
     max_iter: int = 1000,
+    diag_ethr: Union[List[float], None] = None,
     need_subspace: bool = False,
     scf_type: bool = False,
     nproc_in_pool: int = 1
@@ -244,6 +245,9 @@ def cg(
         if init_v.ndim == 2:
             init_v = init_v.T
         init_v = init_v.flatten().astype(np.complex128, order='C')
+
+    if diag_ethr is None:
+        diag_ethr = [tol] * num_eigs
     
     _diago_obj_cg = diago_cg(dim, num_eigs)
     _diago_obj_cg.set_psi(init_v)
@@ -255,6 +259,7 @@ def cg(
         mvv_op,
         max_iter, 
         tol,
+        diag_ethr,
         need_subspace,
         scf_type,
         nproc_in_pool

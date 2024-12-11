@@ -64,7 +64,6 @@ UnitCell::UnitCell() {
     atom_mass = nullptr;
     pseudo_fn = new std::string[1];
     pseudo_type = new std::string[1];
-    orbital_fn = new std::string[1];
 
     set_atom_flag = false;
 }
@@ -113,6 +112,15 @@ void UnitCell::bcast_unitcell() {
     Parallel_Common::bcast_int(lc[0]);
     Parallel_Common::bcast_int(lc[1]);
     Parallel_Common::bcast_int(lc[2]);
+
+    if(this->orbital_fn == nullptr)
+    {
+        this->orbital_fn = new std::string[ntype];
+    }
+    for (int i = 0; i < ntype; i++)
+    {
+        Parallel_Common::bcast_string(orbital_fn[i]);
+    }
 
     // distribute lattice vectors.
     Parallel_Common::bcast_double(a1.x);

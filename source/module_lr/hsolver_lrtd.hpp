@@ -146,9 +146,12 @@ namespace LR
                     std::vector<Real<T>> precondition_(precondition);   //since TensorMap does not support const pointer
                     auto precon_tensor = ct::TensorMap(precondition_.data(), ct::DataTypeToEnum<Real<T>>::value, ct::DeviceType::CpuDevice, ct::TensorShape({ dim }));
                     auto hpsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& hpsi) {hm.hPsi(psi_in.data<T>(), hpsi.data<T>(), psi_in.shape().dim_size(0) /*nbasis_local*/, 1/*band-by-band*/);};
-                    auto spsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& spsi)
-                        { std::memcpy(spsi.data<T>(), psi_in.data<T>(), sizeof(T) * psi_in.NumElements()); };
-                    cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, precon_tensor);
+                    auto spsi_func = [&hm](const ct::Tensor& psi_in, ct::Tensor& spsi) {
+                        std::memcpy(spsi.data<T>(), psi_in.data<T>(), sizeof(T) * psi_in.NumElements());
+                    };
+
+                    std::vector<double> ethr_band(nband, diag_ethr);
+                    cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, precon_tensor);
                 }
                 else { throw std::runtime_error("HSolverLR::solve: method not implemented"); }
             }

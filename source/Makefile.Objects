@@ -635,10 +635,13 @@ OBJS_SRCPW=H_Ewald_pw.o\
     forces_nl.o\
     forces_cc.o\
     forces_scc.o\
+    forces_onsite.o\
+    onsite_proj_pw.o\
     fs_nonlocal_tools.o\
     fs_kin_tools.o\
     force_op.o\
     stress_op.o\
+    onsite_op.o\
     wf_op.o\
     vnl_op.o\
     global.o\
@@ -663,6 +666,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     stress_func_loc.o\
     stress_func_nl.o\
     stress_func_us.o\
+    stress_func_onsite.o\
     stress_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
@@ -673,7 +677,9 @@ OBJS_SRCPW=H_Ewald_pw.o\
     elecond.o\
     sto_tool.o\
     sto_elecond.o\
-    sto_dos.o
+    sto_dos.o\
+    onsite_projector.o\
+    onsite_proj_tools.o
 
 OBJS_VDW=vdw.o\
     vdwd2_parameters.o\
@@ -691,7 +697,8 @@ OBJS_DFTU=dftu.o\
       dftu_io.o\
       dftu_tools.o\
       dftu_occup.o\
-      dftu_hamilt.o
+      dftu_hamilt.o\
+      dftu_pw.o
 
 OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_from_lambda.o\

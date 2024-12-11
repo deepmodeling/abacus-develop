@@ -40,7 +40,12 @@ class DiagoCG final
     // virtual void init(){};
     // refactor hpsi_info
     // this is the diag() function for CG method
-    void diag(const Func& hpsi_func, const Func& spsi_func, ct::Tensor& psi, ct::Tensor& eigen, const ct::Tensor& prec = {});
+    void diag(const Func& hpsi_func,
+              const Func& spsi_func,
+              ct::Tensor& psi,
+              ct::Tensor& eigen,
+              const std::vector<double>& ethr_band,
+              const ct::Tensor& prec = {});
 
   private:
     Device * ctx_ = {};
@@ -103,6 +108,7 @@ class DiagoCG final
         const ct::Tensor& pphi,
         const ct::Tensor& cg,
         const ct::Tensor& scg,
+        const double& ethreshold,
         Real &cg_norm, 
         Real &theta, 
         Real &eigen,
@@ -113,7 +119,10 @@ class DiagoCG final
     void schmit_orth(const int& m, const ct::Tensor& psi, const ct::Tensor& sphi, ct::Tensor& phi_m);
 
     // used in diag() for template replace Hamilt with Hamilt_PW
-    void diag_mock(const ct::Tensor& prec, ct::Tensor& psi, ct::Tensor& eigen);
+    void diag_mock(const ct::Tensor& prec,
+                   ct::Tensor& psi,
+                   ct::Tensor& eigen,
+                   const std::vector<double>& ethr_band);
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 

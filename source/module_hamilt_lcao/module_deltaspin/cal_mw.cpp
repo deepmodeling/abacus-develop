@@ -5,7 +5,7 @@
 #include "module_base/scalapack_connector.h"
 #include "module_base/tool_title.h"
 #include "module_base/timer.h"
-//#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
 #include "spin_constrain.h"
 #include "module_parameter/parameter.h"
 #ifdef __LCAO
@@ -51,7 +51,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_lcao(const int& 
 
 #endif
 
-/*template <>
+template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
 {
     ModuleBase::TITLE("module_deltaspin", "cal_mi_pw");
@@ -154,7 +154,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
     Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, GlobalV::NPROC_IN_POOL, &(this->Mi_[0][0]), 3 * this->Mi_.size());
     
     ModuleBase::timer::tick("spinconstrain::SpinConstrain", "cal_mi_pw");
-}*/
+}
 
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::set_operator(
