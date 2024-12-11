@@ -55,7 +55,8 @@ class LCAO_Deepks
     ModuleBase::matrix o_delta;
 
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
-    std::vector<std::vector<double>> H_V_delta;
+    /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
+    std::vector<std::vector<double>> H_V_delta; 
     /// Correction term to Hamiltonian, for multi-k
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
