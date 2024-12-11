@@ -94,6 +94,9 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_SDFT_PW", "before_scf");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
+
     ESolver_KS_PW<T, Device>::before_scf(ucell, istep);
     delete reinterpret_cast<hamilt::HamiltPW<double>*>(this->p_hamilt);
     this->p_hamilt = new hamilt::HamiltSdftPW<T, Device>(this->pelec->pot,
@@ -110,6 +113,8 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     {
         this->stowf.update_sto_orbitals(PARAM.inp.seed_sto);
     }
+
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "before_scf");
 }
 
 template <typename T, typename Device>
@@ -122,8 +127,13 @@ void ESolver_SDFT_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, i
 template <typename T, typename Device>
 void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf");
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
+
     // 1) call after_scf() of ESolver_KS_PW
     ESolver_KS_PW<T, Device>::after_scf(ucell, istep);
+
+    ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
 }
 
 template <typename T, typename Device>

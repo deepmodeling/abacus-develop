@@ -281,6 +281,9 @@ void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const i
 
 void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "after_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
+
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         if (module_tddft::Evolve_elec::out_dipole == 1)
@@ -306,6 +309,8 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
                                 this->RA);
     }
     ESolver_KS_LCAO<std::complex<double>, double>::after_scf(ucell, istep);
+
+    ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
 }
 
 void ESolver_KS_LCAO_TDDFT::weight_dm_rho()

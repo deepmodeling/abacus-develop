@@ -43,6 +43,7 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
 
     //! 1) call before_scf() of ESolver_KS
     ESolver_KS<TK>::before_scf(ucell, istep);
@@ -347,6 +348,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                           1);
         }
 
+        ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
         return;
     }
 
@@ -377,6 +379,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                 this->sf.strucFac); // add by jghan, 2024-03-16/2024-10-08
     }
 
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
     return;
 }
 

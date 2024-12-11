@@ -247,6 +247,7 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "before_scf");
+    ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 
     //! 1) call before_scf() of ESolver_KS
     ESolver_KS<T, Device>::before_scf(ucell, istep);
@@ -427,6 +428,8 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
             this->already_initpsi = true;
         }
     }
+
+    ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");
 }
 
 template <typename T, typename Device>
@@ -647,6 +650,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
+    ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
+
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
@@ -741,6 +747,8 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
         onsite_p->cal_occupations(reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi), this->pelec->wg);
     }
+
+    ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 }
 
 template <typename T, typename Device>

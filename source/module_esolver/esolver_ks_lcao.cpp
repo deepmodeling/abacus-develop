@@ -903,6 +903,8 @@ template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
+
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
@@ -1266,6 +1268,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         bp.Macroscopic_polarization(ucell,this->pw_wfc->npwk_max, this->psi, this->pw_rho, this->pw_wfc, this->kv);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase calculation");
     }
+
+    ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 }
 
 template class ESolver_KS_LCAO<double, double>;
