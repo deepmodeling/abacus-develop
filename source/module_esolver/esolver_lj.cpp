@@ -88,15 +88,6 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
             lj_virial(i, j) /= (2.0 * ucell.omega);
         }
     }
-#ifdef __MPI
-        atom_arrange::delete_vector(
-            GlobalV::ofs_running,
-            PARAM.inp.search_pbc,
-            grid_neigh,
-            ucell, 
-            search_radius,
-            PARAM.inp.test_atom_input);
-#endif
     }
 
     double ESolver_LJ::cal_energy()

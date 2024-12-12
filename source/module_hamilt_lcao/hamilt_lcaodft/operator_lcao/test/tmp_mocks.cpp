@@ -174,7 +174,8 @@ Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
 Grid::~Grid() {}
 Grid_Driver::Grid_Driver(const int& test_d_in,
                          const int& test_grid_in)
-    : Grid(test_grid_in), test_deconstructor(test_d_in) {}
+    : Grid(test_grid_in), test_deconstructor(test_d_in) {
+}
 Grid_Driver::~Grid_Driver() {}
 
 // filter_adjs delete not adjacent atoms in adjs

@@ -84,7 +84,6 @@ TEST_F(SltkGridTest, Init)
     Atom_input Atom_inp(ofs, *ucell, ucell->nat, ucell->ntype, pbc, radius, test_atom_in);
     Grid LatGrid(PARAM.input.test_grid);
     LatGrid.init(ofs, *ucell, Atom_inp);
-    EXPECT_TRUE(LatGrid.init_cell_flag);
     EXPECT_EQ(LatGrid.getCellX(), 11);
     EXPECT_EQ(LatGrid.getCellY(), 11);
     EXPECT_EQ(LatGrid.getCellZ(), 11);
@@ -126,9 +125,6 @@ TEST_F(SltkGridTest, InitSmall)
     EXPECT_EQ(LatGrid.cell_nx, 4);
     EXPECT_EQ(LatGrid.cell_ny, 4);
     EXPECT_EQ(LatGrid.cell_nz, 4);
-    // init cell flag
-    EXPECT_TRUE(LatGrid.init_cell_flag);
-
     ofs.close();
     remove("test.out");
 }
