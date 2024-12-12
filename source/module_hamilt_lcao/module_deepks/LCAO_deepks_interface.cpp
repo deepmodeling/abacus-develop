@@ -117,7 +117,7 @@ void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
                 }
                 
                 ld->cal_orbital_precalc<TK,TH>(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
-                ld->cal_o_delta(dm_bandgap, nks);
+                ld->cal_o_delta<TK,TH>(dm_bandgap, nks);
 
                 // save obase and orbital_precalc
                 LCAO_deepks_io::save_npy_orbital_precalc(nat, 

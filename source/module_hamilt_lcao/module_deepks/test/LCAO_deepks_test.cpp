@@ -221,12 +221,12 @@ void test_deepks::check_e_deltabands()
 {
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.cal_e_delta_band(dm_new);
+        this->ld.cal_e_delta_band(dm_new, 1); // 1 for gamma-only
     }
     else
     {
         this->folding_nnr(kv);
-        this->ld.cal_e_delta_band_k(dm_k_new, kv.get_nkstot());
+        this->ld.cal_e_delta_band(dm_k_new, kv.get_nkstot());
     }
 
     std::ofstream ofs("E_delta_bands.dat");

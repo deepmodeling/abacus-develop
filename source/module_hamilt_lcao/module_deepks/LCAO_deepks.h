@@ -358,21 +358,18 @@ class LCAO_Deepks
     // tr (rho * V_delta)
 
     // Four subroutines are contained in the file:
-    // 5. cal_e_delta_band : calculates e_delta_bands for gamma only
-    // 6. cal_e_delta_band_k : counterpart of 4, for multi-k
+    // 5. cal_e_delta_band : calculates e_delta_bands
 
   public:
     /// calculate tr(\rho V_delta)
     // void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    void cal_e_delta_band(const std::vector<std::vector<double>>& dm /**<[in] density matrix*/, const int /*nks*/);
-    // void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
-    //     const int nks);
-    void cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
-                            const int nks);
+    template <typename TK>
+    void cal_e_delta_band(const std::vector<std::vector<TK>>& dm /**<[in] density matrix*/, const int nks);
 
     //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k
-    void dpks_cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int nks);
-    void dpks_cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm, const int nks);
+    template <typename TK>
+    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
+    
 
     //-------------------
     // LCAO_deepks_odelta.cpp
@@ -381,17 +378,11 @@ class LCAO_Deepks
     // This file contains subroutines for calculating O_delta,
     // which corresponds to the correction of the band gap.
 
-    // There are two subroutines in this file:
-    // 1. cal_o_delta, which is used for gamma point calculation
-    // 2. cal_o_delta_k, which is used for multi-k calculation
-
   public:
-    void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>&
+    template <typename TK, typename TH>
+    void cal_o_delta(const std::vector<std::vector<TH>>&
                          dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
                      const int nks);
-    void cal_o_delta(const std::vector<std::vector<ModuleBase::ComplexMatrix>>&
-                           dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
-                       const int nks);
 
     //-------------------
     // LCAO_deepks_torch.cpp
