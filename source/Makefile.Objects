@@ -201,14 +201,11 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_hmat.o\
         LCAO_deepks_interface.o\
         orbital_precalc.o\
-        orbital_precalc_k.o\
         cal_gdmx.o\
-        cal_gdmx_k.o\
         cal_gedm.o\
         cal_gvx.o\
         cal_descriptor.o\
         v_delta_precalc.o\
-        v_delta_precalc_k.o\
         
 
 OBJS_ELECSTAT=elecstate.o\

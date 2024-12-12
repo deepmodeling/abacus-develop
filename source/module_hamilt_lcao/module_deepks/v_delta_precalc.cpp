@@ -18,8 +18,11 @@
 // calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm_shell;
 // v_delta_pdm_shell[nks,nlocal,nlocal,Inl,nm*nm] = overlap * overlap;
 // for deepks_v_delta = 1
+template <typename TK>
 void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver &GridD)
@@ -30,7 +33,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 
     this->cal_gvdm(nat);
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
-    this->init_v_delta_pdm_shell(1,nlocal); // 1 for gamma-only
+    this->init_v_delta_pdm_shell(nks,nlocal); 
    
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -46,6 +49,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
             {
                 const int T1 = GridD.getType(ad1);
                 const int I1 = GridD.getNatom(ad1);
+                const int ibt1 = ucell.itia2iat(T1, I1); 
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
 				const Atom* atom1 = &ucell.atoms[T1];
@@ -57,11 +61,27 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
                 {
                     continue;
                 }
+                
+                ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x,
+                                            GridD.getBox(ad1).y,
+                                            GridD.getBox(ad1).z);
+
+                key_tuple key_1(ibt1, dR1.x, dR1.y, dR1.z); 
+
+                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                {
+                    if (this->nlm_save_k[iat].find(key_1)
+                        == this->nlm_save_k[iat].end()) 
+                    {
+                        continue;
+                    }
+                }
 
 				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
 				{
 					const int T2 = GridD.getType(ad2);
 					const int I2 = GridD.getNatom(ad2);
+                    const int ibt2 = ucell.itia2iat(T2, I2);
 					const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
@@ -75,43 +95,83 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 						continue;
 					}
 
+                    ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x,
+                                                        GridD.getBox(ad2).y,
+                                                        GridD.getBox(ad2).z);
+                    key_tuple key_2(ibt2, dR2.x, dR2.y, dR2.z);
+
+                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    {
+                        if (this->nlm_save_k[iat].find(key_2)
+                            == this->nlm_save_k[iat].end()) 
+                        {
+                            continue;
+                        }
+                    }
+
 					for (int iw1=0; iw1<nw1_tot; ++iw1)
 					{
 						const int iw1_all = start1 + iw1; // this is \mu
 						const int iw1_local = pv->global2local_row(iw1_all);
-						if(iw1_local < 0) {continue;
-}
+						if(iw1_local < 0) {continue;}
 						const int iw1_0 = iw1/PARAM.globalv.npol;
 						for (int iw2=0; iw2<nw2_tot; ++iw2)
 						{
 							const int iw2_all = start2 + iw2; // this is \nu
 							const int iw2_local = pv->global2local_col(iw2_all);
-							if(iw2_local < 0) {continue;
-}
+							if(iw2_local < 0) {continue;}
 							const int iw2_0 = iw2/PARAM.globalv.npol;
 
-                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][iw1][0];
-                            std::vector<double> nlm2 = this->nlm_save[iat][ad2][iw2][0];
+                            std::vector<double> nlm1;
+                            std::vector<double> nlm2;
+                            if constexpr (std::is_same<TK, double>::value)
+                            {
+                                nlm1 = this->nlm_save[iat][ad1][iw1][0];
+                                nlm2 = this->nlm_save[iat][ad2][iw2][0];
+                            }
+                            else
+                            {
+                                nlm1 = this->nlm_save_k[iat][key_1][iw1][0];
+                                nlm2 = this->nlm_save_k[iat][key_2][iw2][0];
+                            }
 
                             assert(nlm1.size()==nlm2.size());
-                            int ib=0;
-                            for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                            for (int ik = 0; ik < nks; ik++)
                             {
-                                for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                int ib=0;
+                                std::complex<double> kphase = std::complex<double>(1.0, 0.0);
+                                if constexpr (std::is_same<TK, std::complex<double>>::value)
                                 {
-                                    const int inl = this->inl_index[T0](I0, L0, N0);
-                                    const int nm = 2*L0+1;
-                                    
-                                    for (int m1=0; m1<nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
-                                    {
-                                        for (int m2=0; m2<nm; ++m2) // nm = 1 for s, 3 for p, 5 for d
-                                        {
-                                            v_delta_pdm_shell[0][iw1_all][iw2_all][inl][m1*nm+m2] += nlm1[ib+m1]*nlm2[ib+m2];
-                                        }
-                                    }
-                                    ib+=nm;
+                                    const double arg = - (kvec_d[ik] * (dR1-dR2) ) * ModuleBase::TWO_PI;
+                                    double sinp, cosp;
+                                    ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                                    kphase = std::complex<double>(cosp, sinp);
                                 }
-                            }                            
+                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax();++L0)
+                                {
+                                    for (int N0 = 0;N0 < orb.Alpha[0].getNchi(L0);++N0)
+                                    {
+                                        const int inl = this->inl_index[T0](I0, L0, N0);
+                                        const int nm = 2*L0+1;
+                                        
+                                        for (int m1=0; m1<nm; ++m1) // nm = 1 for s, 3 for p, 5 for d
+                                        {
+                                            for (int m2=0; m2<nm; ++m2) // nm = 1 for s, 3 for p, 5 for d
+                                            {
+                                                if constexpr (std::is_same<TK, double>::value)
+                                                {
+                                                    this->v_delta_pdm_shell[ik][iw1_all][iw2_all][inl][m1*nm+m2] += nlm1[ib+m1]*nlm2[ib+m2];
+                                                }
+                                                else
+                                                {
+                                                    this->v_delta_pdm_shell_complex[ik][iw1_all][iw2_all][inl][m1*nm+m2] += nlm1[ib+m1]*nlm2[ib+m2]*kphase;
+                                                }
+                                            }
+                                        }
+                                        ib+=nm;
+                                    }
+                                }  
+                            } //ik                         
 						}//iw2
 					}//iw1
 				}//ad2
@@ -121,13 +181,23 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     }
 #ifdef __MPI
     const int mn_size=(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
-    for(int inl = 0; inl < this->inlmax; inl++)
+    for (int ik = 0; ik < nks; ik++)
     {
-        for(int mu = 0; mu < nlocal ; mu++)
+        for(int inl = 0; inl < this->inlmax; inl++)
         {
-            for(int nu=0; nu< nlocal ; nu++)
+            for(int mu = 0; mu < nlocal ; mu++)
             {
-                Parallel_Reduce::reduce_all(this->v_delta_pdm_shell[0][mu][nu][inl],mn_size);
+                for(int nu=0; nu< nlocal ; nu++)
+                {
+                    if constexpr (std::is_same<TK, double>::value)
+                    {
+                        Parallel_Reduce::reduce_all(this->v_delta_pdm_shell[ik][mu][nu][inl],mn_size);
+                    }
+                    else
+                    {
+                        Parallel_Reduce::reduce_all(this->v_delta_pdm_shell_complex[ik][mu][nu][inl],mn_size);
+                    }
+                }
             }
         }
     }
@@ -141,7 +211,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     for(int nl = 0; nl < nlmax; ++nl)
     {
         std::vector<torch::Tensor> kuuammv;
-        for(int iks = 0; iks < 1; ++iks)
+        for(int iks = 0; iks < nks; ++iks)
         {
             std::vector<torch::Tensor> uuammv;
             for(int mu = 0; mu < nlocal; ++mu)
@@ -154,17 +224,32 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
                     {
                         int inl = iat*nlmax+nl;
                         int nm = 2*this->inl_l[inl]+1;
-                        std::vector<double> mmv;
+                        std::vector<TK> mmv;
                     
                         for (int m1=0; m1<nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                         {
                             for (int m2=0; m2<nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                             {
-                                mmv.push_back(this->v_delta_pdm_shell[iks][mu][nu][inl][m1*nm+m2]);
+                                if constexpr (std::is_same<TK, double>::value)
+                                {
+                                    mmv.push_back(this->v_delta_pdm_shell[iks][mu][nu][inl][m1*nm+m2]);
+                                }
+                                else
+                                {
+                                    mmv.push_back(this->v_delta_pdm_shell_complex[iks][mu][nu][inl][m1*nm+m2]);
+                                }
                             }
                         }
-                        torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64) ).reshape({nm, nm});    //nm*nm
-                        ammv.push_back(mm);
+                        if constexpr (std::is_same<TK, double>::value)
+                        {
+                            torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64) ).reshape({nm, nm});    //nm*nm
+                            ammv.push_back(mm);
+                        }
+                        else
+                        {
+                            torch::Tensor mm = torch::from_blob(mmv.data(), {nm, nm}, torch::TensorOptions().dtype(torch::kComplexDouble)).clone();    //nm*nm
+                            ammv.push_back(mm);
+                        }
                     }
                     torch::Tensor amm = torch::stack(ammv, 0); 
                     uammv.push_back(amm);                    
@@ -184,12 +269,20 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     //einsum for each nl: 
     std::vector<torch::Tensor> v_delta_precalc_vector;
     for (int nl = 0; nl<nlmax; ++nl)
-    {
-        v_delta_precalc_vector.push_back(at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], this->gevdm_vector[nl]}));
+    {   
+        if constexpr (std::is_same<TK, double>::value)
+        {
+            v_delta_precalc_vector.push_back(at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], this->gevdm_vector[nl]}));
+        }
+        else
+        {
+            torch::Tensor gevdm_vector_complex = this->gevdm_vector[nl].to(torch::kComplexDouble);
+            v_delta_precalc_vector.push_back(at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm_vector_complex}));
+        }
     }
 
     this->v_delta_precalc_tensor = torch::cat(v_delta_precalc_vector, -1);
-    this->del_v_delta_pdm_shell(1,nlocal);
+    this->del_v_delta_pdm_shell(nks,nlocal);
 
     //check_v_delta_precalc(nlocal,nat);
     // timeval t_end;
@@ -198,6 +291,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     return;
 }
 
+template <typename TK>
 void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int nlocal)
 {
     std::ofstream ofs("v_delta_precalc.dat");
@@ -212,7 +306,15 @@ void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int n
                 {
                     for(int p=0; p<this->des_per_atom; ++p)
                     {
-                        ofs<<this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p }).item().toDouble()<<" ";
+                        if constexpr (std::is_same<TK, double>::value)
+                        {
+                            ofs << this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p }).item().toDouble() << " " ;
+                        }
+                        else
+                        {
+                            auto tensor_value = this->v_delta_precalc_tensor.index({iks, mu, nu, iat, p});
+                            ofs << std::complex<double>(torch::real(tensor_value).item<double>(), torch::imag(tensor_value).item<double>()) << " " ;
+                        }
                     }
                 }
                 ofs << std::endl;                
@@ -221,5 +323,24 @@ void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int n
     }
     ofs.close();
 }
+
+template void LCAO_Deepks::cal_v_delta_precalc<double>(const int nlocal,
+                                                       const int nat,
+                                                       const int nks,
+                                                       const std::vector<ModuleBase::Vector3<double>> &kvec_d,
+                                                       const UnitCell &ucell,
+                                                       const LCAO_Orbitals &orb,
+                                                       Grid_Driver &GridD);
+
+template void LCAO_Deepks::cal_v_delta_precalc<std::complex<double>>(const int nlocal,
+                                                                    const int nat,
+                                                                    const int nks,
+                                                                    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
+                                                                    const UnitCell &ucell,
+                                                                    const LCAO_Orbitals &orb,
+                                                                    Grid_Driver &GridD);
+
+template void LCAO_Deepks::check_v_delta_precalc<double>(const int nat, const int nks, const int nlocal);
+template void LCAO_Deepks::check_v_delta_precalc<std::complex<double>>(const int nat, const int nks, const int nlocal);
 
 #endif

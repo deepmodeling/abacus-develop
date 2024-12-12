@@ -17,7 +17,6 @@
 //4. subroutines that are related to V_delta:
 //  - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
 //      init_gdmx, as well as allocating F_delta
-//  - allocate_V_deltaR : allcoates H_V_deltaR, for multi-k calculations
 
 #ifdef __DEEPKS
 
@@ -35,7 +34,6 @@ LCAO_Deepks::LCAO_Deepks()
     alpha_index = new ModuleBase::IntArray[1];
     inl_index = new ModuleBase::IntArray[1];
     inl_l = nullptr;
-    H_V_deltaR = nullptr;
     gedm = nullptr;
 }
 
@@ -45,7 +43,6 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] alpha_index;
     delete[] inl_index;
     delete[] inl_l;
-    delete[] H_V_deltaR;
 
     //=======1. to use deepks, pdm is required==========
     //delete pdm**
@@ -92,7 +89,10 @@ void LCAO_Deepks::init(
     
     int tot_inl = tot_inl_per_atom * nat;
 
-    if(PARAM.inp.deepks_equiv) tot_inl = nat;
+    if(PARAM.inp.deepks_equiv) 
+    {
+        tot_inl = nat;
+    }
 
     this->lmaxd = lm;
     this->nmaxd = nm;
@@ -142,25 +142,6 @@ void LCAO_Deepks::init(
     this->allocate_nlm(nat);
 
     this->pv = &pv_in;
-
-    if(PARAM.inp.deepks_v_delta)
-    {
-        //allocate and init h_mat
-        if(PARAM.globalv.gamma_only_local)
-        {
-            int nloc=this->pv->nloc;
-            this->h_mat.resize(nloc,0.0);
-        }
-        else
-        {
-            int nloc=this->pv->nloc;
-            this->h_mat_k.resize(nks);
-            for (int ik = 0; ik < nks; ik++)
-            {
-                this->h_mat_k[ik].resize(nloc,std::complex<double>(0.0,0.0));
-            }
-        }
-    }
 
     return;
 }
@@ -335,8 +316,9 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     //initialize the H matrix H_V_delta
     if(PARAM.globalv.gamma_only_local)
     {
-        this->H_V_delta.resize(pv->nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta.data(), pv->nloc);
+        H_V_delta.resize(1); // the first dimension is for the consistence with H_V_delta_k
+        this->H_V_delta[0].resize(pv->nloc);
+        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta[0].data(), pv->nloc);
     }
     else
     {
@@ -385,15 +367,6 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     }
 
     return;
-}
-
-void LCAO_Deepks::allocate_V_deltaR(const int nnr)
-{
-    ModuleBase::TITLE("LCAO_Deepks", "allocate_V_deltaR");
-    GlobalV::ofs_running << nnr << std::endl;
-    delete[] H_V_deltaR;
-    H_V_deltaR = new double[nnr];
-    ModuleBase::GlobalFunc::ZEROS(H_V_deltaR, nnr);
 }
 
 void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
@@ -541,12 +514,12 @@ void LCAO_Deepks::del_v_delta_pdm_shell(const int nks,const int nlocal)
 
 void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int nks)
 {
-    this->cal_e_delta_band(dm);
+    this->cal_e_delta_band(dm, nks);
 }
 
 void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm, const int nks)
 {
-    this->cal_e_delta_band_k(dm, nks);
+    this->cal_e_delta_band(dm, nks);
 }
 
 #endif

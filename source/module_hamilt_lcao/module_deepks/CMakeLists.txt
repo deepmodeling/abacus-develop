@@ -13,14 +13,11 @@ if(ENABLE_DEEPKS)
       deepks_hmat.cpp
       LCAO_deepks_interface.cpp
       orbital_precalc.cpp
-      orbital_precalc_k.cpp
       cal_gdmx.cpp
-      cal_gdmx_k.cpp
       cal_gedm.cpp
       cal_gvx.cpp      
       cal_descriptor.cpp
       v_delta_precalc.cpp
-      v_delta_precalc_k.cpp
   )
 
   add_library(

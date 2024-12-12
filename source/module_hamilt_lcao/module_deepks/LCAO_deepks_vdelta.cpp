@@ -18,7 +18,7 @@
 
 //calculating sum of correction band energies
 //for gamma_only calculations
-void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
+void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int /*nks*/)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
     this->e_delta_band = 0;
@@ -35,7 +35,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
                 for (int is = 0; is < dm.size(); ++is)  //dm.size() == PARAM.inp.nspin
                 {
                     //this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
-					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[index];
+					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[0][index];
                 }
             }
         }
@@ -48,7 +48,7 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm)
 
 //calculating sum of correction band energies
 //for multi_k calculations
-void LCAO_Deepks::cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm,
+void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm,
     const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");

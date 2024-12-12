@@ -54,18 +54,10 @@ class LCAO_Deepks
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
     ModuleBase::matrix o_delta;
 
-    ///(Unit: Ry) Hamiltonian matrix in k space
-    /// for gamma only
-    std::vector<double> h_mat;    
-    /// for multi-k
-    std::vector<std::vector<std::complex<double>>> h_mat_k;
-
     /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
-    std::vector<double> H_V_delta;
+    /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
+    std::vector<std::vector<double>> H_V_delta; 
     /// Correction term to Hamiltonian, for multi-k
-    /// In R space:
-    double* H_V_deltaR;
-    /// In k space:
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
     // F_delta will be deleted soon, mohan 2024-07-25
@@ -213,7 +205,6 @@ class LCAO_Deepks
     // 3. subroutines that are related to V_delta:
     //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
     //       init_gdmx, as well as allocating F_delta
-    //   - allocate_V_deltaR : allcoates H_V_deltaR, for multi-k calculations
 
   public:
     explicit LCAO_Deepks();
@@ -230,8 +221,6 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
-
-    void allocate_V_deltaR(const int nnr);
 
     // array for storing gdmx, used for calculating gvx
     void init_gdmx(const int nat);
@@ -299,8 +288,7 @@ class LCAO_Deepks
     // 3. check_projected_dm, which prints pdm to descriptor.dat
 
     // 4. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
-    // 5. cal_gdmx_k, counterpart of 3, for multi-k
-    // 6. check_gdmx, which prints gdmx to a series of .dat files
+    // 5. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
     /** 
@@ -316,7 +304,7 @@ class LCAO_Deepks
                           const LCAO_Orbitals& orb,
                           Grid_Driver& GridD);
 
-    void cal_projected_DM_k(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
+    void cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
                             const UnitCell& ucell,
                             const LCAO_Orbitals& orb,
                             Grid_Driver& GridD);
@@ -335,21 +323,16 @@ class LCAO_Deepks
 
     // calculate the gradient of pdm with regard to atomic positions
     // d/dX D_{Inl,mm'}
+    template <typename TK>
     void cal_gdmx( // const ModuleBase::matrix& dm,
-        const std::vector<double>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
-        const bool isstress);
-
-    void cal_gdmx_k( // const std::vector<ModuleBase::ComplexMatrix>& dm,
-        const std::vector<std::vector<std::complex<double>>>& dm,
+        const std::vector<std::vector<TK>>& dm,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,
         Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         const bool isstress);
+
     void check_gdmx(const int nat);
 
     /** 
@@ -381,10 +364,10 @@ class LCAO_Deepks
   public:
     /// calculate tr(\rho V_delta)
     // void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    void cal_e_delta_band(const std::vector<std::vector<double>>& dm /**<[in] density matrix*/);
+    void cal_e_delta_band(const std::vector<std::vector<double>>& dm /**<[in] density matrix*/, const int /*nks*/);
     // void cal_e_delta_band_k(const std::vector<ModuleBase::ComplexMatrix>& dm/**<[in] density matrix*/,
     //     const int nks);
-    void cal_e_delta_band_k(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
+    void cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm /**<[in] density matrix*/,
                             const int nks);
 
     //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k
@@ -404,8 +387,9 @@ class LCAO_Deepks
 
   public:
     void cal_o_delta(const std::vector<std::vector<ModuleBase::matrix>>&
-                         dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/);
-    void cal_o_delta_k(const std::vector<std::vector<ModuleBase::ComplexMatrix>>&
+                         dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
+                     const int nks);
+    void cal_o_delta(const std::vector<std::vector<ModuleBase::ComplexMatrix>>&
                            dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
                        const int nks);
 
@@ -439,18 +423,12 @@ class LCAO_Deepks
     // 10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
     //                          which equals gvdm * orbital_pdm_shell,
     //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl * overlap * overlap
-    // 11. cal_orbital_precalc_k : orbital_precalc is usted for training with orbital label,
-    //                          for multi-k case, which equals gvdm * orbital_pdm_shell,
-    //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl_k * overlap * overlap
-    // 12. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
+    // 11. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
-    // 13. cal_v_delta_precalc_k : v_delta_precalc is used for training with v_delta label,
-    //                         for multi-k case, which equals ???
-    //                         ???
-    // 14. check_v_delta_precalc : check v_delta_precalc
-    // 15. prepare_psialpha : prepare psialpha for outputting npy file
-    // 16. prepare_gevdm : prepare gevdm for outputting npy file
+    // 12. check_v_delta_precalc : check v_delta_precalc
+    // 13. prepare_psialpha : prepare psialpha for outputting npy file
+    // 14. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
     /// Calculates descriptors
@@ -485,52 +463,39 @@ class LCAO_Deepks
     void cal_gedm_equiv(const int nat);
 
     // calculates orbital_precalc
-    void cal_orbital_precalc(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl /**<[in] density matrix*/,
+    template <typename TK, typename TH>
+    void cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl /**<[in] density matrix*/,
                              const int nat,
+                             const int nks,
+                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
                              Grid_Driver& GridD);
 
-    // calculates orbital_precalc for multi-k case
-    void cal_orbital_precalc_k(
-        const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl /**<[in] density matrix*/,
-        const int nat,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        Grid_Driver& GridD);
-
     //calculates v_delta_precalc
+    template <typename TK>
     void cal_v_delta_precalc(const int nlocal,
         const int nat,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
-
-    void cal_v_delta_precalc_k(const int nlocal,
-        const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
 
-    void check_v_delta_precalc(const int nat, const int nks,const int nlocal);
+    template <typename TK>
+    void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
 
     // prepare psialpha for outputting npy file
+    template <typename TK>
     void prepare_psialpha(const int nlocal,
-        const int nat,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
-    void prepare_psialpha_k(const int nlocal,
         const int nat,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>> &kvec_d,
         const UnitCell &ucell,
         const LCAO_Orbitals &orb,
         Grid_Driver &GridD);
+
+    template <typename TK>
     void check_vdp_psialpha(const int nat, const int nks, const int nlocal);
     
     // prepare gevdm for outputting npy file

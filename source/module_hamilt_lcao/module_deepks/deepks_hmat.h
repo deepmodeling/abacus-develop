@@ -14,37 +14,19 @@
 
 namespace DeePKS_domain
 {
-	void save_h_mat(
-			const double *h_mat_in,
-			const int nloc,
-            const int ik);
-
-	void save_h_mat(
-			const std::complex<double> *h_mat_in,
-			const int nloc,
-            const int ik);
-
     //Collect data in h_in to matrix h_out. Note that left lower trianger in h_out is filled
+    template <typename TK, typename TH>
     void collect_h_mat(
         const Parallel_Orbitals &pv,
-        const std::vector<double>& h_in,
-        ModuleBase::matrix &h_out,
-        const int nlocal);
-
-    void collect_h_mat(
-        const Parallel_Orbitals &pv,
-		const std::vector<std::vector<std::complex<double>>>& h_in,
-		std::vector<ModuleBase::ComplexMatrix> &h_out,
-		const int nlocal,
+        const std::vector<std::vector<TK>>& h_in,
+        std::vector<TH> &h_out,
+        const int nlocal,
         const int nks);
 
+    // write h_mat to file h_file for checking // not used in the code now
+    template <typename TH>
     void check_h_mat(
-        const ModuleBase::matrix &H,
-        const std::string &h_file,
-        const int nlocal);
-
-    void check_h_mat(
-		const std::vector<ModuleBase::ComplexMatrix> &H,
+		const std::vector<TH> &H,
 		const std::string &h_file,
 		const int nlocal,
         const int nks);

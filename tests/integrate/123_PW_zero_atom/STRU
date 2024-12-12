@@ -1,0 +1,23 @@
+ATOMIC_SPECIES
+Al 13 Al_ONCV_PBE-1.0.upf upf201
+Si 14 Si_ONCV_PBE-1.0.upf upf201
+
+LATTICE_CONSTANT
+10.2  // add lattice constant
+
+LATTICE_VECTORS
+0.5 0.5 0.0
+0.5 0.0 0.5
+0.0 0.5 0.5
+
+ATOMIC_POSITIONS
+Direct 
+
+Al
+0.0
+0
+Si      // Element type
+0.0     // magnetism
+2
+0.00 0.00 0.00 1 1 1
+0.25 0.25 0.25 1 1 1

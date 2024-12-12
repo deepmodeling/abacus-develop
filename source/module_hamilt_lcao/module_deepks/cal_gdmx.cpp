@@ -14,10 +14,13 @@
 /// be calculated: 
 /// gdm_epsl = d/d\epsilon_{ab} * 
 ///           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
+template <typename TK>
+void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
     Grid_Driver& GridD,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const bool isstress)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
@@ -70,6 +73,8 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
 				const int nw1_tot = atom1->nw*PARAM.globalv.npol;
 				const double Rcut_AO1 = orb.Phi[T1].getRcut(); 
 
+                ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z); 
+
 				for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
 				{
 					const int T2 = GridD.getType(ad2);
@@ -79,6 +84,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
 					const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
 					const Atom* atom2 = &ucell.atoms[T2];
 					const int nw2_tot = atom2->nw*PARAM.globalv.npol;
+					ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 					
 					const double Rcut_AO2 = orb.Phi[T2].getRcut();
                 	const double dist1 = (tau1-tau0).norm() * ucell.lat0;
@@ -104,25 +110,68 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
                     auto row_indexes = pv->get_indexes_row(ibt1);
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     if(row_indexes.size() * col_indexes.size() == 0) continue;
-
-                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, pv);
-                    dm_pair.allocate(nullptr, 1);
-                    if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                    
+                    double* dm_current;
+                    int dRx, dRy, dRz;
+                    if constexpr (std::is_same<TK, double>::value)
                     {
-                        dm_pair.add_from_matrix(dm.data(), pv->get_row_size(), 1.0, 1);
+                        dRx = 0;
+                        dRy = 0;
+                        dRz = 0;
                     }
                     else
                     {
-                        dm_pair.add_from_matrix(dm.data(), pv->get_col_size(), 1.0, 0);
+                        dRx = (dR2-dR1).x;
+                        dRy = (dR2-dR1).y;
+                        dRz = (dR2-dR1).z;
                     }
-                    const double* dm_current = dm_pair.get_pointer();
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, pv);
+                    dm_pair.allocate(nullptr, 1);
+                    for(int ik=0;ik<nks;ik++)
+                    {
+                        TK kphase;
+                        if constexpr (std::is_same<TK, double>::value)
+                        {
+                            kphase = 1.0;
+                        }
+                        else
+                        {
+                            const double arg = - (kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
+                            double sinp, cosp;
+                            ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                            kphase = TK(cosp, sinp);
+                        }
+                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        {
+                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_row_size(), kphase, 1);
+                        }
+                        else
+                        {
+                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_col_size(), kphase, 0);
+                        }
+                    }
+                    
+                    dm_current = dm_pair.get_pointer();
 
+                    key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
+                    key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
 					for (int iw1=0; iw1<row_indexes.size(); ++iw1)
                     {
                         for (int iw2=0; iw2<col_indexes.size(); ++iw2)
                         {
-                            std::vector<double> nlm1 = this->nlm_save[iat][ad1][row_indexes[iw1]][0];
-                            std::vector<std::vector<double>> nlm2 = this->nlm_save[iat][ad2][col_indexes[iw2]];
+                            std::vector<double> nlm1;
+                            std::vector<std::vector<double>> nlm2;
+
+                            if constexpr (std::is_same<TK, double>::value)
+                            {
+                                nlm1 = this->nlm_save[iat][ad1][row_indexes[iw1]][0];
+                                nlm2 = this->nlm_save[iat][ad2][col_indexes[iw2]];
+                            }
+                            else
+                            {
+                                nlm1 = this->nlm_save_k[iat][key_1][row_indexes[iw1]][0];
+                                nlm2 = this->nlm_save_k[iat][key_2][col_indexes[iw2]];
+                            }
 
                             assert(nlm1.size()==nlm2[0].size());
 
@@ -178,8 +227,16 @@ void LCAO_Deepks::cal_gdmx(const std::vector<double>& dm,
                             assert(ib==nlm1.size());
                             if  (isstress)
                             {
-                                nlm1 = this->nlm_save[iat][ad2][col_indexes[iw2]][0];
-                                nlm2 = this->nlm_save[iat][ad1][row_indexes[iw1]];
+                                if constexpr (std::is_same<TK, double>::value)
+                                {
+                                    nlm1 = this->nlm_save[iat][ad2][col_indexes[iw2]][0];
+                                    nlm2 = this->nlm_save[iat][ad1][row_indexes[iw1]];
+                                }
+                                else
+                                {
+                                    nlm1 = this->nlm_save_k[iat][key_2][col_indexes[iw2]][0];
+                                    nlm2 = this->nlm_save_k[iat][key_1][row_indexes[iw1]];
+                                }
 
                                 assert(nlm1.size()==nlm2[0].size());  
                                 int ib=0;
@@ -277,5 +334,21 @@ void LCAO_Deepks::check_gdmx(const int nat)
         ofs_z.close();
     }
 }
+
+template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double>>& dm,
+                                            const UnitCell &ucell,
+                                            const LCAO_Orbitals &orb,
+                                            Grid_Driver& GridD,
+                                            const int nks,
+                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                            const bool isstress);
+
+template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
+                                                          const UnitCell &ucell,
+                                                          const LCAO_Orbitals &orb,
+                                                          Grid_Driver& GridD,
+                                                          const int nks,
+                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                          const bool isstress);
 
 #endif

@@ -330,6 +330,18 @@ void ReadInput::item_elec_stru()
         Input_Item item("smearing_method");
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         read_sync_string(input.smearing_method);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> methods = {"gauss", "gaussian", 
+                                                      "fd", "fermi-dirac",
+                                                      "fixed",
+                                                      "mp", "mp2", "mp3"
+                                                      "marzari-vanderbilt", "cold", "mv"};
+            if (std::find(methods.begin(), methods.end(), para.input.smearing_method) == methods.end())
+            {
+                const std::string warningstr = nofound_str(methods, "smearing_method");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
         this->add_item(item);
     }
     {

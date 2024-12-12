@@ -261,7 +261,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            LCAO_deepks_io::print_dm(dm_gamma[0], PARAM.globalv.nlocal, this->ParaV->nrow);
+            const int nks = 1; // 1 for gamma-only
+            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma); 
 
             GlobalC::ld.check_projected_dm();
 
@@ -269,7 +270,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
             GlobalC::ld.check_gedm();
 
-            GlobalC::ld.cal_e_delta_band(dm_gamma);
+            GlobalC::ld.cal_e_delta_band(dm_gamma,nks);
 
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
