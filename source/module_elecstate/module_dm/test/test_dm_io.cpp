@@ -48,7 +48,7 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,
                             const int& I,
-                            AdjacentAtomInfo* adjs)
+                            AdjacentAtomInfo* adjs) const
 {
 }
 Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
