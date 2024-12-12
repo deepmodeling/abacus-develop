@@ -36,12 +36,12 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     TDEkinetic<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                 hamilt::HContainer<TR>* hR_in,
-                                 const K_Vectors* kv_in,
-                                 const UnitCell* ucell_in,
-                                 const std::vector<double>& orb_cutoff,
-                                 Grid_Driver* GridD_in,
-                                 const TwoCenterIntegrator* intor);
+                                     hamilt::HContainer<TR>* hR_in,
+                                     const K_Vectors* kv_in,
+                                     const UnitCell* ucell_in,
+                                     const std::vector<double>& orb_cutoff,
+                                     const Grid_Driver* GridD_in,
+                                     const TwoCenterIntegrator* intor);
     ~TDEkinetic();
 
     virtual void contributeHR() override;
@@ -54,7 +54,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(Grid_Driver* GridD);
+    void initialize_HR(const Grid_Driver* GridD);
 
     /**
      * @brief initialize HR_tmp
@@ -89,7 +89,7 @@ class TDEkinetic<OperatorLCAO<TK,TR>> : public OperatorLCAO<TK, TR>
     HContainer<TR>* SR = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     HContainer<std::complex<double>>* hR_tmp = nullptr;
-    Grid_Driver* Grid = nullptr;
+    const Grid_Driver* Grid = nullptr;
 
     const K_Vectors* kv;
     /// @brief correction term iA⋅∇

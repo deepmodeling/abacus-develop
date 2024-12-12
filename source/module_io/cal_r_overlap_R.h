@@ -33,7 +33,7 @@ class cal_r_overlap_R
     bool binary = false;
 
     void init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void out_rR(const UnitCell& ucell, Grid_Driver& gd, const int& istep);
+    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep);
     void out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor);
 
   private:

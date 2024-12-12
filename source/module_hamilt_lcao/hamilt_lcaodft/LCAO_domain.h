@@ -25,7 +25,6 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         TwoCenterBundle& two_center_bundle,
         LCAO_Orbitals& orb);
 
-
 void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr, // mohan 2024-06-16
                            double* HlocR,
@@ -33,7 +32,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const TwoCenterIntegrator& intor_orb_beta,
-                           Grid_Driver* GridD);
+                           const Grid_Driver* GridD);
 
 /**
  * @brief prepare gird integration
@@ -164,7 +163,7 @@ void build_ST_new(ForceStressArrays& fsr,
                   const LCAO_Orbitals& orb,
                   const Parallel_Orbitals& pv,
                   const TwoCenterBundle& two_center_bundle,
-                  Grid_Driver* GridD,
+                  const Grid_Driver* GridD,
                   double* SHlocR,
                   bool cal_syns = false,
                   double dmax = 0.0);

@@ -239,7 +239,7 @@ void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, co
     return;
 }
 
-void cal_r_overlap_R::out_rR(const UnitCell& ucell, Grid_Driver& gd, const int& istep)
+void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::tick("cal_r_overlap_R", "out_rR");

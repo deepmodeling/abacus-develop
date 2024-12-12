@@ -445,7 +445,9 @@ namespace ModuleSymmetry
         return DMk;
     }
 
-    std::vector<TC> Symmetry_rotation::get_Rs_from_adjacent_list(const UnitCell& ucell, Grid_Driver& gd, const Parallel_Orbitals& pv) const
+    std::vector<TC> Symmetry_rotation::get_Rs_from_adjacent_list(const UnitCell& ucell,
+                                                                 const Grid_Driver& gd,
+                                                                 const Parallel_Orbitals& pv) const
     {
         // find the union set of Rs for all the atom pairs
         std::set<TC> Rs_set;

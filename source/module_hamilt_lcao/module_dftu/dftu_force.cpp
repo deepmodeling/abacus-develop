@@ -73,7 +73,7 @@ namespace ModuleDFTU
 {
 
 void DFTU::force_stress(const UnitCell& ucell,
-                        Grid_Driver& gd,
+                        const Grid_Driver& gd,
                         const elecstate::ElecState* pelec,
                         const Parallel_Orbitals& pv,
                         ForceStressArrays& fsr, // mohan add 2024-06-16
@@ -250,7 +250,7 @@ void DFTU::force_stress(const UnitCell& ucell,
 }
 
 void DFTU::cal_force_k(const UnitCell& ucell,
-                       Grid_Driver& gd,
+                       const Grid_Driver& gd,
                        ForceStressArrays& fsr,
                        const Parallel_Orbitals& pv,
                        const int ik,
@@ -380,7 +380,7 @@ void DFTU::cal_force_k(const UnitCell& ucell,
 }
 
 void DFTU::cal_stress_k(const UnitCell& ucell,
-                        Grid_Driver& gd,
+                        const Grid_Driver& gd,
                         ForceStressArrays& fsr,
                         const Parallel_Orbitals& pv,
                         const int ik,
@@ -592,7 +592,7 @@ void DFTU::cal_force_gamma(const UnitCell& ucell,
 
 void DFTU::cal_stress_gamma(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
-                            Grid_Driver* gd,
+                            const Grid_Driver* gd,
                             double* dsloc_x,
                             double* dsloc_y,
                             double* dsloc_z,

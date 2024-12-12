@@ -13,20 +13,20 @@ LCAO_Deepks_Interface<TK, TR>::LCAO_Deepks_Interface(std::shared_ptr<LCAO_Deepks
 {
 }
 
-template<typename TK, typename TR>
-void LCAO_Deepks_Interface<TK,TR>::out_deepks_labels(const double& etot,
-                                              const int& nks,
-                                              const int& nat,
-                                              const int& nlocal,
-                                              const ModuleBase::matrix& ekb,
-                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                              const UnitCell& ucell,
-                                              const LCAO_Orbitals& orb,
-                                              Grid_Driver& GridD,
-                                              const Parallel_Orbitals* ParaV,
-                                              const psi::Psi<TK>& psi,
-                                              const elecstate::DensityMatrix<TK, double>* dm,
-                                              hamilt::HamiltLCAO<TK,TR>* p_ham)
+template <typename TK, typename TR>
+void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
+                                                      const int& nks,
+                                                      const int& nat,
+                                                      const int& nlocal,
+                                                      const ModuleBase::matrix& ekb,
+                                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                      const UnitCell& ucell,
+                                                      const LCAO_Orbitals& orb,
+                                                      const Grid_Driver& GridD,
+                                                      const Parallel_Orbitals* ParaV,
+                                                      const psi::Psi<TK>& psi,
+                                                      const elecstate::DensityMatrix<TK, double>* dm,
+                                                      hamilt::HamiltLCAO<TK, TR>* p_ham)
 {
     ModuleBase::TITLE("LCAO_Deepks_Interface", "out_deepks_labels");
     ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");

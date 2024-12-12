@@ -4,7 +4,7 @@
 #undef private
 namespace Test_Deepks
 {
-Grid_Driver GridD(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+const Grid_Driver GridD(PARAM.input.test_deconstructor, PARAM.input.test_grid);
 }
 
 test_deepks::test_deepks()

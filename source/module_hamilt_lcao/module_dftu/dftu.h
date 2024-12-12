@@ -164,24 +164,23 @@ private:
     // Subroutines for folding S and dS matrix
     //=============================================================
 
-	void fold_dSR_gamma(
-			const UnitCell &ucell,
-			const Parallel_Orbitals &pv,
-			Grid_Driver* gd,
-			double* dsloc_x,
-			double* dsloc_y,
-			double* dsloc_z,
-			double* dh_r,
-			const int dim1, 
-			const int dim2, 
-			double* dSR_gamma);
+    void fold_dSR_gamma(const UnitCell& ucell,
+                        const Parallel_Orbitals& pv,
+                        const Grid_Driver* gd,
+                        double* dsloc_x,
+                        double* dsloc_y,
+                        double* dsloc_z,
+                        double* dh_r,
+                        const int dim1,
+                        const int dim2,
+                        double* dSR_gamma);
 
     // dim = 0 : S, for Hamiltonian
     // dim = 1-3 : dS, for force
     // dim = 4-6 : dS * dR, for stress
 
     void folding_matrix_k(const UnitCell& ucell,
-                          Grid_Driver& gd,
+                          const Grid_Driver& gd,
                           ForceStressArrays& fsr,
                           const Parallel_Orbitals& pv,
                           const int ik,
@@ -203,7 +202,7 @@ private:
     //=============================================================
  public:
    void force_stress(const UnitCell& ucell,
-                     Grid_Driver& gd,
+                     const Grid_Driver& gd,
                      const elecstate::ElecState* pelec,
                      const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
@@ -213,7 +212,7 @@ private:
 
  private:
    void cal_force_k(const UnitCell& ucell,
-                    Grid_Driver& gd,
+                    const Grid_Driver& gd,
                     ForceStressArrays& fsr,
                     const Parallel_Orbitals& pv,
                     const int ik,
@@ -222,7 +221,7 @@ private:
                     const std::vector<ModuleBase::Vector3<double>>& kvec_d);
 
    void cal_stress_k(const UnitCell& ucell,
-                     Grid_Driver& gd,
+                     const Grid_Driver& gd,
                      ForceStressArrays& fsr,
                      const Parallel_Orbitals& pv,
                      const int ik,
@@ -240,7 +239,7 @@ private:
 
    void cal_stress_gamma(const UnitCell& ucell,
                          const Parallel_Orbitals& pv,
-                         Grid_Driver* gd,
+                         const Grid_Driver* gd,
                          double* dsloc_x,
                          double* dsloc_y,
                          double* dsloc_z,

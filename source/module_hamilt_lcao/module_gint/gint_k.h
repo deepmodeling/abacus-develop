@@ -32,11 +32,8 @@ class Gint_k : public Gint {
      * @brief transfer pvpR to this->hRGint
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
-    void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in, Grid_Driver* gd);
-    void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+    void transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in, const Grid_Driver* gd);
+    void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const UnitCell* ucell_in, const Grid_Driver* gd);
 
     //------------------------------------------------------
     // in gint_k_env.cpp
@@ -78,7 +75,7 @@ class Gint_k : public Gint {
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
                                     const UnitCell& ucell,
-                                    Grid_Driver& gdriver);
+                                    const Grid_Driver& gdriver);
 
   private:
     //----------------------------

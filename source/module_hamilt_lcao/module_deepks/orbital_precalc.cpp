@@ -16,14 +16,13 @@
 // calculates orbital_precalc[1,NAt,NDscrpt] = gvdm * orbital_pdm_shell;
 // orbital_pdm_shell[2,Inl,nm*nm] = dm_hl * overlap * overlap;
 template <typename TK, typename TH>
-void LCAO_Deepks::cal_orbital_precalc(
-    const std::vector<std::vector<TH>>& dm_hl,
-    const int nat,
-    const int nks,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-    const UnitCell& ucell,
-    const LCAO_Orbitals& orb,
-    Grid_Driver& GridD) 
+void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
+                                      const int nat,
+                                      const int nks,
+                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                      const UnitCell& ucell,
+                                      const LCAO_Orbitals& orb,
+                                      const Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_orbital_precalc");
     ModuleBase::timer::tick("LCAO_Deepks", "calc_orbital_precalc");
@@ -404,20 +403,21 @@ void LCAO_Deepks::cal_orbital_precalc(
     return;
 }
 
-template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(const std::vector<std::vector<ModuleBase::matrix>>& dm_hl,
-                                                                           const int nat,
-                                                                           const int nks,
-                                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                                           const UnitCell& ucell,
-                                                                           const LCAO_Orbitals& orb,
-                                                                           Grid_Driver& GridD);
+template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(
+    const std::vector<std::vector<ModuleBase::matrix>>& dm_hl,
+    const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD);
 
-
-template void LCAO_Deepks::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl,
-                                                                                                const int nat,
-                                                                                                const int nks,
-                                                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                                                                const UnitCell& ucell,
-                                                                                                const LCAO_Orbitals& orb,
-                                                                                                Grid_Driver& GridD);
+template void LCAO_Deepks::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(
+    const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl,
+    const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD);
 #endif

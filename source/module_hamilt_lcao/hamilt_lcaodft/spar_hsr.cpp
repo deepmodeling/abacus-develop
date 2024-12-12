@@ -8,16 +8,17 @@
 #include "spar_u.h"
 
 void sparse_format::cal_HSR(const UnitCell& ucell,
-    const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    Grid_Driver& grid,
-    const int& current_spin,
-    const double& sparse_thr,
-    const int(&nmp)[3],
-    hamilt::Hamilt<std::complex<double>>* p_ham
+                            const Parallel_Orbitals& pv,
+                            LCAO_HS_Arrays& HS_Arrays,
+                            const Grid_Driver& grid,
+                            const int& current_spin,
+                            const double& sparse_thr,
+                            const int (&nmp)[3],
+                            hamilt::Hamilt<std::complex<double>>* p_ham
 #ifdef __EXX
-    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd
-    , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
+                            ,
+                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+                            const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc
 #endif
 ) {
     ModuleBase::TITLE("sparse_format", "cal_HSR");

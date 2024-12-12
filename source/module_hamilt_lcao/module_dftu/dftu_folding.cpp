@@ -11,17 +11,16 @@
 namespace ModuleDFTU
 {
 
-void DFTU::fold_dSR_gamma(
-    const UnitCell &ucell,
-    const Parallel_Orbitals &pv,
-    Grid_Driver* gd,
-    double* dsloc_x,
-    double* dsloc_y,
-    double* dsloc_z,
-    double* dh_r,
-    const int dim1, 
-    const int dim2, 
-    double* dSR_gamma)
+void DFTU::fold_dSR_gamma(const UnitCell& ucell,
+                          const Parallel_Orbitals& pv,
+                          const Grid_Driver* gd,
+                          double* dsloc_x,
+                          double* dsloc_y,
+                          double* dsloc_z,
+                          double* dh_r,
+                          const int dim1,
+                          const int dim2,
+                          double* dSR_gamma)
 {
     ModuleBase::TITLE("DFTU", "fold_dSR_gamma");
 
@@ -127,7 +126,7 @@ void DFTU::fold_dSR_gamma(
 }
 
 void DFTU::folding_matrix_k(const UnitCell& ucell,
-                            Grid_Driver& gd,
+                            const Grid_Driver& gd,
                             ForceStressArrays& fsr,
                             const Parallel_Orbitals& pv,
                             const int ik,

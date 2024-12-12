@@ -262,13 +262,13 @@ class LCAO_Deepks
     void build_psialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
-                        Grid_Driver& GridD,
+                        const Grid_Driver& GridD,
                         const TwoCenterIntegrator& overlap_orb_alpha);
 
     void check_psialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
-                        Grid_Driver& GridD);
+                        const Grid_Driver& GridD);
 
     //-------------------
     // LCAO_deepks_pdm.cpp
@@ -302,24 +302,24 @@ class LCAO_Deepks
     void cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm,
                           const UnitCell& ucell,
                           const LCAO_Orbitals& orb,
-                          Grid_Driver& GridD);
+                          const Grid_Driver& GridD);
 
     void cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-                            const UnitCell& ucell,
-                            const LCAO_Orbitals& orb,
-                            Grid_Driver& GridD);
+                          const UnitCell& ucell,
+                          const LCAO_Orbitals& orb,
+                          const Grid_Driver& GridD);
 
     void check_projected_dm();
 
     void cal_projected_DM_equiv(const elecstate::DensityMatrix<double, double>* dm,
                                 const UnitCell& ucell,
                                 const LCAO_Orbitals& orb,
-                                Grid_Driver& GridD);
+                                const Grid_Driver& GridD);
 
     void cal_projected_DM_k_equiv(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
                                   const UnitCell& ucell,
                                   const LCAO_Orbitals& orb,
-                                  Grid_Driver& GridD);
+                                  const Grid_Driver& GridD);
 
     // calculate the gradient of pdm with regard to atomic positions
     // d/dX D_{Inl,mm'}
@@ -328,7 +328,7 @@ class LCAO_Deepks
         const std::vector<std::vector<TK>>& dm,
         const UnitCell& ucell,
         const LCAO_Orbitals& orb,
-        Grid_Driver& GridD,
+        const Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         const bool isstress);
@@ -470,17 +470,17 @@ class LCAO_Deepks
                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
-                             Grid_Driver& GridD);
+                             const Grid_Driver& GridD);
 
     //calculates v_delta_precalc
     template <typename TK>
     void cal_v_delta_precalc(const int nlocal,
-        const int nat,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
+                             const int nat,
+                             const int nks,
+                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                             const UnitCell& ucell,
+                             const LCAO_Orbitals& orb,
+                             const Grid_Driver& GridD);
 
     template <typename TK>
     void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
@@ -488,12 +488,12 @@ class LCAO_Deepks
     // prepare psialpha for outputting npy file
     template <typename TK>
     void prepare_psialpha(const int nlocal,
-        const int nat,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-        const UnitCell &ucell,
-        const LCAO_Orbitals &orb,
-        Grid_Driver &GridD);
+                          const int nat,
+                          const int nks,
+                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                          const UnitCell& ucell,
+                          const LCAO_Orbitals& orb,
+                          const Grid_Driver& GridD);
 
     template <typename TK>
     void check_vdp_psialpha(const int nat, const int nks, const int nlocal);

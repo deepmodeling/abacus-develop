@@ -13,23 +13,22 @@
 // If the absolute value of the matrix element is less than or equal to the
 // 'sparse_thr', it will be ignored.
 void ModuleIO::output_HSR(const UnitCell& ucell,
-    const int& istep,
-    const ModuleBase::matrix& v_eff,
-    const Parallel_Orbitals& pv,
-    LCAO_HS_Arrays& HS_Arrays,
-    Grid_Driver& grid, // mohan add 2024-04-06
-    const K_Vectors& kv,
-    hamilt::Hamilt<std::complex<double>>* p_ham,
+                          const int& istep,
+                          const ModuleBase::matrix& v_eff,
+                          const Parallel_Orbitals& pv,
+                          LCAO_HS_Arrays& HS_Arrays,
+                          const Grid_Driver& grid, // mohan add 2024-04-06
+                          const K_Vectors& kv,
+                          hamilt::Hamilt<std::complex<double>>* p_ham,
 #ifdef __EXX
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
-    const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc,
+                          const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd,
+                          const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc,
 #endif
-    const std::string& SR_filename,
-    const std::string& HR_filename_up,
-    const std::string HR_filename_down,
-    const bool& binary,
-    const double& sparse_thr
-) {
+                          const std::string& SR_filename,
+                          const std::string& HR_filename_up,
+                          const std::string HR_filename_down,
+                          const bool& binary,
+                          const double& sparse_thr) {
     ModuleBase::TITLE("ModuleIO", "output_HSR");
     ModuleBase::timer::tick("ModuleIO", "output_HSR");
 
@@ -86,16 +85,17 @@ void ModuleIO::output_HSR(const UnitCell& ucell,
 
 void ModuleIO::output_dHR(const int& istep,
                           const ModuleBase::matrix& v_eff,
-                          Gint_k& gint_k,    // mohan add 2024-04-01
+                          Gint_k& gint_k, // mohan add 2024-04-01
                           const UnitCell& ucell,
                           const Parallel_Orbitals& pv,
                           LCAO_HS_Arrays& HS_Arrays,
-                          Grid_Driver& grid, // mohan add 2024-04-06
+                          const Grid_Driver& grid, // mohan add 2024-04-06
                           const TwoCenterBundle& two_center_bundle,
                           const LCAO_Orbitals& orb,
                           const K_Vectors& kv,
                           const bool& binary,
-                          const double& sparse_thr) {
+                          const double& sparse_thr)
+{
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::tick("ModuleIO", "output_dHR");
 
@@ -155,11 +155,12 @@ void ModuleIO::output_dHR(const int& istep,
 }
 
 void ModuleIO::output_SR(Parallel_Orbitals& pv,
-                         Grid_Driver& grid,
+                         const Grid_Driver& grid,
                          hamilt::Hamilt<std::complex<double>>* p_ham,
                          const std::string& SR_filename,
                          const bool& binary,
-                         const double& sparse_thr) {
+                         const double& sparse_thr)
+{
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::tick("ModuleIO", "output_SR");
 
@@ -208,12 +209,13 @@ void ModuleIO::output_TR(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Orbitals& pv,
                          LCAO_HS_Arrays& HS_Arrays,
-                         Grid_Driver& grid,
+                         const Grid_Driver& grid,
                          const TwoCenterBundle& two_center_bundle,
                          const LCAO_Orbitals& orb,
                          const std::string& TR_filename,
                          const bool& binary,
-                         const double& sparse_thr) {
+                         const double& sparse_thr)
+{
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::tick("ModuleIO", "output_TR");
 

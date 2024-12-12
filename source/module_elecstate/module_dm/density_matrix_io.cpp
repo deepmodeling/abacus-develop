@@ -12,7 +12,7 @@ namespace elecstate
 
 // initialize density matrix DMR from UnitCell (mainly used in UnitTest)
 template <typename TK, typename TR>
-void DensityMatrix<TK, TR>::init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell)
+void DensityMatrix<TK, TR>::init_DMR(const Grid_Driver* GridD_in, const UnitCell* ucell)
 {
     ModuleBase::TITLE("DensityMatrix", "init_DMR");
     // ensure _DMR is empty

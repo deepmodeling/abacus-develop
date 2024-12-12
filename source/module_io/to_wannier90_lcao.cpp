@@ -39,7 +39,7 @@ toWannier90_LCAO::~toWannier90_LCAO()
 }
 
 void toWannier90_LCAO::calculate(const UnitCell& ucell,
-                                 Grid_Driver& gd,
+                                 const Grid_Driver& gd,
                                  const ModuleBase::matrix& ekb,
                                  const K_Vectors& kv,
                                  const psi::Psi<std::complex<double>>& psi,

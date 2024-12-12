@@ -66,10 +66,10 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
 
 //this subroutine performs the calculation of projected density matrices
 //pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm, 
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD)
+void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm,
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
@@ -317,9 +317,9 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<double, double
 }
 
 void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD)
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD)
 {
     // if pdm has been initialized, skip the calculation
     if(this->init_pdm)

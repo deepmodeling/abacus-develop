@@ -93,7 +93,7 @@ void cal_mag(Parallel_Orbitals* pv,
              const TwoCenterBundle& two_center_bundle,
              const LCAO_Orbitals& orb,
              UnitCell& ucell,
-             Grid_Driver& gd,
+             const Grid_Driver& gd,
              const int istep,
              const bool print)
 {

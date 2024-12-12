@@ -12,14 +12,12 @@
 void sparse_format::cal_SR(
     const Parallel_Orbitals& pv,
     std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-    std::map<Abfs::Vector3_Order<int>,
-             std::map<size_t, std::map<size_t, double>>>& SR_sparse,
-    std::map<Abfs::Vector3_Order<int>,
-             std::map<size_t, std::map<size_t, std::complex<double>>>>&
-        SR_soc_sparse,
-    Grid_Driver& grid,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, double>>>& SR_sparse,
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>& SR_soc_sparse,
+    const Grid_Driver& grid,
     const double& sparse_thr,
-    hamilt::Hamilt<std::complex<double>>* p_ham) {
+    hamilt::Hamilt<std::complex<double>>* p_ham)
+{
     ModuleBase::TITLE("sparse_format", "cal_SR");
 
     sparse_format::set_R_range(all_R_coor, grid);
@@ -56,10 +54,11 @@ void sparse_format::cal_SR(
 void sparse_format::cal_TR(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
-                           Grid_Driver& grid,
+                           const Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
                            const LCAO_Orbitals& orb,
-                           const double& sparse_thr) {
+                           const double& sparse_thr)
+{
     ModuleBase::TITLE("sparse_format", "cal_TR");
 
     // need to rebuild T(R)
@@ -92,9 +91,10 @@ void sparse_format::cal_TR(const UnitCell& ucell,
 void sparse_format::cal_STN_R_for_T(const UnitCell& ucell,
                                     const Parallel_Orbitals& pv,
                                     LCAO_HS_Arrays& HS_arrays,
-                                    Grid_Driver& grid,
+                                    const Grid_Driver& grid,
                                     const std::vector<double>& orb_cutoff,
-                                    const double& sparse_thr) {
+                                    const double& sparse_thr)
+{
     ModuleBase::TITLE("sparse_format", "cal_STN_R_for_T");
 
     const int nspin = PARAM.inp.nspin;

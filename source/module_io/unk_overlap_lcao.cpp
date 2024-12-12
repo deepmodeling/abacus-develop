@@ -360,7 +360,7 @@ int unkOverlap_lcao::iw2im(const UnitCell& ucell, int iw)
 }
 
 // search for the nearest neighbor atoms
-void unkOverlap_lcao::cal_R_number(const UnitCell& ucell, Grid_Driver& gd)
+void unkOverlap_lcao::cal_R_number(const UnitCell& ucell, const Grid_Driver& gd)
 {
     // The number of overlaps between atomic orbitals 1 and atomic orbitals 2,
     // or the number of R, is empty when there is no overlap

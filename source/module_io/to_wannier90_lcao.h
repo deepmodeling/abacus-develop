@@ -80,14 +80,14 @@ class toWannier90_LCAO : public toWannier90
     ~toWannier90_LCAO();
 
     void calculate(const UnitCell& ucell,
-                   Grid_Driver& gd,
+                   const Grid_Driver& gd,
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<std::complex<double>>& psi,
                    const Parallel_Orbitals* pv);
 
     void calculate(const UnitCell& ucell,
-                   Grid_Driver& gd,
+                   const Grid_Driver& gd,
                    const ModuleBase::matrix& ekb,
                    const K_Vectors& kv,
                    const psi::Psi<double>& psi,

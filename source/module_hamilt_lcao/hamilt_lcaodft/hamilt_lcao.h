@@ -33,7 +33,7 @@ class HamiltLCAO : public Hamilt<TK>
     HamiltLCAO(Gint_Gamma* GG_in,
                Gint_k* GK_in,
                const UnitCell& ucell,
-               Grid_Driver& grid_d,
+               const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
                elecstate::Potential* pot_in,
                const K_Vectors& kv_in,
@@ -52,7 +52,7 @@ class HamiltLCAO : public Hamilt<TK>
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer
      */
     HamiltLCAO(const UnitCell& ucell,
-               Grid_Driver& grid_d,
+               const Grid_Driver& grid_d,
                const Parallel_Orbitals* paraV,
                const K_Vectors& kv_in,
                const TwoCenterIntegrator& intor_overlap_orb,

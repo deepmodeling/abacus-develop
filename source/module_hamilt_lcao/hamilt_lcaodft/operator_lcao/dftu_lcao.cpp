@@ -16,7 +16,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::DFTU(HS_Matrix_K<TK>* hsk_in,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                                  hamilt::HContainer<TR>* hR_in,
                                                  const UnitCell& ucell_in,
-                                                 Grid_Driver* GridD_in,
+                                                 const Grid_Driver* GridD_in,
                                                  const TwoCenterIntegrator* intor,
                                                  const std::vector<double>& orb_cutoff,
                                                  ModuleDFTU::DFTU* dftu_in)
@@ -42,7 +42,7 @@ hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::~DFTU()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DFTU", "initialize_HR");
     ModuleBase::timer::tick("DFTU", "initialize_HR");
