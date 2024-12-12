@@ -235,6 +235,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
+        const int nks=1;
 		DeePKS_domain::cal_f_delta_gamma(
 				dm_gamma, 
 				ucell, 
@@ -242,6 +243,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
 				GlobalC::GridD, 
                 *this->ParaV,
                 GlobalC::ld.lmaxd,
+                nks, 
+				kv->kvec_d, 
                 GlobalC::ld.nlm_save,
                 GlobalC::ld.gedm,
                 GlobalC::ld.inl_index,

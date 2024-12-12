@@ -241,7 +241,8 @@ void test_deepks::check_f_delta()
     svnl_dalpha.create(3, 3);
     if (PARAM.sys.gamma_only_local)
     {
-        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, 1, svnl_dalpha);
+        const int nks=1;
+        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, 1, svnl_dalpha);
     }
     else
     {
