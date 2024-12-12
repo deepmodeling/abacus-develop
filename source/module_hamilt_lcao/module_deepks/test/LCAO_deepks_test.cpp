@@ -115,7 +115,7 @@ void test_deepks::check_pdm()
     {
         this->read_dm_k(kv.get_nkstot());
         this->set_dm_k_new();
-        this->ld.cal_projected_DM_k(dm_k_new, ucell, ORB, Test_Deepks::GridD);
+        this->ld.cal_projected_DM(dm_k_new, ucell, ORB, Test_Deepks::GridD);
     }
     this->ld.check_projected_dm();
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");

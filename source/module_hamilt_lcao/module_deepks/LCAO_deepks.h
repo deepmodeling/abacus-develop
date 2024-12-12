@@ -284,11 +284,10 @@ class LCAO_Deepks
 
     // There are 6 subroutines in this file:
     // 1. cal_projected_DM, which is used for calculating pdm for gamma point calculation
-    // 2. cal_projected_DM_k, counterpart of 1, for multi-k
-    // 3. check_projected_dm, which prints pdm to descriptor.dat
+    // 2. check_projected_dm, which prints pdm to descriptor.dat
 
-    // 4. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
-    // 5. check_gdmx, which prints gdmx to a series of .dat files
+    // 3. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
+    // 4. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
     /** 
@@ -299,27 +298,13 @@ class LCAO_Deepks
      *    2. SCF calculation of DeePKS with init_chg = file and pdm has been read for restarting SCF
      *    3. Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial pdm
      */
-    void cal_projected_DM(const elecstate::DensityMatrix<double, double>* dm,
+    template <typename TK>
+    void cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm,
                           const UnitCell& ucell,
                           const LCAO_Orbitals& orb,
                           Grid_Driver& GridD);
 
-    void cal_projected_DM(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-                            const UnitCell& ucell,
-                            const LCAO_Orbitals& orb,
-                            Grid_Driver& GridD);
-
     void check_projected_dm();
-
-    void cal_projected_DM_equiv(const elecstate::DensityMatrix<double, double>* dm,
-                                const UnitCell& ucell,
-                                const LCAO_Orbitals& orb,
-                                Grid_Driver& GridD);
-
-    void cal_projected_DM_k_equiv(const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-                                  const UnitCell& ucell,
-                                  const LCAO_Orbitals& orb,
-                                  Grid_Driver& GridD);
 
     // calculate the gradient of pdm with regard to atomic positions
     // d/dX D_{Inl,mm'}
