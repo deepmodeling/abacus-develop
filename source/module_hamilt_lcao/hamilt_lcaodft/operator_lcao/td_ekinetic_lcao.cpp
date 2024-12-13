@@ -20,7 +20,7 @@ TDEkinetic<OperatorLCAO<TK, TR>>::TDEkinetic(HS_Matrix_K<TK>* hsk_in,
                                              const K_Vectors* kv_in,
                                              const UnitCell* ucell_in,
                                              const std::vector<double>& orb_cutoff,
-                                             Grid_Driver* GridD_in,
+                                             const Grid_Driver* GridD_in,
                                              const TwoCenterIntegrator* intor)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in->kvec_d, hR_in), orb_cutoff_(orb_cutoff), kv(kv_in), intor_(intor)
 {
@@ -244,7 +244,7 @@ void hamilt::TDEkinetic<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 template <typename TK, typename TR>
-void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void TDEkinetic<OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {

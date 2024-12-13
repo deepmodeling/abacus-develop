@@ -22,10 +22,10 @@ typedef std::tuple<int, int, int, int> key_tuple;
 //Pulay and HF terms are calculated together
 void DeePKS_domain::cal_f_delta_gamma(
     const std::vector<std::vector<double>>& dm,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD,
-    const Parallel_Orbitals &pv,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD,
+    const Parallel_Orbitals& pv,
     const int lmaxd,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>> &kvec_d,
@@ -33,7 +33,7 @@ void DeePKS_domain::cal_f_delta_gamma(
     double** gedm,
     ModuleBase::IntArray* inl_index,
     ModuleBase::matrix& f_delta,
-    const bool isstress, 
+    const bool isstress,
     ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta_gamma");

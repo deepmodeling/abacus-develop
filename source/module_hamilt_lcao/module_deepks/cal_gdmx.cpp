@@ -21,12 +21,12 @@
 
 template <typename TK>
 void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD,
-    const int nks,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-    const bool isstress)
+                           const UnitCell& ucell,
+                           const LCAO_Orbitals& orb,
+                           const Grid_Driver& GridD,
+                           const int nks,
+                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                           const bool isstress)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
     ModuleBase::timer::tick("LCAO_Deepks","cal_gdmx");
@@ -341,17 +341,17 @@ void LCAO_Deepks::check_gdmx(const int nat)
 }
 
 template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double>>& dm,
-                                            const UnitCell &ucell,
-                                            const LCAO_Orbitals &orb,
-                                            Grid_Driver& GridD,
+                                            const UnitCell& ucell,
+                                            const LCAO_Orbitals& orb,
+                                            const Grid_Driver& GridD,
                                             const int nks,
                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                             const bool isstress);
 
 template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
-                                                          const UnitCell &ucell,
-                                                          const LCAO_Orbitals &orb,
-                                                          Grid_Driver& GridD,
+                                                          const UnitCell& ucell,
+                                                          const LCAO_Orbitals& orb,
+                                                          const Grid_Driver& GridD,
                                                           const int nks,
                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                           const bool isstress);

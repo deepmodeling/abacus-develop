@@ -41,10 +41,9 @@ class Grid
     Grid(const int& test_grid_in);
     virtual ~Grid();
 
-    void init(std::ofstream& ofs, const UnitCell& ucell, const Atom_input& input);
+    Grid& operator=(Grid&&) = default;
 
-    // 2015-05-07
-    void delete_vector(int i, int j, int k);
+    void init(std::ofstream& ofs, const UnitCell& ucell, const Atom_input& input);
 
     // Data
     bool pbc; // periodic boundary condition
@@ -64,28 +63,7 @@ class Grid
     int true_cell_z;
 
     std::vector<std::vector<std::vector<CellSet>>> Cell; // dx , dy ,dz is cell number in each direction,respectly.
-    void delete_Cell()                                   // it will replace by container soon!
-    {
-        if (this->init_cell_flag)
-        {
-            for (int i = 0; i < this->cell_nx; i++)
-            {
-                for (int j = 0; j < this->cell_ny; j++)
-                {
-                    this->Cell[i][j].clear();
-                }
-            }
 
-            for (int i = 0; i < this->cell_nx; i++)
-            {
-                this->Cell[i].clear();
-            }
-
-            this->Cell.clear();
-            this->init_cell_flag = false;
-        }
-    }
-    bool init_cell_flag = false;
     // LiuXh add 2019-07-15
     double getD_minX() const
     {
@@ -125,8 +103,8 @@ class Grid
         return true_cell_z;
     }
 
-  private:
-    const int test_grid;
+private:
+    int test_grid = 0;
     //==========================================================
     // MEMBER FUNCTIONS :
     // Three Main Steps:

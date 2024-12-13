@@ -100,7 +100,7 @@ class DMTest : public testing::Test
 #endif
 };
 
-// test for construct DMR from GlobalC::GridD and UnitCell
+// test for construct DMR from GridD and UnitCell
 TEST_F(DMTest, DMInit1)
 {
     // initalize a kvectors

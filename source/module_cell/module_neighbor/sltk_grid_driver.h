@@ -55,6 +55,8 @@ class Grid_Driver : public Grid
 
     ~Grid_Driver();
 
+    Grid_Driver& operator=(Grid_Driver&&) = default;
+
     //==========================================================
     // EXPLAIN FOR default parameter `adjs = nullptr`
     //
@@ -68,7 +70,7 @@ class Grid_Driver : public Grid
                    const ModuleBase::Vector3<double>& cartesian_posi,
                    const int& ntype,
                    const int& nnumber,
-                   AdjacentAtomInfo* adjs = nullptr);
+                   AdjacentAtomInfo* adjs = nullptr) const;
 
     //==========================================================
     // EXPLAIN : The adjacent information for the input
@@ -103,7 +105,7 @@ class Grid_Driver : public Grid
   private:
     mutable AdjacentAtomInfo adj_info;
 
-    const int test_deconstructor; // caoyu reconst 2021-05-24
+    int test_deconstructor = 0;
 
     //==========================================================
     // MEMBER FUNCTIONS :
@@ -125,9 +127,4 @@ class Grid_Driver : public Grid
                                                         const short box_y,
                                                         const short box_z) const;
 };
-
-namespace GlobalC
-{
-extern Grid_Driver GridD;
-}
 #endif

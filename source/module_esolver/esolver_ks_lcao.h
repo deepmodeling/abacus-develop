@@ -58,6 +58,8 @@ class ESolver_KS_LCAO : public ESolver_KS<TK> {
     // we will get rid of this class soon, don't use it, mohan 2024-03-28
     Record_adj RA;
 
+    Grid_Driver gd;
+
     // 2d block-cyclic distribution info
     Parallel_Orbitals pv;
 

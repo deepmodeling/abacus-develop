@@ -192,8 +192,7 @@ template class Veff_rdmft<std::complex<double>, std::complex<double>>;
 // this part of the code is copying from class Veff
 // initialize_HR()
 template <typename TK, typename TR>
-void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in,
-                                       Grid_Driver* GridD)
+void Veff_rdmft<TK, TR>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");

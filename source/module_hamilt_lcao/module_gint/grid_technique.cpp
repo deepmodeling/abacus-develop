@@ -31,30 +31,30 @@ Grid_Technique::~Grid_Technique() {
 // after the orbital information has been read,
 // this function control the routinue to generate
 // grid technique parameters.
-void Grid_Technique::set_pbc_grid(
-    const int& ncx_in,
-    const int& ncy_in,
-    const int& ncz_in,
-    const int& bx_in,
-    const int& by_in,
-    const int& bz_in,
-    const int& nbx_in,
-    const int& nby_in,
-    const int& nbz_in,
-    const int& nbxx_in,
-    const int& nbzp_start_in,
-    const int& nbzp_in,
-    const int& ny,
-    const int& nplane,
-    const int& startz_current,
-    const UnitCell& ucell,
-    Grid_Driver& gd,
-    const double& dr_uniform,
-    const std::vector<double>& rcuts,
-    const std::vector<std::vector<double>>& psi_u,
-    const std::vector<std::vector<double>>& dpsi_u,
-    const std::vector<std::vector<double>>& d2psi_u,
-    const int& num_stream) {
+void Grid_Technique::set_pbc_grid(const int& ncx_in,
+                                  const int& ncy_in,
+                                  const int& ncz_in,
+                                  const int& bx_in,
+                                  const int& by_in,
+                                  const int& bz_in,
+                                  const int& nbx_in,
+                                  const int& nby_in,
+                                  const int& nbz_in,
+                                  const int& nbxx_in,
+                                  const int& nbzp_start_in,
+                                  const int& nbzp_in,
+                                  const int& ny,
+                                  const int& nplane,
+                                  const int& startz_current,
+                                  const UnitCell& ucell,
+                                  const Grid_Driver& gd,
+                                  const double& dr_uniform,
+                                  const std::vector<double>& rcuts,
+                                  const std::vector<std::vector<double>>& psi_u,
+                                  const std::vector<std::vector<double>>& dpsi_u,
+                                  const std::vector<std::vector<double>>& d2psi_u,
+                                  const int& num_stream)
+{
     ModuleBase::TITLE("Grid_Technique", "init");
     ModuleBase::timer::tick("Grid_Technique", "init");
 
@@ -538,8 +538,8 @@ void Grid_Technique::cal_trace_lo(const UnitCell& ucell) {
     return;
 }
 
-void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell,
-                                   Grid_Driver& gd) {
+void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver& gd)
+{
     ModuleBase::TITLE("Grid_Technique", "init_ijr_and_nnrg");
 
     hamilt::HContainer<double> hRGint_tmp(ucell.nat);
@@ -612,7 +612,6 @@ void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell,
     this->nnrg = hRGint_tmp.get_nnr();
     return;
 }
-
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 

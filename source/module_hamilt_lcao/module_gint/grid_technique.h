@@ -104,7 +104,7 @@ class Grid_Technique : public Grid_MeshBall {
                       const int& nplane,
                       const int& startz_current,
                       const UnitCell& ucell,
-                      Grid_Driver& gd,
+                      const Grid_Driver& gd,
                       const double& dr_uniform,
                       const std::vector<double>& rcuts,
                       const std::vector<std::vector<double>>& psi_u,
@@ -137,7 +137,7 @@ class Grid_Technique : public Grid_MeshBall {
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
     // initialize the ijr_info and nnrg
-    void init_ijr_and_nnrg(const UnitCell& ucell, Grid_Driver& gd);
+    void init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver& gd);
     void cal_grid_integration_index();
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);

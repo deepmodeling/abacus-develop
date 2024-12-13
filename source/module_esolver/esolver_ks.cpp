@@ -427,9 +427,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick(this->classname, "runner");
 
     // 2) before_scf (electronic iteration loops)
-    ModuleBase::timer::tick(this->classname, "before_scf");
     this->before_scf(ucell, istep);
-    ModuleBase::timer::tick(this->classname, "before_scf");
 
     // 3) write charge density
     if (PARAM.inp.dm_to_rho)
@@ -468,9 +466,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     } // end scf iterations
 
     // 9) after scf
-    ModuleBase::timer::tick(this->classname, "after_scf");
     this->after_scf(ucell, istep);
-    ModuleBase::timer::tick(this->classname, "after_scf");
 
     ModuleBase::timer::tick(this->classname, "runner");
     return;
@@ -740,6 +736,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 template <typename T, typename Device>
 void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_KS", "after_scf");
+
     // 1) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep);
 

@@ -19,7 +19,7 @@ void TITLE(const std::string &class_name,const std::string &function_name,const 
 {
     if (disable)
     {
-        return;//no output
+        return; // no output
     }
 #ifdef __NORMAL
     std::cout<<" ==> "<<class_name<<"::"<<function_name<<"\t"
@@ -39,7 +39,7 @@ void TITLE(std::ofstream &ofs,const std::string &class_name,const std::string &f
 {
     if (disable)
     {
-        return;//no output
+        return; // no output
     }
 #ifdef __NORMAL
     std::cout<<"\n\n ==> "<<class_name<<"::"<<function_name<<"\t"

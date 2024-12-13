@@ -86,7 +86,7 @@ void record_device_memory(const Device* dev, std::ofstream& ofs_device, std::str
  * @brief for compatibility with __CUDA_ARCH__ 600 and earlier
  *
  */
-#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600
+#if defined(__CUDA_ARCH__) && __CUDA_ARCH__ < 600 && !defined(__CUDA_ON_DCU)
 static __inline__ __device__ double atomicAdd(double* address, double val)
 {
     unsigned long long int* address_as_ull = (unsigned long long int*)address;

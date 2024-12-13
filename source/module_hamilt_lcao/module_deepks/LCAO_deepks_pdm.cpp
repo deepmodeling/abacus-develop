@@ -68,7 +68,8 @@ void LCAO_Deepks::cal_projected_DM(
     const elecstate::DensityMatrix<TK, double>* dm, 
     const UnitCell &ucell,
     const LCAO_Orbitals &orb,
-    Grid_Driver& GridD)
+    const Grid_Driver& GridD)
+
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
@@ -389,14 +390,14 @@ void LCAO_Deepks::check_projected_dm()
 
 template void LCAO_Deepks::cal_projected_DM<double>(
     const elecstate::DensityMatrix<double, double>* dm, 
-    const UnitCell &ucell, 
-    const LCAO_Orbitals &orb, 
-    Grid_Driver& GridD);
+    const UnitCell& ucell, 
+    const LCAO_Orbitals& orb, 
+    const Grid_Driver& GridD);
 
 template void LCAO_Deepks::cal_projected_DM<std::complex<double>>(
     const elecstate::DensityMatrix<std::complex<double>, double>* dm, 
-    const UnitCell &ucell, 
-    const LCAO_Orbitals &orb, 
-    Grid_Driver& GridD);
+    const UnitCell& ucell, 
+    const LCAO_Orbitals& orb, 
+    const Grid_Driver& GridD);
 
 #endif

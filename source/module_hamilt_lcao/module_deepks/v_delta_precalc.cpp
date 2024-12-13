@@ -20,12 +20,12 @@
 // for deepks_v_delta = 1
 template <typename TK>
 void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
-    const int nat,
-    const int nks,
-    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver &GridD)
+                                      const int nat,
+                                      const int nks,
+                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                      const UnitCell& ucell,
+                                      const LCAO_Orbitals& orb,
+                                      const Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "calc_v_delta_precalc");
     // timeval t_start;
@@ -327,18 +327,19 @@ void LCAO_Deepks::check_v_delta_precalc(const int nat, const int nks,const int n
 template void LCAO_Deepks::cal_v_delta_precalc<double>(const int nlocal,
                                                        const int nat,
                                                        const int nks,
-                                                       const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-                                                       const UnitCell &ucell,
-                                                       const LCAO_Orbitals &orb,
-                                                       Grid_Driver &GridD);
+                                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                       const UnitCell& ucell,
+                                                       const LCAO_Orbitals& orb,
+                                                       const Grid_Driver& GridD);
 
-template void LCAO_Deepks::cal_v_delta_precalc<std::complex<double>>(const int nlocal,
-                                                                    const int nat,
-                                                                    const int nks,
-                                                                    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-                                                                    const UnitCell &ucell,
-                                                                    const LCAO_Orbitals &orb,
-                                                                    Grid_Driver &GridD);
+template void LCAO_Deepks::cal_v_delta_precalc<std::complex<double>>(
+    const int nlocal,
+    const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD);
 
 template void LCAO_Deepks::check_v_delta_precalc<double>(const int nat, const int nks, const int nlocal);
 template void LCAO_Deepks::check_v_delta_precalc<std::complex<double>>(const int nat, const int nks, const int nlocal);

@@ -129,6 +129,8 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
 {
+    ModuleBase::TITLE("ESolver_FP", "after_scf");
+
     // 0) output convergence information
     ModuleIO::output_convergence_after_scf(this->conv_esolver, this->pelec->f_en.etot);
 

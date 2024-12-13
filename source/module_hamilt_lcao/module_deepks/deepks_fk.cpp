@@ -16,19 +16,19 @@
 typedef std::tuple<int, int, int, int> key_tuple; // used in nlm_save_k
 
 void DeePKS_domain::cal_f_delta_k(
-    const std::vector<std::vector<std::complex<double>>>& dm,/**<[in] density matrix*/
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& GridD,
+    const std::vector<std::vector<std::complex<double>>>& dm, /**<[in] density matrix*/
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD,
     const Parallel_Orbitals& pv,
     const int lmaxd,
     const int nks,
-    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-    std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>> &nlm_save_k,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save_k,
     double** gedm,
     ModuleBase::IntArray* inl_index,
     ModuleBase::matrix& f_delta,
-    const bool isstress, 
+    const bool isstress,
     ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_f_delta_hf_k_new");

@@ -6,16 +6,17 @@
 namespace sparse_format {
     using TAC = std::pair<int, std::array<int, 3>>;
     void cal_HSR(const UnitCell& ucell,
-        const Parallel_Orbitals& pv,
-        LCAO_HS_Arrays& HS_Arrays,
-        Grid_Driver& grid,
-        const int& current_spin,
-        const double& sparse_thr,
-        const int(&nmp)[3],
-        hamilt::Hamilt<std::complex<double>>* p_ham
+                 const Parallel_Orbitals& pv,
+                 LCAO_HS_Arrays& HS_Arrays,
+                 const Grid_Driver& grid,
+                 const int& current_spin,
+                 const double& sparse_thr,
+                 const int (&nmp)[3],
+                 hamilt::Hamilt<std::complex<double>>* p_ham
 #ifdef __EXX
-        , const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
-        , const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                 ,
+                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
     );
 

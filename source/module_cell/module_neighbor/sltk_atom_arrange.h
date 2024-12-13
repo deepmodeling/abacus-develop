@@ -30,17 +30,6 @@ public:
 		const double& rcutmax_Beta, 
 		const bool gamma_only_local);
 
-	//2015-05-07
-	static void delete_vector(
-		std::ofstream &ofs_in,
-		const bool pbc_flag,
-		Grid_Driver &grid_d, 
-		const UnitCell &ucell, 
-		const double &search_radius_bohr, 
-		const int &test_atom_in);
-
-private:
-
 };
 
 #endif

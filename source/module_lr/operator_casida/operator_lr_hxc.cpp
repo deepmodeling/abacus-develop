@@ -123,7 +123,7 @@ namespace LR
 
                 // LR_Util::print_HR(*this->gint->get_hRGint(), this->ucell.nat, "VR(grid)");
                 HR_real_imag.set_zero();
-                this->gint->transfer_pvpR(&HR_real_imag, &ucell, &GlobalC::GridD);
+                this->gint->transfer_pvpR(&HR_real_imag, &ucell, &this->gd);
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
                 LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, ucell.nat, type);
             };
