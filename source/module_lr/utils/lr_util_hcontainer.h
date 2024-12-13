@@ -109,7 +109,7 @@ namespace LR_Util
                     const ModuleBase::Vector3<int>& R = ap1->get_R_index(iR);
                     auto mat1 = ap1->get_HR_values(R.x, R.y, R.z);
                     auto mat2 = ap2->get_HR_values(R.x, R.y, R.z);
-                    std::inner_product(mat1.get_pointer(), mat1.get_pointer() + mat1.get_memory_size(), mat2.get_pointer(), sum);
+                    sum += std::inner_product(mat1.get_pointer(), mat1.get_pointer() + mat1.get_memory_size(), mat2.get_pointer(), (TR1)0.0);
                 }
             }
         }

@@ -31,32 +31,42 @@ namespace LR
     template<typename T>
     double LR::LR_Spectrum<T>::mean_square_transition_velocity(const int istate)
     {
-        const TD_current& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
-        elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, 1, this->kv.kvec_d, this->nk);
-        LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, gd_, orb_cutoff_);
-
         const int offset_b = istate * ldim;    //start index of band istate
+        // velocity matrix v(R)
+        const TD_current& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
+        // transition density matrix D(R)
+        elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
+        for (int is = 0;is < this->nspin_x; ++is)
+        {
+            const int offset_x = offset_b + is * nk * pX[0].get_local_size();
+            //1. transition density 
+#ifdef __MPI
+            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
+            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
+#else
+            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
+            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
+#endif
+            for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+        }
+        LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, gd_, orb_cutoff_);
+        DM_trans.cal_DMR();
+
         std::vector<std::complex<double>> transition_velocity(3, 0.0);    // $=\sum_{uvR} v(R) D(R) = \sum_{iak}X_{iak}<ck|v|vk>$
         double mean_transition_velocity_norm2 = 0.0;    // $= |v|^2/3$
         for (int i = 0; i < 3; i++)
         {
             for (int is = 0;is < this->nspin_x; ++is)
             {
-                const int offset_x = offset_b + is * nk * pX[0].get_local_size();
-                //1. transition density 
-#ifdef __MPI
-                std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
-                // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
-#else
-                std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
-                // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
-#endif
-                for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
-                DM_trans.cal_DMR();
                 transition_velocity[i] += LR_Util::dot_R_matrix(*vR.get_current_term_pointer(i), *DM_trans.get_DMR_pointer(is + 1), ucell.nat);
             }   // end for spin_x, only matter in open-shell system
             mean_transition_velocity_norm2 += std::norm(transition_velocity[i]);
         }   // end for direction
+        /// test z-direction
+        // LR_Util::print_HR(*vR.get_current_term_pointer(2), ucell.nat, "vR[2]", 1e-10);
+        // LR_Util::print_HR(*DM_trans.get_DMR_pointer(1), ucell.nat, "DMR[is=0]", 1e-10);
+        // auto test = LR_Util::dot_R_matrix(*vR.get_current_term_pointer(2), *DM_trans.get_DMR_pointer(1), ucell.nat); /// test z-direction
+        // std::cout<<"test z-velocity: "<<test<<std::endl;
         return mean_transition_velocity_norm2 / 3.; // for non-polarized light)
     }
 
@@ -73,9 +83,9 @@ namespace LR
             for (int i = 0;i < nstate;++i)
             {
                 abs_value += mean_square_transition_velocity(i) * lorentz_delta((freq[f] - eig[i]), eta) / (eig[i] * eig[i]);
-                if (GlobalV::MY_RANK == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << abs_value << std::endl; }
             }
             abs_value *= fac;
+            if (GlobalV::MY_RANK == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << abs_value << std::endl; }
         }
     }
 }
