@@ -21,16 +21,16 @@
 //Pulay and HF terms are calculated together
 void DeePKS_domain::cal_f_delta_gamma(
     const std::vector<std::vector<double>>& dm,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver& gd,
-    const Parallel_Orbitals &pv,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& gd,
+    const Parallel_Orbitals& pv,
     const int lmaxd,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
     double** gedm,
     ModuleBase::IntArray* inl_index,
     ModuleBase::matrix& f_delta,
-    const bool isstress, 
+    const bool isstress,
     ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta_gamma");

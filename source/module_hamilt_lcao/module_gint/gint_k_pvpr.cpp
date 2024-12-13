@@ -18,7 +18,7 @@
 #endif
 
 // transfer_pvpR, NSPIN = 1 or 2
-void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell, Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell, const Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");
@@ -71,7 +71,9 @@ void Gint_k::transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell
 }
 
 // transfer_pvpR, NSPIN = 4
-void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const UnitCell* ucell_in, Grid_Driver* gd)
+void Gint_k::transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
+                           const UnitCell* ucell_in,
+                           const Grid_Driver* gd)
 {
     ModuleBase::TITLE("Gint_k", "transfer_pvpR");
     ModuleBase::timer::tick("Gint_k", "transfer_pvpR");

@@ -33,44 +33,40 @@ namespace DeePKS_domain
     // 3. check_f_delta, which prints F_delta into F_delta.dat for checking
 
     // for gamma only, pulay and HF terms of force are calculated together
-	void cal_f_delta_gamma(
-			const std::vector<std::vector<double>>& dm,
-			const UnitCell &ucell,
-			const LCAO_Orbitals &orb,
-			Grid_Driver& gd,
-            const Parallel_Orbitals &pv,
-			const int lmaxd,
-			std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
-			double** gedm,
-			ModuleBase::IntArray* inl_index,
-			ModuleBase::matrix& f_delta,
-			const bool isstress,
-			ModuleBase::matrix& svnl_dalpha);
+void cal_f_delta_gamma(const std::vector<std::vector<double>>& dm,
+                       const UnitCell& ucell,
+                       const LCAO_Orbitals& orb,
+                       const Grid_Driver& gd,
+                       const Parallel_Orbitals& pv,
+                       const int lmaxd,
+                       std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
+                       double** gedm,
+                       ModuleBase::IntArray* inl_index,
+                       ModuleBase::matrix& f_delta,
+                       const bool isstress,
+                       ModuleBase::matrix& svnl_dalpha);
 
-    // for multi-k, pulay and HF terms of force are calculated together
+// for multi-k, pulay and HF terms of force are calculated together
 
-    typedef std::tuple<int, int, int, int> key_tuple;
+typedef std::tuple<int, int, int, int> key_tuple;
 
-	void cal_f_delta_k(
-			const std::vector<std::vector<std::complex<double>>>& dm,/**<[in] density matrix*/
-			const UnitCell &ucell,
-			const LCAO_Orbitals &orb,
-			Grid_Driver& GridD,
-            const Parallel_Orbitals& pv,
-			const int lmaxd,
-			const int nks,
-			const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-			std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>> &nlm_save_k,
-			double** gedm,
-			ModuleBase::IntArray* inl_index,
-			ModuleBase::matrix& f_delta,
-			const bool isstress,
-			ModuleBase::matrix& svnl_dalpha);
+void cal_f_delta_k(
+    const std::vector<std::vector<std::complex<double>>>& dm, /**<[in] density matrix*/
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD,
+    const Parallel_Orbitals& pv,
+    const int lmaxd,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    std::vector<std::map<key_tuple, std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save_k,
+    double** gedm,
+    ModuleBase::IntArray* inl_index,
+    ModuleBase::matrix& f_delta,
+    const bool isstress,
+    ModuleBase::matrix& svnl_dalpha);
 
-	void check_f_delta(
-			const int nat, 
-			ModuleBase::matrix& f_delta,
-			ModuleBase::matrix& svnl_dalpha);
+void check_f_delta(const int nat, ModuleBase::matrix& f_delta, ModuleBase::matrix& svnl_dalpha);
 }
 
 #endif

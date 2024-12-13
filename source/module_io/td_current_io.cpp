@@ -118,7 +118,7 @@ void ModuleIO::cal_tmp_DM(elecstate::DensityMatrix<std::complex<double>, double>
 }
 
 void ModuleIO::write_current(const UnitCell& ucell,
-                             Grid_Driver& gd,
+                             const Grid_Driver& gd,
                              const int istep,
                              const psi::Psi<std::complex<double>>* psi,
                              const elecstate::ElecState* pelec,

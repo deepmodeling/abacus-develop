@@ -45,7 +45,7 @@ namespace hamilt
 
 template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
-                               Grid_Driver& grid_d,
+                               const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
                                const K_Vectors& kv_in,
                                const TwoCenterIntegrator& intor_overlap_orb,
@@ -74,7 +74,7 @@ template <typename TK, typename TR>
 HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                Gint_k* GK_in,
                                const UnitCell& ucell,
-                               Grid_Driver& grid_d,
+                               const Grid_Driver& grid_d,
                                const Parallel_Orbitals* paraV,
                                elecstate::Potential* pot_in,
                                const K_Vectors& kv_in,

@@ -49,7 +49,7 @@ void IState_Charge::begin(Gint_Gamma& gg,
                           const std::string& global_out_dir,
                           std::ofstream& ofs_warning,
                           const UnitCell* ucell_in,
-                          Grid_Driver* GridD_in,
+                          const Grid_Driver* GridD_in,
                           const K_Vectors& kv)
 {
     ModuleBase::TITLE("IState_Charge", "begin");
@@ -172,7 +172,7 @@ void IState_Charge::begin(Gint_k& gk,
                           const std::string& global_out_dir,
                           std::ofstream& ofs_warning,
                           UnitCell* ucell_in,
-                          Grid_Driver* GridD_in,
+                          const Grid_Driver* GridD_in,
                           const K_Vectors& kv,
                           const bool if_separate_k,
                           Parallel_Grid* Pgrid,

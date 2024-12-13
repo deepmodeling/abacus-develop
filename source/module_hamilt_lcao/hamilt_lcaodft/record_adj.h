@@ -21,7 +21,7 @@ class Record_adj
     // HPSEPS's 2D block division.
     //--------------------------------------------
     void for_2d(const UnitCell& ucell,
-                Grid_Driver& grid_d,
+                const Grid_Driver& grid_d,
                 Parallel_Orbitals& pv,
                 bool gamma_only,
                 const std::vector<double>& orb_cutoff);
@@ -31,7 +31,7 @@ class Record_adj
     // grid division (cut along z direction)
     //--------------------------------------------
     void for_grid(const UnitCell& ucell,
-                  Grid_Driver& grid_d,
+                  const Grid_Driver& grid_d,
                   const Grid_Technique& gt,
                   const std::vector<double>& orb_cutoff);
 

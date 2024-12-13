@@ -22,7 +22,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       Grid_Driver& grid, // mohan add 2024-04-06
+                       const Grid_Driver& grid, // mohan add 2024-04-06
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham);
 } // namespace ModuleIO

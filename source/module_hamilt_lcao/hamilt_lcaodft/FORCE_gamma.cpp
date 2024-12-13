@@ -17,7 +17,7 @@
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
-                                  Grid_Driver& gd,
+                                  const Grid_Driver& gd,
                                   const Parallel_Orbitals& pv,
                                   ForceStressArrays& fsr, // mohan add 2024-06-15
                                   const TwoCenterBundle& two_center_bundle,
@@ -176,7 +176,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const bool isstress,
                                 ForceStressArrays& fsr, // mohan add 2024-06-16
                                 const UnitCell& ucell,
-                                Grid_Driver& gd,
+                                const Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
                                 const elecstate::ElecState* pelec,
                                 ModuleBase::matrix& foverlap,

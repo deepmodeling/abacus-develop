@@ -15,7 +15,7 @@ class TD_current
 {
   public:
     TD_current(const UnitCell* ucell_in,
-               Grid_Driver* GridD_in,
+               const Grid_Driver* GridD_in,
                const Parallel_Orbitals* paraV,
                const LCAO_Orbitals& orb,
                const TwoCenterIntegrator* intor);
@@ -36,7 +36,7 @@ class TD_current
 
     const LCAO_Orbitals& orb_;
 
-    Grid_Driver* Grid = nullptr;
+    const Grid_Driver* Grid = nullptr;
     /// @brief Store real space hamiltonian. TD term should include imaginary part, thus it has to be complex type. Only shared between TD operators.
     std::vector<hamilt::HContainer<std::complex<double>>*> current_term = {nullptr, nullptr, nullptr};
     
@@ -47,8 +47,8 @@ class TD_current
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_vcomm_r(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
-    void initialize_grad_term(Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_vcomm_r(const Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_grad_term(const Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
 
     /**
      * @brief calculate the HR local matrix of <I,J,R> atom pair

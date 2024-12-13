@@ -19,7 +19,7 @@ hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::TDNonlocal(HS_Matrix_K<TK>* hs
                                                              hamilt::HContainer<TR>* hR_in,
                                                              const UnitCell* ucell_in,
                                                              const LCAO_Orbitals& orb,
-                                                             Grid_Driver* GridD_in)
+                                                             const Grid_Driver* GridD_in)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_(orb)
 {
     this->cal_type = calculation_type::lcao_tddft_velocity;
@@ -50,7 +50,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::init_td()
 }
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     if (elecstate::H_TDDFT_pw::stype != 1)
     {

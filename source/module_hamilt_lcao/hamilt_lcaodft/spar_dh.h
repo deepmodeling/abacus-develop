@@ -14,7 +14,7 @@ namespace sparse_format
 void cal_dH(const UnitCell& ucell,
             const Parallel_Orbitals& pv,
             LCAO_HS_Arrays& HS_Arrays,
-            Grid_Driver& grid,
+            const Grid_Driver& grid,
             const TwoCenterBundle& two_center_bundle,
             const LCAO_Orbitals& orb,
             const int& current_spin,
@@ -22,14 +22,14 @@ void cal_dH(const UnitCell& ucell,
             Gint_k& gint_k);
 
 // be called by 'cal_dH_sparse'
-void set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, Grid_Driver& grid);
+void set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid);
 
 // be called by 'cal_dH_sparse'
 void cal_dSTN_R(const UnitCell& ucell,
                 const Parallel_Orbitals& pv,
                 LCAO_HS_Arrays& HS_Arrays,
                 ForceStressArrays& fsr, // mohan add 2024-06-16
-                Grid_Driver& grid,
+                const Grid_Driver& grid,
                 const std::vector<double>& orb_cutoff,
                 const int& current_spin,
                 const double& sparse_thr);

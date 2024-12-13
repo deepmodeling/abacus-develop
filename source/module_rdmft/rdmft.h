@@ -85,7 +85,7 @@ class RDMFT
               Gint_k& GK_in,
               Parallel_Orbitals& ParaV_in,
               UnitCell& ucell_in,
-              Grid_Driver& gd_in,
+              const Grid_Driver& gd_in,
               K_Vectors& kv_in,
               elecstate::ElecState& pelec_in,
               LCAO_Orbitals& orb_in,
@@ -198,7 +198,7 @@ class RDMFT
 
     // update after ion step
     const UnitCell* ucell = nullptr;
-    Grid_Driver* gd = nullptr;
+    const Grid_Driver* gd = nullptr;
     const ModulePW::PW_Basis* rho_basis = nullptr;
     const ModuleBase::matrix* vloc = nullptr;
     const ModuleBase::ComplexMatrix* sf = nullptr;

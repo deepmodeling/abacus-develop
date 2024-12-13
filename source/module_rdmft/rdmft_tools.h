@@ -301,35 +301,24 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
      * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
     Veff_rdmft(Gint_k* GK_in,
-                      hamilt::HS_Matrix_K<TK>* hsk_in,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                      elecstate::Potential* pot_in,
-                      hamilt::HContainer<TR>* hR_in,
-                      const UnitCell* ucell_in,
-                      const std::vector<double>& orb_cutoff,
-                      Grid_Driver* GridD_in,
-                      const int& nspin,
-                      const Charge* charge_in,
-                      const ModulePW::PW_Basis* rho_basis_in,
-                      const ModuleBase::matrix* vloc_in,
-                      const ModuleBase::ComplexMatrix* sf_in,
-                      const std::string potential_in,
-                      double* etxc_in = nullptr,
-                      double* vtxc_in = nullptr
-                    )
-        : GK(GK_in),
-          orb_cutoff_(orb_cutoff),
-          pot(pot_in),
-          ucell(ucell_in),
-          gd(GridD_in),
-          hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-          charge_(charge_in),
-          rho_basis_(rho_basis_in),
-          vloc_(vloc_in),
-          sf_(sf_in),
-          potential_(potential_in),
-          etxc(etxc_in),
-          vtxc(vtxc_in)
+               hamilt::HS_Matrix_K<TK>* hsk_in,
+               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+               elecstate::Potential* pot_in,
+               hamilt::HContainer<TR>* hR_in,
+               const UnitCell* ucell_in,
+               const std::vector<double>& orb_cutoff,
+               const Grid_Driver* GridD_in,
+               const int& nspin,
+               const Charge* charge_in,
+               const ModulePW::PW_Basis* rho_basis_in,
+               const ModuleBase::matrix* vloc_in,
+               const ModuleBase::ComplexMatrix* sf_in,
+               const std::string potential_in,
+               double* etxc_in = nullptr,
+               double* vtxc_in = nullptr)
+        : GK(GK_in), orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
+          gd(GridD_in), hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), charge_(charge_in),
+          rho_basis_(rho_basis_in), vloc_(vloc_in), sf_(sf_in), potential_(potential_in), etxc(etxc_in), vtxc(vtxc_in)
     {
         this->cal_type = hamilt::calculation_type::lcao_gint;
 
@@ -338,35 +327,24 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
         GK_in->initialize_pvpR(*ucell_in, GridD_in, nspin);
     }
     Veff_rdmft(Gint_Gamma* GG_in,
-                      hamilt::HS_Matrix_K<TK>* hsk_in,
-                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                      elecstate::Potential* pot_in,
-                      hamilt::HContainer<TR>* hR_in,
-                      const UnitCell* ucell_in,
-                      const std::vector<double>& orb_cutoff,
-                      Grid_Driver* GridD_in,
-                      const int& nspin,
-                      const Charge* charge_in,
-                      const ModulePW::PW_Basis* rho_basis_in,
-                      const ModuleBase::matrix* vloc_in,
-                      const ModuleBase::ComplexMatrix* sf_in,  
-                      const std::string potential_in,
-                      double* etxc_in = nullptr,
-                      double* vtxc_in = nullptr
-                    )
-        : GG(GG_in), 
-          orb_cutoff_(orb_cutoff),
-          pot(pot_in),
-          hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
-          ucell(ucell_in),
-          gd(GridD_in),
-          charge_(charge_in),
-          rho_basis_(rho_basis_in),
-          vloc_(vloc_in),
-          sf_(sf_in),
-          potential_(potential_in),
-          etxc(etxc_in),
-          vtxc(vtxc_in)
+               hamilt::HS_Matrix_K<TK>* hsk_in,
+               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+               elecstate::Potential* pot_in,
+               hamilt::HContainer<TR>* hR_in,
+               const UnitCell* ucell_in,
+               const std::vector<double>& orb_cutoff,
+               const Grid_Driver* GridD_in,
+               const int& nspin,
+               const Charge* charge_in,
+               const ModulePW::PW_Basis* rho_basis_in,
+               const ModuleBase::matrix* vloc_in,
+               const ModuleBase::ComplexMatrix* sf_in,
+               const std::string potential_in,
+               double* etxc_in = nullptr,
+               double* vtxc_in = nullptr)
+        : GG(GG_in), orb_cutoff_(orb_cutoff), pot(pot_in), hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in),
+          ucell(ucell_in), gd(GridD_in), charge_(charge_in), rho_basis_(rho_basis_in), vloc_(vloc_in), sf_(sf_in),
+          potential_(potential_in), etxc(etxc_in), vtxc(vtxc_in)
     {
         this->cal_type = hamilt::calculation_type::lcao_gint;
 
@@ -387,7 +365,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
 
     const UnitCell* ucell;
 
-    Grid_Driver* gd;
+    const Grid_Driver* gd;
 
   private:
     // used for k-dependent grid integration.
@@ -410,8 +388,7 @@ class Veff_rdmft : public hamilt::OperatorLCAO<TK, TR>
      * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD_in);
-
+    void initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD_in);
 
     // added by jghan
 

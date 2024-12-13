@@ -15,7 +15,7 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hs
                                                              hamilt::HContainer<TR>* SR_in,
                                                              const UnitCell* ucell_in,
                                                              const std::vector<double>& orb_cutoff,
-                                                             Grid_Driver* GridD_in,
+                                                             const Grid_Driver* GridD_in,
                                                              const TwoCenterIntegrator* intor)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
 {
@@ -32,7 +32,7 @@ hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::OverlapNew(HS_Matrix_K<TK>* hs
 
 // initialize_SR()
 template <typename TK, typename TR>
-void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(Grid_Driver* GridD)
+void hamilt::OverlapNew<hamilt::OperatorLCAO<TK, TR>>::initialize_SR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("OverlapNew", "initialize_SR");
     ModuleBase::timer::tick("OverlapNew", "initialize_SR");

@@ -45,8 +45,11 @@ namespace LR_Util
         const int& nat,
         const char& type = 'R');
 
-    template<typename T, typename TR>
-    void initialize_HR(hamilt::HContainer<TR>& hR, const UnitCell& ucell, Grid_Driver& gd, const std::vector<double>& orb_cutoff)
+    template <typename T, typename TR>
+    void initialize_HR(hamilt::HContainer<TR>& hR,
+                       const UnitCell& ucell,
+                       const Grid_Driver& gd,
+                       const std::vector<double>& orb_cutoff)
     {
         const auto& pmat = *hR.get_paraV();
         for (int iat1 = 0; iat1 < ucell.nat; iat1++)
@@ -72,8 +75,12 @@ namespace LR_Util
         // hR.set_paraV(&pmat);
         if (std::is_same<T, double>::value) { hR.fix_gamma(); }
     }
-    template<typename T, typename TR>
-    void initialize_DMR(elecstate::DensityMatrix<T, TR>& dm, const Parallel_Orbitals& pmat, const UnitCell& ucell, Grid_Driver& gd, const std::vector<double>& orb_cutoff)
+    template <typename T, typename TR>
+    void initialize_DMR(elecstate::DensityMatrix<T, TR>& dm,
+                        const Parallel_Orbitals& pmat,
+                        const UnitCell& ucell,
+                        const Grid_Driver& gd,
+                        const std::vector<double>& orb_cutoff)
     {
         hamilt::HContainer<TR> hR_tmp(&pmat);
         initialize_HR<T, TR>(hR_tmp, ucell, gd, orb_cutoff);

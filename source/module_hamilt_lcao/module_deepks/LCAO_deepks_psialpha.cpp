@@ -16,7 +16,7 @@
 void LCAO_Deepks::build_psialpha(const bool& calc_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
-                                 Grid_Driver& GridD,
+                                 const Grid_Driver& GridD,
                                  const TwoCenterIntegrator& overlap_orb_alpha)
 {
     ModuleBase::TITLE("LCAO_Deepks", "build_psialpha");
@@ -133,7 +133,7 @@ void LCAO_Deepks::build_psialpha(const bool& calc_deri,
 void LCAO_Deepks::check_psialpha(const bool& calc_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
-                                 Grid_Driver& GridD)
+                                 const Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_psialpha");
     ModuleBase::timer::tick("LCAO_Deepks", "check_psialpha");

@@ -40,6 +40,7 @@ option(ENABLE_CNPY "Enable cnpy usage." OFF)
 option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 option(USE_DSP "Enable DSP usage." OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -124,6 +125,10 @@ if (USE_DSP)
   set(USE_ELPA OFF)
   set(ENABLE_LCAO OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
+endif()
+
+if (USE_CUDA_ON_DCU)
+  add_compile_definitions(__CUDA_ON_DCU)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)

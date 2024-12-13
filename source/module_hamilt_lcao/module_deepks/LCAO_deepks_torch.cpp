@@ -155,12 +155,12 @@ void LCAO_Deepks::load_model(const std::string& deepks_model) {
 // prepare_psialpha and prepare_gevdm for deepks_v_delta = 2
 template <typename TK>
 void LCAO_Deepks::prepare_psialpha(const int nlocal,
-    const int nat,
-    const int nks,
-    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-    const UnitCell &ucell,
-    const LCAO_Orbitals &orb,
-    Grid_Driver &GridD)
+                                   const int nat,
+                                   const int nks,
+                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD)
 {
     ModuleBase::TITLE("LCAO_Deepks", "prepare_psialpha");
     int nlmax = this->inlmax/nat;
@@ -427,18 +427,19 @@ void LCAO_Deepks::check_vdp_gevdm(const int nat)
 template void LCAO_Deepks::prepare_psialpha<double>(const int nlocal,
                                                     const int nat,
                                                     const int nks,
-                                                    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-                                                    const UnitCell &ucell,
-                                                    const LCAO_Orbitals &orb,
-                                                    Grid_Driver &GridD);
+                                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                    const UnitCell& ucell,
+                                                    const LCAO_Orbitals& orb,
+                                                    const Grid_Driver& GridD);
 
-template void LCAO_Deepks::prepare_psialpha<std::complex<double>>(const int nlocal,
-                                                                  const int nat,
-                                                                  const int nks,
-                                                                  const std::vector<ModuleBase::Vector3<double>> &kvec_d,
-                                                                  const UnitCell &ucell,
-                                                                  const LCAO_Orbitals &orb,
-                                                                  Grid_Driver &GridD);
+template void LCAO_Deepks::prepare_psialpha<std::complex<double>>(
+    const int nlocal,
+    const int nat,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD);
 
 template void LCAO_Deepks::check_vdp_psialpha<double>(const int nat, const int nks, const int nlocal);
 template void LCAO_Deepks::check_vdp_psialpha<std::complex<double>>(const int nat, const int nks, const int nlocal);

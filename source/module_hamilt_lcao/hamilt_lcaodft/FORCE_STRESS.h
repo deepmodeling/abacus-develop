@@ -34,7 +34,7 @@ class Force_Stress_LCAO
                         const bool istestf,
                         const bool istests,
                         const UnitCell& ucell,
-                        Grid_Driver& gd,
+                        const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
                         const psi::Psi<T>* psi,
@@ -82,7 +82,7 @@ class Force_Stress_LCAO
                        const bool isforce,
                        const bool isstress,
                        const UnitCell& ucell,
-                       Grid_Driver& gd,
+                       const Grid_Driver& gd,
                        ForceStressArrays& fsr, // mohan add 2024-06-15
                        const elecstate::ElecState* pelec,
                        const psi::Psi<T>* psi,

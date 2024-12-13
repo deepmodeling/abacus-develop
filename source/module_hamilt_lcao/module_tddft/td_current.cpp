@@ -9,11 +9,11 @@
 #endif
 
 TD_current::TD_current(const UnitCell* ucell_in,
-                      Grid_Driver* GridD_in,
-                      const Parallel_Orbitals* paraV,
-                      const LCAO_Orbitals& orb,
-                      const TwoCenterIntegrator* intor)
-    : ucell(ucell_in), paraV(paraV) , orb_(orb), Grid(GridD_in), intor_(intor)
+                       const Grid_Driver* GridD_in,
+                       const Parallel_Orbitals* paraV,
+                       const LCAO_Orbitals& orb,
+                       const TwoCenterIntegrator* intor)
+    : ucell(ucell_in), paraV(paraV), orb_(orb), Grid(GridD_in), intor_(intor)
 {   
     // for length gague, the A(t) = 0 for all the time.
     this->cart_At = ModuleBase::Vector3<double>(0,0,0);
@@ -28,7 +28,7 @@ TD_current::~TD_current()
     }
 }
 //allocate space for current_term
-void TD_current::initialize_vcomm_r(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void TD_current::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_current", "initialize_vcomm_r");
     ModuleBase::timer::tick("TD_current", "initialize_vcomm_r");
@@ -103,7 +103,7 @@ void TD_current::initialize_vcomm_r(Grid_Driver* GridD, const Parallel_Orbitals*
     }
     ModuleBase::timer::tick("TD_current", "initialize_vcomm_r");
 }
-void TD_current::initialize_grad_term(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void TD_current::initialize_grad_term(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_current", "initialize_grad_term");
     ModuleBase::timer::tick("TD_current", "initialize_grad_term");
