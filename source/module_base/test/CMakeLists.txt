@@ -2,7 +2,7 @@ remove_definitions(-D__MPI)
 install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET base_blas_connector
-  LIBS parameter  ${math_libs} device
+  LIBS parameter ${math_libs} base device
   SOURCES blas_connector_test.cpp ../blas_connector.cpp
 )
 AddTest(
