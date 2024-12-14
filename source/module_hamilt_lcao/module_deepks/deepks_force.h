@@ -35,9 +35,9 @@ namespace DeePKS_domain
 // for gamma only, pulay and HF terms of force are calculated together
 void cal_f_delta_gamma(
     const std::vector<std::vector<double>>& dm,
-	const UnitCell& ucell,
-	const LCAO_Orbitals& orb,
-	const Grid_Driver& GridD,
+    const UnitCell& ucell,
+    const LCAO_Orbitals& orb,
+    const Grid_Driver& GridD,
     const Parallel_Orbitals& pv,
     const int lmaxd,
     const int nks,
