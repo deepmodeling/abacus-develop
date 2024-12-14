@@ -107,7 +107,9 @@ void DeePKS_domain::cal_f_delta_gamma(
 						continue;
 					}
 
-                    int dRx, dRy, dRz;
+                    int dRx;
+                    int dRy;
+                    int dRz;
                     if constexpr (std::is_same<TK, double>::value)
                     {
                         dRx = 0;
