@@ -39,15 +39,15 @@ void cal_f_delta_gamma(
 	const LCAO_Orbitals& orb,
 	const Grid_Driver& GridD,
     const Parallel_Orbitals& pv,
-	const int lmaxd,
+    const int lmaxd,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-	std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
-	double** gedm,
-	ModuleBase::IntArray* inl_index,
-	ModuleBase::matrix& f_delta,
-	const bool isstress,
-	ModuleBase::matrix& svnl_dalpha);
+    std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
+    double** gedm,
+    ModuleBase::IntArray* inl_index,
+    ModuleBase::matrix& f_delta,
+    const bool isstress,
+    ModuleBase::matrix& svnl_dalpha);
 
 // for multi-k, pulay and HF terms of force are calculated together
 
