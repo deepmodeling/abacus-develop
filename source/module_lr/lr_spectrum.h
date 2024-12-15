@@ -16,7 +16,8 @@ namespace LR
             const UnitCell& ucell, const K_Vectors& kv_in, const Grid_Driver& gd, const std::vector<double>& orb_cutoff,
             const TwoCenterBundle& two_center_bundle_,
             const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
-            const double* eig, const T* X, const int& nstate, const bool& openshell) :
+            const double* eig, const T* X, const int& nstate, const bool& openshell,
+            const std::string& gauge = "length") :
             nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin_global),
             gint(gint), rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
@@ -26,19 +27,26 @@ namespace LR
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
         {
             for (int is = 0;is < nspin_global;++is) { psi_ks.emplace_back(LR_Util::get_psi_spin(psi_ks_in, is, nk)); }
-            this->oscillator_strength(gd, orb_cutoff);
+            gauge == "velocity" ? this->cal_transition_dipoles_velocity() : this->cal_transition_dipoles_length();
+            this->oscillator_strength();
         };
-        /// @brief calculate the optical absorption spectrum
-        void optical_absorption(const std::vector<double>& freq, const double eta, const std::string& spintype);
-        /// @brief calculate the optical absorption spectrum using the velocity matrix
-        void optical_absorption_velocity(const std::vector<double>& freq, const double eta, const std::string& spintype);
+        /// @brief calculate the optical absorption spectrum with $Im[1/[(w+i\eta)^2-\Omega_S^2]]$
+        void optical_absorption_method1(const std::vector<double>& freq, const double eta, const std::string& spintype);
+        /// @brief calculate the optical absorption spectrum with lorentzian delta function
+        void optical_absorption_method2(const std::vector<double>& freq, const double eta, const std::string& spintype);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude
         void transition_analysis(const std::string& spintype);
+        /// @brief write transition dipole
     private:
         /// $$2/3\Omega\sum_{ia\sigma} |\braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2\int \rho_{\alpha\beta}(\mathbf{r}) \mathbf{r} d\mathbf{r}$$
-        void oscillator_strength(const Grid_Driver& gd, const std::vector<double>& orb_cutoff);
-        /// calculate the mean squared transition velocity of state S: $|\sum_{iak}X^S_{iak}<ik|v|ak>|^2/3$
-        double mean_square_transition_velocity(const int istate);
+        void oscillator_strength();
+        /// calculate the transition dipole of state S in length gauge: $\sum_{iak}X^S_{iak}<ik|r|ak>$
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_length(const int istate);
+        void cal_transition_dipoles_length();
+        /// calculate the transition dipole of state S in velocity gauge: $i(\sum_{iak}X^S_{iak}<ik|v|ak>)/\Omega_S$
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity(const int istate);
+        void cal_transition_dipoles_velocity();
+        double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
 
         elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate);
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
@@ -64,12 +72,11 @@ namespace LR
         const std::vector<double>& orb_cutoff_;
         const TwoCenterBundle& two_center_bundle_;
 
-      void cal_gint_rho(double** rho, const int& nrxx);
-      std::map<std::string, int> get_pair_info(
-          const int i); ///< given the index in X, return its ispin, ik, iocc, ivirt
+        void cal_gint_rho(double** rho, const int& nrxx);
+        std::map<std::string, int> get_pair_info(const int i); ///< given the index in X, return its ispin, ik, iocc, ivirt
 
-      std::vector<ModuleBase::Vector3<T>> transition_dipole_; ///< $\braket{ \psi_{i} | \mathbf{r} | \psi_{a} }$
-      std::vector<double>
-          oscillator_strength_; ///< $2/3\Omega |\sum_{ia\sigma} \braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2$
+        std::vector<ModuleBase::Vector3<T>> transition_dipole_;   ///< $\braket{ \psi_{i} | \mathbf{r} | \psi_{a} }$
+        std::vector<double> mean_squared_transition_dipole_;    /// $|dipole|^2/3$, atomic unit (Hartree)
+        std::vector<double> oscillator_strength_;///< $2/3\Omega |\sum_{ia\sigma} \braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2$, atomic unit (Hartree)
     };
 }
