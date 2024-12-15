@@ -6,6 +6,30 @@
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_hcontainer.h"
 #include "module_lr/utils/lr_util_print.h"
+
+template <typename T>
+elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate)
+{
+    const int offset_b = istate * ldim;    //start index of band istate
+    elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
+    for (int is = 0;is < this->nspin_x; ++is)
+    {
+        const int offset_x = offset_b + is * nk * this->pX[0].get_local_size();
+        //1. transition density 
+#ifdef __MPI
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(this->X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
+        // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
+#else
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(this->X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
+        // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
+#endif
+        for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
+    }
+    LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
+    DM_trans.cal_DMR();
+    return DM_trans;
+}
+
 template<typename T>
 void LR::LR_Spectrum<T>::cal_gint_rho(double** rho, const int& nrxx)
 {
@@ -30,26 +54,14 @@ void LR::LR_Spectrum<double>::oscillator_strength(const Grid_Driver& gd, const s
     std::vector<double>& osc = this->oscillator_strength_;  // unit: Ry
     osc.resize(nstate, 0.0);
     double osc_tot = 0.0;
-    elecstate::DensityMatrix<double, double> DM_trans(&this->pmat, 1, this->kv.kvec_d, this->nk);
-    LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, gd, orb_cutoff);
     this->transition_dipole_.resize(nstate, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int istate = 0;istate < nstate;++istate)
     {
-        const int offset_b = istate * ldim;    //start index of band istate
+        // 1. transition density matrix
+        const elecstate::DensityMatrix<double, double>& DM_trans = this->cal_transition_density_matrix(istate);
         for (int is = 0;is < this->nspin_x;++is)
         {
-            const int offset_x = offset_b + is * nk * pX[0].get_local_size();
-            //1. transition density 
-#ifdef __MPI
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
-            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
-#else
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
-            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
-#endif
-            for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<double>()); }
-            DM_trans.cal_DMR();
-            this->gint->transfer_DM2DtoGrid(DM_trans.get_DMR_vector());
+            this->gint->transfer_DM2DtoGrid({ DM_trans.get_DMR_vector().at(is) });
 
             // 2. transition density
             double** rho_trans;

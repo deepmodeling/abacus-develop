@@ -31,26 +31,10 @@ namespace LR
     template<typename T>
     double LR::LR_Spectrum<T>::mean_square_transition_velocity(const int istate)
     {
-        const int offset_b = istate * ldim;    //start index of band istate
         // velocity matrix v(R)
         const TD_current& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
         // transition density matrix D(R)
-        elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
-        for (int is = 0;is < this->nspin_x; ++is)
-        {
-            const int offset_x = offset_b + is * nk * pX[0].get_local_size();
-            //1. transition density 
-#ifdef __MPI
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
-            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
-#else
-            std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
-            // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
-#endif
-            for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
-        }
-        LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, gd_, orb_cutoff_);
-        DM_trans.cal_DMR();
+        const elecstate::DensityMatrix<T, T>& DM_trans = this->cal_transition_density_matrix(istate);
 
         std::vector<std::complex<double>> transition_velocity(3, 0.0);    // $=\sum_{uvR} v(R) D(R) = \sum_{iak}X_{iak}<ck|v|vk>$
         double mean_transition_velocity_norm2 = 0.0;    // $= |v|^2/3$

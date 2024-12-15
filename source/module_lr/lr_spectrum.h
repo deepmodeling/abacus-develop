@@ -39,6 +39,8 @@ namespace LR
         void oscillator_strength(const Grid_Driver& gd, const std::vector<double>& orb_cutoff);
         /// calculate the mean squared transition velocity of state S: $|\sum_{iak}X^S_{iak}<ik|v|ak>|^2/3$
         double mean_square_transition_velocity(const int istate);
+
+        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate);
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
         const int naos = 1;
         const std::vector<int>& nocc;
