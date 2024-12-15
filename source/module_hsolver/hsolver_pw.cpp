@@ -28,8 +28,7 @@ namespace hsolver
 
 #ifdef USE_PAW
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_in_kloop(const int ik,
-                                             const double tpiba)
+void HSolverPW<T, Device>::paw_func_in_kloop(const int ik, const double tpiba)
 {
     if (this->use_paw)
     {
@@ -97,7 +96,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi, 
+void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
                                                 elecstate::ElecState* pes,
                                                 const double tpiba,
                                                 const int nat)
@@ -211,10 +210,10 @@ void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
 #endif
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::cal_ethr_band(const double& wk,
-                                         const double* wg,
-                                         const double& ethr,
-                                         std::vector<double>& ethrs)
+void HSolverPW<T, Device>::cal_smooth_ethr(const double& wk,
+                                           const double* wg,
+                                           const double& ethr,
+                                           std::vector<double>& ethrs)
 {
     // threshold for classifying occupied and unoccupied bands
     const double occ_threshold = 1e-2;
@@ -288,7 +287,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         pHamilt->updateHk(ik);
 
 #ifdef USE_PAW
-        this->paw_func_in_kloop(ik,tpiba);
+        this->paw_func_in_kloop(ik, tpiba);
 #endif
 
         /// update psi pointer for each k point
@@ -297,14 +296,13 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
 
-        // only dav_subspace method used smooth threshold for all bands now,
-        // for other methods, this trick can be added in the future to accelerate calculation without accuracy loss.
-        if (this->method == "dav_subspace")
+        // use smooth threshold for all iter methods
+        if (PARAM.inp.diago_smooth_ethr == true)
         {
-            this->cal_ethr_band(pes->klist->wk[ik],
-                                &pes->wg(ik, 0),
-                                DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                ethr_band);
+            this->cal_smooth_ethr(pes->klist->wk[ik],
+                                  &pes->wg(ik, 0),
+                                  DiagoIterAssist<T, Device>::PW_DIAG_THR,
+                                  ethr_band);
         }
 
 #ifdef USE_PAW
@@ -347,7 +345,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->psiToRho(psi);
 
 #ifdef USE_PAW
-        this->paw_func_after_kloop(psi, pes,tpiba,nat);
+        this->paw_func_after_kloop(psi, pes, tpiba, nat);
 #endif
 
         ModuleBase::timer::tick("HSolverPW", "solve");
@@ -473,7 +471,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     }
     else if (this->method == "bpcg")
     {
-        const int nband  = psi.get_nbands();
+        const int nband = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
         auto ngk_pointer = psi.get_ngk_pointer();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec

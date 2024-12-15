@@ -37,7 +37,7 @@
     - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
-    - [diag\_smooth\_ethr](#diag_smooth_ethr)
+    - [diago\_smooth\_ethr](#diago_smooth_ethr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
     - [erf\_ecut](#erf_ecut)
