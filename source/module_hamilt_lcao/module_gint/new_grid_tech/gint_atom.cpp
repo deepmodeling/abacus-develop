@@ -1,15 +1,16 @@
-#include "gint_atom.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
 #include "module_base/array_pool.h"
+#include "gint_atom.h"
+#include "gint_helper.h"
 
 namespace Gint
 {
 
 template <typename T>
-void GintAtom::get_psi(const std::vector<Vec3d> coords, const int stride, T* psi)
+void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi)
 {
-    ModuleBase::timer::tick("GintAtom", "get_psi");
+    ModuleBase::timer::tick("GintAtom", "set_phi");
 
     const int num_mgrids = coords.size();
 
@@ -37,19 +38,15 @@ void GintAtom::get_psi(const std::vector<Vec3d> coords, const int stride, T* psi
     for(int im = 0; im < num_mgrids; im++)
     {
         const Vec3d& coord = coords[im];
-        const double dist = coord.norm();
 
-        // avoid division by zero
-        if(dist < 1e-9)
-        {
-            dist = 1e-9;
-        }
+        // 1e-9 is to avoid division by zero
+        const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
 
         if(dist > orb_->getRcut())
         {   
             // if the distance is larger than the cutoff radius,
             // the wave function values are all zeros
-            ModuleBase::GlobalFunc::ZEROS(psi + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(phi + im * stride, atom_->nw);
         }
         else
         {
@@ -75,7 +72,8 @@ void GintAtom::get_psi(const std::vector<Vec3d> coords, const int stride, T* psi
             const double c2 = (dx - 2.0 * dx2 + dx3) * dr_uniform;
             const double c4 = (dx3 - dx2) * dr_uniform;
 
-            double phi = 0;
+            // I'm not sure if the variable name 'psi' is appropriate
+            double psi = 0;
             
             for(int iw = 0; iw < atom_->nw; iw++)
             {
@@ -83,23 +81,23 @@ void GintAtom::get_psi(const std::vector<Vec3d> coords, const int stride, T* psi
                 {
                     auto psi_uniform = p_psi_uniform[iw];
                     auto dpsi_uniform = p_dpsi_uniform[iw];
-                    phi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
+                    psi = c1 * psi_uniform[ip] + c2 * dpsi_uniform[ip]
                         + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
                 }
-                psi[im * stride + iw] = phi * ylma[atom_->iw2_ylm[iw]];
+                phi[im * stride + iw] = psi * ylma[atom_->iw2_ylm[iw]];
             }
         }
     }
 
-    ModuleBase::timer::tick("GintAtom", "get_psi");
+    ModuleBase::timer::tick("GintAtom", "set_phi");
 }
 
 template <typename T>
-void GintAtom::get_psi_dpsir(
+void GintAtom::set_phi_dphi(
     const std::vector<Vec3d> coords, const int stride,
-    T* psi, T* dpsi_x, T* dpsi_y, T* dpsi_z)
+    T* phi, T* dphi_x, T* dphi_y, T* dphi_z)
 {
-    ModuleBase::timer::tick("GintAtom", "get_psi_dpsir");
+    ModuleBase::timer::tick("GintAtom", "set_phi_dphi");
 
     const int num_mgrids = coords.size();
     
@@ -109,16 +107,16 @@ void GintAtom::get_psi_dpsir(
     // store the pointer to reduce repeated address fetching
     std::vector<const double*> p_psi_uniform(atom_->nw);
     std::vector<const double*> p_dpsi_uniform(atom_->nw);
-    std::vector<int> psi_nr_uniform(atom_->nw);
-    for (int iw=0; iw< atom->nw; ++iw)
+    std::vector<int> phi_nr_uniform(atom_->nw);
+    for (int iw=0; iw< atom_->nw; ++iw)
     {
-        if ( atom->iw2_new[iw] )
+        if ( atom_->iw2_new[iw] )
         {
             int l = atom_->iw2l[iw];
             int n = atom_->iw2n[iw];
             p_psi_uniform[iw] = orb_->PhiLN(l, n).psi_uniform.data();
             p_dpsi_uniform[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-            psi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
+            phi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
         }
     }
     
@@ -128,28 +126,23 @@ void GintAtom::get_psi_dpsir(
     for(int im = 0; im < num_mgrids; im++)
     {
         const Vec3d& coord = coords[im];
-        const double dist = coord.norm();
-
-        // avoid division by zero
-        if(dist < 1e-9)
-        {
-            dist = 1e-9;
-        }
+        // 1e-9 is to avoid division by zero
+        const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
 
         if(dist > orb_->getRcut())
         {
             // if the distance is larger than the cutoff radius,
             // the wave function values are all zeros
-            ModuleBase::GlobalFunc::ZEROS(dpsi_x + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(dpsi_y + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(dpsi_z + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(dphi_x + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(dphi_y + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(dphi_z + im * stride, atom_->nw);
         }
         else
         {
             // spherical harmonics
             // TODO: vectorize the sph_harm function, 
             // the vectorized function can be called once for all meshgrids in a biggrid
-            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord.x, coord.y, coord.z, rly, grly.get_ptr_2D());
+            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord.x, coord.y, coord.z, rly.data(), grly.get_ptr_2D());
 
             // interpolation
             const double position = dist / dr_uniform;
@@ -171,7 +164,7 @@ void GintAtom::get_psi_dpsir(
                     auto psi_uniform = p_psi_uniform[iw];
                     auto dpsi_uniform = p_dpsi_uniform[iw];
 
-                    if(ip >= psi_nr_uniform[iw] - 4)
+                    if(ip >= phi_nr_uniform[iw] - 4)
                     {
                         tmp = dtmp = 0.0;
                     }
@@ -196,22 +189,22 @@ void GintAtom::get_psi_dpsir(
                 const double tmprl = tmp / rl;
 
                 // 3D wave functions
-                psi[im * stride + iw] = tmprl * rly[idx_lm];
+                phi[im * stride + iw] = tmprl * rly[idx_lm];
 
                 // derivative of wave functions with respect to atom positions.
                 const double tmpdphi_rly = (dtmp - tmp * ll / dist) / rl * rly[idx_lm] / dist;
 
-                dpsi_x[im * stride + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_lm][0];
-                dpsi_y[im * stride + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_lm][1];
-                dpsi_z[im * stride + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_lm][2];
+                dphi_x[im * stride + iw] =  tmpdphi_rly * coord.x + tmprl * grly[idx_lm][0];
+                dphi_y[im * stride + iw] =  tmpdphi_rly * coord.y + tmprl * grly[idx_lm][1];
+                dphi_z[im * stride + iw] =  tmpdphi_rly * coord.z + tmprl * grly[idx_lm][2];
             }
         }
     }
 
-    ModuleBase::timer::tick("GintAtom", "get_psi_dpsir");
+    ModuleBase::timer::tick("GintAtom", "set_phi_dphi");
 }
 
 // explicit instantiation
-template void GintAtom::get_psi(const std::vector<Vec3d> coords, const int stride, double* psi);
-template void GintAtom::get_psi_dpsir(const std::vector<Vec3d> coords, const int stride, double* psi, double* dpsi_x, double* dpsi_y, double* dpsi_z);
+template void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, double* phi);
+template void GintAtom::set_phi_dphi(const std::vector<Vec3d> coords, const int stride, double* phi, double* dphi_x, double* dphi_y, double* dphi_z);
 }

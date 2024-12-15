@@ -83,7 +83,7 @@ class UnitCellInfo
         };
 
         // get the extended unitcell index of a big grid
-        Vec3i get_extcell_idx(const Vec3i index_3d) const
+        Vec3i get_unitcell_idx(const Vec3i index_3d) const
         {
             return Vec3i(index_3d.x / nbx_, index_3d.y / nby_, index_3d.z / nbz_);
         };
@@ -164,6 +164,6 @@ class UnitCellInfo
         // the total number of meshgrids in the unitcell
         int nmxyz_;
 
-}
+};
 
 } // namespace Gint

@@ -29,6 +29,19 @@ list(APPEND objects
     init_orb.cpp
 )
 
+list(APPEND objects
+    new_grid_tech/biggrid_info.cpp
+    new_grid_tech/biggrid.cpp
+    new_grid_tech/divide_info.cpp
+    new_grid_tech/gint_atom.cpp
+    new_grid_tech/gint_info.cpp
+    new_grid_tech/gint_vl.cpp
+    new_grid_tech/localcell_info.cpp
+    new_grid_tech/phi_operator.cpp
+    new_grid_tech/set_ddphi.cpp
+    new_grid_tech/unitcell_info.cpp
+    )
+
 if(USE_CUDA)
   list(APPEND objects
       gint_gpu_interface.cpp

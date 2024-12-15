@@ -1,15 +1,19 @@
+#include "module_base/array_pool.h"
+#include "module_base/timer.h"
+#include "module_base/ylm.h"
 #include "gint_atom.h"
+#include "gint_helper.h"
 
 namespace Gint
 {
 
 template <typename T>
-void GintAtom::get_ddpsir(
+void GintAtom::set_ddphi(
     const std::vector<Vec3d> coords, const int stride,
-    T* ddpsi_xx, T* ddpsi_xy, T* ddpsi_xz,
-    T* ddpsi_yy, T* ddpsi_yz, T* ddpsi_zz)
+    T* ddphi_xx, T* ddphi_xy, T* ddphi_xz,
+    T* ddphi_yy, T* ddphi_yz, T* ddphi_zz)
 {
-    ModuleBase::timer::tick("GintAtom", "get_ddpsir");
+    ModuleBase::timer::tick("GintAtom", "set_ddphi");
     
     const int num_mgrids = coords.size();
 
@@ -19,26 +23,26 @@ void GintAtom::get_ddpsir(
     // store the pointer to reduce repeated address fetching
     std::vector<const double*> p_psi_uniform(atom_->nw);
     std::vector<const double*> p_dpsi_uniform(atom_->nw);
-    std::vector<const double*> p_d2psi_uniform(atom_->nw);
-    std::vector<int> psi_nr_uniform(atom_->nw);
-    for (int iw=0; iw< atom->nw; ++iw)
+    std::vector<const double*> p_ddpsi_uniform(atom_->nw);
+    std::vector<int> phi_nr_uniform(atom_->nw);
+    for (int iw=0; iw< atom_->nw; ++iw)
     {
-        if ( atom->iw2_new[iw] )
+        if ( atom_->iw2_new[iw] )
         {
             int l = atom_->iw2l[iw];
             int n = atom_->iw2n[iw];
             p_psi_uniform[iw] = orb_->PhiLN(l, n).psi_uniform.data();
             p_dpsi_uniform[iw] = orb_->PhiLN(l, n).dpsi_uniform.data();
-            p_d2psi_uniform[iw] = orb_->PhiLN(l, n).d2psi_uniform.data();
-            psi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
+            p_ddpsi_uniform[iw] = orb_->PhiLN(l, n).ddpsi_uniform.data();
+            phi_nr_uniform[iw] = orb_->PhiLN(l, n).nr_uniform;
         }
     }
 
     std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
     ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
-    // TODO: A better data structure such as a 3D tensor can be used to store dpsi
-    std::vector<ModuleBase::Array_Pool<double>> dpsi(6, ModuleBase::Array_Pool<double>(6, 3));
-    std::vector<double> coord1(3);
+    // TODO: A better data structure such as a 3D tensor can be used to store dphi
+    std::vector<std::vector<std::vector<double>>> dphi(6, std::vector<std::vector<double>>(6, std::vector<double>(3)));
+    Vec3d coord1;
     ModuleBase::Array_Pool<double> displ(6, 3);
     displ[0][0] = 0.0001; // in x direction
     displ[1][0] = -0.0001;
@@ -50,24 +54,19 @@ void GintAtom::get_ddpsir(
     for(int im = 0; im < num_mgrids; im++)
     {
         const Vec3d& coord = coords[im];
-        const double dist = coord.norm();
-
-        // avoid division by zero
-        if(dist < 1e-9)
-        {
-            dist = 1e-9;
-        }
+        // 1e-9 is to avoid division by zero
+        const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
 
         if(dist > orb_->getRcut())
         {
             // if the distance is larger than the cutoff radius,
             // the wave function values are all zeros
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_xx + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_xy + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_xz + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_yy + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_yz + im * stride, atom_->nw);
-            ModuleBase::GlobalFunc::ZEROS(ddpsi_zz + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_xx + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_xy + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_xz + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_yy + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_yz + im * stride, atom_->nw);
+            ModuleBase::GlobalFunc::ZEROS(ddphi_zz + im * stride, atom_->nw);
             continue;
         }
 
@@ -78,14 +77,9 @@ void GintAtom::get_ddpsir(
             coord1[2] = coord[2] + displ[i][2];
 
             // sphereical harmonics
-            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord1[0], coord1[1], coord1[2], rly, grly.get_ptr_2D());
+            ModuleBase::Ylm::grad_rl_sph_harm(atom_->nwl, coord1[0], coord1[1], coord1[2], rly.data(), grly.get_ptr_2D());
 
-            const double dist1 = coord1.norm();
-
-            if(dist1 < 1e-9)
-            {
-                dist1 = 1e-9;
-            }
+            const double dist1 = coord1.norm() < 1e-9 ? 1e-9 : coord1.norm();
 
             const double position = dist1 / dr_uniform;
             const int ip = static_cast<int>(position);
@@ -105,7 +99,7 @@ void GintAtom::get_ddpsir(
                     auto psi_uniform = p_psi_uniform[iw];
                     auto dpsi_uniform = p_dpsi_uniform[iw];
 
-                    if(ip >= psi_nr_uniform[iw] - 4)
+                    if(ip >= phi_nr_uniform[iw] - 4)
                     {
                         tmp = dtmp = 0.0;
                     }
@@ -132,24 +126,24 @@ void GintAtom::get_ddpsir(
                 const double tmpdphi_rly = (dtmp - tmp * ll / dist1) / rl * rly[idx_lm] / dist1;
                 const double tmprl = tmp / rl;
 
-                dpsi[iw][i][0] =  tmpdphi_rly * coord1[0] + tmprl * grly[idx_lm][0];
-                dpsi[iw][i][1] =  tmpdphi_rly * coord1[1] + tmprl * grly[idx_lm][1];
-                dpsi[iw][i][2] =  tmpdphi_rly * coord1[2] + tmprl * grly[idx_lm][2];
+                dphi[iw][i][0] =  tmpdphi_rly * coord1[0] + tmprl * grly[idx_lm][0];
+                dphi[iw][i][1] =  tmpdphi_rly * coord1[1] + tmprl * grly[idx_lm][1];
+                dphi[iw][i][2] =  tmpdphi_rly * coord1[2] + tmprl * grly[idx_lm][2];
             } // end iw
         }  // end i
 
         for(int iw = 0; iw < atom_->nw; iw++)
         {
             int idx = im * stride + iw;
-            ddpsi_xx[idx] = (dpsi[iw][0][0] - dpsi[iw][1][0]) / 0.0002;
-            ddpsi_xy[idx]
-                = ((dpsi[iw][2][0] - dpsi[iw][3][0]) + (dpsi[iw][0][1] - dpsi[iw][1][1])) / 0.0004;
-            ddpsi_xz[idx]
-                = ((dpsi[iw][4][0] - dpsi[iw][5][0]) + (dpsi[iw][0][2] - dpsi[iw][1][2])) / 0.0004;
-            ddpsi_yy[idx] = (dpsi[iw][2][1] - dpsi[iw][3][1]) / 0.0002;
-            ddpsi_yz[idx]
-                = ((dpsi[iw][4][1] - dpsi[iw][5][1]) + (dpsi[iw][2][2] - dpsi[iw][3][2])) / 0.0004;
-            ddpsi_zz[idx] = (dpsi[iw][4][2] - dpsi[iw][5][2]) / 0.0002;
+            ddphi_xx[idx] = (dphi[iw][0][0] - dphi[iw][1][0]) / 0.0002;
+            ddphi_xy[idx]
+                = ((dphi[iw][2][0] - dphi[iw][3][0]) + (dphi[iw][0][1] - dphi[iw][1][1])) / 0.0004;
+            ddphi_xz[idx]
+                = ((dphi[iw][4][0] - dphi[iw][5][0]) + (dphi[iw][0][2] - dphi[iw][1][2])) / 0.0004;
+            ddphi_yy[idx] = (dphi[iw][2][1] - dphi[iw][3][1]) / 0.0002;
+            ddphi_yz[idx]
+                = ((dphi[iw][4][1] - dphi[iw][5][1]) + (dphi[iw][2][2] - dphi[iw][3][2])) / 0.0004;
+            ddphi_zz[idx] = (dphi[iw][4][2] - dphi[iw][5][2]) / 0.0002;
         }
 
         // else
@@ -162,7 +156,7 @@ void GintAtom::get_ddpsir(
         //         {
         //             if ( atom->iw2_new[iw] )
         //             {
-        //                 it_d2psi_uniform[iw] = gt.d2psi_u[it*gt.nwmax + iw].data();
+        //                 it_ddpsi_uniform[iw] = gt.d2phi_u[it*gt.nwmax + iw].data();
         //             }
         //         }
         //         // End of code addition section.
@@ -191,10 +185,10 @@ void GintAtom::get_ddpsir(
         //             {
         //                 auto psi_uniform = it_psi_uniform[iw];
         //                 auto dpsi_uniform = it_dpsi_uniform[iw];
-        //                 auto ddpsi_uniform = it_d2psi_uniform[iw];
+        //                 auto ddpsi_uniform = it_ddpsi_uniform[iw];
 
         //                 // if ( iq[id] >= philn.nr_uniform-4)
-        //                 if (iq >= it_psi_nr_uniform[iw]-4)
+        //                 if (iq >= it_phi_nr_uniform[iw]-4)
         //                 {
         //                     tmp = dtmp = ddtmp = 0.0;
         //                 }
@@ -242,29 +236,29 @@ void GintAtom::get_ddpsir(
         //             const double term_1y = dr[1] * term4;
         //             const double term_1z = dr[2] * term4;
 
-        //             p_ddpsi_xx[iw]
+        //             p_ddphi_xx[iw]
         //                 = term_xx * rly[idx_lm] + 2.0 * term_1x * grly[idx_lm][0] + tmp / rl * hrly[idx_lm][0];
-        //             p_ddpsi_xy[iw] = term_xy * rly[idx_lm] + term_1x * grly[idx_lm][1] + term_1y * grly[idx_lm][0]
+        //             p_ddphi_xy[iw] = term_xy * rly[idx_lm] + term_1x * grly[idx_lm][1] + term_1y * grly[idx_lm][0]
         //                                 + tmp / rl * hrly[idx_lm][1];
-        //             p_ddpsi_xz[iw] = term_xz * rly[idx_lm] + term_1x * grly[idx_lm][2] + term_1z * grly[idx_lm][0]
+        //             p_ddphi_xz[iw] = term_xz * rly[idx_lm] + term_1x * grly[idx_lm][2] + term_1z * grly[idx_lm][0]
         //                                 + tmp / rl * hrly[idx_lm][2];
-        //             p_ddpsi_yy[iw]
+        //             p_ddphi_yy[iw]
         //                 = term_yy * rly[idx_lm] + 2.0 * term_1y * grly[idx_lm][1] + tmp / rl * hrly[idx_lm][3];
-        //             p_ddpsi_yz[iw] = term_yz * rly[idx_lm] + term_1y * grly[idx_lm][2] + term_1z * grly[idx_lm][1]
+        //             p_ddphi_yz[iw] = term_yz * rly[idx_lm] + term_1y * grly[idx_lm][2] + term_1z * grly[idx_lm][1]
         //                                 + tmp / rl * hrly[idx_lm][4];
-        //             p_ddpsi_zz[iw]
+        //             p_ddphi_zz[iw]
         //                 = term_zz * rly[idx_lm] + 2.0 * term_1z * grly[idx_lm][2] + tmp / rl * hrly[idx_lm][5];
 
         //         } // iw
         //     }     // end if
     }
 
-    ModuleBase::timer::tick("GintAtom", "get_ddpsir");
+    ModuleBase::timer::tick("GintAtom", "set_ddphi");
 }
 
 // explicit instantiation
-template void GintAtom::get_ddpsir(const std::vector<Vec3d> coords, const int stride,
-                                    double* ddpsi_xx, double* ddpsi_xy, double* ddpsi_xz,
-                                    double* ddpsi_yy, double* ddpsi_yz, double* ddpsi_zz);
+template void GintAtom::set_ddphi(const std::vector<Vec3d> coords, const int stride,
+                                    double* ddphi_xx, double* ddphi_xy, double* ddphi_xz,
+                                    double* ddphi_yy, double* ddphi_yz, double* ddphi_zz);
 
 }

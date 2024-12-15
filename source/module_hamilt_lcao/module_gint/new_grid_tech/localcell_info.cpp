@@ -75,6 +75,12 @@ namespace Gint
         return biggrid_idx_3Dto1D(get_bgrid_local_idx_3D(idx_3d));
     }
 
+    Vec3d LocalCellInfo::get_bgrid_global_coord_3D(const int index_1d) const
+    {
+        Vec3i ucell_idx_3d = get_bgrid_global_idx_3D(index_1d);
+        return unitcell_info_->get_biggrid_coord(ucell_idx_3d);
+    }
+
     bool LocalCellInfo::is_bgrid_in_lcell(const Vec3i index_3d) const
     {
         return (index_3d.x >= startidx_bx_ && index_3d.x < startidx_bx_ + nbx_ &&

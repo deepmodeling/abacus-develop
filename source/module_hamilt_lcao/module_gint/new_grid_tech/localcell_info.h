@@ -55,6 +55,9 @@ class LocalCellInfo
         // transform the 3D index of a big grid in the unit cell to the 1D index in the local cell
         int get_bgrid_local_idx_1D(const Vec3i index_3d) const;
 
+        // get the cartesian coordinate of a big grid in the unit cell from the 1D index
+        Vec3d get_bgrid_global_coord_3D(const int index_1d) const;
+
         // the input is the 3D index of a big grid in the unitcell
         // return true if the big grid is in the local cell
         bool is_bgrid_in_lcell(const Vec3i index_3d) const;
@@ -117,6 +120,6 @@ class LocalCellInfo
         // information about the big grid
         std::shared_ptr<const BigGridInfo> biggrid_info_;
         
-}
+};
 
 } // namespace Gint

@@ -14,15 +14,15 @@ class DivideInfo
     DivideInfo(
         int startidx_bx_old, int startidx_by_old, int startidx_bz_old,
         int nbx_old, int nby_old, int nbz_old,
-        std::shared_ptr<const UnitCellInfo> unitcell_info, bool is_redevided = false);
+        std::shared_ptr<const UnitCellInfo> unitcell_info, bool is_redivided = false);
     
     // getter functions
     std::shared_ptr<const LocalCellInfo> get_localcell_info() const { return localcell_info_; }
-    bool get_is_redevided() const { return is_redevided_; }
+    bool get_is_redivided() const { return is_redivided_; }
     
     private:
-    // if the grid is redivided, is_redevided_ is true
-    bool is_redevided_;
+    // if the grid is redivided, is_redeiided_ is true
+    bool is_redivided_;
     
     // the old start index of the local cell
     int startidx_bx_old_;
@@ -49,6 +49,6 @@ class DivideInfo
 
     // the localcell info
     std::shared_ptr<const LocalCellInfo> localcell_info_;
-}
+};
 
 }

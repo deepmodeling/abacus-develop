@@ -2,7 +2,10 @@
 
 #include <memory>
 #include <vector>
+#include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_cell/unitcell.h"
 #include "module_cell/atom_spec.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
 #include "biggrid.h"
 #include "gint_atom.h"
@@ -18,18 +21,30 @@ class GintInfo
     public:
     // constructor
     GintInfo(
-        Vec3d unitcell_vec1,
-        Vec3d unitcell_vec2,
-        Vec3d unitcell_vec3,
         int nbx, int nby, int nbz,
         int nmx, int nmy, int nmz,
         int startidx_bx, int startidx_by, int startidx_bz,
         int nbx_local, int nby_local, int nbz_local,
-        int ntype, Atom* atoms, Numerical_Orbital* Phi);
+        const Numerical_Orbital* Phi,
+        const UnitCell& ucell, Grid_Driver& gd);
 
+    // getter functions
+    std::vector<std::shared_ptr<BigGrid>> get_biggrids() const { return biggrids_; };
+
+    //=========================================
+    // functions about hcontainer
+    //=========================================
+    template <typename T>
+    std::shared_ptr<hamilt::HContainer<T>> get_hr(int npol = 1) const;
+    
     private:
     // initialize the atoms
-    void init_atoms_(int ntype, Atom* atoms, Numerical_Orbital* Phi);
+    void init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi);
+
+    // initialize the ijr_info
+    void init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd);
+
+    const UnitCell* ucell_;
 
     // the unitcell information
     std::shared_ptr<const UnitCellInfo> unitcell_info_;
@@ -44,7 +59,14 @@ class GintInfo
     std::vector<std::shared_ptr<BigGrid>> biggrids_;
 
     // the total atoms in the unitcell(include extended unitcell)
+    // Not Used Now
     std::vector<std::shared_ptr<GintAtom>> atoms_;
-}
+
+    // if the iat-th(global index) atom is in this processor, return true
+    std::vector<bool> is_atom_in_proc_;
+
+    // format for storing atomic pair information in hcontainer, used for initializing hcontainer
+    std::vector<int> ijr_info_;
+};
 
 } // namespace Gint

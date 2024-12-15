@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gint_type.h"
+#include "module_base/timer.h"
 
 namespace Gint
 {
@@ -19,7 +20,8 @@ namespace Gint
         return Vec3i(id_x, id_y, id_z);
     };
 
-    // if exponent is an integer between 0 and 5 (the most common cases in gint),
+    // if exponent is an integer between 0 and 5 (the most common cases in gint) and
+    // and exp is a variable that cannot be determined at compile time (which means the compiler cannot optimize the code),
     // pow_int is much faster than std::pow
     inline double pow_int(const double base, const int exp)
     {
