@@ -34,6 +34,7 @@ lspinorb            1
 
 basis_type          pw
 ks_solver           dav_subspace
+diago_smooth_ethr true
 pw_diag_ndim        2
 chg_extrap       second-order
 out_dm              0

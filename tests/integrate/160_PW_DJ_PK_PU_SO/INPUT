@@ -27,6 +27,7 @@ mixing_dmr     1
 mixing_gg0    1.1
 
 ks_solver    dav_subspace
+diago_smooth_ethr true
 pw_diag_ndim  2
 basis_type    pw
 gamma_only    0
