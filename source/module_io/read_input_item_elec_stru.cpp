@@ -315,6 +315,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("diago_smooth_ethr");
+        item.annotation = "smooth ethr for iter methods";
+        read_sync_bool(input.diago_smooth_ethr);
+        this->add_item(item);
+    }
+    {
         Input_Item item("pw_diag_ndim");
         item.annotation = "dimension of workspace for Davidson diagonalization";
         read_sync_int(input.pw_diag_ndim);
