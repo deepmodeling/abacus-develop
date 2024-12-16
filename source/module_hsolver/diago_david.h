@@ -14,7 +14,7 @@ namespace hsolver
 {
 /**
  * @class DiagoDavid
- * @brief A class that implements the Davidson diagonalization algorithm for solving eigenvalue problems.
+ * @brief A class that implements the block-Davidson algorithm for solving generalized eigenvalue problems.
  *
  * The DiagoDavid class provides methods for performing iterative diagonalization using the Davidson algorithm.
  * It supports both real and complex data types and can be executed on different devices (CPU or GPU).
