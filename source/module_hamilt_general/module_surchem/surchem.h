@@ -8,7 +8,6 @@
 #include "module_base/parallel_reduce.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 class surchem
@@ -24,8 +23,8 @@ class surchem
     ModuleBase::matrix Vel;
     double qs;
 
-    double Acav;
-    double Ael;
+    static double Acav;
+    static double Ael;
 
     // get atom info
     atom_in GetAtom;
@@ -114,16 +113,18 @@ class surchem
                        const ModuleBase::matrix& vloc,
                        ModuleBase::matrix& forcesol);
 
+    void force_cor_one(const UnitCell& cell,
+                       const ModulePW::PW_Basis* rho_basis,
+                       const ModuleBase::matrix& vloc,
+                       ModuleBase::matrix& forcesol);
+
+    void force_cor_two(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, ModuleBase::matrix& forcesol);
+
     void get_totn_reci(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* totn_reci);
 
-    void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho);
+    void induced_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, double* induced_rho) const;
 
   private:
 };
-
-namespace GlobalC
-{
-extern surchem solvent_model;
-}
 
 #endif

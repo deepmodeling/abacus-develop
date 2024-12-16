@@ -48,6 +48,7 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
+                        surchem& solvent,
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
                         Exx_LRI<std::complex<double>>& exx_lri_complex,

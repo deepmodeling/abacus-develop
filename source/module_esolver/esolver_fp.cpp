@@ -234,7 +234,8 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
                 this->pw_rhod,
                 this->pelec->charge,
                 &(ucell),
-                this->pelec->pot->get_fixed_v());
+                this->pelec->pot->get_fixed_v(),
+                this->solvent);
         }
 
         // 5) write ELF

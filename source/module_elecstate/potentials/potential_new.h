@@ -1,12 +1,13 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
-#include <vector>
-
 #include "module_base/complexmatrix.h"
+#include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "pot_base.h"
+
+#include <vector>
 
 namespace elecstate
 {
@@ -58,6 +59,7 @@ class Potential : public PotBase
               const UnitCell* ucell_in,
               const ModuleBase::matrix* vloc_in,
               Structure_Factor* structure_factors_in,
+              surchem* solvent_in,
               double* etxc_in,
               double* vtxc_in);
     ~Potential();
@@ -211,6 +213,7 @@ class Potential : public PotBase
     const UnitCell* ucell_ = nullptr;
     const ModuleBase::matrix* vloc_ = nullptr;
     Structure_Factor* structure_factors_ = nullptr;
+    surchem* solvent_ = nullptr;
 };
 
 } // namespace elecstate

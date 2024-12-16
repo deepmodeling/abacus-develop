@@ -548,7 +548,7 @@ double ESolver_OF::cal_energy()
 void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
-    ff.cal_force(ucell,force, *pelec, this->pw_rho, &ucell.symm, &sf, &this->locpp);
+    ff.cal_force(ucell, force, *pelec, this->pw_rho, &ucell.symm, &sf, this->solvent, &this->locpp);
 }
 
 /**

@@ -181,6 +181,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &ucell,
                                                     &this->ppcell.vloc,
                                                     &(this->sf),
+                                                    &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -778,6 +779,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                  this->pw_rhod,
                  &ucell.symm,
                  &this->sf,
+                 this->solvent,
                  &this->ppcell,
                  &this->ppcell,
                  &this->kv,

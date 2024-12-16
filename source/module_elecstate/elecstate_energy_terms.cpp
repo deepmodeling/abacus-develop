@@ -26,12 +26,12 @@ double ElecState::get_etot_gatefield()
 
 double ElecState::get_solvent_model_Ael()
 {
-    return GlobalC::solvent_model.Ael;
+    return surchem::Ael;
 }
 
 double ElecState::get_solvent_model_Acav()
 {
-    return GlobalC::solvent_model.Acav;
+    return surchem::Acav;
 }
 
 double ElecState::get_dftu_energy()

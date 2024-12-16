@@ -214,6 +214,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                                     &ucell,
                                                     &(this->ppcell.vloc),
                                                     &(this->sf),
+                                                    &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -320,6 +321,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->sf,
                        this->kv,
                        this->pw_rho,
+                       this->solvent,
 #ifdef __EXX
                        *this->exx_lri_double,
                        *this->exx_lri_complex,
@@ -460,6 +462,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     *this->psi,
                                     ucell,
                                     this->sf,
+                                    this->solvent,
                                     *this->pw_rho,
                                     *this->pw_rhod,
                                     this->ppcell.vloc,
@@ -487,6 +490,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             *this->psi,
                                             ucell,
                                             this->sf,
+                                            this->solvent,
                                             *this->pw_rho,
                                             *this->pw_rhod,
                                             this->ppcell.vloc,

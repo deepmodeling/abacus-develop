@@ -6,6 +6,7 @@
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_charge/charge_extra.h"
+#include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 #include <fstream>
@@ -67,6 +68,9 @@ namespace ModuleESolver
 
         //! Charge extrapolation
         Charge_Extra CE;
+
+        // solvent model
+        surchem solvent;
     };
 }
 

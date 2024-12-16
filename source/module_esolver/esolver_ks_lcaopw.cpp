@@ -247,6 +247,7 @@ namespace ModuleESolver
                                 *this->kspw_psi,
                                 ucell,
                                 this->sf,
+                                this->solvent,
                                 *this->pw_wfc,
                                 *this->pw_rho,
                                 *this->pw_rhod,

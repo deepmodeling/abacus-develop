@@ -50,6 +50,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
+                                          surchem& solvent,
 #ifdef __EXX
                                           Exx_LRI<double>& exx_lri_double,
                                           Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -279,7 +280,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     if (PARAM.inp.imp_sol && isforce)
     {
         fsol.create(nat, 3);
-        GlobalC::solvent_model.cal_force_sol(ucell, rhopw, nlpp.vloc, fsol);
+        solvent.cal_force_sol(ucell, rhopw, nlpp.vloc, fsol);
     }
 
     //! atomic forces from DFT+U (Quxin version)

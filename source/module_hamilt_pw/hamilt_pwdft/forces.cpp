@@ -30,6 +30,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
                                        ModulePW::PW_Basis* rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
+                                       surchem& solvent,
                                        const pseudopot_cell_vl* locpp,
                                        const pseudopot_cell_vnl* p_nlpp,
                                        K_Vectors* pkv,
@@ -231,7 +232,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        GlobalC::solvent_model.cal_force_sol(ucell, rho_basis, locpp->vloc, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);

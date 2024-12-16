@@ -30,6 +30,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
                                                 &ucell,
                                                 &(this->locpp.vloc),
                                                 &(this->sf),
+                                                &(this->solvent),
                                                 &(this->pelec->f_en.etxc),
                                                 &(this->pelec->f_en.vtxc));
     // There is no Operator in ESolver_OF, register Potentials here!
