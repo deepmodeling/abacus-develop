@@ -47,13 +47,11 @@ void DeePKS_domain::cal_f_delta_k(
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
             GridD.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
 	
-
             for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
             {
                 const int T1 = GridD.getType(ad1);
                 const int I1 = GridD.getNatom(ad1);
                 const int ibt1 = ucell.itia2iat(T1,I1);
-                const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*PARAM.globalv.npol;
@@ -66,7 +64,6 @@ void DeePKS_domain::cal_f_delta_k(
                     const int T2 = GridD.getType(ad2);
                     const int I2 = GridD.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2,I2);
-                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                     const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*PARAM.globalv.npol;

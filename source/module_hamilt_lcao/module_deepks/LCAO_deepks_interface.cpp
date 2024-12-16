@@ -117,7 +117,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 }
                 
                 ld->cal_orbital_precalc<TK,TH>(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
-                ld->cal_o_delta(dm_bandgap, nks);
+                ld->cal_o_delta<TK,TH>(dm_bandgap, nks);
 
                 // save obase and orbital_precalc
                 LCAO_deepks_io::save_npy_orbital_precalc(nat, 
@@ -249,7 +249,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
 		if(!PARAM.inp.deepks_scf) 
 		{
-			ld->cal_projected_DM(dm, ucell, orb, GridD);
+			ld->cal_projected_DM<TK>(dm, ucell, orb, GridD);
 		}
 
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton

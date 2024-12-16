@@ -115,7 +115,7 @@ void test_deepks::check_pdm()
     {
         this->read_dm_k(kv.get_nkstot());
         this->set_dm_k_new();
-        this->ld.cal_projected_DM_k(dm_k_new, ucell, ORB, Test_Deepks::GridD);
+        this->ld.cal_projected_DM(dm_k_new, ucell, ORB, Test_Deepks::GridD);
     }
     this->ld.check_projected_dm();
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
@@ -221,12 +221,12 @@ void test_deepks::check_e_deltabands()
 {
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.cal_e_delta_band(dm_new);
+        this->ld.cal_e_delta_band(dm_new, 1); // 1 for gamma-only
     }
     else
     {
         this->folding_nnr(kv);
-        this->ld.cal_e_delta_band_k(dm_k_new, kv.get_nkstot());
+        this->ld.cal_e_delta_band(dm_k_new, kv.get_nkstot());
     }
 
     std::ofstream ofs("E_delta_bands.dat");
@@ -241,7 +241,8 @@ void test_deepks::check_f_delta()
     svnl_dalpha.create(3, 3);
     if (PARAM.sys.gamma_only_local)
     {
-        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, 1, svnl_dalpha);
+        const int nks=1;
+        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, 1, svnl_dalpha);
     }
     else
     {

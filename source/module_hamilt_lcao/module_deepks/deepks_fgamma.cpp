@@ -16,6 +16,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_base/libm/libm.h"
 
+typedef std::tuple<int, int, int, int> key_tuple;
 
 //force for gamma only calculations
 //Pulay and HF terms are calculated together
@@ -23,9 +24,11 @@ void DeePKS_domain::cal_f_delta_gamma(
     const std::vector<std::vector<double>>& dm,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
-    const Grid_Driver& gd,
+    const Grid_Driver& GridD,
     const Parallel_Orbitals& pv,
     const int lmaxd,
+    const int nks,
+    const std::vector<ModuleBase::Vector3<double>> &kvec_d,
     std::vector<std::vector<std::unordered_map<int, std::vector<std::vector<double>>>>>& nlm_save,
     double** gedm,
     ModuleBase::IntArray* inl_index,
@@ -34,6 +37,9 @@ void DeePKS_domain::cal_f_delta_gamma(
     ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta_gamma");
+
+    using TK = double; // temporary used, will be replaced by the template parameter
+
     f_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
@@ -47,26 +53,29 @@ void DeePKS_domain::cal_f_delta_gamma(
         {
             const int iat = ucell.itia2iat(T0,I0);
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
-            gd.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
+            GridD.Find_atom(ucell, atom0->tau[I0] ,T0, I0);
 
-            for (int ad1=0; ad1<gd.getAdjacentNum()+1 ; ++ad1)
+            for (int ad1=0; ad1<GridD.getAdjacentNum()+1 ; ++ad1)
             {
-                const int T1 = gd.getType(ad1);
-                const int I1 = gd.getNatom(ad1);
+                const int T1 = GridD.getType(ad1);
+                const int I1 = GridD.getNatom(ad1);
                 const int ibt1 = ucell.itia2iat(T1,I1);
-                const ModuleBase::Vector3<double> tau1 = gd.getAdjacentTau(ad1);
+                const ModuleBase::Vector3<double> tau1 = GridD.getAdjacentTau(ad1);
                 const Atom* atom1 = &ucell.atoms[T1];
                 const int nw1_tot = atom1->nw*PARAM.globalv.npol;
                 const double Rcut_AO1 = orb.Phi[T1].getRcut();
 
-                for (int ad2=0; ad2 < gd.getAdjacentNum()+1 ; ad2++)
+                ModuleBase::Vector3<double> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
+
+                for (int ad2=0; ad2 < GridD.getAdjacentNum()+1 ; ad2++)
                 {
-                    const int T2 = gd.getType(ad2);
-                    const int I2 = gd.getNatom(ad2);
+                    const int T2 = GridD.getType(ad2);
+                    const int I2 = GridD.getNatom(ad2);
                     const int ibt2 = ucell.itia2iat(T2,I2);
-                    const ModuleBase::Vector3<double> tau2 = gd.getAdjacentTau(ad2);
+                    const ModuleBase::Vector3<double> tau2 = GridD.getAdjacentTau(ad2);
                     const Atom* atom2 = &ucell.atoms[T2];
                     const int nw2_tot = atom2->nw*PARAM.globalv.npol;
+                    ModuleBase::Vector3<double> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
                     
                     const double Rcut_AO2 = orb.Phi[T2].getRcut();
                     const double dist1 = (tau1-tau0).norm() * ucell.lat0;
@@ -98,20 +107,57 @@ void DeePKS_domain::cal_f_delta_gamma(
 						continue;
 					}
 
-                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, 0, 0, 0, &pv);
+                    int dRx;
+                    int dRy;
+                    int dRz;
+                    if constexpr (std::is_same<TK, double>::value)
+                    {
+                        dRx = 0;
+                        dRy = 0;
+                        dRz = 0;
+                    }
+                    else
+                    {
+                        dRx = dR2.x - dR1.x;
+                        dRy = dR2.y - dR1.y;
+                        dRz = dR2.z - dR1.z;
+                    }
+
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
 
                     dm_pair.allocate(nullptr, 1);
 
-                    for(int is=0;is<dm.size();is++)
+                    if constexpr (std::is_same<TK, double>::value)
                     {
-                        if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        for(int is=0;is<dm.size();is++)
                         {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
+                            if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                            {
+                                dm_pair.add_from_matrix(dm[is].data(), pv.get_row_size(), 1.0, 1);
+                            }
+                            else
+                            {
+                                dm_pair.add_from_matrix(dm[is].data(), pv.get_col_size(), 1.0, 0);
+                            }
                         }
-                        else
-                        {
-                            dm_pair.add_from_matrix(dm[is].data(), pv.get_col_size(), 1.0, 0);
-                        }
+                    }
+                    else
+                    {
+                        // for(int ik=0;ik<nks;ik++)
+                        // {
+                        //     const double arg = - (kvec_d[ik] * (dR2-dR1) ) * ModuleBase::TWO_PI;
+                        //     double sinp, cosp;
+                        //     ModuleBase::libm::sincos(arg, &sinp, &cosp);
+                        //     const std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                        //     if(ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        //     {
+                        //         dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
+                        //     }
+                        //     else
+                        //     {
+                        //         dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
+                        //     }
+                        // }
                     }
 
                     const double* dm_current = dm_pair.get_pointer();
@@ -122,13 +168,27 @@ void DeePKS_domain::cal_f_delta_gamma(
                         {
                             double nlm[3]={0,0,0};
                             double nlm_t[3] = {0,0,0}; //for stress
-                            std::vector<double> nlm1 = nlm_save[iat][ad1][row_indexes[iw1]][0];
+                            key_tuple key_1(ibt1,dR1.x,dR1.y,dR1.z);
+                            key_tuple key_2(ibt2,dR2.x,dR2.y,dR2.z);
+                            std::vector<double> nlm1;
                             std::vector<std::vector<double>> nlm2;
                             nlm2.resize(3);
 
-                            for(int dim=0;dim<3;++dim)
+                            if constexpr (std::is_same<TK, double>::value)
                             {
-                                nlm2[dim] = nlm_save[iat][ad2][col_indexes[iw2]][dim+1];
+                                nlm1 = nlm_save[iat][ad1][row_indexes[iw1]][0];
+                                for(int dim=0;dim<3;dim++)
+                                {
+                                    nlm2[dim] = nlm_save[iat][ad2][col_indexes[iw2]][dim+1];
+                                }
+                            }
+                            else
+                            {
+                                // nlm1 = nlm_save_k[iat][key_1][row_indexes[iw1]][0];
+                                // for(int dim=0;dim<3;dim++)
+                                // {
+                                //     nlm2[dim] = nlm_save_k[iat][key_2][col_indexes[iw2]][dim+1];
+                                // }
                             }
 
                             assert(nlm1.size()==nlm2[0].size());
@@ -188,10 +248,21 @@ void DeePKS_domain::cal_f_delta_gamma(
 
                             if(isstress)
                             {
-                                nlm1 = nlm_save[iat][ad2][col_indexes[iw2]][0];
-                                for(int i=0;i<3;i++)
+                                if constexpr (std::is_same<TK, double>::value)
                                 {
-                                    nlm2[i] = nlm_save[iat][ad1][row_indexes[iw1]][i+1];
+                                    nlm1 = nlm_save[iat][ad2][col_indexes[iw2]][0];
+                                    for(int i=0;i<3;i++)
+                                    {
+                                        nlm2[i] = nlm_save[iat][ad1][row_indexes[iw1]][i+1];
+                                    }
+                                }
+                                else
+                                {
+                                    // nlm1 = nlm_save_k[iat][key_2][col_indexes[iw2]][0];
+                                    // for(int i=0;i<3;i++)
+                                    // {
+                                    //     nlm2[i] = nlm_save_k[iat][key_1][row_indexes[iw1]][i+1];
+                                    // }
                                 }
 
                                 assert(nlm1.size()==nlm2[0].size());                                
@@ -265,8 +336,10 @@ void DeePKS_domain::cal_f_delta_gamma(
 		{
 			for(int j=0;j<3;++j)
 			{
-				if(j>i) { svnl_dalpha(j,i) = svnl_dalpha(i,j);
-}
+				if(j>i) 
+                { 
+                    svnl_dalpha(j,i) = svnl_dalpha(i,j);
+                }
 				svnl_dalpha(i,j) *= weight;
 			}
 		}

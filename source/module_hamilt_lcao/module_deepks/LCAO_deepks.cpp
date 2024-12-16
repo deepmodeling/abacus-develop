@@ -512,14 +512,13 @@ void LCAO_Deepks::del_v_delta_pdm_shell(const int nks,const int nlocal)
     return;
 }
 
-void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int nks)
+template <typename TK>
+void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks)
 {
     this->cal_e_delta_band(dm, nks);
 }
 
-void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm, const int nks)
-{
-    this->cal_e_delta_band(dm, nks);
-}
+template void LCAO_Deepks::dpks_cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm, const int nks);
+template void LCAO_Deepks::dpks_cal_e_delta_band<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm, const int nks);
 
 #endif

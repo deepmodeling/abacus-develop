@@ -237,18 +237,21 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
-        DeePKS_domain::cal_f_delta_gamma(dm_gamma,
-                                         ucell,
-                                         orb,
-                                         gd,
+        const int nks=1;
+		DeePKS_domain::cal_f_delta_gamma(dm_gamma, 
+				                         ucell, 
+				                         orb, 
+				                         gd, 
                                          *this->ParaV,
                                          GlobalC::ld.lmaxd,
+                                         nks, 
+				                         kv->kvec_d, 
                                          GlobalC::ld.nlm_save,
                                          GlobalC::ld.gedm,
                                          GlobalC::ld.inl_index,
                                          GlobalC::ld.F_delta,
-                                         isstress,
-                                         svnl_dalpha);
+				                         isstress, 
+				                         svnl_dalpha);
 
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);

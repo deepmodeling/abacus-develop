@@ -14,6 +14,11 @@
 /// be calculated: 
 /// gdm_epsl = d/d\epsilon_{ab} * 
 ///           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
+
+//There are 2 subroutines in this file:
+//1. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
+//2. check_gdmx, which prints gdmx to a series of .dat files
+
 template <typename TK>
 void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                            const UnitCell& ucell,
