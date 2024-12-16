@@ -252,7 +252,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     orb_cutoff_ = ks_sol.orb_.cutoffs();
     if (LR_Util::tolower(input.abs_gauge) == "velocity")
     {
-        setup_2center_table(this->two_center_bundle_, ks_sol.orb_, ucell);
+        this->two_center_bundle_ = std::move(ks_sol.two_center_bundle_);
     }
 }
 
