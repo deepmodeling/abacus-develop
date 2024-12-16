@@ -565,7 +565,11 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
             LR_Util::tolower(input.abs_gauge));
         spectrum.transition_analysis(spin_types[is]);
         spectrum.optical_absorption_method1(freq, input.abs_broadening, spin_types[is]);
+        // =============================================== for test ====================================================
         // spectrum.optical_absorption_method2(freq, input.abs_broadening, spin_types[is]);
+        // spectrum.test_transition_dipoles_velocity_ks(eig_ks.c);
+        // spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_ks_" + spin_types[is] + ".dat");
+        // =============================================== for test ====================================================
     }
 }
 

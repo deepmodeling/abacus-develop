@@ -8,8 +8,9 @@
 #include "module_lr/utils/lr_util_print.h"
 
 template <typename T>
-elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate)
+elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in)
 {
+    const T* const X = X_in == nullptr ? this->X : X_in;
     const int offset_b = istate * ldim;    //start index of band istate
     elecstate::DensityMatrix<T, T> DM_trans(&this->pmat, this->nspin_x, this->kv.kvec_d, this->nk);
     for (int is = 0;is < this->nspin_x; ++is)
@@ -17,10 +18,10 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
         const int offset_x = offset_b + is * nk * this->pX[0].get_local_size();
         //1. transition density 
 #ifdef __MPI
-        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(this->X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_pblas(X + offset_x, this->pX[is], psi_ks[is], this->pc, this->naos, this->nocc[is], this->nvirt[is], this->pmat);
         // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
 #else
-        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(this->X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
+        std::vector<container::Tensor>  dm_trans_2d = cal_dm_trans_blas(X + offset_x, this->psi_ks[is], this->nocc[is], this->nvirt[is]);
         // if (this->tdm_sym) for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
 #endif
         for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik + is * nk, dm_trans_2d[ik].data<T>()); }
@@ -173,6 +174,13 @@ void LR::LR_Spectrum<T>::oscillator_strength()
 template<typename T>
 void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta, const std::string& spintype)
 {
+    // ============test dipole================
+    // this->cal_transition_dipoles_length();
+    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_length_" + spintype + ".dat");
+    // this->cal_transition_dipoles_velocity();
+    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_" + spintype + ".dat");
+    // exit(0);
+    // ============test dipole================
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
     // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
     // = -8*pi*Omega_S/V * mean_squared_dipole * Im[1/[(w+i\eta)^2-\Omega_S^2]]
@@ -262,6 +270,22 @@ std::map<std::string, int> LR::LR_Spectrum<T>::get_pair_info(const int i)
     const int iocc = ipair / nvirt[ispin];
     const int ivirt = ipair % nvirt[ispin];
     return  { {"ispin", ispin}, {"ik", ik}, {"iocc", iocc}, {"ivirt", ivirt} };
+}
+
+template<typename T>
+void LR::LR_Spectrum<T>::write_transition_dipole(const std::string& filename)
+{
+    std::ofstream ofs(filename);
+    ofs << "Transition dipole moment (a.u.)" << std::endl;
+    ofs << std::setw(20) << "State" << std::setw(20) << "x" << std::setw(20) << "y" << std::setw(20) << "z" << std::setw(20) << "average" << std::endl;
+    for (int istate = 0;istate < nstate;++istate)
+    {
+        ofs << std::setw(20) << istate << std::setw(20) << transition_dipole_[istate].x << std::setw(20)
+            << transition_dipole_[istate].y << std::setw(20)
+            << transition_dipole_[istate].z << std::setw(20)
+            << mean_squared_transition_dipole_[istate] << std::endl;
+    }
+    ofs.close();
 }
 
 template class LR::LR_Spectrum<double>;

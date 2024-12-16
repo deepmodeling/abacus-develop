@@ -5,6 +5,7 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_lr/utils/lr_util.h"
 #include "module_basis/module_nao/two_center_bundle.h"
+#include "module_hamilt_lcao/module_tddft/td_current.h"
 namespace LR
 {
     template<typename T>
@@ -36,19 +37,27 @@ namespace LR
         void optical_absorption_method2(const std::vector<double>& freq, const double eta, const std::string& spintype);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude
         void transition_analysis(const std::string& spintype);
+
+        //========================================== test functions ==============================================
         /// @brief write transition dipole
+        void write_transition_dipole(const std::string& filename);
+        /// @brief calculate transition dipole in velocity gauge using ks eigenvalues instead of excitation energies
+        void test_transition_dipoles_velocity_ks(const double* const ks_eig);
+        //======================================================================================================
     private:
         /// $$2/3\Omega\sum_{ia\sigma} |\braket{\psi_{i}|\mathbf{r}|\psi_{a}} |^2\int \rho_{\alpha\beta}(\mathbf{r}) \mathbf{r} d\mathbf{r}$$
         void oscillator_strength();
         /// calculate the transition dipole of state S in length gauge: $\sum_{iak}X^S_{iak}<ik|r|ak>$
         ModuleBase::Vector3<T> cal_transition_dipole_istate_length(const int istate);
+        /// calculate the transition dipole of all states in length gauge
         void cal_transition_dipoles_length();
         /// calculate the transition dipole of state S in velocity gauge: $i(\sum_{iak}X^S_{iak}<ik|v|ak>)/\Omega_S$
-        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity(const int istate);
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity(const int istate, const TD_current& vR);
+        /// calculate the transition dipole of all states in velocity gauge
         void cal_transition_dipoles_velocity();
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
 
-        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate);
+        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr);
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
         const int naos = 1;
         const std::vector<int>& nocc;
