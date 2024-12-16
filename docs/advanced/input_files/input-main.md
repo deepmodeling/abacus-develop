@@ -781,7 +781,7 @@ These variables are used to control the plane wave related parameters.
 ### diago_smooth_ethr
 
 - **Type**: bool
-- **Description**: If `FALSE`, all the empty states are diagonalized at the same level of accuracy of the occupied ones. If `TRUE` the empty states are diagonalized using a larger threshold (10-5) (this should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.).
+- **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
 - **Default**: false
 
 ### pw_diag_nmax
