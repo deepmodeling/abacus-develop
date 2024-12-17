@@ -31,41 +31,7 @@ UnitCell::UnitCell() {
     if (test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
 }
-    Coordinate = "Direct";
-    latName = "none";
-    lat0 = 0.0;
-    lat0_angstrom = 0.0;
-
-    ntype = 0;
-    nat = 0;
-    namax = 0;
-    nwmax = 0;
-
-    iat2it = nullptr;
-    iat2ia = nullptr;
-    iwt2iat = nullptr;
-    iwt2iw = nullptr;
-
     itia2iat.create(1, 1);
-    lc = new int[3];
-
-    latvec = ModuleBase::Matrix3();
-    latvec_supercell = ModuleBase::Matrix3();
-    G = ModuleBase::Matrix3();
-    GT = ModuleBase::Matrix3();
-    GGT = ModuleBase::Matrix3();
-    invGGT = ModuleBase::Matrix3();
-
-    tpiba = 0.0;
-    tpiba2 = 0.0;
-    omega = 0.0;
-
-    atom_label = new std::string[1];
-    atom_mass = nullptr;
-    pseudo_fn = new std::string[1];
-    pseudo_type = new std::string[1];
-
-    set_atom_flag = false;
 }
 
 UnitCell::~UnitCell() {
@@ -74,11 +40,6 @@ UnitCell::~UnitCell() {
     delete[] pseudo_fn;
     delete[] pseudo_type;
     delete[] orbital_fn;
-    delete[] iat2it;
-    delete[] iat2ia;
-    delete[] iwt2iat;
-    delete[] iwt2iw;
-    delete[] lc;
     if (set_atom_flag) {
         delete[] atoms;
     }
