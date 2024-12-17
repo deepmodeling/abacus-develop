@@ -11,7 +11,8 @@ Operator<T, Device>::Operator(){}
 template<typename T, typename Device>
 Operator<T, Device>::~Operator() 
 {
-    if(this->hpsi != nullptr) delete this->hpsi;
+    if(this->hpsi != nullptr) { delete this->hpsi;
+}
     Operator* last = this->next_op;
     Operator* last_sub = this->next_sub_op;
     while(last != nullptr || last_sub != nullptr)
@@ -100,9 +101,11 @@ void Operator<T, Device>::init(const int ik_in)
 template<typename T, typename Device>
 void Operator<T, Device>::add(Operator* next) 
 {
-    if(next==nullptr) return;
+    if(next==nullptr) { return;
+}
     next->is_first_node = false;
-    if(next->next_op != nullptr) this->add(next->next_op);
+    if(next->next_op != nullptr) { this->add(next->next_op);
+}
     Operator* last = this;
     //loop to end of the chain
     while(last->next_op != nullptr)

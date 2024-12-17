@@ -212,7 +212,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
         {
             // psi_temp is one band psi, psi is all bands psi, the range always is 1 for the only band in psi_temp
             syncmem_complex_op()(ctx, ctx, ppsi, psi + i * psi_nc, psi_nc);
-            psi::Range band_by_band_range(1, 0, 0, 0);
+            psi::Range band_by_band_range(true, 0, 0, 0);
             hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi);
 
             // H|Psi> to get hpsi for target band
@@ -256,7 +256,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         T* hpsi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(1, 0, 0, nstart - 1);
+        psi::Range all_bands_range(true, 0, 0, nstart - 1);
         hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
         pHamilt->ops->hPsi(hpsi_in);
 
@@ -586,8 +586,9 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notc
     //================================================================
 
     bool scf = true;
-    if (PARAM.inp.calculation == "nscf")
+    if (PARAM.inp.calculation == "nscf") {
         scf = false;
+}
 
     // If ntry <=5, try to do it better, if ntry > 5, exit.
     const bool f1 = (ntry <= 5);
