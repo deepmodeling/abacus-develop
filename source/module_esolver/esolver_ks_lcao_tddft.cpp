@@ -139,7 +139,7 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(UnitCell& ucell, const int ist
     }
 
     // (7) calculate delta energy
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
 void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& iter)

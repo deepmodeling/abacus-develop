@@ -23,8 +23,8 @@ inline void check_sum_rule(const double& osc_tot)
 }
 }
 
-template<>
-void LR::LR_Spectrum<double>::oscillator_strength(Grid_Driver& gd, const std::vector<double>& orb_cutoff)
+template <>
+void LR::LR_Spectrum<double>::oscillator_strength(const Grid_Driver& gd, const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("LR::LR_Spectrum", "oscillator_strength");
     std::vector<double>& osc = this->oscillator_strength_;  // unit: Ry
@@ -79,8 +79,9 @@ void LR::LR_Spectrum<double>::oscillator_strength(Grid_Driver& gd, const std::ve
     check_sum_rule(osc_tot);
 }
 
-template<>
-void LR::LR_Spectrum<std::complex<double>>::oscillator_strength(Grid_Driver& gd, const std::vector<double>& orb_cutoff)
+template <>
+void LR::LR_Spectrum<std::complex<double>>::oscillator_strength(const Grid_Driver& gd,
+                                                                const std::vector<double>& orb_cutoff)
 {
     ModuleBase::TITLE("LR::LR_Spectrum", "oscillator_strength");
     std::vector<double>& osc = this->oscillator_strength_;  // unit: Ry

@@ -39,10 +39,6 @@ int get_xc_func_type()
     return tmp_xc_func_type;
 }
 double tmp_ucell_omega = 500.0;
-double get_ucell_omega()
-{
-    return tmp_ucell_omega;
-}
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
 {
@@ -146,7 +142,7 @@ TEST_F(ChargeTest, SumRho)
             charge->rho[is][ir] = 0.1;
         }
     }
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     EXPECT_NEAR(charge->sum_rho(), 0.1 * nspin * rhopw->nrxx * ucell->omega / rhopw->nxyz, 1E-10);
 }
 
@@ -165,7 +161,7 @@ TEST_F(ChargeTest, RenormalizeRho)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
 }
@@ -185,7 +181,7 @@ TEST_F(ChargeTest, CheckNe)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     EXPECT_NEAR(charge->sum_rho(), 8.0, 1e-10);
     EXPECT_NEAR(charge->cal_rho2ne(charge->rho[0]), 8.0, 1e-10);
@@ -207,7 +203,7 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
     elecstate::tmp_xc_func_type = 3;
-    elecstate::tmp_ucell_omega = ucell->omega;
+    charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
     EXPECT_NEAR(charge->cal_rho2ne(charge->rho_save[0]), 8.0, 1e-10);

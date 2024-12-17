@@ -218,7 +218,7 @@ double Charge::sum_rho() const
     }
 
     // multiply the sum of charge density by a factor
-    sum_rho *= elecstate::get_ucell_omega() / static_cast<double>(this->rhopw->nxyz);
+    sum_rho *= *this->omega_ / static_cast<double>(this->rhopw->nxyz);
 
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum_rho);
@@ -722,7 +722,7 @@ double Charge::cal_rho2ne(const double* rho_in) const
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(ne);
 #endif
-    ne = ne * elecstate::get_ucell_omega() / (double)this->rhopw->nxyz;
+    ne = ne * *this->omega_ / (double)this->rhopw->nxyz;
 
     return ne;
 }

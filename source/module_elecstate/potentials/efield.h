@@ -1,9 +1,10 @@
 #ifndef EFIELD_H
 #define EFIELD_H
 
-#include "module_cell/unitcell.h"
 #include "module_basis/module_pw/pw_basis.h"
+#include "module_cell/unitcell.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
+#include "module_parameter/parameter.h"
 
 namespace elecstate
 {
@@ -17,7 +18,7 @@ class Efield
                                          const ModulePW::PW_Basis* rho_basis,
                                          const int& nspin,
                                          const double* const* const rho,
-                                         surchem& solvent);
+                                         const surchem& solvent);
 
     static double cal_elec_dipole(const UnitCell& cell,
                                   const ModulePW::PW_Basis* rho_basis,
@@ -29,7 +30,7 @@ class Efield
 
     static double cal_induced_dipole(const UnitCell& cell,
                                      const ModulePW::PW_Basis* rho_basis,
-                                     surchem& solvent,
+                                     const surchem& solvent,
                                      const double& bmod);
 
     static double saw_function(const double &a, const double &b, const double &x);
@@ -59,7 +60,8 @@ namespace elecstate
 class PotEfield : public PotBase
 {
   public:
-    PotEfield(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, bool dipole) : ucell_(ucell_in)
+    PotEfield(const ModulePW::PW_Basis* rho_basis_in, const UnitCell* ucell_in, const surchem* solvent_in, bool dipole)
+        : ucell_(ucell_in), solvent_(solvent_in)
     {
         this->rho_basis_ = rho_basis_in;
         if (!dipole)
@@ -81,7 +83,7 @@ class PotEfield : public PotBase
                                       const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                       PARAM.inp.nspin,
                                       nullptr,
-                                      GlobalC::solvent_model);
+                                      *solvent_);
         for (int ir = 0; ir < rho_basis_->nrxx; ++ir)
         {
             vl_pseudo[ir] += v_efield(0, ir);
@@ -94,11 +96,12 @@ class PotEfield : public PotBase
                                     const_cast<const ModulePW::PW_Basis*>(rho_basis_),
                                     v_eff.nr,
                                     chg->rho,
-                                    GlobalC::solvent_model);
+                                    *solvent_);
     }
 
   private:
-    const UnitCell *ucell_ = nullptr;
+    const UnitCell* ucell_ = nullptr;
+    const surchem* solvent_ = nullptr;
 };
 
 } // namespace elecstate

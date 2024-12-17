@@ -7,7 +7,7 @@
 void sparse_format::cal_dH(const UnitCell& ucell,
                            const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
-                           Grid_Driver& grid,
+                           const Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
@@ -65,7 +65,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
     return;
 }
 
-void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, Grid_Driver& grid)
+void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid)
 {
     const int RminX = int(-grid.getTrueCellX());
     const int RminY = int(-grid.getTrueCellY());
@@ -94,7 +94,7 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                                const Parallel_Orbitals& pv,
                                LCAO_HS_Arrays& HS_Arrays,
                                ForceStressArrays& fsr,
-                               Grid_Driver& grid,
+                               const Grid_Driver& grid,
                                const std::vector<double>& orb_cutoff,
                                const int& current_spin,
                                const double& sparse_thr)

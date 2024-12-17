@@ -60,9 +60,9 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
         Parallel_Reduce::reduce_pool(drho);
 #endif
         assert(nelec != 0);
-        assert(GlobalC::ucell.omega > 0);
+        assert(*this->omega > 0);
         assert(this->rhopw->nxyz > 0);
-        drho *= GlobalC::ucell.omega / static_cast<double>(this->rhopw->nxyz);
+        drho *= *this->omega / static_cast<double>(this->rhopw->nxyz);
         drho /= nelec;
     }
 
@@ -99,9 +99,9 @@ double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
     Parallel_Reduce::reduce_pool(dkin);
 #endif
     assert(nelec != 0);
-    assert(GlobalC::ucell.omega > 0);
+    assert(*this->omega > 0);
     assert(this->rhopw->nxyz > 0);
-    dkin *= GlobalC::ucell.omega / static_cast<double>(this->rhopw->nxyz);
+    dkin *= *this->omega / static_cast<double>(this->rhopw->nxyz);
     dkin /= nelec;
 
     ModuleBase::timer::tick("Charge_Mixing", "get_dkin");
@@ -121,7 +121,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         rhog2[is] = rho2 + is * this->rhopw->npw;
     }
 
-    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
+    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / ((*this->tpiba) * (*this->tpiba));
     static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
 
     double sum = 0.0;
@@ -245,7 +245,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
     ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_rho");
 
-    sum *= GlobalC::ucell.omega * 0.5;
+    sum *= *this->omega * 0.5;
 
     delete[] rhog1;
     delete[] rhog2;
@@ -285,7 +285,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
     ModuleBase::TITLE("Charge_Mixing", "inner_product_recip_hartree");
     ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_hartree");
 
-    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / GlobalC::ucell.tpiba2;
+    static const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI / ((*this->tpiba) * (*this->tpiba));
     static const double fac2 = ModuleBase::e2 * ModuleBase::FOUR_PI / (ModuleBase::TWO_PI * ModuleBase::TWO_PI);
 
     double sum = 0.0;
@@ -446,7 +446,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 
     ModuleBase::timer::tick("Charge_Mixing", "inner_product_recip_hartree");
 
-    sum *= GlobalC::ucell.omega * 0.5;
+    sum *= *this->omega * 0.5;
 
     return sum;
 }

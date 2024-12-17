@@ -893,7 +893,7 @@ void cal_force_npw_op<FPTYPE, base_device::DEVICE_GPU>::operator()(
     int t_num = (npw%t_size) ? (npw/t_size + 1) : (npw/t_size);
     dim3 npwgrid(((t_num%THREADS_PER_BLOCK) ? (t_num/THREADS_PER_BLOCK + 1) : (t_num/THREADS_PER_BLOCK)));
 
-    cal_force_npw << < npwgrid, THREADS_PER_BLOCK >> > (
+    cal_force_npw <<< npwgrid, THREADS_PER_BLOCK >>> (
         reinterpret_cast<const thrust::complex<FPTYPE>*>(psiv),
         gv_x, gv_y, gv_z, rhocgigg_vec, force, pos_x, pos_y, pos_z,
         npw, omega, tpiba

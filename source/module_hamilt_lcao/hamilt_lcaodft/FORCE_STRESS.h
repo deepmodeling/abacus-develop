@@ -34,7 +34,7 @@ class Force_Stress_LCAO
                         const bool istestf,
                         const bool istests,
                         const UnitCell& ucell,
-                        Grid_Driver& gd,
+                        const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
                         const psi::Psi<T>* psi,
@@ -48,6 +48,7 @@ class Force_Stress_LCAO
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
+                        surchem& solvent,
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
                         Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -82,7 +83,7 @@ class Force_Stress_LCAO
                        const bool isforce,
                        const bool isstress,
                        const UnitCell& ucell,
-                       Grid_Driver& gd,
+                       const Grid_Driver& gd,
                        ForceStressArrays& fsr, // mohan add 2024-06-15
                        const elecstate::ElecState* pelec,
                        const psi::Psi<T>* psi,

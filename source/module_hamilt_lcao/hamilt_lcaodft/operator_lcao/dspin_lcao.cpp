@@ -8,14 +8,13 @@
 #include "module_parameter/parameter.h"
 
 template <typename TK, typename TR>
-hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(
-    HS_Matrix_K<TK>* hsk_in,
-    const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-    hamilt::HContainer<TR>* hR_in,
-    const UnitCell& ucell_in,
-    Grid_Driver* gridD_in,
-    const TwoCenterIntegrator* intor,
-    const std::vector<double>& orb_cutoff)
+hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::DeltaSpin(HS_Matrix_K<TK>* hsk_in,
+                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                                           hamilt::HContainer<TR>* hR_in,
+                                                           const UnitCell& ucell_in,
+                                                           const Grid_Driver* gridD_in,
+                                                           const TwoCenterIntegrator* intor,
+                                                           const std::vector<double>& orb_cutoff)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), intor_(intor), orb_cutoff_(orb_cutoff)
 {
     this->cal_type = calculation_type::lcao_sc_lambda;

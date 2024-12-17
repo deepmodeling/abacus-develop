@@ -156,7 +156,8 @@ void Grid_Driver::Find_atom(const UnitCell& ucell,
                             const ModuleBase::Vector3<double>& tau,
                             const int& T,
                             const int& I,
-                            AdjacentAtomInfo* adjs) {
+                            AdjacentAtomInfo* adjs) const
+{
     adjs->adj_num = ucell.nat - 1;
     adjs->adjacent_tau.resize(ucell.nat);
     adjs->ntype.resize(ucell.nat, 0);

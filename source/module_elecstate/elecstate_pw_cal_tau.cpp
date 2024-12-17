@@ -26,7 +26,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
         {
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
             // kinetic energy density
             for (int j = 0; j < 3; j++)
@@ -38,7 +38,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
                             j,
                             npw,
                             this->basis->npwk_max,
-                            static_cast<Real>(get_ucell_tpiba()),
+                            static_cast<Real>(ucell->tpiba),
                             this->basis->template get_gcar_data<Real>(),
                             this->basis->template get_kvec_c_data<Real>(),
                             &psi(ibnd, 0),

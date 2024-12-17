@@ -65,12 +65,14 @@ class Charge
      * @brief Init charge density from file or atomic pseudo-wave-functions
      *
      * @param eferm_iout [out] fermi energy to be initialized
+     * @param ucell [in] unit cell
      * @param strucFac [in] structure factor
      * @param symm [in] symmetry
      * @param klist [in] k points list if needed
      * @param wfcpw [in] PW basis for wave function if needed
      */
     void init_rho(elecstate::efermi& eferm_iout,
+                  const UnitCell& ucell,
                   const ModuleBase::ComplexMatrix& strucFac,
                   ModuleSymmetry::Symmetry& symm,
                   const void* klist = nullptr,
@@ -84,7 +86,9 @@ class Charge
                     const ModuleBase::ComplexMatrix& strucFac,
                     const UnitCell& ucell) const;
 
-    void set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, const bool* numeric);
+    void set_rho_core(const UnitCell& ucell,
+                      const ModuleBase::ComplexMatrix& structure_factor, 
+                      const bool* numeric);
     void set_rho_core_paw();
 
     void renormalize_rho();
@@ -97,6 +101,8 @@ class Charge
     void non_linear_core_correction
     (
         const bool &numeric,
+        const double omega,
+        const double tpiba2,
         const int mesh,
         const double *r,
         const double *rab,
@@ -132,6 +138,8 @@ class Charge
 	   */
 	  void reduce_diff_pools(double* array_rho) const;
 
+    void set_omega(double* omega_in){this->omega_ = omega_in;};
+
     // mohan add 2021-02-20
     int nrxx; // number of r vectors in this processor
     int nxyz; // total nuber of r vectors
@@ -142,6 +150,8 @@ class Charge
   private:
 
     void destroy();    // free arrays  liuyu 2023-03-12
+
+    double* omega_ = nullptr; // omega for non-linear core correction
 
     bool allocate_rho;
 

@@ -22,6 +22,7 @@
 #endif
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
+                      const UnitCell& ucell,
                       const ModuleBase::ComplexMatrix& strucFac,
                       ModuleSymmetry::Symmetry& symm,
                       const void* klist,
@@ -30,6 +31,9 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "init_chg", PARAM.inp.init_chg);
 
     std::cout << " START CHARGE      : " << PARAM.inp.init_chg << std::endl;
+    //here we need to set the omega for the charge density
+    set_omega(&ucell.omega);
+    
     bool read_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
@@ -58,7 +62,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],
-                    GlobalC::ucell.nat))
+                    ucell.nat))
                 {
                     GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
                 }
@@ -108,7 +112,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                         GlobalV::ofs_running,
                         ssc.str(),
                         this->kin_r[is],
-                        GlobalC::ucell.nat))
+                        ucell.nat))
                     {
                         GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
                     }
@@ -134,7 +138,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     if (PARAM.inp.init_chg == "atomic" || 
         (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
     {
-        this->atomic_rho(PARAM.inp.nspin, GlobalC::ucell.omega, rho, strucFac, GlobalC::ucell);
+        this->atomic_rho(PARAM.inp.nspin, ucell.omega, rho, strucFac, ucell);
 
         // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
         // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
@@ -171,7 +175,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],
-                    GlobalC::ucell.nat))
+                    ucell.nat))
                 {
                     GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
                 }
@@ -199,7 +203,9 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
 //==========================================================
 // computes the core charge on the real space 3D mesh.
 //==========================================================
-void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, const bool* numeric)
+void Charge::set_rho_core(const UnitCell& ucell,
+                          const ModuleBase::ComplexMatrix& structure_factor, 
+                          const bool* numeric)
 {
     ModuleBase::TITLE("Charge","set_rho_core");
     ModuleBase::timer::tick("Charge","set_rho_core");
@@ -216,9 +222,9 @@ void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, con
     // int ig = 0;
 
     bool bl = false;
-    for (int it = 0; it<GlobalC::ucell.ntype; it++)
+    for (int it = 0; it<ucell.ntype; it++)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell.atoms[it].ncpp.nlcc)
         {
             bl = true;
             break;
@@ -238,9 +244,9 @@ void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, con
 	// three dimension.
     std::complex<double> *vg = new std::complex<double>[this->rhopw->npw];	
 
-    for (int it = 0; it < GlobalC::ucell.ntype;it++)
+    for (int it = 0; it < ucell.ntype;it++)
     {
-        if (GlobalC::ucell.atoms[it].ncpp.nlcc)
+        if (ucell.atoms[it].ncpp.nlcc)
         {
 //----------------------------------------------------------
 // EXPLAIN : drhoc compute the radial fourier transform for
@@ -248,10 +254,12 @@ void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, con
 //----------------------------------------------------------
             this->non_linear_core_correction(
                 numeric,
-                GlobalC::ucell.atoms[it].ncpp.msh,
-                GlobalC::ucell.atoms[it].ncpp.r.data(),
-                GlobalC::ucell.atoms[it].ncpp.rab.data(),
-                GlobalC::ucell.atoms[it].ncpp.rho_atc.data(),
+                ucell.omega,
+                ucell.tpiba2,
+                ucell.atoms[it].ncpp.msh,
+                ucell.atoms[it].ncpp.r.data(),
+                ucell.atoms[it].ncpp.rab.data(),
+                ucell.atoms[it].ncpp.rho_atc.data(),
                 rhocg);
 //----------------------------------------------------------
 // EXPLAIN : multiply by the structure factor and sum
@@ -296,8 +304,8 @@ void Charge::set_rho_core(const ModuleBase::ComplexMatrix& structure_factor, con
 
 	// mohan changed 2010-2-2, make this same as in atomic_rho.
 	// still lack something......
-    rhoneg /= this->rhopw->nxyz * GlobalC::ucell.omega;
-    rhoima /= this->rhopw->nxyz * GlobalC::ucell.omega;
+    rhoneg /= this->rhopw->nxyz * ucell.omega;
+    rhoima /= this->rhopw->nxyz * ucell.omega;
 
     // calculate core_only exch-corr energy etxcc=E_xc[rho_core] if required
     // The term was present in previous versions of the code but it shouldn't
@@ -322,6 +330,8 @@ void Charge::set_rho_core_paw()
 void Charge::non_linear_core_correction
 (
     const bool &numeric,
+    const double omega,
+    const double tpiba2,
     const int mesh,
     const double *r,
     const double *rab,
@@ -356,7 +366,7 @@ void Charge::non_linear_core_correction
 				}
 				ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
 				//rhocg [1] = fpi * rhocg1 / omega;
-				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;//mohan modify 2008-01-19
+				rhocg [0] = ModuleBase::FOUR_PI * rhocg1 / omega;//mohan modify 2008-01-19
 			}
             igl0 = 1;
         }
@@ -370,14 +380,14 @@ void Charge::non_linear_core_correction
         // G <> 0 term
         for (int igl = igl_beg; igl < igl_end;igl++) 
         {
-            gx = sqrt(this->rhopw->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+            gx = sqrt(this->rhopw->gg_uniq[igl] * tpiba2);
             ModuleBase::Sphbes::Spherical_Bessel(mesh, r, gx, 0, aux);
             for (int ir = 0;ir < mesh; ir++) 
             {
                 aux [ir] = r[ir] * r[ir] * rhoc [ir] * aux [ir];
             } //  enddo
             ModuleBase::Integral::Simpson_Integral(mesh, aux, rab, rhocg1);
-            rhocg [igl] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
+            rhocg [igl] = ModuleBase::FOUR_PI * rhocg1 / omega;
         } //  enddo
         delete [] aux;
     }

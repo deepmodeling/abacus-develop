@@ -156,7 +156,7 @@ void H_TDDFT_pw::cal_v_space_length(std::vector<double>& vext_space, int direc)
     ModuleBase::TITLE("H_TDDFT_pw", "cal_v_space_length");
     ModuleBase::timer::tick("H_TDDFT_pw", "cal_v_space_length");
 
-    prepare(GlobalC::ucell, direc);
+    prepare(ucell_->G, direc);
 
     for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)
     {
@@ -436,25 +436,25 @@ double H_TDDFT_pw::cal_v_time_heaviside()
     return vext_time;
 }
 
-void H_TDDFT_pw::prepare(const UnitCell& cell, int& dir)
+void H_TDDFT_pw::prepare(const ModuleBase::Matrix3& G, int& dir)
 {
     if (dir == 1)
     {
-        bvec[0] = cell.G.e11;
-        bvec[1] = cell.G.e12;
-        bvec[2] = cell.G.e13;
+        bvec[0] = G.e11;
+        bvec[1] = G.e12;
+        bvec[2] = G.e13;
     }
     else if (dir == 2)
     {
-        bvec[0] = cell.G.e21;
-        bvec[1] = cell.G.e22;
-        bvec[2] = cell.G.e23;
+        bvec[0] = G.e21;
+        bvec[1] = G.e22;
+        bvec[2] = G.e23;
     }
     else if (dir == 3)
     {
-        bvec[0] = cell.G.e31;
-        bvec[1] = cell.G.e32;
-        bvec[2] = cell.G.e33;
+        bvec[0] = G.e31;
+        bvec[1] = G.e32;
+        bvec[2] = G.e33;
     }
     else
     {

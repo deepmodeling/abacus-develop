@@ -198,7 +198,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
         {
             srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
         }
-        this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+        this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
     else
     {

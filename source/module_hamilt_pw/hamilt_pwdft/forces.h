@@ -39,6 +39,7 @@ class Forces
                    ModulePW::PW_Basis* rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
+                   surchem& solvent,
                    const pseudopot_cell_vl* locpp,
                    const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,

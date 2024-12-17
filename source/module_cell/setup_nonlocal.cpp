@@ -34,7 +34,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
     ModuleBase::TITLE("InfoNonlocal", "Set_NonLocal");
 
     // set a pointer
-    // Atom* atom = &GlobalC::ucell.atoms[it];
+    // Atom* atom = &ucell.atoms[it];
 
     // get the number of non-local projectors
     n_projectors = atom->ncpp.nbeta;

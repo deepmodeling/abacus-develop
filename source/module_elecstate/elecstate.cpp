@@ -207,6 +207,7 @@ void ElecState::calEBand()
 
 
 void ElecState::init_scf(const int istep, 
+                         const UnitCell& ucell,
                          const ModuleBase::ComplexMatrix& strucfac, 
                          const bool* numeric,
                          ModuleSymmetry::Symmetry& symm, 
@@ -215,7 +216,7 @@ void ElecState::init_scf(const int istep,
     //! core correction potential.
     if (!PARAM.inp.use_paw)
     {
-        this->charge->set_rho_core(strucfac, numeric);
+        this->charge->set_rho_core(ucell,strucfac, numeric);
     }
     else
     {
@@ -226,7 +227,7 @@ void ElecState::init_scf(const int istep,
     // choose charge density from ionic step 0.
     if (istep == 0)
     {
-        this->charge->init_rho(this->eferm, strucfac, symm, (const void*)this->klist, wfcpw);
+        this->charge->init_rho(this->eferm,ucell, strucfac, symm, (const void*)this->klist, wfcpw);
         this->charge->check_rho(); // check the rho
     }
 

@@ -13,15 +13,13 @@ FR_overlap<T>::FR_overlap()
 }
 
 template <typename T>
-void FR_overlap<T>::set_parameters(
-    fr_ptr fr_in, 
-    const UnitCell* ucell_in, 
-    const LCAO_Orbitals* ptr_orb, 
-    Grid_Driver* GridD_in, 
-    const Parallel_Orbitals* paraV,
-    int radial_grid_num,
-    int degree
-)
+void FR_overlap<T>::set_parameters(fr_ptr fr_in,
+                                   const UnitCell* ucell_in,
+                                   const LCAO_Orbitals* ptr_orb,
+                                   const Grid_Driver* GridD_in,
+                                   const Parallel_Orbitals* paraV,
+                                   int radial_grid_num,
+                                   int degree)
 {
     this->fr = fr_in;
     this->ucell = ucell_in;
@@ -70,7 +68,7 @@ FR_overlap<T>::~FR_overlap()
 }
 
 template <typename T>
-void FR_overlap<T>::initialize_FR(Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void FR_overlap<T>::initialize_FR(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("FR_overlap", "initialize_FR");
     ModuleBase::timer::tick("FR_overlap", "initialize_FR");

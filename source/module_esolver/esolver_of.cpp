@@ -120,7 +120,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, ucell,sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -258,7 +258,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             GlobalV::ofs_warning);
     }
 
-    this->pelec->init_scf(istep, sf.strucFac, locpp.numeric, ucell.symm);
+    this->pelec->init_scf(istep,ucell, sf.strucFac, locpp.numeric, ucell.symm);
 
     // calculate ewald energy
     this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
@@ -548,7 +548,7 @@ double ESolver_OF::cal_energy()
 void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
 {
     Forces<double> ff(ucell.nat);
-    ff.cal_force(ucell,force, *pelec, this->pw_rho, &ucell.symm, &sf, &this->locpp);
+    ff.cal_force(ucell, force, *pelec, this->pw_rho, &ucell.symm, &sf, this->solvent, &this->locpp);
 }
 
 /**

@@ -66,7 +66,7 @@ class DensityMatrix
      * @param GridD_in pointer of Grid_Driver object (used to find ajacent atoms)
      * @param ucell pointer of UnitCell object
      */
-    void init_DMR(Grid_Driver* GridD_in, const UnitCell* ucell);
+    void init_DMR(const Grid_Driver* GridD_in, const UnitCell* ucell);
 
     /**
      * @brief initialize density matrix DMR from UnitCell and RA

@@ -21,7 +21,12 @@ public:
     double tot_magnetization_nc[3];
     double abs_magnetization;
 
-    void compute_magnetization(const int& nrxx, const int& nxyz, const double* const * rho, double* nelec_spin = nullptr);
+    void compute_magnetization(const double& omega,
+                               const int& nrxx, 
+                               const int& nxyz, 
+                               const double* const * rho, 
+                               
+                               double* nelec_spin = nullptr);
 
     ModuleBase::Vector3<double> *m_loc_;   //magnetization for each element along c-axis
 	double *angle1_;           //angle between c-axis and real spin std::vector

@@ -20,7 +20,7 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
                                      HContainer<TR>* hR_in,
                                      const UnitCell* ucell_in,
-                                     Grid_Driver* GridD_in,
+                                     const Grid_Driver* GridD_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const LCAO_Orbitals* ptr_orb,
                                      const int& nks_in,
@@ -47,7 +47,7 @@ DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
 #ifdef __DEEPKS
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("DeePKS", "initialize_HR");
     ModuleBase::timer::tick("DeePKS", "initialize_HR");
@@ -158,7 +158,7 @@ void DeePKS<OperatorLCAO<double, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
         const Parallel_Orbitals* pv = this->hsk->get_pv();
-        GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
+        GlobalC::ld.cal_projected_DM<double>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         GlobalC::ld.cal_gedm(this->ucell->nat);
         // recalculate the H_V_delta
@@ -186,7 +186,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, *ptr_orb_, *this->gd);
+        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
@@ -219,7 +219,7 @@ void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contribut
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM(this->DM, *this->ucell, *ptr_orb_, *this->gd);
+        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
         GlobalC::ld.cal_descriptor(this->ucell->nat);
         // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);

@@ -36,7 +36,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const bool istestf,
                                           const bool istests,
                                           const UnitCell& ucell,
-                                          Grid_Driver& gd,
+                                          const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
                                           const psi::Psi<T>* psi,
@@ -50,6 +50,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
+                                          surchem& solvent,
 #ifdef __EXX
                                           Exx_LRI<double>& exx_lri_double,
                                           Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -279,7 +280,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
     if (PARAM.inp.imp_sol && isforce)
     {
         fsol.create(nat, 3);
-        GlobalC::solvent_model.cal_force_sol(ucell, rhopw, nlpp.vloc, fsol);
+        solvent.cal_force_sol(ucell, rhopw, nlpp.vloc, fsol);
     }
 
     //! atomic forces from DFT+U (Quxin version)
@@ -870,7 +871,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               const bool isforce,
                                               const bool isstress,
                                               const UnitCell& ucell,
-                                              Grid_Driver& gd,
+                                              const Grid_Driver& gd,
                                               ForceStressArrays& fsr, // mohan add 2024-06-15
                                               const elecstate::ElecState* pelec,
                                               const psi::Psi<double>* psi,
@@ -923,7 +924,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             const bool isforce,
                                                             const bool isstress,
                                                             const UnitCell& ucell,
-                                                            Grid_Driver& gd,
+                                                            const Grid_Driver& gd,
                                                             ForceStressArrays& fsr, // mohan add 2024-06-15
                                                             const elecstate::ElecState* pelec,
                                                             const psi::Psi<std::complex<double>>* psi,

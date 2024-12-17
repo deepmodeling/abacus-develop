@@ -70,7 +70,7 @@ class Grid_Driver : public Grid
                    const ModuleBase::Vector3<double>& cartesian_posi,
                    const int& ntype,
                    const int& nnumber,
-                   AdjacentAtomInfo* adjs = nullptr);
+                   AdjacentAtomInfo* adjs = nullptr) const;
 
     //==========================================================
     // EXPLAIN : The adjacent information for the input

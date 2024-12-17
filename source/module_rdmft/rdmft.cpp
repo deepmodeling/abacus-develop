@@ -59,7 +59,7 @@ void RDMFT<TK, TR>::init(Gint_Gamma& GG_in,
                          Gint_k& GK_in,
                          Parallel_Orbitals& ParaV_in,
                          UnitCell& ucell_in,
-                         Grid_Driver& gd_in,
+                         const Grid_Driver& gd_in,
                          K_Vectors& kv_in,
                          elecstate::ElecState& pelec_in,
                          LCAO_Orbitals& orb_in,
@@ -343,7 +343,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     }
     else
     {
-        this->pelec->f_en.deband  = this->pelec->cal_delta_eband();
+        this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
         this->pelec->cal_energies(2);
         Etotal = this->pelec->f_en.etot;

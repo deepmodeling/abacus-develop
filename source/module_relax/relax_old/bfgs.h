@@ -49,14 +49,14 @@ public:
      * @param _size 
      */
     void allocate(const int _size);//initialize parameters
-    void relax_step(ModuleBase::matrix _force,UnitCell& ucell);//
+    void relax_step(const ModuleBase::matrix& _force,UnitCell& ucell);//
     void PrepareStep(std::vector<std::vector<double>>& force,std::vector<std::vector<double>>& pos,std::vector<std::vector<double>>& H,std::vector<double>& pos0,std::vector<double>& force0,std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,UnitCell& ucell);
     void IsRestrain(std::vector<std::vector<double>>& dpos);
 
 private:
     bool sign;
     
-    void CalculateLargestGrad(ModuleBase::matrix& _force,UnitCell& ucell);
+    void CalculateLargestGrad(const ModuleBase::matrix& _force,UnitCell& ucell);
     void GetPos(UnitCell& ucell,std::vector<std::vector<double>>& pos);
     void GetPostaud(UnitCell& ucell,std::vector<std::vector<double>>& pos_taud);
     void Update(std::vector<double>& pos, std::vector<double>& force,std::vector<std::vector<double>>& H,UnitCell& ucell);

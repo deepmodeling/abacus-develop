@@ -260,7 +260,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
+    this->pelec->init_scf(istep, ucell,this->sf.strucFac, this->ppcell.numeric, ucell.symm);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)

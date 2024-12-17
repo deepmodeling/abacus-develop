@@ -34,7 +34,7 @@ ModuleBase::matrix Efield::add_efield(const UnitCell& cell,
                                       const ModulePW::PW_Basis* rho_basis,
                                       const int& nspin,
                                       const double* const* const rho,
-                                      surchem& solvent)
+                                      const surchem& solvent)
 {
     ModuleBase::TITLE("Efield", "add_efield");
     ModuleBase::timer::tick("Efield", "add_efield");
@@ -202,7 +202,7 @@ double Efield::cal_elec_dipole(const UnitCell& cell,
 
 double Efield::cal_induced_dipole(const UnitCell& cell,
                                   const ModulePW::PW_Basis* rho_basis,
-                                  surchem& solvent,
+                                  const surchem& solvent,
                                   const double& bmod)
 {
     double induced_dipole = 0;

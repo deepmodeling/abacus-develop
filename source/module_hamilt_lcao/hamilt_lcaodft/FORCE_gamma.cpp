@@ -17,7 +17,7 @@
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
-                                  Grid_Driver& gd,
+                                  const Grid_Driver& gd,
                                   const Parallel_Orbitals& pv,
                                   ForceStressArrays& fsr, // mohan add 2024-06-15
                                   const TwoCenterBundle& two_center_bundle,
@@ -176,7 +176,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 const bool isstress,
                                 ForceStressArrays& fsr, // mohan add 2024-06-16
                                 const UnitCell& ucell,
-                                Grid_Driver& gd,
+                                const Grid_Driver& gd,
                                 const psi::Psi<double>* psi,
                                 const elecstate::ElecState* pelec,
                                 ModuleBase::matrix& foverlap,
@@ -237,18 +237,21 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
-        DeePKS_domain::cal_f_delta_gamma(dm_gamma,
-                                         ucell,
-                                         orb,
-                                         gd,
+        const int nks=1;
+		DeePKS_domain::cal_f_delta_gamma(dm_gamma, 
+				                         ucell, 
+				                         orb, 
+				                         gd, 
                                          *this->ParaV,
                                          GlobalC::ld.lmaxd,
+                                         nks, 
+				                         kv->kvec_d, 
                                          GlobalC::ld.nlm_save,
                                          GlobalC::ld.gedm,
                                          GlobalC::ld.inl_index,
                                          GlobalC::ld.F_delta,
-                                         isstress,
-                                         svnl_dalpha);
+				                         isstress, 
+				                         svnl_dalpha);
 
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);

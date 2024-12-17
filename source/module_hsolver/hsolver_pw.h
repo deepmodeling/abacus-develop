@@ -88,7 +88,7 @@ class HSolverPW
 
   private:
     /// @brief calculate the threshold for iterative-diagonalization for each band
-    void cal_ethr_band(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
+    void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
 
 #ifdef USE_PAW
     void paw_func_in_kloop(const int ik,

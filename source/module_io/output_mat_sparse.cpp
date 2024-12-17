@@ -18,7 +18,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       Grid_Driver& grid,
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<double>* p_ham)
 {
@@ -36,7 +36,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       Grid_Driver& grid,
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<std::complex<double>>* p_ham)
 {

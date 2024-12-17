@@ -90,7 +90,7 @@ void ElecState::cal_bandgap_updw()
 }
 
 /// @brief calculate deband
-double ElecState::cal_delta_eband() const
+double ElecState::cal_delta_eband(const UnitCell& ucell) const
 {
     // out potentials from potential mixing
     // total energy and band energy corrections
@@ -109,7 +109,7 @@ double ElecState::cal_delta_eband() const
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &GlobalC::ucell);
+            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &ucell);
         v_xc = std::get<2>(etxc_vtxc_v);
 
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)

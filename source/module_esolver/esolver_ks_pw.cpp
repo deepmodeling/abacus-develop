@@ -181,6 +181,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &ucell,
                                                     &this->ppcell.vloc,
                                                     &(this->sf),
+                                                    &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
                                                     &(this->pelec->f_en.vtxc));
     }
@@ -307,7 +308,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
+    this->pelec->init_scf(istep, ucell,this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -481,7 +482,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
     }
     // mohan move harris functional to here, 2012-06-05
     // use 'rho(in)' and 'v_h and v_xc'(in)
-    this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband();
+    this->pelec->f_en.deband_harris = this->pelec->cal_delta_eband(ucell);
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
@@ -576,7 +577,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
     // deband is calculated from "output" charge density calculated
     // in sum_band
     // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 }
@@ -778,6 +779,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                  this->pw_rhod,
                  &ucell.symm,
                  &this->sf,
+                 this->solvent,
                  &this->ppcell,
                  &this->ppcell,
                  &this->kv,

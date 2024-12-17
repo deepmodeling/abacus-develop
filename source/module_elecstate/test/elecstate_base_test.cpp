@@ -32,7 +32,12 @@ Charge::Charge()
 Charge::~Charge()
 {
 }
-
+UnitCell::UnitCell(){}
+UnitCell::~UnitCell(){}
+Magnetism::Magnetism(){}
+Magnetism::~Magnetism(){}
+InfoNonlocal::InfoNonlocal(){}
+InfoNonlocal::~InfoNonlocal(){}
 #include "module_cell/klist.h"
 K_Vectors::K_Vectors()
 {
@@ -60,13 +65,14 @@ void ModulePW::PW_Basis::initgrids(double, ModuleBase::Matrix3, int, int, int)
 void ModulePW::PW_Basis::distribute_r()
 {
 }
-void Charge::set_rho_core(ModuleBase::ComplexMatrix const&, const bool*)
+void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
 void Charge::set_rho_core_paw()
 {
 }
 void Charge::init_rho(elecstate::efermi&,
+                      const UnitCell&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
@@ -139,6 +145,7 @@ class ElecStateTest : public ::testing::Test
 {
   protected:
     elecstate::MockElecState* elecstate;
+    UnitCell ucell;
     std::string output;
     void SetUp()
     {
@@ -249,7 +256,7 @@ TEST_F(ElecStateTest, InitSCF)
     ModuleBase::ComplexMatrix strucfac;
     elecstate->eferm = efermi;
     ModuleSymmetry::Symmetry symm;
-    EXPECT_NO_THROW(elecstate->init_scf(istep, strucfac, nullptr, symm));
+    EXPECT_NO_THROW(elecstate->init_scf(istep, ucell,strucfac, nullptr, symm));
     // delete elecstate->pot is done in the destructor of elecstate
     delete charge;
 }

@@ -11,14 +11,6 @@
 // mock functions for testing
 namespace elecstate
 {
-double get_ucell_omega()
-{
-    return 500.0;
-}
-double get_ucell_tpiba()
-{
-    return 2.0;
-}
 int tmp_xc_func_type = 1;
 int get_xc_func_type()
 {
@@ -141,13 +133,14 @@ K_Vectors::~K_Vectors()
 {
 }
 
-void Charge::set_rho_core(ModuleBase::ComplexMatrix const&, const bool*)
+void Charge::set_rho_core(const UnitCell& ucell, ModuleBase::ComplexMatrix const&, const bool*)
 {
 }
 void Charge::set_rho_core_paw()
 {
 }
 void Charge::init_rho(elecstate::efermi&,
+                      const UnitCell&,
                       ModuleBase::ComplexMatrix const&,
                       ModuleSymmetry::Symmetry& symm,
                       const void*,
@@ -221,6 +214,8 @@ class ElecStatePWTest : public ::testing::Test
         klist = new K_Vectors;
         klist->set_nks(5);
         ucell = new UnitCell;
+        ucell->omega = 500.0;
+        ucell->tpiba = 2.0;
         ppcell = new pseudopot_cell_vnl;
         rhodpw = new ModulePW::PW_Basis;
         rhopw = new ModulePW::PW_Basis;

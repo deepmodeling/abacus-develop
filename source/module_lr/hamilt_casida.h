@@ -17,30 +17,31 @@ namespace LR
     class HamiltLR
     {
     public:
-        template<typename TGint>
-        HamiltLR(std::string& xc_kernel,
-            const int& nspin,
-            const int& naos,
-            const std::vector<int>& nocc,
-            const std::vector<int>& nvirt,
-            const UnitCell& ucell_in,
-            const std::vector<double>& orb_cutoff,
-            Grid_Driver& gd_in,
-            const psi::Psi<T>& psi_ks_in,
-            const ModuleBase::matrix& eig_ks,
+      template <typename TGint>
+      HamiltLR(std::string& xc_kernel,
+               const int& nspin,
+               const int& naos,
+               const std::vector<int>& nocc,
+               const std::vector<int>& nvirt,
+               const UnitCell& ucell_in,
+               const std::vector<double>& orb_cutoff,
+               const Grid_Driver& gd_in,
+               const psi::Psi<T>& psi_ks_in,
+               const ModuleBase::matrix& eig_ks,
 #ifdef __EXX
-            std::weak_ptr<Exx_LRI<T>> exx_lri_in,
-            const double& exx_alpha,
-#endif 
-            TGint* gint_in,
-            std::weak_ptr<PotHxcLR> pot_in,
-            const K_Vectors& kv_in,
-            const std::vector<Parallel_2D>& pX_in,
-            const Parallel_2D& pc_in,
-            const Parallel_Orbitals& pmat_in,
-            const std::string& spin_type,
-            const std::string& ri_hartree_benchmark = "none",
-            const std::vector<int>& aims_nbasis = {}) : nspin(nspin), nocc(nocc), nvirt(nvirt), pX(pX_in), nk(kv_in.get_nks() / nspin)
+               std::weak_ptr<Exx_LRI<T>> exx_lri_in,
+               const double& exx_alpha,
+#endif
+               TGint* gint_in,
+               std::weak_ptr<PotHxcLR> pot_in,
+               const K_Vectors& kv_in,
+               const std::vector<Parallel_2D>& pX_in,
+               const Parallel_2D& pc_in,
+               const Parallel_Orbitals& pmat_in,
+               const std::string& spin_type,
+               const std::string& ri_hartree_benchmark = "none",
+               const std::vector<int>& aims_nbasis = {})
+          : nspin(nspin), nocc(nocc), nvirt(nvirt), pX(pX_in), nk(kv_in.get_nks() / nspin)
         {
             ModuleBase::TITLE("HamiltLR", "HamiltLR");
             if (ri_hartree_benchmark != "aims") { assert(aims_nbasis.empty()); }

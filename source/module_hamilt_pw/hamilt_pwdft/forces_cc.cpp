@@ -9,12 +9,13 @@
 #include "module_base/mathzone.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_elecstate/cal_ux.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 
 #ifdef _OPENMP
 #include <omp.h>

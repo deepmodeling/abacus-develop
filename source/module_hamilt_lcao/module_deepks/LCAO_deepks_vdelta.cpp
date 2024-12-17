@@ -6,8 +6,7 @@
 //tr (rho * V_delta)
 
 //Four subroutines are contained in the file:
-//5. cal_e_delta_band : calculates e_delta_bands for gamma only
-//6. cal_e_delta_band_k : counterpart of 4, for multi-k
+//5. cal_e_delta_band : calculates e_delta_bands
 
 #ifdef __DEEPKS
 
@@ -17,43 +16,12 @@
 #include "module_base/timer.h"
 
 //calculating sum of correction band energies
-//for gamma_only calculations
-void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<double>>& dm, const int /*nks*/)
+template <typename TK>
+void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
-    this->e_delta_band = 0;
-    for (int i = 0; i < PARAM.globalv.nlocal; ++i)
-    {
-        for (int j = 0; j < PARAM.globalv.nlocal; ++j)
-        {
-            const int mu = pv->global2local_row(j);
-            const int nu = pv->global2local_col(i);
-            
-            if (mu >= 0 && nu >= 0)
-            {                
-                const int index = nu * pv->nrow + mu;
-                for (int is = 0; is < dm.size(); ++is)  //dm.size() == PARAM.inp.nspin
-                {
-                    //this->e_delta_band += dm[is](nu, mu) * this->H_V_delta[index];
-					this->e_delta_band += dm[is][nu*this->pv->nrow+mu] * this->H_V_delta[0][index];
-                }
-            }
-        }
-    }
-#ifdef __MPI
-    Parallel_Reduce::reduce_all(this->e_delta_band);
-#endif
-    return;
-}
-
-//calculating sum of correction band energies
-//for multi_k calculations
-void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<std::complex<double>>>& dm,
-    const int nks)
-{
-    ModuleBase::TITLE("LCAO_Deepks", "cal_e_delta_band");
-	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
-    std::complex<double> e_delta_band_k=std::complex<double>(0.0,0.0);
+    ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band");
+    TK e_delta_band_tmp = TK(0);
     for (int i = 0; i < PARAM.globalv.nlocal; ++i)
     {
         for (int j = 0; j < PARAM.globalv.nlocal; ++j)
@@ -72,21 +40,40 @@ void LCAO_Deepks::cal_e_delta_band(const std::vector<std::vector<std::complex<do
                 {
                     iic = mu * pv->ncol + nu;
                 }
-                for(int ik=0;ik<nks;ik++)
+                if constexpr (std::is_same<TK, double>::value)
                 {
-                    //e_delta_band_k += dm[ik](nu, mu) * this->H_V_delta_k[ik][iic];
-					e_delta_band_k += dm[ik][nu * this->pv->nrow + mu] * this->H_V_delta_k[ik][iic];
+                    for (int is = 0; is < dm.size(); ++is)  //dm.size() == PARAM.inp.nspin
+                    {
+                        e_delta_band_tmp += dm[is][nu * this->pv->nrow + mu] * this->H_V_delta[0][iic];
+                    }
                 }
+                else
+                {
+                    for(int ik = 0; ik < nks; ik++)
+                    {
+                        e_delta_band_tmp += dm[ik][nu * this->pv->nrow + mu] * this->H_V_delta_k[ik][iic];
+                    }
+                }
+                
             }
         }
     }
-
-    this->e_delta_band = e_delta_band_k.real();
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        this->e_delta_band = e_delta_band_tmp;
+    }
+    else
+    {
+        this->e_delta_band = e_delta_band_tmp.real();
+    }
 #ifdef __MPI
     Parallel_Reduce::reduce_all(this->e_delta_band);
 #endif
-	ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band_k");
+    ModuleBase::timer::tick("LCAO_Deepks","cal_e_delta_band");
     return;
 }
+
+template void LCAO_Deepks::cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm, const int nks);
+template void LCAO_Deepks::cal_e_delta_band<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm, const int nks);
 
 #endif

@@ -55,7 +55,7 @@ class Gint {
      * @brief calculate the neighbor atoms of each atom in this processor
      * size of BaseMatrix with be the non-parallel version
      */
-    void initialize_pvpR(const UnitCell& unitcell, Grid_Driver* gd, const int& nspin);
+    void initialize_pvpR(const UnitCell& unitcell, const Grid_Driver* gd, const int& nspin);
 
     /**
      * @brief resize DMRGint to nspin and reallocate the memory

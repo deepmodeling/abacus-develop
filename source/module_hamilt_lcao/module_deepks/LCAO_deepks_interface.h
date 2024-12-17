@@ -39,7 +39,7 @@ class LCAO_Deepks_Interface
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
-                           Grid_Driver& GridD,
+                           const Grid_Driver& GridD,
                            const Parallel_Orbitals* ParaV,
                            const psi::Psi<TK>& psid,
                            const elecstate::DensityMatrix<TK, double>* dm,
