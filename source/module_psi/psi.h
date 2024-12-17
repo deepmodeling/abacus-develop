@@ -91,16 +91,20 @@ class Psi
     /// if k_first=false, ikb2=ik
     T& operator()(const int ikb2, const int ibasis) const;
     // use operator "(ibasis)" to reach target element for current k and current band
-    T& operator()(const int ibasis) const;
+    // T& operator()(const int ibasis) const;
 
     // return current k-point index
     int get_current_k() const;
+    
     // return current band index
     int get_current_b() const;
-    // return current ngk for PW base
-    int get_current_nbas() const;
 
-    const int& get_ngk(const int ik_in) const;
+    // return the nbasis of current k
+    const int& get_current_nbas() const;
+
+    // return the nbasis of ik_in
+    const int& get_ik_nbas(const int ik_in) const;
+    
     // return ngk array of psi
     const int* get_ngk_pointer() const;
     // return k_first

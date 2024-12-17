@@ -29,12 +29,12 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
 	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw);
 	
 
-	for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
+	for (int igl = 0; igl < evc->get_ik_nbas(ik_L); igl++)
 	{
 		unk_L[wfcpw->getigl2ig(ik_L,igl)] = evc[0](ik_L, iband_L, igl);
 	}
 	
-	for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
+	for (int igl = 0; igl < evc->get_ik_nbas(ik_R); igl++)
 	{
 		unk_R[wfcpw->getigl2ig(ik_R,igl)] = evc[0](ik_R, iband_R, igl);
 	}
@@ -103,7 +103,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     // (3) calculate the overlap in ik_L and ik_R
     wfcpw->real2recip(psi_r, psi_r, ik_R);
 
-    for (int ig = 0; ig < evc->get_ngk(ik_R); ig++)
+    for (int ig = 0; ig < evc->get_ik_nbas(ik_R); ig++)
     {
         result = result + conj(psi_r[ig]) * evc[0](ik_R, iband_R, ig);
     }
@@ -143,12 +143,12 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
 	
 	for(int i = 0; i < PARAM.globalv.npol; i++)
 	{
-		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
+		for (int igl = 0; igl < evc->get_ik_nbas(ik_L); igl++)
 		{
             unk_L[wfcpw->getigl2ig(ik_L, igl) + i * number_pw] = evc[0](ik_L, iband_L, igl + i * npwx);
         }
 
-        for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
+        for (int igl = 0; igl < evc->get_ik_nbas(ik_R); igl++)
         {
             unk_R[wfcpw->getigl2ig(ik_L, igl) + i * number_pw] = evc[0](ik_R, iband_R, igl + i * npwx);
         }
@@ -223,7 +223,7 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
 
     for (int i = 0; i < PARAM.globalv.npol; i++)
     {
-		for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
+		for(int ig = 0; ig < evc->get_ik_nbas(ik_R); ig++)
 		{
 			if( i == 0 ) { result = result + conj( psi_up[ig] ) * evc[0](ik_R, iband_R, ig);
 }

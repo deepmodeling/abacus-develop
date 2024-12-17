@@ -63,23 +63,23 @@ TEST_F(TestPsi, get_val)
     EXPECT_EQ(psi_object14->get_psi_bias(), 0);
 }
 
-TEST_F(TestPsi, get_ngk)
+TEST_F(TestPsi, get_ik_nbas)
 {
     psi::Psi<std::complex<double>>* psi_object21 = new psi::Psi<std::complex<double>>(&ngk[0]);
     psi::Psi<double>* psi_object22 = new psi::Psi<double>(&ngk[0]);
     psi::Psi<std::complex<float>>* psi_object23 = new psi::Psi<std::complex<float>>(&ngk[0]);
     psi::Psi<float>* psi_object24 = new psi::Psi<float>(&ngk[0]);
 
-    EXPECT_EQ(psi_object21->get_ngk(2), ngk[2]);
+    EXPECT_EQ(psi_object21->get_ik_nbas(2), ngk[2]);
     EXPECT_EQ(psi_object21->get_ngk_pointer()[0], ngk[0]);
 
-    EXPECT_EQ(psi_object22->get_ngk(2), ngk[2]);
+    EXPECT_EQ(psi_object22->get_ik_nbas(2), ngk[2]);
     EXPECT_EQ(psi_object22->get_ngk_pointer()[0], ngk[0]);
 
-    EXPECT_EQ(psi_object23->get_ngk(2), ngk[2]);
+    EXPECT_EQ(psi_object23->get_ik_nbas(2), ngk[2]);
     EXPECT_EQ(psi_object23->get_ngk_pointer()[0], ngk[0]);
 
-    EXPECT_EQ(psi_object24->get_ngk(2), ngk[2]);
+    EXPECT_EQ(psi_object24->get_ik_nbas(2), ngk[2]);
     EXPECT_EQ(psi_object24->get_ngk_pointer()[0], ngk[0]);
 }
 

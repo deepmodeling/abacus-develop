@@ -76,7 +76,6 @@ template <typename T, typename Device> Psi<T, Device>::Psi(T* psi_pointer, const
     this->nk = nk_in;
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
-    this->current_nbasis = nbs_in;
     this->psi_current = this->psi = psi_pointer;
     this->allocate_inside = false;
     // Currently only GPU's implementation is supported for device recording!
@@ -148,7 +147,6 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const Psi& psi_in)
                                                        psi_in.get_pointer() - psi_in.get_psi_bias(),
                                                        psi_in.size());
     this->psi_bias = psi_in.get_psi_bias();
-    this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
@@ -200,7 +198,6 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
                                                              psi_in.size());
     }
     this->psi_bias = psi_in.get_psi_bias();
-    this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
@@ -213,7 +210,6 @@ void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nba
     this->nk = nks_in;
     this->nbands = nbands_in;
     this->nbasis = nbasis_in;
-    this->current_nbasis = nbasis_in;
     this->psi_current = this->psi;
     // GlobalV::ofs_device << "allocated xxx MB memory for psi" << std::endl;
 }
@@ -276,27 +272,26 @@ template <typename T, typename Device> std::size_t Psi<T, Device>::size() const
 
 template <typename T, typename Device> void Psi<T, Device>::fix_k(const int ik) const
 {
-    assert(ik >= 0);
-    this->current_k = ik;
-    if (this->ngk != nullptr && this->npol != 2)
-        this->current_nbasis = this->ngk[ik];
-    else
-        this->current_nbasis = this->nbasis;
+    assert(ik >= 0 && ik < this->nk);
 
-    if (this->k_first)this->current_b = 0;
-    int base = this->current_b * this->nk * this->nbasis;
-    if (ik >= this->nk)
+    if (this->k_first == true)
     {
-        // mem_saver: fix to base
-        this->psi_bias = base;
-        this->psi_current = const_cast<T*>(&(this->psi[base]));
+        this->current_k = ik;
+        this->current_b = 0;
+
+        this->psi_bias = this->current_k * this->nbands * this->nbasis;
+        this->psi_current = this->psi + this->psi_bias;
     }
     else
     {
-        this->psi_bias = k_first ? ik * this->nbands * this->nbasis : base + ik * this->nbasis;
-        this->psi_current = const_cast<T*>(&(this->psi[psi_bias]));
+        this->current_k = ik;
+        // this->current_b remains unchanged
+        
+        this->psi_bias = this->current_b * this->nk * this->nbasis + this->current_k * this->nbasis;
+        this->psi_current = this->psi + this->psi_bias;
     }
 }
+
 template <typename T, typename Device> void Psi<T, Device>::fix_b(const int ib) const
 {
     assert(ib >= 0);
@@ -350,12 +345,6 @@ template <typename T, typename Device> T& Psi<T, Device>::operator()(const int i
     return this->psi_current[ikb2 * this->nbasis + ibasis];
 }
 
-template <typename T, typename Device> T& Psi<T, Device>::operator()(const int ibasis) const
-{
-    assert(ibasis >= 0 && ibasis < this->nbasis);
-    return this->psi_current[ibasis];
-}
-
 template <typename T, typename Device> int Psi<T, Device>::get_current_k() const
 {
     return this->current_k;
@@ -366,15 +355,28 @@ template <typename T, typename Device> int Psi<T, Device>::get_current_b() const
     return this->current_b;
 }
 
-template <typename T, typename Device> int Psi<T, Device>::get_current_nbas() const
+template <typename T, typename Device> const int& Psi<T, Device>::get_current_nbas() const
 {
-    return this->current_nbasis;
+    if (this->ngk != nullptr)
+    {
+        return this->ngk[this->current_k];
+    }
+    else
+    {
+        return this->nbasis;
+    }
 }
 
-template <typename T, typename Device> const int& Psi<T, Device>::get_ngk(const int ik_in) const
+template <typename T, typename Device> const int& Psi<T, Device>::get_ik_nbas(const int ik_in) const
 {
-    if (!this->ngk) return this->nbasis;
-    return this->ngk[ik_in];
+    if (this->ngk != nullptr)
+    {
+        return this->ngk[ik_in];
+    }
+    else
+    {
+         return this->nbasis;
+    }
 }
 
 template <typename T, typename Device> void Psi<T, Device>::zero_out()
