@@ -10,7 +10,7 @@ Atom::~Atom()
 {
 }
 
-void Atom::set_index(void)
+void Atom::set_index()
 {
     assert(nw != 0);
     this->iw2l.resize(nw, 0);
@@ -75,7 +75,7 @@ void Atom::print_Atom(std::ofstream& ofs)
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void Atom::bcast_atom(void)
+void Atom::bcast_atom()
 {
     Parallel_Common::bcast_int(type);
     Parallel_Common::bcast_int(na);
