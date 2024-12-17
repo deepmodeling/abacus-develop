@@ -8,7 +8,7 @@
 #include "module_lr/utils/lr_util_print.h"
 
 template <typename T>
-elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in)
+elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in, const bool need_R)
 {
     const T* const X = X_in == nullptr ? this->X : X_in;
     const int offset_b = istate * ldim;    //start index of band istate
@@ -26,8 +26,11 @@ elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix
 #endif
         for (int ik = 0;ik < this->nk;++ik) { DM_trans.set_DMK_pointer(ik + is * nk, dm_trans_2d[ik].data<T>()); }
     }
-    LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
-    DM_trans.cal_DMR();
+    if (need_R)
+    {
+        LR_Util::initialize_DMR(DM_trans, this->pmat, this->ucell, this->gd_, this->orb_cutoff_);
+        DM_trans.cal_DMR();
+    }
     return DM_trans;
 }
 

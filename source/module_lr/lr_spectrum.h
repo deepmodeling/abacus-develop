@@ -52,12 +52,13 @@ namespace LR
         /// calculate the transition dipole of all states in length gauge
         void cal_transition_dipoles_length();
         /// calculate the transition dipole of state S in velocity gauge: $i(\sum_{iak}X^S_{iak}<ik|v|ak>)/\Omega_S$
-        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity(const int istate, const TD_current& vR);
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_R(const int istate, const TD_current& vR);
+        ModuleBase::Vector3<T> cal_transition_dipole_istate_velocity_k(const int istate, const TD_current& vR);
         /// calculate the transition dipole of all states in velocity gauge
         void cal_transition_dipoles_velocity();
         double cal_mean_squared_dipole(ModuleBase::Vector3<T> dipole);
-
-        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr);
+        /// calculate the transition density matrix
+        elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
         const int naos = 1;
         const std::vector<int>& nocc;
