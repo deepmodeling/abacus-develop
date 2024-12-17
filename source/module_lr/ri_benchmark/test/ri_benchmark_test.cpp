@@ -17,7 +17,6 @@ UnitCell::UnitCell() {
 }
 UnitCell::~UnitCell() {
     delete[] atoms;
-    delete[] iat2it;
 }
 // inline const int* UnitCell::get_iat2iwt(int iat) { return iat2iwt; }
 
