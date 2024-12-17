@@ -188,7 +188,7 @@ class UnitCell {
     int nmax_total = 0; // mohan add 2009-09-10
     int lmax_ppwf = 0;
     int lmaxmax = 0;   // liuyu 2021-07-04
-    bool init_vel = 0; // liuyu 2021-07-15
+    bool init_vel = false; // liuyu 2021-07-15
                        // double nelec;
 
   private:
