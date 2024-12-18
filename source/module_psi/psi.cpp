@@ -51,7 +51,16 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
 template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
     this->k_first = k_first_in;
-    this->ngk = ngk_in;
+    
+    if (nk_in == 1)
+    {
+        this->ngk = nullptr;
+    }
+    else
+    {
+        this->ngk = ngk_in;
+    }
+
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
@@ -68,7 +77,16 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, cons
 template <typename T, typename Device> Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
     this->k_first = k_first_in;
-    this->ngk = ngk_in;
+
+    if (nk_in == 1)
+    {
+        this->ngk = nullptr;
+    }
+    else
+    {
+        this->ngk = ngk_in;
+    }
+
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
@@ -368,7 +386,26 @@ template <typename T, typename Device> int Psi<T, Device>::get_current_b() const
 
 template <typename T, typename Device> int Psi<T, Device>::get_current_nbas() const
 {
-    return this->current_nbasis;
+    if (this->ngk == nullptr)
+    {
+        std::cout << this->nbasis << std::endl;
+        return this->nbasis;
+    }
+    else // this->ngk != nullptr
+    {
+        if (this->npol == 1)
+        {
+            return this->ngk[this->current_k];
+        }
+        else if (this->npol == 2)
+        {
+            return this->nbasis;
+        }
+        else
+        {
+            assert(false && "In Psi Class, this->npol can only be 1 and 2, not other values.");
+        }
+    }
 }
 
 template <typename T, typename Device> const int& Psi<T, Device>::get_ngk(const int ik_in) const
