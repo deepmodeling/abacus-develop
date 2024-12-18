@@ -51,15 +51,12 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(
-#ifdef __MPI
-            &(this->Pgrid),
-#endif
-            ucell,
-            this->pelec->charge,
-            &(this->sf),
-            GlobalV::ofs_running,
-            GlobalV::ofs_warning);
+        this->CE.extrapolate_charge(&(this->Pgrid),
+                                    ucell,
+                                    this->pelec->charge,
+                                    &(this->sf),
+                                    GlobalV::ofs_running,
+                                    GlobalV::ofs_warning);
     }
 
     //----------------------------------------------------------

@@ -247,15 +247,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     if (ucell.ionic_position_updated)
     {
         CE.update_all_dis(ucell);
-        CE.extrapolate_charge(
-#ifdef __MPI
-            &(Pgrid),
-#endif
-            ucell,
-            pelec->charge,
-            &(sf),
-            GlobalV::ofs_running,
-            GlobalV::ofs_warning);
+        CE.extrapolate_charge(&Pgrid, ucell, pelec->charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
     this->pelec->init_scf(istep, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
