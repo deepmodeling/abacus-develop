@@ -56,10 +56,6 @@ class OutputHContainerTest : public testing::Test
     void TearDown() override
     {
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
-        delete[] ucell.iwt2iat;
-        delete[] ucell.iwt2iw;
     }
 };
 

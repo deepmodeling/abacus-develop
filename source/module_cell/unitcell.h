@@ -15,13 +15,14 @@
 // provide the basic information about unitcell.
 class UnitCell {
   public:
-    Atom* atoms;
+    Atom* atoms = nullptr;
 
-    bool set_atom_flag; // added on 2009-3-8 by mohan
-    Magnetism magnet;   // magnetism Yu Liu 2021-07-03
+    bool set_atom_flag = false;                     // added on 2009-3-8 by mohan
+    Magnetism magnet;                               // magnetism Yu Liu 2021-07-03
     std::vector<std::vector<double>> atom_mulliken; //[nat][nspin]
-    int n_mag_at;
+    int n_mag_at = 0;
 
+    Lattice lat;
     std::string& Coordinate = lat.Coordinate;
     std::string& latName = lat.latName;
     double& lat0 = lat.lat0;
@@ -31,7 +32,6 @@ class UnitCell {
     double& omega = lat.omega;
     int*& lc = lat.lc;
 
-    Lattice lat;
     ModuleBase::Matrix3& latvec = lat.latvec;
     ModuleBase::Vector3<double>&a1 = lat.a1, &a2 = lat.a2, &a3 = lat.a3;
     ModuleBase::Vector3<double>& latcenter = lat.latcenter;
@@ -181,15 +181,15 @@ class UnitCell {
     // nelec : total number of electrons
     // lmaxmax : revert from INPUT
     //============================================================
-    int meshx;
-    int natomwfc;
-    int lmax;
-    int nmax;
-    int nmax_total; // mohan add 2009-09-10
-    int lmax_ppwf;
-    int lmaxmax;   // liuyu 2021-07-04
-    bool init_vel; // liuyu 2021-07-15
-                   // double nelec;
+    int meshx = 0;
+    int natomwfc = 0;
+    int lmax = 0;
+    int nmax = 0;
+    int nmax_total = 0; // mohan add 2009-09-10
+    int lmax_ppwf = 0;
+    int lmaxmax = 0;   // liuyu 2021-07-04
+    bool init_vel = false; // liuyu 2021-07-15
+                       // double nelec;
 
   private:
     ModuleBase::Matrix3 stress; // calculate stress on the cell
@@ -211,11 +211,11 @@ class UnitCell {
     void update_stress(ModuleBase::matrix& scs); // updates stress
     void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
 
-    double* atom_mass;
-    std::string* atom_label;
-    std::string* pseudo_fn;
-    std::string* pseudo_type; // pseudopotential types for each elements,
-                              // sunliang added 2022-09-15.
+    double* atom_mass = nullptr;
+    std::string* atom_label = new std::string[1];
+    std::string* pseudo_fn = new std::string[1];
+    std::string* pseudo_type = new std::string[1]; // pseudopotential types for each elements,
+                                                   // sunliang added 2022-09-15.
     std::string* orbital_fn = nullptr;  // filenames of orbitals, liuyu add 2022-10-19
     std::string
         descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06

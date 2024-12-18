@@ -4,22 +4,13 @@
 
 Atom::Atom()
 {
-    na = 0;
-    label = "\0";
-    label_orb = "\0";
-    nw = 0;
-    nwl = 0;
-    Rcut = 0.0; // pengfei Li 16-2-29
-    type = 0;
-    stapos_wf = 0;
-    mass = 0.0;
 }
 
 Atom::~Atom()
 {
 }
 
-void Atom::set_index(void)
+void Atom::set_index()
 {
     assert(nw != 0);
     this->iw2l.resize(nw, 0);
@@ -84,7 +75,7 @@ void Atom::print_Atom(std::ofstream& ofs)
 
 #include "module_base/parallel_common.h"
 #ifdef __MPI
-void Atom::bcast_atom(void)
+void Atom::bcast_atom()
 {
     Parallel_Common::bcast_int(type);
     Parallel_Common::bcast_int(na);
