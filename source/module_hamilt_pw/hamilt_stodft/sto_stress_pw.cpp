@@ -20,7 +20,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                                const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                                                const Charge* const chr,
                                                pseudopot_cell_vnl* nlpp,
-                                               const UnitCell& ucell_in)
+                                               UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Sto_Stress_PW", "cal_stress");
     ModuleBase::timer::tick("Sto_Stress_PW", "cal_stress");
@@ -55,7 +55,7 @@ void Sto_Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_loc(ucell_in,sigmaloc, rho_basis, nlpp->vloc, p_sf, true, chr);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, true, nlpp->numeric, chr);
+    this->stress_cc(sigmaxcc, rho_basis, ucell_in, p_sf, true, nlpp->numeric, chr);
 
     // nonlocal
     this->sto_stress_nl(sigmanl, wg, p_sf, p_symm, p_kv, wfc_basis, *nlpp, ucell_in, psi_in, stowf);

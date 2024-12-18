@@ -302,11 +302,11 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 
     Force_Stress_LCAO<TK> fsl(this->RA, ucell.nat);
 
-    fsl.getForceStress(PARAM.inp.cal_force,
+    fsl.getForceStress(ucell,
+                       PARAM.inp.cal_force,
                        PARAM.inp.cal_stress,
                        PARAM.inp.test_force,
                        PARAM.inp.test_stress,
-                       ucell,
                        this->gd,
                        this->pv,
                        this->pelec,

@@ -97,7 +97,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_loc(ucell,sigmaloc, rho_basis, nlpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, nlpp.numeric, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, nlpp.numeric, pelec->charge);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);

@@ -24,7 +24,7 @@
 #endif
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const elecstate::ElecState& elec,
                                        ModulePW::PW_Basis* rho_basis,
@@ -161,7 +161,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
         // DFT+U and DeltaSpin
         if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
-            this->cal_force_onsite(forceonsite, wg, wfc_basis, GlobalC::ucell, psi_in);
+            this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, psi_in);
         }
     }
 
@@ -169,7 +169,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
     // not relevant for PAW
     if (!PARAM.inp.use_paw)
     {
-        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, GlobalC::ucell);
+        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
     }
     else
     {

@@ -29,11 +29,11 @@ class Force_Stress_LCAO
     Force_Stress_LCAO(Record_adj& ra, const int nat_in);
     ~Force_Stress_LCAO();
 
-    void getForceStress(const bool isforce,
+    void getForceStress(UnitCell& ucell,
+                        const bool isforce,
                         const bool isstress,
                         const bool istestf,
                         const bool istests,
-                        const UnitCell& ucell,
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
@@ -66,7 +66,7 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& fcs, 
                        ModuleSymmetry::Symmetry* symm);
 
-    void calForcePwPart(const UnitCell& ucell,
+    void calForcePwPart(UnitCell& ucell,
                         ModuleBase::matrix& fvl_dvl,
                         ModuleBase::matrix& fewalds,
                         ModuleBase::matrix& fcc,
@@ -105,7 +105,7 @@ class Force_Stress_LCAO
                        const Parallel_Orbitals& pv,
                        const K_Vectors& kv);
 
-    void calStressPwPart(const UnitCell& ucell,
+    void calStressPwPart(UnitCell& ucell,
                          ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
                          ModuleBase::matrix& sigmaewa,

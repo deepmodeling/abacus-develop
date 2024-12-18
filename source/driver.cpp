@@ -43,9 +43,6 @@ void Driver::init()
     // (4) close all of the running logs
     ModuleBase::Global_File::close_all_log(GlobalV::MY_RANK, PARAM.inp.out_alllog,PARAM.inp.calculation);
 
-    // (5) output the json file
-    // Json::create_Json(&GlobalC::ucell.symm,GlobalC::ucell.atoms,&INPUT);
-    Json::create_Json(&GlobalC::ucell, PARAM);
 }
 
 void Driver::print_start_info()
@@ -180,7 +177,7 @@ void Driver::atomic_world()
     //--------------------------------------------------
 
     // where the actual stuff is done
-    this->driver_run(GlobalC::ucell);
+    this->driver_run();
 
     ModuleBase::timer::finish(GlobalV::ofs_running);
     ModuleBase::Memory::print_all(GlobalV::ofs_running);

@@ -33,7 +33,7 @@ class Forces
     Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
-    void cal_force(const UnitCell& ucell,
+    void cal_force(UnitCell& ucell,
                    ModuleBase::matrix& force,
                    const elecstate::ElecState& elec,
                    ModulePW::PW_Basis* rho_basis,

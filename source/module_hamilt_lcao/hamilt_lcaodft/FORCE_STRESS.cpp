@@ -31,11 +31,11 @@ Force_Stress_LCAO<T>::~Force_Stress_LCAO()
 {
 }
 template <typename T>
-void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
+void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
+                                          const bool isforce,
                                           const bool isstress,
                                           const bool istestf,
                                           const bool istests,
-                                          const UnitCell& ucell,
                                           const Grid_Driver& gd,
                                           Parallel_Orbitals& pv,
                                           const elecstate::ElecState* pelec,
@@ -830,7 +830,7 @@ void Force_Stress_LCAO<T>::getForceStress(const bool isforce,
 
 // local pseudopotential, ewald, core correction, scc terms in force
 template <typename T>
-void Force_Stress_LCAO<T>::calForcePwPart(const UnitCell& ucell,
+void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
                                           ModuleBase::matrix& fvl_dvl,
                                           ModuleBase::matrix& fewalds,
                                           ModuleBase::matrix& fcc,
@@ -857,7 +857,7 @@ void Force_Stress_LCAO<T>::calForcePwPart(const UnitCell& ucell,
     //--------------------------------------------------------
     // force due to core correlation.
     //--------------------------------------------------------
-    f_pw.cal_force_cc(fcc, rhopw, chr, nlpp.numeric, GlobalC::ucell);
+    f_pw.cal_force_cc(fcc, rhopw, chr, nlpp.numeric, ucell);
     //--------------------------------------------------------
     // force due to self-consistent charge.
     //--------------------------------------------------------
@@ -975,7 +975,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 
 // vlocal, hartree, ewald, core correction, exchange-correlation terms in stress
 template <typename T>
-void Force_Stress_LCAO<T>::calStressPwPart(const UnitCell& ucell,
+void Force_Stress_LCAO<T>::calStressPwPart(UnitCell& ucell,
                                            ModuleBase::matrix& sigmadvl,
                                            ModuleBase::matrix& sigmahar,
                                            ModuleBase::matrix& sigmaewa,
@@ -1007,7 +1007,7 @@ void Force_Stress_LCAO<T>::calStressPwPart(const UnitCell& ucell,
     //--------------------------------------------------------
     // stress due to core correlation.
     //--------------------------------------------------------
-    sc_pw.stress_cc(sigmacc, rhopw, &sf, 0, nlpp.numeric, chr);
+    sc_pw.stress_cc(sigmacc, rhopw, ucell, &sf, 0, nlpp.numeric, chr);
 
     //--------------------------------------------------------
     // stress due to self-consistent charge.

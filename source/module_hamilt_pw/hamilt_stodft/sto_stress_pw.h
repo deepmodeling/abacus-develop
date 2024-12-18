@@ -26,7 +26,7 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                     const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                     const Charge* const chr,
                     pseudopot_cell_vnl* nlpp_in,
-                    const UnitCell& ucell_in);
+                    UnitCell& ucell_in);
 
   private:
     void sto_stress_kin(ModuleBase::matrix& sigma,

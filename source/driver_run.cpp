@@ -24,13 +24,12 @@
  * the configuration-changing subroutine takes force and stress and updates the
  * configuration
  */
-void Driver::driver_run(UnitCell& ucell)
+void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_line");
     ModuleBase::timer::tick("Driver", "driver_line");
 
     //! 1: setup cell and atom information
-
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
     if (PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "lcao") {
@@ -40,6 +39,13 @@ void Driver::driver_run(UnitCell& ucell)
 #endif
 
     // the life of ucell should begin here, mohan 2024-05-12
+    UnitCell ucell;
+    ucell.setup(PARAM.inp.latname,
+                    PARAM.inp.ntype,
+                    PARAM.inp.lmaxmax,
+                    PARAM.inp.init_vel,
+                    PARAM.inp.fixed_axes);
+
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
@@ -86,6 +92,8 @@ void Driver::driver_run(UnitCell& ucell)
 
     ModuleESolver::clean_esolver(p_esolver);
 
+    //! 6: output the json file
+    Json::create_Json(&ucell, PARAM);
     ModuleBase::timer::tick("Driver", "driver_line");
     return;
 }
