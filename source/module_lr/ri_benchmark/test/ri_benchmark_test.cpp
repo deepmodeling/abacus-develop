@@ -17,7 +17,6 @@ UnitCell::UnitCell() {
 }
 UnitCell::~UnitCell() {
     delete[] atoms;
-    delete[] iat2it;
 }
 // inline const int* UnitCell::get_iat2iwt(int iat) { return iat2iwt; }
 
@@ -25,8 +24,9 @@ TEST(RI_Benchmark, SlicePsi)
 {
     const int nk = 1, nbands = 2, nbasis = 3;
     psi::Psi<double> psi(nk, nbands, nbasis);
-    for (int i = 0; i < nk * nbands * nbasis; i++)
+    for (int i = 0; i < nk * nbands * nbasis; i++) {
         psi.get_pointer()[i] = i;
+}
     std::vector<double> psi_slice = RI_Benchmark::slice_psi(psi, 1, 1, 1, 2);
     EXPECT_DOUBLE_EQ(psi_slice[0], 4);
     EXPECT_DOUBLE_EQ(psi_slice[1], 5);
@@ -62,7 +62,7 @@ TEST(RI_Benchmark, CalCsMO)
 
 int main(int argc, char** argv)
 {
-    srand(time(NULL));  // for random number generator
+    srand(time(nullptr));  // for random number generator
     MPI_Init(&argc, &argv);
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
