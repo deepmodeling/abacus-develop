@@ -52,7 +52,11 @@ namespace ModuleESolver
         //! K points in Brillouin zone
         K_Vectors kv;
 
+        //! Plane-wave basis set for charge density
         ModulePW::PW_Basis* pw_rho;
+
+        //! parallel for rho grid
+        Parallel_Grid Pgrid;
 
         //! pointer to pseudopotential
         pseudopot_cell_vl* p_locpp = nullptr;

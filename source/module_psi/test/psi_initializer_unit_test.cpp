@@ -79,7 +79,7 @@ InfoNonlocal::~InfoNonlocal() {}
 #endif
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
-void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis) {}
+void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}
 std::complex<double>* Structure_Factor::get_sk(int ik, int it, int ia, ModulePW::PW_Basis_K const*wfc_basis) const
 {
     int npw = wfc_basis->npwk[ik];

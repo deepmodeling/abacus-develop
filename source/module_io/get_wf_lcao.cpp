@@ -24,6 +24,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                             const ModulePW::PW_Basis* pw_rhod,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const ModulePW::PW_Basis_Big* pw_big,
+                            const Parallel_Grid& pgrid,
                             const Parallel_Orbitals& para_orb,
                             Gint_Gamma& gg,
                             const int& out_wfc_pw,
@@ -122,7 +123,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 ss << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_ENV.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     pes_->charge->rho_save[is],
                     is,
                     nspin,
@@ -204,7 +205,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     wfc_real.data(),
                     is,
                     nspin,
@@ -216,7 +217,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     wfc_imag.data(),
                     is,
                     nspin,
@@ -259,6 +260,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                             const ModulePW::PW_Basis* pw_rhod,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const ModulePW::PW_Basis_Big* pw_big,
+                            const Parallel_Grid& pgrid,
                             const Parallel_Orbitals& para_orb,
                             Gint_k& gk,
                             const int& out_wf,
@@ -356,7 +358,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1 << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     pes_->charge->rho[ispin],
                     ispin,
                     nspin,
@@ -424,7 +426,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                     ss_real << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_REAL.cube";
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(pgrid,
                         wfc_real.data(),
                         ispin,
                         nspin,
@@ -437,7 +439,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
-                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(pgrid,
                         wfc_imag.data(),
                         ispin,
                         nspin,

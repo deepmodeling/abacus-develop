@@ -260,7 +260,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
 
     //! 10) initialize the real-space uniform grid for FFT and parallel
     //! distribution of plane waves
-    GlobalC::Pgrid.init(this->pw_rhod->nx,
+    Pgrid.init(this->pw_rhod->nx,
                         this->pw_rhod->ny,
                         this->pw_rhod->nz,
                         this->pw_rhod->nplane,
@@ -269,7 +269,7 @@ void ESolver_KS<T, Device>::before_all_runners(UnitCell& ucell, const Input_para
                         pw_big->bz);
 
     //! 11) calculate the structure factor
-    this->sf.setup_structure_factor(&ucell, this->pw_rhod);
+    this->sf.setup_structure_factor(&ucell, Pgrid, this->pw_rhod);
 
 #ifdef USE_PAW
     if (PARAM.inp.use_paw)
@@ -709,7 +709,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                 data = this->pelec->charge->rho_save[is];
             }
             std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(Pgrid,
                                           data,
                                           is,
                                           PARAM.inp.nspin,
@@ -722,7 +722,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
             if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
             {
                 fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(Pgrid,
                                               this->pelec->charge->kin_r_save[is],
                                               is,
                                               PARAM.inp.nspin,

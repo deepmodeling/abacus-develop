@@ -52,6 +52,7 @@ class IState_Charge
                const std::string& global_out_dir,
                std::ofstream& ofs_warning,
                const UnitCell* ucell_in,
+               const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv);
 
@@ -80,6 +81,7 @@ class IState_Charge
                const std::string& global_out_dir,
                std::ofstream& ofs_warning,
                UnitCell* ucell_in,
+               const Parallel_Grid& pgrid,
                const Grid_Driver* GridD_in,
                const K_Vectors& kv,
                const bool if_separate_k,

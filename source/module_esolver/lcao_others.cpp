@@ -249,7 +249,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     // pelec should be initialized before these calculations
-    this->pelec->init_scf(istep, ucell,this->sf.strucFac, this->ppcell.numeric, ucell.symm);
+    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {
@@ -279,6 +279,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
                       &ucell,
+                      this->Pgrid,
                       &this->gd,
                       this->kv);
         }
@@ -308,10 +309,11 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       PARAM.globalv.global_out_dir,
                       GlobalV::ofs_warning,
                       &ucell,
+                      this->Pgrid,
                       &this->gd,
                       this->kv,
                       PARAM.inp.if_separate_k,
-                      &GlobalC::Pgrid,
+                      &this->Pgrid,
                       this->pelec->charge->ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
@@ -327,6 +329,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
+                      this->Pgrid,
                       this->pv,
                       this->GG,
                       PARAM.inp.out_wfc_pw,
@@ -348,6 +351,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->pw_rhod,
                       this->pw_wfc,
                       this->pw_big,
+                      this->Pgrid,
                       this->pv,
                       this->GK,
                       PARAM.inp.out_wfc_pw,

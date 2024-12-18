@@ -40,6 +40,7 @@ class PotSurChem : public PotBase
         }
 
         v_eff += this->surchem_->v_correction(*ucell,
+                                              *chg->pgrid,
                                               const_cast<ModulePW::PW_Basis*>(this->rho_basis_),
                                               v_eff.nr,
                                               chg->rho,

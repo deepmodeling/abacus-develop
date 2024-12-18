@@ -271,7 +271,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->CE.update_all_dis(ucell);
         this->CE.extrapolate_charge(
 #ifdef __MPI
-            &(GlobalC::Pgrid),
+            &this->Pgrid,
 #endif
             ucell,
             this->pelec->charge,
@@ -308,7 +308,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, ucell,this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
+    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -317,7 +317,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->pelec->charge->rho[is],
                                           is,
                                           PARAM.inp.nspin,
@@ -335,7 +335,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         {
             std::stringstream ss;
             ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+            ModuleIO::write_vdata_palgrid(this->Pgrid,
                                           this->pelec->pot->get_effective_v(is),
                                           is,
                                           PARAM.inp.nspin,
@@ -703,7 +703,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
                               this->pw_rhod,
                               this->pw_wfc,
                               this->ctx,
-                              GlobalC::Pgrid,
+                              this->Pgrid,
                               PARAM.globalv.global_out_dir,
                               PARAM.inp.if_separate_k);
     }
