@@ -345,6 +345,12 @@ template <typename T, typename Device> T& Psi<T, Device>::operator()(const int i
     return this->psi_current[ikb2 * this->nbasis + ibasis];
 }
 
+template <typename T, typename Device> T& Psi<T, Device>::operator()(const int ibasis) const
+{
+    assert(ibasis >= 0 && ibasis < this->nbasis);
+    return this->psi_current[ibasis];
+}
+
 template <typename T, typename Device> int Psi<T, Device>::get_current_k() const
 {
     return this->current_k;

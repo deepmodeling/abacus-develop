@@ -86,12 +86,14 @@ class Psi
     /// if k_first=true, ikb=ik, ikb2=iband
     /// if k_first=false, ikb=iband, ikb2=ik
     T& operator()(const int ikb1, const int ikb2, const int ibasis) const;
+    
     /// use operator "(ikb2, ibasis)" to reach target element for current k
     /// if k_first=true, ikb2=iband
     /// if k_first=false, ikb2=ik
     T& operator()(const int ikb2, const int ibasis) const;
+    
     // use operator "(ibasis)" to reach target element for current k and current band
-    // T& operator()(const int ibasis) const;
+    T& operator()(const int ibasis) const;
 
     // return current k-point index
     int get_current_k() const;
