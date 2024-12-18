@@ -39,7 +39,6 @@ class HContainerTest : public ::testing::Test
     {
         delete HR;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
     }
 
     UnitCell ucell;

@@ -65,8 +65,6 @@ class ESolverDPTest : public ::testing::Test
     {
         // Clean up after each test
         delete esolver;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
         delete[] ucell.atoms;
         delete[] ucell.atom_label;
     }
