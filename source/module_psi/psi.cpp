@@ -53,14 +53,8 @@ template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, cons
 {
     this->k_first = k_first_in;
     
-    if (nk_in == 1)
-    {
-        this->ngk = nullptr;
-    }
-    else
-    {
-        this->ngk = ngk_in;
-    }
+
+    this->ngk = ngk_in;
 
     this->current_b = 0;
     this->current_k = 0;
