@@ -10,7 +10,6 @@ namespace ModuleESolver
 
 void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
-    ucell_ = &ucell;
     lj_potential = 0;
     lj_force.create(ucell.nat, 3);
     lj_virial.create(3, 3);
@@ -21,13 +20,13 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
                                "data_?");
 
     // determine the maximum rcut and lj_rcut
-    rcut_search_radius(inp.mdp.lj_rcut);
+    rcut_search_radius(ucell.ntype, inp.mdp.lj_rcut);
 
     // determine the LJ parameters
-    set_c6_c12(inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
+    set_c6_c12(ucell.ntype, inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
 
     // calculate the energy shift so that LJ energy is zero at rcut
-    cal_en_shift(inp.mdp.lj_eshift);
+    cal_en_shift(ucell.ntype, inp.mdp.lj_eshift);
 }
 
 void ESolver_LJ::runner(UnitCell& ucell, const int istep)
@@ -98,7 +97,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     void ESolver_LJ::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
     {
         force = lj_force;
-        ModuleIO::print_force(GlobalV::ofs_running, *ucell_, "TOTAL-FORCE (eV/Angstrom)", force, false);
+        ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", force, false);
     }
 
     void ESolver_LJ::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
@@ -124,7 +123,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         GlobalV::ofs_running << " --------------------------------------------\n\n" << std::endl;
     }
 
-    double ESolver_LJ::LJ_energy(const double d, const int i, const int j)
+    double ESolver_LJ::LJ_energy(const double& d, const int& i, const int& j)
     {
         assert(d > 1e-6); // avoid atom overlap
         const double r2 = d * d;
@@ -133,7 +132,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         return lj_c12(i, j) / (r6 * r6) - lj_c6(i, j) / r6;
     }
 
-    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const ModuleBase::Vector3<double> dr, const int i, const int j)
+    ModuleBase::Vector3<double> ESolver_LJ::LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j)
     {
         const double d = dr.norm();
         assert(d > 1e-6); // avoid atom overlap
@@ -145,8 +144,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         return dr * coff;
     }
 
-    void ESolver_LJ::LJ_virial(const ModuleBase::Vector3<double>& force,
-        const ModuleBase::Vector3<double>& dtau)
+    void ESolver_LJ::LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau)
     {
         for (int i = 0; i < 3; ++i)
         {
@@ -157,9 +155,8 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    void ESolver_LJ::rcut_search_radius(const std::vector<double>& rcut)
+    void ESolver_LJ::rcut_search_radius(const int& ntype, const std::vector<double>& rcut)
     {
-        const int ntype = this->ucell_->ntype;
         lj_rcut.create(ntype, ntype);
         double rcut_max = 0.0;
 
@@ -193,9 +190,11 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         search_radius = rcut_max + 0.01;
     }
 
-    void ESolver_LJ::set_c6_c12(const int rule, const std::vector<double> epsilon, const std::vector<double> sigma)
+    void ESolver_LJ::set_c6_c12(const int& ntype,
+                                const int& rule,
+                                const std::vector<double>& epsilon,
+                                const std::vector<double>& sigma)
     {
-        const int ntype = this->ucell_->ntype;
         lj_c6.create(ntype, ntype);
         lj_c12.create(ntype, ntype);
 
@@ -269,9 +268,8 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    void ESolver_LJ::cal_en_shift(const bool is_shift)
+    void ESolver_LJ::cal_en_shift(const int& ntype, const bool& is_shift)
     {
-        const int ntype = this->ucell_->ntype;
         en_shift.create(ntype, ntype);
 
         if (is_shift)

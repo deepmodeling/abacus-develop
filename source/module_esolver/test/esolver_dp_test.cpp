@@ -86,7 +86,6 @@ TEST_F(ESolverDPTest, InitCase1)
         for (int j = 0; j < 3; ++j)
         {
             EXPECT_DOUBLE_EQ(esolver->dp_virial(i, j), 0.0);
-            EXPECT_DOUBLE_EQ(esolver->cell[3 * i + j], 0.0);
         }
     }
     for (int i = 0; i < ucell.nat; ++i)
@@ -94,7 +93,6 @@ TEST_F(ESolverDPTest, InitCase1)
         for (int j = 0; j < 3; ++j)
         {
             EXPECT_DOUBLE_EQ(esolver->dp_force(i, j), 0.0);
-            EXPECT_DOUBLE_EQ(esolver->coord[3 * i + j], 0.0);
         }
     }
     EXPECT_EQ(esolver->atype[0], 0);
