@@ -4,7 +4,7 @@
 #include "module_basis/module_ao/ORB_atomic.h"
 #include "gint_type.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class GintAtom
@@ -115,4 +115,4 @@ class GintAtom
 
 };
 
-} // namespace Gint
+} // namespace ModuleGint

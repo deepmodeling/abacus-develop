@@ -1,6 +1,6 @@
 #include "localcell_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
     LocalCellInfo::LocalCellInfo(
         int startidx_bx, int startidx_by, int startidx_bz,
@@ -25,12 +25,12 @@ namespace Gint
 
     int LocalCellInfo::biggrid_idx_3Dto1D(const Vec3i index_3d) const
     {
-        return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
+        return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
     }
 
     Vec3i LocalCellInfo::biggrid_idx_1Dto3D(const int index_1d) const
     {
-        return Gint::index1Dto3D(index_1d, nbx_, nby_, nbz_);
+        return index1Dto3D(index_1d, nbx_, nby_, nbz_);
     }
 
     Vec3i LocalCellInfo::get_bgrid_global_idx_3D(const Vec3i index_3d) const
@@ -94,12 +94,12 @@ namespace Gint
 
     int LocalCellInfo::meshgrid_idx_3Dto1D(const Vec3i index_3d) const
     {
-        return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
+        return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
     }
 
     Vec3i LocalCellInfo::meshgrid_idx_1Dto3D(const int index_1d) const
     {
-        return Gint::index1Dto3D(index_1d, nmx_, nmy_, nmz_);
+        return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
     }
 
     Vec3i LocalCellInfo::get_mgrid_global_idx_3D(const Vec3i index_3d) const
@@ -114,6 +114,28 @@ namespace Gint
     {
         Vec3i ucell_idx_3d = get_mgrid_global_idx_3D(meshgrid_idx_1Dto3D(index_1d));
         return unitcell_info_->meshgrid_idx_3Dto1D(ucell_idx_3d);
+    }
+
+    std::vector<int> LocalCellInfo::get_mgrids_local_idx_1D(const int index_1d) const
+    {
+        std::vector<int> local_idx;
+        auto index_3d = biggrid_idx_1Dto3D(index_1d);
+        Vec3i startidx(
+            index_3d.x * biggrid_info_->get_nmx(),
+            index_3d.y * biggrid_info_->get_nmy(),
+            index_3d.z * biggrid_info_->get_nmz());
+        for(int ix = 0; ix < biggrid_info_->get_nmx(); ++ix)
+        {
+            for(int iy = 0; iy < biggrid_info_->get_nmy(); ++iy)
+            {
+                for(int iz = 0; iz < biggrid_info_->get_nmz(); ++iz)
+                {
+                    Vec3i idx_3d = Vec3i(startidx.x + ix, startidx.y + iy, startidx.z + iz);
+                    local_idx.push_back(meshgrid_idx_3Dto1D(idx_3d));
+                }
+            }
+        }
+        return local_idx;
     }
 
 }

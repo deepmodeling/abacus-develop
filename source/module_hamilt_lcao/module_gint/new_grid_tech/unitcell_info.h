@@ -6,7 +6,7 @@
 #include "gint_helper.h"
 #include "gint_type.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class UnitCellInfo
@@ -42,13 +42,13 @@ class UnitCellInfo
         // transform the 1D index of a big grid in the unit cell to the 3D index
         Vec3i biggrid_idx_1Dto3D(const int index_1d) const
         {
-            return Gint::index1Dto3D(index_1d, nbx_, nby_, nbz_);
+            return index1Dto3D(index_1d, nbx_, nby_, nbz_);
         };
 
         // transform the 3D index of a biggrid in the unit cell to the 1D index
         int biggrid_idx_3Dto1D(const Vec3i index_3d) const
         {
-            return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
+            return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
         };
 
         // get the cartesian coordinate of a big grid in the unit cell from the 3D index
@@ -85,13 +85,17 @@ class UnitCellInfo
         // get the extended unitcell index of a big grid
         Vec3i get_unitcell_idx(const Vec3i index_3d) const
         {
-            return Vec3i(index_3d.x / nbx_, index_3d.y / nby_, index_3d.z / nbz_);
+            return Vec3i(floor_div(index_3d.x, nbx_),
+                         floor_div(index_3d.y, nby_),
+                         floor_div(index_3d.z, nbz_));
         };
 
         // map the extended big grid index to the big grid index in unitcell
         Vec3i map_ext_idx_to_ucell(const Vec3i index_3d) const
         {
-            return Vec3i(index_3d.x % nbx_, index_3d.y % nby_, index_3d.z % nbz_);
+            return Vec3i(index_3d.x - floor_div(index_3d.x, nbx_) * nbx_,
+                         index_3d.y - floor_div(index_3d.y, nby_) * nby_,
+                         index_3d.z - floor_div(index_3d.z, nbz_) * nbz_);
         };
 
 
@@ -102,13 +106,13 @@ class UnitCellInfo
         // transform the 1D index of a meshgrid in the unit cell to the 3D index
         Vec3i meshgrid_idx_1Dto3D(const int index_1d) const
         {
-            return Gint::index1Dto3D(index_1d, nmx_, nmy_, nmz_);
+            return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
         }
 
         // transform the 3D index of a meshgrid in the unit cell to the 1D index
         int meshgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
-            return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
+            return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
         }
 
         // get the cartesian coordinate of a meshgrid in the unit cell from the 3D index
@@ -166,4 +170,4 @@ class UnitCellInfo
 
 };
 
-} // namespace Gint
+} // namespace ModuleGint

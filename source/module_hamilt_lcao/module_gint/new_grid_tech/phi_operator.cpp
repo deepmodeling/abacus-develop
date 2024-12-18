@@ -1,7 +1,7 @@
 #include "phi_operator.h"
 #include "module_base/blas_connector.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 PhiOperator::PhiOperator(std::shared_ptr<BigGrid> biggrid)
@@ -10,7 +10,7 @@ PhiOperator::PhiOperator(std::shared_ptr<BigGrid> biggrid)
     rows_ = biggrid_->get_biggrid_info()->get_nmxyz();
     cols_ = biggrid_->get_mgrid_phi_len();
     is_atom_on_mgrids_ = biggrid_->get_is_atom_on_mgrids();
-    meshgrid_coords_ = biggrid_->get_mgrid_coords();
+    meshgrids_local_idx_ = biggrid_->get_mgrids_local_idx();
     atom_startidx_ = biggrid_->get_atom_startidx();
     atom_phi_len_ = biggrid_->get_atom_phi_len();
 }
@@ -19,16 +19,22 @@ void PhiOperator::set_phi(double* phi) const
 {
     for(const auto& atom : biggrid_->get_atoms())
     {
-        atom->set_phi(meshgrid_coords_, cols_, phi);
+        atom->set_phi(biggrid_->get_atom_relative_coords(*atom), cols_, phi);
         phi += atom->get_nw();
     }
+    if(biggrid_->get_idx() == 0)
+    {
+        printf("cols_ = %d\n", cols_);
+        writeArrayToFile(phi, rows_*cols_, "phi.txt");
+    }
+    exit(0);
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
 {
     for(const auto& atom : biggrid_->get_atoms())
     {
-        atom->set_phi_dphi(meshgrid_coords_, cols_, phi, dphi_x, dphi_y, dphi_z);
+        atom->set_phi_dphi(biggrid_->get_atom_relative_coords(*atom), cols_, phi, dphi_x, dphi_y, dphi_z);
         phi += atom->get_nw();
         dphi_x += atom->get_nw();
         dphi_y += atom->get_nw();
@@ -42,7 +48,7 @@ void PhiOperator::set_ddphi(
 {
     for(const auto& atom : biggrid_->get_atoms())
     {
-        atom->set_ddphi(meshgrid_coords_, cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
+        atom->set_ddphi(biggrid_->get_atom_relative_coords(*atom), cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
         ddphi_xx += atom->get_nw();
         ddphi_xy += atom->get_nw();
         ddphi_xz += atom->get_nw();
@@ -93,8 +99,8 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
             const int end_idx = atom_pair_endidx_(i, j);
             const int len = end_idx - start_idx + 1;
 
-            // if len == 0, it means this atom pair does not affect any meshgrid in this biggrid
-            if(len == 0)
+            // if len<=0, it means this atom pair does not affect any meshgrid in this biggrid
+            if(len <= 0)
             {
                 continue;
             }
@@ -105,17 +111,14 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
     }
 }
 
-void PhiOperator::phi_mul_vldr3(const double* vldr3, const double* const* phi, double** result) const
+void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* const* phi, double** result) const
 {
     for(int i = 0; i < biggrid_->get_meshgrid_num(); i++)
     {
-        for(int j = 0; j < biggrid_->get_atom_num(); j++)
+        double vldr3_mgrid = vl[meshgrids_local_idx_[i]] * dr3;
+        for(int j = 0; j < cols_; j++)
         {
-            for(int k = 0; k < atom_phi_len_[j]; k++)
-            {
-                const int idx = atom_startidx_[j];
-                result[i][idx + k] = phi[i][idx + k] * vldr3[i];
-            }
+            result[i][j] = phi[i][j] * vldr3_mgrid;
         }
     }
 }
@@ -131,13 +134,13 @@ void PhiOperator::phi_mul_phi_vldr3(
     for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atoms()[i];
-        const auto r_i = atom_i->get_r();
+        const auto& r_i = atom_i->get_r();
         const int iat_i = atom_i->get_iat();
 
         for(int j = i; j < biggrid_->get_atom_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atoms()[j];
-            const auto r_j = atom_j->get_r();
+            const auto& r_j = atom_j->get_r();
             const int iat_j = atom_j->get_iat();
 
             // only calculate the upper triangle matrix
@@ -158,7 +161,7 @@ void PhiOperator::phi_mul_phi_vldr3(
             const int end_idx = atom_pair_endidx_(i, j);
             const int len = end_idx - start_idx + 1;
 
-            if(len == 0)
+            if(len <= 0)
             {
                 continue;
             }
@@ -181,6 +184,7 @@ int PhiOperator::atom_pair_startidx_(int a, int b) const
             return i;
         }
     }
+    return biggrid_->get_meshgrid_num();
 }
 
 int PhiOperator::atom_pair_endidx_(int a, int b) const
@@ -192,6 +196,7 @@ int PhiOperator::atom_pair_endidx_(int a, int b) const
             return i;
         }
     }
+    return -1;
 }
 
-} // namespace Gint
+} // namespace ModuleGint

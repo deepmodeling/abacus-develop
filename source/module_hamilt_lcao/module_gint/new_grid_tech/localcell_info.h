@@ -4,7 +4,7 @@
 #include "gint_type.h"
 #include "unitcell_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class LocalCellInfo
@@ -79,6 +79,9 @@ class LocalCellInfo
         // transform the 1D index of a meshgrid in the local cell to the 1D index in the unit cell
         int get_mgrid_global_idx_1D(const int index_1d) const;
 
+        // get the local index of meshgrids of the index_1d th biggrid
+        std::vector<int> get_mgrids_local_idx_1D(const int index_1d) const;
+
     private:
         //====================================================================
         // information about the big grid
@@ -122,4 +125,4 @@ class LocalCellInfo
         
 };
 
-} // namespace Gint
+} // namespace ModuleGint

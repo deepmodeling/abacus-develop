@@ -10,6 +10,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
 
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_helper.h"
+
 Grid_Technique::Grid_Technique() {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     if (PARAM.inp.device == "gpu") {
@@ -376,8 +378,11 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     int count = 0;
     this->how_many_atoms = std::vector<int>(nbxx, 0);
     ModuleBase::Memory::record("GT::how many atoms", sizeof(int) * nbxx);
+    std::vector<double> coord_x(total_atoms_on_grid* bxyz, 0.0);
+    std::vector<double> coords3(bxyz * 3, 0.0);
     for(int iat = 0; iat < ucell.nat; iat++)
     {
+        // printf("tau_in_bigcell[%d] = %f %f %f\n", iat, this->tau_in_bigcell[iat][0], this->tau_in_bigcell[iat][1], this->tau_in_bigcell[iat][2]);
         const int it = ucell.iat2it[iat];
         const double rcut_square = this->rcuts[it] * this->rcuts[it];
         // zero bigcell of meshball indicate ?
@@ -429,14 +434,29 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
             this->which_atom[index] = iat;
             this->which_bigcell[index] = im;
             this->which_unitcell[index] = index2ucell[extgrid];
+            for(int imcell = 0; imcell < this -> bxyz; imcell++)
+            {
+                const double dr_x = this->meshcell_pos[imcell][0] + dr_x_part;
+                coord_x[index * bxyz + imcell] = dr_x;
+            }
 
             ++count;
             ++how_many_atoms[bcell_idx_on_proc];
             }
         }
     }
+    for(int i = 0; i < this->bxyz; i++)
+    {
+        for(int j = 0; j < 3; j++)
+        {
+            coords3[i * 3 + j] = this->meshcell_pos[i][j];
+        }
+    }
     assert(count == total_atoms_on_grid);
     printf("total_atoms_on_grid = %d\n", total_atoms_on_grid);
+    // writeArrayToFile(this->which_atom.data(), this->which_atom.size(), "which_atom2.txt");
+    // writeArrayToFile(coord_x.data(), coord_x.size(), "coord_x2.txt");
+    // writeArrayToFile(coords3.data(), coords3.size(), "coords3.txt");
     return;
 }
 

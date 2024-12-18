@@ -4,7 +4,7 @@
 #include "gint_atom.h"
 #include "gint_helper.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 template <typename T>

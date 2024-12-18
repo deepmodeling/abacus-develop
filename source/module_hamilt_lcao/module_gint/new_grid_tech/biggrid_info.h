@@ -5,7 +5,7 @@
 #include "gint_helper.h"
 #include "meshgrid_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 /**
@@ -38,13 +38,13 @@ class BigGridInfo
         // get the 3D index of a meshgrid in the big grid from the 1D index
         Vec3i meshgrid_idx_1Dto3D(int index_1d) const
         {
-            return Gint::index1Dto3D(index_1d, nmx_, nmy_, nmz_);
+            return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
         };
 
         // get the 1D index of a meshgrid in the big grid from the 3D index
         int meshgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
-            return Gint::index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
+            return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
         };
         
         // get the cartesian coordinate of a meshgrid in the big grid from the 3D index
@@ -102,4 +102,4 @@ class BigGridInfo
         std::vector<Vec3d> meshgrid_coords_;
 };
 
-} // namespace Gint
+} // namespace ModuleGint

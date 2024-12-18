@@ -5,7 +5,7 @@
 #include <module_hamilt_lcao/module_hcontainer/hcontainer.h>
 #include "biggrid.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 /**
@@ -46,7 +46,8 @@ class PhiOperator
         const bool is_symm) const;
 
     void phi_mul_vldr3(
-        const double* vldr3,
+        const double* vl,
+        const double dr3,
         const double* const* phi,
         double** result) const;
     
@@ -71,12 +72,12 @@ class PhiOperator
     // the column number of the phi matrix
     // cols_ = biggrid_->get_mgrid_phi_len()
     int cols_;
-
-    // the coordinates of the meshgrids
-    std::vector<Vec3d> meshgrid_coords_;
+    
+    // the local index of the meshgrids
+    std::vector<int> meshgrids_local_idx_;
 
     // the big grid that the phi matrix is associated with
-    std::shared_ptr<const BigGrid> biggrid_;
+    std::shared_ptr<BigGrid> biggrid_;
 
     // record whether the atom affects the meshgrid
     // is_atom_on_mgrids_[i][j] = true if the ith atom affects the jth meshgrid, otherwise false

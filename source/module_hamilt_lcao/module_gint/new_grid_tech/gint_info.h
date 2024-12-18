@@ -13,7 +13,7 @@
 #include "localcell_info.h"
 #include "divide_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class GintInfo
@@ -30,6 +30,7 @@ class GintInfo
 
     // getter functions
     std::vector<std::shared_ptr<BigGrid>> get_biggrids() const { return biggrids_; };
+    double get_mgrid_volume() const { return unitcell_info_->get_meshgrid_info()->get_volume(); };
 
     //=========================================
     // functions about hcontainer
@@ -69,4 +70,4 @@ class GintInfo
     std::vector<int> ijr_info_;
 };
 
-} // namespace Gint
+} // namespace ModuleGint

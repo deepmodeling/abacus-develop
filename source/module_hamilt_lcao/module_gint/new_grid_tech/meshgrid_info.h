@@ -3,7 +3,7 @@
 #include "gint_type.h"
 #include "module_cell/unitcell.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class MeshGridInfo
@@ -33,6 +33,8 @@ class MeshGridInfo
 
                 // initialize the GT matrix
                 meshgrid_GT_ = meshgrid_latvec0_.Inverse();
+
+                meshgrid_volume_ = std::abs(meshgrid_latvec0_.Det());
             };
         
         // getter functions
@@ -41,6 +43,7 @@ class MeshGridInfo
         const Vec3d &get_vec3() const { return meshgrid_vec3_; };
         const Matrix3 &get_latvec0() const { return meshgrid_latvec0_; };
         const Matrix3 &get_GT() const { return meshgrid_GT_; };
+        const double get_volume() const { return meshgrid_volume_; };
 
     private:
         // basis vectors of meshgrid
@@ -58,6 +61,8 @@ class MeshGridInfo
         // meshgrid_GT_ = meshgrid_latvec0_.Inverse()
         // (x, y, z) * meshgrid_GT_ = (i, j, k)
         Matrix3 meshgrid_GT_;
+
+        double meshgrid_volume_;
 };
 
-} // namespace Gint
+} // namespace ModuleGint

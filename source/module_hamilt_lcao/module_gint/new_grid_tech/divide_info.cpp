@@ -1,6 +1,6 @@
 #include "divide_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 DivideInfo::DivideInfo(

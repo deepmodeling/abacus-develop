@@ -5,7 +5,7 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "gint_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class Gint_vl
@@ -13,9 +13,9 @@ class Gint_vl
     public:
     Gint_vl(
         std::shared_ptr<const GintInfo>gint_info,
-        double* vr_eff,
+        const double* vr_eff,
         hamilt::HContainer<double>* hR)
-        : gint_info_(gint_info), vr_eff_(vr_eff), hR_(hR){};
+        : gint_info_(gint_info), vr_eff_(vr_eff), hR_(hR), dr3_(gint_info->get_mgrid_volume()){};
     
     void cal_gint();
 
@@ -34,7 +34,7 @@ class Gint_vl
     std::shared_ptr<const GintInfo> gint_info_;
 
     // input
-    double* vr_eff_;
+    const double* vr_eff_;
 
     // output
     hamilt::HContainer<double>* hR_;
@@ -42,6 +42,8 @@ class Gint_vl
     //========================
     // Intermediate variables
     //========================
+    double dr3_;
+
     std::shared_ptr<hamilt::HContainer<double>> hRGint_;
 };
 

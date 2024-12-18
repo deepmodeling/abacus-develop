@@ -4,7 +4,7 @@
 #include "unitcell_info.h"
 #include "localcell_info.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class DivideInfo

@@ -8,7 +8,7 @@
 #include "unitcell_info.h"
 #include "gint_atom.h"
 
-namespace Gint
+namespace ModuleGint
 {
 
 class BigGrid
@@ -46,6 +46,9 @@ class BigGrid
 
         // get the coordinates of the meshgrids of the big grid
         vector<Vec3d> get_mgrid_coords() const;
+
+        // get the 1D index of the meshgrids in the local cell
+        vector<int> get_mgrids_local_idx() const;
 
         /**
          * @brief Get the coordinates of the meshgrids of the big grid relative to an atom
@@ -88,4 +91,4 @@ class BigGrid
         std::shared_ptr<const BigGridInfo> biggrid_info_;
 };
 
-} // namespace Gint
+} // namespace ModuleGint

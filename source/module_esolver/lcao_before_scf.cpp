@@ -115,6 +115,24 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                              dpsi_u,
                              d2psi_u,
                              PARAM.inp.nstream);
+
+    this->gint_info = std::make_shared<ModuleGint::GintInfo>(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb_.Phi,
+        ucell,
+        GlobalC::GridD);
+        
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();

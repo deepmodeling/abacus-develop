@@ -1,7 +1,7 @@
 #include "unitcell_info.h"
 #include "gint_helper.h"
 
-namespace Gint
+namespace ModuleGint
 {
     
 UnitCellInfo::UnitCellInfo(
