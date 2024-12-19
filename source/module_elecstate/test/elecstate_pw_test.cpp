@@ -7,6 +7,7 @@
 #undef private
 #define protected public
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #undef protected
 // mock functions for testing
 namespace elecstate
