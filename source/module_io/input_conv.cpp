@@ -170,11 +170,6 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
-    GlobalC::ucell.setup(PARAM.inp.latname,
-                         PARAM.inp.ntype,
-                         PARAM.inp.lmaxmax,
-                         PARAM.inp.init_vel,
-                         PARAM.inp.fixed_axes);
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {

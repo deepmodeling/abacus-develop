@@ -262,11 +262,8 @@ namespace GlobalC
 
 #include "module_cell/parallel_kpoints.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 namespace GlobalC
 {
-extern UnitCell ucell;
-extern Parallel_Grid Pgrid;
 extern Parallel_Kpoints Pkpoints;
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC

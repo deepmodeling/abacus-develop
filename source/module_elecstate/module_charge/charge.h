@@ -6,8 +6,9 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/pw_basis.h"
-#include "module_elecstate/fp_energy.h"
 #include "module_cell/module_symmetry/symmetry.h"
+#include "module_elecstate/fp_energy.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 
 //a forward declaration of UnitCell
 class UnitCell;
@@ -43,6 +44,7 @@ class Charge
     double **kin_r = nullptr; // kinetic energy density in real space, for meta-GGA
     double **kin_r_save = nullptr; // kinetic energy density in real space, for meta-GGA
                                    // wenfei 2021-07-28
+    const Parallel_Grid* pgrid = nullptr;
   private:
     //temporary
     double *_space_rho = nullptr, *_space_rho_save = nullptr;
@@ -73,6 +75,7 @@ class Charge
      */
     void init_rho(elecstate::efermi& eferm_iout,
                   const UnitCell& ucell,
+                  const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucFac,
                   ModuleSymmetry::Symmetry& symm,
                   const void* klist = nullptr,

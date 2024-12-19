@@ -114,12 +114,15 @@ class Stress_Func
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
+                   UnitCell& ucell,
                    const Structure_Factor* p_sf,
                    const bool is_pw,
                    const bool *numeric,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
+                     const double& omega,
+                     const double& tpiba2,
                      const int mesh,
                      const FPTYPE* r,
                      const FPTYPE* rab,

@@ -23,6 +23,7 @@
 
 void Charge::init_rho(elecstate::efermi& eferm_iout,
                       const UnitCell& ucell,
+                      const Parallel_Grid& pgrid,
                       const ModuleBase::ComplexMatrix& strucFac,
                       ModuleSymmetry::Symmetry& symm,
                       const void* klist,
@@ -33,7 +34,8 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     std::cout << " START CHARGE      : " << PARAM.inp.init_chg << std::endl;
     //here we need to set the omega for the charge density
     set_omega(&ucell.omega);
-    
+    this->pgrid = &pgrid;
+
     bool read_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
@@ -57,7 +59,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             {
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                if (ModuleIO::read_vdata_palgrid(pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),
@@ -107,7 +109,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
                                          << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                    if (ModuleIO::read_vdata_palgrid(pgrid,
                         (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
                         GlobalV::ofs_running,
                         ssc.str(),
@@ -170,7 +172,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                 // try to load from the output of `out_chg` 
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
-                if (ModuleIO::read_vdata_palgrid(GlobalC::Pgrid,
+                if (ModuleIO::read_vdata_palgrid(pgrid,
                     (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),

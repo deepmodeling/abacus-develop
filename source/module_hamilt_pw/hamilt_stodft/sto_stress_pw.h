@@ -29,7 +29,7 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                     const Charge* const chr,
                     const pseudopot_cell_vl* locpp,
                     const pseudopot_cell_vnl* nlpp,
-                    const UnitCell& ucell_in);
+                    UnitCell& ucell_in);
 
   private:
     void sto_stress_kin(ModuleBase::matrix& sigma,
@@ -50,6 +50,7 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                        const UnitCell& ucell,
                        const psi::Psi<std::complex<FPTYPE>, Device>& psi,
                        const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf);
+
   private:
     using resmem_var_op = base_device::memory::resize_memory_op<FPTYPE, Device>;
     using setmem_var_op = base_device::memory::set_memory_op<FPTYPE, Device>;

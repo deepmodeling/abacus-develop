@@ -94,7 +94,7 @@ void write_elecstat_pot(
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
-    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+    ModuleIO::write_vdata_palgrid(*chr->pgrid,
         v_elecstat.data(),
         is,
         nspin,

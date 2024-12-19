@@ -99,7 +99,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
 
     // initialize the real-space uniform grid for FFT and parallel
     // distribution of plane waves
-    GlobalC::Pgrid.init(pw_rho->nx,
+    Pgrid.init(pw_rho->nx,
                         pw_rho->ny,
                         pw_rho->nz,
                         pw_rho->nplane,
@@ -107,7 +107,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
                         pw_big->nbz,
                         pw_big->bz); // mohan add 2010-07-22, update 2011-05-04
     // Calculate Structure factor
-    sf.setup_structure_factor(&ucell, pw_rho);
+    sf.setup_structure_factor(&ucell, Pgrid, pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 
     // initialize local pseudopotential
@@ -119,7 +119,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(0, ucell,sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    this->pelec->init_scf(0, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -246,18 +246,10 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     if (ucell.ionic_position_updated)
     {
         CE.update_all_dis(ucell);
-        CE.extrapolate_charge(
-#ifdef __MPI
-            &(GlobalC::Pgrid),
-#endif
-            ucell,
-            pelec->charge,
-            &(sf),
-            GlobalV::ofs_running,
-            GlobalV::ofs_warning);
+        CE.extrapolate_charge(&Pgrid, ucell, pelec->charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
-    this->pelec->init_scf(istep,ucell, sf.strucFac, locpp.numeric, ucell.symm);
+    this->pelec->init_scf(istep, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
 
     // calculate ewald energy
     this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
@@ -415,7 +407,7 @@ void ESolver_OF::update_rho()
     //     Symmetry_rho srho;
     //     for (int is = 0; is < PARAM.inp.nspin; is++)
     //     {
-    //         srho.begin(is, *(pelec->charge), this->pw_rho, GlobalC::Pgrid, ucell.symm);
+    //         srho.begin(is, *(pelec->charge), this->pw_rho, Pgrid, ucell.symm);
     //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
     //         {
     //             this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);

@@ -7,6 +7,7 @@
 #include "surchem.h"
 
 ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
+                                         const Parallel_Grid& pgrid,
                                          const ModulePW::PW_Basis* rho_basis,
                                          const int& nspin,
                                          const double* const* const rho,
@@ -35,7 +36,7 @@ ModuleBase::matrix surchem::v_correction(const UnitCell& cell,
 
     cal_totn(cell, rho_basis, Porter_g, N, TOTN, vlocal);
 
-    cal_pseudo(cell, rho_basis, Porter_g, PS_TOTN, sf);
+    cal_pseudo(cell, pgrid, rho_basis, Porter_g, PS_TOTN, sf);
 
     ModuleBase::matrix v(nspin, rho_basis->nrxx);
 

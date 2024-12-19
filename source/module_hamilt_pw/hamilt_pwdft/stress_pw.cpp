@@ -71,17 +71,17 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_kin(sigmakin, this->pelec->wg, p_symm, p_kv, wfc_basis, ucell, d_psi_in);
 
     // hartree contribution
-    this->stress_har(ucell,sigmahar, rho_basis, 1, pelec->charge);
+    this->stress_har(ucell, sigmahar, rho_basis, 1, pelec->charge);
 
     // ewald contribution
-    this->stress_ewa(ucell,sigmaewa, rho_basis, 1);
+    this->stress_ewa(ucell, sigmaewa, rho_basis, 1);
 
     // xc contribution: add gradient corrections(non diagonal)
     for (int i = 0; i < 3; i++)
     {
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
-    this->stress_gga(ucell,sigmaxc, rho_basis, pelec->charge);
+    this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge);
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
         this->stress_mgga(ucell,
@@ -98,7 +98,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, locpp.numeric, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, ucell, p_sf, 1, locpp.numeric, pelec->charge);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);
@@ -113,7 +113,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     stress_vdw(sigmavdw, ucell);
 
     // DFT+U and DeltaSpin stress
-    if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+    if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
     {
         this->stress_onsite(sigmaonsite, this->pelec->wg, wfc_basis, ucell, d_psi_in, p_symm);
     }
@@ -149,7 +149,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("XC    STRESS", sigmaxc, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("EWALD    STRESS", sigmaewa, PARAM.inp.test_stress, ry);
         ModuleIO::print_stress("NLCC    STRESS", sigmaxcc, PARAM.inp.test_stress, ry);
-        if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
+        if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, PARAM.inp.test_stress, ry);
         }

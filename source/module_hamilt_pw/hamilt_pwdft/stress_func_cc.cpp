@@ -15,6 +15,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                                             ModulePW::PW_Basis* rho_basis,
+											UnitCell& ucell,
                                             const Structure_Factor* p_sf,
                                             const bool is_pw,
 											const bool *numeric,
@@ -34,9 +35,9 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	FPTYPE* rhocg;
 
 	int judge=0;
-	for(int nt=0;nt<GlobalC::ucell.ntype;nt++)
+	for(int nt=0;nt<ucell.ntype;nt++)
 	{
-		if(GlobalC::ucell.atoms[nt].ncpp.nlcc) 
+		if(ucell.atoms[nt].ncpp.nlcc) 
 		{
 			judge++;
 		}
@@ -54,7 +55,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	{
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
-            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, GlobalC::ucell.omega, GlobalC::ucell.tpiba, chr);
+            = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell.omega, ucell.tpiba, chr);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -65,8 +66,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 	else
 	{
-		elecstate::cal_ux(GlobalC::ucell);
-        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &GlobalC::ucell);
+		elecstate::cal_ux(ucell);
+        const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?
         // vtxc = std::get<1>(etxc_vtxc_v); // may delete?
         vxc = std::get<2>(etxc_vtxc_v);
@@ -103,17 +104,19 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	rhocg= new FPTYPE [rho_basis->ngg];
 
 	sigmadiag=0.0;
-	for(int nt=0;nt<GlobalC::ucell.ntype;nt++)
+	for(int nt=0;nt<ucell.ntype;nt++)
 	{
-		if(GlobalC::ucell.atoms[nt].ncpp.nlcc)
+		if(ucell.atoms[nt].ncpp.nlcc)
 		{
 			//drhoc();
 			this->deriv_drhoc(
 				numeric,
-				GlobalC::ucell.atoms[nt].ncpp.msh,
-				GlobalC::ucell.atoms[nt].ncpp.r.data(),
-				GlobalC::ucell.atoms[nt].ncpp.rab.data(),
-				GlobalC::ucell.atoms[nt].ncpp.rho_atc.data(),
+				ucell.omega,
+				ucell.tpiba2,
+				ucell.atoms[nt].ncpp.msh,
+				ucell.atoms[nt].ncpp.r.data(),
+				ucell.atoms[nt].ncpp.rab.data(),
+				ucell.atoms[nt].ncpp.rho_atc.data(),
 				rhocg,
 				rho_basis,
 				1);
@@ -135,10 +138,12 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
             }
 			this->deriv_drhoc (
 				numeric,
-				GlobalC::ucell.atoms[nt].ncpp.msh,
-				GlobalC::ucell.atoms[nt].ncpp.r.data(),
-				GlobalC::ucell.atoms[nt].ncpp.rab.data(),
-				GlobalC::ucell.atoms[nt].ncpp.rho_atc.data(),
+				ucell.omega,
+				ucell.tpiba2,
+				ucell.atoms[nt].ncpp.msh,
+				ucell.atoms[nt].ncpp.r.data(),
+				ucell.atoms[nt].ncpp.rab.data(),
+				ucell.atoms[nt].ncpp.rho_atc.data(),
 				rhocg,
 				rho_basis,
 				0);
@@ -162,7 +167,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 					{
                         const std::complex<FPTYPE> t
                             = conj(psic[ig]) * p_sf->strucFac(nt, ig) * rhocg[rho_basis->ig2igg[ig]]
-                              * GlobalC::ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
+                              * ucell.tpiba * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] / norm_g * fact;
                         //						sigmacc [l][ m] += t.real();
                         local_sigma(l,m) += t.real();
 					}//end m
@@ -209,6 +214,8 @@ template<typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::deriv_drhoc
 (
 	const bool &numeric,
+	const double& omega,
+	const double& tpiba2,
 	const int mesh,
 	const FPTYPE *r,
 	const FPTYPE *rab,
@@ -254,7 +261,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 				aux [ir] = r [ir] * r [ir] * rhoc [ir];
 			}
 			ModuleBase::Integral::Simpson_Integral(mesh, aux.data(), rab, rhocg1);
-			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / GlobalC::ucell.omega;
+			drhocg [0] = ModuleBase::FOUR_PI * rhocg1 / omega;
 			igl0 = 1;
 		} 
 		else
@@ -273,7 +280,7 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 #endif
 	for(int igl = igl0;igl< rho_basis->ngg;igl++)
 	{
-		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * GlobalC::ucell.tpiba2);
+		gx_arr[igl] = sqrt(rho_basis->gg_uniq[igl] * tpiba2);
 	}
 
 	double *r_d = nullptr;
@@ -298,12 +305,12 @@ void Stress_Func<FPTYPE, Device>::deriv_drhoc
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,omega,type);
 		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
-			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,GlobalC::ucell.omega,type);
+			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,omega,type);
 
 	}
     delmem_var_op()(this->ctx, r_d);

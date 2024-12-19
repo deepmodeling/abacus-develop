@@ -8,6 +8,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_cell/unitcell.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 class surchem
@@ -37,12 +38,17 @@ class surchem
     void cal_epsilon(const ModulePW::PW_Basis* rho_basis, const double* PS_TOTN_real, double* epsilon, double* epsilon0);
 
     void cal_pseudo(const UnitCell& cell,
+                    const Parallel_Grid& pgrid,
                     const ModulePW::PW_Basis* rho_basis,
                     const complex<double>* Porter_g,
                     complex<double>* PS_TOTN,
                     Structure_Factor* sf);
 
-    void gauss_charge(const UnitCell& cell, const ModulePW::PW_Basis* rho_basis, complex<double>* N, Structure_Factor* sf);
+    void gauss_charge(const UnitCell& cell,
+                      const Parallel_Grid& pgrid,
+                      const ModulePW::PW_Basis* rho_basis,
+                      complex<double>* N,
+                      Structure_Factor* sf);
 
     void cal_totn(const UnitCell& cell,
                   const ModulePW::PW_Basis* rho_basis,
@@ -97,6 +103,7 @@ class surchem
                complex<double>* lp);
 
     ModuleBase::matrix v_correction(const UnitCell& cell,
+                                    const Parallel_Grid& pgrid,
                                     const ModulePW::PW_Basis* rho_basis,
                                     const int& nspin,
                                     const double* const* const rho,

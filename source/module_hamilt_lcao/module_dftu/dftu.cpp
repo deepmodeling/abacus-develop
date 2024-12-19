@@ -59,6 +59,7 @@ void DFTU::init(UnitCell& cell, // unitcell class
     {
         orb_cutoff_ = orb->cutoffs();
     }
+    ucell = &cell;
 #endif
 
     // needs reconstructions in future
