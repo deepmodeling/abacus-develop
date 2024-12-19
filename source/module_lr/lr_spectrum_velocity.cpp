@@ -56,6 +56,7 @@ namespace LR
                 trans_dipole[i] += LR_Util::dot_R_matrix(*vR.get_current_term_pointer(i), *DM_trans.get_DMR_pointer(is + 1), ucell.nat) * fac;
             }   // end for spin_x, only matter in open-shell system
             trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
+            if (this->nspin_x == 1) { trans_dipole[i] *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
             Parallel_Reduce::reduce_all(trans_dipole[i]);
         }   // end for direction
         return convert_vector_to_vector3<T>(trans_dipole);
@@ -82,6 +83,7 @@ namespace LR
                 }
             }   // end for spin_x, only matter in open-shell system
             trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
+            if (this->nspin_x == 1) { trans_dipole[i] *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
             Parallel_Reduce::reduce_all(trans_dipole[i]);
         }   // end for direction
         return convert_vector_to_vector3<T>(trans_dipole);
@@ -101,11 +103,11 @@ namespace LR
     }
 
     template<typename T>
-    void LR::LR_Spectrum<T>::optical_absorption_method2(const std::vector<double>& freq, const double eta, const std::string& spintype)
+    void LR::LR_Spectrum<T>::optical_absorption_method2(const std::vector<double>& freq, const double eta)
     {
         ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption_velocity");
         // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
-        std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption_" + spintype + ".dat");
+        std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
         if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
         const double fac = 4 * M_PI * M_PI / ucell.omega * ModuleBase::e2 / this->nk;  // e2: Ry to Hartree in the denominator
         for (int f = 0;f < freq.size();++f)

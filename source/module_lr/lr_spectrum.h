@@ -32,9 +32,9 @@ namespace LR
             this->oscillator_strength();
         };
         /// @brief calculate the optical absorption spectrum with $Im[1/[(w+i\eta)^2-\Omega_S^2]]$
-        void optical_absorption_method1(const std::vector<double>& freq, const double eta, const std::string& spintype);
+        void optical_absorption_method1(const std::vector<double>& freq, const double eta);
         /// @brief calculate the optical absorption spectrum with lorentzian delta function
-        void optical_absorption_method2(const std::vector<double>& freq, const double eta, const std::string& spintype);
+        void optical_absorption_method2(const std::vector<double>& freq, const double eta);
         /// @brief print out the transition dipole moment and the main contributions to the transition amplitude
         void transition_analysis(const std::string& spintype);
 

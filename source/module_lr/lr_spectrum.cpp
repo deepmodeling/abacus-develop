@@ -81,6 +81,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
     }
     trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
     trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
+    if (this->nspin_x == 1) { trans_dipole *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
     Parallel_Reduce::reduce_all(trans_dipole.x);
     Parallel_Reduce::reduce_all(trans_dipole.y);
     Parallel_Reduce::reduce_all(trans_dipole.z);
@@ -134,6 +135,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
     }
     trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
     trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
+    if (this->nspin_x == 1) { trans_dipole *= sqrt(2.0); } // *2 for 2 spins, /sqrt(2) for the halfed dimension of X in the normalizaiton
     Parallel_Reduce::reduce_all(trans_dipole.x);
     Parallel_Reduce::reduce_all(trans_dipole.y);
     Parallel_Reduce::reduce_all(trans_dipole.z);
@@ -177,13 +179,13 @@ void LR::LR_Spectrum<T>::oscillator_strength()
 }
 
 template<typename T>
-void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta, const std::string& spintype)
+void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& freq, const double eta)
 {
     // ============test dipole================
     // this->cal_transition_dipoles_length();
-    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_length_" + spintype + ".dat");
+    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_length.dat");
     // this->cal_transition_dipoles_velocity();
-    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_" + spintype + ".dat");
+    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity.dat");
     // exit(0);
     // ============test dipole================
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
@@ -191,7 +193,7 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     // = -8*pi*Omega_S/V * mean_squared_dipole * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     // = -4*pi/V * oscilator_strength * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     std::vector<double>& osc = this->oscillator_strength_;
-    std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption_" + spintype + ".dat");
+    std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
     if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
     double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator
