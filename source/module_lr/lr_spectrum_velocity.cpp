@@ -55,6 +55,8 @@ namespace LR
             {
                 trans_dipole[i] += LR_Util::dot_R_matrix(*vR.get_current_term_pointer(i), *DM_trans.get_DMR_pointer(is + 1), ucell.nat) * fac;
             }   // end for spin_x, only matter in open-shell system
+            trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
+            Parallel_Reduce::reduce_all(trans_dipole[i]);
         }   // end for direction
         return convert_vector_to_vector3<T>(trans_dipole);
     }
@@ -79,6 +81,7 @@ namespace LR
                     trans_dipole[i] += std::inner_product(vk.begin(), vk.end(), DM_trans.get_DMK_pointer(is * nk + ik), std::complex<double>(0., 0.)) * fac;
                 }
             }   // end for spin_x, only matter in open-shell system
+            trans_dipole[i] *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
             Parallel_Reduce::reduce_all(trans_dipole[i]);
         }   // end for direction
         return convert_vector_to_vector3<T>(trans_dipole);
@@ -104,7 +107,7 @@ namespace LR
         // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
         std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption_" + spintype + ".dat");
         if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
-        const double fac = 4 * M_PI * M_PI / ucell.omega * ModuleBase::e2;  // e2: Ry to Hartree in the denominator
+        const double fac = 4 * M_PI * M_PI / ucell.omega * ModuleBase::e2 / this->nk;  // e2: Ry to Hartree in the denominator
         for (int f = 0;f < freq.size();++f)
         {
             double abs_value = 0.0;

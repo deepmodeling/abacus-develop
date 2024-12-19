@@ -80,6 +80,7 @@ ModuleBase::Vector3<double> LR::LR_Spectrum<double>::cal_transition_dipole_istat
         LR_Util::_deallocate_2order_nested_ptr(rho_trans, 1);
     }
     trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
+    trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
     Parallel_Reduce::reduce_all(trans_dipole.x);
     Parallel_Reduce::reduce_all(trans_dipole.y);
     Parallel_Reduce::reduce_all(trans_dipole.z);
@@ -132,6 +133,7 @@ ModuleBase::Vector3<std::complex<double>> LR::LR_Spectrum<std::complex<double>>:
         LR_Util::_deallocate_2order_nested_ptr(rho_trans_imag, 1);
     }
     trans_dipole *= (ucell.omega / static_cast<double>(gint->get_ncxyz()));   // dv
+    trans_dipole *= static_cast<double>(this->nk);  // nk is divided inside DM_trans, now recover it
     Parallel_Reduce::reduce_all(trans_dipole.x);
     Parallel_Reduce::reduce_all(trans_dipole.y);
     Parallel_Reduce::reduce_all(trans_dipole.z);
@@ -192,7 +194,7 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption_" + spintype + ".dat");
     if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
     double FourPI_div_c = ModuleBase::FOUR_PI / 137.036;
-    double fac = 4 * M_PI / ucell.omega * ModuleBase::e2;   // e2 for Ry to Hartree in the denominator
+    double fac = 4 * M_PI / ucell.omega * ModuleBase::e2 / this->nk;   // e2 for Ry to Hartree in the denominator
     for (int f = 0;f < freq.size();++f)
     {
         std::complex<double> f_complex = std::complex<double>(freq[f], eta);
