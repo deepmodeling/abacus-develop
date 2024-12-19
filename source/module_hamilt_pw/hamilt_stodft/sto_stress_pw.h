@@ -3,8 +3,10 @@
 
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 #include "sto_wf.h"
+
 // qianrui create 2021-6-4
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
@@ -25,7 +27,8 @@ class Sto_Stress_PW : public Stress_Func<FPTYPE, Device>
                     const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,
                     const Stochastic_WF<std::complex<FPTYPE>, Device>& stowf,
                     const Charge* const chr,
-                    pseudopot_cell_vnl* nlpp_in,
+                    const pseudopot_cell_vl* locpp,
+                    const pseudopot_cell_vnl* nlpp,
                     const UnitCell& ucell_in);
 
   private:

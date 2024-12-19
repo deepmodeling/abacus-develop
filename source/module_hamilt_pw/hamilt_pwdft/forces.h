@@ -9,6 +9,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"

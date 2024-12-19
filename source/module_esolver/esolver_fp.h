@@ -7,6 +7,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/module_charge/charge_extra.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 #include <fstream>
@@ -40,8 +41,12 @@ namespace ModuleESolver
         //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
         virtual void after_scf(UnitCell& ucell, const int istep);
 
-        //! Electronic states
-        elecstate::ElecState* pelec = nullptr;
+        //! ------------------------------------------------------------------------------
+        //! These pointers will be deleted in the free_pointers() function every ion step.
+        //! ------------------------------------------------------------------------------
+        elecstate::ElecState* pelec = nullptr; ///< Electronic states
+
+        //! ------------------------------------------------------------------------------
 
         //! Electorn charge density
         Charge chr;
@@ -54,8 +59,8 @@ namespace ModuleESolver
 
         ModulePW::PW_Basis* pw_rho;
 
-        //! pointer to pseudopotential
-        pseudopot_cell_vl* p_locpp = nullptr;
+        //! pointer to local pseudopotential
+        pseudopot_cell_vl locpp;
 
         /**
          * @brief same as pw_rho for ncpp. Here 'd' stands for 'dense'

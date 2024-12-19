@@ -1,7 +1,6 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
@@ -18,7 +17,7 @@
 // Calculate the non-local pseudopotential in reciprocal
 // space using plane wave as basis set.
 //==========================================================
-class pseudopot_cell_vnl : public pseudopot_cell_vl
+class pseudopot_cell_vnl
 {
 
   public:

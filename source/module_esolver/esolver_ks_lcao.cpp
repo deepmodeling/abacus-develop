@@ -199,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 8) initialize ppcell
-    this->ppcell.init_vloc(ucell, this->pw_rho);
+    this->locpp.init_vloc(ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     // 9) inititlize the charge density
@@ -212,7 +212,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
                                                     &ucell,
-                                                    &(this->ppcell.vloc),
+                                                    &(this->locpp.vloc),
                                                     &(this->sf),
                                                     &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
@@ -317,7 +317,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        orb_,
                        force,
                        this->scs,
-                       this->ppcell,
+                       this->locpp,
                        this->sf,
                        this->kv,
                        this->pw_rho,
@@ -465,7 +465,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     this->solvent,
                                     *this->pw_rho,
                                     *this->pw_rhod,
-                                    this->ppcell.vloc,
+                                    this->locpp.vloc,
                                     *this->pelec->charge,
                                     this->GG,
                                     this->GK,
@@ -493,7 +493,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             this->solvent,
                                             *this->pw_rho,
                                             *this->pw_rhod,
-                                            this->ppcell.vloc,
+                                            this->locpp.vloc,
                                             *this->pelec->charge,
                                             this->GG,
                                             this->GK,

@@ -179,7 +179,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
                                                     this->pw_rho,
                                                     &ucell,
-                                                    &this->ppcell.vloc,
+                                                    &this->locpp.vloc,
                                                     &(this->sf),
                                                     &(this->solvent),
                                                     &(this->pelec->f_en.etxc),
@@ -206,14 +206,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
         delete this->psi;
     }
 
-    //! init pseudopotential
-    this->ppcell.init(ucell,&this->sf, this->pw_wfc);
-
     //! initalize local pseudopotential
-    this->ppcell.init_vloc(ucell,this->pw_rhod);
+    this->locpp.init_vloc(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     //! Initalize non-local pseudopotential
+    this->ppcell.init(ucell, &this->sf, this->pw_wfc);
     this->ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
@@ -308,7 +306,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     elecstate::cal_ux(ucell);
 
     //! calculate the total local pseudopotential in real space
-    this->pelec->init_scf(istep, ucell,this->sf.strucFac, this->ppcell.numeric, ucell.symm, (void*)this->pw_wfc);
+    this->pelec->init_scf(istep, ucell, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
 
     //! output the initial charge density
     if (PARAM.inp.out_chg[0] == 2)
@@ -780,7 +778,7 @@ void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& fo
                  &ucell.symm,
                  &this->sf,
                  this->solvent,
-                 &this->ppcell,
+                 &this->locpp,
                  &this->ppcell,
                  &this->kv,
                  this->pw_wfc,
@@ -802,6 +800,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
                            : reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->kspw_psi);
     ss.cal_stress(stress,
                   ucell,
+                  this->locpp,
                   this->ppcell,
                   this->pw_rhod,
                   &ucell.symm,

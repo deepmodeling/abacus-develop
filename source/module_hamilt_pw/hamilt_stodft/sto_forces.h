@@ -28,6 +28,7 @@ class Sto_Forces : public Forces<FPTYPE, Device>
                       const Structure_Factor* p_sf,
                       K_Vectors* pkv,
                       ModulePW::PW_Basis_K* wfc_basis,
+                      const pseudopot_cell_vl& locpp,
                       const pseudopot_cell_vnl& nlpp,
                       UnitCell& ucell,
                       const psi::Psi<std::complex<FPTYPE>, Device>& psi_in,

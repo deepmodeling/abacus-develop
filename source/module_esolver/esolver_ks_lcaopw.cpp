@@ -251,7 +251,7 @@ namespace ModuleESolver
                                 *this->pw_wfc,
                                 *this->pw_rho,
                                 *this->pw_rhod,
-                                this->ppcell.vloc,
+                                this->locpp.vloc,
                                 *this->pelec->charge,
                                 this->kv,
                                 this->pelec->wg

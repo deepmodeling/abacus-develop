@@ -24,6 +24,7 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
                                               const Structure_Factor* p_sf,
                                               K_Vectors* pkv,
                                               ModulePW::PW_Basis_K* wfc_basis,
+                                              const pseudopot_cell_vl& locpp,
                                               const pseudopot_cell_vnl& nlpp,
                                               UnitCell& ucell,
                                               const psi::Psi<std::complex<FPTYPE>, Device>& psi,
@@ -41,11 +42,11 @@ void Sto_Forces<FPTYPE, Device>::cal_stoforce(ModuleBase::matrix& force,
     ModuleBase::matrix forcecc(this->nat, 3);
     ModuleBase::matrix forcenl(this->nat, 3);
     ModuleBase::matrix forcescc(this->nat, 3);
-    this->cal_force_loc(ucell,forcelc, rho_basis, nlpp.vloc, chr);
+    this->cal_force_loc(ucell, forcelc, rho_basis, locpp.vloc, chr);
     this->cal_force_ew(ucell,forceion, rho_basis, p_sf);
     this->cal_sto_force_nl(forcenl, wg, pkv, wfc_basis, p_sf, nlpp, ucell, psi, stowf);
-    this->cal_force_cc(forcecc, rho_basis, chr, nlpp.numeric, ucell);
-    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, nlpp.numeric, ucell);
+    this->cal_force_cc(forcecc, rho_basis, chr, locpp.numeric, ucell);
+    this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp.numeric, ucell);
 
     // impose total force = 0
     ModuleBase::matrix force_e;

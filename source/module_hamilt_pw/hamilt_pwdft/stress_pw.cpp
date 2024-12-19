@@ -8,6 +8,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
+                                           const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
                                            ModuleSymmetry::Symmetry* p_symm,
@@ -94,10 +95,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // local contribution
-    this->stress_loc(ucell,sigmaloc, rho_basis, nlpp.vloc, p_sf, 1, pelec->charge);
+    this->stress_loc(ucell, sigmaloc, rho_basis, locpp.vloc, p_sf, 1, pelec->charge);
 
     // nlcc
-    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, nlpp.numeric, pelec->charge);
+    this->stress_cc(sigmaxcc, rho_basis, p_sf, 1, locpp.numeric, pelec->charge);
 
     // nonlocal
     this->stress_nl(sigmanl, this->pelec->wg, this->pelec->ekb, p_sf, p_kv, p_symm, wfc_basis, d_psi_in, nlpp, ucell);

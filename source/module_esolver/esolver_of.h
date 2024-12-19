@@ -30,8 +30,6 @@ class ESolver_OF : public ESolver_FP
     virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
     virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
-  protected:
-    pseudopot_cell_vl locpp;
 
   private:
     // ======================= variables ==========================

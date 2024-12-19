@@ -69,7 +69,6 @@ ESolver_KS<T, Device>::ESolver_KS()
     p_chgmix = new Charge_Mixing();
     p_chgmix->set_rhopw(this->pw_rho, this->pw_rhod);
     this->ppcell.cell_factor = PARAM.inp.cell_factor;
-    this->p_locpp = &this->ppcell;
 }
 
 //------------------------------------------------------------------------------

@@ -44,7 +44,7 @@ class Force_Stress_LCAO
                         const LCAO_Orbitals& orb,
                         ModuleBase::matrix& fcs,
                         ModuleBase::matrix& scs,
-                        const pseudopot_cell_vnl& nlpp,
+                        const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
@@ -76,7 +76,7 @@ class Force_Stress_LCAO
                         const bool vnew_exist,
                         const Charge* const chr,
                         ModulePW::PW_Basis* rhopw,
-                        const pseudopot_cell_vnl& nlpp,
+                        const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf);
 
     void integral_part(const bool isGammaOnly,
@@ -114,7 +114,7 @@ class Force_Stress_LCAO
                          const double& etxc,
                          const Charge* const chr,
                          ModulePW::PW_Basis* rhopw,
-                         const pseudopot_cell_vnl& nlpp,
+                         const pseudopot_cell_vl& locpp,
                          const Structure_Factor& sf);
 
     static double force_invalid_threshold_ev;

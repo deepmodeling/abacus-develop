@@ -233,6 +233,7 @@ void ESolver_SDFT_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& 
                     &this->sf,
                     &this->kv,
                     this->pw_wfc,
+                    this->locpp,
                     this->ppcell,
                     ucell,
                     *this->kspw_psi,
@@ -253,6 +254,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
                   *this->kspw_psi,
                   this->stowf,
                   this->pelec->charge,
+                  &this->locpp,
                   &this->ppcell,
                   ucell);
 }
