@@ -5,6 +5,7 @@
 #include "module_base/module_device/types.h"
 
 #include <tuple>
+#include <vector>
 
 namespace psi
 {
@@ -38,7 +39,7 @@ class Psi
     // Constructor 1: basic
     Psi();
     // Constructor 2: specify ngk only, should call resize() later
-    Psi(const int* ngk_in);
+    // Psi(const int* ngk_in);
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
     // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in

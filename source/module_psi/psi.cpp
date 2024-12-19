@@ -41,12 +41,12 @@ template <typename T, typename Device> Psi<T, Device>::~Psi()
     if (this->allocate_inside) delete_memory_op()(this->ctx, this->psi);
 }
 
-template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
-{
-    this->ngk = ngk_in;
-    this->npol = PARAM.globalv.npol;
-    this->device = base_device::get_device_type<Device>(this->ctx);
-}
+// template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
+// {
+//     this->ngk = ngk_in;
+//     this->npol = PARAM.globalv.npol;
+//     this->device = base_device::get_device_type<Device>(this->ctx);
+// }
 
 template <typename T, typename Device> Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
