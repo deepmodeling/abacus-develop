@@ -231,7 +231,7 @@ TEST_F(TestPsi, size)
 TEST_F(TestPsi, range)
 {
     psi::Range range1(1);// k_first = 1;index_1 = 0;range_1 = 1;range_2 = 1;
-    psi::Range range2(0,1,0,0);
+    psi::Range range2(false,1,0,0);
     EXPECT_EQ(range1.range_1, 1);
     EXPECT_EQ(range1.range_2, 1);
     EXPECT_EQ(range2.k_first, 0);
@@ -316,12 +316,12 @@ TEST_F(TestPsi, band_first)
     EXPECT_EQ((*psi_band_32)(2), 42);
 
     // range
-    psi::Range b2_k11(0, 2, 1, 1);
-    psi::Range b13(0, -1, 1, 3);
-    psi::Range illegal_kfirst(1, 2, 1, 1);
-    psi::Range illegal_index1(0, 4, 2, 1);
-    psi::Range illegal_range1(0, -1, 3, 1);
-    psi::Range illegal_range2(0, 2, 1, 3);
+    psi::Range b2_k11(false, 2, 1, 1);
+    psi::Range b13(false, -1, 1, 3);
+    psi::Range illegal_kfirst(true, 2, 1, 1);
+    psi::Range illegal_index1(false, 4, 2, 1);
+    psi::Range illegal_range1(false, -1, 3, 1);
+    psi::Range illegal_range2(false, 2, 1, 3);
     EXPECT_EQ(std::get<0>(psi_band_c64->to_range(b2_k11))[1].real(), 51);
     EXPECT_EQ(std::get<1>(psi_band_c64->to_range(b2_k11)), 1);
     EXPECT_EQ(std::get<0>(psi_band_64->to_range(b13))[50], 70);
@@ -342,7 +342,7 @@ TEST_F(TestPsi, band_first)
     EXPECT_EQ(psi_band_32_b.get_nk(), ink);
     EXPECT_EQ(psi_band_32_b.get_nbands(), inbands);
     EXPECT_EQ(psi_band_32_b.get_nbasis(), inbasis);
-    for (int ik = 0;ik < ink;++ik)
+    for (int ik = 0;ik < ink;++ik) {
         for (int ib = 0;ib < inbands;++ib)
         {
             psi_band_32->fix_kb(ik, ib);
@@ -352,6 +352,7 @@ TEST_F(TestPsi, band_first)
             EXPECT_EQ(psi_band_32_k.get_psi_bias(), (ik * inbands + ib) * inbasis);
             EXPECT_EQ(psi_band_32_b.get_psi_bias(), (ib * ink + ik) * inbasis);
         }
+}
 
     delete psi_band_c64;
     delete psi_band_64;
