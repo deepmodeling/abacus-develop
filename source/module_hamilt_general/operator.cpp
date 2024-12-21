@@ -61,8 +61,11 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     }
 
     auto call_act = [&, this](const Operator* op, const bool& is_first_node) -> void {
+        
         // a "psi" with the bands of needed range
-        psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis());
+        psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis(), nullptr, true);
+        
+        
         switch (op->get_act_type())
         {
         case 2:
