@@ -167,7 +167,7 @@ class WriteWfcLcaoTest : public testing::Test
 TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 {
     // create a psi object
-    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local);
+    psi::Psi<double> my_psi(psi_local_double.data(), nk, nbands_local, nbasis_local, true);
     PARAM.sys.global_out_dir = "./";
     ModuleIO::write_wfc_nao(2, my_psi, ekb, wg, kvec_c, pv, -1);
 
@@ -196,7 +196,7 @@ TEST_F(WriteWfcLcaoTest, WriteWfcLcao)
 
 TEST_F(WriteWfcLcaoTest, WriteWfcLcaoComplex)
 {
-    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local);
+    psi::Psi<std::complex<double>> my_psi(psi_local_complex.data(), nk, nbands_local, nbasis_local, true);
     PARAM.sys.global_out_dir = "./";
     ModuleIO::write_wfc_nao(2, my_psi, ekb, wg, kvec_c, pv, -1);
 
