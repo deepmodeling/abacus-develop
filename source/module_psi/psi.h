@@ -66,6 +66,7 @@ class Psi
         const bool k_first_in = true);
 
     // Constructor 8-2: a pointer version of constructor 3
+    // only used in hsolver-pw function pointer.
     Psi(T* psi_pointer,
         const int nk_in,
         const int nbd_in,
