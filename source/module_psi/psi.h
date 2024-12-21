@@ -57,13 +57,23 @@ class Psi
     template <typename T_in, typename Device_in = Device>
     Psi(const Psi<T_in, Device_in>& psi_in);
 
-    // Constructor 8: a pointer version of constructor 3
+    // Constructor 8-1: a pointer version of constructor 3
     Psi(T* psi_pointer,
         const int nk_in,
         const int nbd_in,
         const int nbs_in,
         const int* ngk_in = nullptr,
         const bool k_first_in = true);
+
+    // Constructor 8-2: a pointer version of constructor 3
+    Psi(T* psi_pointer,
+        const int nk_in,
+        const int nbd_in,
+        const int nbs_in,
+        const std::vector<int>& ngk_vector_in,
+        const bool k_first_in = true);
+
+    
     // Destructor for deleting the psi array manually
     ~Psi();
 
