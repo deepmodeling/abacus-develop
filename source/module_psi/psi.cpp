@@ -44,13 +44,6 @@ Psi<T, Device>::~Psi()
     }
 }
 
-// template <typename T, typename Device> Psi<T, Device>::Psi(const int* ngk_in)
-// {
-//     this->ngk = ngk_in;
-//     this->npol = PARAM.globalv.npol;
-//     this->device = base_device::get_device_type<Device>(this->ctx);
-// }
-
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
@@ -70,40 +63,16 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
 }
 
 // Constructor 8-1:
-// template <typename T, typename Device>
-// Psi<T, Device>::Psi(T* psi_pointer,
-//                     const int nk_in,
-//                     const int nbd_in,
-//                     const int nbs_in,
-//                     const int* ngk_in,
-//                     const bool k_first_in)
-// {
-//     this->k_first = k_first_in;
-//     this->ngk = ngk_in;
-//     this->current_b = 0;
-//     this->current_k = 0;
-//     this->npol = PARAM.globalv.npol;
-//     this->device = base_device::get_device_type<Device>(this->ctx);
-//     this->nk = nk_in;
-//     this->nbands = nbd_in;
-//     this->nbasis = nbs_in;
-//     this->current_nbasis = nbs_in;
-//     this->psi_current = this->psi = psi_pointer;
-//     this->allocate_inside = false;
-//     // Currently only GPU's implementation is supported for device recording!
-//     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
-// }
-
-// Constructor 8-3:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer,
                     const int nk_in,
                     const int nbd_in,
                     const int nbs_in,
+                    const std::vector<int>& ngk_vector_in,
                     const bool k_first_in)
 {
     this->k_first = k_first_in;
-    this->ngk = nullptr;
+    this->ngk = ngk_vector_in.data();
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
@@ -120,15 +89,10 @@ Psi<T, Device>::Psi(T* psi_pointer,
 
 // Constructor 8-2:
 template <typename T, typename Device>
-Psi<T, Device>::Psi(T* psi_pointer,
-                    const int nk_in,
-                    const int nbd_in,
-                    const int nbs_in,
-                    const std::vector<int>& ngk_vector_in,
-                    const bool k_first_in)
+Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const bool k_first_in)
 {
     this->k_first = k_first_in;
-    this->ngk = ngk_vector_in.data();
+    this->ngk = nullptr;
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;

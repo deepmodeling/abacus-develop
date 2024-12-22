@@ -109,12 +109,6 @@ namespace LR_Util
         assert(psi_kfirst.get_nk() == 1);
         assert(nk_in * nbasis_in == psi_kfirst.get_nbasis());
 
-        // std::vector<int> ngk_vector(nk_in, 0);
-        // for (size_t i = 0; i < ngk_vector.size(); i++)
-        // {
-        //     ngk_vector[i] = psi_kfirst.get_ngk_pointer()[i];
-        // }
-
         int ib_now = psi_kfirst.get_current_b();
         psi_kfirst.fix_b(0);    // for get_pointer() to get the head pointer
         psi::Psi<T, Device> psi_bfirst(psi_kfirst.get_pointer(), nk_in, psi_kfirst.get_nbands(), nbasis_in, false);
@@ -128,12 +122,6 @@ namespace LR_Util
     {
         int ib_now = psi_bfirst.get_current_b();
         int ik_now = psi_bfirst.get_current_k();
-
-        // std::vector<int> ngk_vector(psi_bfirst.get_nk(), 0);
-        // for (size_t i = 0; i < ngk_vector.size(); i++)
-        // {
-        //     ngk_vector[i] = psi_bfirst.get_ngk_pointer()[i];
-        // }
 
         psi_bfirst.fix_kb(0, 0);    // for get_pointer() to get the head pointer
         psi::Psi<T, Device> psi_kfirst(psi_bfirst.get_pointer(), 1, psi_bfirst.get_nbands(), psi_bfirst.get_nk() * psi_bfirst.get_nbasis(), true);
