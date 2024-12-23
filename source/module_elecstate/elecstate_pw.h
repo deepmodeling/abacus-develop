@@ -35,6 +35,9 @@ class ElecStatePW : public ElecState
 
     virtual void cal_tau(const psi::Psi<T, Device>& psi);
 
+    //! calculate becsum for uspp
+    void cal_becsum(const psi::Psi<T, Device>& psi);
+
     Real* becsum = nullptr;
 
     //! init rho_data and kin_r_data
@@ -61,7 +64,7 @@ class ElecStatePW : public ElecState
     
     //! calcualte rho for each k
     void rhoBandK(const psi::Psi<T, Device>& psi);
-    
+
     //! add to the charge density in reciprocal space the part which is due to the US augmentation.
     void add_usrho(const psi::Psi<T, Device>& psi);
 

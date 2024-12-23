@@ -337,6 +337,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
     if (skip_charge)
     {
+        if (PARAM.globalv.use_uspp)
+        {
+            reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->cal_becsum(psi);
+        }
         ModuleBase::timer::tick("HSolverPW", "solve");
         return;
     }

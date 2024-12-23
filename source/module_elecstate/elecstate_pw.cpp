@@ -238,7 +238,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 {
     const T one{1, 0};
     const T zero{0, 0};
@@ -392,6 +392,12 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         }
     }
     delmem_complex_op()(this->ctx, becp);
+}
+
+template <typename T, typename Device>
+void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
+{
+    this->cal_becsum(psi);
 
     // transform soft charge to recip space using smooth grids
     T* rhog = nullptr;

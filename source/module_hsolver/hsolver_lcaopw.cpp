@@ -281,6 +281,10 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
     if (skip_charge)
     {
+        if (PARAM.globalv.use_uspp)
+        {
+            reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
+        }
         ModuleBase::timer::tick("HSolverLIP", "solve");
         return;
     }
