@@ -67,9 +67,9 @@ void ReadInput::item_deepks()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.deepks_out_unittest){
-                if (para.input.cal_force != 1)
+                if (para.input.cal_force != 1 || para.input.cal_stress != 1)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "force is required in generating deepks unittest");
+                    ModuleBase::WARNING_QUIT("ReadInput", "force and stress are required in generating deepks unittest");
                 }
             }
         };
