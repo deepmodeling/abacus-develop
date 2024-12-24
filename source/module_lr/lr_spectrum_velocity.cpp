@@ -8,7 +8,7 @@ namespace LR
 {
     /// get the velocity matrix v(R)
     inline TD_current get_velocity_matrix_R(const UnitCell& ucell,
-        Grid_Driver& gd,
+        const Grid_Driver& gd,
         const Parallel_Orbitals& pmat,
         const TwoCenterBundle& two_center_bundle)
     {

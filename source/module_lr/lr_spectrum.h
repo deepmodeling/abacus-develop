@@ -77,7 +77,7 @@ namespace LR
         const Parallel_Orbitals& pmat;
         typename TGint<T>::type* gint = nullptr;
         const ModulePW::PW_Basis& rho_basis;
-        Grid_Driver& gd_;
+        const Grid_Driver& gd_;
         const UnitCell& ucell;
         const std::vector<double>& orb_cutoff_;
         const TwoCenterBundle& two_center_bundle_;
