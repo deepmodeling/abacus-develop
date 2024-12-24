@@ -126,11 +126,11 @@ void test_deepks::check_gdmx()
     this->ld.init_gdmx(ucell.nat);
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
+        this->ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.psialpha, 0);
     }
     else
     {
-        this->ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 0);
+        this->ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.psialpha, 0);
     }
     this->ld.check_gdmx(ucell.nat);
 
@@ -241,7 +241,7 @@ void test_deepks::check_f_delta()
     svnl_dalpha.create(3, 3);
     if (PARAM.sys.gamma_only_local)
     {
-        const int nks=1;
+        const int nks = 1;
         ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, 1, svnl_dalpha);
     }
     else

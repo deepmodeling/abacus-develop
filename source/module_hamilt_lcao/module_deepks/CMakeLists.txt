@@ -1,8 +1,7 @@
 if(ENABLE_DEEPKS)
   list(APPEND objects
       LCAO_deepks.cpp
-      deepks_fgamma.cpp
-      deepks_fk.cpp
+      deepks_force.cpp
       LCAO_deepks_odelta.cpp
       LCAO_deepks_io.cpp
       LCAO_deepks_mpi.cpp

@@ -216,6 +216,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
+        // allocate <psi(0)|alpha(R)>, psialpha is different every ion step, so it is allocated here
+        GlobalC::ld.allocate_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
         // build and save <psi(0)|alpha(R)> at beginning
         GlobalC::ld.build_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, *(two_center_bundle_.overlap_orb_alpha));
 

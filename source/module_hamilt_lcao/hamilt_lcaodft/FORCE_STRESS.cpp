@@ -511,7 +511,14 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        GlobalC::ld.cal_gdmx(dm_gamma, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld.cal_gdmx(dm_gamma,
+                                             ucell,
+                                             orb,
+                                             gd,
+                                             kv.get_nks(),
+                                             kv.kvec_d,
+                                             GlobalC::ld.psialpha,
+                                             isstress);
                     }
                     else
                     {
@@ -520,7 +527,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld.cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld
+                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.psialpha, isstress);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {
