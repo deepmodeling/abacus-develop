@@ -27,10 +27,6 @@ class Gint_vl
     // that's why we need compose_hRGint_() to fill the lower triangle matrix.
     void cal_hRGint_();
 
-    void compose_hRGint_();
-
-    void transfer_hRGint_to_hR_();
-
     std::shared_ptr<const GintInfo> gint_info_;
 
     // input

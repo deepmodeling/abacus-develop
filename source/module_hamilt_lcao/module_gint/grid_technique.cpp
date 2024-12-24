@@ -453,7 +453,7 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
         }
     }
     assert(count == total_atoms_on_grid);
-    printf("total_atoms_on_grid = %d\n", total_atoms_on_grid);
+    printf("total_atoms_on_proc_old = %d\n", total_atoms_on_grid);
     // writeArrayToFile(this->which_atom.data(), this->which_atom.size(), "which_atom2.txt");
     // writeArrayToFile(coord_x.data(), coord_x.size(), "coord_x2.txt");
     // writeArrayToFile(coords3.data(), coords3.size(), "coords3.txt");
@@ -562,7 +562,6 @@ void Grid_Technique::init_ijr_and_nnrg(const UnitCell& ucell, const Grid_Driver&
     ModuleBase::TITLE("Grid_Technique", "init_ijr_and_nnrg");
 
     hamilt::HContainer<double> hRGint_tmp(ucell.nat);
-
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
     std::vector<int> orb_index(ucell.nat + 1);

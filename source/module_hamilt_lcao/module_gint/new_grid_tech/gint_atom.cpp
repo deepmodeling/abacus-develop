@@ -1,4 +1,3 @@
-#include "module_base/timer.h"
 #include "module_base/ylm.h"
 #include "module_base/array_pool.h"
 #include "gint_atom.h"
@@ -10,8 +9,6 @@ namespace ModuleGint
 template <typename T>
 void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi)
 {
-    ModuleBase::timer::tick("GintAtom", "set_phi");
-
     const int num_mgrids = coords.size();
 
     // orb_ does not have the member variable dr_uniform
@@ -41,7 +38,7 @@ void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi
 
         // 1e-9 is to avoid division by zero
         const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
-
+        // printf("coord.x = %.10f, coord.y = %.10f, coord.z = %.10f, dist = %f\n", coord.x, coord.y, coord.z, dist);
         if(dist > orb_->getRcut())
         {   
             // if the distance is larger than the cutoff radius,
@@ -54,7 +51,6 @@ void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi
             // TODO: vectorize the sph_harm function, 
             // the vectorized function can be called once for all meshgrids in a biggrid
             ModuleBase::Ylm::sph_harm(atom_->nwl, coord.x/dist, coord.y/dist, coord.z/dist, ylma);
-
             // interpolation
 
             // these parameters are related to interpolation
@@ -85,11 +81,13 @@ void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi
                         + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
                 }
                 phi[im * stride + iw] = psi * ylma[atom_->iw2_ylm[iw]];
+                // printf("phi[%d] = %.10f\n", im * stride + iw, phi[im * stride + iw]);
+                // printf("ylma[%d] = %.10f\n", atom_->iw2_ylm[iw], ylma[atom_->iw2_ylm[iw]]);
+                // printf("psi = %.10f\n", psi);
             }
+            // exit(0);
         }
     }
-
-    ModuleBase::timer::tick("GintAtom", "set_phi");
 }
 
 template <typename T>
@@ -97,8 +95,6 @@ void GintAtom::set_phi_dphi(
     const std::vector<Vec3d> coords, const int stride,
     T* phi, T* dphi_x, T* dphi_y, T* dphi_z)
 {
-    ModuleBase::timer::tick("GintAtom", "set_phi_dphi");
-
     const int num_mgrids = coords.size();
     
     // orb_ does not have the member variable dr_uniform
@@ -200,8 +196,6 @@ void GintAtom::set_phi_dphi(
             }
         }
     }
-
-    ModuleBase::timer::tick("GintAtom", "set_phi_dphi");
 }
 
 // explicit instantiation

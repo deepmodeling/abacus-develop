@@ -28,16 +28,6 @@ BigGridInfo::BigGridInfo(
         biggrid_latvec0_.e32 = biggrid_vec3_.y;
         biggrid_latvec0_.e33 = biggrid_vec3_.z;
 
-        printf("biggrid_latvec0_e11 = %.8f\n", biggrid_latvec0_.e11);
-        printf("biggrid_latvec0_e12 = %.8f\n", biggrid_latvec0_.e12);
-        printf("biggrid_latvec0_e13 = %.8f\n", biggrid_latvec0_.e13);
-        printf("biggrid_latvec0_e21 = %f\n", biggrid_latvec0_.e21);
-        printf("biggrid_latvec0_e22 = %f\n", biggrid_latvec0_.e22);
-        printf("biggrid_latvec0_e23 = %f\n", biggrid_latvec0_.e23);
-        printf("biggrid_latvec0_e31 = %f\n", biggrid_latvec0_.e31);
-        printf("biggrid_latvec0_e32 = %f\n", biggrid_latvec0_.e32);
-        printf("biggrid_latvec0_e33 = %f\n", biggrid_latvec0_.e33);
-
         // initialize the GT matrix
         biggrid_GT_ = biggrid_latvec0_.Inverse();
 

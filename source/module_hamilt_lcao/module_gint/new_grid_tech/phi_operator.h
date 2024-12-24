@@ -81,6 +81,7 @@ class PhiOperator
 
     // record whether the atom affects the meshgrid
     // is_atom_on_mgrids_[i][j] = true if the ith atom affects the jth meshgrid, otherwise false
+    // FIXME,std::vector<std::vector<bool>> is not a efficient data structure, we can use a 1D array to replace it. 
     std::vector<std::vector<bool>> is_atom_on_mgrids_;
 
     // the start index of the phi of each atom

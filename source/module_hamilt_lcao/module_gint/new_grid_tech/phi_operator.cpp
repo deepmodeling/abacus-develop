@@ -22,12 +22,6 @@ void PhiOperator::set_phi(double* phi) const
         atom->set_phi(biggrid_->get_atom_relative_coords(*atom), cols_, phi);
         phi += atom->get_nw();
     }
-    if(biggrid_->get_idx() == 0)
-    {
-        printf("cols_ = %d\n", cols_);
-        writeArrayToFile(phi, rows_*cols_, "phi.txt");
-    }
-    exit(0);
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
@@ -137,7 +131,7 @@ void PhiOperator::phi_mul_phi_vldr3(
         const auto& r_i = atom_i->get_r();
         const int iat_i = atom_i->get_iat();
 
-        for(int j = i; j < biggrid_->get_atom_num(); ++j)
+        for(int j = 0; j < biggrid_->get_atom_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atoms()[j];
             const auto& r_j = atom_j->get_r();
@@ -150,7 +144,7 @@ void PhiOperator::phi_mul_phi_vldr3(
             }
 
             // FIXME may be r = r_j - r_i
-            const auto result = hr->find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i-r_j);
+            const auto result = hr->find_matrix(iat_i, iat_j, r_i-r_j);
 
             if(result == nullptr)
             {

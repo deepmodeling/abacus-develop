@@ -27,20 +27,11 @@ GintInfo::GintInfo(
     // initialize the localcell information
     localcell_info_ = divide_info_->get_localcell_info();
 
-    Vec3d diff_1 = unitcell_info_->get_vec1() - (double)24 * unitcell_info_->get_biggrid_info()->get_vec1();
-    Vec3d diff_2 = unitcell_info_->get_vec2() - (double)24 * unitcell_info_->get_biggrid_info()->get_vec2();
-    Vec3d diff_3 = unitcell_info_->get_vec3() - (double)24 * unitcell_info_->get_biggrid_info()->get_vec3();
-    diff_1.print();
-    diff_2.print();
-    diff_3.print();
     // initialize the biggrids
     for (int i = 0; i < localcell_info_->get_biggrid_num(); i++)
     {
-        biggrids_.push_back(
-            std::make_shared<BigGrid>(i, localcell_info_));
+        biggrids_.push_back(std::make_shared<BigGrid>(i, localcell_info_));
     }
-
-    is_atom_in_proc_ = std::vector<bool>(ucell.nat, false);
 
     // initialize the atoms
     init_atoms_(ucell_->ntype, ucell_->atoms, Phi);
@@ -53,7 +44,7 @@ GintInfo::GintInfo(
         total_atoms_on_proc += biggrid->get_atom_num();
     }
     // printf("biggrid_num = %d\n", biggrid_num);
-    printf("total_atoms_on_proc = %d\n", total_atoms_on_proc);
+    printf("total_atoms_on_proc_new = %d\n", total_atoms_on_proc);
     // exit(0);
     // std::vector<int> which_atom;
     // std::vector<double> coords_x;
@@ -84,6 +75,7 @@ GintInfo::GintInfo(
     // writeArrayToFile(coords_x.data(), coords_x.size(), "coords_x.txt");
 
     // initialize the ijr_info
+    // this step needs to be done after init_atoms_, because it requires the information of is_atom_on_bgrid
     init_ijr_info_(ucell, gd);
 }
 
@@ -113,6 +105,8 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
     const double g3 = sqrt(biggrid_GT.e13 * biggrid_GT.e13
         + biggrid_GT.e23 * biggrid_GT.e23
         + biggrid_GT.e33 * biggrid_GT.e33);
+
+    is_atom_in_proc_ = std::vector<bool>(ucell_->nat, false);
 
 // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for(int i = 0; i < ntype; i++)
@@ -154,7 +148,6 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             // const Vec3d tau_in_biggrid = atom.tau[j] - unitcell_info_->get_biggrid_coord(atom_bgrid_idx);
             // const Vec3d tau_in_biggrid(0, 0, 0);
 
-            printf("tau_in_biggrid (%d)= %f %f %f\n", iat, tau_in_biggrid.x, tau_in_biggrid.y, tau_in_biggrid.z);
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
             std::map<Vec3i, std::shared_ptr<GintAtom>> gint_atom_map;
 
@@ -187,18 +180,12 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                                                      atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz()); 
                             auto gint_atom = std::make_shared<GintAtom>(&atom, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb);
                             gint_atom_map[ucell_idx_relative] = gint_atom;
-                            if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(*gint_atom))
-                            {
-                                biggrids_[bgrid_local_idx]->add_atom(gint_atom);
-                                atoms_.push_back(gint_atom);
-                                is_atom_in_proc_[iat] = true;
-                            }
-                        } else
+                            atoms_.push_back(gint_atom);
+                        }
+                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(*gint_atom_map[ucell_idx_relative]))
                         {
-                            if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(*gint_atom_map[ucell_idx_relative]))
-                            {
-                                biggrids_[bgrid_local_idx]->add_atom(gint_atom_map[ucell_idx_relative]);
-                            }
+                            biggrids_[bgrid_local_idx]->add_atom(gint_atom_map[ucell_idx_relative]);
+                            is_atom_in_proc_[iat] = true;
                         }
                     }
                 }
@@ -211,7 +198,6 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
 {
     hamilt::HContainer<double> hRGint_local(ucell.nat);
-
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
     std::vector<int> orb_index(ucell.nat + 1);
