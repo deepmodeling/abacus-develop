@@ -23,7 +23,8 @@ Velocity::Velocity
         ModuleBase::WARNING_QUIT("Velocity", "Constuctor of Operator::Velocity is failed, please check your code!");
     }
     this->tpiba = ucell_in -> tpiba;
-    if(this->nonlocal)      this->ppcell->initgradq_vnl(*this->ucell);
+    if(this->nonlocal) {      this->ppcell->initgradq_vnl(*this->ucell);
+}
 }
 
 void Velocity::init(const int ik_in)
