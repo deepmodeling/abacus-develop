@@ -149,52 +149,26 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
 }
 #endif
 
-template <>
-void DeePKS<OperatorLCAO<double, double>>::contributeHR()
-{
-    ModuleBase::TITLE("DeePKS", "contributeHR");
-#ifdef __DEEPKS
-    if (GlobalC::ld.get_hr_cal())
-    {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-        const Parallel_Orbitals* pv = this->hsk->get_pv();
-        GlobalC::ld.cal_projected_DM<double>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
-        GlobalC::ld.cal_descriptor(this->ucell->nat);
-        GlobalC::ld.cal_gedm(this->ucell->nat);
-        // recalculate the H_V_delta
-        this->H_V_delta->set_zero();
-        this->calculate_HR();
-
-        GlobalC::ld.set_hr_cal(false);
-
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-    }
-    // save H_V_delta to hR
-    this->hR->add(*this->H_V_delta);
-#endif
-}
-
-template <>
-void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
+template <typename TK, typename TR>
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
 #ifdef __DEEPKS
     ModuleBase::TITLE("DeePKS", "contributeHR");
-    // if DM_K changed, HR of DeePKS need to refresh.
+    // if DM changed, HR of DeePKS need to refresh.
     // the judgement is based on the status of HR in GlobalC::ld
-    // this operator should be informed that DM_K has changed and HR need to recalculate.
+    // this operator should be informed that DM has changed and HR need to recalculate.
     if (GlobalC::ld.get_hr_cal())
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
+        GlobalC::ld.cal_projected_DM<TK>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
         GlobalC::ld.cal_descriptor(this->ucell->nat);
-        // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
 
         // recalculate the H_V_delta
         if (this->H_V_delta == nullptr)
         {
-            this->H_V_delta = new hamilt::HContainer<double>(*this->hR);
+            this->H_V_delta = new hamilt::HContainer<TR>(*this->hR);
         }
         this->H_V_delta->set_zero();
         this->calculate_HR();
@@ -205,40 +179,6 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     }
     // save H_V_delta to hR
     this->hR->add(*this->H_V_delta);
-#endif
-}
-template <>
-void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
-{
-#ifdef __DEEPKS
-    ModuleBase::TITLE("DeePKS", "contributeHR");
-    // if DM_K changed, HR of DeePKS need to refresh.
-    // the judgement is based on the status of HR in GlobalC::ld
-    // this operator should be informed that DM_K has changed and HR need to recalculate.
-    if (GlobalC::ld.get_hr_cal())
-    {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-
-        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
-        GlobalC::ld.cal_descriptor(this->ucell->nat);
-        // calculate dE/dD
-        GlobalC::ld.cal_gedm(this->ucell->nat);
-
-        // recalculate the H_V_delta
-        if (this->H_V_delta == nullptr)
-        {
-            this->H_V_delta = new hamilt::HContainer<std::complex<double>>(*this->hR);
-        }
-        this->H_V_delta->set_zero();
-        this->calculate_HR();
-
-        GlobalC::ld.set_hr_cal(false);
-
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-    }
-    // save H_V_delta to hR
-    this->hR->add(*this->H_V_delta);
-
 #endif
 }
 
@@ -537,9 +477,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 #endif
 
 template class DeePKS<OperatorLCAO<double, double>>;
-
 template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
-
 template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 } // namespace hamilt
