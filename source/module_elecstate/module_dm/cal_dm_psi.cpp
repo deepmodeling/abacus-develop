@@ -32,8 +32,8 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
         // dm.fix_k(ik);
         // dm[ik].create(ParaV->ncol, ParaV->nrow);
         //  wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        // psi::Psi<double> wg_wfc(wfc, 1, );
-        psi::Psi<double> wg_wfc(1, nbands_local, nbasis_local);
+        
+        psi::Psi<double> wg_wfc(wfc, 1, nbands_local);
 
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)

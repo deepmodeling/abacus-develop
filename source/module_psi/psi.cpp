@@ -107,6 +107,34 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
 
+
+template <typename T, typename Device>
+Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
+{
+    assert(nk_in <= psi_in.get_nk());
+    if (nband_in == 0)
+    {
+        nband_in = psi_in.get_nbands();
+    }
+    this->k_first = psi_in.get_k_first();
+    this->device = psi_in.device;
+    this->resize(nk_in, nband_in, psi_in.get_nbasis());
+    this->ngk = psi_in.ngk;
+    this->npol = psi_in.npol;
+    if (nband_in <= psi_in.get_nbands())
+    {
+        // copy from Psi from psi_in(current_k, 0, 0),
+        // if size of k is 1, current_k in new Psi is psi_in.current_k
+        if (nk_in == 1)
+        {
+            // current_k for this Psi only keep the spin index same as the copied Psi
+            this->current_k = psi_in.get_current_k();
+        }
+        synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
+    }
+}
+
+
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
 {
@@ -208,11 +236,11 @@ template <typename T, typename Device>
 void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nbasis_in)
 {
     assert(nks_in > 0 && nbands_in >= 0 && nbasis_in > 0);
-    
+
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
     resize_memory_op()(this->ctx, this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
 
-    this->zero_out();
+    // this->zero_out();
 
     this->nk = nks_in;
     this->nbands = nbands_in;

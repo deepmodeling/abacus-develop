@@ -478,8 +478,8 @@ void IState_Charge::idmatrix(const int& ib,
 
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
         this->psi_gamma->fix_k(is);
-        // psi::Psi<double> wg_wfc(*this->psi_gamma, 1);
-        psi::Psi<double> wg_wfc(1, this->psi_gamma->get_nbands(), this->psi_gamma->get_nbasis());
+
+        psi::Psi<double> wg_wfc(*this->psi_gamma, 1, this->psi_gamma->get_nbands());
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
