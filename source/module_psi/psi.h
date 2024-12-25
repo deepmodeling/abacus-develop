@@ -5,6 +5,7 @@
 #include "module_base/module_device/types.h"
 
 #include <tuple>
+#include <vector>
 
 namespace psi
 {
@@ -37,22 +38,43 @@ class Psi
   public:
     // Constructor 1: basic
     Psi();
-    // Constructor 2: specify ngk only, should call resize() later
-    Psi(const int* ngk_in);
+
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
+
     // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
     Psi(const Psi& psi_in, const int nk_in, int nband_in = 0);
+
     // Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
     // in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in = 0);
+
     // Constructor 6: initialize a new psi from the given psi_in
     Psi(const Psi& psi_in);
+
     // Constructor 7: initialize a new psi from the given psi_in with a different class template
     // in this case, psi_in may have a different device type.
-    template <typename T_in, typename Device_in = Device> Psi(const Psi<T_in, Device_in>& psi_in);
-    // Constructor 8: a pointer version of constructor 3
-    Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
+    template <typename T_in, typename Device_in = Device>
+    Psi(const Psi<T_in, Device_in>& psi_in);
+
+    // Constructor 8-1: a pointer version of constructor 3
+    // only used in hsolver-pw function pointer.
+    Psi(T* psi_pointer,
+        const int nk_in,
+        const int nbd_in,
+        const int nbs_in,
+        const std::vector<int>& ngk_vector_in,
+        const bool k_first_in = true);
+
+    // Constructor 8-2: a pointer version of constructor 3
+    // only used in operator.cpp call_act func
+    Psi(T* psi_pointer,
+        const int nk_in,
+        const int nbd_in,
+        const int nbs_in,
+        const bool k_first_in);
+
+    
     // Destructor for deleting the psi array manually
     ~Psi();
 
@@ -77,10 +99,9 @@ class Psi
     /// if k_first=true: choose band index, then Psi(ibasis) can reach Psi(ik, iband, ibasis)
     /// if k_first=false: choose band index, then Psi(ik, ibasis) can reach Psi(iband, ik, ibasis)
     void fix_b(const int ib) const;
-    /// choose k-point index and band index, then Psi(ibasis) can reach 
+    /// choose k-point index and band index, then Psi(ibasis) can reach
     /// Psi(ik, iband, ibasis) for k_first=true or Psi(iband, ik, ibasis) for k_first=false
     void fix_kb(const int ik, const int ib) const;
-
 
     /// use operator "(ikb1, ikb2, ibasis)" to reach target element
     /// if k_first=true, ikb=ik, ikb2=iband
@@ -121,15 +142,15 @@ class Psi
     T* psi = nullptr; // avoid using C++ STL
 
     base_device::AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
-    Device* ctx = {}; // an context identifier for obtaining the device variable
+    Device* ctx = {};                        // an context identifier for obtaining the device variable
 
     // dimensions
-    int nk = 1; // number of k points
+    int nk = 1;     // number of k points
     int nbands = 1; // number of bands
     int nbasis = 1; // number of basis
 
-    mutable int current_k = 0; // current k point
-    mutable int current_b = 0; // current band index
+    mutable int current_k = 0;      // current k point
+    mutable int current_b = 0;      // current band index
     mutable int current_nbasis = 1; // current number of basis of current_k
 
     // current pointer for getting the psi
@@ -141,7 +162,7 @@ class Psi
 
     bool k_first = true;
 
-    bool allocate_inside = true;  ///<whether allocate psi inside Psi class
+    bool allocate_inside = true; ///< whether allocate psi inside Psi class
 
 #ifdef __DSP
     using delete_memory_op = base_device::memory::delete_memory_op_mt<T, Device>;
@@ -152,7 +173,6 @@ class Psi
 #endif
     using set_memory_op = base_device::memory::set_memory_op<T, Device>;
     using synchronize_memory_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
-
 };
 
 } // end of namespace psi

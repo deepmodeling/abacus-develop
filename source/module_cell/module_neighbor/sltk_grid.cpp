@@ -4,131 +4,231 @@
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
-#include "sltk_atom_input.h"
 
-//==================
-// Class CellSet
-//==================
-CellSet::CellSet()
+Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in)
 {
-    in_grid[0] = 0;
-    in_grid[1] = 0;
-    in_grid[2] = 0;
 }
 
-Grid::Grid(const int& test_grid_in) : test_grid(test_grid_in) {}
+Grid::~Grid()
+{
+    this->clear_atoms();
+}
 
-Grid::~Grid() {}
-
-void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const Atom_input& input)
+void Grid::init(std::ofstream& ofs_in, const UnitCell& ucell, const double radius_in, const bool boundary)
 {
     ModuleBase::TITLE("SLTK_Grid", "init");
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
+    this->pbc = boundary;
+    this->sradius2 = radius_in * radius_in;
+    this->sradius = radius_in;
 
-    this->setMemberVariables(ofs_in, input);
-    this->Build_Hash_Table(ucell, input);
-    this->setBoundaryAdjacent(ofs_in, input);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "PeriodicBoundary", this->pbc);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Radius(unit:lat0)", sradius);
+
+    this->Check_Expand_Condition(ucell);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "glayer", glayerX, glayerY, glayerZ);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "glayer_minus", glayerX_minus, glayerY_minus, glayerZ_minus);
+
+    this->setMemberVariables(ofs_in, ucell);
+    this->Construct_Adjacent(ucell);
+    ModuleBase::timer::tick("atom_arrange", "grid_d.init");
 }
 
-//==========================================================
-// MEMBER FUNCTION :
-// NAME : setMemberVariables(read in data from Atom_input)
-//==========================================================
+void Grid::Check_Expand_Condition(const UnitCell& ucell)
+{
+    //	ModuleBase::TITLE(GlobalV::ofs_running, "Atom_input", "Check_Expand_Condition");
+
+    if (!pbc)
+    {
+        return;
+    }
+
+    /*2016-07-19, LiuXh
+        // the unit of extent_1DX,Y,Z is lat0.
+        // means still how far can be included now.
+        double extent_1DX = glayerX * clength0 - dmaxX;
+        while (radius > extent_1DX)
+        {
+            glayerX++;
+            extent_1DX = glayerX * clength0 - dmaxX;
+        }
+        double extent_1DY = glayerY * clength1 - dmaxY;
+        while (radius > extent_1DY)
+        {
+            glayerY++;
+            extent_1DY = glayerY * clength1 - dmaxY;
+        }
+        double extent_1DZ = glayerZ * clength2 - dmaxZ;
+        while (radius > extent_1DZ)
+        {
+            glayerZ++;
+            extent_1DZ = glayerZ * clength2 - dmaxZ;
+        }
+
+        // in case the cell is not retangle.
+        // mohan added 2009-10-23
+        // if this is not added, it's a serious bug.
+        glayerX++;
+        glayerY++;
+        glayerZ++;
+        if(test_atom_input)
+        {
+            GlobalV::ofs_running << " Extend distance from the (maxX,maxY,maxZ) direct position in this unitcell: " <<
+    std::endl;
+        }
+
+        if(test_atom_input)OUT(GlobalV::ofs_running,"ExtentDim+",extent_1DX,extent_1DY,extent_1DZ);
+
+        double extent_1DX_minus = glayerX_minus * clength0 + dminX;
+        while (radius > extent_1DX_minus)
+        {
+            glayerX_minus++;
+            extent_1DX_minus = glayerX_minus * clength0 + dminX;
+        }
+        double extent_1DY_minus = glayerY_minus * clength1 + dminY;
+        while (radius > extent_1DY_minus)
+        {
+            glayerY_minus++;
+            extent_1DY_minus = glayerY_minus * clength1 + dminY;
+        }
+        double extent_1DZ_minus = glayerZ_minus * clength2 + dminZ;
+        while (radius > extent_1DZ_minus)
+        {
+            glayerZ_minus++;
+            extent_1DZ_minus = glayerZ_minus * clength2 + dminZ;
+        }
+
+        // in case the cell is not retangle.
+        // mohan added 2009-10-23
+        // if this is not added, it's a serious bug.
+        glayerX_minus++;
+        glayerY_minus++;
+        glayerZ_minus++;
+
+        //glayerX_minus++;
+        //glayerY_minus++;
+        //glayerZ_minus++;
+    2016-07-19, LiuXh*/
+    // Begin, 2016-07-19, LiuXh
+    double a23_1 = ucell.latvec.e22 * ucell.latvec.e33 - ucell.latvec.e23 * ucell.latvec.e32;
+    double a23_2 = ucell.latvec.e21 * ucell.latvec.e33 - ucell.latvec.e23 * ucell.latvec.e31;
+    double a23_3 = ucell.latvec.e21 * ucell.latvec.e32 - ucell.latvec.e22 * ucell.latvec.e31;
+    double a23_norm = sqrt(a23_1 * a23_1 + a23_2 * a23_2 + a23_3 * a23_3);
+    double extend_v = a23_norm * sradius;
+    double extend_d1 = extend_v / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    int extend_d11 = std::ceil(extend_d1);
+
+    double a31_1 = ucell.latvec.e32 * ucell.latvec.e13 - ucell.latvec.e33 * ucell.latvec.e12;
+    double a31_2 = ucell.latvec.e31 * ucell.latvec.e13 - ucell.latvec.e33 * ucell.latvec.e11;
+    double a31_3 = ucell.latvec.e31 * ucell.latvec.e12 - ucell.latvec.e32 * ucell.latvec.e11;
+    double a31_norm = sqrt(a31_1 * a31_1 + a31_2 * a31_2 + a31_3 * a31_3);
+    double extend_d2 = a31_norm * sradius / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    int extend_d22 = std::ceil(extend_d2);
+
+    double a12_1 = ucell.latvec.e12 * ucell.latvec.e23 - ucell.latvec.e13 * ucell.latvec.e22;
+    double a12_2 = ucell.latvec.e11 * ucell.latvec.e23 - ucell.latvec.e13 * ucell.latvec.e21;
+    double a12_3 = ucell.latvec.e11 * ucell.latvec.e22 - ucell.latvec.e12 * ucell.latvec.e21;
+    double a12_norm = sqrt(a12_1 * a12_1 + a12_2 * a12_2 + a12_3 * a12_3);
+    double extend_d3 = a12_norm * sradius / ucell.omega * ucell.lat0 * ucell.lat0 * ucell.lat0;
+    int extend_d33 = std::ceil(extend_d3);
+    // 2016-09-05, LiuXh
+
+    glayerX = extend_d11 + 1;
+    glayerY = extend_d22 + 1;
+    glayerZ = extend_d33 + 1;
+    glayerX_minus = extend_d11;
+    glayerY_minus = extend_d22;
+    glayerZ_minus = extend_d33;
+    // End, 2016-09-05, LiuXh
+
+}
+
+
 void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
-                              const Atom_input& input)
+                              const UnitCell& ucell)
 {
     ModuleBase::TITLE("SLTK_Grid", "setMemberVariables");
 
-    // mohan add 2010-09-05
-    // AdjacentSet::call_times = 0;
+    this->clear_atoms();
 
-    this->pbc = input.getBoundary();
-    this->sradius2 = input.getRadius() * input.getRadius();
-    this->sradius = input.getRadius();
-    this->expand_flag = input.getExpandFlag();
+    // random selection, in order to estimate again.
+    this->x_min = ucell.atoms[0].tau[0].x;
+    this->y_min = ucell.atoms[0].tau[0].y;
+    this->z_min = ucell.atoms[0].tau[0].z;
+    this->x_max = ucell.atoms[0].tau[0].x;
+    this->y_max = ucell.atoms[0].tau[0].y;
+    this->z_max = ucell.atoms[0].tau[0].z;
 
-    if (test_grid)
-    {
-        ModuleBase::GlobalFunc::OUT(ofs_in, "PeriodicBoundary", this->pbc);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "Radius(unit:lat0)", sradius);
-        ModuleBase::GlobalFunc::OUT(ofs_in, "Expand_flag", expand_flag);
-    }
-
-    //----------------------------------------------------------
-    // EXPLAIN : (d_minX,d_minY,d_minZ)minimal value of
-    // x[] ,y[] , z[]
-    //----------------------------------------------------------
-    this->d_minX = input.minX();
-    this->d_minY = input.minY();
-    this->d_minZ = input.minZ();
-    if (test_grid)
-    {
-        ModuleBase::GlobalFunc::OUT(ofs_in, "MinCoordinate", d_minX, d_minY, d_minZ);
-    }
-    //----------------------------------------------------------
-    // set dx, dy, dz
-    //----------------------------------------------------------
-    this->cell_nx = input.getCell_nX();
-    this->cell_ny = input.getCell_nY();
-    this->cell_nz = input.getCell_nZ();
-    if (test_grid)
-    {
-        ModuleBase::GlobalFunc::OUT(ofs_in, "CellNumber", cell_nx, cell_ny, cell_nz);
-    }
-
-    Cell.resize(cell_nx);
-    for (int i = 0; i < cell_nx; i++)
-    {
-        Cell[i].resize(cell_ny);
-        for (int j = 0; j < cell_ny; j++)
-        {
-            Cell[i][j].resize(cell_nz);
-        }
-    }
-    this->true_cell_x = input.getGrid_layerX_minus();
-    this->true_cell_y = input.getGrid_layerY_minus();
-    this->true_cell_z = input.getGrid_layerZ_minus();
-}
-
-void Grid::setBoundaryAdjacent(std::ofstream& ofs_in, const Atom_input& input)
-{
-    if (expand_flag)
-    {
-        this->Construct_Adjacent_expand(true_cell_x, true_cell_y, true_cell_z);
-    }
-    else
-    {
-        this->Construct_Adjacent_begin();
-    }
-}
-
-void Grid::Build_Hash_Table(const UnitCell& ucell, const Atom_input& input)
-{
-    ModuleBase::timer::tick("Grid", "Build_Hash_Table");
-
-    // TODO in case expand == false, the following code is over malloc
-    for (int i = 0; i < cell_nx; i++)
-    {
-        for (int j = 0; j < cell_ny; j++)
-        {
-            for (int k = 0; k < cell_nz; k++)
-            {
-                Cell[i][j][k].atom_map.resize(ucell.ntype);
-                for (int it = 0; it < ucell.ntype; ++it)
-                {
-                    Cell[i][j][k].atom_map[it].resize(ucell.atoms[it].na);
-                }
-            }
-        }
-    }
     ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
     ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
 
-    for (int ix = -input.getGrid_layerX_minus(); ix < input.getGrid_layerX(); ix++)
+    // calculate min & max value
+    for (int ix = -glayerX_minus; ix < glayerX; ix++)
     {
-        for (int iy = -input.getGrid_layerY_minus(); iy < input.getGrid_layerY(); iy++)
+        for (int iy = -glayerY_minus; iy < glayerY; iy++)
         {
-            for (int iz = -input.getGrid_layerZ_minus(); iz < input.getGrid_layerZ(); iz++)
+            for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
+            {
+                for (int i = 0; i < ucell.ntype; i++)
+                {
+                    for (int j = 0; j < ucell.atoms[i].na; j++)
+                    {
+                        double x = ucell.atoms[i].tau[j].x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
+                        double y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
+                        double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
+                        x_min = std::min(x_min, x);
+                        x_max = std::max(x_max, x);
+                        y_min = std::min(y_min, y);
+                        y_max = std::max(y_max, y);
+                        z_min = std::min(z_min, z);
+                        z_max = std::max(z_max, z);
+                    }
+                }
+            }
+        }
+    }
+    ModuleBase::GlobalFunc::OUT(ofs_in, "Find the coordinate range of the input atom(unit:lat0).");
+    ModuleBase::GlobalFunc::OUT(ofs_in, "min_tau", x_min, y_min, z_min);
+    ModuleBase::GlobalFunc::OUT(ofs_in, "max_tau", x_max, y_max, z_max);
+
+    this->box_edge_length = sradius + 0.1; // To avoid edge cases, the size of the box is slightly increased.
+
+/*  warning box algorithm   
+    this->box_nx = std::ceil((this->x_max - this->x_min) / box_edge_length) + 1;
+    this->box_ny = std::ceil((this->y_max - this->y_min) / box_edge_length) + 1;
+    this->box_nz = std::ceil((this->z_max - this->z_min) / box_edge_length) + 1;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
+
+    atoms_in_box.resize(this->box_nx);
+    for (int i = 0; i < this->box_nx; i++)
+    {
+        atoms_in_box[i].resize(this->box_ny);
+        for (int j = 0; j < this->box_ny; j++)
+        {
+            atoms_in_box[i][j].resize(this->box_nz);
+        }
+    }
+ */
+    this->box_nx = glayerX + glayerX_minus;
+    this->box_ny = glayerY + glayerY_minus;
+    this->box_nz = glayerZ + glayerZ_minus;
+    ModuleBase::GlobalFunc::OUT(ofs_in, "BoxNumber", box_nx, box_ny, box_nz);
+
+    atoms_in_box.resize(this->box_nx);
+    for (int i = 0; i < this->box_nx; i++)
+    {
+        atoms_in_box[i].resize(this->box_ny);
+        for (int j = 0; j < this->box_ny; j++)
+        {
+            atoms_in_box[i][j].resize(this->box_nz);
+        }
+    }
+    for (int ix = -glayerX_minus; ix < glayerX; ix++)
+    {
+        for (int iy = -glayerY_minus; iy < glayerY; iy++)
+        {
+            for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
             {
                 for (int i = 0; i < ucell.ntype; i++)
                 {
@@ -138,101 +238,70 @@ void Grid::Build_Hash_Table(const UnitCell& ucell, const Atom_input& input)
                         double y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
                         double z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
                         FAtom atom(x, y, z, i, j, ix, iy, iz);
-                        int a, b, c;
-                        if (expand_flag)
-                        {
-                            // EXPLAIN : In expand grid case,
-                            // the input cell is exactly the same as input file.
-                            a = atom.getCellX() + true_cell_x;
-                            b = atom.getCellY() + true_cell_y;
-                            c = atom.getCellZ() + true_cell_z;
-                        }
-                        else
-                        {
-                            //----------------------------------------------------------
-                            // EXPLAIN : Not expand case , the cell is 'cubic',
-                            // the three dimension length :
-                            // cell_x_length = |radius|
-                            // cell_y_length = |radius|
-                            // cell_z_length = |radius|
-                            //
-                            // So we don't need crystal coordinate to locate the atom.
-                            // We use cartesian coordinate directly.
-                            //----------------------------------------------------------
-                            a = static_cast<int>(std::floor((atom.x() - this->d_minX) / this->sradius));
-                            b = static_cast<int>(std::floor((atom.y() - this->d_minY) / this->sradius));
-                            c = static_cast<int>(std::floor((atom.z() - this->d_minZ) / this->sradius));
-                        }
-
-                        this->Cell[a][b][c].atom_map[atom.getType()][atom.getNatom()] = atom;
+                        int box_i_x, box_i_y, box_i_z;
+                        //this->getBox(box_i_x, box_i_y, box_i_z, x, y, z);
+                        box_i_x = ix + glayerX_minus;
+                        box_i_y = iy + glayerY_minus;
+                        box_i_z = iz + glayerZ_minus;
+                        this->atoms_in_box[box_i_x][box_i_y][box_i_z].push_back(atom);
                     }
                 }
             }
         }
     }
-    ModuleBase::timer::tick("Grid", "Build_Hash_Table");
+    
+    this->all_adj_info.resize(ucell.ntype);
+    for (int i = 0; i < ucell.ntype; i++)
+    {
+        this->all_adj_info[i].resize(ucell.atoms[i].na);
+    }
 }
 
-void Grid::Construct_Adjacent_expand(const int true_i, const int true_j, const int true_k)
+void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 
-    //-----------------------------------------------------------
-    // EXPLAIN : (true_i,true_j,true_k) is the cell we want
-    // to found AdjacentSet.And other cell save the displacement
-    // of center_grid in 'in_grid'
-    //-----------------------------------------------------------
-    for (int i = 0; i < this->cell_nx; i++)
+    for  (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
-        for (int j = 0; j < this->cell_ny; j++)
+        for (int j_atom = 0; j_atom < ucell.atoms[i_type].na; j_atom++)
         {
-            for (int k = 0; k < this->cell_nz; k++)
-            {
-                this->Cell[i][j][k].in_grid[0] = i - true_i;
-                this->Cell[i][j][k].in_grid[1] = j - true_j;
-                this->Cell[i][j][k].in_grid[2] = k - true_k;
-            }
-        }
-    }
 
-    //----------------------------------------------------------
-    // EXPLAIN : Only construct AdjacentSet for 'true' cell.
-    //----------------------------------------------------------
-    for (auto& atom_vector: this->Cell[true_i][true_j][true_k].atom_map)
-    {
-        for (auto& fatom: atom_vector)
-        {
-            if (this->pbc)
-            {
-                Construct_Adjacent_expand_periodic(true_i, true_j, true_k, fatom);
-                // std::cout << "fatom1 = " << fatom.getNatom() << "  " << fatom.getAdjacent().size() << std::endl;
-            }
-            else
-            {
-                ModuleBase::WARNING_QUIT("Construct_Adjacent_expand", "\n Expand case, must use periodic boundary.");
-            }
+            FAtom atom(ucell.atoms[i_type].tau[j_atom].x,
+                     ucell.atoms[i_type].tau[j_atom].y,
+                     ucell.atoms[i_type].tau[j_atom].z,
+                     i_type,
+                     j_atom,
+                     0, 0 ,0);
+
+            this->Construct_Adjacent_near_box(atom);
         }
     }
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
 }
 
-void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j, const int true_k, FAtom& fatom)
+void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
 {
     //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Construct_Adjacent_expand_periodic");
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand_periodic");
+    int box_i_x, box_i_y, box_i_z;
+    this->getBox(box_i_x, box_i_y, box_i_z, fatom.x, fatom.y, fatom.z);
 
-    for (int i = 0; i < this->cell_nx; i++)
+/*     for (int box_i_x_adj = std::max(box_i_x - 1, 0); box_i_x_adj <= std::min(box_i_x + 1, box_nx - 1); box_i_x_adj++)
     {
-        for (int j = 0; j < this->cell_ny; j++)
+        for (int box_i_y_adj = std::max(box_i_y - 1, 0); box_i_y_adj <= std::min(box_i_y + 1, box_ny - 1); box_i_y_adj++)
         {
-            for (int k = 0; k < this->cell_nz; k++)
+            for (int box_i_z_adj = std::max(box_i_z - 1, 0); box_i_z_adj <= std::min(box_i_z + 1, box_nz - 1); box_i_z_adj++)
             {
-                for (auto& atom_vector: this->Cell[i][j][k].atom_map)
+ */             
+    for (int box_i_x_adj = 0; box_i_x_adj < glayerX + glayerX_minus; box_i_x_adj++)
+    {
+        for (int box_i_y_adj = 0; box_i_y_adj < glayerY + glayerY_minus; box_i_y_adj++)
+        {
+            for (int box_i_z_adj = 0; box_i_z_adj < glayerZ + glayerZ_minus; box_i_z_adj++)
+            {
+                for (auto &fatom2 : this->atoms_in_box[box_i_x_adj][box_i_y_adj][box_i_z_adj])
                 {
-                    for (auto& fatom2: atom_vector)
-                    {
-                        Construct_Adjacent_final(true_i, true_j, true_k, fatom, i, j, k, fatom2);
-                    }
+                    this->Construct_Adjacent_final(fatom, &fatom2);
                 }
             }
         }
@@ -240,257 +309,23 @@ void Grid::Construct_Adjacent_expand_periodic(const int true_i, const int true_j
     ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand_periodic");
 }
 
-void Grid::Construct_Adjacent_begin()
+void Grid::Construct_Adjacent_final(const FAtom& fatom1,
+                                    FAtom* fatom2)
 {
-    //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Construct_Adjacent_begin");
-
-    //----------------------------------------------------------
-    // EXPLAIN : Searching in all cells in this grid
-    //----------------------------------------------------------
-
-    for (int i = 0; i < this->cell_nx; i++)
-    {
-        for (int j = 0; j < this->cell_ny; j++)
-        {
-            for (int k = 0; k < this->cell_nz; k++)
-            {
-                //----------------------------------------------------------
-                // EXPLAIN : Cell length == Number of atoms in this cell
-                //----------------------------------------------------------
-                for (auto& atom_vector: this->Cell[i][j][k].atom_map)
-                {
-                    for (auto& fatom2: atom_vector)
-                    {
-                        // pbc: periodic boundary condition
-                        if (this->pbc)
-                        {
-                            Construct_Adjacent_periodic(i, j, k, fatom2);
-                        }
-                        else
-                        {
-                            Construct_Adjacent_nature(i, j, k, fatom2);
-                        }
-                    }
-
-                } // ia
-            } // k
-        } // j
-    } // i
-
-    return;
-}
-
-void Grid::Construct_Adjacent_nature(const int i, const int j, const int k, FAtom& fatom1)
-{
-    //	if(test_grid)ModuleBase::TITLE(ofs_running,"Grid","Construct_Adjacent_nature");
-    for (int i2 = i - 1; i2 <= i + 1; i2++)
-    {
-        if (i2 < cell_nx && i2 >= 0)
-        {
-            for (int j2 = j - 1; j2 <= j + 1; j2++)
-            {
-                if (j2 < cell_ny && j2 >= 0)
-                {
-                    for (int k2 = k - 1; k2 <= k + 1; k2++)
-                    {
-                        if (k2 < cell_nz && k2 >= 0)
-                        {
-                            for (auto& atom_vector: this->Cell[i2][j2][k2].atom_map)
-                            {
-                                for (auto& fatom2: atom_vector)
-                                {
-                                    Construct_Adjacent_final(i, j, k, fatom1, i2, j2, k2, fatom2);
-                                } // ia2
-                            }
-                        }
-                    } // k2
-                }
-            } // j2
-        }
-    } // 2
-
-    return;
-}
-
-void Grid::Construct_Adjacent_periodic(const int i, const int j, const int k, FAtom& fatom1)
-{
-    //	if(test_grid)ModuleBase::TITLE(ofs_running,"Grid","Construct_Adjacent_periodic");
-    bool first_i = true;
-
-    for (int i2 = i - 1; i2 <= i + 1; i2++)
-    {
-        bool first_j = true;
-
-        for (int j2 = j - 1; j2 <= j + 1; j2++)
-        {
-            bool first_k = true;
-
-            for (int k2 = k - 1; k2 <= k + 1; k2++)
-            {
-                int temp_i = i2;
-                int temp_j = j2;
-                int temp_k = k2;
-
-                int g0 = 0;
-                int g1 = 0;
-                int g2 = 0;
-
-                if (i2 < 0)
-                {
-                    g0 = -1;
-
-                    if (first_i)
-                    {
-                        if (cell_nx >= 2)
-                        {
-                            i2--;
-                            temp_i--;
-                        }
-
-                        first_i = false;
-                    }
-
-                    i2 += cell_nx;
-                }
-                else if (i2 >= cell_nx)
-                {
-                    g0 = 1;
-                    i2 -= cell_nx;
-                }
-
-                if (j2 < 0)
-                {
-                    g1 = -1;
-
-                    if (first_j)
-                    {
-                        if (cell_ny >= 2)
-                        {
-                            j2--;
-                            temp_j--;
-                        }
-
-                        first_j = false;
-                    }
-
-                    j2 += cell_ny;
-                }
-                else if (j2 >= cell_ny)
-                {
-                    g1 = 1;
-                    j2 -= cell_ny;
-                }
-
-                if (k2 < 0)
-                {
-                    g2 = -1;
-
-                    if (first_k)
-                    {
-                        if (cell_nz >= 2)
-                        {
-                            k2--;
-                            temp_k--;
-                        }
-
-                        first_k = false;
-                    }
-
-                    k2 += cell_nz;
-                }
-                else if (k2 >= cell_nz)
-                {
-                    g2 = 1;
-                    k2 -= cell_nz;
-                }
-
-                Cell[i2][j2][k2].in_grid[0] = g0;
-
-                Cell[i2][j2][k2].in_grid[1] = g1;
-                Cell[i2][j2][k2].in_grid[2] = g2;
-
-                for (auto& atom_vector: this->Cell[i2][j2][k2].atom_map)
-                {
-                    for (auto& fatom2: atom_vector)
-                    {
-                        Construct_Adjacent_final(i, j, k, fatom1, i2, j2, k2, fatom2);
-                    } // ia2
-                }
-
-                i2 = temp_i;
-
-                j2 = temp_j;
-
-                k2 = temp_k; // resume i2 j2 k2
-            } // k2
-        } // j2
-    } // i2
-
-    return;
-}
-
-void Grid::Construct_Adjacent_final(const int i,
-                                    const int j,
-                                    const int k,
-                                    FAtom& fatom1,
-                                    const int i2,
-                                    const int j2,
-                                    const int k2,
-                                    FAtom& fatom2)
-{
-    //----------------------------------------------------------
-    // EXPLAIN : 		expand_case				not_expand_case
-    // (i,j,k,ia) 		only the 'true' cell	only the 'true' grid
-    // (i2,j2,k2,ia2) 	all atoms in grid		all atoms in 27*cell
-    //----------------------------------------------------------
-    // (suitable for small cell periodic condition)
-    // Expand_Case : many 'pseudo' cells, only one true cell,
-    // one grid(true grid).
-    // Advantage : only the atoms in 'true' cell need to construct
-    // AdjacentSet.
-    // Disadvantage : must search all atoms in true grid to construct
-    // AdjacentSet.
-    //
-    // (suitable for large cell periodic/nature condition,here
-    // we discuss periodic case,once you known this case, nature
-    // boundary is easy to understand)
-    // Not_Expand_Case : 27 'pseudo' grid,only one true grid,
-    // many true cells.
-    // Advantage : (the disadvantage above is the advantage now)
-    // only need to search 27*cells to construct AdjacentSet
-    // for each cell.
-    // Disadvantage : (the advantave mentioned above)
-    // need to construct adjacent for each cell.
-    //----------------------------------------------------------
-    const double x = fatom1.x();
-    const double y = fatom1.y();
-    const double z = fatom1.z();
-    double x2 = fatom2.x();
-    double y2 = fatom2.y();
-    double z2 = fatom2.z();
-    //----------------------------------------------------------
-    // EXPLAIN : in different case 'in_grid' has different
-    // meaning.
-    //----------------------------------------------------------
-    // NAME : 			expand_case		 |  not_expand_case
-    // in_which_grid	'not available'	 |  one of 27 adjacent grid
-    // in_which_cell	one of all cells |  'not available'
-    //----------------------------------------------------------
-    // The solution here is we save these datas in one structrue
-    // named : 'in_grid'
-    //----------------------------------------------------------
-
-    //----------------------------------------------------------
-    // EXPlAIN : Calculate distance between two atoms.
-    //----------------------------------------------------------
-    double delta_x = x - x2;
-    double delta_y = y - y2;
-    double delta_z = z - z2;
+    double delta_x = fatom1.x - fatom2->x;
+    double delta_y = fatom1.y - fatom2->y;
+    double delta_z = fatom1.z - fatom2->z;
 
     double dr = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
 
+
+    // 20241204 zhanghaochong
+    // dr == 0 means the same atom
+    // the atom itself is neighbour atom, but the order itself must on last in the list.
+    // so we will add itself on find atom function, and skip here.
+    // I dont know why, but if we add self here, test 701_LJ_MD_Anderson will assert
     if (dr != 0.0 && dr <= this->sradius2)
     {
-        fatom1.addAdjacent(fatom2);
+        all_adj_info[fatom1.type][fatom1.natom].push_back(fatom2);
     }
 }

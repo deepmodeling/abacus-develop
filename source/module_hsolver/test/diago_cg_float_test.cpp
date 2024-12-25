@@ -164,7 +164,7 @@ class DiagoCGPrepare
             auto psi_wrapper = psi::Psi<std::complex<float>>(
                 psi_in.data<std::complex<float>>(), 1, 
                 ndim == 1 ? 1 : psi_in.shape().dim_size(0), 
-                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1));
+                ndim == 1 ? psi_in.NumElements() : psi_in.shape().dim_size(1), true);
             psi::Range all_bands_range(true, psi_wrapper.get_current_k(), 0, psi_wrapper.get_nbands() - 1);
             using hpsi_info = typename hamilt::Operator<std::complex<float>>::hpsi_info;
             hpsi_info info(&psi_wrapper, all_bands_range, hpsi_out.data<std::complex<float>>());

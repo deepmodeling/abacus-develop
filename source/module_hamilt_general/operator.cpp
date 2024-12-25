@@ -11,7 +11,8 @@ Operator<T, Device>::Operator(){}
 template<typename T, typename Device>
 Operator<T, Device>::~Operator() 
 {
-    if(this->hpsi != nullptr) delete this->hpsi;
+    if(this->hpsi != nullptr) { delete this->hpsi;
+}
     Operator* last = this->next_op;
     Operator* last_sub = this->next_sub_op;
     while(last != nullptr || last_sub != nullptr)
@@ -61,8 +62,11 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     }
 
     auto call_act = [&, this](const Operator* op, const bool& is_first_node) -> void {
+        
         // a "psi" with the bands of needed range
-        psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis());
+        psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis(), true);
+        
+        
         switch (op->get_act_type())
         {
         case 2:
@@ -100,9 +104,11 @@ void Operator<T, Device>::init(const int ik_in)
 template<typename T, typename Device>
 void Operator<T, Device>::add(Operator* next) 
 {
-    if(next==nullptr) return;
+    if(next==nullptr) { return;
+}
     next->is_first_node = false;
-    if(next->next_op != nullptr) this->add(next->next_op);
+    if(next->next_op != nullptr) { this->add(next->next_op);
+}
     Operator* last = this;
     //loop to end of the chain
     while(last->next_op != nullptr)
