@@ -106,7 +106,7 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
 }
 
 template <typename T, typename Device>
-Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
+Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
 {
     assert(nk_in <= psi_in.get_nk() && nk_in > 0);
     assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
