@@ -31,6 +31,8 @@ void test_deepks::check_psialpha()
     }
     ld.init(ORB, ucell.nat, ucell.ntype, ParaO, na);
 
+    ld.allocate_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+
     ld.build_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
 
     ld.check_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
@@ -200,7 +202,7 @@ void test_deepks::check_edelta()
     this->ld.load_model("model.ptg");
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.allocate_V_delta(ucell.nat);
+        this->ld.allocate_V_delta(ucell.nat, 1); // 1 for gamma-only
     }
     else
     {
@@ -239,14 +241,16 @@ void test_deepks::check_f_delta()
 {
     ModuleBase::matrix svnl_dalpha;
     svnl_dalpha.create(3, 3);
+    const int cal_stress = 1;
     if (PARAM.sys.gamma_only_local)
     {
         const int nks = 1;
-        ld.cal_f_delta_gamma(dm_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, 1, svnl_dalpha);
+        ld.cal_f_delta(dm_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, cal_stress, svnl_dalpha);
     }
     else
     {
-        ld.cal_f_delta_k(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, 1, svnl_dalpha);
+        const int nks = kv.get_nkstot();
+        ld.cal_f_delta(dm_k_new, ucell, ORB, Test_Deepks::GridD, nks, kv.kvec_d, cal_stress, svnl_dalpha);
     }
     ld.check_f_delta(ucell.nat, svnl_dalpha);
 
