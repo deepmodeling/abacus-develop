@@ -36,7 +36,7 @@ ElecStatePW<T, Device>::~ElecStatePW()
         delmem_var_op()(this->ctx, this->rho_data);
         delete[] this->rho;
 
-        if (PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
         {
             delmem_complex_op()(this->ctx, this->rhog_data);
             delete[] this->rhog;
@@ -71,7 +71,7 @@ void ElecStatePW<T, Device>::init_rho_data()
         {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
         }
-        if (PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
         {
             this->rhog = new T*[this->charge->nspin];
             resmem_complex_op()(this->ctx, this->rhog_data, this->charge->nspin * this->charge->rhopw->npw);
@@ -92,7 +92,7 @@ void ElecStatePW<T, Device>::init_rho_data()
     else
     {
         this->rho = reinterpret_cast<Real **>(this->charge->rho);
-        if (PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
         {
             this->rhog = reinterpret_cast<T**>(this->charge->rhog);
         }
@@ -124,7 +124,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
             // ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
             setmem_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
         }
-        if (PARAM.globalv.double_grid)
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
         {
             setmem_complex_op()(this->ctx, this->rhog[is], 0, this->charge->rhopw->npw);
         }
