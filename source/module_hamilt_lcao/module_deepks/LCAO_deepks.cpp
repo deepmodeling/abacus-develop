@@ -34,7 +34,7 @@ LCAO_Deepks::LCAO_Deepks()
     inl_index = new ModuleBase::IntArray[1];
     inl_l = nullptr;
     gedm = nullptr;
-    this->psialpha.resize(1);
+    this->phialpha.resize(1);
 }
 
 // Desctructor of the class

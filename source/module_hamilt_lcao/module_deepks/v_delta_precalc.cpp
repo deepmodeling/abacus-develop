@@ -65,7 +65,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    if (this->psialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
+                    if (this->phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                     {
                         continue;
                     }
@@ -93,7 +93,7 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
 
                     if constexpr (std::is_same<TK, std::complex<double>>::value)
                     {
-                        if (this->psialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
+                        if (this->phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                         {
                             continue;
                         }
@@ -116,8 +116,8 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
                                 continue;
                             }
 
-                            hamilt::BaseMatrix<double>* overlap_1 = psialpha[0]->find_matrix(iat, ibt1, dR1);
-                            hamilt::BaseMatrix<double>* overlap_2 = psialpha[0]->find_matrix(iat, ibt2, dR2);
+                            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
                             assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
                             for (int ik = 0; ik < nks; ik++)

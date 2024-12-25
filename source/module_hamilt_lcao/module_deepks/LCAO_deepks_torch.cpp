@@ -10,7 +10,7 @@
 //  cal_gvdm : d(des)/d(pdm)
 //        calculated using torch::autograd::grad
 //  load_model : loads model for applying V_delta
-//  prepare_psialpha : prepare psialpha for outputting npy file
+//  prepare_phialpha : prepare phialpha for outputting npy file
 //  prepare_gevdm : prepare gevdm for outputting npy file
 
 #ifdef __DEEPKS
@@ -157,9 +157,9 @@ void LCAO_Deepks::load_model(const std::string& deepks_model)
     return;
 }
 
-// prepare_psialpha and prepare_gevdm for deepks_v_delta = 2
+// prepare_phialpha and prepare_gevdm for deepks_v_delta = 2
 template <typename TK>
-void LCAO_Deepks::prepare_psialpha(const int nlocal,
+void LCAO_Deepks::prepare_phialpha(const int nlocal,
                                    const int nat,
                                    const int nks,
                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -167,16 +167,16 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                                    const LCAO_Orbitals& orb,
                                    const Grid_Driver& GridD)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "prepare_psialpha");
+    ModuleBase::TITLE("LCAO_Deepks", "prepare_phialpha");
     int nlmax = this->inlmax / nat;
     int mmax = 2 * this->lmaxd + 1;
     if constexpr (std::is_same<TK, double>::value)
     {
-        this->psialpha_tensor = torch::zeros({nat, nlmax, nks, nlocal, mmax}, torch::kFloat64); // support gamma-only
+        this->phialpha_tensor = torch::zeros({nat, nlmax, nks, nlocal, mmax}, torch::kFloat64); // support gamma-only
     }
     else
     {
-        this->psialpha_tensor = torch::zeros({nat, nlmax, nks, nlocal, mmax}, torch::kComplexDouble); // support multi-k
+        this->phialpha_tensor = torch::zeros({nat, nlmax, nks, nlocal, mmax}, torch::kComplexDouble); // support multi-k
     }
 
     // cutoff for alpha is same for all types of atoms
@@ -216,7 +216,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    if (this->psialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
+                    if (this->phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
                     {
                         continue;
                     }
@@ -232,7 +232,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                     {
                         continue;
                     }
-                    hamilt::BaseMatrix<double>* overlap = psialpha[0]->find_matrix(iat, ibt, dR);
+                    hamilt::BaseMatrix<double>* overlap = phialpha[0]->find_matrix(iat, ibt, dR);
 
                     for (int ik = 0; ik < nks; ik++)
                     {
@@ -256,7 +256,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                                 {
                                     if constexpr (std::is_same<TK, double>::value)
                                     {
-                                        this->psialpha_tensor[iat][nl][ik][iw1_all][m1]
+                                        this->phialpha_tensor[iat][nl][ik][iw1_all][m1]
                                             = overlap->get_value(iw1, ib + m1);
                                     }
                                     else
@@ -265,7 +265,7 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                                         torch::Tensor nlm_tensor
                                             = torch::tensor({nlm_phase.real(), nlm_phase.imag()}, torch::kDouble);
                                         torch::Tensor complex_tensor = torch::complex(nlm_tensor[0], nlm_tensor[1]);
-                                        this->psialpha_tensor[iat][nl][ik][iw1_all][m1] = complex_tensor;
+                                        this->phialpha_tensor[iat][nl][ik][iw1_all][m1] = complex_tensor;
                                     }
                                 }
                                 ib += nm;
@@ -292,11 +292,11 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            msg[m] = this->psialpha_tensor[iat][nl][ik][mu][m].item().toDouble();
+                            msg[m] = this->phialpha_tensor[iat][nl][ik][mu][m].item().toDouble();
                         }
                         else
                         {
-                            auto tensor_value = this->psialpha_tensor.index({iat, nl, ik, mu, m});
+                            auto tensor_value = this->phialpha_tensor.index({iat, nl, ik, mu, m});
                             msg[m] = std::complex<double>(torch::real(tensor_value).item<double>(),
                                                           torch::imag(tensor_value).item<double>());
                         }
@@ -306,13 +306,13 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            this->psialpha_tensor[iat][nl][ik][mu][m] = msg[m];
+                            this->phialpha_tensor[iat][nl][ik][mu][m] = msg[m];
                         }
                         else
                         {
                             torch::Tensor msg_tensor = torch::tensor({msg[m].real(), msg[m].imag()}, torch::kDouble);
                             torch::Tensor complex_tensor = torch::complex(msg_tensor[0], msg_tensor[1]);
-                            this->psialpha_tensor[iat][nl][ik][mu][m] = complex_tensor;
+                            this->phialpha_tensor[iat][nl][ik][mu][m] = complex_tensor;
                         }
                     }
                 }
@@ -324,9 +324,9 @@ void LCAO_Deepks::prepare_psialpha(const int nlocal,
 }
 
 template <typename TK>
-void LCAO_Deepks::check_vdp_psialpha(const int nat, const int nks, const int nlocal)
+void LCAO_Deepks::check_vdp_phialpha(const int nat, const int nks, const int nlocal)
 {
-    std::ofstream ofs("vdp_psialpha.dat");
+    std::ofstream ofs("vdp_phialpha.dat");
     ofs << std::setprecision(10);
 
     int nlmax = this->inlmax / nat;
@@ -343,11 +343,11 @@ void LCAO_Deepks::check_vdp_psialpha(const int nat, const int nks, const int nlo
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            ofs << this->psialpha_tensor.index({iat, nl, iks, mu, m}).item().toDouble() << " ";
+                            ofs << this->phialpha_tensor.index({iat, nl, iks, mu, m}).item().toDouble() << " ";
                         }
                         else
                         {
-                            auto tensor_value = this->psialpha_tensor.index({iat, nl, iks, mu, m});
+                            auto tensor_value = this->phialpha_tensor.index({iat, nl, iks, mu, m});
                             ofs << std::complex<double>(torch::real(tensor_value).item<double>(),
                                                         torch::imag(tensor_value).item<double>())
                                 << " ";
@@ -421,7 +421,7 @@ void LCAO_Deepks::check_vdp_gevdm(const int nat)
     ofs.close();
 }
 
-template void LCAO_Deepks::prepare_psialpha<double>(const int nlocal,
+template void LCAO_Deepks::prepare_phialpha<double>(const int nlocal,
                                                     const int nat,
                                                     const int nks,
                                                     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -429,7 +429,7 @@ template void LCAO_Deepks::prepare_psialpha<double>(const int nlocal,
                                                     const LCAO_Orbitals& orb,
                                                     const Grid_Driver& GridD);
 
-template void LCAO_Deepks::prepare_psialpha<std::complex<double>>(
+template void LCAO_Deepks::prepare_phialpha<std::complex<double>>(
     const int nlocal,
     const int nat,
     const int nks,
@@ -438,7 +438,7 @@ template void LCAO_Deepks::prepare_psialpha<std::complex<double>>(
     const LCAO_Orbitals& orb,
     const Grid_Driver& GridD);
 
-template void LCAO_Deepks::check_vdp_psialpha<double>(const int nat, const int nks, const int nlocal);
-template void LCAO_Deepks::check_vdp_psialpha<std::complex<double>>(const int nat, const int nks, const int nlocal);
+template void LCAO_Deepks::check_vdp_phialpha<double>(const int nat, const int nks, const int nlocal);
+template void LCAO_Deepks::check_vdp_phialpha<std::complex<double>>(const int nat, const int nks, const int nlocal);
 
 #endif

@@ -516,7 +516,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                              gd,
                                              kv.get_nks(),
                                              kv.kvec_d,
-                                             GlobalC::ld.psialpha,
+                                             GlobalC::ld.phialpha,
                                              isstress);
                     }
                     else
@@ -527,7 +527,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DMK_vector();
 
                         GlobalC::ld
-                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.psialpha, isstress);
+                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, isstress);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {

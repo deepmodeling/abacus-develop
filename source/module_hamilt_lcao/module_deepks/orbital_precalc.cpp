@@ -87,7 +87,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    if (this->psialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
+                    if (this->phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                     {
                         continue;
                     }
@@ -108,7 +108,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 
                 for (int irow = 0; irow < row_size; irow++)
                 {
-                    hamilt::BaseMatrix<double>* row_ptr = this->psialpha[0]->find_matrix(iat, ibt1, dR1);
+                    hamilt::BaseMatrix<double>* row_ptr = this->phialpha[0]->find_matrix(iat, ibt1, dR1);
                     for (int i = 0; i < trace_alpha_size; i++)
                     {
                         s_1t[i * row_size + irow] = row_ptr->get_value(row_indexes[irow], trace_alpha_row[i]);
@@ -143,7 +143,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 
                     if constexpr (std::is_same<TK, std::complex<double>>::value)
                     {
-                        if (this->psialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
+                        if (this->phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                         {
                             continue;
                         }
@@ -159,7 +159,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
                     std::vector<double> s_2t(trace_alpha_size * col_size);
                     for (int icol = 0; icol < col_size; icol++)
                     {
-                        hamilt::BaseMatrix<double>* col_ptr = this->psialpha[0]->find_matrix(iat, ibt2, dR2);
+                        hamilt::BaseMatrix<double>* col_ptr = this->phialpha[0]->find_matrix(iat, ibt2, dR2);
                         for (int i = 0; i < trace_alpha_size; i++)
                         {
                             s_2t[i * col_size + icol] = col_ptr->get_value(col_indexes[icol], trace_alpha_col[i]);

@@ -36,8 +36,8 @@ namespace LCAO_deepks_io
     /// 10. save_npy_orbital_precalc: orbital_precalc -> deepks_orbpre.npy
     /// 11. save_npy_h : Hamiltonian
     /// 12. save_npy_v_delta_precalc : v_delta_precalc -> deepks_vdpre.npy
-    /// 13. save_npy_psialpha : psialpha -> deepks_psialpha.npy
-    /// 14. save_npy_gevdm : grav_evdm -> deepks_gevdm.npy, can use psialpha and gevdm to calculate v_delta_precalc
+    /// 13. save_npy_phialpha : phialpha -> deepks_phialpha.npy
+    /// 14. save_npy_gevdm : grav_evdm -> deepks_gevdm.npy, can use phialpha and gevdm to calculate v_delta_precalc
 
 /// print density matrices
 template <typename TK>
@@ -104,7 +104,7 @@ void save_npy_orbital_precalc(const int nat,
         const std::string& out_dir,
 		const int rank);
 
-// save Hamiltonian and v_delta_precalc(for deepks_v_delta==1)/psialpha+gevdm(for deepks_v_delta==2)
+// save Hamiltonian and v_delta_precalc(for deepks_v_delta==1)/phialpha+gevdm(for deepks_v_delta==2)
 template <typename TK, typename TH>
 void save_npy_h(const std::vector<TH> &hamilt,
 		const std::string &h_file,
@@ -122,12 +122,12 @@ void save_npy_v_delta_precalc(const int nat,
 		const int rank);
 
 template <typename TK>
-void save_npy_psialpha(const int nat,
+void save_npy_phialpha(const int nat,
 		const int nks,
 		const int nlocal,
 		const int inlmax,
 		const int lmaxd,
-		const torch::Tensor &psialpha_tensor,
+		const torch::Tensor &phialpha_tensor,
 		const std::string& out_dir,
 		const int rank);
 

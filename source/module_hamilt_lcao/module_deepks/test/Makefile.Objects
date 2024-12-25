@@ -13,7 +13,7 @@ LCAO_deepks_fdelta.o\
 LCAO_deepks_io.o\
 LCAO_deepks_mpi.o\
 LCAO_deepks_pdm.o\
-LCAO_deepks_psialpha.o\
+LCAO_deepks_phialpha.o\
 LCAO_deepks_vdelta.o\
 LCAO_deepks_torch.o\
 

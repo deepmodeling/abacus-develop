@@ -175,7 +175,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                 ModuleBase::Vector3<int> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    if (this->psialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
+                    if (this->phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                     {
                         continue;
                     }
@@ -193,7 +193,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                 std::vector<double> g_1dmt(trace_alpha_size * row_size, 0.0);
                 for (int irow = 0; irow < row_size; irow++)
                 {
-                    hamilt::BaseMatrix<double>* row_ptr = this->psialpha[0]->find_matrix(iat, ibt1, dR1);
+                    hamilt::BaseMatrix<double>* row_ptr = this->phialpha[0]->find_matrix(iat, ibt1, dR1);
 
                     for (int i = 0; i < trace_alpha_size; i++)
                     {
@@ -213,7 +213,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                     ModuleBase::Vector3<int> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
                     if constexpr (std::is_same<TK, std::complex<double>>::value)
                     {
-                        if (this->psialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
+                        if (this->phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                         {
                             continue;
                         }
@@ -238,7 +238,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                     // no possible to unexist key
                     for (int icol = 0; icol < col_size; icol++)
                     {
-                        hamilt::BaseMatrix<double>* col_ptr = this->psialpha[0]->find_matrix(iat, ibt2, dR2);
+                        hamilt::BaseMatrix<double>* col_ptr = this->phialpha[0]->find_matrix(iat, ibt2, dR2);
                         for (int i = 0; i < trace_alpha_size; i++)
                         {
                             s_2t[i * col_size + icol] = col_ptr->get_value(col_indexes[icol], trace_alpha_col[i]);

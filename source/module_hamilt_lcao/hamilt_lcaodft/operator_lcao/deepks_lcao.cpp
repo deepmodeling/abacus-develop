@@ -251,7 +251,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const Parallel_Orbitals* paraV = this->H_V_delta->get_paraV();
     const int npol = this->ucell->get_npol();
 
-    // 1. calculate <psi|alpha> for each pair of atoms
+    // 1. calculate <phi|alpha> for each pair of atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -318,7 +318,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
         std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat = nlm_tot[iat00];
 
-        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // 2. calculate <phi_I|beta>D<beta|phi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];

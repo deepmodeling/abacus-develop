@@ -40,7 +40,7 @@ void cal_f_delta(
     const int lmaxd,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-    std::vector<hamilt::HContainer<double>*> psialpha,
+    std::vector<hamilt::HContainer<double>*> phialpha,
     double** gedm,
     ModuleBase::IntArray* inl_index,
     ModuleBase::matrix& f_delta,

@@ -210,14 +210,14 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 }
                 else if(PARAM.inp.deepks_v_delta==2)//v_delta_precalc storage method 2
                 {
-                    ld->prepare_psialpha<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
+                    ld->prepare_phialpha<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
 
-                    LCAO_deepks_io::save_npy_psialpha<TK>(nat, 
+                    LCAO_deepks_io::save_npy_phialpha<TK>(nat, 
                                                           nks, 
                                                           nlocal,
                                                           ld->inlmax,
                                                           ld->lmaxd,
-                                                          ld->psialpha_tensor,
+                                                          ld->phialpha_tensor,
                                                           PARAM.globalv.global_out_dir,
                                                           my_rank);
 

@@ -26,7 +26,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                            const Grid_Driver& GridD,
                            const int nks,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           std::vector<hamilt::HContainer<double>*> psialpha,
+                           std::vector<hamilt::HContainer<double>*> phialpha,
                            const bool isstress)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
@@ -169,8 +169,8 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                     {
                         for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2)
                         {
-                            hamilt::BaseMatrix<double>* overlap_1 = psialpha[0]->find_matrix(iat, ibt1, dR1);
-                            hamilt::BaseMatrix<double>* overlap_2 = psialpha[0]->find_matrix(iat, ibt2, dR2);
+                            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
                             std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
                             std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
 
@@ -178,8 +178,8 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
 
                             for (int i = 0; i < 3; ++i)
                             {
-                                grad_overlap_1[i] = psialpha[i + 1]->find_matrix(iat, ibt1, dR1);
-                                grad_overlap_2[i] = psialpha[i + 1]->find_matrix(iat, ibt2, dR2);
+                                grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
+                                grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
                             }
 
                             int ib = 0;
@@ -370,7 +370,7 @@ template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double
                                             const Grid_Driver& GridD,
                                             const int nks,
                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                            std::vector<hamilt::HContainer<double>*> psialpha,
+                                            std::vector<hamilt::HContainer<double>*> phialpha,
                                             const bool isstress);
 
 template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
@@ -379,7 +379,7 @@ template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std:
                                                           const Grid_Driver& GridD,
                                                           const int nks,
                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                          std::vector<hamilt::HContainer<double>*> psialpha,
+                                                          std::vector<hamilt::HContainer<double>*> phialpha,
                                                           const bool isstress);
 
 #endif

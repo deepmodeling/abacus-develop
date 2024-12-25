@@ -25,7 +25,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                 const int lmaxd,
                                 const int nks,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                std::vector<hamilt::HContainer<double>*> psialpha,
+                                std::vector<hamilt::HContainer<double>*> phialpha,
                                 double** gedm,
                                 ModuleBase::IntArray* inl_index,
                                 ModuleBase::matrix& f_delta,
@@ -163,14 +163,14 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                             double nlm[3] = {0, 0, 0};
                             double nlm_t[3] = {0, 0, 0}; // for stress
 
-                            hamilt::BaseMatrix<double>* overlap_1 = psialpha[0]->find_matrix(iat, ibt1, dR1);
-                            hamilt::BaseMatrix<double>* overlap_2 = psialpha[0]->find_matrix(iat, ibt2, dR2);
+                            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
                             std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
                             std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
                             for (int i = 0; i < 3; ++i)
                             {
-                                grad_overlap_1[i] = psialpha[i + 1]->find_matrix(iat, ibt1, dR1);
-                                grad_overlap_2[i] = psialpha[i + 1]->find_matrix(iat, ibt2, dR2);
+                                grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
+                                grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
                             }
 
                             assert(overlap_1->get_col_size() == overlap_2->get_col_size());
@@ -356,7 +356,7 @@ template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<d
                                                  const int lmaxd,
                                                  const int nks,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                 std::vector<hamilt::HContainer<double>*> psialpha,
+                                                 std::vector<hamilt::HContainer<double>*> phialpha,
                                                  double** gedm,
                                                  ModuleBase::IntArray* inl_index,
                                                  ModuleBase::matrix& f_delta,
@@ -371,7 +371,7 @@ template void DeePKS_domain::cal_f_delta<std::complex<double>>(const std::vector
                                                                const int lmaxd,
                                                                const int nks,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                               std::vector<hamilt::HContainer<double>*> psialpha,
+                                                               std::vector<hamilt::HContainer<double>*> phialpha,
                                                                double** gedm,
                                                                ModuleBase::IntArray* inl_index,
                                                                ModuleBase::matrix& f_delta,

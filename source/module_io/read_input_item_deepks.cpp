@@ -48,7 +48,7 @@ void ReadInput::item_deepks()
     }
     {
         Input_Item item("deepks_v_delta");
-        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for psialpha and grad_evdm ( can save memory )";
+        item.annotation = ">0 for v_delta label. when output, 1 for v_delta_precalc, 2 for phialpha and grad_evdm ( can save memory )";
         read_sync_int(input.deepks_v_delta);
         this->add_item(item);
     }

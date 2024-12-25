@@ -1,9 +1,9 @@
 // wenfei 2022-1-11
 // This file contains 2 subroutines:
-// 1. build_psialpha, which calculates the overlap
-// between atomic basis and projector alpha : <psi_mu|alpha>
+// 1. build_phialpha, which calculates the overlap
+// between atomic basis and projector alpha : <phi_mu|alpha>
 // which will be used in calculating pdm, gdmx, H_V_delta, F_delta;
-// 2. check_psialpha, which prints the results into .dat files
+// 2. check_phialpha, which prints the results into .dat files
 // for checking
 
 #ifdef __DEEPKS
@@ -13,16 +13,16 @@
 #include "module_base/vector3.h"
 #include "module_parameter/parameter.h"
 
-void LCAO_Deepks::allocate_psialpha(const bool& cal_deri,
+void LCAO_Deepks::allocate_phialpha(const bool& cal_deri,
                                     const UnitCell& ucell,
                                     const LCAO_Orbitals& orb,
                                     const Grid_Driver& GridD)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "allocate_psialpha");
+    ModuleBase::TITLE("LCAO_Deepks", "allocate_phialpha");
 
-    this->psialpha.resize(cal_deri ? 4 : 1);
+    this->phialpha.resize(cal_deri ? 4 : 1);
 
-    this->psialpha[0] = new hamilt::HContainer<double>(pv); // psialpha is always real
+    this->phialpha[0] = new hamilt::HContainer<double>(pv); // phialpha is always real
     // Do not use fix_gamma, since it may find wrong matrix for gamma-only case in DeePKS
 
     // cutoff for alpha is same for all types of atoms
@@ -63,31 +63,31 @@ void LCAO_Deepks::allocate_psialpha(const bool& cal_deri,
                 hamilt::AtomPair<double> pair(iat, ibt, R_index, pv);
                 // Notice: in AtomPair, the usage is set_size(ncol, nrow)
                 pair.set_size(nw_alpha, atom1->nw * PARAM.globalv.npol);
-                this->psialpha[0]->insert_pair(pair);
+                this->phialpha[0]->insert_pair(pair);
             }
         }
     }
 
-    this->psialpha[0]->allocate(nullptr, true);
-    // whether to calculate the derivative of psialpha
+    this->phialpha[0]->allocate(nullptr, true);
+    // whether to calculate the derivative of phialpha
     if (cal_deri)
     {
         for (int i = 1; i < 4; ++i)
         {
-            this->psialpha[i] = new hamilt::HContainer<double>(*this->psialpha[0], nullptr); // copy constructor
+            this->phialpha[i] = new hamilt::HContainer<double>(*this->phialpha[0], nullptr); // copy constructor
         }
     }
     return;
 }
 
-void LCAO_Deepks::build_psialpha(const bool& cal_deri,
+void LCAO_Deepks::build_phialpha(const bool& cal_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
                                  const Grid_Driver& GridD,
                                  const TwoCenterIntegrator& overlap_orb_alpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "build_psialpha");
-    ModuleBase::timer::tick("LCAO_Deepks", "build_psialpha");
+    ModuleBase::TITLE("LCAO_Deepks", "build_phialpha");
+    ModuleBase::timer::tick("LCAO_Deepks", "build_phialpha");
 
     // cutoff for alpha is same for all types of atoms
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
@@ -126,17 +126,17 @@ void LCAO_Deepks::build_psialpha(const bool& cal_deri,
                     continue;
                 }
 
-                double* data_pointer = this->psialpha[0]->data(iat, ibt, R);
+                double* data_pointer = this->phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3);
                 if (cal_deri)
                 {
                     for (int i = 0; i < 3; ++i)
                     {
-                        grad_pointer[i] = this->psialpha[i + 1]->data(iat, ibt, R);
+                        grad_pointer[i] = this->phialpha[i + 1]->data(iat, ibt, R);
                     }
                 }
 
-                // Calculate psialpha
+                // Calculate phialpha
                 // Get all indexes of atomic basis on the neighbour atom in this core
                 // Notice that atom pair (a,b) and (b,a) are different when the former is changed to projected orbitals
                 // So we need both row and col indexes for complete calculation
@@ -152,7 +152,7 @@ void LCAO_Deepks::build_psialpha(const bool& cal_deri,
                     const int iw1 = all_indexes[iw1l] / PARAM.globalv.npol;
 
                     std::vector<std::vector<double>> nlm;
-                    // 2D, dim 0 contains the overlap <psi_{iw1}|alpha_{all}>
+                    // 2D, dim 0 contains the overlap <phi_{iw1}|alpha_{all}>
                     // dim 1-3 contains the gradient of overlap
 
                     const int L1 = atom1->iw2l[iw1];
@@ -192,17 +192,17 @@ void LCAO_Deepks::build_psialpha(const bool& cal_deri,
         }
     }
 
-    ModuleBase::timer::tick("LCAO_Deepks", "build_psialpha");
+    ModuleBase::timer::tick("LCAO_Deepks", "build_phialpha");
     return;
 }
 
-void LCAO_Deepks::check_psialpha(const bool& cal_deri,
+void LCAO_Deepks::check_phialpha(const bool& cal_deri,
                                  const UnitCell& ucell,
                                  const LCAO_Orbitals& orb,
                                  const Grid_Driver& GridD)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "check_psialpha");
-    ModuleBase::timer::tick("LCAO_Deepks", "check_psialpha");
+    ModuleBase::TITLE("LCAO_Deepks", "check_phialpha");
+    ModuleBase::timer::tick("LCAO_Deepks", "check_phialpha");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     // same for all types of atoms
@@ -212,10 +212,10 @@ void LCAO_Deepks::check_psialpha(const bool& cal_deri,
         nw_alpha += orb.Alpha[0].getNchi(l) * (2 * l + 1);
     }
 
-    std::ofstream ofs("psialpha.dat");
-    std::ofstream ofs_x("dpsialpha_x.dat");
-    std::ofstream ofs_y("dpsialpha_y.dat");
-    std::ofstream ofs_z("dpsialpha_z.dat");
+    std::ofstream ofs("phialpha.dat");
+    std::ofstream ofs_x("dphialpha_x.dat");
+    std::ofstream ofs_y("dphialpha_y.dat");
+    std::ofstream ofs_z("dphialpha_z.dat");
 
     ofs << std::setprecision(10);
     ofs_x << std::setprecision(10);
@@ -230,8 +230,8 @@ void LCAO_Deepks::check_psialpha(const bool& cal_deri,
             const int iat = ucell.itia2iat(T0, I0);
             //=======================================================
             // Step 1 :
-            // saves <alpha|psi>, where alpha runs over all projectors
-            // and psi runs over atomic basis sets on the current core
+            // saves <alpha|phi>, where alpha runs over all projectors
+            // and phi runs over atomic basis sets on the current core
             //=======================================================
 
             const ModuleBase::Vector3<double> tau0 = atom0->tau[I0];
@@ -280,13 +280,13 @@ void LCAO_Deepks::check_psialpha(const bool& cal_deri,
                     ofs_z << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                 }
 
-                const double* data_pointer = this->psialpha[0]->data(iat, ibt, R);
+                const double* data_pointer = this->phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3, nullptr);
                 if (cal_deri)
                 {
-                    grad_pointer[0] = this->psialpha[1]->data(iat, ibt, R);
-                    grad_pointer[1] = this->psialpha[2]->data(iat, ibt, R);
-                    grad_pointer[2] = this->psialpha[3]->data(iat, ibt, R);
+                    grad_pointer[0] = this->phialpha[1]->data(iat, ibt, R);
+                    grad_pointer[1] = this->phialpha[2]->data(iat, ibt, R);
+                    grad_pointer[2] = this->phialpha[3]->data(iat, ibt, R);
                 }
 
                 for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
@@ -334,7 +334,7 @@ void LCAO_Deepks::check_psialpha(const bool& cal_deri,
         }         // end I0
     }             // end T0
 
-    ModuleBase::timer::tick("LCAO_Deepks", "check_psialpha");
+    ModuleBase::timer::tick("LCAO_Deepks", "check_phialpha");
     return;
 }
 

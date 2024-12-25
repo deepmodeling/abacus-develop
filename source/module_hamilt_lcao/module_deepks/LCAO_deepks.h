@@ -54,7 +54,7 @@ class LCAO_Deepks
     ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
     ModuleBase::matrix o_delta;
 
-    /// Correction term to the Hamiltonian matrix: \f$\langle\psi|V_\delta|\psi\rangle\f$ (for gamma only)
+    /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$ (for gamma only)
     /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
     std::vector<std::vector<double>> H_V_delta;
     /// Correction term to Hamiltonian, for multi-k
@@ -111,9 +111,9 @@ class LCAO_Deepks
     // related derivatives.
     torch::jit::script::Module module;
 
-    // saves <psi(0)|alpha(R)> and its derivatives
+    // saves <phi(0)|alpha(R)> and its derivatives
     // index 0 for itself and index 1-3 for derivatives over x,y,z
-    std::vector<hamilt::HContainer<double>*> psialpha;
+    std::vector<hamilt::HContainer<double>*> phialpha;
 
     // projected density matrix
     double** pdm; //[tot_Inl][2l+1][2l+1]	caoyu modified 2021-05-07; if equivariant version: [nat][nlm*nlm]
@@ -125,7 +125,7 @@ class LCAO_Deepks
     // gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
     std::vector<torch::Tensor> gedm_tensor;
 
-    // gdmx: dD/dX		\sum_{mu,nu} 2*c_mu*c_nu * <dpsi_mu/dx|alpha_m><alpha_m'|psi_nu>
+    // gdmx: dD/dX		\sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
     double*** gdmx; //[natom][tot_Inl][2l+1][2l+1]
     double*** gdmy;
     double*** gdmz;
@@ -162,7 +162,7 @@ class LCAO_Deepks
     // v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm_shell;
     torch::Tensor v_delta_precalc_tensor;
     // for v_delta==2 , new v_delta_precalc storage method
-    torch::Tensor psialpha_tensor;
+    torch::Tensor phialpha_tensor;
     torch::Tensor gevdm_tensor;
 
     /// size of descriptor(projector) basis set
@@ -230,7 +230,7 @@ class LCAO_Deepks
   private:
     // arrange index of descriptor in all atoms
     void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
-    // data structure that saves <psi|alpha>
+    // data structure that saves <phi|alpha>
     void allocate_nlm(const int nat);
 
     // for bandgap label calculation; QO added on 2022-1-7
@@ -242,32 +242,32 @@ class LCAO_Deepks
     void del_v_delta_pdm_shell(const int nks, const int nlocal);
 
     //-------------------
-    // LCAO_deepks_psialpha.cpp
+    // LCAO_deepks_phialpha.cpp
     //-------------------
 
     // E.Wu 2024-12-24
     // This file contains 3 subroutines:
-    // 1. allocate_psialpha, which allocates memory for psialpha
-    // 2. build_psialpha, which calculates the overlap
-    // between atomic basis and projector alpha : <psi_mu|alpha>
+    // 1. allocate_phialpha, which allocates memory for phialpha
+    // 2. build_phialpha, which calculates the overlap
+    // between atomic basis and projector alpha : <phi_mu|alpha>
     // which will be used in calculating pdm, gdmx, H_V_delta, F_delta;
-    // 3. check_psialpha, which prints the results into .dat files
+    // 3. check_phialpha, which prints the results into .dat files
     // for checking
 
   public:
     // calculates <chi|alpha>
-    void allocate_psialpha(const bool& cal_deri,
+    void allocate_phialpha(const bool& cal_deri,
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const Grid_Driver& GridD);
 
-    void build_psialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
+    void build_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
                         const Grid_Driver& GridD,
                         const TwoCenterIntegrator& overlap_orb_alpha);
 
-    void check_psialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
+    void check_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
                         const Grid_Driver& GridD);
@@ -319,7 +319,7 @@ class LCAO_Deepks
         const Grid_Driver& GridD,
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        std::vector<hamilt::HContainer<double>*> psialpha,
+        std::vector<hamilt::HContainer<double>*> phialpha,
         const bool isstress);
 
     void check_gdmx(const int nat);
@@ -406,7 +406,7 @@ class LCAO_Deepks
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
     // 12. check_v_delta_precalc : check v_delta_precalc
-    // 13. prepare_psialpha : prepare psialpha for outputting npy file
+    // 13. prepare_phialpha : prepare phialpha for outputting npy file
     // 14. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
@@ -464,9 +464,9 @@ class LCAO_Deepks
     template <typename TK>
     void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
 
-    // prepare psialpha for outputting npy file
+    // prepare phialpha for outputting npy file
     template <typename TK>
-    void prepare_psialpha(const int nlocal,
+    void prepare_phialpha(const int nlocal,
                           const int nat,
                           const int nks,
                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -475,7 +475,7 @@ class LCAO_Deepks
                           const Grid_Driver& GridD);
 
     template <typename TK>
-    void check_vdp_psialpha(const int nat, const int nks, const int nlocal);
+    void check_vdp_phialpha(const int nat, const int nks, const int nlocal);
 
     // prepare gevdm for outputting npy file
     void prepare_gevdm(const int nat, const LCAO_Orbitals& orb);

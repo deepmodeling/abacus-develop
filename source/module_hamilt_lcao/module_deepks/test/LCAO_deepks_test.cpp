@@ -21,7 +21,7 @@ void test_deepks::check_dstable()
     // this->compare_with_ref("S_I_mu_alpha.dat","S_I_mu_alpha_ref.dat");
 }
 
-void test_deepks::check_psialpha()
+void test_deepks::check_phialpha()
 {
     std::vector<int> na;
     na.resize(ucell.ntype);
@@ -31,16 +31,16 @@ void test_deepks::check_psialpha()
     }
     ld.init(ORB, ucell.nat, ucell.ntype, ParaO, na);
 
-    ld.allocate_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    ld.allocate_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
 
-    ld.build_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
+    ld.build_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
 
-    ld.check_psialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    ld.check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
 
-    this->compare_with_ref("psialpha.dat", "psialpha_ref.dat");
-    this->compare_with_ref("dpsialpha_x.dat", "dpsialpha_x_ref.dat");
-    this->compare_with_ref("dpsialpha_y.dat", "dpsialpha_y_ref.dat");
-    this->compare_with_ref("dpsialpha_z.dat", "dpsialpha_z_ref.dat");
+    this->compare_with_ref("phialpha.dat", "phialpha_ref.dat");
+    this->compare_with_ref("dphialpha_x.dat", "dphialpha_x_ref.dat");
+    this->compare_with_ref("dphialpha_y.dat", "dphialpha_y_ref.dat");
+    this->compare_with_ref("dphialpha_z.dat", "dphialpha_z_ref.dat");
 }
 
 void test_deepks::read_dm()
@@ -128,11 +128,11 @@ void test_deepks::check_gdmx()
     this->ld.init_gdmx(ucell.nat);
     if (PARAM.sys.gamma_only_local)
     {
-        this->ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.psialpha, 0);
+        this->ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.phialpha, 0);
     }
     else
     {
-        this->ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.psialpha, 0);
+        this->ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.get_nkstot(), kv.kvec_d, this->ld.phialpha, 0);
     }
     this->ld.check_gdmx(ucell.nat);
 
