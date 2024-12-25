@@ -69,6 +69,7 @@ Psi<T, Device>::Psi(T* psi_pointer,
                     const int nbd_in,
                     const int nbs_in,
                     const std::vector<int>& ngk_vector_in,
+                    const int current_nbasis_in,
                     const bool k_first_in)
 {
     this->k_first = k_first_in;
@@ -79,7 +80,7 @@ Psi<T, Device>::Psi(T* psi_pointer,
     this->nk = nk_in;
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
-    this->current_nbasis = nbs_in;
+    this->current_nbasis = current_nbasis_in;
     this->psi_current = this->psi = psi_pointer;
     this->allocate_inside = false;
     // Currently only GPU's implementation is supported for device recording!
