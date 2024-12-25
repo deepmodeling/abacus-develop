@@ -32,7 +32,6 @@ template <typename T, typename Device>
 Psi<T, Device>::Psi()
 {
     this->npol = PARAM.globalv.npol;
-    this->device = base_device::get_device_type<Device>(this->ctx);
 }
 
 template <typename T, typename Device>
@@ -52,8 +51,9 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
-    this->device = base_device::get_device_type<Device>(this->ctx);
+
     this->resize(nk_in, nbd_in, nbs_in);
+
     // Currently only GPU's implementation is supported for device recording!
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
     base_device::information::record_device_memory<Device>(this->ctx,
@@ -76,7 +76,6 @@ Psi<T, Device>::Psi(T* psi_pointer,
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
-    this->device = base_device::get_device_type<Device>(this->ctx);
     this->nk = nk_in;
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
@@ -96,7 +95,6 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
     this->current_b = 0;
     this->current_k = 0;
     this->npol = PARAM.globalv.npol;
-    this->device = base_device::get_device_type<Device>(this->ctx);
     this->nk = nk_in;
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
@@ -111,13 +109,10 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
 {
-    assert(nk_in <= psi_in.get_nk());
-    if (nband_in == 0)
-    {
-        nband_in = psi_in.get_nbands();
-    }
+    assert(nk_in <= psi_in.get_nk() && nk_in > 0);
+    assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
+
     this->k_first = psi_in.get_k_first();
-    this->device = psi_in.device;
     this->resize(nk_in, nband_in, psi_in.get_nbasis());
     this->ngk = psi_in.ngk;
     this->npol = psi_in.npol;
@@ -139,8 +134,6 @@ template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
 {
     this->k_first = psi_in.get_k_first();
-    this->device = base_device::get_device_type<Device>(this->ctx);
-    assert(this->device == psi_in.device);
     assert(nk_in <= psi_in.get_nk());
     if (nband_in == 0)
     {
@@ -168,7 +161,7 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
-    this->device = base_device::get_device_type<Device>(this->ctx);
+
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
     base_device::memory::synchronize_memory_op<T, Device, Device>()(this->ctx,
                                                                     psi_in.get_device(),
@@ -193,7 +186,7 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
-    this->device = base_device::get_device_type<Device>(this->ctx);
+
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
 
     // Specifically, if the Device_in type is CPU and the Device type is GPU.

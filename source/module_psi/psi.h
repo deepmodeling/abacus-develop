@@ -43,9 +43,8 @@ class Psi
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
 
     // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    Psi(const Psi& psi_in, const int nk_in, int nband_in = 0);
-    
-    
+    Psi(const Psi& psi_in, const int nk_in, const int nband_in);
+
     // Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
     // in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in = 0);
@@ -69,13 +68,8 @@ class Psi
 
     // Constructor 8-2: a pointer version of constructor 3
     // only used in operator.cpp call_act func
-    Psi(T* psi_pointer,
-        const int nk_in,
-        const int nbd_in,
-        const int nbs_in,
-        const bool k_first_in);
+    Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const bool k_first_in);
 
-    
     // Destructor for deleting the psi array manually
     ~Psi();
 
@@ -141,8 +135,7 @@ class Psi
 
   private:
     T* psi = nullptr; // avoid using C++ STL
-
-    base_device::AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
+    
     Device* ctx = {};                        // an context identifier for obtaining the device variable
 
     // dimensions
