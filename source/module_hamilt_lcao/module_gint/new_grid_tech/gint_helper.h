@@ -46,7 +46,7 @@ inline double pow_int(const double base, const int exp)
 
 inline int floor_div(const int a, const int b)
 {
-    // a ^ b < 0 is equivalent to a and b have different signs
+    // a ^ b < 0 means a and b have different signs
     return a / b - (a % b != 0 && (a ^ b) < 0);
 };
 
@@ -62,22 +62,18 @@ inline int ceil_div(const int a, const int b)
 
 template <typename T>
 void writeArrayToFile(T* array, int n, const std::string& filename) {
-    // 打开文件，使用 ofstream 来写入数据
     std::ofstream outFile(filename);
 
-    // 检查文件是否成功打开
     if (!outFile.is_open()) {
-        std::cerr << "无法打开或创建文件: " << filename << std::endl;
+        std::cerr << "can't open file: " << filename << std::endl;
         return;
     }
 
-    // 写入数组的前n个元素到文件中
     for (int i = 0; i < n; ++i) {
         outFile <<array[i] << std::endl;
     }
 
-    // 关闭文件
     outFile.close();
 
-    std::cout << "成功将数据写入文件: " << filename << std::endl;
+    std::cout << "successfully write data to: " << filename << std::endl;
 }
