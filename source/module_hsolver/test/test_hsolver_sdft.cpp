@@ -23,37 +23,8 @@ Sto_Func<REAL>::Sto_Func()
 }
 template class Sto_Func<double>;
 
-
-template <>
-elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
-                                    Charge* chg_in,
-                                    K_Vectors* pkv_in,
-                                    UnitCell* ucell_in,
-                                    pseudopot_cell_vnl* ppcell_in,
-                                    ModulePW::PW_Basis* rhodpw_in,
-                                    ModulePW::PW_Basis* rhopw_in,
-                                    ModulePW::PW_Basis_Big* bigpw_in)
-    : basis(wfc_basis_in)
-{
-}
-
-template<>
-elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::~ElecStatePW() 
-{
-}
-
 template<>
 void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init_rho_data() 
-{
-}
-
-template<>
-void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::psiToRho(const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi)
-{
-}
-
-template<>
-void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::cal_tau(const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi)
 {
 }
 

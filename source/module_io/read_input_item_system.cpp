@@ -207,7 +207,7 @@ void ReadInput::item_system()
         item.annotation = "if calculate the force at the end of the electronic iteration";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
-            std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "nscf", "get_S"};
+            std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "get_S"};
             if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
             {
                 if (!para.input.cal_force)

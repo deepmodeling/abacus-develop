@@ -2446,10 +2446,11 @@ These variables are relevant when using hybrid functionals.
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
-  - 1.5: if *[dft_functional](#dft_functional)==hse*
-  - 5: else
+  - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
+  - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*
+  - 1: else
 
 ### exx_distribute_type
 
@@ -2488,6 +2489,7 @@ These variables are relevant when using hybrid functionals.
 - **Description**:
   - True: Enforce LibRI to use `double` data type.
   - False: Enforce LibRI to use `complex` data type.
+  Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only
   - False: else

@@ -305,7 +305,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
     // for pw_wfc in G space
-    psi::Psi<std::complex<double>> psi_g(kv.ngk.data());
+    psi::Psi<std::complex<double>> psi_g;
     if (out_wf || out_wf_r)
     {
         psi_g.resize(nks, nbands, pw_wfc->npwk_max);

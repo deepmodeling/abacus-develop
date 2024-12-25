@@ -36,7 +36,6 @@ list(APPEND depend_files
   ../../module_base/math_integral.cpp
   ../../module_cell/module_neighbor/sltk_atom_arrange.cpp
   ../../module_cell/module_neighbor/sltk_atom.cpp
-  ../../module_cell/module_neighbor/sltk_atom_input.cpp
   ../../module_cell/module_neighbor/sltk_grid.cpp
   ../../module_cell/module_neighbor/sltk_grid_driver.cpp
   ../../module_io/output.cpp

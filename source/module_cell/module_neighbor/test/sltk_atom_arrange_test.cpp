@@ -87,11 +87,11 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
     std::ofstream ofs;
     ofs.open("./to_test_arrange.txt");
     test_sr = test.set_sr_NL(ofs, teststring, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
-    EXPECT_DOUBLE_EQ(test_sr, 2.01);
+    EXPECT_DOUBLE_EQ(test_sr, 2.001);
 
     gamma_only_local = false;
     test_sr = test.set_sr_NL(ofs, teststring, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
-    EXPECT_DOUBLE_EQ(test_sr, 6.01);
+    EXPECT_DOUBLE_EQ(test_sr, 6.001);
 
     const std::string teststring2 = "no";
     test_sr = test.set_sr_NL(ofs, teststring2, rcutmax_Phi, rcutmax_Beta, gamma_only_local);
