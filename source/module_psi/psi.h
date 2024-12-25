@@ -42,9 +42,6 @@ class Psi
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
 
-    // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    Psi(const Psi& psi_in, const int nk_in, int nband_in = 0);
-
     // Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
     // in this case, fix_k can not be used
     Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in = 0);

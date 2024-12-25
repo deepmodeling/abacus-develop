@@ -461,7 +461,9 @@ void ModuleIO::write_dos_lcao(const UnitCell& ucell,
                     }
 
                     psi->fix_k(ik);
-                    psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                    // psi::Psi<std::complex<double>> Dwfc(psi[0], 1);
+                    psi::Psi<std::complex<double>> Dwfc(1, psi->get_nbands(), psi->get_nbasis());
+
                     std::complex<double>* p_dwfc = Dwfc.get_pointer();
                     for (int index = 0; index < Dwfc.size(); ++index)
                     {

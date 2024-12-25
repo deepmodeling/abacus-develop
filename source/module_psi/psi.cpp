@@ -108,32 +108,6 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
 }
 
 template <typename T, typename Device>
-Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
-{
-    assert(nk_in <= psi_in.get_nk());
-    if (nband_in == 0)
-    {
-        nband_in = psi_in.get_nbands();
-    }
-    this->k_first = psi_in.get_k_first();
-    this->device = psi_in.device;
-    this->resize(nk_in, nband_in, psi_in.get_nbasis());
-    this->ngk = psi_in.ngk;
-    this->npol = psi_in.npol;
-    if (nband_in <= psi_in.get_nbands())
-    {
-        // copy from Psi from psi_in(current_k, 0, 0),
-        // if size of k is 1, current_k in new Psi is psi_in.current_k
-        if (nk_in == 1)
-        {
-            // current_k for this Psi only keep the spin index same as the copied Psi
-            this->current_k = psi_in.get_current_k();
-        }
-        synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
-    }
-}
-
-template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
 {
     this->k_first = psi_in.get_k_first();

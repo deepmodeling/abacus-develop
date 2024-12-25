@@ -15,7 +15,7 @@ class TestPsi : public ::testing::Test
     const psi::Psi<std::complex<float>>* psi_object33 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, &ngk[0]);
     const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, &ngk[0]);
 
-    psi::Psi<std::complex<double>>* psi_object4 = new psi::Psi<std::complex<double>>(*psi_object31, ink, 0);
+    // psi::Psi<std::complex<double>>* psi_object4 = new psi::Psi<std::complex<double>>(*psi_object31, ink, 0);
     psi::Psi<std::complex<double>>* psi_object5 = new psi::Psi<std::complex<double>>(psi_object31->get_pointer(), *psi_object31, ink, 0);
 };
 
