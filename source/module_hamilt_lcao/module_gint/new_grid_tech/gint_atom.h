@@ -29,7 +29,7 @@ class GintAtom
         const int get_iat() const { return iat_; };
         const Vec3i& get_biggrid_idx() const { return biggrid_idx_; };
         const Vec3i& get_unitcell_idx() const { return unitcell_idx_; };
-        const Vec3i& get_r() const { return unitcell_idx_; };
+        const Vec3i& get_R() const { return unitcell_idx_; };
         const Vec3d& get_tau_in_biggrid() const { return tau_in_biggrid_; };
         const Numerical_Orbital* get_orb() const { return orb_; };
 
@@ -46,7 +46,7 @@ class GintAtom
          * @param phi array to store the wave function values
          */
         template <typename T>
-        void set_phi(const std::vector<Vec3d> coords, const int stride, T* phi);
+        void set_phi(const std::vector<Vec3d>& coords, const int stride, T* phi) const;
 
         /**
          * @brief Get the wave function values and its derivative
@@ -64,8 +64,8 @@ class GintAtom
          */
         template <typename T>
         void set_phi_dphi(
-            const std::vector<Vec3d> coords, const int stride,
-            T* phi, T* dphi_x, T* dphi_y, T* dphi_z);
+            const std::vector<Vec3d>& coords, const int stride,
+            T* phi, T* dphi_x, T* dphi_y, T* dphi_z) const;
 
         /**
          * @brief Get the wave function values and its second derivative
@@ -84,9 +84,9 @@ class GintAtom
          */
         template <typename T>
         void set_ddphi(
-            const std::vector<Vec3d> coords, const int stride,
+            const std::vector<Vec3d>& coords, const int stride,
             T* ddphi_xx, T* ddphi_xy, T* ddphi_xz,
-            T* ddphi_yy, T* ddphi_yz, T* ddphi_zz);
+            T* ddphi_yy, T* ddphi_yz, T* ddphi_zz) const;
 
     private:
         // the atom object

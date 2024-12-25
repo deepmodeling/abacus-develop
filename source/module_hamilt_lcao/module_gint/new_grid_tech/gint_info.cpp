@@ -35,44 +35,6 @@ GintInfo::GintInfo(
 
     // initialize the atoms
     init_atoms_(ucell_->ntype, ucell_->atoms, Phi);
-    
-    int total_atoms_on_proc = 0;
-    int biggrid_num = 0;
-    for(const auto& biggrid: biggrids_)
-    {
-        biggrid_num++;
-        total_atoms_on_proc += biggrid->get_atom_num();
-    }
-    // printf("biggrid_num = %d\n", biggrid_num);
-    printf("total_atoms_on_proc_new = %d\n", total_atoms_on_proc);
-    // exit(0);
-    // std::vector<int> which_atom;
-    // std::vector<double> coords_x;
-    // std::vector<double> mcell_coords3;
-    // auto mcell_cord = unitcell_info_->get_biggrid_info()->get_meshgrid_coords();
-    // for(auto &coord: mcell_cord)
-    // {
-    //     mcell_coords3.push_back(coord.x);
-    //     mcell_coords3.push_back(coord.y);
-    //     mcell_coords3.push_back(coord.z);
-    // }
-    // for(const auto& biggrid : biggrids_)
-    // {
-    //     for(int i = 0; i < biggrid->get_atom_num(); i++)
-    //     {
-    //         // which_atom.push_back(biggrid->get_atoms()[i]->get_iat());
-    //         for(const auto coord: biggrid->get_atom_relative_coords(*biggrid->get_atoms()[i]))
-    //         {
-    //             coords_x.push_back(coord.x);
-    //         };
-    //     }
-    // }
-
-    // writeArrayToFile(which_atom.data(), which_atom.size(), "which_atom.txt");
-    // writeArrayToFile(coords_x.data(), coords_x.size(), "coords_x.txt");
-    // writeArrayToFile(mcell_coords3.data(), mcell_coords3.size(), "mcell_cord.txt");
-    // exit(0);
-    // writeArrayToFile(coords_x.data(), coords_x.size(), "coords_x.txt");
 
     // initialize the ijr_info
     // this step needs to be done after init_atoms_, because it requires the information of is_atom_on_bgrid

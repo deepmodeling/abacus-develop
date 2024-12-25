@@ -9,9 +9,9 @@ namespace ModuleGint
 
 template <typename T>
 void GintAtom::set_ddphi(
-    const std::vector<Vec3d> coords, const int stride,
+    const std::vector<Vec3d>& coords, const int stride,
     T* ddphi_xx, T* ddphi_xy, T* ddphi_xz,
-    T* ddphi_yy, T* ddphi_yz, T* ddphi_zz)
+    T* ddphi_yy, T* ddphi_yz, T* ddphi_zz) const
 {
     ModuleBase::timer::tick("GintAtom", "set_ddphi");
     
@@ -257,8 +257,8 @@ void GintAtom::set_ddphi(
 }
 
 // explicit instantiation
-template void GintAtom::set_ddphi(const std::vector<Vec3d> coords, const int stride,
+template void GintAtom::set_ddphi(const std::vector<Vec3d>& coords, const int stride,
                                     double* ddphi_xx, double* ddphi_xy, double* ddphi_xz,
-                                    double* ddphi_yy, double* ddphi_yz, double* ddphi_zz);
+                                    double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
 }

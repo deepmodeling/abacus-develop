@@ -23,44 +23,57 @@ int BigGrid::get_mgrid_phi_len() const
     return len;
 }
 
-std::vector<int> BigGrid::get_atom_startidx() const
+void BigGrid::set_atoms_startidx(std::vector<int>& startidx) const
 {
-    std::vector<int> startidx(atoms_.size());
+    startidx.resize(atoms_.size());
     startidx[0] = 0;
     for(int i = 1; i < atoms_.size(); ++i)
     {
         startidx[i] = startidx[i-1] + atoms_[i-1]->get_nw();
     }
-    return startidx;
 }
 
-std::vector<int> BigGrid::get_atom_phi_len() const
+void BigGrid::set_atoms_phi_len(std::vector<int>& phi_len) const
 {
-    std::vector<int> phi_len(atoms_.size());
+    phi_len.resize(atoms_.size());
     for(int i = 0; i < atoms_.size(); ++i)
     {
         phi_len[i] = atoms_[i]->get_nw();
     }
-    return phi_len;
 }
 
-std::vector<Vec3d> BigGrid::get_mgrid_coords() const
+void BigGrid::set_mgrids_coord(std::vector<Vec3d>& coord) const
 {
-    std::vector<Vec3d> coords(biggrid_info_->get_nmxyz());
+    coord.resize(biggrid_info_->get_nmxyz());
     Vec3d this_bgrid_coord = localcell_info_->get_bgrid_global_coord_3D(idx_);
     for(int im = 0; im < biggrid_info_->get_nmxyz(); ++im)
     {
-        coords[im] = biggrid_info_->get_meshgrid_coord(im) + this_bgrid_coord;
+        coord[im] = biggrid_info_->get_meshgrid_coord(im) + this_bgrid_coord;
     }
-    return coords;
 }
 
-std::vector<int> BigGrid::get_mgrids_local_idx() const
+void BigGrid::set_mgrids_local_idx(std::vector<int>& mgrids_idx) const
 {
-    return localcell_info_->get_mgrids_local_idx_1D(idx_);
+    auto index_3d = localcell_info_->biggrid_idx_1Dto3D(idx_);
+    Vec3i startidx(
+        index_3d.x * biggrid_info_->get_nmx(),
+        index_3d.y * biggrid_info_->get_nmy(),
+        index_3d.z * biggrid_info_->get_nmz());
+    mgrids_idx.resize(0);
+    for(int ix = 0; ix < biggrid_info_->get_nmx(); ++ix)
+    {
+        for(int iy = 0; iy < biggrid_info_->get_nmy(); ++iy)
+        {
+            for(int iz = 0; iz < biggrid_info_->get_nmz(); ++iz)
+            {
+                Vec3i idx_3d(startidx.x + ix, startidx.y + iy, startidx.z + iz);
+                mgrids_idx.push_back(localcell_info_->meshgrid_idx_3Dto1D(idx_3d));
+            }
+        }
+    }
 }
 
-std::vector<Vec3d> BigGrid::get_atom_relative_coords(Vec3i bgrid_idx, Vec3d tau_in_bgrid) const
+void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in_bgrid, std::vector<Vec3d>& atom_coord) const
 {
     Vec3i this_bgrid_idx = localcell_info_->get_bgrid_global_idx_3D(idx_);
     
@@ -68,24 +81,25 @@ std::vector<Vec3d> BigGrid::get_atom_relative_coords(Vec3i bgrid_idx, Vec3d tau_
     Vec3d bgrid_relative_coord 
         = unitcell_info_->get_relative_coord(bgrid_idx, this_bgrid_idx) + tau_in_bgrid;
 
-    std::vector<Vec3d> coords(biggrid_info_->get_nmxyz());
+    atom_coord.resize(biggrid_info_->get_nmxyz());
     for(int im = 0; im < biggrid_info_->get_nmxyz(); ++im)
     {
         Vec3d mcell_coord = biggrid_info_->get_meshgrid_coord(im);
-        coords[im] = mcell_coord - bgrid_relative_coord;
+        atom_coord[im] = mcell_coord - bgrid_relative_coord;
     }
-    return coords;
 }
 
 
-std::vector<Vec3d> BigGrid::get_atom_relative_coords(const GintAtom& atom) const
+void BigGrid::set_atom_relative_coords(const GintAtom& atom, std::vector<Vec3d>& atom_coord) const
 {
-    return get_atom_relative_coords(atom.get_biggrid_idx(), atom.get_tau_in_biggrid());
+    return set_atom_relative_coords(atom.get_biggrid_idx(), atom.get_tau_in_biggrid(), atom_coord);
 }
 
 bool BigGrid::is_atom_on_bgrid(const GintAtom& atom) const
 {
-    for(const auto& dist : get_atom_relative_coords(atom))
+    std::vector<Vec3d> coords;
+    this->set_atom_relative_coords(atom, coords);
+    for(const auto& dist : coords)
     {
         if(dist.norm() <= atom.get_rcut())
         {
@@ -93,26 +107,6 @@ bool BigGrid::is_atom_on_bgrid(const GintAtom& atom) const
         }
     }
     return false;
-}
-
-std::vector<std::vector<bool>> BigGrid::get_is_atom_on_mgrids() const
-{
-    std::vector<std::vector<bool>> if_on_mcell;
-    for(const auto& atom : atoms_)
-    {
-        std::vector<Vec3d> mcell_coords = get_atom_relative_coords(*atom);
-        std::vector<bool> atom_if_on_mcell(mcell_coords.size());
-        for(const auto& coord : mcell_coords)
-        {
-            for(int i = 0; i < mcell_coords.size(); ++i)
-            {   
-                auto coord = mcell_coords[i];
-                atom_if_on_mcell[i] = coord.norm() <= atom->get_rcut();
-            }
-        }
-        if_on_mcell.push_back(atom_if_on_mcell);
-    }
-    return if_on_mcell;
 }
 
 } // namespace ModuleGint

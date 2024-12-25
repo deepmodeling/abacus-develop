@@ -4,31 +4,46 @@
 namespace ModuleGint
 {
 
-PhiOperator::PhiOperator(std::shared_ptr<BigGrid> biggrid)
-: biggrid_(biggrid)
+void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 {
-    rows_ = biggrid_->get_biggrid_info()->get_nmxyz();
+    biggrid_ = biggrid;
+    rows_ = biggrid_->get_meshgrid_num();
     cols_ = biggrid_->get_mgrid_phi_len();
-    is_atom_on_mgrids_ = biggrid_->get_is_atom_on_mgrids();
-    meshgrids_local_idx_ = biggrid_->get_mgrids_local_idx();
-    atom_startidx_ = biggrid_->get_atom_startidx();
-    atom_phi_len_ = biggrid_->get_atom_phi_len();
+
+    biggrid_->set_atoms_startidx(atoms_startidx_);
+    biggrid_->set_atoms_phi_len(atoms_phi_len_);
+    biggrid_->set_mgrids_local_idx(meshgrids_local_idx_);
+
+    int atoms_num = biggrid_->get_atom_num();
+    atoms_relative_coords_.resize(atoms_num);
+    is_atom_on_mgrid_.resize(atoms_num);
+    for(int i = 0; i < atoms_num; ++i)
+    {
+        biggrid_->set_atom_relative_coords(*biggrid_->get_atom(i), atoms_relative_coords_[i]);
+        is_atom_on_mgrid_[i].resize(rows_);
+        for(int j = 0; j < rows_; ++j)
+        {
+            is_atom_on_mgrid_[i][j] = atoms_relative_coords_[i][j].norm() <= biggrid_->get_atom(i)->get_rcut();
+        }
+    }
 }
 
 void PhiOperator::set_phi(double* phi) const
 {
-    for(const auto& atom : biggrid_->get_atoms())
+    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
-        atom->set_phi(biggrid_->get_atom_relative_coords(*atom), cols_, phi);
+        const auto atom = biggrid_->get_atom(i);
+        atom->set_phi(atoms_relative_coords_[i], cols_, phi);
         phi += atom->get_nw();
     }
 }
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
 {
-    for(const auto& atom : biggrid_->get_atoms())
+    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
-        atom->set_phi_dphi(biggrid_->get_atom_relative_coords(*atom), cols_, phi, dphi_x, dphi_y, dphi_z);
+        const auto atom = biggrid_->get_atom(i);
+        atom->set_phi_dphi(atoms_relative_coords_[i], cols_, phi, dphi_x, dphi_y, dphi_z);
         phi += atom->get_nw();
         dphi_x += atom->get_nw();
         dphi_y += atom->get_nw();
@@ -40,9 +55,10 @@ void PhiOperator::set_ddphi(
     double* ddphi_xx, double* ddphi_xy, double* ddphi_xz,
     double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const
 {
-    for(const auto& atom : biggrid_->get_atoms())
+    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
-        atom->set_ddphi(biggrid_->get_atom_relative_coords(*atom), cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
+        const auto atom = biggrid_->get_atom(i);
+        atom->set_ddphi(atoms_relative_coords_[i], cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
         ddphi_xx += atom->get_nw();
         ddphi_xy += atom->get_nw();
         ddphi_xz += atom->get_nw();
@@ -64,22 +80,22 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
 
     for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
-        const auto atom_i = biggrid_->get_atoms()[i];
-        const auto r_i = atom_i->get_r();
+        const auto atom_i = biggrid_->get_atom(i);
+        const auto r_i = atom_i->get_R();
 
         if(is_symm)
         {
             const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
-            dsymm_(&side, &uplo, &atom_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atom_phi_len_[i],
-                &phi[0][atom_startidx_[i]], &cols_, &beta, &result[0][atom_startidx_[i]], &cols_);
+            dsymm_(&side, &uplo, &atoms_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atoms_phi_len_[i],
+                &phi[0][atoms_startidx_[i]], &cols_, &beta, &result[0][atoms_startidx_[i]], &cols_);
         }
 
         const int start = is_symm ? i + 1 : 0;
 
         for(int j = start; j < biggrid_->get_atom_num(); ++j)
         {
-            const auto atom_j = biggrid_->get_atoms()[j];
-            const auto r_j = atom_j->get_r();
+            const auto atom_j = biggrid_->get_atom(j);
+            const auto r_j = atom_j->get_R();
             // FIXME may be r = r_j - r_i
             const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i-r_j);
 
@@ -99,8 +115,8 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
                 continue;
             }
 
-            dgemm_(&trans, &trans, &atom_phi_len_[j], &len, &atom_phi_len_[i], &alpha1, dm_mat->get_pointer(), &atom_phi_len_[j],
-                &phi[start_idx][atom_startidx_[i]], &cols_, &beta, &result[start_idx][atom_startidx_[j]], &cols_);
+            dgemm_(&trans, &trans, &atoms_phi_len_[j], &len, &atoms_phi_len_[i], &alpha1, dm_mat->get_pointer(), &atoms_phi_len_[j],
+                &phi[start_idx][atoms_startidx_[i]], &cols_, &beta, &result[start_idx][atoms_startidx_[j]], &cols_);
         }
     }
 }
@@ -127,14 +143,14 @@ void PhiOperator::phi_mul_phi_vldr3(
 
     for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
-        const auto atom_i = biggrid_->get_atoms()[i];
-        const auto& r_i = atom_i->get_r();
+        const auto atom_i = biggrid_->get_atom(i);
+        const auto& r_i = atom_i->get_R();
         const int iat_i = atom_i->get_iat();
 
         for(int j = 0; j < biggrid_->get_atom_num(); ++j)
         {
-            const auto atom_j = biggrid_->get_atoms()[j];
-            const auto& r_j = atom_j->get_r();
+            const auto atom_j = biggrid_->get_atom(j);
+            const auto& r_j = atom_j->get_R();
             const int iat_j = atom_j->get_iat();
 
             // only calculate the upper triangle matrix
@@ -160,8 +176,8 @@ void PhiOperator::phi_mul_phi_vldr3(
                 continue;
             }
 
-            dgemm_(&transa, &transb, &atom_phi_len_[j], &atom_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx][atom_startidx_[j]],
-                &cols_,&phi[start_idx][atom_startidx_[i]], &cols_, &beta, result->get_pointer(), &atom_phi_len_[j]);
+            dgemm_(&transa, &transb, &atoms_phi_len_[j], &atoms_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx][atoms_startidx_[j]],
+                &cols_,&phi[start_idx][atoms_startidx_[i]], &cols_, &beta, result->get_pointer(), &atoms_phi_len_[j]);
         }
     }
 }
@@ -173,7 +189,7 @@ int PhiOperator::atom_pair_startidx_(int a, int b) const
 {
     for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
     {
-        if(is_atom_on_mgrids_[a][i] && is_atom_on_mgrids_[b][i])
+        if(is_atom_on_mgrid_[a][i] && is_atom_on_mgrid_[b][i])
         {
             return i;
         }
@@ -185,7 +201,7 @@ int PhiOperator::atom_pair_endidx_(int a, int b) const
 {
     for(int i = biggrid_->get_meshgrid_num() - 1; i >= 0; --i)
     {
-        if(is_atom_on_mgrids_[a][i] && is_atom_on_mgrids_[b][i])
+        if(is_atom_on_mgrid_[a][i] && is_atom_on_mgrid_[b][i])
         {
             return i;
         }

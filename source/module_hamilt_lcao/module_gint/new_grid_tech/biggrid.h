@@ -23,6 +23,7 @@ class BigGrid
         std::shared_ptr<const UnitCellInfo> get_unitcell_info() const {return unitcell_info_; };
         std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return biggrid_info_; };
         const std::vector<std::shared_ptr<GintAtom>>& get_atoms() const { return atoms_; };
+        std::shared_ptr<const GintAtom> get_atom(int i) const { return atoms_[i]; };
 
         // get the number of meshgrids in the big grid
         int get_meshgrid_num() const { return biggrid_info_->get_nmxyz(); };
@@ -37,42 +38,35 @@ class BigGrid
         // return: (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
         int get_mgrid_phi_len() const;
 
-        // get the start index of the phi of each atom
+        // set the start index of the phi of each atom
         // return: vector[i] = \sum_{j=0}^{i-1} atoms_[j]->nw
-        vector<int> get_atom_startidx() const;
+        void set_atoms_startidx(std::vector<int>& startidx) const;
 
-        // get the length of phi of each atom
-        vector<int> get_atom_phi_len() const;
+        // set the length of phi of each atom
+        void set_atoms_phi_len(std::vector<int>& phi_len) const;
 
-        // get the coordinates of the meshgrids of the big grid
-        vector<Vec3d> get_mgrid_coords() const;
+        // set the coordinates of the meshgrids of the big grid
+        void set_mgrids_coord(std::vector<Vec3d>& coord) const;
 
-        // get the 1D index of the meshgrids in the local cell
-        vector<int> get_mgrids_local_idx() const;
+        // set the 1D index of the meshgrids in the local cell
+        void set_mgrids_local_idx(std::vector<int>& mgrids_idx) const;
 
         /**
-         * @brief Get the coordinates of the meshgrids of the big grid relative to an atom
+         * @brief Set the coordinates of the meshgrids of the big grid relative to an atom
          * 
          * @param bgrid_idx the 3D index of the big grid, which contains the atom, in the unitcell
          * @param tau_in_bgrid the cartesian coordinate of the atom relative to the big grid containing it
+         * @param atom_coord the relative cartesian coordinates of the atom and the meshgrids
          */
-        std::vector<Vec3d> get_atom_relative_coords(Vec3i bgrid_idx, Vec3d tau_in_bgrid) const;
+        void set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in_bgrid, std::vector<Vec3d>& atom_coord) const;
 
-        // get the coordinates of the meshgrids of the big grid relative to the atom
-        std::vector<Vec3d> get_atom_relative_coords(const GintAtom& atom) const;
+        // a wrapper function to get the relative coordinates of the atom and the meshgrids
+        void set_atom_relative_coords(const GintAtom& atom, std::vector<Vec3d>& atom_coord) const;
 
         // if the atom affects the big grid, return true, otherwise false
         // note when we say an atom affects a big grid, it does not mean that the atom affects all the meshgrid on the big grid,
         // it may only affect a part of them.
         bool is_atom_on_bgrid(const GintAtom& atom) const;
-
-        /**
-         * @brief Get a boolean array to indicate whether the atom affects the meshgrids
-         * 
-         * @return a boolean array, the dimension of the array is atoms_->size() * biggrid_info_->get_nmxyz()
-         * array[i][j] = true if the ith atom affects the jth meshgrid，otherwise false.
-         */
-        std::vector<std::vector<bool>> get_is_atom_on_mgrids() const;
     
     private:
         // atoms that can affect the big grid

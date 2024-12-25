@@ -26,13 +26,14 @@ void Gint_vl::init_hRGint_()
 
 void Gint_vl::cal_hRGint_()
 {
+    PhiOperator phi_op;
     for(const auto& biggrid: gint_info_->get_biggrids())
     {
         if(biggrid->get_atoms().size() == 0)
         {
             continue;
         }
-        PhiOperator phi_op(biggrid);
+        phi_op.set_bgrid(biggrid);
         ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
         ModuleBase::Array_Pool<double> phi_vldr3(phi_op.get_rows(), phi_op.get_cols());
         phi_op.set_phi(phi.get_ptr_1D());

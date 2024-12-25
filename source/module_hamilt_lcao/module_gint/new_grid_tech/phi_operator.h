@@ -19,7 +19,10 @@ class PhiOperator
 {
     public:
     // constructor
-    PhiOperator(std::shared_ptr<BigGrid> biggrid);
+    PhiOperator()=default;
+
+    // set the big grid that the phiOperator is associated with
+    void set_bgrid(std::shared_ptr<const BigGrid> biggrid);
 
     // getter
     int get_rows() const {return rows_;};
@@ -77,19 +80,24 @@ class PhiOperator
     std::vector<int> meshgrids_local_idx_;
 
     // the big grid that the phi matrix is associated with
-    std::shared_ptr<BigGrid> biggrid_;
+    std::shared_ptr<const BigGrid> biggrid_;
+
+    // the relative coordinates of the atoms and the meshgrids
+    // atoms_relative_coords_[i][j] is the relative coordinate of the jth meshgrid and the ith atom
+    std::vector<std::vector<Vec3d>> atoms_relative_coords_;
 
     // record whether the atom affects the meshgrid
-    // is_atom_on_mgrids_[i][j] = true if the ith atom affects the jth meshgrid, otherwise false
+    // is_atom_on_mgrid_[i][j] = true if the ith atom affects the jth meshgrid, otherwise false
     // FIXME,std::vector<std::vector<bool>> is not a efficient data structure, we can use a 1D array to replace it. 
-    std::vector<std::vector<bool>> is_atom_on_mgrids_;
+    std::vector<std::vector<bool>> is_atom_on_mgrid_;
 
     // the start index of the phi of each atom
-    std::vector<int> atom_startidx_;
+    std::vector<int> atoms_startidx_;
 
     // the length of phi of each atom
-    // atom_phi_len_[i] = biggrid_->get_atoms()[i]->get_nw()
-    std::vector<int> atom_phi_len_;
+    // atoms_phi_len_[i] = biggrid_->get_atom(i)->get_nw()
+    // TODO: remove it
+    std::vector<int> atoms_phi_len_;
 };
 
 }

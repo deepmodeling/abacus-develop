@@ -453,10 +453,6 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
         }
     }
     assert(count == total_atoms_on_grid);
-    printf("total_atoms_on_proc_old = %d\n", total_atoms_on_grid);
-    // writeArrayToFile(this->which_atom.data(), this->which_atom.size(), "which_atom2.txt");
-    // writeArrayToFile(coord_x.data(), coord_x.size(), "coord_x2.txt");
-    // writeArrayToFile(coords3.data(), coords3.size(), "coords3.txt");
     return;
 }
 

@@ -7,7 +7,7 @@ namespace ModuleGint
 {
 
 template <typename T>
-void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi)
+void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, T* phi) const
 {
     const int num_mgrids = coords.size();
 
@@ -38,7 +38,6 @@ void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi
 
         // 1e-9 is to avoid division by zero
         const double dist = coord.norm() < 1e-9 ? 1e-9 : coord.norm();
-        // printf("coord.x = %.10f, coord.y = %.10f, coord.z = %.10f, dist = %f\n", coord.x, coord.y, coord.z, dist);
         if(dist > orb_->getRcut())
         {   
             // if the distance is larger than the cutoff radius,
@@ -81,19 +80,15 @@ void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, T* phi
                         + c3 * psi_uniform[ip + 1] + c4 * dpsi_uniform[ip + 1];
                 }
                 phi[im * stride + iw] = psi * ylma[atom_->iw2_ylm[iw]];
-                // printf("phi[%d] = %.10f\n", im * stride + iw, phi[im * stride + iw]);
-                // printf("ylma[%d] = %.10f\n", atom_->iw2_ylm[iw], ylma[atom_->iw2_ylm[iw]]);
-                // printf("psi = %.10f\n", psi);
             }
-            // exit(0);
         }
     }
 }
 
 template <typename T>
 void GintAtom::set_phi_dphi(
-    const std::vector<Vec3d> coords, const int stride,
-    T* phi, T* dphi_x, T* dphi_y, T* dphi_z)
+    const std::vector<Vec3d>& coords, const int stride,
+    T* phi, T* dphi_x, T* dphi_y, T* dphi_z) const
 {
     const int num_mgrids = coords.size();
     
@@ -199,6 +194,6 @@ void GintAtom::set_phi_dphi(
 }
 
 // explicit instantiation
-template void GintAtom::set_phi(const std::vector<Vec3d> coords, const int stride, double* phi);
-template void GintAtom::set_phi_dphi(const std::vector<Vec3d> coords, const int stride, double* phi, double* dphi_x, double* dphi_y, double* dphi_z);
+template void GintAtom::set_phi(const std::vector<Vec3d>& coords, const int stride, double* phi) const;
+template void GintAtom::set_phi_dphi(const std::vector<Vec3d>& coords, const int stride, double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const;
 }

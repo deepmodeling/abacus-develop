@@ -116,26 +116,4 @@ namespace ModuleGint
         return unitcell_info_->meshgrid_idx_3Dto1D(ucell_idx_3d);
     }
 
-    std::vector<int> LocalCellInfo::get_mgrids_local_idx_1D(const int index_1d) const
-    {
-        std::vector<int> local_idx;
-        auto index_3d = biggrid_idx_1Dto3D(index_1d);
-        Vec3i startidx(
-            index_3d.x * biggrid_info_->get_nmx(),
-            index_3d.y * biggrid_info_->get_nmy(),
-            index_3d.z * biggrid_info_->get_nmz());
-        for(int ix = 0; ix < biggrid_info_->get_nmx(); ++ix)
-        {
-            for(int iy = 0; iy < biggrid_info_->get_nmy(); ++iy)
-            {
-                for(int iz = 0; iz < biggrid_info_->get_nmz(); ++iz)
-                {
-                    Vec3i idx_3d = Vec3i(startidx.x + ix, startidx.y + iy, startidx.z + iz);
-                    local_idx.push_back(meshgrid_idx_3Dto1D(idx_3d));
-                }
-            }
-        }
-        return local_idx;
-    }
-
 }
