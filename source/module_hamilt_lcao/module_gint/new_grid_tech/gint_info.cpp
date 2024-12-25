@@ -96,19 +96,6 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             const Vec3d tau_in_biggrid = delta.x * unitcell_info_->get_biggrid_info()->get_vec1() +
                                          delta.y * unitcell_info_->get_biggrid_info()->get_vec2() +
                                          delta.z * unitcell_info_->get_biggrid_info()->get_vec3();
-            // const Vec3i atom_bgrid_idx = unitcell_info_->get_biggrid_idx_3d(atom.tau[j]);
-            // int b1 = static_cast<int>(atom.taud[j].x * unitcell_info_->get_nbx());
-            // int b2 = static_cast<int>(atom.taud[j].y * unitcell_info_->get_nby());
-            // int b3 = static_cast<int>(atom.taud[j].z * unitcell_info_->get_nbz());
-            // if(true)
-            // {
-            //     printf("atom_bgrid_idx (%d) = %d %d %d\n", iat, atom_bgrid_idx.x, atom_bgrid_idx.y, atom_bgrid_idx.z);
-            //     printf("atom.taud (%d) = %f %f %f\n", iat, atom.taud[j].x, atom.taud[j].y, atom.taud[j].z);
-            //     printf("atom.tau (%d) = %f %f %f\n", iat, atom.tau[j].x, atom.tau[j].y, atom.tau[j].z);
-            //     printf("b1 b2 b3 = %d %d %d\n", b1, b2, b3);
-            // }
-            // const Vec3d tau_in_biggrid = atom.tau[j] - unitcell_info_->get_biggrid_coord(atom_bgrid_idx);
-            // const Vec3d tau_in_biggrid(0, 0, 0);
 
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
             std::map<Vec3i, std::shared_ptr<GintAtom>> gint_atom_map;
