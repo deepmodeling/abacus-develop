@@ -144,7 +144,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                             gint_atom_map[ucell_idx_relative] = gint_atom;
                             atoms_.push_back(gint_atom);
                         }
-                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(*gint_atom_map[ucell_idx_relative]))
+                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(gint_atom_map[ucell_idx_relative]))
                         {
                             biggrids_[bgrid_local_idx]->add_atom(gint_atom_map[ucell_idx_relative]);
                             is_atom_in_proc_[iat] = true;

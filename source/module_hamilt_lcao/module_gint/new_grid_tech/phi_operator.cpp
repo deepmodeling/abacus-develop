@@ -19,7 +19,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     is_atom_on_mgrid_.resize(atoms_num);
     for(int i = 0; i < atoms_num; ++i)
     {
-        biggrid_->set_atom_relative_coords(*biggrid_->get_atom(i), atoms_relative_coords_[i]);
+        biggrid_->set_atom_relative_coords(biggrid_->get_atom(i), atoms_relative_coords_[i]);
         is_atom_on_mgrid_[i].resize(rows_);
         for(int j = 0; j < rows_; ++j)
         {

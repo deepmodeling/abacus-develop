@@ -61,12 +61,12 @@ class BigGrid
         void set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in_bgrid, std::vector<Vec3d>& atom_coord) const;
 
         // a wrapper function to get the relative coordinates of the atom and the meshgrids
-        void set_atom_relative_coords(const GintAtom& atom, std::vector<Vec3d>& atom_coord) const;
+        void set_atom_relative_coords(std::shared_ptr<const GintAtom> atom, std::vector<Vec3d>& atom_coord) const;
 
         // if the atom affects the big grid, return true, otherwise false
         // note when we say an atom affects a big grid, it does not mean that the atom affects all the meshgrid on the big grid,
         // it may only affect a part of them.
-        bool is_atom_on_bgrid(const GintAtom& atom) const;
+        bool is_atom_on_bgrid(std::shared_ptr<const GintAtom> atom) const;
     
     private:
         // atoms that can affect the big grid

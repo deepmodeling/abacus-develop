@@ -84,24 +84,24 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
     atom_coord.resize(biggrid_info_->get_nmxyz());
     for(int im = 0; im < biggrid_info_->get_nmxyz(); ++im)
     {
-        Vec3d mcell_coord = biggrid_info_->get_meshgrid_coord(im);
+        const Vec3d& mcell_coord = biggrid_info_->get_meshgrid_coord(im);
         atom_coord[im] = mcell_coord - bgrid_relative_coord;
     }
 }
 
 
-void BigGrid::set_atom_relative_coords(const GintAtom& atom, std::vector<Vec3d>& atom_coord) const
+void BigGrid::set_atom_relative_coords(std::shared_ptr<const GintAtom> atom, std::vector<Vec3d>& atom_coord) const
 {
-    return set_atom_relative_coords(atom.get_biggrid_idx(), atom.get_tau_in_biggrid(), atom_coord);
+    return set_atom_relative_coords(atom->get_biggrid_idx(), atom->get_tau_in_biggrid(), atom_coord);
 }
 
-bool BigGrid::is_atom_on_bgrid(const GintAtom& atom) const
+bool BigGrid::is_atom_on_bgrid(std::shared_ptr<const GintAtom> atom) const
 {
     std::vector<Vec3d> coords;
     this->set_atom_relative_coords(atom, coords);
     for(const auto& dist : coords)
     {
-        if(dist.norm() <= atom.get_rcut())
+        if(dist.norm() <= atom->get_rcut())
         {
             return true;
         }
