@@ -208,8 +208,12 @@ template <typename T, typename Device>
 void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nbasis_in)
 {
     assert(nks_in > 0 && nbands_in >= 0 && nbasis_in > 0);
+    
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
     resize_memory_op()(this->ctx, this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
+
+    this->zero_out();
+
     this->nk = nks_in;
     this->nbands = nbands_in;
     this->nbasis = nbasis_in;
