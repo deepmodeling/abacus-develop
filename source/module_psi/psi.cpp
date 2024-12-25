@@ -105,7 +105,6 @@ Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
 
-
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
 {
@@ -113,22 +112,36 @@ Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, int nband_in)
     assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
 
     this->k_first = psi_in.get_k_first();
-    this->resize(nk_in, nband_in, psi_in.get_nbasis());
-    this->ngk = psi_in.ngk;
     this->npol = psi_in.npol;
-    if (nband_in <= psi_in.get_nbands())
+    this->allocate_inside = true;
+
+    this->nk = nk_in;
+    this->nbands = nband_in;
+    this->nbasis = psi_in.get_nbasis();
+
+    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+    resize_memory_op()(this->ctx,
+                       this->psi,
+                       (static_cast<std::size_t>(this->nk) * static_cast<std::size_t>(this->nbands)
+                        * static_cast<std::size_t>(this->nbasis)),
+                       "no_record");
+    synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
+
+    this->current_k = 0;
+    this->current_b = 0;
+    this->current_nbasis = this->nbasis;
+    this->psi_current = this->psi;
+    this->psi_bias = 0;
+
+    if (this->nk != psi_in.get_nk())
     {
-        // copy from Psi from psi_in(current_k, 0, 0),
-        // if size of k is 1, current_k in new Psi is psi_in.current_k
-        if (nk_in == 1)
-        {
-            // current_k for this Psi only keep the spin index same as the copied Psi
-            this->current_k = psi_in.get_current_k();
-        }
-        synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
+        this->ngk = nullptr;
+    }
+    else
+    {
+        this->ngk = psi_in.ngk;
     }
 }
-
 
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
