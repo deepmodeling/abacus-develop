@@ -6,6 +6,7 @@ orbital_dir                 ../../../tests/PP_ORB
 calculation             scf
 nbands                23
 symmetry               	-1
+nspin                   2 
 
 #Parameters (2.Iteration)
 ecutwfc                  60 ###Energy cutoff needs to be tested to ensure your calculation is reliable.[1]
@@ -30,6 +31,7 @@ xc_kernel lda
 lr_solver dav
 lr_thr 1e-2
 pw_diag_ndim 2
+# lr_unrestricted 1  ### use this to do TDUKS calculation for closeshell systems (openshell system will force TDUKS)
 
 esolver_type ks-lr
 out_alllog	1
@@ -39,6 +41,7 @@ out_alllog	1
 nvirt 19
 abs_wavelen_range  40 180
 abs_broadening 0.01
+abs_gauge length
 
 ### [1] Energy cutoff determines the quality of numerical quadratures in your calculations.
 ###     So it is strongly recommended to test whether your result (such as converged SCF energies) is

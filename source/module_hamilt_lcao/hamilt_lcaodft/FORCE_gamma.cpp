@@ -1,10 +1,10 @@
 #include "FORCE.h"
 #include "module_base/memory.h"
-#include "module_parameter/parameter.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h"
@@ -12,8 +12,8 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
-#include "module_io/write_HS.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/pulay_force_stress.h"
+#include "module_io/write_HS.h"
 
 template <>
 void Force_LCAO<double>::allocate(const UnitCell& ucell,
@@ -147,28 +147,28 @@ void Force_LCAO<double>::finish_ftable(ForceStressArrays& fsr)
     return;
 }
 
-//template <>
-//void Force_LCAO<double>::test(Parallel_Orbitals& pv, double* mm, const std::string& name)
+// template <>
+// void Force_LCAO<double>::test(Parallel_Orbitals& pv, double* mm, const std::string& name)
 //{
-//    std::cout << "\n PRINT " << name << std::endl;
-//    std::cout << std::setprecision(6) << std::endl;
-//    for (int i = 0; i < PARAM.globalv.nlocal; i++)
-//    {
-//        for (int j = 0; j < PARAM.globalv.nlocal; j++)
-//        {
-//            if (std::abs(mm[i * PARAM.globalv.nlocal + j]) > 1.0e-5)
-//            {
-//                std::cout << std::setw(12) << mm[i * PARAM.globalv.nlocal + j];
-//            }
-//            else
-//            {
-//                std::cout << std::setw(12) << "0";
-//            }
-//        }
-//        std::cout << std::endl;
-//    }
-//    return;
-//}
+//     std::cout << "\n PRINT " << name << std::endl;
+//     std::cout << std::setprecision(6) << std::endl;
+//     for (int i = 0; i < PARAM.globalv.nlocal; i++)
+//     {
+//         for (int j = 0; j < PARAM.globalv.nlocal; j++)
+//         {
+//             if (std::abs(mm[i * PARAM.globalv.nlocal + j]) > 1.0e-5)
+//             {
+//                 std::cout << std::setw(12) << mm[i * PARAM.globalv.nlocal + j];
+//             }
+//             else
+//             {
+//                 std::cout << std::setw(12) << "0";
+//             }
+//         }
+//         std::cout << std::endl;
+//     }
+//     return;
+// }
 
 // be called in force_lo.cpp
 template <>
@@ -210,20 +210,40 @@ void Force_LCAO<double>::ftable(const bool isforce,
     // allocate DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
     this->allocate(ucell, gd, pv, fsr, two_center_bundle, orb);
 
-    const double* dSx[3] = { fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z };
-    const double* dSxy[6] = { fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33 };
+    const double* dSx[3] = {fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z};
+    const double* dSxy[6] = {fsr.DSloc_11, fsr.DSloc_12, fsr.DSloc_13, fsr.DSloc_22, fsr.DSloc_23, fsr.DSloc_33};
     // calculate the force related to 'energy density matrix'.
-    PulayForceStress::cal_pulay_fs(foverlap, soverlap,
+    PulayForceStress::cal_pulay_fs(
+        foverlap,
+        soverlap,
         this->cal_edm(pelec, *psi, *dm, *kv, pv, PARAM.inp.nspin, PARAM.inp.nbands, ucell, *ra),
-        ucell, pv, dSx, dSxy, isforce, isstress);
+        ucell,
+        pv,
+        dSx,
+        dSxy,
+        isforce,
+        isstress);
 
-    const double* dHx[3] = { fsr.DHloc_fixed_x, fsr.DHloc_fixed_y, fsr.DHloc_fixed_z };
-    const double* dHxy[6] = { fsr.DHloc_fixed_11, fsr.DHloc_fixed_12, fsr.DHloc_fixed_13, fsr.DHloc_fixed_22, fsr.DHloc_fixed_23, fsr.DHloc_fixed_33 };
-    //tvnl_dphi
+    const double* dHx[3] = {fsr.DHloc_fixed_x, fsr.DHloc_fixed_y, fsr.DHloc_fixed_z};
+    const double* dHxy[6] = {fsr.DHloc_fixed_11,
+                             fsr.DHloc_fixed_12,
+                             fsr.DHloc_fixed_13,
+                             fsr.DHloc_fixed_22,
+                             fsr.DHloc_fixed_23,
+                             fsr.DHloc_fixed_33};
+    // tvnl_dphi
     PulayForceStress::cal_pulay_fs(ftvnl_dphi, stvnl_dphi, *dm, ucell, pv, dHx, dHxy, isforce, isstress);
 
     // vl_dphi
-    PulayForceStress::cal_pulay_fs(fvl_dphi, svl_dphi, *dm, ucell, pelec->pot, gint, isforce, isstress, false/*reset dm to gint*/);
+    PulayForceStress::cal_pulay_fs(fvl_dphi,
+                                   svl_dphi,
+                                   *dm,
+                                   ucell,
+                                   pelec->pot,
+                                   gint,
+                                   isforce,
+                                   isstress,
+                                   false /*reset dm to gint*/);
 
 #ifdef __DEEPKS
     if (PARAM.inp.deepks_scf)
@@ -237,21 +257,21 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         GlobalC::ld.cal_gedm(ucell.nat);
 
-        const int nks=1;
-		DeePKS_domain::cal_f_delta_gamma(dm_gamma, 
-				                         ucell, 
-				                         orb, 
-				                         gd, 
-                                         *this->ParaV,
-                                         GlobalC::ld.lmaxd,
-                                         nks, 
-				                         kv->kvec_d, 
-                                         GlobalC::ld.nlm_save,
-                                         GlobalC::ld.gedm,
-                                         GlobalC::ld.inl_index,
-                                         GlobalC::ld.F_delta,
-				                         isstress, 
-				                         svnl_dalpha);
+        const int nks = 1;
+        DeePKS_domain::cal_f_delta<double>(dm_gamma,
+                                           ucell,
+                                           orb,
+                                           gd,
+                                           *this->ParaV,
+                                           GlobalC::ld.lmaxd,
+                                           nks,
+                                           kv->kvec_d,
+                                           GlobalC::ld.phialpha,
+                                           GlobalC::ld.gedm,
+                                           GlobalC::ld.inl_index,
+                                           GlobalC::ld.F_delta,
+                                           isstress,
+                                           svnl_dalpha);
 
 #ifdef __MPI
         Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
@@ -265,7 +285,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
         if (PARAM.inp.deepks_out_unittest)
         {
             const int nks = 1; // 1 for gamma-only
-            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma); 
+            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma);
 
             GlobalC::ld.check_projected_dm();
 
@@ -273,7 +293,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
             GlobalC::ld.check_gedm();
 
-            GlobalC::ld.cal_e_delta_band(dm_gamma,nks);
+            GlobalC::ld.cal_e_delta_band(dm_gamma, nks);
 
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;

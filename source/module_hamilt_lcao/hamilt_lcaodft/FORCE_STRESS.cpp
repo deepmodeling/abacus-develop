@@ -12,12 +12,11 @@
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
-#ifdef __DEEPKS
 #include "module_elecstate/elecstate_lcao.h"
+#ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
 #endif
-#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
@@ -511,7 +510,14 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        GlobalC::ld.cal_gdmx(dm_gamma, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld.cal_gdmx(dm_gamma,
+                                             ucell,
+                                             orb,
+                                             gd,
+                                             kv.get_nks(),
+                                             kv.kvec_d,
+                                             GlobalC::ld.phialpha,
+                                             isstress);
                     }
                     else
                     {
@@ -520,7 +526,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld.cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld
+                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, isstress);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {

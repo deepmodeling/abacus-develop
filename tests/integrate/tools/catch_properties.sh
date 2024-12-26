@@ -514,8 +514,8 @@ if ! test -z "$deepks_v_delta" && [ $deepks_v_delta == 2 ]; then
 	echo "totalh $totalh" >>$1
 	totalvdelta=`python3 get_v_delta.py`
 	echo "totalvdelta $totalvdelta" >>$1
-	total_psialpha=`python3 get_sum_numpy.py OUT.autotest/deepks_psialpha.npy `
-	echo "total_psialpha $total_psialpha" >> $1
+	total_phialpha=`python3 get_sum_numpy.py OUT.autotest/deepks_phialpha.npy `
+	echo "total_phialpha $total_phialpha" >> $1
 	total_gevdm=`python3 get_sum_numpy.py OUT.autotest/deepks_gevdm.npy `
 	echo "total_gevdm $total_gevdm" >> $1
 fi

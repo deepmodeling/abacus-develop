@@ -149,52 +149,26 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
 }
 #endif
 
-template <>
-void DeePKS<OperatorLCAO<double, double>>::contributeHR()
-{
-    ModuleBase::TITLE("DeePKS", "contributeHR");
-#ifdef __DEEPKS
-    if (GlobalC::ld.get_hr_cal())
-    {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-        const Parallel_Orbitals* pv = this->hsk->get_pv();
-        GlobalC::ld.cal_projected_DM<double>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
-        GlobalC::ld.cal_descriptor(this->ucell->nat);
-        GlobalC::ld.cal_gedm(this->ucell->nat);
-        // recalculate the H_V_delta
-        this->H_V_delta->set_zero();
-        this->calculate_HR();
-
-        GlobalC::ld.set_hr_cal(false);
-
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-    }
-    // save H_V_delta to hR
-    this->hR->add(*this->H_V_delta);
-#endif
-}
-
-template <>
-void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
+template <typename TK, typename TR>
+void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
 #ifdef __DEEPKS
     ModuleBase::TITLE("DeePKS", "contributeHR");
-    // if DM_K changed, HR of DeePKS need to refresh.
+    // if DM changed, HR of DeePKS need to refresh.
     // the judgement is based on the status of HR in GlobalC::ld
-    // this operator should be informed that DM_K has changed and HR need to recalculate.
+    // this operator should be informed that DM has changed and HR need to recalculate.
     if (GlobalC::ld.get_hr_cal())
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
+        GlobalC::ld.cal_projected_DM<TK>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
         GlobalC::ld.cal_descriptor(this->ucell->nat);
-        // calculate dE/dD
         GlobalC::ld.cal_gedm(this->ucell->nat);
 
         // recalculate the H_V_delta
         if (this->H_V_delta == nullptr)
         {
-            this->H_V_delta = new hamilt::HContainer<double>(*this->hR);
+            this->H_V_delta = new hamilt::HContainer<TR>(*this->hR);
         }
         this->H_V_delta->set_zero();
         this->calculate_HR();
@@ -205,40 +179,6 @@ void DeePKS<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     }
     // save H_V_delta to hR
     this->hR->add(*this->H_V_delta);
-#endif
-}
-template <>
-void DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
-{
-#ifdef __DEEPKS
-    ModuleBase::TITLE("DeePKS", "contributeHR");
-    // if DM_K changed, HR of DeePKS need to refresh.
-    // the judgement is based on the status of HR in GlobalC::ld
-    // this operator should be informed that DM_K has changed and HR need to recalculate.
-    if (GlobalC::ld.get_hr_cal())
-    {
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-
-        GlobalC::ld.cal_projected_DM<std::complex<double>>(this->DM, *this->ucell, *ptr_orb_, *this->gd);
-        GlobalC::ld.cal_descriptor(this->ucell->nat);
-        // calculate dE/dD
-        GlobalC::ld.cal_gedm(this->ucell->nat);
-
-        // recalculate the H_V_delta
-        if (this->H_V_delta == nullptr)
-        {
-            this->H_V_delta = new hamilt::HContainer<std::complex<double>>(*this->hR);
-        }
-        this->H_V_delta->set_zero();
-        this->calculate_HR();
-
-        GlobalC::ld.set_hr_cal(false);
-
-        ModuleBase::timer::tick("DeePKS", "contributeHR");
-    }
-    // save H_V_delta to hR
-    this->hR->add(*this->H_V_delta);
-
 #endif
 }
 
@@ -311,7 +251,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const Parallel_Orbitals* paraV = this->H_V_delta->get_paraV();
     const int npol = this->ucell->get_npol();
 
-    // 1. calculate <psi|alpha> for each pair of atoms
+    // 1. calculate <phi|alpha> for each pair of atoms
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -378,7 +318,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
         std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat = nlm_tot[iat00];
 
-        // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+        // 2. calculate <phi_I|beta>D<beta|phi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             const int T1 = adjs.ntype[ad1];
@@ -537,9 +477,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 #endif
 
 template class DeePKS<OperatorLCAO<double, double>>;
-
 template class DeePKS<OperatorLCAO<std::complex<double>, double>>;
-
 template class DeePKS<OperatorLCAO<std::complex<double>, std::complex<double>>>;
 
 } // namespace hamilt
