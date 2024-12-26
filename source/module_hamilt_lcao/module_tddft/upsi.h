@@ -7,7 +7,9 @@
 #ifndef UPSI_H
 #define UPSI_H
 
+#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
+
 #include <complex>
 
 namespace module_tddft
@@ -31,6 +33,14 @@ void upsi(const Parallel_Orbitals* pv,
           const std::complex<double>* psi_k_laststep,
           std::complex<double>* psi_k,
           const int print_matrix);
+
+void upsi_tensor(const Parallel_Orbitals* pv,
+                 const int nband,
+                 const int nlocal,
+                 const container::Tensor& U_operator,
+                 const container::Tensor& psi_k_laststep,
+                 container::Tensor& psi_k,
+                 const int print_matrix);
 
 #endif
 } // namespace module_tddft

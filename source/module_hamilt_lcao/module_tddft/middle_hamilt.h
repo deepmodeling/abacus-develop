@@ -6,7 +6,9 @@
 #ifndef MIDDLE_HAMILT_H
 #define MIDDLE_HAMILT_H
 
+#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
+
 #include <complex>
 
 namespace module_tddft
@@ -31,6 +33,16 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   const std::complex<double>* H_laststep,
                   const std::complex<double>* S_laststep,
                   const int print_matrix);
+
+void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
+                         const int nband,
+                         const int nlocal,
+                         container::Tensor& Htmp,
+                         container::Tensor& Stmp,
+                         const container::Tensor& H_laststep,
+                         const container::Tensor& S_laststep,
+                         const int print_matrix);
+
 #endif
 } // namespace module_tddft
 

@@ -6,6 +6,7 @@
 #ifndef BANDENERGY_H
 #define BANDENERGY_H
 
+#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
@@ -29,6 +30,13 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
                  double* ekb);
+
+void compute_ekb_tensor(const Parallel_Orbitals* pv,
+                        const int nband,
+                        const int nlocal,
+                        const container::Tensor& Htmp,
+                        const container::Tensor& psi_k,
+                        container::Tensor& ekb);
 #endif
 } // namespace module_tddft
 #endif

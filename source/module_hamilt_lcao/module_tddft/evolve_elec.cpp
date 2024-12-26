@@ -10,8 +10,8 @@
 
 namespace module_tddft
 {
-Evolve_elec::Evolve_elec(){};
-Evolve_elec::~Evolve_elec(){};
+Evolve_elec::Evolve_elec() {};
+Evolve_elec::~Evolve_elec() {};
 
 double Evolve_elec::td_force_dt;
 bool Evolve_elec::td_vext;
@@ -73,6 +73,67 @@ void Evolve_elec::solve_psi(const int& istep,
                        &(ekb(ik, 0)),
                        htype,
                        propagator);
+
+            const bool use_tensor = false;
+            if (use_tensor)
+            {
+                std::cout << "Print ekb: " << std::endl;
+                ekb.print(std::cout);
+                std::cout << "nband = " << nband << std::endl;
+                std::cout << "psi->get_nbands() = " << psi->get_nbands() << std::endl;
+                std::cout << "nlocal = " << nlocal << std::endl;
+                std::cout << "psi->get_nbasis() = " << psi->get_nbasis() << std::endl;
+                std::cout << "ekb.nr = " << ekb.nr << std::endl;
+                std::cout << "ekb.nc = " << ekb.nc << std::endl;
+
+                // Create TensorMap for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
+                container::TensorMap psi_k_tensor(psi[0].get_pointer(),
+                                                  container::DataType::DT_COMPLEX_DOUBLE,
+                                                  container::DeviceType::CpuDevice,
+                                                  container::TensorShape({psi->get_nbands(), psi->get_nbasis()}));
+                container::TensorMap psi_k_laststep_tensor(
+                    psi_laststep[0].get_pointer(),
+                    container::DataType::DT_COMPLEX_DOUBLE,
+                    container::DeviceType::CpuDevice,
+                    container::TensorShape({psi->get_nbands(), psi->get_nbasis()}));
+                container::TensorMap H_laststep_tensor(Hk_laststep[ik],
+                                                       container::DataType::DT_COMPLEX_DOUBLE,
+                                                       container::DeviceType::CpuDevice,
+                                                       container::TensorShape({para_orb.nloc}));
+                container::TensorMap S_laststep_tensor(Sk_laststep[ik],
+                                                       container::DataType::DT_COMPLEX_DOUBLE,
+                                                       container::DeviceType::CpuDevice,
+                                                       container::TensorShape({para_orb.nloc}));
+                container::TensorMap ekb_tensor(&(ekb(ik, 0)),
+                                                container::DataType::DT_DOUBLE,
+                                                container::DeviceType::CpuDevice,
+                                                container::TensorShape({nband}));
+
+                evolve_psi_tensor(nband,
+                                  nlocal,
+                                  &(para_orb),
+                                  phm,
+                                  psi_k_tensor,
+                                  psi_k_laststep_tensor,
+                                  H_laststep_tensor,
+                                  S_laststep_tensor,
+                                  ekb_tensor,
+                                  htype,
+                                  propagator);
+                // evolve_psi_tensor(nband,
+                //                   nlocal,
+                //                   &(para_orb),
+                //                   phm,
+                //                   psi[0].get_pointer(),
+                //                   psi_laststep[0].get_pointer(),
+                //                   Hk_laststep[ik],
+                //                   Sk_laststep[ik],
+                //                   &(ekb(ik, 0)),
+                //                   htype,
+                //                   propagator);
+                std::cout << "Print ekb tensor: " << std::endl;
+                ekb.print(std::cout);
+            }
         }
         else
         {

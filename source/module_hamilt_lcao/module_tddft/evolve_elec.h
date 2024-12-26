@@ -3,6 +3,8 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
+#include "module_base/module_container/ATen/core/tensor.h"     // container::Tensor
+#include "module_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_esolver/esolver_ks_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"

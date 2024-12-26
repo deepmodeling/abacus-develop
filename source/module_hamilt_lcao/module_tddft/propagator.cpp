@@ -43,7 +43,26 @@ void Propagator::compute_propagator(const int nlocal,
 
     case 2:
         compute_propagator_etrs(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
+        break;
 
+    default:
+        std::cout << "method of propagator is wrong" << std::endl;
+        break;
+    }
+}
+
+void Propagator::compute_propagator_tensor(const int nlocal,
+                                           const container::Tensor& Stmp,
+                                           const container::Tensor& Htmp,
+                                           const container::Tensor& H_laststep,
+                                           container::Tensor& U_operator,
+                                           const int print_matrix) const
+{
+    int tag;
+    switch (ptype)
+    {
+    case 0:
+        compute_propagator_cn2_tensor(nlocal, Stmp, Htmp, U_operator, print_matrix);
         break;
 
     default:
@@ -148,10 +167,30 @@ void Propagator::compute_propagator_cn2(const int nlocal,
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
-    int* ipiv = new int[this->ParaV->nloc];
+    // What is the size of ipiv exactly? Need to check ScaLAPACK documentation!
+    // But anyway, not this->ParaV->nloc
+    int* ipiv = new int[this->ParaV->nrow + this->ParaV->nb];
     int info = 0;
     // (3.1) compute ipiv
     ScalapackConnector::getrf(nlocal, nlocal, Denominator, 1, 1, this->ParaV->desc, ipiv, &info);
+
+    // Print ipiv
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
+        GlobalV::ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
+        GlobalV::ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
+        GlobalV::ofs_running << " this->ParaV->nb = " << this->ParaV->nb << std::endl;
+        GlobalV::ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->get_block_size() << std::endl;
+        GlobalV::ofs_running << " nlocal = " << nlocal << std::endl;
+        GlobalV::ofs_running << " ipiv:" << std::endl;
+        for (int i = 0; i < this->ParaV->nloc; i++)
+        {
+            GlobalV::ofs_running << ipiv[i] << " ";
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+
     int lwork = -1;
     int liwotk = -1;
     std::vector<std::complex<double>> work(1, 0);
@@ -241,12 +280,14 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -256,6 +297,257 @@ void Propagator::compute_propagator_cn2(const int nlocal,
     delete[] Numerator;
     delete[] Denominator;
     delete[] ipiv;
+}
+
+void Propagator::compute_propagator_cn2_tensor(const int nlocal,
+                                               const container::Tensor& Stmp,
+                                               const container::Tensor& Htmp,
+                                               container::Tensor& U_operator,
+                                               const int print_matrix) const
+{
+    // (1) copy Htmp to Numerator & Denominator
+    container::Tensor Numerator(container::DataType::DT_COMPLEX_DOUBLE,
+                                container::DeviceType::CpuDevice,
+                                container::TensorShape({this->ParaV->nloc}));
+    Numerator.zero();
+    BlasConnector::copy(this->ParaV->nloc,
+                        Htmp.data<std::complex<double>>(),
+                        1,
+                        Numerator.data<std::complex<double>>(),
+                        1);
+
+    container::Tensor Denominator(container::DataType::DT_COMPLEX_DOUBLE,
+                                  container::DeviceType::CpuDevice,
+                                  container::TensorShape({this->ParaV->nloc}));
+    Denominator.zero();
+    BlasConnector::copy(this->ParaV->nloc,
+                        Htmp.data<std::complex<double>>(),
+                        1,
+                        Denominator.data<std::complex<double>>(),
+                        1);
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " S matrix :" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                GlobalV::ofs_running << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
+                                     << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " H matrix :" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                GlobalV::ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
+                                     << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
+                                     << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+
+    // ->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (2) compute Numerator & Denominator by GEADD
+    // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
+    // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta1 = {0.0, -0.25 * this->dt};
+    std::complex<double> beta2 = {0.0, 0.25 * this->dt};
+
+    ScalapackConnector::geadd('N',
+                              nlocal,
+                              nlocal,
+                              alpha,
+                              Stmp.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc,
+                              beta1,
+                              Numerator.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc);
+    ScalapackConnector::geadd('N',
+                              nlocal,
+                              nlocal,
+                              alpha,
+                              Stmp.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc,
+                              beta2,
+                              Denominator.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc);
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << " beta=" << beta1 << std::endl;
+        GlobalV::ofs_running << " fenmu:" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                GlobalV::ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
+                                     << "+"
+                                     << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
+                                     << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+
+    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (3) Next, invert Denominator
+    container::Tensor ipiv(container::DataType::DT_INT,
+                           container::DeviceType::CpuDevice,
+                           container::TensorShape({this->ParaV->nrow + this->ParaV->nb}));
+    int info = 0;
+    // (3.1) compute ipiv
+    ScalapackConnector::getrf(nlocal,
+                              nlocal,
+                              Denominator.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc,
+                              ipiv.data<int>(),
+                              &info);
+
+    // Print ipiv
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
+        GlobalV::ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
+        GlobalV::ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
+        GlobalV::ofs_running << " this->ParaV->nb = " << this->ParaV->nb << std::endl;
+        GlobalV::ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->get_block_size() << std::endl;
+        GlobalV::ofs_running << " nlocal = " << nlocal << std::endl;
+        GlobalV::ofs_running << " ipiv:" << std::endl;
+        for (int i = 0; i < this->ParaV->nloc; i++)
+        {
+            GlobalV::ofs_running << ipiv.data<int>()[i] << " ";
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+
+    int lwork = -1;
+    int liwotk = -1;
+    container::Tensor work(container::DataType::DT_COMPLEX_DOUBLE,
+                           container::DeviceType::CpuDevice,
+                           container::TensorShape({1}));
+    container::Tensor iwork(container::DataType::DT_INT, container::DeviceType::CpuDevice, container::TensorShape({1}));
+    // (3.2) compute work
+    ScalapackConnector::getri(nlocal,
+                              Denominator.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc,
+                              ipiv.data<int>(),
+                              work.data<std::complex<double>>(),
+                              &lwork,
+                              iwork.data<int>(),
+                              &liwotk,
+                              &info);
+    lwork = work.data<std::complex<double>>()[0].real();
+    work.resize(container::TensorShape({lwork}));
+    liwotk = iwork.data<int>()[0];
+    iwork.resize(container::TensorShape({liwotk}));
+    // (3.3) compute inverse matrix of Denominator
+    ScalapackConnector::getri(nlocal,
+                              Denominator.data<std::complex<double>>(),
+                              1,
+                              1,
+                              this->ParaV->desc,
+                              ipiv.data<int>(),
+                              work.data<std::complex<double>>(),
+                              &lwork,
+                              iwork.data<int>(),
+                              &liwotk,
+                              &info);
+    assert(0 == info);
+
+    //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    // (4) U_operator = Denominator * Numerator;
+    ScalapackConnector::gemm('N',
+                             'N',
+                             nlocal,
+                             nlocal,
+                             nlocal,
+                             1.0,
+                             Denominator.data<std::complex<double>>(),
+                             1,
+                             1,
+                             this->ParaV->desc,
+                             Numerator.data<std::complex<double>>(),
+                             1,
+                             1,
+                             this->ParaV->desc,
+                             0.0,
+                             U_operator.data<std::complex<double>>(),
+                             1,
+                             1,
+                             this->ParaV->desc);
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << " fenmu^-1:" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                GlobalV::ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
+                                     << "+"
+                                     << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
+                                     << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " fenzi:" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                GlobalV::ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
+                                     << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
+                                     << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " U operator:" << std::endl;
+        for (int i = 0; i < this->ParaV->nrow; i++)
+        {
+            for (int j = 0; j < this->ParaV->ncol; j++)
+            {
+                double aa, bb;
+                aa = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real();
+                bb = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+    }
 }
 
 void Propagator::compute_propagator_taylor(const int nlocal,
@@ -327,15 +619,17 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 for (int j = 0; j < naroc[1]; ++j)
                 {
                     int igcol = globalIndex(j, this->ParaV->nb, this->ParaV->dim1, ipcol);
-                    if (igcol >= nlocal) {
+                    if (igcol >= nlocal)
+                    {
                         continue;
-}
+                    }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, this->ParaV->nb, this->ParaV->dim0, iprow);
-                        if (igrow >= nlocal) {
+                        if (igrow >= nlocal)
+                        {
                             continue;
-}
+                        }
                         if (igcol == igrow)
                         {
                             rank0[j * naroc[0] + i] = {1.0, 0.0};
@@ -348,7 +642,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 }
             }
         } // loop ipcol
-    }     // loop iprow
+    } // loop iprow
 
     std::complex<double> beta = {0.0, -0.5 * this->dt / tag}; // for ETRS tag=2 , for taylor tag=1
 
@@ -556,12 +850,14 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 double aa, bb;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
