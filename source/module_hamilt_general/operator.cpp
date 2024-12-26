@@ -74,6 +74,10 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
 
         // std::cout << "psi_input->ik : " << psi_input->get_nk() << std::endl;
 
+        // std::cout << "psi_input->npol : " << psi_input->npol << std::endl;
+
+
+
         switch (op->get_act_type())
         {
         case 2:
@@ -85,7 +89,10 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
                     psi_input->npol,
                     tmpsi_in,
                     this->hpsi->get_pointer(),
-                    psi_input->get_current_nbas() / psi_input->npol,
+                    psi_input->get_ngk(op->ik),
+                    // 0,
+                    // psi_input->get_current_nbas(),
+                    // psi_input->get_current_nbas() / psi_input->npol,
                     is_first_node);
             break;
         }
