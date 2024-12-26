@@ -66,9 +66,11 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         // a "psi" with the bands of needed range
         psi::Psi<T, Device> psi_wrapper(const_cast<T*>(tmpsi_in), 1, nbands, psi_input->get_nbasis(), true);
 
-        // std::cout << "op->ik : " << op->ik << std::endl;
-        // std::cout << "psi_input->get_ngk(op->ik) : " << psi_input->get_ngk(op->ik) << std::endl;
-        // std::cout << "psi_input->get_current_nbas() : " << psi_input->get_current_nbas() << std::endl;
+        std::cout << "op->ik : " << op->ik << std::endl;
+        std::cout << "psi_input->get_ngk(op->ik) : " << psi_input->get_ngk(op->ik) << std::endl;
+        std::cout << "psi_input->get_current_nbas() : " << psi_input->get_current_nbas() << std::endl;
+
+        std::cout << "psi_input->ik : " << psi_input->get_nk() << std::endl;
         
         
         
@@ -78,7 +80,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
             op->act(psi_wrapper, *this->hpsi, nbands);
             break;
         default:
-            op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_current_nbas(), is_first_node);
+            op->act(nbands, psi_input->get_nbasis(), psi_input->npol, tmpsi_in, this->hpsi->get_pointer(), psi_input->get_current_nbas() / psi_input->npol, is_first_node);
             break;
         }
         };
