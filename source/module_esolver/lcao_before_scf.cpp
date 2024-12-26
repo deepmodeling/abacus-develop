@@ -205,17 +205,19 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
 #ifdef __DEEPKS
-    // for each ionic step, the overlap <psi|alpha> must be rebuilt
+    // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
-        // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, *(two_center_bundle_.overlap_orb_alpha));
+        // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
+        GlobalC::ld.allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
+        // build and save <phi(0)|alpha(R)> at beginning
+        GlobalC::ld.build_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, *(two_center_bundle_.overlap_orb_alpha));
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
+            GlobalC::ld.check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
         }
     }
 #endif
