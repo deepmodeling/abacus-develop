@@ -1,5 +1,5 @@
-#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
-#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_WFINIT_H
+#ifndef PSI_INIT_H
+#define PSI_INIT_H
 #include "module_hamilt_general/hamilt.h"
 #include "module_psi/wavefunc.h"
 #include "module_psi/psi_initializer.h"
@@ -23,10 +23,8 @@ class PSIInit
     void prepare_init(Structure_Factor* p_sf, //< structure factor
                       UnitCell* p_ucell,      //< unit cell
                       const int& random_seed, //< random seed
-#ifdef __MPI
                       Parallel_Kpoints* = nullptr, //< parallel kpoints
                       const int& rank = 0,         //< rank
-#endif
                       pseudopot_cell_vnl* = nullptr); //< nonlocal pseudopotential
 
     // allocate the wavefunction

@@ -32,7 +32,7 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
-        dim2 = (this->p_ucell_->atoms[it].ncpp.nchi > dim2) ? this->p_ucell_->atoms[it].ncpp.nchi : dim2;
+        dim2 = std::max(dim2, this->p_ucell_->atoms[it].ncpp.nchi);
     }
     if (dim2 == 0)
     {

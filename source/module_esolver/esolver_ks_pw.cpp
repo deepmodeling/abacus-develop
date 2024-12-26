@@ -201,11 +201,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
 #endif
                                   &this->ppcell);
 
-    if (this->psi != nullptr)
-    {
-        delete this->psi;
-    }
-
     //! initalize local pseudopotential
     this->locpp.init_vloc(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");

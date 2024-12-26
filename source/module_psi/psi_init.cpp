@@ -31,20 +31,19 @@ template <typename T, typename Device>
 void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
                                       UnitCell* p_ucell,
                                       const int& random_seed,
-#ifdef __MPI
                                       Parallel_Kpoints* p_parak,
                                       const int& rank,
-#endif
                                       pseudopot_cell_vnl* p_ppcell)
 {
-    if (!this->use_psiinitializer)
-    {
-        return;
-    }
+
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("PSIInit", "prepare_init");
-    if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
+    if (this->init_wfc == "random")
+    {
+        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+    }
+    else if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
     {
         this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
     }
@@ -52,17 +51,13 @@ void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
     {
         this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
     }
-    else if (this->init_wfc == "random")
+    else if (this->init_wfc == "atomic+random")
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
     }
     else if (this->init_wfc == "nao")
     {
         this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao<T, Device>());
-    }
-    else if (this->init_wfc == "atomic+random")
-    {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
     }
     else if (this->init_wfc == "nao+random")
     {
@@ -109,6 +104,7 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
     // the basis (representation) with operator (hamiltonian) and solver (diagonalization).
     // This feature requires feasible Linear Algebra library in-built in ABACUS, which
     // is not ready yet.
+    delete psi;
     if (this->use_psiinitializer) // new method
     {
         // psi_initializer drag initialization of pw wavefunction out of HSolver, make psi
@@ -127,7 +123,7 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
         // however, init_at_1 does not actually initialize the psi, instead, it is a
         // function to calculate a interpolate table saving overlap intergral or say
         // Spherical Bessel Transform of atomic orbitals.
-        this->wf_old.init_at_1(ucell,p_sf, &p_ppcell->tab_at);
+        this->wf_old.init_at_1(ucell, p_sf, &p_ppcell->tab_at);
         // similarly, wfcinit not really initialize any wavefunction, instead, it initialize
         // the mapping from ixy, the 1d flattened index of point on fft grid (x, y) plane,
         // to the index of "stick", composed of grid points.
@@ -136,8 +132,8 @@ void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
 }
 
 template <typename T, typename Device>
-void PSIInit<T, Device>::make_table(const int nks, 
-                                    Structure_Factor* p_sf, 
+void PSIInit<T, Device>::make_table(const int nks,
+                                    Structure_Factor* p_sf,
                                     pseudopot_cell_vnl* p_ppcell,
                                     const UnitCell& ucell)
 {
@@ -146,8 +142,10 @@ void PSIInit<T, Device>::make_table(const int nks,
     }    // do not need to do anything because the interpolate table is unchanged
     else // old initialization method, used in EXX calculation
     {
-        this->wf_old.init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
-        this->wf_old.init_at_1(ucell,p_sf, &p_ppcell->tab_at);    // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
+        // reallocate wanf2, the planewave expansion of lcao
+        this->wf_old.init_after_vc(nks);
+        // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
+        this->wf_old.init_at_1(ucell, p_sf, &p_ppcell->tab_at);
     }
 }
 
