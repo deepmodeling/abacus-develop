@@ -2,7 +2,6 @@ INPUT_PARAMETERS
 #Parameters (1.General)
 suffix                  autotest
 calculation             scf
-nbands                  12
 symmetry                0
 latname                 fcc
 pseudo_dir              ../../PP_ORB
