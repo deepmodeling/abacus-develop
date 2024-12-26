@@ -62,6 +62,21 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
     return nupdown;
 }
 
+inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
+{
+    // set up 2-center table
+#ifdef USE_NEW_TWO_CENTER
+    two_center_bundle.tabulate();
+#else
+    two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+#endif
+    if (PARAM.inp.vnl_in_h)
+    {
+        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+    }
+}
+
 template<typename T, typename TR>
 void LR::ESolver_LR<T, TR>::parameter_check()const
 {
@@ -149,8 +164,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     this->gd = std::move(ks_sol.gd);
 
     // xc kernel
-    this->xc_kernel = inp.xc_kernel;
-    std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
+    this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
     //kv
     this->kv = std::move(ks_sol.kv);
 
@@ -218,8 +232,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     if (xc_kernel == "hf" || xc_kernel == "hse")
     {
         // if the same kernel is calculated in the esolver_ks, move it
-        std::string dft_functional = input.dft_functional;
-        std::transform(dft_functional.begin(), dft_functional.end(), dft_functional.begin(), tolower);
+        std::string dft_functional = LR_Util::tolower(input.dft_functional);
         if (ks_sol.exx_lri_double && std::is_same<T, double>::value && xc_kernel == dft_functional) {
             this->move_exx_lri(ks_sol.exx_lri_double);
         } else if (ks_sol.exx_lri_complex && std::is_same<T, std::complex<double>>::value && xc_kernel == dft_functional) {
@@ -237,6 +250,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 #endif
     this->pelec = new elecstate::ElecStateLCAO<T>();
     orb_cutoff_ = ks_sol.orb_.cutoffs();
+    if (LR_Util::tolower(input.abs_gauge) == "velocity")
+    {
+        this->two_center_bundle_ = std::move(ks_sol.two_center_bundle_);
+    }
 }
 
 template <typename T, typename TR>
@@ -247,8 +264,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
-    this->xc_kernel = inp.xc_kernel;
-    std::transform(xc_kernel.begin(), xc_kernel.end(), xc_kernel.begin(), tolower);
+    this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
 
     // necessary steps in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
@@ -272,6 +288,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     LCAO_Orbitals orb;
     two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
     orb_cutoff_ = orb.cutoffs();
+    if (LR_Util::tolower(input.abs_gauge) == "velocity")
+    {
+        setup_2center_table(this->two_center_bundle_, orb, ucell);
+    }
 
     this->set_dimension();
     //  setup 2d-block distribution for AO-matrix and KS wfc
@@ -320,7 +340,6 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->init_pot(chg_gs);
 
     // search adjacent atoms and init Gint
-    std::cout << "ucell.infoNL.get_rcutmax_Beta(): " << ucell.infoNL.get_rcutmax_Beta() << std::endl;
     double search_radius = -1.0;
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
@@ -539,26 +558,21 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
     auto spin_types = (nspin == 2 && !openshell) ? std::vector<std::string>({ "singlet", "triplet" }) : std::vector<std::string>({ "updown" });
     for (int is = 0;is < this->X.size();++is)
     {
-        LR_Spectrum<T> spectrum(nspin,
-                                this->nbasis,
-                                this->nocc,
-                                this->nvirt,
-                                this->gint_,
-                                *this->pw_rho,
-                                *this->psi_ks,
-                                this->ucell,
-                                this->kv,
-                                this->gd,
-                                this->orb_cutoff_,
-                                this->paraX_,
-                                this->paraC_,
-                                this->paraMat_,
-                                &this->pelec->ekb.c[is * nstates],
-                                this->X[is].template data<T>(),
-                                nstates,
-                                openshell);
+        LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, this->gint_, *this->pw_rho, *this->psi_ks,
+            this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
+            this->paraX_, this->paraC_, this->paraMat_,
+            &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,
+            LR_Util::tolower(input.abs_gauge));
         spectrum.transition_analysis(spin_types[is]);
-        spectrum.optical_absorption(freq, input.abs_broadening, spin_types[is]);
+        if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
+        {
+            spectrum.optical_absorption_method1(freq, input.abs_broadening);
+            // =============================================== for test ====================================================
+            // spectrum.optical_absorption_method2(freq, input.abs_broadening, spin_types[is]);
+            // spectrum.test_transition_dipoles_velocity_ks(eig_ks.c);
+            // spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_ks.dat");
+            // =============================================== for test ====================================================
+        }
     }
 }
 

@@ -103,5 +103,9 @@ namespace LR_Util
     /// @brief  diagonalize a general matrix
     void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
     void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
+
+    ///=================string option====================
+    std::string tolower(const std::string& str);
+    std::string toupper(const std::string& str);
 }
 #include "lr_util.hpp"
