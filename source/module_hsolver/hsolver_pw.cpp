@@ -378,7 +378,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         ngk_vector[i] = ngk_pointer[i];
     }
 
-    const int cur_nbasis = psi.get_current_nbas();
+    const int cur_nbasis = psi.get_ngk(psi.get_current_k());
 
     if (this->method == "cg")
     {
