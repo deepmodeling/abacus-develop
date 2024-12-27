@@ -18,6 +18,7 @@
 101_PW_upf201_upf100_pseudopots
 101_PW_upf201_uspp_Fe
 101_PW_upf201_uspp_NaCl
+101_PW_upf201_uspp_ncpp
 101_PW_VW_pseudopots
 101_PW_Coulomb
 101_PW_GTH_CF_CS_Si
