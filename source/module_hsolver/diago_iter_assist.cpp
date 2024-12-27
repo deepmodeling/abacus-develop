@@ -49,7 +49,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
     setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
 
-    const int dmin = psi.get_current_nbas();
+    const int dmin = psi.get_cur_effective_basis();
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
@@ -167,7 +167,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     const int nstart = psi_nr;
     const int n_band = evc.get_nbands();
     const int dmax = evc.get_nbasis();
-    const int dmin = evc.get_current_nbas();
+    const int dmin = evc.get_cur_effective_basis();
 
     // skip the diagonalization if the operators are not allocated
     if (pHamilt->ops == nullptr)
@@ -264,7 +264,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         T* spsi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
+        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_cur_effective_basis(), psi_temp.get_nbands());
 
         gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
         delmem_complex_op()(ctx, temp);
@@ -423,7 +423,7 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
     setmem_complex_op()(ctx, hcc, 0, nstart * nstart);
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
 
-    const int dmin = psi.get_current_nbas();
+    const int dmin = psi.get_cur_effective_basis();
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
@@ -549,7 +549,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
     DiagoIterAssist::diagH_LAPACK(nstart, nstart, hcc, scc, nstart, en, vcc);
 
     { // code block to calculate tar_mat
-        const int dmin = evc.get_current_nbas();
+        const int dmin = evc.get_cur_effective_basis();
         const int dmax = evc.get_nbasis();
         T* temp = nullptr;
         resmem_complex_op()(ctx, temp, nstart * dmax, "DiagSub::temp");
