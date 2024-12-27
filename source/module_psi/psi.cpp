@@ -73,16 +73,23 @@ Psi<T, Device>::Psi(T* psi_pointer,
                     const bool k_first_in)
 {
     this->k_first = k_first_in;
-    this->ngk = ngk_vector_in.data();
-    this->current_b = 0;
-    this->current_k = 0;
     this->npol = PARAM.globalv.npol;
+    this->allocate_inside = false;
+
+    this->ngk = ngk_vector_in.data();
+
+    this->psi = psi_pointer;
+
     this->nk = nk_in;
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
+
+    this->current_k = 0;
+    this->current_b = 0;
     this->current_nbasis = current_nbasis_in;
-    this->psi_current = this->psi = psi_pointer;
-    this->allocate_inside = false;
+    this->psi_current = psi_pointer;
+    this->psi_bias = 0;
+
     // Currently only GPU's implementation is supported for device recording!
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
