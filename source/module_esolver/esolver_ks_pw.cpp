@@ -194,11 +194,9 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                   this->pw_wfc);
     this->p_wf_init->prepare_init(&(this->sf),
                                   &ucell,
-                                  1,
-#ifdef __MPI
+                                  PARAM.inp.pw_seed,
                                   &GlobalC::Pkpoints,
                                   GlobalV::MY_RANK,
-#endif
                                   &this->ppcell);
 
     //! initalize local pseudopotential

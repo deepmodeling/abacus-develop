@@ -26,14 +26,16 @@ Institute: AI for Science Institute, BEIJING
 This class is used to allocate memory and give initial guess for psi
 therefore only double datatype is needed to be supported.
 Following methods are available:
-    1. random: use random number to initialize psi
+    1. file: use wavefunction file to initialize psi
+             implemented in psi_initializer_file.h
+    2. random: use random number to initialize psi
                implemented in psi_initializer_random.h
-    2. atomic: use pseudo-wavefunction in pseudopotential file to initialize psi
+    3. atomic: use pseudo-wavefunction in pseudopotential file to initialize psi
                implemented in psi_initializer_atomic.h
-    3. atomic+random: mix 'atomic' with some random numbers to initialize psi
-    4. nao: use numerical orbitals to initialize psi
+    4. atomic+random: mix 'atomic' with some random numbers to initialize psi
+    5. nao: use numerical orbitals to initialize psi
             implemented in psi_initializer_nao.h
-    5. nao+random: mix 'nao' with some random numbers to initialize psi
+    6. nao+random: mix 'nao' with some random numbers to initialize psi
 
 To use:
 - WAVEFUNCTION INITIALIZATION
@@ -60,8 +62,6 @@ class psi_initializer
     private:
         using Real = typename GetTypeReal<T>::type;
     public:
-        // technical notes:
-        // Polymorphism is used to implement different methods, and achieved by pointers and virtual functions
         psi_initializer() {};
         virtual ~psi_initializer() {};
         #ifdef __MPI // MPI additional implementation

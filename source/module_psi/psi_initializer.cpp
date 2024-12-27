@@ -121,13 +121,16 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
     ModuleBase::timer::tick("psi_initializer", "random_t");
     assert(iw_start >= 0);
     const int ng = this->pw_wfc_->npwk[ik];
+    const int npwk_max = this->pw_wfc_->npwk_max;
+    const int npol = PARAM.globalv.npol;
 
-    // if random seed is specified, then based on this seed to generate random wavefunction
+    // If random seed is specified, then generate random wavefunction satisfying that
+    // it can generate the same results using different number of processors.
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
-#ifdef __MPI // if compile with MPI, then let the seed include the kpoint information
+#ifdef __MPI
         srand(unsigned(this->random_seed_ + this->p_parakpts_->startk_pool[GlobalV::MY_POOL] + ik));
-#else // otherwise, it is the run in serial, without the Parallel_Kpoints class
+#else
         srand(unsigned(this->random_seed_ + ik));
 #endif
         const int nxy = this->pw_wfc_->fftnxy;
@@ -142,9 +145,8 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
         for (int iw = iw_start; iw < iw_end; iw++)
         {   
             // get the starting memory address of iw band
-            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]);
-            int startig = 0;
-            for(int ipol = 0 ; ipol < PARAM.globalv.npol ; ++ipol)
+            T* psi_slice = &(psi[iw * npwk_max * npol]);
+            for(int ipol = 0 ; ipol < npol ; ++ipol)
             {
                 // loop over all fft (x,y), but actually loop over all sticks
                 for(int ir = 0; ir < nxy; ir++)
@@ -171,7 +173,9 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
 #endif
                 }
                 // then for each g-component, initialize the wavefunction value
-                #pragma omp parallel for schedule(static, 4096/sizeof(T))
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(T))
+#endif
                 for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
@@ -180,34 +184,43 @@ void psi_initializer<T, Device>::random_t(T* psi, const int iw_start, const int 
                     // get the |G+k|^2
                     const double gk2 = this->pw_wfc_->getgk2(ik, ig);
                     // initialize the wavefunction value with rr/(gk2 + 1.0) * exp(i*arg)
-                    psi_slice[ig+startig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
+                    psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
-                startig += this->pw_wfc_->npwk_max; // move to the next polarization
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096/sizeof(T))
+#endif
+                for (int ig = ng; ig < npwk_max; ++ig)
+                {
+                    psi_slice[ig] = static_cast<T> (0.0);
+                }
+                psi_slice += npwk_max; // move to the next polarization
             }
         }
     }
-    else // if random seed is not specified, then generate random wavefunction directly
+    // If random seed is not specified, then generate random wavefunction directly
+    // It does not guarantee the same results using different number of processors.
+    else 
     {
         for (int iw = iw_start ;iw < iw_end; iw++)
         {
-            T* psi_slice = &(psi[iw * this->pw_wfc_->npwk_max * PARAM.globalv.npol]); // get the memory to write directly. For nspin 4, nbasis*2
+            T* psi_slice = &(psi[iw * npwk_max * npol]); // get the memory to write directly. For nspin 4, nbasis*2
 
             #pragma omp parallel for schedule(static, 4096/sizeof(T))
             for (int ig = 0; ig < ng; ig++)
             {
-                const double rr = std::rand()/double(RAND_MAX); //qianrui add RAND_MAX
+                const double rr = std::rand()/double(RAND_MAX);
                 const double arg = ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
                 const double gk2 = this->pw_wfc_->getgk2(ik, ig);
                 psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
             }
-            if(PARAM.globalv.npol == 2) // additionally for nspin 4...
+            if(npol == 2)
             {
                 #pragma omp parallel for schedule(static, 4096/sizeof(T))
-                for (int ig = this->pw_wfc_->npwk_max; ig < this->pw_wfc_->npwk_max + ng; ig++)
+                for (int ig = npwk_max; ig < npwk_max + ng; ig++)
                 {
                     const double rr = std::rand()/double(RAND_MAX);
                     const double arg = ModuleBase::TWO_PI * std::rand()/double(RAND_MAX);
-                    const double gk2 = this->pw_wfc_->getgk2(ik, ig - this->pw_wfc_->npwk_max);
+                    const double gk2 = this->pw_wfc_->getgk2(ik, ig - npwk_max);
                     psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr*cos(arg)/(gk2 + 1.0), rr*sin(arg)/(gk2 + 1.0)));
                 }
             }
