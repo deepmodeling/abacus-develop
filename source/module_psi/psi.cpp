@@ -341,7 +341,7 @@ void Psi<T, Device>::fix_k(const int ik) const
 {
     assert(ik >= 0);
     this->current_k = ik;
-    if (this->ngk != nullptr && this->npol != 2)
+    if (this->ngk != nullptr)
     {
         this->current_nbasis = this->ngk[ik];
     }
