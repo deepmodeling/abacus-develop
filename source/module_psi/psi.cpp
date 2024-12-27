@@ -296,6 +296,26 @@ const int& Psi<T, Device>::get_psi_bias() const
 }
 
 template <typename T, typename Device>
+const int& Psi<T, Device>::get_cur_effective_basis() const
+{
+    if (this->npol == 1)
+    {
+        if (this->ngk != nullptr)
+        {
+            return this->ngk[this->current_k];
+        }
+        else
+        {
+            return this->current_nbasis;
+        }
+    }
+    else
+    {
+        return this->nbasis;
+    }
+}
+
+template <typename T, typename Device>
 const int& Psi<T, Device>::get_nk() const
 {
     return this->nk;

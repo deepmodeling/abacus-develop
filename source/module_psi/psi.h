@@ -127,6 +127,8 @@ class Psi
     // return psi_bias
     const int& get_psi_bias() const;
 
+    const int& get_cur_effective_basis() const;
+
     // mark
     void zero_out();
 
