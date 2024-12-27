@@ -83,7 +83,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa, bb;
+                double aa = 0.0, bb = 0.0;
                 aa = Eij[i * pv->ncol + j].real();
                 bb = Eij[i * pv->ncol + j].imag();
                 if (std::abs(aa) < Evolve_elec::td_print_eij)
@@ -211,7 +211,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa, bb;
+                double aa = 0.0, bb = 0.0;
                 aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < Evolve_elec::td_print_eij)
