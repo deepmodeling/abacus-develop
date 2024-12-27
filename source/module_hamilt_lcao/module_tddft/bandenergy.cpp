@@ -102,7 +102,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
             << std::endl;
     }
 
-    int info;
+    int info = 0;
     int naroc[2];
 
     double* Eii = new double[nband];
@@ -230,7 +230,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
             << std::endl;
     }
 
-    int info;
+    int info = 0;
     int naroc[2];
 
     // Create a Tensor for Eii
