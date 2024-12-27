@@ -300,11 +300,11 @@ const int& Psi<T, Device>::get_cur_effective_basis() const
 {
     if (this->npol == 1)
     {
-        if (this->ngk != nullptr)
-        {
-            return this->ngk[this->current_k];
-        }
-        else
+        // if (this->ngk != nullptr)
+        // {
+        //     return this->ngk[this->current_k];
+        // }
+        // else
         {
             return this->current_nbasis;
         }
