@@ -676,45 +676,44 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                     std::string mags;
                     //cout<<"mag"<<atoms[it].mag[ia]<<"angle1"<<atoms[it].angle1[ia]<<"angle2"<<atoms[it].angle2[ia]<<'\n';
 
+                    // ----------------------------------------------------------------------------
+                    // recalcualte mag and m_loc_ from read in angle1, angle2 and mag or mx, my, mz
+                    if(input_angle_mag)
+                    {// angle1 or angle2 are given, calculate mx, my, mz from angle1 and angle2 and mag
+                        atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
+                            cos(atoms[it].angle1[ia]);
+                        if(std::abs(sin(atoms[it].angle1[ia])) > 1e-10 )
+                        {
+                            atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
+                                sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
+                            atoms[it].m_loc_[ia].y = atoms[it].mag[ia] *
+                                sin(atoms[it].angle1[ia]) * sin(atoms[it].angle2[ia]);
+                        }
+                    }
+                    else if (input_vec_mag)
+                    {// mx, my, mz are given, calculate angle1 and angle2 from mx, my, mz
+                        double mxy=sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2));
+                        atoms[it].angle1[ia]=atan2(mxy,atoms[it].m_loc_[ia].z);
+                        if(mxy>1e-8)
+                        {
+                            atoms[it].angle2[ia]=atan2(atoms[it].m_loc_[ia].y,atoms[it].m_loc_[ia].x);
+                        }
+                    }
+                    else// only one mag is given, assume it is z
+                    {
+                        atoms[it].m_loc_[ia].x = 0;
+                        atoms[it].m_loc_[ia].y = 0;
+                        atoms[it].m_loc_[ia].z = atoms[it].mag[ia];
+                    }
+
                     if(PARAM.inp.nspin==4)
                     {
-                        if(PARAM.inp.noncolin)
+                        if(!PARAM.inp.noncolin)
                         {
-                            if(input_angle_mag)
-                            {
-                                atoms[it].m_loc_[ia].z = atoms[it].mag[ia] *
-                                    cos(atoms[it].angle1[ia]);
-                                if(std::abs(sin(atoms[it].angle1[ia])) > 1e-10 )
-                                {
-                                    atoms[it].m_loc_[ia].x = atoms[it].mag[ia] *
-                                        sin(atoms[it].angle1[ia]) * cos(atoms[it].angle2[ia]);
-                                    atoms[it].m_loc_[ia].y = atoms[it].mag[ia] *
-                                        sin(atoms[it].angle1[ia]) * sin(atoms[it].angle2[ia]);
-                                }
-                            }
-                            else if (input_vec_mag)
-                            {
-                                double mxy=sqrt(pow(atoms[it].m_loc_[ia].x,2)+pow(atoms[it].m_loc_[ia].y,2));
-                                atoms[it].angle1[ia]=atan2(mxy,atoms[it].m_loc_[ia].z);
-                                if(mxy>1e-8)
-                                {
-                                    atoms[it].angle2[ia]=atan2(atoms[it].m_loc_[ia].y,atoms[it].m_loc_[ia].x);
-                                }
-                            }
-                            else
-                            {
-                                atoms[it].m_loc_[ia].x = 0;
-                                atoms[it].m_loc_[ia].y = 0;
-                                atoms[it].m_loc_[ia].z = atoms[it].mag[ia];
-                            }
-                        }
-                        else
-                        {
+                            //collinear case with nspin = 4, only z component is used
                             atoms[it].m_loc_[ia].x = 0;
                             atoms[it].m_loc_[ia].y = 0;
-                            atoms[it].m_loc_[ia].z = atoms[it].mag[ia];
                         }
-
                         //print only ia==0 && mag>0 to avoid too much output
                         //print when ia!=0 && mag[ia] != mag[0] to avoid too much output
                         if(ia==0 || (ia!=0 
@@ -734,8 +733,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         ModuleBase::GlobalFunc::ZEROS(magnet.ux_ ,3);
                     }
                     else if(PARAM.inp.nspin==2)
-                    {
-                        atoms[it].m_loc_[ia].x = atoms[it].mag[ia];
+                    {// collinear case with nspin = 2, only z component is used
+                        atoms[it].mag[ia] = atoms[it].m_loc_[ia].z;
                         //print only ia==0 && mag>0 to avoid too much output
                         //print when ia!=0 && mag[ia] != mag[0] to avoid too much output
                         if(ia==0 || (ia!=0 && atoms[it].mag[ia] != atoms[it].mag[0]))
@@ -750,6 +749,8 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                             ModuleBase::GlobalFunc::OUT(ofs_running, ss.str(),atoms[it].mag[ia]);
                         }
                     }
+                    // end of calculating initial magnetization of each atom
+                    // ----------------------------------------------------------------------------
             
                     if(Coordinate=="Direct")
                     {
