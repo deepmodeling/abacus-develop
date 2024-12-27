@@ -32,7 +32,7 @@ int calculate()
 	test.preparation();
 
 	test.check_dstable();
-	test.check_psialpha();
+	test.check_phialpha();
 
 	test.check_pdm();
 	test.check_gdmx();

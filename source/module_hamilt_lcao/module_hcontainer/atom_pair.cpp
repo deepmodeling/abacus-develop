@@ -347,6 +347,10 @@ void AtomPair<T>::set_size(const int& col_size_in, const int& row_size_in)
 {
     this->col_size = col_size_in;
     this->row_size = row_size_in;
+    for (int i = 0; i < this->values.size(); i++)
+    {
+        this->values[i].set_size(row_size_in, col_size_in);
+    }
 }
 
 // get paraV for check

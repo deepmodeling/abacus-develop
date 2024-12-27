@@ -189,13 +189,12 @@ OBJS_CELL=atom_pseudo.o\
     check_atomic_stru.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
-        deepks_fgamma.o\
-        deepks_fk.o\
+        deepks_force.o\
         LCAO_deepks_odelta.o\
         LCAO_deepks_io.o\
         LCAO_deepks_mpi.o\
         LCAO_deepks_pdm.o\
-        LCAO_deepks_psialpha.o\
+        LCAO_deepks_phialpha.o\
         LCAO_deepks_torch.o\
         LCAO_deepks_vdelta.o\
         deepks_hmat.o\

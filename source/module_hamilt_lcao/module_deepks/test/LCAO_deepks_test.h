@@ -81,7 +81,7 @@ class test_deepks
 
     // checking
     void check_dstable();
-    void check_psialpha();
+    void check_phialpha();
 
     void read_dm();
     void read_dm_k(const int nks);

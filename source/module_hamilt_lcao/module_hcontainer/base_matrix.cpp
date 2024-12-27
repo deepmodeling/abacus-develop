@@ -216,6 +216,14 @@ size_t BaseMatrix<T>::get_memory_size() const
     return memory_size;
 }
 
+// set size
+template <typename T>
+void BaseMatrix<T>::set_size(const int& nrow, const int& ncol)
+{
+    this->nrow_local = nrow;
+    this->ncol_local = ncol;
+}
+
 // T of BaseMatrix can be double or complex<double>
 template class BaseMatrix<double>;
 template class BaseMatrix<std::complex<double>>;
