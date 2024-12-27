@@ -70,16 +70,10 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         if (PARAM.inp.deepks_bandgap)
         {
             const int nocc = PARAM.inp.nelec / 2;
-            // ModuleBase::matrix deepks_bands;
-            // deepks_bands.create(nks, 1);
             std::vector<double> o_tot(nks);
             for (int iks = 0; iks < nks; ++iks)
             {
                 // record band gap for each k point (including spin)
-                // for (int hl = 0; hl < 1; ++hl)
-                // {
-                // deepks_bands(iks, hl) = ekb(iks, nocc + hl) - ekb(iks, nocc - 1 + hl);
-                // }
                 o_tot[iks] = ekb(iks, nocc) - ekb(iks, nocc - 1);
             }
 
@@ -119,7 +113,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 std::vector<double> o_delta(nks, 0.0);
 
-                ld->cal_orbital_precalc<TK, TH>(dm_bandgap, nat, nks, kvec_d, ucell, orb, GridD);
+                ld->cal_orbital_precalc<TK, TH>(dm_bandgap, ld->lmaxd, ld->inlmax, nat, nks, ld->inl_l, kvec_d, ld->phialpha, ld->inl_index, ucell, orb, *ParaV, GridD);
                 DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks);
 
                 // save obase and orbital_precalc

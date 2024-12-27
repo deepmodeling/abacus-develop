@@ -282,6 +282,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                               ModuleBase::matrix& svnl_dbeta,
                                               ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
+                                              ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
 #endif
                                               TGint<std::complex<double>>::type& gint,
@@ -363,17 +364,9 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
                                                          GlobalC::ld.phialpha,
                                                          GlobalC::ld.gedm,
                                                          GlobalC::ld.inl_index,
-                                                         GlobalC::ld.F_delta,
+                                                         fvnl_dalpha,
                                                          isstress,
                                                          svnl_dalpha);
-
-#ifdef __MPI
-        Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
-        if (isstress)
-        {
-            Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
-        }
-#endif
     }
 #endif
 
@@ -386,6 +379,9 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
+#ifdef __DEEPKS
+        Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
+#endif
     }
     if (isstress)
     {
@@ -393,6 +389,9 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
+#ifdef __DEEPKS
+        Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+#endif
     }
 
     ModuleBase::timer::tick("Force_LCAO", "ftable");

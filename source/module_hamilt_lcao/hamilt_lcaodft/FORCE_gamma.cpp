@@ -188,6 +188,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                 ModuleBase::matrix& svnl_dbeta,
                                 ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
+                                ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
 #endif
                                 TGint<double>::type& gint,
@@ -246,15 +247,13 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    false /*reset dm to gint*/);
 
 #ifdef __DEEPKS
+    const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
     if (PARAM.inp.deepks_scf)
     {
-        const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
-
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
         // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
 
         GlobalC::ld.cal_descriptor(ucell.nat);
-
         GlobalC::ld.cal_gedm(ucell.nat);
 
         const int nks = 1;
@@ -269,40 +268,9 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            GlobalC::ld.phialpha,
                                            GlobalC::ld.gedm,
                                            GlobalC::ld.inl_index,
-                                           GlobalC::ld.F_delta,
+                                           fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);
-
-#ifdef __MPI
-        Parallel_Reduce::reduce_all(GlobalC::ld.F_delta.c, GlobalC::ld.F_delta.nr * GlobalC::ld.F_delta.nc);
-
-        if (isstress)
-        {
-            Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
-        }
-#endif
-
-        if (PARAM.inp.deepks_out_unittest)
-        {
-            const int nks = 1; // 1 for gamma-only
-            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma);
-
-            GlobalC::ld.check_projected_dm();
-
-            GlobalC::ld.check_descriptor(ucell, PARAM.globalv.global_out_dir);
-
-            GlobalC::ld.check_gedm();
-
-            GlobalC::ld.cal_e_delta_band(dm_gamma, nks);
-
-            std::ofstream ofs("E_delta_bands.dat");
-            ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-
-            std::ofstream ofs1("E_delta.dat");
-            ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
-
-            DeePKS_domain::check_f_delta(ucell.nat, GlobalC::ld.F_delta, svnl_dalpha);
-        }
     }
 #endif
 
@@ -312,6 +280,9 @@ void Force_LCAO<double>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(ftvnl_dphi.c, ftvnl_dphi.nr * ftvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(fvnl_dbeta.c, fvnl_dbeta.nr * fvnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(fvl_dphi.c, fvl_dphi.nr * fvl_dphi.nc);
+#ifdef __DEEPKS
+        Parallel_Reduce::reduce_pool(fvnl_dalpha.c, fvnl_dalpha.nr * fvnl_dalpha.nc);
+#endif
     }
     if (isstress)
     {
@@ -319,7 +290,36 @@ void Force_LCAO<double>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(stvnl_dphi.c, stvnl_dphi.nr * stvnl_dphi.nc);
         Parallel_Reduce::reduce_pool(svnl_dbeta.c, svnl_dbeta.nr * svnl_dbeta.nc);
         Parallel_Reduce::reduce_pool(svl_dphi.c, svl_dphi.nr * svl_dphi.nc);
+#ifdef __DEEPKS
+        Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
+#endif
     }
+
+#ifdef __DEEPKS
+    // It seems these test should not all be here, should be moved in the future
+    // Also, these test are not in multi-k case now
+    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
+    {
+        const int nks = 1; // 1 for gamma-only
+        LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma);
+
+        GlobalC::ld.check_projected_dm();
+
+        GlobalC::ld.check_descriptor(ucell, PARAM.globalv.global_out_dir);
+
+        GlobalC::ld.check_gedm();
+
+        GlobalC::ld.cal_e_delta_band(dm_gamma, nks);
+
+        std::ofstream ofs("E_delta_bands.dat");
+        ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
+
+        std::ofstream ofs1("E_delta.dat");
+        ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
+
+        DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
+    }
+#endif
 
     // delete DSloc_x, DSloc_y, DSloc_z
     // delete DHloc_fixed_x, DHloc_fixed_y, DHloc_fixed_z
