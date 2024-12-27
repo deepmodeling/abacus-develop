@@ -10,11 +10,11 @@
 // numerical algorithm support
 #include "module_base/spherical_bessel_transformer.h" // for spherical bessel transform
 #ifdef __MPI
-// MPI support
 #include <mpi.h>
+#endif
 #include "module_base/parallel_global.h"
 #include "module_cell/parallel_kpoints.h"
-#endif
+
 
 #include "module_base/macros.h"
 #include <type_traits>
