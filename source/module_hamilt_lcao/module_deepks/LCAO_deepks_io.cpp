@@ -325,8 +325,8 @@ void LCAO_deepks_io::save_npy_s(const ModuleBase::matrix &stress,
 }
 
 
-void LCAO_deepks_io::save_npy_o(const ModuleBase::matrix &bandgap, 
-                                const std::string &o_file, 
+void LCAO_deepks_io::save_npy_o(const std::vector<double>& bandgap, 
+                                const std::string& o_file, 
                                 const int nks,
                                 const int rank)
 {
@@ -338,17 +338,7 @@ void LCAO_deepks_io::save_npy_o(const ModuleBase::matrix &bandgap,
 
     //save o_base
     const long unsigned oshape[] = {static_cast<unsigned long>(nks), 1 };
-
-    std::vector<double> npy_o;
-    for (int iks = 0; iks < nks; ++iks)
-    {
-        for (int hl = 0;hl < 1; ++hl)
-        {
-            npy_o.push_back(bandgap(iks,hl));
-        }
-    }
-
-    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, npy_o);
+    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, bandgap);
     return;
 }
 

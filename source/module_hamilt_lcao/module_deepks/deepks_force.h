@@ -3,7 +3,6 @@
 
 #ifdef __DEEPKS
 
-
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -13,14 +12,10 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 
-#include <torch/script.h>
-#include <torch/torch.h>
-#include <unordered_map>
-
 namespace DeePKS_domain
 {
     //------------------------
-    // LCAO_deepks_force.cpp
+    // deepks_force.cpp
     //------------------------
 
     // This file contains subroutines for calculating F_delta,

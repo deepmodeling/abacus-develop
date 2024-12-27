@@ -5,6 +5,7 @@
 
 #include "deepks_force.h"
 #include "deepks_hmat.h"
+#include "deepks_orbital.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -49,10 +50,6 @@ class LCAO_Deepks
     double E_delta = 0.0;
     ///(Unit: Ry)  \f$tr(\rho H_\delta), \rho = \sum_i{c_{i, \mu}c_{i,\nu}} \f$ (for gamma_only)
     double e_delta_band = 0.0;
-
-    ///(Unit: Ry)  \f$tr(\rho_{HL} H_\delta),
-    ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
-    ModuleBase::matrix o_delta;
 
     /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$ (for gamma only)
     /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
@@ -359,19 +356,7 @@ class LCAO_Deepks
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
 
-    //-------------------
-    // LCAO_deepks_odelta.cpp
-    //-------------------
-
-    // This file contains subroutines for calculating O_delta,
-    // which corresponds to the correction of the band gap.
-
   public:
-    template <typename TK, typename TH>
-    void cal_o_delta(
-        const std::vector<std::vector<TH>>& dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
-        const int nks);
-
     //-------------------
     // LCAO_deepks_torch.cpp
     //-------------------
@@ -443,7 +428,7 @@ class LCAO_Deepks
 
     // calculates orbital_precalc
     template <typename TK, typename TH>
-    void cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl /**<[in] density matrix*/,
+    void cal_orbital_precalc(const std::vector<TH>& dm_hl /**<[in] density matrix*/,
                              const int nat,
                              const int nks,
                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,

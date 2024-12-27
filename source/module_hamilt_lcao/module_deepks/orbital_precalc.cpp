@@ -16,7 +16,7 @@
 // calculates orbital_precalc[1,NAt,NDscrpt] = gvdm * orbital_pdm_shell;
 // orbital_pdm_shell[2,Inl,nm*nm] = dm_hl * overlap * overlap;
 template <typename TK, typename TH>
-void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
+void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                                       const int nat,
                                       const int nks,
                                       const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -180,11 +180,11 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
-                                dm_pair.add_from_matrix(dm_hl[0][is].c, pv->get_row_size(), 1.0, 1);
+                                dm_pair.add_from_matrix(dm_hl[is].c, pv->get_row_size(), 1.0, 1);
                             }
                             else
                             {
-                                dm_pair.add_from_matrix(dm_hl[0][is].c, pv->get_col_size(), 1.0, 0);
+                                dm_pair.add_from_matrix(dm_hl[is].c, pv->get_col_size(), 1.0, 0);
                             }
                         } // is
                     }
@@ -212,11 +212,11 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 
                             if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                             {
-                                dm_pair.add_from_matrix(dm_hl[0][ik].c, pv->get_row_size(), kphase, 1);
+                                dm_pair.add_from_matrix(dm_hl[ik].c, pv->get_row_size(), kphase, 1);
                             }
                             else
                             {
-                                dm_pair.add_from_matrix(dm_hl[0][ik].c, pv->get_col_size(), kphase, 0);
+                                dm_pair.add_from_matrix(dm_hl[ik].c, pv->get_col_size(), kphase, 0);
                             }
                         } // ik
                     }
@@ -285,13 +285,10 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 #ifdef __MPI
     for (int iks = 0; iks < nks; iks++)
     {
-        for (int hl = 0; hl < 1; hl++)
+        for (int inl = 0; inl < this->inlmax; inl++)
         {
-            for (int inl = 0; inl < this->inlmax; inl++)
-            {
-                Parallel_Reduce::reduce_all(this->orbital_pdm_shell[iks][hl][inl],
-                                            (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
-            }
+            Parallel_Reduce::reduce_all(this->orbital_pdm_shell[iks][0][inl],
+                                        (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
         }
     }
 #endif
@@ -307,30 +304,27 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
         for (int iks = 0; iks < nks; ++iks)
         {
             std::vector<torch::Tensor> iammv;
-            for (int hl = 0; hl < 1; ++hl)
+            std::vector<torch::Tensor> ammv;
+            for (int iat = 0; iat < nat; ++iat)
             {
-                std::vector<torch::Tensor> ammv;
-                for (int iat = 0; iat < nat; ++iat)
+                int inl = iat * nlmax + nl;
+                int nm = 2 * this->inl_l[inl] + 1;
+                std::vector<double> mmv;
+
+                for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                 {
-                    int inl = iat * nlmax + nl;
-                    int nm = 2 * this->inl_l[inl] + 1;
-                    std::vector<double> mmv;
-
-                    for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
+                    for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                     {
-                        for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
-                        {
-                            mmv.push_back(this->orbital_pdm_shell[iks][hl][inl][m1 * nm + m2]);
-                        }
+                        mmv.push_back(this->orbital_pdm_shell[iks][0][inl][m1 * nm + m2]);
                     }
-                    torch::Tensor mm
-                        = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
-
-                    ammv.push_back(mm);
                 }
-                torch::Tensor amm = torch::stack(ammv, 0);
-                iammv.push_back(amm);
+                torch::Tensor mm
+                    = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64)).reshape({nm, nm}); // nm*nm
+
+                ammv.push_back(mm);
             }
+            torch::Tensor amm = torch::stack(ammv, 0);
+            iammv.push_back(amm);
             torch::Tensor iamm = torch::stack(iammv, 0); // inl*nm*nm
             kiammv.push_back(iamm);
         }
@@ -355,7 +349,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl,
 }
 
 template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(
-    const std::vector<std::vector<ModuleBase::matrix>>& dm_hl,
+    const std::vector<ModuleBase::matrix>& dm_hl,
     const int nat,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
@@ -364,7 +358,7 @@ template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(
     const Grid_Driver& GridD);
 
 template void LCAO_Deepks::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(
-    const std::vector<std::vector<ModuleBase::ComplexMatrix>>& dm_hl,
+    const std::vector<ModuleBase::ComplexMatrix>& dm_hl,
     const int nat,
     const int nks,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,

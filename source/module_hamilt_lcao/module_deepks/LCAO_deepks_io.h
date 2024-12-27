@@ -92,7 +92,7 @@ void save_npy_gvepsl(const int nat,
 		const int rank);
 
 /// save orbital and orbital_precalc
-void save_npy_o(const ModuleBase::matrix &bandgap, /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/
+void save_npy_o(const std::vector<double>& bandgap, /**<[in] \f$E_{base}\f$ or \f$E_{tot}\f$, in Ry*/
 		const std::string &o_file,
 		const int nks,
 		const int rank);
