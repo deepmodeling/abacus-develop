@@ -73,7 +73,12 @@ class Psi
     
 
     // Constructor 8-3: 2D Psi version 3
-    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int current_nbasis_in, const bool k_first_in);
+    Psi(const int nk_in, 
+        const int nbd_in, 
+        const int nbs_in, 
+        const int* ngk_in, 
+        const int current_nbasis_in, 
+        const bool k_first_in);
 
     
     // Destructor for deleting the psi array manually

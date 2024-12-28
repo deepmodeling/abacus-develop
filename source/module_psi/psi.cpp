@@ -118,6 +118,7 @@ template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in,
                     const int nbd_in,
                     const int nbs_in,
+                    const int* ngk_in, 
                     const int current_nbasis_in,
                     const bool k_first_in)
 {
@@ -129,7 +130,7 @@ Psi<T, Device>::Psi(const int nk_in,
     this->npol = PARAM.globalv.npol;
     this->allocate_inside = true;
 
-    this->ngk = nullptr;
+    this->ngk = ngk_in;
     assert(nk_in > 0 && nbd_in > 0 && nbs_in > 0);
     resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
