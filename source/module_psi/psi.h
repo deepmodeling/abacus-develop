@@ -63,20 +63,13 @@ class Psi
         const int nk_in,
         const int nbd_in,
         const int nbs_in,
-        const std::vector<int>& ngk_vector_in,
         const int current_nbasis_in,
         const bool k_first_in = true);
-
-    // Constructor 8-2: a pointer version of constructor 3
-    // only used in operator.cpp call_act func
-    Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const bool k_first_in);
-    
 
     // Constructor 8-3: 2D Psi version 3
     Psi(const int nk_in, 
         const int nbd_in, 
         const int nbs_in, 
-        const int* ngk_in, 
         const int current_nbasis_in, 
         const bool k_first_in);
 

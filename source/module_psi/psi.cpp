@@ -68,15 +68,18 @@ Psi<T, Device>::Psi(T* psi_pointer,
                     const int nk_in,
                     const int nbd_in,
                     const int nbs_in,
-                    const std::vector<int>& ngk_vector_in,
                     const int current_nbasis_in,
                     const bool k_first_in)
 {
+
+    // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
+    assert(nk_in == 1);
+
     this->k_first = k_first_in;
     this->npol = PARAM.globalv.npol;
     this->allocate_inside = false;
 
-    this->ngk = ngk_vector_in.data();
+    this->ngk = nullptr;
 
     this->psi = psi_pointer;
 
@@ -94,31 +97,11 @@ Psi<T, Device>::Psi(T* psi_pointer,
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
 
-// Constructor 8-2:
-template <typename T, typename Device>
-Psi<T, Device>::Psi(T* psi_pointer, const int nk_in, const int nbd_in, const int nbs_in, const bool k_first_in)
-{
-    this->k_first = k_first_in;
-    this->ngk = nullptr;
-    this->current_b = 0;
-    this->current_k = 0;
-    this->npol = PARAM.globalv.npol;
-    this->nk = nk_in;
-    this->nbands = nbd_in;
-    this->nbasis = nbs_in;
-    this->current_nbasis = nbs_in;
-    this->psi_current = this->psi = psi_pointer;
-    this->allocate_inside = false;
-    // Currently only GPU's implementation is supported for device recording!
-    base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
-}
-
 // Constructor 8-3: 2D Psi version 3
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in,
                     const int nbd_in,
                     const int nbs_in,
-                    const int* ngk_in, 
                     const int current_nbasis_in,
                     const bool k_first_in)
 {
@@ -130,7 +113,7 @@ Psi<T, Device>::Psi(const int nk_in,
     this->npol = PARAM.globalv.npol;
     this->allocate_inside = true;
 
-    this->ngk = ngk_in;
+    this->ngk = nullptr;
     assert(nk_in > 0 && nbd_in > 0 && nbs_in > 0);
     resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
@@ -138,7 +121,7 @@ Psi<T, Device>::Psi(const int nk_in,
     this->nbands = nbd_in;
     this->nbasis = nbs_in;
 
-    this->current_k = 0;    
+    this->current_k = 0;
     this->current_b = 0;
     this->current_nbasis = current_nbasis_in;
     this->psi_current = this->psi;
