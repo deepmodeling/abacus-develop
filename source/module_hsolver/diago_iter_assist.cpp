@@ -199,8 +199,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        // psi::Psi<T, Device> psi_temp(1, 1, psi_nc, &evc.get_ngk(0), dmin, true);
-        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, &evc.get_ngk(0));
+        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, &evc.get_ngk(0), dmin, true);
+        // psi::Psi<T, Device> psi_temp(1, 1, psi_nc, &evc.get_ngk(0));
         T* ppsi = psi_temp.get_pointer();
         // hpsi and spsi share the temp space
         T* temp = nullptr;
@@ -247,8 +247,9 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     }
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
-        // psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0), dmin, true);
-        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
+        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0), dmin, true);
+        // psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
+
         T* ppsi = psi_temp.get_pointer();
         syncmem_complex_op()(ctx, ctx, ppsi, psi, psi_temp.size());
         // hpsi and spsi share the temp space
@@ -266,7 +267,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         T* spsi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_cur_effective_basis(), psi_temp.get_nbands());
+        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_nbasis(), psi_temp.get_nbands());
 
         gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
         delmem_complex_op()(ctx, temp);
