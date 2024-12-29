@@ -73,7 +73,7 @@ Psi<T, Device>::Psi(T* psi_pointer,
 {
 
     // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
-    assert(nk_in == 1);
+    // assert(nk_in == 1);
 
     this->k_first = k_first_in;
     this->npol = PARAM.globalv.npol;

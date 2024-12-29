@@ -104,7 +104,7 @@ namespace LR_Util
 
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
     template<typename T, typename Device>
-    psi::Psi<T, Device> c(const psi::Psi<T, Device>& psi_kfirst, int nk_in, int nbasis_in)
+    psi::Psi<T, Device> k1_to_bfirst_wrapper(const psi::Psi<T, Device>& psi_kfirst, int nk_in, int nbasis_in)
     {
         assert(psi_kfirst.get_nk() == 1);
         assert(nk_in * nbasis_in == psi_kfirst.get_nbasis());
