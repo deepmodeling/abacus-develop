@@ -40,7 +40,7 @@ class Psi
     Psi();
 
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
-    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in = true);
 
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in);
 
