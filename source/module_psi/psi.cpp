@@ -134,7 +134,7 @@ Psi<T, Device>::Psi(const int nk_in,
     this->allocate_inside = true;
 
     this->ngk = nullptr;
-    assert(nk_in > 0 && nbd_in > 0 && nbs_in > 0);
+    assert(nk_in > 0 && nbd_in >= 0 && nbs_in > 0);
     resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
     this->nk = nk_in;
