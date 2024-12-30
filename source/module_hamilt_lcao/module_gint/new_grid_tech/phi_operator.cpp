@@ -68,7 +68,10 @@ void PhiOperator::set_ddphi(
     }
 }
 
-void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double* const* phi, double** result, const bool is_symm) const
+void PhiOperator::phi_mul_dm(
+    const double* const* phi, 
+    const hamilt::HContainer<double>& DM, 
+    const bool is_symm, double** phi_dm) const
 {
     // parameters for lapack subroutines
     constexpr char side = 'L';
@@ -87,7 +90,7 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
         {
             const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
             dsymm_(&side, &uplo, &atoms_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atoms_phi_len_[i],
-                &phi[0][atoms_startidx_[i]], &cols_, &beta, &result[0][atoms_startidx_[i]], &cols_);
+                &phi[0][atoms_startidx_[i]], &cols_, &beta, &phi_dm[0][atoms_startidx_[i]], &cols_);
         }
 
         const int start = is_symm ? i + 1 : 0;
@@ -116,7 +119,7 @@ void PhiOperator::phi_mul_dm(const hamilt::HContainer<double>& DM, const double*
             }
 
             dgemm_(&trans, &trans, &atoms_phi_len_[j], &len, &atoms_phi_len_[i], &alpha1, dm_mat->get_pointer(), &atoms_phi_len_[j],
-                &phi[start_idx][atoms_startidx_[i]], &cols_, &beta, &result[start_idx][atoms_startidx_[j]], &cols_);
+                &phi[start_idx][atoms_startidx_[i]], &cols_, &beta, &phi_dm[start_idx][atoms_startidx_[j]], &cols_);
         }
     }
 }
@@ -179,6 +182,18 @@ void PhiOperator::phi_mul_phi_vldr3(
             dgemm_(&transa, &transb, &atoms_phi_len_[j], &atoms_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx][atoms_startidx_[j]],
                 &cols_,&phi[start_idx][atoms_startidx_[i]], &cols_, &beta, result->get_pointer(), &atoms_phi_len_[j]);
         }
+    }
+}
+
+void PhiOperator::phi_dot_phi_dm(
+    const double* const* phi,
+    const double* const* phi_dm,
+    double* rho) const
+{
+    const int inc = 1;
+    for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
+    {
+        rho[meshgrids_local_idx_[i]] += ddot_(&cols_, phi[i], &inc, phi_dm[i], &inc);
     }
 }
 

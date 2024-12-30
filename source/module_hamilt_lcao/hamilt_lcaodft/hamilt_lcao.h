@@ -22,7 +22,6 @@
 #include "module_ri/Exx_LRI.h"
 #endif
 #include <memory>
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_info.h"
 namespace hamilt
 {
 
@@ -143,8 +142,6 @@ class HamiltLCAO : public Hamilt<TK>
     int current_spin = 0;
 
     const int istep = 0;
-
-    std::shared_ptr<ModuleGint::GintInfo> gint_info;
 
     // sk and hk will be refactored to HamiltLCAO later
     // std::vector<TK> sk;

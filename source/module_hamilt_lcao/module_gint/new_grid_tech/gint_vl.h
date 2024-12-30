@@ -3,31 +3,29 @@
 #include <memory>
 #include <vector>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "gint.h"
 #include "gint_info.h"
 
 namespace ModuleGint
 {
 
-class Gint_vl
+class Gint_vl : public Gint
 {
     public:
     Gint_vl(
-        std::shared_ptr<const GintInfo>gint_info,
         const double* vr_eff,
         hamilt::HContainer<double>* hR)
-        : gint_info_(gint_info), vr_eff_(vr_eff), hR_(hR), dr3_(gint_info->get_mgrid_volume()){};
+        : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
     
-    void cal_gint();
+    void cal_gint() override;
 
     private:
 
     void init_hRGint_();
     
     // note that only the upper triangle matrix of hR is calculated
-    // that's why we need compose_hRGint_() to fill the lower triangle matrix.
+    // that's why we need compose_hRGint() to fill the lower triangle matrix.
     void cal_hRGint_();
-
-    std::shared_ptr<const GintInfo> gint_info_;
 
     // input
     const double* vr_eff_;

@@ -24,6 +24,7 @@ class LocalCellInfo
         const int get_nby() const { return nby_; };
         const int get_nbz() const { return nbz_; };
         const int get_biggrid_num() const { return nbxyz_; };
+        const int get_mgrid_num() const { return nmxyz_; };
         std::shared_ptr<const UnitCellInfo> get_unitcell_info() const { return unitcell_info_; };
         std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return unitcell_info_->get_biggrid_info(); };
 

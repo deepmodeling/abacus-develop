@@ -151,7 +151,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     {
         // Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
         // this->GG->cal_vlocal(&inout,  this->new_e_iteration);
-        ModuleGint::Gint_vl gint_vl(this->gint_info, vr_eff1, this->hR);
+        ModuleGint::Gint_vl gint_vl(vr_eff1, this->hR);
         gint_vl.cal_gint();
     }
     // this->GG->transfer_pvpR(this->hR,this->ucell);

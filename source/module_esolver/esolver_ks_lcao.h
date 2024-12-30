@@ -6,6 +6,7 @@
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/new_grid_tech/gint_info.h"
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
@@ -75,8 +76,6 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
     Gint_Gamma GG;
 
     Grid_Technique GridT;
-
-    std::shared_ptr<ModuleGint::GintInfo> gint_info;
 
     TwoCenterBundle two_center_bundle_;
 

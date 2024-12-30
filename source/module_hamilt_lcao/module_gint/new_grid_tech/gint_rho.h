@@ -1,0 +1,41 @@
+#pragma once
+
+#include <memory>
+#include <vector>
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "gint.h"
+#include "gint_info.h"
+
+namespace ModuleGint
+{
+
+class Gint_rho : public Gint
+{
+    public:
+    Gint_rho(
+        const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+        const int nspin,
+        double **rho)
+        : DMR_vec_(DMR_vec), nspin_(nspin), rho_(rho) {};
+    
+    void cal_gint();
+
+    private:
+    void init_DMRGint_();
+
+    void cal_rho_();
+
+    // input
+    const std::vector<hamilt::HContainer<double>*> DMR_vec_;
+    const int nspin_;
+
+    // output
+    double **rho_;
+
+    //========================
+    // Intermediate variables
+    //========================
+    std::vector<std::shared_ptr<hamilt::HContainer<double>>> DMRGint_vec_;
+};
+
+}

@@ -4,12 +4,10 @@
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_info.h"
 #include "operator_lcao.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_cell/unitcell.h"
 #include <vector>
-#include <memory>
 
 namespace hamilt
 {

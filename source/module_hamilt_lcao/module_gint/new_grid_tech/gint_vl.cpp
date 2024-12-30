@@ -1,4 +1,5 @@
 #include "module_base/array_pool.h"
+#include "module_base/timer.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "module_base/blas_connector.h"
@@ -11,10 +12,14 @@ namespace ModuleGint
 
 void Gint_vl::cal_gint()
 {
+    ModuleBase::timer::tick("Gint_vl", "cal_gint");
+
     init_hRGint_();
     cal_hRGint_();
     compose_hRGint(hRGint_.get());
     transfer_hRGint_to_hR(hRGint_.get(), hR_);
+    
+    ModuleBase::timer::tick("Gint_vl", "cal_gint");
 }
 
 //========================

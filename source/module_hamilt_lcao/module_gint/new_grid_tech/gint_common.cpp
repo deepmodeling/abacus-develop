@@ -1,6 +1,7 @@
 #include "gint_common.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_parameter/parameter.h"
 
 namespace ModuleGint
 {
@@ -56,6 +57,74 @@ void transfer_hRGint_to_hR(const hamilt::HContainer<T>* hRGint, hamilt::HContain
     hR->add(*hRGint);
 #endif
 }
+
+// gint_info should not have been a parameter, but it was added to initialize DMRGint_full
+// In the future, we might try to remove the gint_info parameter
+void transfer_DM_to_DMGint(
+    std::shared_ptr<const GintInfo> gint_info,
+    std::vector<hamilt::HContainer<double>*> DM,
+    std::vector<std::shared_ptr<hamilt::HContainer<double>>> DMRGint)
+{
+    // To check whether input parameter DM2D has been initialized
+#ifdef __DEBUG
+    assert(PARAM.inp.nspin == DM.size()
+           && "The size of DM should be equal to the number of spins!");
+#endif
+
+    if (PARAM.inp.nspin != 4)
+    {
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+#ifdef __MPI
+            hamilt::transferParallels2Serials(*DM[is], DMRGint[is].get());
+#else
+            DMRGint[is]->set_zero();
+            DMRGint[is]->add(*DM[is]);
+#endif
+        }
+    } else  // NSPIN=4 case
+    {
+#ifdef __MPI
+        std::shared_ptr<hamilt::HContainer<double>> DM_full = gint_info->get_hr<double>(2);
+        hamilt::transferParallels2Serials(*DM[0], DM_full.get());
+#else
+        hamilt::HContainer<double>* DM_full = DM[0];
+#endif
+        std::vector<double*> tmp_pointer(4, nullptr);
+        for (int iap = 0; iap < DM_full->size_atom_pairs(); iap++)
+        {
+            auto& ap = DM_full->get_atom_pair(iap);
+            const int iat1 = ap.get_atom_i();
+            const int iat2 = ap.get_atom_j();
+            for (int ir = 0; ir < ap.get_R_size(); ir++)
+            {
+                const ModuleBase::Vector3<int> r_index = ap.get_R_index(ir);
+                for (int is = 0; is < 4; is++)
+                {
+                    tmp_pointer[is] = 
+                        DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
+                }
+                double* data_full = ap.get_pointer(ir);
+                for (int irow = 0; irow < ap.get_row_size(); irow += 2)
+                {
+                    for (int icol = 0; icol < ap.get_col_size(); icol += 2)
+                    {
+                        *(tmp_pointer[0])++ = data_full[icol];
+                        *(tmp_pointer[1])++ = data_full[icol + 1];
+                    }
+                    data_full += ap.get_col_size();
+                    for (int icol = 0; icol < ap.get_col_size(); icol += 2)
+                    {
+                        *(tmp_pointer[2])++ = data_full[icol];
+                        *(tmp_pointer[3])++ = data_full[icol + 1];
+                    }
+                    data_full += ap.get_col_size();
+                }
+            }
+        }
+    }
+}
+
 
 template void transfer_hRGint_to_hR(const hamilt::HContainer<double>* hRGint, hamilt::HContainer<double>* hR);
 template void transfer_hRGint_to_hR(const hamilt::HContainer<std::complex<double>>* hRGint, hamilt::HContainer<std::complex<double>>* hR);
