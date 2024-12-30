@@ -5,6 +5,7 @@
 
 #include "deepks_force.h"
 #include "deepks_hmat.h"
+#include "deepks_orbital.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -50,19 +51,11 @@ class LCAO_Deepks
     ///(Unit: Ry)  \f$tr(\rho H_\delta), \rho = \sum_i{c_{i, \mu}c_{i,\nu}} \f$ (for gamma_only)
     double e_delta_band = 0.0;
 
-    ///(Unit: Ry)  \f$tr(\rho_{HL} H_\delta),
-    ///\rho_{HL} = c_{L, \mu}c_{L,\nu} - c_{H, \mu}c_{H,\nu} \f$ (for gamma_only)
-    ModuleBase::matrix o_delta;
-
     /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$ (for gamma only)
     /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
     std::vector<std::vector<double>> H_V_delta;
     /// Correction term to Hamiltonian, for multi-k
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
-
-    // F_delta will be deleted soon, mohan 2024-07-25
-    ///(Unit: Ry/Bohr) Total Force due to the DeePKS correction term \f$E_{\delta}\f$
-    ModuleBase::matrix F_delta;
 
     // k index of HOMO for multi-k bandgap label. QO added 2022-01-24
     int h_ind = 0;
@@ -151,8 +144,8 @@ class LCAO_Deepks
     // dD/dX, tensor form of gdmx
     std::vector<torch::Tensor> gdmr_vector;
 
-    // orbital_pdm_shell:[1,Inl,nm*nm]; \langle \phi_\mu|\alpha\rangle\langle\alpha|\phi_\nu\ranlge
-    double**** orbital_pdm_shell;
+    // orbital_pdm_shell:[Inl,nm*nm]; \langle \phi_\mu|\alpha\rangle\langle\alpha|\phi_\nu\ranlge
+    double*** orbital_pdm_shell;
     // orbital_precalc:[1,NAt,NDscrpt]; gvdm*orbital_pdm_shell
     torch::Tensor orbital_precalc_tensor;
 
@@ -359,19 +352,7 @@ class LCAO_Deepks
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
 
-    //-------------------
-    // LCAO_deepks_odelta.cpp
-    //-------------------
-
-    // This file contains subroutines for calculating O_delta,
-    // which corresponds to the correction of the band gap.
-
   public:
-    template <typename TK, typename TH>
-    void cal_o_delta(
-        const std::vector<std::vector<TH>>& dm_hl /**<[in] modified density matrix that contains HOMO and LUMO only*/,
-        const int nks);
-
     //-------------------
     // LCAO_deepks_torch.cpp
     //-------------------
@@ -401,7 +382,7 @@ class LCAO_Deepks
     // 9. check_gedm : prints gedm for checking
     // 10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
     //                          which equals gvdm * orbital_pdm_shell,
-    //                          orbital_pdm_shell[1,Inl,nm*nm] = dm_hl * overlap * overlap
+    //                          orbital_pdm_shell[Inl,nm*nm] = dm_hl * overlap * overlap
     // 11. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
     //                         which equals gvdm * v_delta_pdm_shell,
     //                         v_delta_pdm_shell = overlap * overlap
@@ -443,12 +424,18 @@ class LCAO_Deepks
 
     // calculates orbital_precalc
     template <typename TK, typename TH>
-    void cal_orbital_precalc(const std::vector<std::vector<TH>>& dm_hl /**<[in] density matrix*/,
+    void cal_orbital_precalc(const std::vector<TH>& dm_hl,
+                             const int lmaxd,
+                             const int inlmax,
                              const int nat,
                              const int nks,
+                             const int* inl_l,
                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                             const std::vector<hamilt::HContainer<double>*> phialpha,
+                             const ModuleBase::IntArray* inl_index,
                              const UnitCell& ucell,
                              const LCAO_Orbitals& orb,
+                             const Parallel_Orbitals& pv,
                              const Grid_Driver& GridD);
 
     // calculates v_delta_precalc

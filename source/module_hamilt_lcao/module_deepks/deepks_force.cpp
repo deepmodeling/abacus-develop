@@ -1,11 +1,4 @@
-// wenfei 2022-1-11
-// This file contains subroutines for calculating F_delta,
 #include "module_parameter/parameter.h"
-// which is defind as sum_mu,nu rho_mu,nu d/dX (<chi_mu|alpha>V(D)<alpha|chi_nu>)
-
-// There are 2 subroutines in this file:
-// 1. cal_f_delta, which calculates F_delta
-// 2. check_f_delta, which prints F_delta into F_delta.dat for checking
 
 #ifdef __DEEPKS
 

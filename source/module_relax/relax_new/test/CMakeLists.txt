@@ -18,6 +18,7 @@ AddTest(
     ../../../module_base/matrix3.cpp ../../../module_base/intarray.cpp ../../../module_base/tool_title.cpp
     ../../../module_base/global_function.cpp ../../../module_base/complexmatrix.cpp ../../../module_base/matrix.cpp
     ../../../module_base/complexarray.cpp ../../../module_base/tool_quit.cpp ../../../module_base/realarray.cpp ../../../module_base/blas_connector.cpp
-  LIBS parameter ${math_libs} 
+    ../../../module_cell/update_cell.cpp  ../../../module_io/output.cpp
+    LIBS parameter ${math_libs} 
 )
 

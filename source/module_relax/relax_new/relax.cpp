@@ -1,8 +1,10 @@
 #include "relax.h"
 
+
 #include "module_base/matrix3.h"
 #include "module_base/parallel_common.h"
 #include "module_base/tool_title.h"
+#include "module_cell/update_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -583,7 +585,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
         }
         if (PARAM.inp.fixed_ibrav)
         {
-            ucell.remake_cell();
+            unitcell::remake_cell(ucell.lat);
         }
     }
 
@@ -693,7 +695,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     // I do not want to change it
     if (if_cell_moves)
     {
-        ucell.setup_cell_after_vc(GlobalV::ofs_running);
+        unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
     }
 }
