@@ -49,17 +49,6 @@ void Velocity::act
 {
     ModuleBase::timer::tick("Operator", "Velocity");
 
-    // if (psi_in->get_ngk(this->ik) != psi_in->get_current_nbas()) 
-    // {
-    //     std::cout << "op->ik : " << this->ik << std::endl;
-    //     std::cout << "get_ngk(op->ik) : " << psi_in->get_ngk(this->ik) << std::endl;
-    //     std::cout << "get_current_nbas() : " << psi_in->get_current_nbas() << std::endl;
-
-    //     std::cout << "ik : " << this->ik << std::endl;
-    // }
-
-
-    // const int npw = psi_in->get_ngk(this->ik);
     const int npw = psi_in->get_current_nbas();
 
     const int max_npw = psi_in->get_nbasis() / psi_in->npol;
