@@ -99,7 +99,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
     // cover all lines in fix_k func
     psi_object31->fix_k(2);
     EXPECT_EQ(psi_object31->get_psi_bias(), 0);
-    psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis);
+    psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, inbasis, true);
     psi_temp->fix_k(0);
     EXPECT_EQ(psi_object31->get_current_nbas(), inbasis);
     delete psi_temp;
