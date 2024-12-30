@@ -96,6 +96,7 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
+                       ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
 #endif
                        Gint_Gamma& gint_gamma,

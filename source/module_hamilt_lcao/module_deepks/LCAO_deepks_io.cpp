@@ -325,8 +325,8 @@ void LCAO_deepks_io::save_npy_s(const ModuleBase::matrix &stress,
 }
 
 
-void LCAO_deepks_io::save_npy_o(const ModuleBase::matrix &bandgap, 
-                                const std::string &o_file, 
+void LCAO_deepks_io::save_npy_o(const std::vector<double>& bandgap, 
+                                const std::string& o_file, 
                                 const int nks,
                                 const int rank)
 {
@@ -338,17 +338,7 @@ void LCAO_deepks_io::save_npy_o(const ModuleBase::matrix &bandgap,
 
     //save o_base
     const long unsigned oshape[] = {static_cast<unsigned long>(nks), 1 };
-
-    std::vector<double> npy_o;
-    for (int iks = 0; iks < nks; ++iks)
-    {
-        for (int hl = 0;hl < 1; ++hl)
-        {
-            npy_o.push_back(bandgap(iks,hl));
-        }
-    }
-
-    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, npy_o);
+    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, bandgap);
     return;
 }
 
@@ -369,27 +359,23 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
     //save orbital_precalc.npy (when bandgap label is in use)
     //unit: a.u.
     const long unsigned gshape[] = {static_cast<unsigned long>(nks),
-                                    1,
                                     static_cast<unsigned long>(nat),
                                     static_cast<unsigned long>(des_per_atom)};
 
     std::vector<double> npy_orbital_precalc;
     for (int iks = 0; iks < nks; ++iks)
     {
-        for (int hl = 0; hl < 1; ++hl)
+        for (int iat = 0;iat < nat;++iat)
         {
-            for (int iat = 0;iat < nat;++iat)
+            for(int p=0; p<des_per_atom; ++p)
             {
-                for(int p=0; p<des_per_atom; ++p)
-                {
-                    npy_orbital_precalc.push_back(orbital_precalc_tensor.index({iks, hl, iat, p }).item().toDouble());
-                }
+                npy_orbital_precalc.push_back(orbital_precalc_tensor.index({iks, iat, p}).item().toDouble());
             }
         }
     }
 
     const std::string file_orbpre = out_dir + "deepks_orbpre.npy";
-    npy::SaveArrayAsNumpy(file_orbpre, false, 4, gshape, npy_orbital_precalc);
+    npy::SaveArrayAsNumpy(file_orbpre, false, 3, gshape, npy_orbital_precalc);
     return;
 }
 

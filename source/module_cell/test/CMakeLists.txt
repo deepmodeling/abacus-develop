@@ -103,7 +103,7 @@ add_test(NAME cell_parallel_kpoints_test
 AddTest(
   TARGET cell_unitcell_test
   LIBS parameter  ${math_libs} base device cell_info  symmetry
-  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../../module_elecstate/cal_ux.cpp
+  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../../module_elecstate/cal_ux.cpp ../update_cell.cpp
 
 )
 
@@ -122,7 +122,8 @@ AddTest(
 AddTest(
   TARGET cell_unitcell_test_setupcell
   LIBS parameter  ${math_libs} base device cell_info 
-  SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp
+  SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp 
+  ../../module_cell/update_cell.cpp
 )
 
 add_test(NAME cell_unitcell_test_parallel

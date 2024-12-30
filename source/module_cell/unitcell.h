@@ -277,11 +277,8 @@ class UnitCell {
                          const bool& dpks_desc = false,
                          const int& iproc = 0) const;
     void check_dtau();
-    void setup_cell_after_vc(std::ofstream& log); // LiuXh add 20180515
-
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
-    void remake_cell();
 
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions

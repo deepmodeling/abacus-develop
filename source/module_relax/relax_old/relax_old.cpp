@@ -3,7 +3,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
-
+#include "module_cell/update_cell.h"
 void Relax_old::init_relax(const int& natom)
 {
     // Geometry optimization algorithm setup.
@@ -70,7 +70,7 @@ bool Relax_old::relax_step(const int& istep,
             force_step = 1;
             stress_step++;
             ucell.cell_parameter_updated = true;
-            ucell.setup_cell_after_vc(GlobalV::ofs_running);
+            unitcell::setup_cell_after_vc(ucell,GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
         }
         return converged;
