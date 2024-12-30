@@ -165,7 +165,7 @@ class psi_initializer
         Parallel_Kpoints* p_parakpts_ = nullptr;
         #endif
         pseudopot_cell_vnl* p_pspot_nl_ = nullptr;
-        // shared by atomic, nao, atomic+random, nao+random
+        // shared by nao, nao+random
         ModuleBase::SphericalBesselTransformer sbt; // useful for atomic-like methods
         // shared by random, atomic+random, nao+random
         int random_seed_ = 1;

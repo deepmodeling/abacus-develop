@@ -38,7 +38,7 @@ void psi_initializer_atomic_random<T, Device>::proj_ao_onkG(const int ik)
     {
         for(int ibasis = 0; ibasis < this->psig_->get_nbasis(); ibasis++)
         {
-            (*(this->psig_))(iband, ibasis) = ((Real)(1-rm))*(*(this->psig_))(iband, ibasis) + ((Real)rm)*psi_random(iband, ibasis);
+            (*this->psig_)(iband, ibasis) *= ((Real)(1+rm))*psi_random(iband, ibasis);
         }
     }
 }

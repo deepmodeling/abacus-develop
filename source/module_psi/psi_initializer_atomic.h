@@ -15,7 +15,6 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
         psi_initializer_atomic() {this->set_method("atomic");}
         ~psi_initializer_atomic() {};
 
-        #ifdef __MPI // MPI additional implementation
         /// @brief initialize the psi_initializer with external data and methods
         virtual void initialize(Structure_Factor*,                      //< structure factor
                                 ModulePW::PW_Basis_K*,                  //< planewave basis
@@ -24,14 +23,6 @@ class psi_initializer_atomic : public psi_initializer<T, Device>
                                 const int& = 1,                         //< random seed
                                 pseudopot_cell_vnl* = nullptr,          //< nonlocal pseudopotential
                                 const int& = 0) override;               //< MPI rank
-        #else
-        /// @brief serial version of initialize function, link psi_initializer with external data and methods
-        virtual void initialize(Structure_Factor*,                      //< structure factor
-                                ModulePW::PW_Basis_K*,                  //< planewave basis
-                                UnitCell*,                              //< unit cell
-                                const int& = 1,                         //< random seed
-                                pseudopot_cell_vnl* = nullptr) override;//< nonlocal pseudopotential
-        #endif
         virtual void allocate_table() override;
         virtual void tabulate() override;
         virtual void proj_ao_onkG(const int ik) override;

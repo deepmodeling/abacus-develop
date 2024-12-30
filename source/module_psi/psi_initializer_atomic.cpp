@@ -2,27 +2,29 @@
 #include "module_hamilt_pw/hamilt_pwdft/soc.h"
 // numerical algorithm support
 #include "module_base/math_integral.h" // for numerical integration
-// numerical algorithm support
 #include "module_base/math_polyint.h" // for polynomial interpolation
 #include "module_base/math_ylmreal.h" // for real spherical harmonics
+#include "module_base/math_sphbes.h" // for spherical bessel functions
 // basic functions support
 #include "module_base/tool_quit.h"
 #include "module_base/timer.h"
-// three global variables definition
+// global variables definition
 #include "module_base/global_variable.h"
 #include "module_parameter/parameter.h"
+// io support
+#include "module_io/write_pao.h"
 
 // free function, compared with common radial function normalization, it does not multiply r to function
 // due to pswfc is already multiplied by r
-template <typename T>
-void normalize(int n_rgrid, std::vector<T>& pswfcr, double* rab)
-{
-    std::vector<T> pswfc2r2(pswfcr.size());
-    std::transform(pswfcr.begin(), pswfcr.end(), pswfc2r2.begin(), [](T pswfc) { return pswfc * pswfc; });
-    T norm = ModuleBase::Integral::simpson(n_rgrid, pswfc2r2.data(), rab);
-    norm = sqrt(norm);
-    std::transform(pswfcr.begin(), pswfcr.end(), pswfcr.begin(), [norm](T pswfc) { return pswfc / norm; });
-}
+// template <typename T>
+// void normalize(int n_rgrid, std::vector<T>& pswfcr, double* rab)
+// {
+//     std::vector<T> pswfc2r2(pswfcr.size());
+//     std::transform(pswfcr.begin(), pswfcr.end(), pswfc2r2.begin(), [](T pswfc) { return pswfc * pswfc; });
+//     T norm = ModuleBase::Integral::simpson(n_rgrid, pswfc2r2.data(), rab);
+//     norm = sqrt(norm);
+//     std::transform(pswfcr.begin(), pswfcr.end(), pswfcr.begin(), [norm](T pswfc) { return pswfc / norm; });
+// }
 
 template <typename T, typename Device>
 void psi_initializer_atomic<T, Device>::allocate_table()
@@ -44,7 +46,6 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     this->ovlp_pswfcjlq_.zero_out();
 }
 
-#ifdef __MPI
 template <typename T, typename Device>
 void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,                                //< structure factor
                                                    ModulePW::PW_Basis_K* pw_wfc,                        //< planewave basis
@@ -75,53 +76,32 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
 }
-#else
-template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,                                //< structure factor
-                                                   ModulePW::PW_Basis_K* pw_wfc,                        //< planewave basis
-                                                   UnitCell* p_ucell,                                   //< unit cell
-                                                   const int& random_seed,                          //< random seed
-                                                   pseudopot_cell_vnl* p_pspot_nl)
-{
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
-    if(p_pspot_nl == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize", 
-                                 "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
-    }
-    // import
-    this->sf_ = sf;
-    this->pw_wfc_ = pw_wfc;
-    this->p_ucell_ = p_ucell;
-    this->p_pspot_nl_ = p_pspot_nl;
-    this->random_seed_ = random_seed;
-    // allocate
-    this->allocate_table();
-    // then for generate random number to fill in the wavefunction
-    this->ixy2is_.clear();
-    this->ixy2is_.resize(this->pw_wfc_->fftnxy);
-    this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
-}
-#endif
 
 template <typename T, typename Device>
 void psi_initializer_atomic<T, Device>::tabulate()
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
-    int maxn_rgrid = 0;
-    std::vector<double> qgrid(PARAM.globalv.nqx);
-    for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
+    if (PARAM.inp.use_paw)
     {
-        qgrid[iq] = PARAM.globalv.dq * iq;
+        return;
     }
+    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
+    
+    GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
+    ModuleIO::print_PAOs(*this->p_ucell_);
+
+    // Find the type of atom that has most mesh points.
+    int max_msh = 0;
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
-        maxn_rgrid = (this->p_ucell_->atoms[it].ncpp.msh > maxn_rgrid) ? this->p_ucell_->atoms[it].ncpp.msh : maxn_rgrid;
+        max_msh = (this->p_ucell_->atoms[it].ncpp.msh > max_msh) ? this->p_ucell_->atoms[it].ncpp.msh : max_msh;
     }
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",maxn_rgrid);
+	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
     
+    this->ovlp_pswfcjlq_.zero_out();
+    const int startq = 0;
     const double pref = ModuleBase::FOUR_PI / sqrt(this->p_ucell_->omega);
+    std::vector<double> aux(max_msh);
+    std::vector<double> vchi(max_msh);
 
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
 	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
@@ -132,21 +112,113 @@ void psi_initializer_atomic<T, Device>::tabulate()
 
 		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
+        // QE uses atom->ncpp.mesh
+        const int n_rgrid = (PARAM.inp.pseudo_mesh) ? atom->ncpp.mesh : atom->ncpp.msh;
+        std::vector<double> chi2(n_rgrid);
+
         for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
         {
-            int n_rgrid = (PARAM.inp.pseudo_mesh)?atom->ncpp.mesh:atom->ncpp.msh;
-            std::vector<double> pswfcr(n_rgrid);
-            for (int ir=0; ir<n_rgrid; ir++) { pswfcr[ir] = atom->ncpp.chi(ic, ir); }
-            normalize(n_rgrid, pswfcr, atom->ncpp.rab.data());
-            if (atom->ncpp.oc[ic] >= 0.0) // reasonable occupation number, but is it always true?
+            // check the unit condition
+            for(int ir=0; ir<n_rgrid; ir++)
             {
-                const int l = atom->ncpp.lchi[ic];
-                std::vector<double> ovlp_pswfcjlq_q(PARAM.globalv.nqx);
-                this->sbt.direct(l, atom->ncpp.msh, atom->ncpp.r.data(), pswfcr.data(), PARAM.globalv.nqx, qgrid.data(), ovlp_pswfcjlq_q.data(), 1);
-                for (int iq = 0; iq < PARAM.globalv.nqx; iq++)
+                double chi = atom->ncpp.chi(ic, ir);
+                chi2[ir] = chi * chi;
+            }
+            double unit = 0.0;
+            ModuleBase::Integral::Simpson_Integral(n_rgrid, chi2.data(), atom->ncpp.rab.data(), unit);
+            // liuyu add 2023-10-06
+            if (unit < 1e-8)
+            {
+                // set occupancy to a small negative number so that this wfc
+                // is not going to be used for starting wavefunctions
+                atom->ncpp.oc[ic] = -1e-8;
+                GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << ic + 1 << " of atomic type "
+                                     << atom->ncpp.psd << " is zero" << std::endl;
+            }
+
+            // only occupied states are normalized
+            if (atom->ncpp.oc[ic] < 0)
+            {
+                continue;
+            }
+
+            // the US part if needed
+            if (atom->ncpp.tvanp)
+            {
+                int kkbeta = atom->ncpp.kkbeta;
+                if ((kkbeta % 2 == 0) && kkbeta > 0)
                 {
-                    this->ovlp_pswfcjlq_(it, ic, iq) = pref * ovlp_pswfcjlq_q[iq];
+                    kkbeta--;
                 }
+                std::vector<double> norm_beta(kkbeta);
+                std::vector<double> work(atom->ncpp.nbeta);
+                for (int ib = 0; ib < atom->ncpp.nbeta; ib++)
+                {
+                    bool match = false;
+                    if (atom->ncpp.lchi[ic] == atom->ncpp.lll[ib])
+                    {
+                        if (atom->ncpp.has_so)
+                        {
+                            if (std::abs(atom->ncpp.jchi[ic] - atom->ncpp.jjj[ib]) < 1e-6)
+                            {
+                                match = true;
+                            }
+                        }
+                        else
+                        {
+                            match = true;
+                        }
+                    }
+                    if (match)
+                    {
+                        for (int ik = 0; ik < kkbeta; ik++)
+                        {
+                            norm_beta[ik] = atom->ncpp.betar(ib, ik) * atom->ncpp.chi(ic, ik);
+                        }
+                        ModuleBase::Integral::Simpson_Integral(kkbeta, norm_beta.data(), atom->ncpp.rab.data(), work[ib]);
+                    }
+                    else
+                    {
+                        work[ib] = 0.0;
+                    }
+                }
+                for (int ib1 = 0; ib1 < atom->ncpp.nbeta; ib1++)
+                {
+                    for (int ib2 = 0; ib2 < atom->ncpp.nbeta; ib2++)
+                    {
+                        unit += atom->ncpp.qqq(ib1, ib2) * work[ib1] * work[ib2];
+                    }
+                }
+            } // endif tvanp
+
+            //=================================
+            // normalize radial wave functions
+            //=================================
+            unit = std::sqrt(unit);
+            if (std::abs(unit - 1.0) > 1e-6)
+            {
+                GlobalV::ofs_running << "WARNING: norm of atomic wavefunction # " << ic + 1 << " of atomic type "
+                                     << atom->ncpp.psd << " is " << unit << ", renormalized" << std::endl;
+                for (int ir = 0; ir < n_rgrid; ir++)
+                {
+                    atom->ncpp.chi(ic, ir) /= unit;
+                }
+            }
+
+            const int l = atom->ncpp.lchi[ic];
+            for (int iq = startq; iq < PARAM.globalv.nqx; iq++)
+            {
+                const double q = PARAM.globalv.dq * iq;
+                ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux.data());
+                for (int ir = 0; ir < atom->ncpp.msh; ir++)
+                {
+                    vchi[ir] = atom->ncpp.chi(ic, ir) * aux[ir] * atom->ncpp.r[ir];
+                }
+
+                double vqint = 0.0;
+                ModuleBase::Integral::Simpson_Integral(atom->ncpp.msh, vchi.data(), atom->ncpp.rab.data(), vqint);
+
+                this->ovlp_pswfcjlq_(it, ic, iq) = vqint * pref;
             }
         }
     }
@@ -312,11 +384,9 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                     }
                                 }
             /* ROTATE ACCORDING TO NONCOLINEAR */
-                                double alpha=0.0;
-                                double gamma=0.0;
+                                double alpha = this->p_ucell_->atoms[it].angle1[ia];
+                                double gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
                                 std::complex<double> fup, fdw;
-                                alpha = this->p_ucell_->atoms[it].angle1[ia];
-                                gamma = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
 
                                 for(int m = 0; m < 2*l+1; m++)
                                 {

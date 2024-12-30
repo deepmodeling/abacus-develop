@@ -491,6 +491,7 @@ OBJS_IO=input_conv.o\
     to_wannier90_lcao.o\
     fR_overlap.o\
     unk_overlap_pw.o\
+    write_pao.o\
     write_wfc_pw.o\
     winput.o\
     write_cube.o\
