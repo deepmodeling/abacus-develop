@@ -59,8 +59,8 @@ void Velocity::act
     // }
 
 
-    const int npw = psi_in->get_ngk(this->ik);
-    // const int npw = psi_in->get_current_nbas();
+    // const int npw = psi_in->get_ngk(this->ik);
+    const int npw = psi_in->get_current_nbas();
 
     const int max_npw = psi_in->get_nbasis() / psi_in->npol;
     const int npol = psi_in->npol;

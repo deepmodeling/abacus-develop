@@ -42,6 +42,8 @@ class Psi
     // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
 
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in);
+
     // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
     Psi(const Psi& psi_in, const int nk_in, const int nband_in);
 
@@ -121,12 +123,13 @@ class Psi
     int get_current_nbas() const;
 
     const int& get_ngk(const int ik_in) const;
-    // return ngk array of psi
-    const int* get_ngk_pointer() const;
+
     // return k_first
     const bool& get_k_first() const;
+
     // return device type of psi
     const Device* get_device() const;
+    
     // return psi_bias
     const int& get_psi_bias() const;
 

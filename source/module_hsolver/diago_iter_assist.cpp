@@ -248,7 +248,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
         psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, dmin, true);
-        // psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
 
         T* ppsi = psi_temp.get_pointer();
         syncmem_complex_op()(ctx, ctx, ppsi, psi, psi_temp.size());

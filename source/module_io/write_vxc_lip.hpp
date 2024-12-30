@@ -122,7 +122,7 @@ namespace ModuleIO
         // const ModuleBase::matrix vr_localxc = potxc->get_veff_smooth();
 
         // 2. allocate xc operator
-        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), psi_pw.get_ngk_pointer());
+        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), kv.ngk, true);
         hpsi_localxc.zero_out();
         // std::cout << "hpsi.nk=" << hpsi_localxc.get_nk() << std::endl;
         // std::cout << "hpsi.nbands=" << hpsi_localxc.get_nbands() << std::endl;

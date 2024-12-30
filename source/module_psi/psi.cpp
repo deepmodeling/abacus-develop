@@ -62,6 +62,26 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
+
+template <typename T, typename Device>
+Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in)
+{
+    this->k_first = k_first_in;
+    this->ngk = ngk_in.data();
+    this->current_b = 0;
+    this->current_k = 0;
+    this->npol = PARAM.globalv.npol;
+
+    this->resize(nk_in, nbd_in, nbs_in);
+
+    // Currently only GPU's implementation is supported for device recording!
+    base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
+    base_device::information::record_device_memory<Device>(this->ctx,
+                                                           GlobalV::ofs_device,
+                                                           "Psi->resize()",
+                                                           sizeof(T) * nk_in * nbd_in * nbs_in);
+}
+
 // Constructor 8-1:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer,
@@ -195,7 +215,7 @@ Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nban
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)
 {
-    this->ngk = psi_in.get_ngk_pointer();
+    this->ngk = psi_in.ngk;
     this->npol = psi_in.npol;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
@@ -220,7 +240,7 @@ template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
 {
-    this->ngk = psi_in.get_ngk_pointer();
+    this->ngk = psi_in.ngk;
     this->npol = psi_in.npol;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
@@ -298,12 +318,6 @@ T* Psi<T, Device>::get_pointer(const int& ikb) const
     assert(ikb >= 0);
     assert(this->k_first ? ikb < this->nbands : ikb < this->nk);
     return this->psi_current + ikb * this->nbasis;
-}
-
-template <typename T, typename Device>
-const int* Psi<T, Device>::get_ngk_pointer() const
-{
-    return this->ngk;
 }
 
 template <typename T, typename Device>

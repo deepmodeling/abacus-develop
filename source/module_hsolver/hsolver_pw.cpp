@@ -374,7 +374,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     const diag_comm_info comm_info = {this->rank_in_pool, this->nproc_in_pool};
 #endif
 
-    const int cur_nbasis = psi.get_ngk(psi.get_current_k());
+    const int cur_nbasis = psi.get_current_nbas();
 
     if (this->method == "cg")
     {
