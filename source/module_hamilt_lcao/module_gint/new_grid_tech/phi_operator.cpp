@@ -1,5 +1,6 @@
 #include "phi_operator.h"
 #include "module_base/blas_connector.h"
+#include "module_base/matrix.h"
 
 namespace ModuleGint
 {
@@ -196,6 +197,70 @@ void PhiOperator::phi_dot_phi_dm(
         rho[meshgrids_local_idx_[i]] += ddot_(&cols_, phi[i], &inc, phi_dm[i], &inc);
     }
 }
+
+void PhiOperator::phi_dot_dphi(
+    const double* const* phi,
+    const double* const* dphi_x,
+    const double* const* dphi_y,
+    const double* const* dphi_z,
+    ModuleBase::matrix *fvl) const
+{
+    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    {
+        const int start_idx = atoms_startidx_[i];
+        const int phi_len = atoms_phi_len_[i];
+        double rx = 0, ry = 0, rz = 0;
+        for(int j = 0; j < biggrid_->get_meshgrid_num(); ++j)
+        {
+            for(int k = 0; k < phi_len; ++k)
+            {
+                const double phi_val = phi[j][start_idx + k];
+                rx += phi_val * dphi_x[j][start_idx + k];
+                ry += phi_val * dphi_y[j][start_idx + k];
+                rz += phi_val * dphi_z[j][start_idx + k];
+            }
+        }
+        fvl[0](i, 0) += rx * 2;
+        fvl[0](i, 1) += ry * 2;
+        fvl[0](i, 2) += rz * 2;
+    }
+}
+
+void PhiOperator::phi_dot_dphi_r(
+    const double* const *phi,
+    const double* const *dphi_x,
+    const double* const *dphi_y,
+    const double* const *dphi_z,
+    ModuleBase::matrix *svl) const
+{
+    double sxx = 0, sxy = 0, sxz = 0, syy = 0, syz = 0, szz = 0;
+    for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
+    {
+        for(int j = 0; j < biggrid_->get_atom_num(); ++j)
+        {
+            const int start_idx = atoms_startidx_[j];
+            for(int k = 0; k < atoms_phi_len_[j]; ++k)
+            {
+                const int col_idx = start_idx + k;
+                const double phi_val = phi[i][col_idx];
+                const Vec3d& r3 = atoms_relative_coords_[j][i];
+                sxx += phi_val * dphi_x[i][col_idx] * r3[0];
+                sxy += phi_val * dphi_x[i][col_idx] * r3[1];
+                sxz += phi_val * dphi_x[i][col_idx] * r3[2];
+                syy += phi_val * dphi_y[i][col_idx] * r3[1];
+                syz += phi_val * dphi_y[i][col_idx] * r3[2];
+                szz += phi_val * dphi_z[i][col_idx] * r3[2];
+            }
+        }
+    }
+    svl[0](0, 0) += sxx * 2;
+    svl[0](0, 1) += sxy * 2;
+    svl[0](0, 2) += sxz * 2;
+    svl[0](1, 1) += syy * 2;
+    svl[0](1, 2) += syz * 2;
+    svl[0](2, 2) += szz * 2;
+}
+
 
 //===============================
 // private methods

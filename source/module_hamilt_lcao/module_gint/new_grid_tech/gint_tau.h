@@ -1,5 +1,4 @@
 #pragma once
-
 #include <memory>
 #include <vector>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
@@ -8,29 +7,28 @@
 
 namespace ModuleGint
 {
-
-class Gint_rho : public Gint
+    
+class Gint_tau : public Gint
 {
     public:
-    Gint_rho(
-        const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+    gint_tau(
+        const std::vector<double*>& DMR_vec,
         const int nspin,
-        double **rho)
-        : DMR_vec_(DMR_vec), nspin_(nspin), rho_(rho) {};
+        std::vector<double*>& tau);
     
     void cal_gint() override;
-
+    
     private:
     void init_DMRGint_();
 
-    void cal_rho_();
+    void cal_tau_();
 
     // input
     const std::vector<hamilt::HContainer<double>*> DMR_vec_;
     const int nspin_;
 
     // output
-    double **rho_;
+    double **kin_;
 
     //========================
     // Intermediate variables
@@ -38,4 +36,4 @@ class Gint_rho : public Gint
     std::vector<std::shared_ptr<hamilt::HContainer<double>>> DMRGint_vec_;
 };
 
-}
+} // namespace ModuleGint

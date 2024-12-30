@@ -85,7 +85,8 @@ void transfer_DM_to_DMGint(
     } else  // NSPIN=4 case
     {
 #ifdef __MPI
-        std::shared_ptr<hamilt::HContainer<double>> DM_full = gint_info->get_hr<double>(2);
+        const int npol = 2;
+        std::shared_ptr<hamilt::HContainer<double>> DM_full = gint_info->get_hr<double>(npol);
         hamilt::transferParallels2Serials(*DM[0], DM_full.get());
 #else
         hamilt::HContainer<double>* DM_full = DM[0];

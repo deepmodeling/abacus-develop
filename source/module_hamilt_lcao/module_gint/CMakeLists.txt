@@ -38,6 +38,7 @@ list(APPEND objects
     new_grid_tech/gint.cpp
     new_grid_tech/gint_vl.cpp
     new_grid_tech/gint_rho.cpp
+    new_grid_tech/gint_fvl.cpp
     new_grid_tech/localcell_info.cpp
     new_grid_tech/phi_operator.cpp
     new_grid_tech/set_ddphi.cpp

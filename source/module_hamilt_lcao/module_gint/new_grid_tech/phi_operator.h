@@ -63,6 +63,20 @@ class PhiOperator
         const double* const* phi_dm,
         double* rho) const;
 
+    void phi_dot_dphi(
+        const double* const* phi,
+        const double* const* dphi_x,
+        const double* const* dphi_y,
+        const double* const* dphi_z,
+        ModuleBase::matrix *fvl) const;
+    
+    void phi_dot_dphi_r(
+        const double* const* phi,
+        const double* const* dphi_x,
+        const double* const* dphi_y,
+        const double* const* dphi_z,
+        ModuleBase::matrix *svl) const;
+
     private:
 
     // get the index of the first meshgrid that both atom a and atom b affect
