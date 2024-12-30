@@ -240,7 +240,7 @@ template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
 {
-    this->ngk = psi_in.ngk;
+    this->ngk = psi_in.get_ngk_pointer();
     this->npol = psi_in.npol;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
@@ -330,6 +330,12 @@ template <typename T, typename Device>
 const Device* Psi<T, Device>::get_device() const
 {
     return this->ctx;
+}
+
+template <typename T, typename Device>
+const int* Psi<T, Device>::get_ngk_pointer() const
+{
+    return this->ngk;
 }
 
 template <typename T, typename Device>

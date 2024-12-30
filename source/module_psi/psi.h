@@ -124,6 +124,8 @@ class Psi
 
     const int& get_ngk(const int ik_in) const;
 
+    const int* get_ngk_pointer() const;
+
     // return k_first
     const bool& get_k_first() const;
 
