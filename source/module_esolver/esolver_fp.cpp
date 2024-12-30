@@ -183,24 +183,6 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
                 }
             }
         }
-        if (PARAM.inp.out_chg[0] != -1)
-        {
-            std::complex<double>** rhog_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
-            double** rhor_tot = (PARAM.inp.dm_to_rho)? this->pelec->charge->rho : this->pelec->charge->rho_save;
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
-            }
-            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
-                                 this->pw_rhod,
-                                 PARAM.inp.nspin,
-                                 ucell.GT,
-                                 rhog_tot,
-                                 GlobalV::MY_POOL,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL);
-        }
 
         // 4) write potential
         if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
