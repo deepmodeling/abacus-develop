@@ -23,7 +23,7 @@ UnitCell::~UnitCell() {
 TEST(RI_Benchmark, SlicePsi)
 {
     const int nk = 1, nbands = 2, nbasis = 3;
-    psi::Psi<double> psi(nk, nbands, nbasis);
+    psi::Psi<double> psi(nk, nbands, nbasis, nbasis, true);
     for (int i = 0; i < nk * nbands * nbasis; i++) {
         psi.get_pointer()[i] = i;
 }
@@ -50,7 +50,7 @@ TEST(RI_Benchmark, CalCsMO)
     for (int i = 0;i < nabf * nao * nao;++i) { Cs_ao[0][{0, { 0, 0, 0 }}].ptr()[i] = static_cast<double>(i); }
 
     const UnitCell ucell;
-    psi::Psi<double> psi_ks(1, 2, 2);
+    psi::Psi<double> psi_ks(1, 2, 2, 2, true);
     for (int i = 0;i < 4;++i) { psi_ks.get_pointer()[i] = static_cast<double>(i); }
     RI_Benchmark::TLRI<double> Cs_a_mo = RI_Benchmark::cal_Cs_mo(ucell, Cs_ao, psi_ks, nocc, nvirt, false);
     std::vector<double> Cs_a_mo_ref = { 11,31 };
