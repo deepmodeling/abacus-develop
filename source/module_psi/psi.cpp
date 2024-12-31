@@ -193,25 +193,6 @@ Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
     }
 }
 
-// template <typename T, typename Device>
-// Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
-// {
-//     this->k_first = psi_in.get_k_first();
-//     assert(nk_in <= psi_in.get_nk());
-//     if (nband_in == 0)
-//     {
-//         nband_in = psi_in.get_nbands();
-//     }
-//     this->ngk = psi_in.ngk;
-//     this->npol = psi_in.npol;
-//     this->nk = nk_in;
-//     this->nbands = nband_in;
-//     this->nbasis = psi_in.nbasis;
-//     this->psi_current = psi_pointer;
-//     this->allocate_inside = false;
-//     this->psi = psi_pointer;
-// }
-
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)
 {
