@@ -93,7 +93,7 @@ Psi<T, Device>::Psi(T* psi_pointer,
 {
 
     // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
-    // assert(nk_in == 1); // NOTE because lr/utils/lr_uril.hpp func
+    // assert(nk_in == 1); // NOTE because lr/utils/lr_uril.hpp func & get_psi_spin func
 
     this->k_first = k_first_in;
     this->npol = PARAM.globalv.npol;
@@ -193,24 +193,24 @@ Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
     }
 }
 
-template <typename T, typename Device>
-Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
-{
-    this->k_first = psi_in.get_k_first();
-    assert(nk_in <= psi_in.get_nk());
-    if (nband_in == 0)
-    {
-        nband_in = psi_in.get_nbands();
-    }
-    this->ngk = psi_in.ngk;
-    this->npol = psi_in.npol;
-    this->nk = nk_in;
-    this->nbands = nband_in;
-    this->nbasis = psi_in.nbasis;
-    this->psi_current = psi_pointer;
-    this->allocate_inside = false;
-    this->psi = psi_pointer;
-}
+// template <typename T, typename Device>
+// Psi<T, Device>::Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in)
+// {
+//     this->k_first = psi_in.get_k_first();
+//     assert(nk_in <= psi_in.get_nk());
+//     if (nband_in == 0)
+//     {
+//         nband_in = psi_in.get_nbands();
+//     }
+//     this->ngk = psi_in.ngk;
+//     this->npol = psi_in.npol;
+//     this->nk = nk_in;
+//     this->nbands = nband_in;
+//     this->nbasis = psi_in.nbasis;
+//     this->psi_current = psi_pointer;
+//     this->allocate_inside = false;
+//     this->psi = psi_pointer;
+// }
 
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)

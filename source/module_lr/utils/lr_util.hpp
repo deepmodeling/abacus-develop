@@ -99,7 +99,11 @@ namespace LR_Util
     template<typename T>
     psi::Psi<T> get_psi_spin(const psi::Psi<T>& psi_in, const int& is, const int& nk)
     {
-        return psi::Psi<T>(&psi_in(is * nk, 0, 0), psi_in, nk, psi_in.get_nbands());
+        return psi::Psi<T>(&psi_in(is * nk, 0, 0), 
+                           nk, 
+                           psi_in.get_nbands(),
+                           psi_in.get_nbasis(),
+                           true);
     }
 
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy

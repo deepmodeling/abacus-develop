@@ -61,7 +61,12 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
         syncmem_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
         delete this->hpsi;
-        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, *psi_input, 1, nbands / psi_input->npol);
+        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
+                                             1, 
+                                             nbands / psi_input->npol,
+                                             psi_input->get_nbasis(),
+                                             psi_input->get_nbasis(),
+                                             true);
     }
 
     auto call_act = [&, this](const Operator* op, const bool& is_first_node) -> void {
@@ -177,7 +182,13 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
     else
     {
         this->in_place = false;
-        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, std::get<0>(info)[0], 1, nbands_range);
+        // this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, std::get<0>(info)[0], 1, nbands_range);
+        this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
+                                             1, 
+                                             nbands_range, 
+                                             std::get<0>(info)->get_nbasis(), 
+                                             std::get<0>(info)->get_nbasis(), 
+                                             true);
     }
 
     hpsi_pointer = this->hpsi->get_pointer();
