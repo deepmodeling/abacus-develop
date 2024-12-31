@@ -65,22 +65,24 @@ class Psi
     // Constructor 3-2: 2D Psi version
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int current_nbasis_in, const bool k_first_in);
 
-    // // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    // Psi(const Psi& psi_in, const int nk_in, const int nband_in);
-
     // Destructor for deleting the psi array manually
     ~Psi();
 
+    // set psi value func 1
     void set_all_psi(const T* another_pointer, const std::size_t size_in);
 
-    // mark
+    // set psi value func 2
     void zero_out();
+
+    // size_t size() const {return this->psi.size();}
+    size_t size() const;
 
     // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 
     // get the pointer for the 1st index
     T* get_pointer() const;
+
     // get the pointer for the 2nd index (iband for k_first = true, ik for k_first = false)
     T* get_pointer(const int& ikb) const;
 
@@ -88,8 +90,6 @@ class Psi
     const int& get_nk() const;
     const int& get_nbands() const;
     const int& get_nbasis() const;
-    // size_t size() const {return this->psi.size();}
-    size_t size() const;
 
     /// if k_first=true: choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
     /// if k_first=false: choose k-point index, then Psi(ibasis) can reach Psi(iband, ik, ibasis)

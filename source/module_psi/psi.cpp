@@ -28,6 +28,7 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
     range_2 = range_2_in;
 }
 
+// Constructor 0: basic
 template <typename T, typename Device>
 Psi<T, Device>::Psi()
 {
@@ -43,16 +44,31 @@ Psi<T, Device>::~Psi()
     }
 }
 
+// Constructor 1-1:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
+    assert(nk_in > 0);
+    assert(nbd_in > 0);
+    assert(nbs_in > 0);
+
     this->k_first = k_first_in;
-    this->ngk = ngk_in;
+    this->npol = PARAM.globalv.npol;
+    this->allocate_inside = true;
+
+    this->ngk = ngk_in; // modify later
+    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+    resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
+
+    this->nk = nk_in;
+    this->nbands = nbd_in;
+    this->nbasis = nbs_in;
+    
     this->current_b = 0;
     this->current_k = 0;
-    this->npol = PARAM.globalv.npol;
-
-    this->resize(nk_in, nbd_in, nbs_in);
+    this->current_nbasis = nbs_in;
+    this->psi_current = this->psi;
+    this->psi_bias = 0;
 
     // Currently only GPU's implementation is supported for device recording!
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
@@ -62,6 +78,7 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
+// Constructor 1-2:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in,
                     const int nbd_in,
@@ -69,13 +86,27 @@ Psi<T, Device>::Psi(const int nk_in,
                     const std::vector<int>& ngk_in,
                     const bool k_first_in)
 {
+    assert(nk_in > 0);
+    assert(nbd_in > 0);
+    assert(nbs_in > 0);
+
     this->k_first = k_first_in;
-    this->ngk = ngk_in.data();
+    this->npol = PARAM.globalv.npol;
+    this->allocate_inside = true;
+
+    this->ngk = ngk_in.data(); // modify later
+    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+    resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
+
+    this->nk = nk_in;
+    this->nbands = nbd_in;
+    this->nbasis = nbs_in;
+    
     this->current_b = 0;
     this->current_k = 0;
-    this->npol = PARAM.globalv.npol;
-
-    this->resize(nk_in, nbd_in, nbs_in);
+    this->current_nbasis = nbs_in;
+    this->psi_current = this->psi;
+    this->psi_bias = 0;
 
     // Currently only GPU's implementation is supported for device recording!
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
@@ -85,7 +116,7 @@ Psi<T, Device>::Psi(const int nk_in,
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
-// Constructor 8-1:
+// Constructor 3-1: 2D Psi version
 template <typename T, typename Device>
 Psi<T, Device>::Psi(T* psi_pointer,
                     const int nk_in,
@@ -94,7 +125,6 @@ Psi<T, Device>::Psi(T* psi_pointer,
                     const int current_nbasis_in,
                     const bool k_first_in)
 {
-
     // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
     // assert(nk_in == 1); // NOTE because lr/utils/lr_uril.hpp func & get_psi_spin func
 
@@ -103,7 +133,6 @@ Psi<T, Device>::Psi(T* psi_pointer,
     this->allocate_inside = false;
 
     this->ngk = nullptr;
-
     this->psi = psi_pointer;
 
     this->nk = nk_in;
@@ -120,7 +149,7 @@ Psi<T, Device>::Psi(T* psi_pointer,
     base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
 }
 
-// Constructor 8-3: 2D Psi version 3
+// Constructor 3-2: 2D Psi version
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in,
                     const int nbd_in,
@@ -128,7 +157,6 @@ Psi<T, Device>::Psi(const int nk_in,
                     const int current_nbasis_in,
                     const bool k_first_in)
 {
-
     // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
     assert(nk_in == 1);
 
@@ -158,37 +186,7 @@ Psi<T, Device>::Psi(const int nk_in,
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
-// template <typename T, typename Device>
-// Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
-// {
-//     assert(nk_in == 1);
-//     assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
-
-//     this->k_first = psi_in.get_k_first();
-//     this->npol = psi_in.npol;
-//     this->allocate_inside = true;
-
-//     this->nk = nk_in;
-//     this->nbands = nband_in;
-//     this->nbasis = psi_in.get_nbasis();
-
-//     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-//     resize_memory_op()(this->ctx,
-//                        this->psi,
-//                        (static_cast<std::size_t>(this->nk) * static_cast<std::size_t>(this->nbands)
-//                         * static_cast<std::size_t>(this->nbasis)),
-//                        "no_record");
-//     synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
-
-//     this->current_k = 0;
-//     this->current_b = 0;
-//     this->current_nbasis = this->nbasis;
-//     this->psi_current = this->psi;
-//     this->psi_bias = 0;
-
-//     this->ngk = nullptr;
-// }
-
+// Constructor 2-1:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)
 {
@@ -213,6 +211,8 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
+
+// Constructor 2-2:
 template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
