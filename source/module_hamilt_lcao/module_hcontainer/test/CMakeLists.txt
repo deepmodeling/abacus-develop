@@ -42,35 +42,33 @@ add_test(NAME hontainer_para_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-#AddTest(
-#  TARGET hcontainer_output_test
-#  LIBS parameter base ${math_libs} device
-#  SOURCES test_hcontainer_output.cpp
-#    tmp_mocks.cpp
-#    ../output_hcontainer.cpp
-#    ../base_matrix.cpp
-#    ../hcontainer.cpp
-#    ../atom_pair.cpp
-#    ../../../module_basis/module_ao/parallel_2d.cpp
-#    ../../../module_basis/module_ao/parallel_orbitals.cpp
-#    ../../../module_io/sparse_matrix.cpp
-#)
+AddTest(
+  TARGET hcontainer_output_test
+  LIBS parameter base ${math_libs} device
+  SOURCES test_hcontainer_output.cpp
+    tmp_mocks.cpp
+    ../output_hcontainer.cpp
+    ../base_matrix.cpp
+    ../hcontainer.cpp
+    ../atom_pair.cpp
+    ../../../module_basis/module_ao/parallel_orbitals.cpp
+    ../../../module_io/sparse_matrix.cpp
+)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
-#AddTest(
-#  TARGET hcontainer_readCSR_test
-#  LIBS parameter base ${math_libs} device cell_info 
-#  SOURCES test_hcontainer_readCSR.cpp
-#    ../base_matrix.cpp
-#    ../hcontainer.cpp
-#    ../atom_pair.cpp
-#    ../output_hcontainer.cpp
-#    ../../../module_basis/module_ao/parallel_2d.cpp
-#    ../../../module_basis/module_ao/parallel_orbitals.cpp
-#    ../../../module_io/sparse_matrix.cpp
-#    ../../../module_io/csr_reader.cpp
-#    ../../../module_io/file_reader.cpp
-#    ../../../module_io/output.cpp
-#)
+AddTest(
+  TARGET hcontainer_readCSR_test
+  LIBS parameter base ${math_libs} device cell_info 
+  SOURCES test_hcontainer_readCSR.cpp
+    ../base_matrix.cpp
+    ../hcontainer.cpp
+    ../atom_pair.cpp
+    ../output_hcontainer.cpp
+    ../../../module_basis/module_ao/parallel_orbitals.cpp
+    ../../../module_io/sparse_matrix.cpp
+    ../../../module_io/csr_reader.cpp
+    ../../../module_io/file_reader.cpp
+    ../../../module_io/output.cpp
+)
 endif() 

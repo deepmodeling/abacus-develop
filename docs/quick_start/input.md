@@ -8,17 +8,17 @@ The `INPUT` file contains parameters that control the type of calculation as wel
 
 Below is an example `INPUT` file with some of the most important parameters that need to be set:
 
-```
+```plaintext
 INPUT_PARAMETERS
 suffix                  MgO
 ntype                   2
 pseudo_dir              ./
-orbital_dir		./
-ecutwfc                 100             # Rydberg
-scf_thr                 1e-4		# Rydberg
-basis_type              lcao            
-calculation             scf		# this is the key parameter telling abacus to do a scf calculation
-out_chg			True
+orbital_dir             ./
+ecutwfc                 100  # in Rydberg
+scf_thr                 1e-4 # Rydberg
+basis_type              lcao
+calculation             scf  # this is the key parameter telling abacus to do a scf calculation
+out_chg                 True
 ```
 
 The parameter list always starts with key word `INPUT_PARAMETERS`. Any content before `INPUT_PARAMETERS` will be ignored.
@@ -40,22 +40,23 @@ In the above example, the meanings of the parameters are:
 - `ntype` : how many types of elements in the unit cell
 - `pseudo_dir` : the directory where pseudopotential files are provided
 - `orbital_dir` : the directory where orbital files are provided
-- `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg)    
-- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg)    
+- `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg)
+- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg)
 - `basis_type` : the type of basis set for expanding the electronic wave functions
 - `calculation` : the type of calculation to be performed by ABACUS
-- `out_chg` : if true, output thee charge density oon real space grid
+- `out_chg` : if true, output the charge density on real space grid
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
-> **Note:** Users cannot change the filename “INPUT” to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported.
+> **Note:** Users cannot change the filename “INPUT” to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg True 8` will output the charge density on realspace grid with 8 digits after the decimal point.
 
 ## *STRU*
 
-The structure file contains structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates. 
+The structure file contains structural information about the system, e.g., lattice constant, lattice vectors, and positions of the atoms within a unit cell. The positions can be given either in direct or Cartesian coordinates.
 
 An example of the `STRU` file is given as follows :
-```
+
+```plaintext
 #This is the atom file containing all the information
 #about the lattice structure.
 
@@ -68,7 +69,7 @@ Mg_gga_8au_100Ry_4s2p1d.orb
 O_gga_8au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-1.8897259886 		# 1.8897259886 Bohr =  1.0 Angstrom
+1.8897259886 # 1.8897259886 Bohr =  1.0 Angstrom
 
 LATTICE_VECTORS
 4.25648 0.00000 0.00000  
@@ -100,9 +101,10 @@ For a more detailed description of STRU file, please consult [here](../advanced/
 ## *KPT*
 
 This file contains information of the kpoint grid setting for the Brillouin zone sampling.
-    
+
 An example of the `KPT` file is given below:
-```
+
+```plaintext
 K_POINTS
 0 
 Gamma
@@ -110,7 +112,6 @@ Gamma
 ```
 
 > **Note:** users may choose a different name for their k-point file using keyword `kpoint_file`
-
 
 For a more detailed description, please consult [here](../advanced/input_files/kpt.md).
 

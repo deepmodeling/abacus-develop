@@ -26,24 +26,24 @@ class Grid
     void init(std::ofstream& ofs, const UnitCell& ucell, const double radius_in, const bool boundary = true);
 
     // Data
-    bool pbc; // When pbc is set to false, periodic boundary conditions are explicitly ignored.
-    double sradius2; // searching radius squared (unit:lat0)
-    double sradius;  // searching radius (unit:lat0)
+    bool pbc=false; // When pbc is set to false, periodic boundary conditions are explicitly ignored.
+    double sradius2=0.0; // searching radius squared (unit:lat0)
+    double sradius=0.0;  // searching radius (unit:lat0)
     
     // coordinate range of the input atom (unit:lat0)
-    double x_min;
-    double y_min;
-    double z_min;
-    double x_max;
-    double y_max;
-    double z_max;
+    double x_min=0.0;
+    double y_min=0.0;
+    double z_min=0.0;
+    double x_max=0.0;
+    double y_max=0.0;
+    double z_max=0.0;
 
     // The algorithm for searching neighboring atoms uses a "box" partitioning method. 
     // Each box has an edge length of sradius, and the number of boxes in each direction is recorded here.
-    double box_edge_length;
-    int box_nx;
-    int box_ny;
-    int box_nz;
+    double box_edge_length=0.0;
+    int box_nx=0;
+    int box_ny=0;
+    int box_nz=0;
 
     void getBox(int& bx, int& by, int& bz, const double& x, const double& y, const double& z)
     {
@@ -104,12 +104,12 @@ class Grid
     void Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2);
 
     void Check_Expand_Condition(const UnitCell& ucell);
-    int glayerX;
-    int glayerX_minus;
-    int glayerY;
-    int glayerY_minus;
-    int glayerZ;
-    int glayerZ_minus;
+    int glayerX=0;
+    int glayerX_minus=0;
+    int glayerY=0;
+    int glayerY_minus=0;
+    int glayerZ=0;
+    int glayerZ_minus=0;
 };
 
 #endif

@@ -29,9 +29,9 @@ class Grid_Technique : public Grid_MeshBall {
     // record how many atoms on each grid.
     std::vector<int> how_many_atoms;
     // max atom on grid
-    int max_atom;
+    int max_atom=0;
     // sum of how_many_atoms
-    int total_atoms_on_grid;
+    int total_atoms_on_grid=0;
     std::vector<int> start_ind;
 
     //------------------------------------
@@ -54,8 +54,8 @@ class Grid_Technique : public Grid_MeshBall {
     //------------------------------------
     // 3: which atom on local grid.
     //------------------------------------
-    int lnat; // local nat.
-    int lgd;  // local grid dimension.  lgd * lgd symmetry matrix.
+    int lnat=0; // local nat.
+    int lgd=0;  // local grid dimension.  lgd * lgd symmetry matrix.
     std::vector<bool> in_this_processor;
     std::vector<int> trace_iat;
     std::vector<int> trace_lo; // trace local orbital.
@@ -68,23 +68,23 @@ class Grid_Technique : public Grid_MeshBall {
     int nnrg = 0;
 
     // UnitCell and LCAO_Obrbitals
-    const UnitCell* ucell;
-    const LCAO_Orbitals* orb;
+    const UnitCell* ucell=nullptr;
+    const LCAO_Orbitals* orb=nullptr;
 
     // UnitCell parameters
-    int nwmax;
-    int nr_max;
-    int ntype;
+    int nwmax=0;
+    int nr_max=0;
+    int ntype=0;
 
     // LCAO Orbitals
-    double dr_uniform;
+    double dr_uniform={0.0};
     std::vector<double> rcuts;
     std::vector<std::vector<double>> psi_u;
     std::vector<std::vector<double>> dpsi_u;
     std::vector<std::vector<double>> d2psi_u;
 
     // Determine whether the grid point integration is initialized.
-    bool init_malloced;
+    bool init_malloced=false;
 
     bool get_init_malloced() const { return init_malloced; }
 
