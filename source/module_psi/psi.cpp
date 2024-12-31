@@ -49,7 +49,7 @@ template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
 {
     assert(nk_in > 0);
-    assert(nbd_in > 0);
+    assert(nbd_in >= 0); // 187_PW_SDFT_ALL_GPU && 187_PW_MD_SDFT_ALL_GPU
     assert(nbs_in > 0);
 
     this->k_first = k_first_in;
