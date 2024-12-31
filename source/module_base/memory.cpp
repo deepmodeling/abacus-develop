@@ -436,6 +436,7 @@ void Memory::print_all(std::ofstream &ofs)
 #if defined(__CUDA) || defined(__ROCM)
 	if(!init_flag_gpu) 
 	{
+		delete[] print_flag;
 		return;
 	}
 

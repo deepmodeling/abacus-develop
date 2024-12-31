@@ -101,7 +101,7 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         const size_t sub_nmatch = 1;
         if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
         {
-            int pos = sub_str.find("*");
+            size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
             T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
             // std::vector<double> ocp_temp(num, occ);

@@ -29,9 +29,9 @@ class unkOverlap_lcao
     std::vector<std::vector<std::vector<double>>> psi_psi;
     std::vector<std::vector<std::vector<ModuleBase::Vector3<double>>>> psi_r_psi;
     bool allocate_flag;                      // translate: Used to initialize the array
-    int** cal_tag;                           // Used for parallel scheme
+    int** cal_tag=nullptr;                           // Used for parallel scheme
 
-    int kpoints_number;
+    int kpoints_number=0;
 
     std::vector<double> rcut_orb_; // real space cutoffs of LCAO orbitals' radial functions
 

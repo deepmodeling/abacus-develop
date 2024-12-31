@@ -82,13 +82,13 @@ class MD_base
     ModuleBase::Vector3<double>* force; ///< force of each atom
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
-    double potential;                   ///< potential energy
+    double potential=0.0;               ///< potential energy
     double kinetic;                     ///< kinetic energy
 
   protected:
     const MD_para& mdp; ///< input parameters used in md
-    UnitCell& ucell; ///< unitcell information
-    double energy_;  ///< total energy of the system
+    UnitCell& ucell;    ///< unitcell information
+    double energy_=0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress
     int my_rank;      ///< MPI rank of the processor
