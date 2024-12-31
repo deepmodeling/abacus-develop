@@ -50,9 +50,9 @@ class Velocity
 
     const UnitCell* ucell = nullptr;
 
-    int ik;
+    int ik=0;
 
-    double tpiba;
+    double tpiba=0.0;
 };
 }
 #endif

@@ -49,7 +49,7 @@ namespace ModuleESolver
         ModuleBase::matrix lj_c6;
         ModuleBase::matrix en_shift;
 
-        double lj_potential;
+        double lj_potential=0.0;
         ModuleBase::matrix lj_force;
         ModuleBase::matrix lj_virial;
         //---------------------------------------------------

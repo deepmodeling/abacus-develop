@@ -141,8 +141,8 @@ class IState_Charge
 
 #endif
     std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma;
-    psi::Psi<std::complex<double>>* psi_k;
+    psi::Psi<double>* psi_gamma=nullptr;
+    psi::Psi<std::complex<double>>* psi_k=nullptr;
     const Parallel_Orbitals* ParaV;
 };
 #endif

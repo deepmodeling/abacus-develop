@@ -19,7 +19,7 @@ public:
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nmp[3];                 /// Number of Monhorst-Pack
+    int nmp[3]={0};                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
     /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
@@ -163,7 +163,7 @@ private:
     int nspin;
     bool kc_done;
     bool kd_done;
-    double koffset[3];   // used only in automatic k-points.
+    double koffset[3]={0.0};   // used only in automatic k-points.
     std::string k_kword; // LiuXh add 20180619
     int k_nkstot;        // LiuXh add 20180619
     bool is_mp = false;  // Monkhorst-Pack

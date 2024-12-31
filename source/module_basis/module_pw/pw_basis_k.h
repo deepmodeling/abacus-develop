@@ -94,9 +94,9 @@ public:
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
     // liuyu add 2023-09-06
-    double erf_ecut;   // the value of the constant energy cutoff
-    double erf_height; // the height of the energy step for reciprocal vectors
-    double erf_sigma;  // the width of the energy step for reciprocal vectors
+    double erf_ecut=0.0;   // the value of the constant energy cutoff
+    double erf_height=0.0; // the height of the energy step for reciprocal vectors
+    double erf_sigma=0.0;  // the width of the energy step for reciprocal vectors
 
     //collect gdirect, gcar, gg
     void collect_local_pw(const double& erf_ecut_in = 0.0,

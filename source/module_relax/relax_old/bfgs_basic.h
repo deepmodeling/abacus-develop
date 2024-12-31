@@ -39,15 +39,15 @@ class BFGS_Basic
     static double relax_bfgs_w2; // fixed: parameters for Wolfe conditions.
 
   protected:
-    bool save_flag;
-    bool tr_min_hit; //.TRUE. if the trust_radius has already been set
+    bool save_flag=false;
+    bool tr_min_hit=false; //.TRUE. if the trust_radius has already been set
                      // to the minimum value at the previous step
 
     // mohan add 2010-07-27
     double check_move(const double& lat0, const double& pos, const double& pos_p);
 
   private:
-    bool wolfe_flag;
+    bool wolfe_flag=false;
     ModuleBase::matrix inv_hess;
 
     int bfgs_ndim;
