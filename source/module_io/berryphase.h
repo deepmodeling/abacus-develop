@@ -28,11 +28,11 @@ class berryphase
     const Parallel_Orbitals* paraV;
 #endif
 
-    int total_string;
+    int total_string=0;
     std::vector<std::vector<int>> k_index;
-    int nppstr;
-    int direction;
-    int occ_nbands;
+    int nppstr=0;
+    int direction=0;
+    int occ_nbands=0;
     int GDIR;
 
     void get_occupation_bands();

@@ -22,7 +22,9 @@ MSST::MSST(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     e0 = 0;
     v0 = 1;
     totmass = 0;
-
+    lag_pos = 0;
+    vsum = 0;
+    
     for (int i = 0; i < ucell.nat; ++i)
     {
         totmass += allmass[i];

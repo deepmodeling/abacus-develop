@@ -12,6 +12,9 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
                                        const int veff_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
+    if (isk_in == nullptr || wfcpw_in == nullptr) {
+        ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
+    }
     this->classname = "Veff";
     this->cal_type = calculation_type::pw_veff;
     this->isk = isk_in;
@@ -22,9 +25,7 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->wfcpw = wfcpw_in;
     resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
     resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
-    if (this->isk == nullptr || this->wfcpw == nullptr) {
-        ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");
-    }
+
 }
 
 template<typename T, typename Device>

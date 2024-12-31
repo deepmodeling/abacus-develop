@@ -17,6 +17,10 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
                                                const UnitCell* ucell_in,
                                                const ModulePW::PW_Basis_K* wfc_basis)
 {
+    if( isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
+    }
     this->classname = "Nonlocal";
     this->cal_type = calculation_type::pw_nonlocal;
     this->wfcpw = wfc_basis;
@@ -26,10 +30,7 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
     this->deeq = this->ppcell->template get_deeq_data<Real>();
     this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-    if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
-    }
+
 }
 
 template<typename T, typename Device>

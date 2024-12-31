@@ -716,10 +716,11 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         }
                         //print only ia==0 && mag>0 to avoid too much output
                         //print when ia!=0 && mag[ia] != mag[0] to avoid too much output
-                        if(ia==0 || (ia!=0 
-                            && (atoms[it].m_loc_[ia].x != atoms[it].m_loc_[0].x 
-                            || atoms[it].m_loc_[ia].y != atoms[it].m_loc_[0].y 
-                            || atoms[it].m_loc_[ia].z != atoms[it].m_loc_[0].z)))
+                        //  'A || (!A && B)' is equivalent to 'A || B',so the following 
+                        // code is equivalent to 'ia==0 || (...)'
+                        if(ia==0 || (atoms[it].m_loc_[ia].x != atoms[it].m_loc_[0].x 
+                                    || atoms[it].m_loc_[ia].y != atoms[it].m_loc_[0].y 
+                                    || atoms[it].m_loc_[ia].z != atoms[it].m_loc_[0].z))
                         {
                             //use a stringstream to generate string: "concollinear magnetization of element it is:"
                             std::stringstream ss;
@@ -737,7 +738,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                         atoms[it].mag[ia] = atoms[it].m_loc_[ia].z;
                         //print only ia==0 && mag>0 to avoid too much output
                         //print when ia!=0 && mag[ia] != mag[0] to avoid too much output
-                        if(ia==0 || (ia!=0 && atoms[it].mag[ia] != atoms[it].mag[0]))
+                        if(ia==0 || (atoms[it].mag[ia] != atoms[it].mag[0]))
                         {
                             //use a stringstream to generate string: "cocollinear magnetization of element it is:"
                             std::stringstream ss;

@@ -18,7 +18,7 @@ class Lattice_Change_CG
     double *grad0;
     double *cg_grad0;
     double *move0;
-    double e0;
+    double e0=0.0;
 
     // setup gradients.
     void setup_cg_grad(double *grad,

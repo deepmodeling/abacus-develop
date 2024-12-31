@@ -12,7 +12,7 @@ class Grid_BigCell: public Grid_MeshCell
 		Grid_BigCell();
 		~Grid_BigCell();
 		// number atoms and type.
-		int nat;
+		int nat=0;
 		// save the relative cartesian position
 		// to bigcell of each atom.
         std::vector<std::vector<double>> tau_in_bigcell;
