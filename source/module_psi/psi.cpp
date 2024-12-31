@@ -62,9 +62,12 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
-
 template <typename T, typename Device>
-Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in)
+Psi<T, Device>::Psi(const int nk_in,
+                    const int nbd_in,
+                    const int nbs_in,
+                    const std::vector<int>& ngk_in,
+                    const bool k_first_in)
 {
     this->k_first = k_first_in;
     this->ngk = ngk_in.data();
@@ -155,43 +158,36 @@ Psi<T, Device>::Psi(const int nk_in,
                                                            sizeof(T) * nk_in * nbd_in * nbs_in);
 }
 
-template <typename T, typename Device>
-Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
-{
-    assert(nk_in == 1);
-    assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
+// template <typename T, typename Device>
+// Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
+// {
+//     assert(nk_in == 1);
+//     assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
 
-    this->k_first = psi_in.get_k_first();
-    this->npol = psi_in.npol;
-    this->allocate_inside = true;
+//     this->k_first = psi_in.get_k_first();
+//     this->npol = psi_in.npol;
+//     this->allocate_inside = true;
 
-    this->nk = nk_in;
-    this->nbands = nband_in;
-    this->nbasis = psi_in.get_nbasis();
+//     this->nk = nk_in;
+//     this->nbands = nband_in;
+//     this->nbasis = psi_in.get_nbasis();
 
-    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->ctx,
-                       this->psi,
-                       (static_cast<std::size_t>(this->nk) * static_cast<std::size_t>(this->nbands)
-                        * static_cast<std::size_t>(this->nbasis)),
-                       "no_record");
-    synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
+//     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
+//     resize_memory_op()(this->ctx,
+//                        this->psi,
+//                        (static_cast<std::size_t>(this->nk) * static_cast<std::size_t>(this->nbands)
+//                         * static_cast<std::size_t>(this->nbasis)),
+//                        "no_record");
+//     synchronize_memory_op()(this->ctx, psi_in.get_device(), this->psi, psi_in.get_pointer(), this->size());
 
-    this->current_k = 0;
-    this->current_b = 0;
-    this->current_nbasis = this->nbasis;
-    this->psi_current = this->psi;
-    this->psi_bias = 0;
+//     this->current_k = 0;
+//     this->current_b = 0;
+//     this->current_nbasis = this->nbasis;
+//     this->psi_current = this->psi;
+//     this->psi_bias = 0;
 
-    if (this->nk != psi_in.get_nk())
-    {
-        this->ngk = nullptr;
-    }
-    else
-    {
-        this->ngk = psi_in.ngk;
-    }
-}
+//     this->ngk = nullptr;
+// }
 
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)
@@ -267,6 +263,13 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
+}
+
+template <typename T, typename Device>
+void Psi<T, Device>::set_all_psi(const T* another_pointer, const std::size_t size_in)
+{
+    assert(size_in == this->size());
+    synchronize_memory_op()(this->ctx, this->ctx, this->psi, another_pointer, this->size());
 }
 
 template <typename T, typename Device>

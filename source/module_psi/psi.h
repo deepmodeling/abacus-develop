@@ -42,7 +42,7 @@ class Psi
     // Constructor 1-1: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in = true);
 
-    // Constructor 1-2: 
+    // Constructor 1-2:
     Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in);
 
     // Constructor 2-1: initialize a new psi from the given psi_in
@@ -63,19 +63,18 @@ class Psi
         const bool k_first_in = true);
 
     // Constructor 3-2: 2D Psi version
-    Psi(const int nk_in, 
-        const int nbd_in, 
-        const int nbs_in, 
-        const int current_nbasis_in, 
-        const bool k_first_in);
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int current_nbasis_in, const bool k_first_in);
 
+    // // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
+    // Psi(const Psi& psi_in, const int nk_in, const int nband_in);
 
-    // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    Psi(const Psi& psi_in, const int nk_in, const int nband_in);
-
-    
     // Destructor for deleting the psi array manually
     ~Psi();
+
+    void set_all_psi(const T* another_pointer, const std::size_t size_in);
+
+    // mark
+    void zero_out();
 
     // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
@@ -129,24 +128,21 @@ class Psi
 
     // return device type of psi
     const Device* get_device() const;
-    
+
     // return psi_bias
     const int& get_psi_bias() const;
 
     const int& get_cur_effective_basis() const;
 
-    // mark
-    void zero_out();
-
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;
-    
+
     int npol = 1;
 
   private:
     T* psi = nullptr; // avoid using C++ STL
-    
-    Device* ctx = {};                        // an context identifier for obtaining the device variable
+
+    Device* ctx = {}; // an context identifier for obtaining the device variable
 
     // dimensions
     int nk = 1;     // number of k points
