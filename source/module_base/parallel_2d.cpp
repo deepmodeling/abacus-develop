@@ -12,20 +12,24 @@ bool Parallel_2D::in_this_processor(const int iw1_all, const int iw2_all) const
 
 int Parallel_2D::get_global_row_size() const
 {
+    if (!is_serial)
+    {
 #ifdef __MPI
-    return desc[2];
-#else
-    return nrow;
+        return desc[2];
 #endif
+    }
+    return nrow;
 }
 
 int Parallel_2D::get_global_col_size() const
 {
+    if (!is_serial)
+    {
 #ifdef __MPI
-    return desc[3];
-#else
-    return ncol;
+        return desc[3];
 #endif
+    }
+    return ncol;
 }
 
 #ifdef __MPI
@@ -133,6 +137,7 @@ void Parallel_2D::set_serial(const int mg, const int ng)
     std::iota(local2global_col_.begin(), local2global_col_.end(), 0);
     global2local_row_ = local2global_row_;
     global2local_col_ = local2global_col_;
+    is_serial = true;
 #ifdef __MPI
     blacs_ctxt = -1;
 #endif

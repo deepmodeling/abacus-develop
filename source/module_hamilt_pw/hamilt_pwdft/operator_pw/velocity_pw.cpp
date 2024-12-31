@@ -13,15 +13,15 @@ Velocity::Velocity
     const bool nonlocal_in
 )
 {
+    if( wfcpw_in == nullptr || isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("Velocity", "Constuctor of Operator::Velocity is failed, please check your code!");
+    }
     this->wfcpw = wfcpw_in;
     this->isk = isk_in;
     this->ppcell = ppcell_in;
     this->ucell = ucell_in;
     this->nonlocal = nonlocal_in;
-    if( this->wfcpw == nullptr || this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("Velocity", "Constuctor of Operator::Velocity is failed, please check your code!");
-    }
     this->tpiba = ucell_in -> tpiba;
     if(this->nonlocal)      this->ppcell->initgradq_vnl(*this->ucell);
 }

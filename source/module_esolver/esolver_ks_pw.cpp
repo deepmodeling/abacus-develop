@@ -204,6 +204,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     if (this->psi != nullptr)
     {
         delete this->psi;
+        this->psi = nullptr;
     }
 
     //! initalize local pseudopotential
@@ -224,7 +225,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                   &this->sf,
                                   &this->ppcell,
                                   ucell);
-
+                                  
+    assert(this->psi != nullptr);
     this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);

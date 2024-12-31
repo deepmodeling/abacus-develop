@@ -5,14 +5,15 @@
 
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    tot_magnetization = 0.0;
+    abs_magnetization = 0.0;
+    std::fill(tot_magnetization_nc, tot_magnetization_nc + 3, 0.0);
+    std::fill(ux_, ux_ + 3, 0.0);
 }
 
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] start_magnetization;
 }
 
 void Magnetism::compute_magnetization(const double& omega,
@@ -56,20 +57,23 @@ void Magnetism::compute_magnetization(const double& omega,
 	// noncolliear :
 	else if(PARAM.inp.nspin==4)
 	{
-		for(int i=0;i<3;i++)this->tot_magnetization_nc[i] = 0.00;
+		for(int i=0;i<3;i++) {this->tot_magnetization_nc[i] = 0.00;
+}
 		this->abs_magnetization = 0.00;
 		for (int ir=0; ir<nrxx; ir++)
 		{
 			double diff = sqrt(pow(rho[1][ir], 2) + pow(rho[2][ir], 2) +pow(rho[3][ir], 2));
  
-			for(int i=0;i<3;i++)this->tot_magnetization_nc[i] += rho[i+1][ir];
+			for(int i=0;i<3;i++) {this->tot_magnetization_nc[i] += rho[i+1][ir];
+}
 			this->abs_magnetization += std::abs(diff);
 		}
 #ifdef __MPI
         Parallel_Reduce::reduce_pool(this->tot_magnetization_nc, 3);
         Parallel_Reduce::reduce_pool(this->abs_magnetization);
 #endif
-		for(int i=0;i<3;i++)this->tot_magnetization_nc[i] *= omega/ nxyz;
+		for(int i=0;i<3;i++) {this->tot_magnetization_nc[i] *= omega/ nxyz;
+}
 		this->abs_magnetization *= omega/ nxyz;
 		GlobalV::ofs_running<<"total magnetism (Bohr mag/cell)"<<'\t'<<this->tot_magnetization_nc[0]<<'\t'<<this->tot_magnetization_nc[1]<<'\t'<<this->tot_magnetization_nc[2]<<'\n';
 		ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"absolute magnetism (Bohr mag/cell)",this->abs_magnetization);

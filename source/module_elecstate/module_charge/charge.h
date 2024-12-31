@@ -144,10 +144,10 @@ class Charge
     void set_omega(double* omega_in){this->omega_ = omega_in;};
 
     // mohan add 2021-02-20
-    int nrxx; // number of r vectors in this processor
-    int nxyz; // total nuber of r vectors
-    int ngmc; // number of g vectors in this processor
-    int nspin; // number of spins
+    int nrxx=0; // number of r vectors in this processor
+    int nxyz=0; // total nuber of r vectors
+    int ngmc=0; // number of g vectors in this processor
+    int nspin=0; // number of spins
     ModulePW::PW_Basis* rhopw = nullptr;// When double_grid is used, rhopw = rhodpw (dense grid)
     bool cal_elf = false; // whether to calculate electron localization function (ELF)
   private:

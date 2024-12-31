@@ -44,20 +44,20 @@ public:
 
 	Numerical_Nonlocal_Lm* Proj; ///< length: nproj(only store radial function )
 
-	const double& get_rcut_max(void) const { return rcut_max; }
+	const double& get_rcut_max() const { return rcut_max; }
     const int& get_nproj() const { return nproj; }
 
 	private:
 	
-	std::string label; /// <element label
+	std::string label=""; /// <element label
 
 	int type; ///< element index
 
 	int lmax; ///< max value of L angular momentum
 
-	double rcut_max;
+	double rcut_max=0.0;
 
-	std::string type_ps; ///<local or nonlocal
+	std::string type_ps=""; ///<local or nonlocal
 
 	int nproj;
 
