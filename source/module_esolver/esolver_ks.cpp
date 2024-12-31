@@ -7,7 +7,6 @@
 #include "module_io/json_output/output_info.h"
 #include "module_io/output_log.h"
 #include "module_io/print_info.h"
-#include "module_io/rhog_io.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
 
@@ -691,53 +690,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         std::cout << " SCF restart after this step!" << std::endl;
     }
 
-    //! output charge density
-    if (PARAM.inp.out_chg[0] != -1)
-    {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || this->conv_esolver)
-        {
-            std::complex<double>** rhog_tot
-                = (PARAM.inp.dm_to_rho) ? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
-            double** rhor_tot = (PARAM.inp.dm_to_rho) ? this->pelec->charge->rho : this->pelec->charge->rho_save;
-            for (int is = 0; is < PARAM.inp.nspin; is++)
-            {
-                this->pw_rhod->real2recip(rhor_tot[is], rhog_tot[is]);
-            }
-            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
-                                 PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
-                                 this->pw_rhod,
-                                 PARAM.inp.nspin,
-                                 ucell.GT,
-                                 rhog_tot,
-                                 GlobalV::MY_POOL,
-                                 GlobalV::RANK_IN_POOL,
-                                 GlobalV::NPROC_IN_POOL);
-
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                std::complex<double>** kin_g = new std::complex<double>*[PARAM.inp.nspin];
-                for (int is = 0; is < PARAM.inp.nspin; is++)
-                {
-                    kin_g[is] = new std::complex<double>[this->pelec->charge->ngmc];
-                    this->pw_rhod->real2recip(this->pelec->charge->kin_r_save[is], kin_g[is]);
-                }
-                ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-TAU-DENSITY.restart",
-                                     PARAM.globalv.gamma_only_pw || PARAM.globalv.gamma_only_local,
-                                     this->pw_rhod,
-                                     PARAM.inp.nspin,
-                                     ucell.GT,
-                                     kin_g,
-                                     GlobalV::MY_POOL,
-                                     GlobalV::RANK_IN_POOL,
-                                     GlobalV::NPROC_IN_POOL);
-                for (int is = 0; is < PARAM.inp.nspin; is++)
-                {
-                    delete[] kin_g[is];
-                }
-                delete[] kin_g;
-            }
-        }
-    }
+    ESolver_FP::iter_finish(ucell, istep, iter);
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
