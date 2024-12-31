@@ -5,6 +5,7 @@
 ///                       orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
 
 #include "deepks_orbpre.h"
+
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
@@ -37,7 +38,8 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
-    torch::Tensor orbital_pdm = torch::zeros({nks, inlmax, (2 * lmaxd + 1) , (2 * lmaxd + 1)}, torch::dtype(torch::kFloat64));
+    torch::Tensor orbital_pdm
+        = torch::zeros({nks, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(torch::kFloat64));
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -257,7 +259,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                 for (int ik = 0; ik < nks; ik++)
                 {
                     // do dot of g_1dmt and s_1t to get orbital_pdm
-                    
+
                     const double* p_g1dmt = g_1dmt.data() + ik * row_size;
 
                     int ib = 0, index = 0, inc = 1;
@@ -273,12 +275,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    orbital_pdm[ik][inl][m1][m2]
-                                        += ddot_(&row_size,
-                                                 p_g1dmt + index * row_size * nks,
-                                                 &inc,
-                                                 s_1t.data() + index * row_size,
-                                                 &inc);
+                                    orbital_pdm[ik][inl][m1][m2] += ddot_(&row_size,
+                                                                          p_g1dmt + index * row_size * nks,
+                                                                          &inc,
+                                                                          s_1t.data() + index * row_size,
+                                                                          &inc);
                                     index++;
                                 }
                             }
@@ -295,8 +296,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
         for (int inl = 0; inl < inlmax; inl++)
         {
             auto tensor_slice = orbital_pdm[iks][inl];
-            Parallel_Reduce::reduce_all(tensor_slice.data_ptr<double>(),
-                                        (2 * lmaxd + 1) * (2 * lmaxd + 1));
+            Parallel_Reduce::reduce_all(tensor_slice.data_ptr<double>(), (2 * lmaxd + 1) * (2 * lmaxd + 1));
         }
     }
 #endif
@@ -342,8 +342,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     std::vector<torch::Tensor> orbital_precalc_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        orbital_precalc_vector.push_back(
-            at::einsum("kamn, avmn->kav", {orbital_pdm_vector[nl], gevdm[nl]}));
+        orbital_precalc_vector.push_back(at::einsum("kamn, avmn->kav", {orbital_pdm_vector[nl], gevdm[nl]}));
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);

@@ -71,7 +71,7 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
                 }
             }
         }
-        
+
         this->init_pdm = true;
     }
 }
@@ -330,10 +330,10 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                                 {
                                     int ind = m1 * nm + m2;
                                     pdm[inl][m1][m2] += ddot_(&row_size,
-                                                                     g_1dmt.data() + index * row_size,
-                                                                     &inc,
-                                                                     s_1t.data() + index * row_size,
-                                                                     &inc);
+                                                              g_1dmt.data() + index * row_size,
+                                                              &inc,
+                                                              s_1t.data() + index * row_size,
+                                                              &inc);
                                     index++;
                                 }
                             }
@@ -354,10 +354,10 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                         for (int jproj = 0; jproj < nproj; jproj++)
                         {
                             pdm[iat][iproj * nproj + jproj] += ddot_(&row_size,
-                                                                            g_1dmt.data() + index * row_size,
-                                                                            &inc,
-                                                                            s_1t.data() + index * row_size,
-                                                                            &inc);
+                                                                     g_1dmt.data() + index * row_size,
+                                                                     &inc,
+                                                                     s_1t.data() + index * row_size,
+                                                                     &inc);
                             index++;
                         }
                     }
@@ -367,7 +367,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
     }         // T0
 
 #ifdef __MPI
-    for(int inl=0; inl<inlmax; inl++)
+    for (int inl = 0; inl < inlmax; inl++)
     {
         int pdm_size = (2 * inl_l[inl] + 1) * (2 * inl_l[inl] + 1);
         Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);

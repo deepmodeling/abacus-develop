@@ -1,8 +1,9 @@
 #include "LCAO_deepks_test.h"
 #define private public
 #include "module_parameter/parameter.h"
-#include <torch/torch.h>
+
 #include <torch/script.h>
+#include <torch/torch.h>
 #undef private
 namespace Test_Deepks
 {

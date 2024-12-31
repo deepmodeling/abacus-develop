@@ -1,5 +1,5 @@
-#ifndef DEEPKS_ORBPRE_H 
-#define DEEPKS_ORBPRE_H 
+#ifndef DEEPKS_ORBPRE_H
+#define DEEPKS_ORBPRE_H
 
 #ifdef __DEEPKS
 
@@ -18,12 +18,12 @@
 
 namespace DeePKS_domain
 {
-    //------------------------
-    // deepks_orbpre.cpp
-    //------------------------
+//------------------------
+// deepks_orbpre.cpp
+//------------------------
 
-    // This file contains one subroutine for calculating orbital_precalc,
-    // which is defind as gvdm * dm_hl * overlap * overlap
+// This file contains one subroutine for calculating orbital_precalc,
+// which is defind as gvdm * dm_hl * overlap * overlap
 
 template <typename TK, typename TH>
 void cal_orbital_precalc(const std::vector<TH>& dm_hl,
@@ -41,6 +41,6 @@ void cal_orbital_precalc(const std::vector<TH>& dm_hl,
                          const Parallel_Orbitals& pv,
                          const Grid_Driver& GridD,
                          torch::Tensor& orbital_precalc);
-}
+} // namespace DeePKS_domain
 #endif
 #endif
