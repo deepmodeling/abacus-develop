@@ -200,7 +200,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_vdelta.o\
         deepks_hmat.o\
         LCAO_deepks_interface.o\
-        orbital_precalc.o\
+        deepks_orbpre.o\
         cal_gdmx.o\
         cal_gedm.o\
         cal_gvx.o\

@@ -100,7 +100,7 @@ void save_npy_o(const std::vector<double>& bandgap, /**<[in] \f$E_{base}\f$ or \
 void save_npy_orbital_precalc(const int nat, 
 		const int nks,
 		const int des_per_atom,
-		const torch::Tensor& orbital_precalc_tensor,
+		const torch::Tensor& orbital_precalc,
         const std::string& out_dir,
 		const int rank);
 

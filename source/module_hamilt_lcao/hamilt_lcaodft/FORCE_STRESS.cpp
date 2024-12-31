@@ -540,7 +540,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         GlobalC::ld.check_gdmx(ucell.nat);
                     }
-                    GlobalC::ld.cal_gvx(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvx(ucell.nat, gevdm);
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -758,7 +760,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
                 if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
-                    GlobalC::ld.cal_gvepsl(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvepsl(ucell.nat, gevdm);
 
                     LCAO_deepks_io::save_npy_gvepsl(ucell.nat,
                                                     GlobalC::ld.des_per_atom,

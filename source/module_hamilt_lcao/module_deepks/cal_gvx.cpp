@@ -16,10 +16,9 @@
 
 // calculates gradient of descriptors from gradient of projected density
 // matrices
-void LCAO_Deepks::cal_gvx(const int nat) {
+void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm) 
+{
     ModuleBase::TITLE("LCAO_Deepks", "cal_gvx");
-    // preconditions
-    this->cal_gvdm(nat);
 
     if (!gdmr_vector.empty()) 
     {
@@ -85,14 +84,14 @@ void LCAO_Deepks::cal_gvx(const int nat) {
 
         // einsum for each inl:
         // gdmr_vector : b:nat(derivative) * x:3 * a:inl(projector) * m:nm *
-        // n:nm gevdm_vector : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) *
+        // n:nm gevdm : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) *
         // n:nm (pdm, dim2) gvx_vector : b:nat(derivative) * x:3 *
         // a:inl(projector) * m:nm(descriptor)
         std::vector<torch::Tensor> gvx_vector;
         for (int nl = 0; nl < nlmax; ++nl) {
             gvx_vector.push_back(
                 at::einsum("bxamn, avmn->bxav",
-                           {this->gdmr_vector[nl], this->gevdm_vector[nl]}));
+                           {this->gdmr_vector[nl], gevdm[nl]}));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom

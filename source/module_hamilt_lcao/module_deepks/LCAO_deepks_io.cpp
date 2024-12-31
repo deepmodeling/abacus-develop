@@ -346,7 +346,7 @@ void LCAO_deepks_io::save_npy_o(const std::vector<double>& bandgap,
 void LCAO_deepks_io::save_npy_orbital_precalc(const int nat, 
                                               const int nks, 
                                               const int des_per_atom,
-                                              const torch::Tensor& orbital_precalc_tensor,
+                                              const torch::Tensor& orbital_precalc,
                                               const std::string& out_dir,
                                               const int rank)
 {
@@ -369,7 +369,7 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
         {
             for(int p=0; p<des_per_atom; ++p)
             {
-                npy_orbital_precalc.push_back(orbital_precalc_tensor.index({iks, iat, p}).item().toDouble());
+                npy_orbital_precalc.push_back(orbital_precalc.index({iks, iat, p}).item().toDouble());
             }
         }
     }

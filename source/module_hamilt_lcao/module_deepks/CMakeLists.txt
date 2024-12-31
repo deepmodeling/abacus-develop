@@ -11,7 +11,7 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_vdelta.cpp
       deepks_hmat.cpp
       LCAO_deepks_interface.cpp
-      orbital_precalc.cpp
+      deepks_orbpre.cpp
       cal_gdmx.cpp
       cal_gedm.cpp
       cal_gvx.cpp      

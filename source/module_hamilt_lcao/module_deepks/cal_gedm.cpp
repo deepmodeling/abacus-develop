@@ -108,7 +108,6 @@ void LCAO_Deepks::cal_gedm(const int nat) {
         return;
     }
 
-    // using this->pdm_tensor
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm");
 
     // forward
@@ -125,7 +124,7 @@ void LCAO_Deepks::cal_gedm(const int nat) {
     std::vector<torch::Tensor> gedm_shell;
     gedm_shell.push_back(torch::ones_like(ec[0]));
     this->gedm_tensor = torch::autograd::grad(ec,
-                                              this->pdm_tensor,
+                                              this->pdm,
                                               gedm_shell,
                                               /*retain_grad=*/true,
                                               /*create_graph=*/false,

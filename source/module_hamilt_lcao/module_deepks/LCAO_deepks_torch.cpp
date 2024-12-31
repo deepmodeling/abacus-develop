@@ -7,7 +7,7 @@
 //        descriptors wrt strain tensor, calculated by
 //        d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdm_epsl * gvdm
 //        using einsum
-//  cal_gvdm : d(des)/d(pdm)
+//  cal_gevdm : d(des)/d(pdm)
 //        calculated using torch::autograd::grad
 //  load_model : loads model for applying V_delta
 //  prepare_phialpha : prepare phialpha for outputting npy file
@@ -25,11 +25,9 @@
 #include "module_parameter/parameter.h"
 
 // calculates stress of descriptors from gradient of projected density matrices
-void LCAO_Deepks::cal_gvepsl(const int nat)
+void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gvepsl");
-    // preconditions
-    this->cal_gvdm(nat);
     if (!gdmepsl_vector.empty())
     {
         gdmepsl_vector.erase(gdmepsl_vector.begin(), gdmepsl_vector.end());
@@ -76,13 +74,13 @@ void LCAO_Deepks::cal_gvepsl(const int nat)
 
         // einsum for each inl:
         // gdmepsl_vector : b:npol * a:inl(projector) * m:nm * n:nm
-        // gevdm_vector : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) * n:nm
+        // gevdm : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) * n:nm
         // (pdm, dim2) gvepsl_vector : b:npol * a:inl(projector) *
         // m:nm(descriptor)
         std::vector<torch::Tensor> gvepsl_vector;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {this->gdmepsl_vector[nl], this->gevdm_vector[nl]}));
+            gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {this->gdmepsl_vector[nl], gevdm[nl]}));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom
@@ -96,13 +94,14 @@ void LCAO_Deepks::cal_gvepsl(const int nat)
     return;
 }
 
-// dDescriptor / dprojected density matrix
-void LCAO_Deepks::cal_gvdm(const int nat)
+// d(Descriptor) / d(projected density matrix)
+// Dimension is different for each inl, so there's a vector of tensors
+void LCAO_Deepks::cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_gvdm");
-    if (!gevdm_vector.empty())
+    ModuleBase::TITLE("LCAO_Deepks", "cal_gevdm");
+    if (!gevdm.empty())
     {
-        gevdm_vector.erase(gevdm_vector.begin(), gevdm_vector.end());
+        gevdm.erase(gevdm.begin(), gevdm.end());
     }
     // cal gevdm(d(EigenValue(D))/dD)
     int nlmax = inlmax / nat;
@@ -114,7 +113,7 @@ void LCAO_Deepks::cal_gvdm(const int nat)
             int inl = iat * nlmax + nl;
             int nm = 2 * this->inl_l[inl] + 1;
             // repeat each block for nm times in an additional dimension
-            torch::Tensor tmp_x = this->pdm_tensor[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
+            torch::Tensor tmp_x = this->pdm[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
             // torch::Tensor tmp_y = std::get<0>(torch::symeig(tmp_x, true));
             torch::Tensor tmp_y = std::get<0>(torch::linalg::eigh(tmp_x, "U"));
             torch::Tensor tmp_yshell = torch::eye(nm, torch::TensorOptions().dtype(torch::kFloat64));
@@ -134,9 +133,9 @@ void LCAO_Deepks::cal_gvdm(const int nat)
             avmmv.push_back(tmp_res[0]);
         }
         torch::Tensor avmm = torch::stack(avmmv, 0); // nat*nv**nm*nm
-        this->gevdm_vector.push_back(avmm);
+        gevdm.push_back(avmm);
     }
-    assert(this->gevdm_vector.size() == nlmax);
+    assert(gevdm.size() == nlmax);
     return;
 }
 
@@ -367,7 +366,8 @@ void LCAO_Deepks::prepare_gevdm(const int nat, const LCAO_Orbitals& orb)
     int mmax = 2 * this->lmaxd + 1;
     this->gevdm_tensor = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
 
-    this->cal_gvdm(nat);
+    std::vector<torch::Tensor> gevdm;
+    this->cal_gevdm(nat, gevdm);
 
     int nl = 0;
     for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
@@ -383,7 +383,7 @@ void LCAO_Deepks::prepare_gevdm(const int nat, const LCAO_Orbitals& orb)
                     {
                         for (int n = 0; n < nm; ++n)
                         {
-                            this->gevdm_tensor[iat][nl][v][m][n] = this->gevdm_vector[nl][iat][v][m][n];
+                            this->gevdm_tensor[iat][nl][v][m][n] = gevdm[nl][iat][v][m][n];
                         }
                     }
                 }
