@@ -158,7 +158,7 @@ Psi<T, Device>::Psi(const int nk_in,
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in, const int nk_in, const int nband_in)
 {
-    assert(nk_in <= psi_in.get_nk() && nk_in > 0);
+    assert(nk_in == 1);
     assert(nband_in <= psi_in.get_nbands() && nband_in > 0);
 
     this->k_first = psi_in.get_k_first();

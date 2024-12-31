@@ -177,12 +177,17 @@ T* Operator<T, Device>::get_hpsi(const hpsi_info& info) const
     else if (hpsi_pointer == psi_pointer)
     {
         this->in_place = true;
-        this->hpsi = new psi::Psi<T, Device>(std::get<0>(info)[0], 1, nbands_range);
+        // this->hpsi = new psi::Psi<T, Device>(std::get<0>(info)[0], 1, nbands_range);
+        this->hpsi = new psi::Psi<T, Device>(1, 
+                                             nbands_range,
+                                             std::get<0>(info)->get_nbasis(),
+                                             std::get<0>(info)->get_nbasis(),
+                                             true);
     }
     else
     {
         this->in_place = false;
-        // this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, std::get<0>(info)[0], 1, nbands_range);
+        
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
                                              1, 
                                              nbands_range, 
