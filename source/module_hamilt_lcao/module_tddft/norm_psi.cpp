@@ -342,8 +342,9 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         } // loop ipcol
     } // loop iprow
 
-    // Copy psi_k to tmp1
-    tmp1.CopyFrom(psi_k);
+    // Copy psi_k to tmp1 (using deep copy)
+    // tmp1.CopyFrom(psi_k); // Does not work because this will cause tmp1 and psi_k to share the same data
+    tmp1 = psi_k; // operator= overload for Tensor class
 
     // Perform matrix multiplication: psi_k = tmp1 * Cij
     ScalapackConnector::gemm('N',

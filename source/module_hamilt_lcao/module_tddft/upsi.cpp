@@ -49,12 +49,14 @@ void upsi(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = psi_k[i * pv->ncol + j].real();
                 bb = psi_k[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -68,12 +70,14 @@ void upsi(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = psi_k_laststep[i * pv->ncol + j].real();
                 bb = psi_k_laststep[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -122,12 +126,14 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -141,12 +147,14 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                 double aa, bb;
                 aa = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag();
-                if (std::abs(aa) < 1e-8) {
+                if (std::abs(aa) < 1e-8)
+                {
                     aa = 0.0;
-}
-                if (std::abs(bb) < 1e-8) {
+                }
+                if (std::abs(bb) < 1e-8)
+                {
                     bb = 0.0;
-}
+                }
                 GlobalV::ofs_running << aa << "+" << bb << "i ";
             }
             GlobalV::ofs_running << std::endl;

@@ -128,7 +128,7 @@ void evolve_psi_tensor(const int nband,
 
 #ifdef __MPI
 
-    int print_matrix = 1;
+    int print_matrix = 0;
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
@@ -223,7 +223,7 @@ void evolve_psi_tensor(const int nband,
 
 #ifdef __MPI
 
-    int print_matrix = 1;
+    int print_matrix = 0;
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 

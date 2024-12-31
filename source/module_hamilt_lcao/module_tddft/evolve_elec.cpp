@@ -62,29 +62,32 @@ void Evolve_elec::solve_psi(const int& istep,
         }
         else if (htype == 1)
         {
-            evolve_psi(nband,
-                       nlocal,
-                       &(para_orb),
-                       phm,
-                       psi[0].get_pointer(),
-                       psi_laststep[0].get_pointer(),
-                       Hk_laststep[ik],
-                       Sk_laststep[ik],
-                       &(ekb(ik, 0)),
-                       htype,
-                       propagator);
-
+            // const bool use_tensor = true;
             const bool use_tensor = false;
-            if (use_tensor)
+            if (!use_tensor)
             {
-                std::cout << "Print ekb: " << std::endl;
-                ekb.print(std::cout);
-                std::cout << "nband = " << nband << std::endl;
-                std::cout << "psi->get_nbands() = " << psi->get_nbands() << std::endl;
-                std::cout << "nlocal = " << nlocal << std::endl;
-                std::cout << "psi->get_nbasis() = " << psi->get_nbasis() << std::endl;
-                std::cout << "ekb.nr = " << ekb.nr << std::endl;
-                std::cout << "ekb.nc = " << ekb.nc << std::endl;
+                evolve_psi(nband,
+                           nlocal,
+                           &(para_orb),
+                           phm,
+                           psi[0].get_pointer(),
+                           psi_laststep[0].get_pointer(),
+                           Hk_laststep[ik],
+                           Sk_laststep[ik],
+                           &(ekb(ik, 0)),
+                           htype,
+                           propagator);
+                // std::cout << "Print ekb: " << std::endl;
+                // ekb.print(std::cout);
+            }
+            else
+            {
+                // std::cout << "nband = " << nband << std::endl;
+                // std::cout << "psi->get_nbands() = " << psi->get_nbands() << std::endl;
+                // std::cout << "nlocal = " << nlocal << std::endl;
+                // std::cout << "psi->get_nbasis() = " << psi->get_nbasis() << std::endl;
+                // std::cout << "ekb.nr = " << ekb.nr << std::endl;
+                // std::cout << "ekb.nc = " << ekb.nc << std::endl;
 
                 // Create TensorMap for psi_k, psi_k_laststep, H_laststep, S_laststep, ekb
                 container::TensorMap psi_k_tensor(psi[0].get_pointer(),
@@ -131,8 +134,20 @@ void Evolve_elec::solve_psi(const int& istep,
                 //                   &(ekb(ik, 0)),
                 //                   htype,
                 //                   propagator);
-                std::cout << "Print ekb tensor: " << std::endl;
-                ekb.print(std::cout);
+                // std::cout << "Print ekb tensor: " << std::endl;
+                // ekb.print(std::cout);
+
+                // std::cout << "Print psi_k (after evolve): " << std::endl;
+                // for (int i = 0; i < psi->get_nbands(); ++i)
+                // {
+                //     for (int j = 0; j < psi->get_nbasis(); ++j)
+                //     {
+                //         std::cout << "psi[" << i << "][" << j << "] = " << psi[0](i, j) << std::endl;
+                //     }
+                // }
+
+                // std::cout << "Print psi_k_tensor (after evolve): " << std::endl;
+                // print_tensor_data<std::complex<double>>(psi_k_tensor, "psi_k");
             }
         }
         else
