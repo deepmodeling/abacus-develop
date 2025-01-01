@@ -1,8 +1,8 @@
 INPUT_PARAMETERS
 #Parameters (1.General)
 suffix			autotest
-calculation     scf
-dft_functional  scan
+calculation             scf
+dft_functional          scan
 
 nbands			8
 symmetry		1
