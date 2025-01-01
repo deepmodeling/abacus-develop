@@ -20,6 +20,11 @@ void cal_gint_rho(
     const int nspin,
     double **rho);
 
+void cal_gint_tau(        
+    const std::vector<HContainer<double>*>& DMR_vec,
+    const int nspin,
+    double**tau);
+
 void cal_gint_fvl(
     const int nspin,
     const std::vector<const double*>& vr_eff,

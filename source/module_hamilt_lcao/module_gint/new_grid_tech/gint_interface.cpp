@@ -3,6 +3,7 @@
 #include "gint_vl_nspin4.h"
 #include "gint_fvl.h"
 #include "gint_rho.h"
+#include "gint_tau.h"
 
 namespace ModuleGint
 {
@@ -30,6 +31,15 @@ void cal_gint_rho(
 {
     Gint_rho gint_rho(DMR_vec, nspin, rho);
     gint_rho.cal_gint();
+}
+
+void cal_gint_tau(        
+    const std::vector<HContainer<double>*>& DMR_vec,
+    const int nspin,
+    double** tau)
+{
+    Gint_tau gint_tau(DMR_vec, nspin, tau);
+    gint_tau.cal_gint();
 }
 
 void cal_gint_fvl(

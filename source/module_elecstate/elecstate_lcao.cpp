@@ -172,8 +172,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
-        Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
-        this->gint_gamma->cal_gint(&inout1);
+        ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
     }
 
     this->charge->renormalize_rho();

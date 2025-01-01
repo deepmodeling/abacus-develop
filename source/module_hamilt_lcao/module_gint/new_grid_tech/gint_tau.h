@@ -11,10 +11,11 @@ namespace ModuleGint
 class Gint_tau : public Gint
 {
     public:
-    gint_tau(
-        const std::vector<double*>& DMR_vec,
+    Gint_tau(
+        const std::vector<HContainer<double>*>& DMR_vec,
         const int nspin,
-        std::vector<double*>& tau);
+        double** tau)
+        : DMR_vec_(DMR_vec), nspin_(nspin), kin_(tau) {};
     
     void cal_gint() override;
     

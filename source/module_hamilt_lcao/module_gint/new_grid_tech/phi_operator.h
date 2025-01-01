@@ -34,6 +34,7 @@ class PhiOperator
 
     // get phi and the gradient of phi of the big grid
     // the dimension of phi and dphi is num_mgrids * (\sum_{i=0}^{atoms_->size()} atoms_[i]->nw)
+    // if you do not need phi, you can set phi to nullptr.
     void set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const;
 
     // get the hessian of the wave function values of the big grid

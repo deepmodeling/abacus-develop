@@ -1,4 +1,5 @@
 #include "elecstate_lcao.h"
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_interface.h"
 #include "elecstate_lcao_cal_tau.h"
 #include "module_base/timer.h"
 
@@ -15,8 +16,7 @@ void lcao_cal_tau_k(Gint_k* gint_k,
     {
         ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
     }
-    Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
-    gint_k->cal_gint(&inout1);
+    ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
 
     ModuleBase::timer::tick("ElecStateLCAO", "cal_tau");
     return;
@@ -32,8 +32,7 @@ void lcao_cal_tau_gamma(Gint_Gamma* gint_gamma,
     {
         ModuleBase::GlobalFunc::ZEROS(charge->kin_r[is], charge->nrxx);
     }
-    Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau, PARAM.inp.nspin);
-    gint_gamma->cal_gint(&inout1);
+    ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
 
     ModuleBase::timer::tick("ElecStateLCAO", "cal_tau");
     return;
