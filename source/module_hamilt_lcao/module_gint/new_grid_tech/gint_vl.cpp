@@ -6,6 +6,7 @@
 #include "gint_common.h"
 #include "gint_vl.h"
 #include "phi_operator.h"
+#include "gint_helper.h"
 
 namespace ModuleGint
 {
@@ -16,8 +17,8 @@ void Gint_vl::cal_gint()
 
     init_hRGint_();
     cal_hRGint_();
-    compose_hRGint(hRGint_.get());
-    transfer_hRGint_to_hR(hRGint_.get(), hR_);
+    compose_hRGint(hRGint_);
+    transfer_hRGint_to_hR(toConstSharedPtr(hRGint_), hR_);
     
     ModuleBase::timer::tick("Gint_vl", "cal_gint");
 }

@@ -1,8 +1,15 @@
 #pragma once
 
+#include <memory>
 #include <cmath>
 #include "gint_type.h"
 #include "module_base/timer.h"
+
+template <typename T>
+std::shared_ptr<const T> toConstSharedPtr(std::shared_ptr<T> ptr) {
+    return std::static_pointer_cast<const T>(ptr);
+}
+
 
 inline int index3Dto1D(const int id_x, const int id_y, const int id_z,
                         const int dim_x, const int dim_y, const int dim_z)

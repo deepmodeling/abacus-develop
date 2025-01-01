@@ -6,19 +6,19 @@
 namespace ModuleGint
 {
 
-void compose_hRGint(hamilt::HContainer<double>* hR)
+void compose_hRGint(std::shared_ptr<hamilt::HContainer<double>> hRGint)
 {
-    for (int iap = 0; iap < hR->size_atom_pairs(); iap++)
+    for (int iap = 0; iap < hRGint->size_atom_pairs(); iap++)
     {
-        auto& ap = hR->get_atom_pair(iap);
+        auto& ap = hRGint->get_atom_pair(iap);
         const int iat1 = ap.get_atom_i();
         const int iat2 = ap.get_atom_j();
         if (iat1 > iat2)
         {
             // fill lower triangle matrix with upper triangle matrix
             // the upper <IJR> is <iat2, iat1>
-            const hamilt::AtomPair<double>* upper_ap = hR->find_pair(iat2, iat1);
-            const hamilt::AtomPair<double>* lower_ap = hR->find_pair(iat1, iat2);
+            const hamilt::AtomPair<double>* upper_ap = hRGint->find_pair(iat2, iat1);
+            const hamilt::AtomPair<double>* lower_ap = hRGint->find_pair(iat1, iat2);
 #ifdef __DEBUG
             assert(upper_ap != nullptr);
 #endif
@@ -104,7 +104,7 @@ void compose_hRGint(std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRG
 }
 
 template <typename T>
-void transfer_hRGint_to_hR(const hamilt::HContainer<T>* hRGint, hamilt::HContainer<T>* hR)
+void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<T>> hRGint, hamilt::HContainer<T>* hR)
 {
 #ifdef __MPI
     int size = 0;
@@ -191,6 +191,6 @@ void transfer_DM_to_DMGint(
 }
 
 
-template void transfer_hRGint_to_hR(const hamilt::HContainer<double>* hRGint, hamilt::HContainer<double>* hR);
-template void transfer_hRGint_to_hR(const hamilt::HContainer<std::complex<double>>* hRGint, hamilt::HContainer<std::complex<double>>* hR);
+template void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<double>> hRGint, hamilt::HContainer<double>* hR);
+template void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<std::complex<double>>> hRGint, hamilt::HContainer<std::complex<double>>* hR);
 }
