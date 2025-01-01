@@ -6,7 +6,7 @@
 namespace ModuleGint
 {
 
-void compose_hRGint(std::shared_ptr<hamilt::HContainer<double>> hRGint)
+void compose_hRGint(std::shared_ptr<HContainer<double>> hRGint)
 {
     for (int iap = 0; iap < hRGint->size_atom_pairs(); iap++)
     {
@@ -39,8 +39,8 @@ void compose_hRGint(std::shared_ptr<hamilt::HContainer<double>> hRGint)
     } 
 }
 
-void compose_hRGint(std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRGint_part,
-        std::shared_ptr<hamilt::HContainer<std::complex<double>>> hRGint_full)
+void compose_hRGint(std::vector<std::shared_ptr<HContainer<double>>> hRGint_part,
+        std::shared_ptr<HContainer<std::complex<double>>> hRGint_full)
 {
     for (int iap = 0; iap < hRGint_full->size_atom_pairs(); iap++)
     {
@@ -104,7 +104,7 @@ void compose_hRGint(std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRG
 }
 
 template <typename T>
-void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<T>> hRGint, hamilt::HContainer<T>* hR)
+void transfer_hRGint_to_hR(std::shared_ptr<const HContainer<T>> hRGint, HContainer<T>* hR)
 {
 #ifdef __MPI
     int size = 0;
@@ -126,8 +126,8 @@ void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<T>> hRGint, 
 // In the future, we might try to remove the gint_info parameter
 void transfer_DM_to_DMGint(
     std::shared_ptr<const GintInfo> gint_info,
-    std::vector<hamilt::HContainer<double>*> DM,
-    std::vector<std::shared_ptr<hamilt::HContainer<double>>> DMRGint)
+    std::vector<HContainer<double>*> DM,
+    std::vector<std::shared_ptr<HContainer<double>>> DMRGint)
 {
     // To check whether input parameter DM2D has been initialized
 #ifdef __DEBUG
@@ -150,10 +150,10 @@ void transfer_DM_to_DMGint(
     {
 #ifdef __MPI
         const int npol = 2;
-        std::shared_ptr<hamilt::HContainer<double>> DM_full = gint_info->get_hr<double>(npol);
+        std::shared_ptr<HContainer<double>> DM_full = gint_info->get_hr<double>(npol);
         hamilt::transferParallels2Serials(*DM[0], DM_full.get());
 #else
-        hamilt::HContainer<double>* DM_full = DM[0];
+        HContainer<double>* DM_full = DM[0];
 #endif
         std::vector<double*> tmp_pointer(4, nullptr);
         for (int iap = 0; iap < DM_full->size_atom_pairs(); iap++)
@@ -191,6 +191,6 @@ void transfer_DM_to_DMGint(
 }
 
 
-template void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<double>> hRGint, hamilt::HContainer<double>* hR);
-template void transfer_hRGint_to_hR(std::shared_ptr<const hamilt::HContainer<std::complex<double>>> hRGint, hamilt::HContainer<std::complex<double>>* hR);
+template void transfer_hRGint_to_hR(std::shared_ptr<const HContainer<double>> hRGint, HContainer<double>* hR);
+template void transfer_hRGint_to_hR(std::shared_ptr<const HContainer<std::complex<double>>> hRGint, HContainer<std::complex<double>>* hR);
 }

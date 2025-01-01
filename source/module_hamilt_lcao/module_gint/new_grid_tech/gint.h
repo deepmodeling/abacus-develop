@@ -1,6 +1,7 @@
 #pragma once
 #include <memory>
 #include "gint_info.h"
+#include "gint_type.h"
 
 namespace ModuleGint
 {

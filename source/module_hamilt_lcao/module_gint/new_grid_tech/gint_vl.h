@@ -14,7 +14,7 @@ class Gint_vl : public Gint
     public:
     Gint_vl(
         const double* vr_eff,
-        hamilt::HContainer<double>* hR)
+        HContainer<double>* hR)
         : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
     
     void cal_gint() override;
@@ -31,14 +31,14 @@ class Gint_vl : public Gint
     const double* vr_eff_;
 
     // output
-    hamilt::HContainer<double>* hR_;
+    HContainer<double>* hR_;
 
     //========================
     // Intermediate variables
     //========================
     double dr3_;
 
-    std::shared_ptr<hamilt::HContainer<double>> hRGint_;
+    std::shared_ptr<HContainer<double>> hRGint_;
 };
 
 }

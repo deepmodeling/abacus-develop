@@ -39,7 +39,7 @@ void Gint_vl::cal_hRGint_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
-        hamilt::HContainer<double> hRGint_local(*hRGint_);
+        HContainer<double> hRGint_local(*hRGint_);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {

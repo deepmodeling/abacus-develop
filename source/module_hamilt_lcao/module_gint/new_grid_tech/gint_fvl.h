@@ -16,7 +16,7 @@ class Gint_fvl : public Gint
     Gint_fvl(
         const int nspin,
         const std::vector<const double*>& vr_eff,
-        const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+        const std::vector<HContainer<double>*>& DMR_vec,
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix* fvl,
@@ -35,7 +35,7 @@ class Gint_fvl : public Gint
     // input
     const int nspin_;
     std::vector<const double*> vr_eff_;
-    std::vector<hamilt::HContainer<double>*> DMR_vec_;
+    std::vector<HContainer<double>*> DMR_vec_;
     const bool isforce_;
     const bool isstress_;
 
@@ -44,7 +44,7 @@ class Gint_fvl : public Gint
     ModuleBase::matrix* svl_;
 
     // intermediate variables
-    std::vector<std::shared_ptr<hamilt::HContainer<double>>> DMRGint_vec_;
+    std::vector<std::shared_ptr<HContainer<double>>> DMRGint_vec_;
 
     double dr3_;
 };

@@ -9,7 +9,7 @@ namespace ModuleGint
 
 void cal_gint_vl(
     const double* vr_eff,
-    hamilt::HContainer<double>* hR)
+    HContainer<double>* hR)
 {
     Gint_vl gint_vl(vr_eff, hR);
     gint_vl.cal_gint();
@@ -17,14 +17,14 @@ void cal_gint_vl(
 
 void cal_gint_vl(
     std::vector<const double*> vr_eff,
-    hamilt::HContainer<std::complex<double>>* hR)
+    HContainer<std::complex<double>>* hR)
 {
     Gint_vl_nspin4 gint_vl_nspin4(vr_eff, hR);
     gint_vl_nspin4.cal_gint();
 }
 
 void cal_gint_rho(
-    const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& DMR_vec,
     const int nspin,
     double **rho)
 {
@@ -35,7 +35,7 @@ void cal_gint_rho(
 void cal_gint_fvl(
     const int nspin,
     const std::vector<const double*>& vr_eff,
-    const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& DMR_vec,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl,

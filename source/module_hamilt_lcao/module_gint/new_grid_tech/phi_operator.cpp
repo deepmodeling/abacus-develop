@@ -71,7 +71,7 @@ void PhiOperator::set_ddphi(
 
 void PhiOperator::phi_mul_dm(
     const double* const* phi, 
-    const hamilt::HContainer<double>& DM, 
+    const HContainer<double>& DM, 
     const bool is_symm, double** phi_dm) const
 {
     // parameters for lapack subroutines
@@ -140,7 +140,7 @@ void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double
 void PhiOperator::phi_mul_phi_vldr3(
     const double* const* phi,
     const double* const* phi_vldr3,
-    hamilt::HContainer<double>* hr) const
+    HContainer<double>* hr) const
 {
     const char transa='N', transb='T';
     const double alpha=1, beta=1;

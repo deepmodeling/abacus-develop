@@ -14,7 +14,7 @@ class Gint_vl_nspin4 : public Gint
     public:
     Gint_vl_nspin4(
         std::vector<const double*> vr_eff,
-        hamilt::HContainer<std::complex<double>>* hR)
+        HContainer<std::complex<double>>* hR)
         : vr_eff_(vr_eff), hR_(hR), dr3_(gint_info_->get_mgrid_volume()){};
     
     void cal_gint() override;
@@ -31,7 +31,7 @@ class Gint_vl_nspin4 : public Gint
     std::vector<const double*> vr_eff_;
 
     // output
-    hamilt::HContainer<std::complex<double>>* hR_;
+    HContainer<std::complex<double>>* hR_;
 
     //========================
     // Intermediate variables
@@ -40,8 +40,8 @@ class Gint_vl_nspin4 : public Gint
 
     const int nspin_ = 4;
 
-    std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRGint_part_;
-    std::shared_ptr<hamilt::HContainer<std::complex<double>>> hRGint_full_;
+    std::vector<std::shared_ptr<HContainer<double>>> hRGint_part_;
+    std::shared_ptr<HContainer<std::complex<double>>> hRGint_full_;
 
 };
 

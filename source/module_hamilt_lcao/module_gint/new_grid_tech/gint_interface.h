@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "gint_type.h"
 
 
 namespace ModuleGint
@@ -8,21 +9,21 @@ namespace ModuleGint
 
 void cal_gint_vl(
     const double* vr_eff,
-    hamilt::HContainer<double>* hR);
+    HContainer<double>* hR);
 
 void cal_gint_vl(
     std::vector<const double*> vr_eff,
-    hamilt::HContainer<std::complex<double>>* hR);
+    HContainer<std::complex<double>>* hR);
 
 void cal_gint_rho(
-    const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& DMR_vec,
     const int nspin,
     double **rho);
 
 void cal_gint_fvl(
     const int nspin,
     const std::vector<const double*>& vr_eff,
-    const std::vector<hamilt::HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& DMR_vec,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl,

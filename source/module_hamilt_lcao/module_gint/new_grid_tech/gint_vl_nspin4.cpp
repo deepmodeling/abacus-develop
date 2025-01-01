@@ -39,7 +39,7 @@ void Gint_vl_nspin4::cal_hRGint_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
-        std::vector<hamilt::HContainer<double>> hRGint_part_thread(nspin_, *hRGint_part_[0]);
+        std::vector<HContainer<double>> hRGint_part_thread(nspin_, *hRGint_part_[0]);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {

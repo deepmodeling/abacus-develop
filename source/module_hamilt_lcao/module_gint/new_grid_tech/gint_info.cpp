@@ -42,9 +42,9 @@ GintInfo::GintInfo(
 }
 
 template <typename T>
-std::shared_ptr<hamilt::HContainer<T>> GintInfo::get_hr(int npol) const
+std::shared_ptr<HContainer<T>> GintInfo::get_hr(int npol) const
 {
-    auto p_hr = std::make_shared<hamilt::HContainer<T>>(ucell_->nat);
+    auto p_hr = std::make_shared<HContainer<T>>(ucell_->nat);
     if(PARAM.inp.gamma_only)
     {
         p_hr->fix_gamma();
@@ -146,7 +146,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 
 void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
 {
-    hamilt::HContainer<double> hRGint_local(ucell.nat);
+    HContainer<double> hRGint_local(ucell.nat);
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
     std::vector<int> orb_index(ucell.nat + 1);
@@ -211,6 +211,6 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
     return;
 }
 
-template std::shared_ptr<hamilt::HContainer<double>> GintInfo::get_hr<double>(int npol) const;
-template std::shared_ptr<hamilt::HContainer<std::complex<double>>> GintInfo::get_hr<std::complex<double>>(int npol) const;
+template std::shared_ptr<HContainer<double>> GintInfo::get_hr<double>(int npol) const;
+template std::shared_ptr<HContainer<std::complex<double>>> GintInfo::get_hr<std::complex<double>>(int npol) const;
 }
