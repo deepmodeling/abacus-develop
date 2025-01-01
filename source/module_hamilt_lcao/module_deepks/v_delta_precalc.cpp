@@ -30,7 +30,8 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
 
-    this->cal_gvdm(nat);
+    std::vector<torch::Tensor> gevdm;
+    this->cal_gevdm(nat, gevdm);
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     this->init_v_delta_pdm_shell(nks, nlocal);
 
@@ -266,13 +267,13 @@ void LCAO_Deepks::cal_v_delta_precalc(const int nlocal,
         if constexpr (std::is_same<TK, double>::value)
         {
             v_delta_precalc_vector.push_back(
-                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], this->gevdm_vector[nl]}));
+                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm[nl]}));
         }
         else
         {
-            torch::Tensor gevdm_vector_complex = this->gevdm_vector[nl].to(torch::kComplexDouble);
+            torch::Tensor gevdm_complex = gevdm[nl].to(torch::kComplexDouble);
             v_delta_precalc_vector.push_back(
-                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm_vector_complex}));
+                at::einsum("kxyamn, avmn->kxyav", {v_delta_pdm_shell_vector[nl], gevdm_complex}));
         }
     }
 

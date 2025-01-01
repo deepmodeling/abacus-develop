@@ -21,26 +21,14 @@
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
+#ifdef __MPI
+#include "module_base/parallel_reduce.h"
+#endif
 
 void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha)
 {
     if (read_pdm_file && !this->init_pdm) // for DeePKS NSCF calculation
     {
-        int pdm_size = 0;
-        if (!is_equiv)
-        {
-            pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
-        }
-        else
-        {
-            int nproj = 0;
-            for (int il = 0; il < this->lmaxd + 1; il++)
-            {
-                nproj += (2 * il + 1) * alpha.getNchi(il);
-            }
-            pdm_size = nproj * nproj;
-        }
-
         const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
@@ -48,15 +36,42 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
         {
             ModuleBase::WARNING_QUIT("LCAO_Deepks::read_projected_DM", "Cannot find the file deepks_projdm.dat");
         }
-        for (int inl = 0; inl < this->inlmax; inl++)
+        if (!is_equiv)
         {
-            for (int ind = 0; ind < pdm_size; ind++)
+            for (int inl = 0; inl < this->inlmax; inl++)
             {
-                double c;
-                ifs >> c;
-                pdm[inl][ind] = c;
+                int nm = this->inl_l[inl] * 2 + 1;
+                for (int m1 = 0; m1 < nm; m1++)
+                {
+                    for (int m2 = 0; m2 < nm; m2++)
+                    {
+                        double c;
+                        ifs >> c;
+                        this->pdm[inl][m1][m2] = c;
+                    }
+                }
             }
         }
+        else
+        {
+            int pdm_size = 0;
+            int nproj = 0;
+            for (int il = 0; il < this->lmaxd + 1; il++)
+            {
+                nproj += (2 * il + 1) * alpha.getNchi(il);
+            }
+            pdm_size = nproj * nproj;
+            for (int inl = 0; inl < this->inlmax; inl++)
+            {
+                for (int ind = 0; ind < pdm_size; ind++)
+                {
+                    double c;
+                    ifs >> c;
+                    this->pdm[inl][ind] = c;
+                }
+            }
+        }
+
         this->init_pdm = true;
     }
 }
@@ -78,31 +93,31 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
         this->init_pdm = false;
         return;
     }
-    int pdm_size = 0;
+
     if (!PARAM.inp.deepks_equiv)
     {
-        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+        for (int inl = 0; inl < this->inlmax; inl++)
+        {
+            int nm = this->inl_l[inl] * 2 + 1;
+            this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
+        }
     }
     else
     {
+        int pdm_size = 0;
         int nproj = 0;
         for (int il = 0; il < this->lmaxd + 1; il++)
         {
             nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = nproj * nproj;
+        for (int inl = 0; inl < inlmax; inl++)
+        {
+            this->pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
+        }
     }
 
-    // if(dm.size() == 0 || dm[0].size() == 0)
-    //{
-    //     return;
-    // }
     ModuleBase::timer::tick("LCAO_Deepks", "cal_projected_DM");
-
-    for (int inl = 0; inl < inlmax; inl++)
-    {
-        ModuleBase::GlobalFunc::ZEROS(pdm[inl], pdm_size);
-    }
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     for (int T0 = 0; T0 < ucell.ntype; T0++)
@@ -299,7 +314,6 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                            g_1dmt.data(),
                            &row_size);
                 } // ad2
-                // do dot of g_1dmt and s_1t to get orbital_pdm_shell
                 if (!PARAM.inp.deepks_equiv)
                 {
                     int ib = 0, index = 0, inc = 1;
@@ -315,11 +329,11 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
                                     int ind = m1 * nm + m2;
-                                    pdm[inl][ind] += ddot_(&row_size,
-                                                           g_1dmt.data() + index * row_size,
-                                                           &inc,
-                                                           s_1t.data() + index * row_size,
-                                                           &inc);
+                                    pdm[inl][m1][m2] += ddot_(&row_size,
+                                                              g_1dmt.data() + index * row_size,
+                                                              &inc,
+                                                              s_1t.data() + index * row_size,
+                                                              &inc);
                                     index++;
                                 }
                             }
@@ -353,7 +367,11 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
     }         // T0
 
 #ifdef __MPI
-    allsum_deepks(this->inlmax, pdm_size, this->pdm);
+    for (int inl = 0; inl < inlmax; inl++)
+    {
+        int pdm_size = (2 * inl_l[inl] + 1) * (2 * inl_l[inl] + 1);
+        Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);
+    }
 #endif
     ModuleBase::timer::tick("LCAO_Deepks", "cal_projected_DM");
     return;
@@ -364,13 +382,16 @@ void LCAO_Deepks::check_projected_dm()
     const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
     ofs << std::setprecision(10);
     for (int inl = 0; inl < inlmax; inl++)
     {
-        for (int ind = 0; ind < pdm_size; ind++)
+        const int nm = 2 * this->inl_l[inl] + 1;
+        for (int m1 = 0; m1 < nm; m1++)
         {
-            ofs << pdm[inl][ind] << " ";
+            for (int m2 = 0; m2 < nm; m2++)
+            {
+                ofs << pdm[inl][m1][m2].item<double>() << " ";
+            }
         }
         ofs << std::endl;
     }

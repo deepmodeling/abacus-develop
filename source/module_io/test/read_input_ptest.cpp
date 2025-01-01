@@ -184,7 +184,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.printe, 100);
     EXPECT_EQ(param.inp.init_chg, "atomic");
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
-    EXPECT_EQ(param.inp.out_freq_elec, 0);
+    EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
     EXPECT_EQ(param.inp.out_chg[0], 0);
     EXPECT_EQ(param.inp.out_chg[1], 3);

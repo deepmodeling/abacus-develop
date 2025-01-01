@@ -113,14 +113,32 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 std::vector<double> o_delta(nks, 0.0);
 
-                ld->cal_orbital_precalc<TK, TH>(dm_bandgap, ld->lmaxd, ld->inlmax, nat, nks, ld->inl_l, kvec_d, ld->phialpha, ld->inl_index, ucell, orb, *ParaV, GridD);
+                // calculate and save orbital_precalc: [nks,NAt,NDscrpt]
+                torch::Tensor orbital_precalc;
+                std::vector<torch::Tensor> gevdm;
+                ld->cal_gevdm(nat, gevdm);
+                DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
+                                                           ld->lmaxd,
+                                                           ld->inlmax,
+                                                           nat,
+                                                           nks,
+                                                           ld->inl_l,
+                                                           kvec_d,
+                                                           ld->phialpha,
+                                                           gevdm,
+                                                           ld->inl_index,
+                                                           ucell,
+                                                           orb,
+                                                           *ParaV,
+                                                           GridD,
+                                                           orbital_precalc);
                 DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks);
 
                 // save obase and orbital_precalc
                 LCAO_deepks_io::save_npy_orbital_precalc(nat,
                                                          nks,
                                                          ld->des_per_atom,
-                                                         ld->orbital_precalc_tensor,
+                                                         orbital_precalc,
                                                          PARAM.globalv.global_out_dir,
                                                          my_rank);
                 const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
@@ -135,8 +153,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             {
                 const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
                 LCAO_deepks_io::save_npy_o(o_tot, file_obase, nks, my_rank); // no scf, o_tot=o_base
-            }                                                                       // end deepks_scf == 0
-        }                                                                           // end bandgap label
+            }                                                                // end deepks_scf == 0
+        }                                                                    // end bandgap label
 
         // save H(R) matrix
         if (true) // should be modified later!

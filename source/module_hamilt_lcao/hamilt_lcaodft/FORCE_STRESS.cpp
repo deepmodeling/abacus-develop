@@ -7,12 +7,12 @@
 // new
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
 #include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_lcao.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
@@ -540,7 +540,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         GlobalC::ld.check_gdmx(ucell.nat);
                     }
-                    GlobalC::ld.cal_gvx(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvx(ucell.nat, gevdm);
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -758,7 +760,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
                 if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
-                    GlobalC::ld.cal_gvepsl(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvepsl(ucell.nat, gevdm);
 
                     LCAO_deepks_io::save_npy_gvepsl(ucell.nat,
                                                     GlobalC::ld.des_per_atom,

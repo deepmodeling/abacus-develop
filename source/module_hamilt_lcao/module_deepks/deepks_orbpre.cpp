@@ -1,10 +1,11 @@
 #ifdef __DEEPKS
 
-/// cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
-///                          which equals gvdm * orbital_pdm_shell,
-///                          orbital_pdm_shell[Inl,nm*nm] = dm_hl * overlap * overlap
+/// cal_orbital_precalc : orbital_precalc is used for training with orbital label,
+///                       which equals gvdm * orbital_pdm,
+///                       orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
 
-#include "LCAO_deepks.h"
+#include "deepks_orbpre.h"
+
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
@@ -13,31 +14,32 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
-// calculates orbital_precalc[1,NAt,NDscrpt] = gvdm * orbital_pdm_shell;
-// orbital_pdm_shell[Inl,nm*nm] = dm_hl * overlap * overlap;
+// calculates orbital_precalc[nks,NAt,NDscrpt] = gvdm * orbital_pdm;
+// orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;
 template <typename TK, typename TH>
-void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
-                                      const int lmaxd,
-                                      const int inlmax,
-                                      const int nat,
-                                      const int nks,
-                                      const int* inl_l,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                      const std::vector<hamilt::HContainer<double>*> phialpha,
-                                      const ModuleBase::IntArray* inl_index,
-                                      const UnitCell& ucell,
-                                      const LCAO_Orbitals& orb,
-                                      const Parallel_Orbitals& pv,
-                                      const Grid_Driver& GridD)
+void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
+                                        const int lmaxd,
+                                        const int inlmax,
+                                        const int nat,
+                                        const int nks,
+                                        const int* inl_l,
+                                        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                        const std::vector<hamilt::HContainer<double>*> phialpha,
+                                        const std::vector<torch::Tensor> gevdm,
+                                        const ModuleBase::IntArray* inl_index,
+                                        const UnitCell& ucell,
+                                        const LCAO_Orbitals& orb,
+                                        const Parallel_Orbitals& pv,
+                                        const Grid_Driver& GridD,
+                                        torch::Tensor& orbital_precalc)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_orbital_precalc");
-    ModuleBase::timer::tick("LCAO_Deepks", "calc_orbital_precalc");
-
-    this->cal_gvdm(nat);
+    ModuleBase::TITLE("DeePKS_domain", "cal_orbital_precalc");
+    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
-    this->init_orbital_pdm_shell(nks);
+    torch::Tensor orbital_pdm
+        = torch::zeros({nks, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(torch::kFloat64));
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -256,7 +258,8 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
                 for (int ik = 0; ik < nks; ik++)
                 {
-                    // do dot of g_1dmt and s_1t to get orbital_pdm_shell
+                    // do dot of g_1dmt and s_1t to get orbital_pdm
+
                     const double* p_g1dmt = g_1dmt.data() + ik * row_size;
 
                     int ib = 0, index = 0, inc = 1;
@@ -272,12 +275,11 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    orbital_pdm_shell[ik][inl][m1 * nm + m2]
-                                        += ddot_(&row_size,
-                                                 p_g1dmt + index * row_size * nks,
-                                                 &inc,
-                                                 s_1t.data() + index * row_size,
-                                                 &inc);
+                                    orbital_pdm[ik][inl][m1][m2] += ddot_(&row_size,
+                                                                          p_g1dmt + index * row_size * nks,
+                                                                          &inc,
+                                                                          s_1t.data() + index * row_size,
+                                                                          &inc);
                                     index++;
                                 }
                             }
@@ -293,17 +295,16 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     {
         for (int inl = 0; inl < inlmax; inl++)
         {
-            Parallel_Reduce::reduce_all(this->orbital_pdm_shell[iks][inl],
-                                        (2 * lmaxd + 1) * (2 * lmaxd + 1));
+            auto tensor_slice = orbital_pdm[iks][inl];
+            Parallel_Reduce::reduce_all(tensor_slice.data_ptr<double>(), (2 * lmaxd + 1) * (2 * lmaxd + 1));
         }
     }
 #endif
 
-    // transfer orbital_pdm_shell to orbital_pdm_shell_vector
-
+    // transfer orbital_pdm [nks,inl,nm,nm] to orbital_pdm_vector [nl,[nks,nat,nm,nm]]
     int nlmax = inlmax / nat;
 
-    std::vector<torch::Tensor> orbital_pdm_shell_vector;
+    std::vector<torch::Tensor> orbital_pdm_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
         std::vector<torch::Tensor> kammv;
@@ -320,7 +321,7 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                 {
                     for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                     {
-                        mmv.push_back(this->orbital_pdm_shell[iks][inl][m1 * nm + m2]);
+                        mmv.push_back(orbital_pdm[iks][inl][m1][m2].item<double>());
                     }
                 }
                 torch::Tensor mm
@@ -332,26 +333,24 @@ void LCAO_Deepks::cal_orbital_precalc(const std::vector<TH>& dm_hl,
             kammv.push_back(amm);
         }
         torch::Tensor kamm = torch::stack(kammv, 0);
-        orbital_pdm_shell_vector.push_back(kamm);
+        orbital_pdm_vector.push_back(kamm);
     }
 
-    assert(orbital_pdm_shell_vector.size() == nlmax);
+    assert(orbital_pdm_vector.size() == nlmax);
 
     // einsum for each nl:
     std::vector<torch::Tensor> orbital_precalc_vector;
     for (int nl = 0; nl < nlmax; ++nl)
     {
-        orbital_precalc_vector.push_back(
-            at::einsum("kamn, avmn->kav", {orbital_pdm_shell_vector[nl], this->gevdm_vector[nl]}));
+        orbital_precalc_vector.push_back(at::einsum("kamn, avmn->kav", {orbital_pdm_vector[nl], gevdm[nl]}));
     }
 
-    this->orbital_precalc_tensor = torch::cat(orbital_precalc_vector, -1);
-    this->del_orbital_pdm_shell(nks);
+    orbital_precalc = torch::cat(orbital_precalc_vector, -1);
     ModuleBase::timer::tick("LCAO_Deepks", "calc_orbital_precalc");
     return;
 }
 
-template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(
+template void DeePKS_domain::cal_orbital_precalc<double, ModuleBase::matrix>(
     const std::vector<ModuleBase::matrix>& dm_hl,
     const int lmaxd,
     const int inlmax,
@@ -360,13 +359,15 @@ template void LCAO_Deepks::cal_orbital_precalc<double, ModuleBase::matrix>(
     const int* inl_l,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
+    const std::vector<torch::Tensor> gevdm,
     const ModuleBase::IntArray* inl_index,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,
-    const Grid_Driver& GridD);
+    const Grid_Driver& GridD,
+    torch::Tensor& orbital_precalc);
 
-template void LCAO_Deepks::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(
+template void DeePKS_domain::cal_orbital_precalc<std::complex<double>, ModuleBase::ComplexMatrix>(
     const std::vector<ModuleBase::ComplexMatrix>& dm_hl,
     const int lmaxd,
     const int inlmax,
@@ -375,9 +376,11 @@ template void LCAO_Deepks::cal_orbital_precalc<std::complex<double>, ModuleBase:
     const int* inl_l,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
+    const std::vector<torch::Tensor> gevdm,
     const ModuleBase::IntArray* inl_index,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
     const Parallel_Orbitals& pv,
-    const Grid_Driver& GridD);
+    const Grid_Driver& GridD,
+    torch::Tensor& orbital_precalc);
 #endif

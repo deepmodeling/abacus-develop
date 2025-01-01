@@ -45,12 +45,7 @@ LCAO_Deepks::~LCAO_Deepks()
     delete[] inl_l;
 
     //=======1. to use deepks, pdm is required==========
-    // delete pdm**
-    for (int inl = 0; inl < this->inlmax; inl++)
-    {
-        delete[] pdm[inl];
-    }
-    delete[] pdm;
+    pdm.clear();
     //=======2. "deepks_scf" part==========
     // if (PARAM.inp.deepks_scf)
     if (gedm)
@@ -100,30 +95,7 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
 
     int pdm_size = 0;
     this->inlmax = tot_inl;
-    if (!PARAM.inp.deepks_equiv)
-    {
-        GlobalV::ofs_running << " total basis (all atoms) for descriptor = " << std::endl;
-
-        // init pdm**
-        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
-    }
-    else
-    {
-        for (int il = 0; il < this->lmaxd + 1; il++)
-        {
-            pdm_size += (2 * il + 1) * orb.Alpha[0].getNchi(il);
-        }
-        pdm_size = pdm_size * pdm_size;
-        this->des_per_atom = pdm_size;
-        GlobalV::ofs_running << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
-    }
-
-    this->pdm = new double*[this->inlmax];
-    for (int inl = 0; inl < this->inlmax; inl++)
-    {
-        this->pdm[inl] = new double[pdm_size];
-        ModuleBase::GlobalFunc::ZEROS(this->pdm[inl], pdm_size);
-    }
+    this->pdm.resize(this->inlmax);
 
     // cal n(descriptor) per atom , related to Lmax, nchi(L) and m. (not total_nchi!)
     if (!PARAM.inp.deepks_equiv)
@@ -136,6 +108,34 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
         this->n_descriptor = nat * this->des_per_atom;
 
         this->init_index(ntype, nat, na, tot_inl, orb);
+    }
+
+    if (!PARAM.inp.deepks_equiv)
+    {
+        GlobalV::ofs_running << " total basis (all atoms) for descriptor = " << std::endl;
+
+        // init pdm
+        for (int inl = 0; inl < this->inlmax; inl++)
+        {
+            int nm = 2 * inl_l[inl] + 1;
+            pdm_size += nm * nm;
+            this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
+            // this->pdm[inl].requires_grad_(true);
+        }
+    }
+    else
+    {
+        for (int il = 0; il < this->lmaxd + 1; il++)
+        {
+            pdm_size += (2 * il + 1) * orb.Alpha[0].getNchi(il);
+        }
+        pdm_size = pdm_size * pdm_size;
+        this->des_per_atom = pdm_size;
+        GlobalV::ofs_running << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
+        for (int inl = 0; inl < this->inlmax; inl++)
+        {
+            this->pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
+        }
     }
 
     this->pv = &pv_in;
@@ -339,41 +339,6 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
         }
         // gdmx is used only in calculating gvx
     }
-
-    return;
-}
-
-void LCAO_Deepks::init_orbital_pdm_shell(const int nks)
-{
-
-    this->orbital_pdm_shell = new double**[nks];
-
-    for (int iks = 0; iks < nks; iks++)
-    {
-        this->orbital_pdm_shell[iks] = new double*[this->inlmax];
-        for (int inl = 0; inl < this->inlmax; inl++)
-        {
-            this->orbital_pdm_shell[iks][inl] = new double[(2 * this->lmaxd + 1) * (2 * this->lmaxd + 1)];
-            ModuleBase::GlobalFunc::ZEROS(orbital_pdm_shell[iks][inl],
-                                            (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1));
-        }
-        
-    }
-
-    return;
-}
-
-void LCAO_Deepks::del_orbital_pdm_shell(const int nks)
-{
-    for (int iks = 0; iks < nks; iks++)
-    {
-        for (int inl = 0; inl < this->inlmax; inl++)
-        {
-            delete[] this->orbital_pdm_shell[iks][inl];
-        }
-        delete[] this->orbital_pdm_shell[iks];
-    }
-    delete[] this->orbital_pdm_shell;
 
     return;
 }
