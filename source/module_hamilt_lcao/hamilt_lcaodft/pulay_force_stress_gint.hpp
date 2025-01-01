@@ -3,7 +3,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_fvl.h"
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_interface.h"
 namespace PulayForceStress
 {
     template<typename TK, typename TR>
@@ -38,8 +38,7 @@ namespace PulayForceStress
             {
                 vr_eff[is] = pot->get_effective_v(is);
             }
-            ModuleGint::Gint_fvl gint_fvl(nspin, vr_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
-            gint_fvl.cal_gint();
+            ModuleGint::cal_gint_fvl(nspin, vr_eff, dm.get_DMR_vector(), isforce, isstress, &f, &s);
         }
 
         if (isstress) { StressTools::stress_fill(-1.0, ucell.omega, s); }

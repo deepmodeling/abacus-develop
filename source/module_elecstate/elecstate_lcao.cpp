@@ -10,7 +10,7 @@
 #include "module_parameter/parameter.h"
 #include "elecstate_lcao_cal_tau.h"
 
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_rho.h"
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_interface.h"
 
 #include <vector>
 
@@ -64,8 +64,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     // Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     // this->gint_k->cal_gint(&inout);
-    ModuleGint::Gint_rho gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
-    gint_rho.cal_gint();
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
@@ -101,8 +100,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     // Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
 
     // this->gint_gamma->cal_gint(&inout);
-    ModuleGint::Gint_rho gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
-    gint_rho.cal_gint();
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
     
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)

@@ -37,6 +37,7 @@ list(APPEND objects
     new_grid_tech/gint_info.cpp
     new_grid_tech/gint.cpp
     new_grid_tech/gint_vl.cpp
+    new_grid_tech/gint_vl_nspin4.cpp
     new_grid_tech/gint_rho.cpp
     new_grid_tech/gint_fvl.cpp
     new_grid_tech/localcell_info.cpp
@@ -44,6 +45,7 @@ list(APPEND objects
     new_grid_tech/set_ddphi.cpp
     new_grid_tech/unitcell_info.cpp
     new_grid_tech/gint_common.cpp
+    new_grid_tech/gint_interface.cpp
     )
 
 if(USE_CUDA)

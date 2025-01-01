@@ -6,6 +6,9 @@ namespace ModuleGint
 {
     // fill the lower triangle matrix with the upper triangle matrix
     void compose_hRGint(hamilt::HContainer<double>* hR);
+    // for nspin=4 case
+    void compose_hRGint(std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRGint_part,
+        std::shared_ptr<hamilt::HContainer<std::complex<double>>> hRGint_full);
 
     template <typename T>
     void transfer_hRGint_to_hR(const hamilt::HContainer<T>* hRGint, hamilt::HContainer<T>* hR);

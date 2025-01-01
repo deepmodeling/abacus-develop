@@ -39,6 +39,70 @@ void compose_hRGint(hamilt::HContainer<double>* hR)
     } 
 }
 
+void compose_hRGint(std::vector<std::shared_ptr<hamilt::HContainer<double>>> hRGint_part,
+        std::shared_ptr<hamilt::HContainer<std::complex<double>>> hRGint_full)
+{
+    for (int iap = 0; iap < hRGint_full->size_atom_pairs(); iap++)
+    {
+        auto* ap = &hRGint_full->get_atom_pair(iap);
+        const int iat1 = ap->get_atom_i();
+        const int iat2 = ap->get_atom_j();
+        if (iat1 <= iat2)
+        {
+            hamilt::AtomPair<std::complex<double>>* upper_ap = ap;
+            hamilt::AtomPair<std::complex<double>>* lower_ap = hRGint_full->find_pair(iat2, iat1);
+            const hamilt::AtomPair<double>* ap_nspin_0 = hRGint_part[0]->find_pair(iat1, iat2);
+            const hamilt::AtomPair<double>* ap_nspin_3 = hRGint_part[3]->find_pair(iat1, iat2);
+            for (int ir = 0; ir < upper_ap->get_R_size(); ir++)
+            {   
+                const auto R_index = upper_ap->get_R_index(ir);
+                auto upper_mat = upper_ap->find_matrix(R_index);
+                auto mat_nspin_0 = ap_nspin_0->find_matrix(R_index);
+                auto mat_nspin_3 = ap_nspin_3->find_matrix(R_index);
+
+                // The row size and the col size of upper_matrix is double that of matrix_nspin_0
+                for (int irow = 0; irow < mat_nspin_0->get_row_size(); ++irow)
+                {
+                    for (int icol = 0; icol < mat_nspin_0->get_col_size(); ++icol)
+                    {
+                        upper_mat->get_value(2*irow, 2*icol) = mat_nspin_0->get_value(irow, icol) + mat_nspin_3->get_value(irow, icol);
+                        upper_mat->get_value(2*irow+1, 2*icol+1) = mat_nspin_0->get_value(irow, icol) - mat_nspin_3->get_value(irow, icol);
+                    }
+                }
+
+                if (PARAM.globalv.domag)
+                {
+                    const hamilt::AtomPair<double>* ap_nspin_1 = hRGint_part[1]->find_pair(iat1, iat2);
+                    const hamilt::AtomPair<double>* ap_nspin_2 = hRGint_part[2]->find_pair(iat1, iat2);
+                    const auto mat_nspin_1 = ap_nspin_1->find_matrix(R_index);
+                    const auto mat_nspin_2 = ap_nspin_2->find_matrix(R_index);
+                    for (int irow = 0; irow < mat_nspin_1->get_row_size(); ++irow)
+                    {
+                        for (int icol = 0; icol < mat_nspin_1->get_col_size(); ++icol)
+                        {
+                            upper_mat->get_value(2*irow, 2*icol+1) = mat_nspin_1->get_value(irow, icol) +  std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
+                            upper_mat->get_value(2*irow+1, 2*icol) = mat_nspin_1->get_value(irow, icol) -  std::complex<double>(0.0, 1.0) * mat_nspin_2->get_value(irow, icol);
+                        }
+                    }
+                }
+
+                // fill the lower triangle matrix
+                if (iat1 < iat2)
+                {
+                    auto lower_mat = lower_ap->find_matrix(-R_index);
+                    for (int irow = 0; irow < upper_mat->get_row_size(); ++irow)
+                    {
+                        for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
+                        {
+                            lower_mat->get_value(icol, irow) = conj(upper_mat->get_value(irow, icol));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 template <typename T>
 void transfer_hRGint_to_hR(const hamilt::HContainer<T>* hRGint, hamilt::HContainer<T>* hR)
 {

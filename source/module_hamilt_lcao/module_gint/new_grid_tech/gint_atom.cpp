@@ -180,8 +180,11 @@ void GintAtom::set_phi_dphi(
                 const double tmprl = tmp / rl;
 
                 // 3D wave functions
-                phi[im * stride + iw] = tmprl * rly[idx_lm];
-
+                if(phi != nullptr)
+                {
+                    phi[im * stride + iw] = tmprl * rly[idx_lm];
+                }
+                
                 // derivative of wave functions with respect to atom positions.
                 const double tmpdphi_rly = (dtmp - tmp * ll / dist) / rl * rly[idx_lm] / dist;
 

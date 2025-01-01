@@ -4,7 +4,7 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_cell/unitcell.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_vl.h"
+#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_interface.h"
 namespace hamilt
 {
 
@@ -56,10 +56,8 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
     ModuleBase::timer::tick("Veff", "initialize_HR");
 }
 
-
-
-template<typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::contributeHR()
+template<>
+void Veff<OperatorLCAO<double, double>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
@@ -70,14 +68,6 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
-    //--------------------------------------------
-    //(2) check if we need to calculate
-    // pvpR = < phi0 | v(spin) | phiR> for a new spin.
-    //--------------------------------------------
-    // GlobalV::ofs_running << " (spin change)" << std::endl;
-
-    // if you change the place of the following code,
-    // rememeber to delete the #include
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
         Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
@@ -85,82 +75,92 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     }
     else
     {
-        // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-        Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
-        this->GK->cal_gint(&inout);
+        ModuleGint::cal_gint_vl(vr_eff1, this->hR);
     }
 
-    // added by zhengdy-soc, for non-collinear case
-    // integral 4 times, is there any method to simplify?
-    if (this->nspin == 4)
+    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        for (int is = 1; is < 4; is++)
-        {
-            vr_eff1 = this->pot->get_effective_v(is);
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                vofk_eff1 = this->pot->get_effective_vofk(is);
-            }
-            
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-            {
-                Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
-                this->GK->cal_gint(&inout);
-            }
-            else
-            {
-                Gint_inout inout(vr_eff1, is, Gint_Tools::job_type::vlocal);
-                this->GK->cal_gint(&inout);
-            }
-        }
+        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
     }
-    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 
-    if(this->nspin == 2) { this->current_spin = 1 - this->current_spin;
-}
+    if(this->nspin == 2) 
+    { 
+        this->current_spin = 1 - this->current_spin;
+    }
 
     ModuleBase::timer::tick("Veff", "contributeHR");
     return;
 }
 
-// special case of gamma-only
 template<>
-void Veff<OperatorLCAO<double, double>>::contributeHR(void)
+void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
-
     //-----------------------------------------
     //(1) prepare data for this k point.
     // copy the local potential from array.
     //-----------------------------------------
-    const double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
-    const double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
-
-    //--------------------------------------------
-    // (3) folding matrix,
-    // and diagonalize the H matrix (T+Vl+Vnl).
-    //--------------------------------------------
+    double* vr_eff1 = this->pot->get_effective_v(this->current_spin);
+    double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
+        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
+        this->GK->cal_gint(&inout);
     }
     else
     {
-        // Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
-        // this->GG->cal_vlocal(&inout,  this->new_e_iteration);
-        ModuleGint::Gint_vl gint_vl(vr_eff1, this->hR);
-        gint_vl.cal_gint();
+        ModuleGint::cal_gint_vl(vr_eff1, this->hR);
     }
-    // this->GG->transfer_pvpR(this->hR,this->ucell);
 
-    this->new_e_iteration = false;
+    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    {
+        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
+    }
 
-    if(this->nspin == 2) this->current_spin = 1 - this->current_spin;
+    if(this->nspin == 2) 
+    { 
+        this->current_spin = 1 - this->current_spin;
+    }
 
     ModuleBase::timer::tick("Veff", "contributeHR");
+    return;
+}
+
+template<>
+void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
+{
+    ModuleBase::TITLE("Veff", "contributeHR");
+    ModuleBase::timer::tick("Veff", "contributeHR");
+
+    std::vector<const double*> vr_eff(4, nullptr);
+    for (int is = 0; is < 4; is++)
+    {
+        const double* vr_eff1 = this->pot->get_effective_v(is);
+        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+        {
+            const double* vofk_eff1 = this->pot->get_effective_vofk(is);
+            Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
+            this->GK->cal_gint(&inout);
+        }
+        else
+        {
+            vr_eff[is] = vr_eff1;
+            if(is == 3)
+            {
+                ModuleGint::cal_gint_vl(vr_eff, this->hR);
+            }
+        }
+    }
+
+    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    {
+        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
+    }
+
+    ModuleBase::timer::tick("Veff", "contributeHR");
+    return;
 }
 
 // definition of class template should in the end of file to avoid compiling warning 
