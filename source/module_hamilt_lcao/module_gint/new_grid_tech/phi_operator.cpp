@@ -45,7 +45,10 @@ void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, doub
     {
         const auto atom = biggrid_->get_atom(i);
         atom->set_phi_dphi(atoms_relative_coords_[i], cols_, phi, dphi_x, dphi_y, dphi_z);
-        phi += atom->get_nw();
+        if(phi != nullptr)
+        {
+            phi += atom->get_nw();
+        }
         dphi_x += atom->get_nw();
         dphi_y += atom->get_nw();
         dphi_z += atom->get_nw();
