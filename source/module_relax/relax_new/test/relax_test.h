@@ -10,8 +10,6 @@ namespace GlobalC
 UnitCell::UnitCell(){};
 UnitCell::~UnitCell(){};
 
-void UnitCell::remake_cell(){};
-
 void UnitCell::update_pos_taud(double* posd_in)
 {
     int iat = 0;
@@ -38,7 +36,6 @@ void UnitCell::print_stru_file(const std::string& fn,
                                const bool& dpks_desc,
                                const int& iproc) const {};
 void UnitCell::print_tau()const{};
-void UnitCell::setup_cell_after_vc(std::ofstream &log){};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};

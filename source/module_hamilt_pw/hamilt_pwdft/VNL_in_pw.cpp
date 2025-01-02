@@ -1542,6 +1542,8 @@ void pseudopot_cell_vnl::newq(const ModuleBase::matrix& veff, const ModulePW::PW
         fact = 2.0;
     }
 
+    deeq.zero_out();
+
     const int npw = rho_basis->npw;
     ModuleBase::matrix ylmk0(lmaxq * lmaxq, npw);
     ModuleBase::YlmReal::Ylm_Real(lmaxq * lmaxq, npw, rho_basis->gcar, ylmk0);

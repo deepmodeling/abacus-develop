@@ -7,17 +7,16 @@
 // new
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/potentials/efield.h"           // liuyu add 2022-05-18
 #include "module_elecstate/potentials/gatefield.h"        // liuyu add 2022-09-13
 #include "module_hamilt_general/module_surchem/surchem.h" //sunml add 2022-08-10
 #include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_parameter/parameter.h"
 #ifdef __DEEPKS
-#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
 #endif
-#include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dftu_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/nonlocal_new.h"
@@ -81,6 +80,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix fewalds;
     ModuleBase::matrix fcc;
     ModuleBase::matrix fscc;
+#ifdef __DEEPKS
+    ModuleBase::matrix fvnl_dalpha; // deepks
+#endif
 
     fvl_dphi.create(nat, 3); // must do it now, update it later, noted by zhengdy
 
@@ -94,6 +96,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         fewalds.create(nat, 3);
         fcc.create(nat, 3);
         fscc.create(nat, 3);
+#ifdef __DEEPKS
+        fvnl_dalpha.create(nat, 3); // deepks
+#endif
 
         // calculate basic terms in Force, same method with PW base
         this->calForcePwPart(ucell,
@@ -173,6 +178,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                         svnl_dbeta,
                         svl_dphi,
 #ifdef __DEEPKS
+                        fvnl_dalpha,
                         svnl_dalpha,
 #endif
                         gint_gamma,
@@ -455,7 +461,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // mohan add 2021-08-04
                 if (PARAM.inp.deepks_scf)
                 {
-                    fcs(iat, i) += GlobalC::ld.F_delta(iat, i);
+                    fcs(iat, i) += fvnl_dalpha(iat, i);
                 }
 #endif
                 // sum total force for correction
@@ -500,7 +506,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             if (PARAM.inp.deepks_scf)
             {
                 const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-                LCAO_deepks_io::save_npy_f(fcs - GlobalC::ld.F_delta,
+                LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha,
                                            file_fbase,
                                            ucell.nat,
                                            GlobalV::MY_RANK); // Ry/Bohr, F_base
@@ -511,7 +517,14 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        GlobalC::ld.cal_gdmx(dm_gamma, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld.cal_gdmx(dm_gamma,
+                                             ucell,
+                                             orb,
+                                             gd,
+                                             kv.get_nks(),
+                                             kv.kvec_d,
+                                             GlobalC::ld.phialpha,
+                                             isstress);
                     }
                     else
                     {
@@ -520,13 +533,16 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld.cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, isstress);
+                        GlobalC::ld
+                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, isstress);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {
                         GlobalC::ld.check_gdmx(ucell.nat);
                     }
-                    GlobalC::ld.cal_gvx(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvx(ucell.nat, gevdm);
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -629,8 +645,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             // caoyu add 2021-06-03
             if (PARAM.inp.deepks_scf)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS 	FORCE", GlobalC::ld.F_delta, true);
-                // this->print_force("DeePKS 	FORCE", GlobalC::ld.F_delta, 1, ry);
+                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS 	FORCE", fvnl_dalpha, true);
             }
 #endif
         }
@@ -745,7 +760,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
                 if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
-                    GlobalC::ld.cal_gvepsl(ucell.nat);
+                    std::vector<torch::Tensor> gevdm;
+                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+                    GlobalC::ld.cal_gvepsl(ucell.nat, gevdm);
 
                     LCAO_deepks_io::save_npy_gvepsl(ucell.nat,
                                                     GlobalC::ld.des_per_atom,
@@ -884,6 +901,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                                               ModuleBase::matrix& svnl_dbeta,
                                               ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
+                                              ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
 #endif
                                               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
@@ -910,6 +928,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
                svnl_dbeta,
                svl_dphi,
 #if __DEEPKS
+               fvnl_dalpha,
                svnl_dalpha,
 #endif
                gint_gamma,
@@ -937,6 +956,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                                                             ModuleBase::matrix& svnl_dbeta,
                                                             ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
+                                                            ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
 #endif
                                                             Gint_Gamma& gint_gamma,
@@ -962,6 +982,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
                svnl_dbeta,
                svl_dphi,
 #if __DEEPKS
+               fvnl_dalpha,
                svnl_dalpha,
 #endif
                gint_k,

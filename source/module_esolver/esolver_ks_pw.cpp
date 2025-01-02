@@ -204,6 +204,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     if (this->psi != nullptr)
     {
         delete this->psi;
+        this->psi = nullptr;
     }
 
     //! initalize local pseudopotential
@@ -224,7 +225,8 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                   &this->sf,
                                   &this->ppcell,
                                   ucell);
-
+                                  
+    assert(this->psi != nullptr);
     this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
@@ -617,10 +619,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
-    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
+    // 4) Print out electronic wavefunctions
+    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
     {
-        // 4) Print out electronic wavefunctions
-        if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || this->conv_esolver)
         {
             std::stringstream ssw;
             ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";

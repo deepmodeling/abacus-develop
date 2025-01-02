@@ -129,6 +129,9 @@ class Parallel_2D
     /// process coordinate in the BLACS grid
     int coord[2] = {-1, -1};
 
+    /// whether to use the serial mode
+    bool is_serial = false;
+
   protected:
     /// map from global index to local index
     std::vector<int> global2local_row_;

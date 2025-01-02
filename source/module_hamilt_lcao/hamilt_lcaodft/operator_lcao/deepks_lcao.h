@@ -5,6 +5,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "operator_lcao.h"
 
 namespace hamilt
@@ -56,6 +57,8 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
     elecstate::DensityMatrix<TK, double>* DM;
+
+    // LCAO_Deepks* ld = nullptr;
 
     const UnitCell* ucell = nullptr;
 

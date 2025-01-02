@@ -141,9 +141,14 @@ class IntArray
     }
 
   private:
-    int size;
-    int dim;
-    int bound1, bound2, bound3, bound4, bound5, bound6;
+    int size=0;
+    int dim=0;
+    int bound1=0;
+    int bound2=0; 
+    int bound3=0;
+    int bound4=0; 
+    int bound5=0; 
+    int bound6=0;
     static int arrayCount;
     void freemem();
 };

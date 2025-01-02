@@ -1561,10 +1561,8 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)).
-  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
-  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
-- **Default**: 0
+- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
+- **Default**: [scf_nmax](#scf_nmax)
 
 ### out_chg
 
@@ -2060,7 +2058,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: int
 - **Availability**: numerical atomic orbital basis
 - **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
-  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output psialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output phialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
 - **Default**: 0
 
 ### deepks_out_unittest

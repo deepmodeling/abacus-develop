@@ -121,15 +121,15 @@ class Stochastic_Iter
 
     double mu0; // chemical potential; unit in Ry
     bool change;
-    double targetne;
+    double targetne=0.0;
     Real* spolyv = nullptr;     //[Device] coefficients of Chebyshev expansion
     Real* spolyv_cpu = nullptr; //[CPU] coefficients of Chebyshev expansion
 
   public:
     int* nchip = nullptr;
     bool check = false;
-    double th_ne;
-    double KS_ne;
+    double th_ne=0.0;
+    double KS_ne=0.0;
 
   public:
     int method; // different methods 1: slow, less memory  2: fast, more memory
@@ -141,7 +141,7 @@ class Stochastic_Iter
     void calTnchi_ik(const int& ik, Stochastic_WF<T, Device>& stowf);
 
   private:
-    K_Vectors* pkv;
+    K_Vectors* pkv=nullptr;
     /**
      * @brief return cpu dot result
      * @param x [Device]

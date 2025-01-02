@@ -143,7 +143,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
 
         if (PARAM.inp.out_element_info) {
             tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
-}
+        }
 
         delete[] beta_r;
     }

@@ -46,9 +46,6 @@ ESolver_KS<T, Device>::ESolver_KS()
     maxniter = PARAM.inp.scf_nmax;
     niter = maxniter;
 
-    // should not use GlobalV here, mohan 2024-05-12
-    out_freq_elec = PARAM.inp.out_freq_elec;
-
     // pw_rho = new ModuleBase::PW_Basis();
     // temporary, it will be removed
     std::string fft_device = PARAM.inp.device;
@@ -693,45 +690,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         std::cout << " SCF restart after this step!" << std::endl;
     }
 
-    //! output charge density and density matrix
-    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            double* data = nullptr;
-            if (PARAM.inp.dm_to_rho)
-            {
-                data = this->pelec->charge->rho[is];
-            }
-            else
-            {
-                data = this->pelec->charge->rho_save[is];
-            }
-            std::string fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_vdata_palgrid(Pgrid,
-                                          data,
-                                          is,
-                                          PARAM.inp.nspin,
-                                          0,
-                                          fn,
-                                          this->pelec->eferm.get_efval(is),
-                                          &(ucell),
-                                          3,
-                                          1);
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-            {
-                fn = PARAM.globalv.global_out_dir + "/tmp_SPIN" + std::to_string(is + 1) + "_TAU.cube";
-                ModuleIO::write_vdata_palgrid(Pgrid,
-                                              this->pelec->charge->kin_r_save[is],
-                                              is,
-                                              PARAM.inp.nspin,
-                                              0,
-                                              fn,
-                                              this->pelec->eferm.get_efval(is),
-                                              &(ucell));
-            }
-        }
-    }
+    ESolver_FP::iter_finish(ucell, istep, iter);
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.

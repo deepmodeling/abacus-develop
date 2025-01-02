@@ -14,13 +14,13 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
+inline void generate_py_files(const int lmaxd, const int nmaxd, const std::string& out_dir)
+{
 
-inline void generate_py_files(const int lmaxd, const int nmaxd, const std::string &out_dir) {
-
-	if (GlobalV::MY_RANK != 0) 
-	{
-		return;
-	}
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     std::ofstream ofs("cal_gedm.py");
     ofs << "import torch" << std::endl;
@@ -52,12 +52,15 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
 
     ofs.open("basis.yaml");
     ofs << "proj_basis:" << std::endl;
-    for (int l = 0; l < lmaxd + 1; l++) {
+    for (int l = 0; l < lmaxd + 1; l++)
+    {
         ofs << "  - - " << l << std::endl;
         ofs << "    - [";
-        for (int i = 0; i < nmaxd + 1; i++) {
+        for (int i = 0; i < nmaxd + 1; i++)
+        {
             ofs << "0";
-            if (i != nmaxd) {
+            if (i != nmaxd)
+            {
                 ofs << ", ";
             }
         }
@@ -65,22 +68,23 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
     }
 }
 
-void LCAO_Deepks::cal_gedm_equiv(const int nat) {
+void LCAO_Deepks::cal_gedm_equiv(const int nat)
+{
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm_equiv");
 
-	LCAO_deepks_io::save_npy_d(
-			nat, 
-			this->des_per_atom, 
-			this->inlmax, 
-			this->inl_l,
-			PARAM.inp.deepks_equiv, 
-			this->d_tensor, 
-            PARAM.globalv.global_out_dir,
-			GlobalV::MY_RANK); // libnpy needed
+    LCAO_deepks_io::save_npy_d(nat,
+                               this->des_per_atom,
+                               this->inlmax,
+                               this->inl_l,
+                               PARAM.inp.deepks_equiv,
+                               this->d_tensor,
+                               PARAM.globalv.global_out_dir,
+                               GlobalV::MY_RANK); // libnpy needed
 
     generate_py_files(this->lmaxd, this->nmaxd, PARAM.globalv.global_out_dir);
 
-    if (GlobalV::MY_RANK == 0) {
+    if (GlobalV::MY_RANK == 0)
+    {
         std::string cmd = "python cal_gedm.py " + PARAM.inp.deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
@@ -88,83 +92,78 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat) {
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-	LCAO_deepks_io::load_npy_gedm(
-			nat,
-			this->des_per_atom,
-			this->gedm,
-			this->E_delta,
-			GlobalV::MY_RANK);
+    LCAO_deepks_io::load_npy_gedm(nat, this->des_per_atom, this->gedm, this->E_delta, GlobalV::MY_RANK);
 
     std::string cmd = "rm -f cal_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
 }
 
 // obtain from the machine learning model dE_delta/dDescriptor
-void LCAO_Deepks::cal_gedm(const int nat) {
+void LCAO_Deepks::cal_gedm(const int nat)
+{
 
-    if (PARAM.inp.deepks_equiv) 
+    if (PARAM.inp.deepks_equiv)
     {
         this->cal_gedm_equiv(nat);
         return;
     }
 
-    // using this->pdm_tensor
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm");
 
     // forward
     std::vector<torch::jit::IValue> inputs;
 
     // input_dim:(natom, des_per_atom)
-    inputs.push_back(
-        torch::cat(this->d_tensor, 0).reshape({1, nat, this->des_per_atom}));
+    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({1, nat, this->des_per_atom}));
     std::vector<torch::Tensor> ec;
     ec.push_back(module.forward(inputs).toTensor()); // Hartree
-    this->E_delta = ec[0].item().toDouble() * 2; // Ry; *2 is for Hartree to Ry
+    this->E_delta = ec[0].item().toDouble() * 2;     // Ry; *2 is for Hartree to Ry
 
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
     gedm_shell.push_back(torch::ones_like(ec[0]));
     this->gedm_tensor = torch::autograd::grad(ec,
-                                              this->pdm_tensor,
+                                              this->pdm,
                                               gedm_shell,
                                               /*retain_grad=*/true,
                                               /*create_graph=*/false,
                                               /*allow_unused=*/true);
 
     // gedm_tensor(Hartree) to gedm(Ry)
-    for (int inl = 0; inl < inlmax; ++inl) {
+    for (int inl = 0; inl < inlmax; ++inl)
+    {
         int nm = 2 * inl_l[inl] + 1;
-        for (int m1 = 0; m1 < nm; ++m1) {
-            for (int m2 = 0; m2 < nm; ++m2) {
+        for (int m1 = 0; m1 < nm; ++m1)
+        {
+            for (int m2 = 0; m2 < nm; ++m2)
+            {
                 int index = m1 * nm + m2;
                 //*2 is for Hartree to Ry
-                this->gedm[inl][index]
-                    = this->gedm_tensor[inl].index({m1, m2}).item().toDouble()
-                      * 2;
+                this->gedm[inl][index] = this->gedm_tensor[inl].index({m1, m2}).item().toDouble() * 2;
             }
         }
     }
     return;
 }
 
-void LCAO_Deepks::check_gedm() 
+void LCAO_Deepks::check_gedm()
 {
     std::ofstream ofs("gedm.dat");
 
-	for (int inl = 0; inl < inlmax; inl++) 
-	{
-		int nm = 2 * inl_l[inl] + 1;
-		for (int m1 = 0; m1 < nm; ++m1) 
-		{
-			for (int m2 = 0; m2 < nm; ++m2) 
-			{
-				int index = m1 * nm + m2;
-				//*2 is for Hartree to Ry
-				ofs << this->gedm[inl][index] << " ";
-			}
-		}
-		ofs << std::endl;
-	}
+    for (int inl = 0; inl < inlmax; inl++)
+    {
+        int nm = 2 * inl_l[inl] + 1;
+        for (int m1 = 0; m1 < nm; ++m1)
+        {
+            for (int m2 = 0; m2 < nm; ++m2)
+            {
+                int index = m1 * nm + m2;
+                //*2 is for Hartree to Ry
+                ofs << this->gedm[inl][index] << " ";
+            }
+        }
+        ofs << std::endl;
+    }
 }
 
 #endif

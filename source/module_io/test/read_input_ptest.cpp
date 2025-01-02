@@ -184,7 +184,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.printe, 100);
     EXPECT_EQ(param.inp.init_chg, "atomic");
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
-    EXPECT_EQ(param.inp.out_freq_elec, 0);
+    EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
     EXPECT_EQ(param.inp.out_chg[0], 0);
     EXPECT_EQ(param.inp.out_chg[1], 3);
@@ -431,6 +431,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
     EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.abs_broadening, 0.01);
+    EXPECT_EQ(param.inp.abs_gauge, "length");
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }

@@ -3,7 +3,6 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_cell/unitcell.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/read_pseudo.h"
 
@@ -11,6 +10,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "prepare_unitcell.h"
+#include "module_cell/update_cell.h"
 #include <streambuf>
 #include <valarray>
 #include <vector>
@@ -346,7 +346,7 @@ TEST_F(UcellTest, RemakeCell)
         ucell->latvec.e32 = 0.00;
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
-        ucell->remake_cell();
+        unitcell::remake_cell(ucell->lat);
         if (latname_in[i] == "sc")
         {
             double celldm
@@ -591,7 +591,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ucell->remake_cell(), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(unitcell::remake_cell(ucell->lat), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         if (latname_in[i] == "none")
         {
@@ -783,7 +783,9 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->periodic_boundary_adjustment(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::periodic_boundary_adjustment(
+                ucell->atoms,ucell->latvec,ucell->ntype),
+                ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("the movement of atom is larger than the length of cell"));
 }
@@ -793,7 +795,8 @@ TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    EXPECT_NO_THROW(ucell->periodic_boundary_adjustment());
+    EXPECT_NO_THROW(unitcell::periodic_boundary_adjustment(
+                    ucell->atoms,ucell->latvec,ucell->ntype));
 }
 
 TEST_F(UcellTest, PrintCell)
