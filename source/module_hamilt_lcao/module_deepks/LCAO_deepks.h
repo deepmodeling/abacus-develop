@@ -7,6 +7,7 @@
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
+#include "deepks_vdpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -137,11 +138,6 @@ class LCAO_Deepks
     // dD/dX, tensor form of gdmx
     std::vector<torch::Tensor> gdmr_vector;
 
-    // v_delta_pdm_shell[nks,nlocal,nlocal,Inl,nm*nm] = overlap * overlap
-    double***** v_delta_pdm_shell;
-    std::complex<double>***** v_delta_pdm_shell_complex; // for multi-k
-    // v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm_shell;
-    torch::Tensor v_delta_precalc_tensor;
     // for v_delta==2 , new v_delta_precalc storage method
     torch::Tensor phialpha_tensor;
     torch::Tensor gevdm_tensor;
@@ -211,10 +207,6 @@ class LCAO_Deepks
   private:
     // arrange index of descriptor in all atoms
     void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
-
-    // for v_delta label calculation; xinyuan added on 2023-2-22
-    void init_v_delta_pdm_shell(const int nks, const int nlocal);
-    void del_v_delta_pdm_shell(const int nks, const int nlocal);
 
     //-------------------
     // LCAO_deepks_phialpha.cpp
@@ -362,15 +354,6 @@ class LCAO_Deepks
     //       this is the term V(D) that enters the expression H_V_delta = |alpha>V(D)<alpha|
     //       caculated using torch::autograd::grad
     // 9. check_gedm : prints gedm for checking
-    // 10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
-    //                          which equals gvdm * orbital_pdm,
-    //                          orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
-    // 11. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
-    //                         which equals gvdm * v_delta_pdm_shell,
-    //                         v_delta_pdm_shell = overlap * overlap
-    // 12. check_v_delta_precalc : check v_delta_precalc
-    // 13. prepare_phialpha : prepare phialpha for outputting npy file
-    // 14. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
     /// Calculates descriptors
@@ -404,54 +387,8 @@ class LCAO_Deepks
     void check_gedm();
     void cal_gedm_equiv(const int nat);
 
-    // calculates orbital_precalc
-    // template <typename TK, typename TH>
-    // void cal_orbital_precalc(const std::vector<TH>& dm_hl,
-    //                          const int lmaxd,
-    //                          const int inlmax,
-    //                          const int nat,
-    //                          const int nks,
-    //                          const int* inl_l,
-    //                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-    //                          const std::vector<hamilt::HContainer<double>*> phialpha,
-    //                          const std::vector<torch::Tensor> gevdm,
-    //                          const ModuleBase::IntArray* inl_index,
-    //                          const UnitCell& ucell,
-    //                          const LCAO_Orbitals& orb,
-    //                          const Parallel_Orbitals& pv,
-    //                          const Grid_Driver& GridD,
-    //                          torch::Tensor& orbital_precalc);
-
-    // calculates v_delta_precalc
-    template <typename TK>
-    void cal_v_delta_precalc(const int nlocal,
-                             const int nat,
-                             const int nks,
-                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                             const UnitCell& ucell,
-                             const LCAO_Orbitals& orb,
-                             const Grid_Driver& GridD);
-
-    template <typename TK>
-    void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
-
-    // prepare phialpha for outputting npy file
-    template <typename TK>
-    void prepare_phialpha(const int nlocal,
-                          const int nat,
-                          const int nks,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                          const UnitCell& ucell,
-                          const LCAO_Orbitals& orb,
-                          const Grid_Driver& GridD);
-
-    template <typename TK>
-    void check_vdp_phialpha(const int nat, const int nks, const int nlocal);
-
-    // prepare gevdm for outputting npy file
-    void prepare_gevdm(const int nat, const LCAO_Orbitals& orb);
+    // calculate gevdm
     void cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm);
-    void check_vdp_gevdm(const int nat);
 
   private:
     const Parallel_Orbitals* pv;

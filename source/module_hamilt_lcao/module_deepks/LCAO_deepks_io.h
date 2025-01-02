@@ -110,7 +110,7 @@ void save_npy_v_delta_precalc(const int nat,
                               const int nks,
                               const int nlocal,
                               const int des_per_atom,
-                              const torch::Tensor& v_delta_precalc_tensor,
+                              const torch::Tensor& v_delta_precalc,
                               const std::string& out_dir,
                               const int rank);
 

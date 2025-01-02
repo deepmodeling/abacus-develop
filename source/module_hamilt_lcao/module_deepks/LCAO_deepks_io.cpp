@@ -394,7 +394,7 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                                               const int nks,
                                               const int nlocal,
                                               const int des_per_atom,
-                                              const torch::Tensor& v_delta_precalc_tensor,
+                                              const torch::Tensor& v_delta_precalc,
                                               const std::string& out_dir,
                                               const int rank)
 {
@@ -428,13 +428,13 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                         if constexpr (std::is_same<TK, double>::value)
                         {
                             npy_v_delta_precalc.push_back(
-                                v_delta_precalc_tensor.index({iks, mu, nu, iat, p}).item().toDouble());
+                                v_delta_precalc.index({iks, mu, nu, iat, p}).item().toDouble());
                         }
                         else
                         {
                             std::complex<double> value(
-                                torch::real(v_delta_precalc_tensor.index({iks, mu, nu, iat, p})).item<double>(),
-                                torch::imag(v_delta_precalc_tensor.index({iks, mu, nu, iat, p})).item<double>());
+                                torch::real(v_delta_precalc.index({iks, mu, nu, iat, p})).item<double>(),
+                                torch::imag(v_delta_precalc.index({iks, mu, nu, iat, p})).item<double>());
                             npy_v_delta_precalc.push_back(value);
                         }
                     }

@@ -209,35 +209,68 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 if (PARAM.inp.deepks_v_delta == 1) // v_delta_precalc storage method 1
                 {
-                    ld->cal_v_delta_precalc<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
+                    std::vector<torch::Tensor> gevdm;
+                    ld->cal_gevdm(nat, gevdm);
+
+                    torch::Tensor v_delta_precalc;
+                    DeePKS_domain::cal_v_delta_precalc<TK>(nlocal,
+                                                           ld->lmaxd,
+                                                           ld->inlmax,
+                                                           nat,
+                                                           nks,
+                                                           ld->inl_l,
+                                                           kvec_d,
+                                                           ld->phialpha,
+                                                           gevdm,
+                                                           ld->inl_index,
+                                                           ucell,
+                                                           orb,
+                                                           *ParaV,
+                                                           GridD,
+                                                           v_delta_precalc);
 
                     LCAO_deepks_io::save_npy_v_delta_precalc<TK>(nat,
                                                                  nks,
                                                                  nlocal,
                                                                  ld->des_per_atom,
-                                                                 ld->v_delta_precalc_tensor,
+                                                                 v_delta_precalc,
                                                                  PARAM.globalv.global_out_dir,
                                                                  my_rank);
                 }
                 else if (PARAM.inp.deepks_v_delta == 2) // v_delta_precalc storage method 2
                 {
-                    ld->prepare_phialpha<TK>(nlocal, nat, nks, kvec_d, ucell, orb, GridD);
+                    torch::Tensor phialpha_out;
+                    DeePKS_domain::prepare_phialpha<TK>(nlocal,
+                                                        ld->lmaxd,
+                                                        ld->inlmax,
+                                                        nat,
+                                                        nks,
+                                                        kvec_d,
+                                                        ld->phialpha,
+                                                        ucell,
+                                                        orb,
+                                                        *ParaV,
+                                                        GridD,
+                                                        phialpha_out);
 
                     LCAO_deepks_io::save_npy_phialpha<TK>(nat,
                                                           nks,
                                                           nlocal,
                                                           ld->inlmax,
                                                           ld->lmaxd,
-                                                          ld->phialpha_tensor,
+                                                          phialpha_out,
                                                           PARAM.globalv.global_out_dir,
                                                           my_rank);
+                    std::vector<torch::Tensor> gevdm;
+                    ld->cal_gevdm(nat, gevdm);
 
-                    ld->prepare_gevdm(nat, orb);
+                    torch::Tensor gevdm_out;
+                    DeePKS_domain::prepare_gevdm(nat, ld->lmaxd, ld->inlmax, orb, gevdm, gevdm_out);
 
                     LCAO_deepks_io::save_npy_gevdm(nat,
                                                    ld->inlmax,
                                                    ld->lmaxd,
-                                                   ld->gevdm_tensor,
+                                                   gevdm_out,
                                                    PARAM.globalv.global_out_dir,
                                                    my_rank);
                 }

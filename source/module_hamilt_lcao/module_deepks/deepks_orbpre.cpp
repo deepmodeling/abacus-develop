@@ -291,14 +291,8 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
         }
     }
 #ifdef __MPI
-    for (int iks = 0; iks < nks; iks++)
-    {
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            auto tensor_slice = orbital_pdm[iks][inl];
-            Parallel_Reduce::reduce_all(tensor_slice.data_ptr<double>(), (2 * lmaxd + 1) * (2 * lmaxd + 1));
-        }
-    }
+    const int size = nks * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
+    Parallel_Reduce::reduce_all(orbital_pdm.data_ptr<double>(), size);
 #endif
 
     // transfer orbital_pdm [nks,inl,nm,nm] to orbital_pdm_vector [nl,[nks,nat,nm,nm]]
