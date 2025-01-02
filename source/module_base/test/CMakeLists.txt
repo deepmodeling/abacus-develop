@@ -81,7 +81,7 @@ AddTest(
 )
 AddTest(
   TARGET base_ylmreal
-  LIBS parameter  ${math_libs} device
+  LIBS parameter  ${math_libs} base device
   SOURCES math_ylmreal_test.cpp ../blas_connector.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
           ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp
           ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp
@@ -118,7 +118,7 @@ AddTest(
 )
 AddTest(
   TARGET base_inverse_matrix
-  LIBS parameter  ${math_libs} device
+  LIBS parameter  ${math_libs} base device
   SOURCES inverse_matrix_test.cpp ../blas_connector.cpp ../inverse_matrix.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp 
 )
 AddTest(
@@ -134,7 +134,7 @@ AddTest(
 
 AddTest(
   TARGET base_math_chebyshev
-  LIBS parameter  ${math_libs} device container
+  LIBS parameter  ${math_libs} base device container
   SOURCES math_chebyshev_test.cpp  ../blas_connector.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../parallel_reduce.cpp
 )
 
@@ -209,7 +209,7 @@ AddTest(
   SOURCES clebsch_gordan_coeff_test.cpp ../blas_connector.cpp ../clebsch_gordan_coeff.cpp ../intarray.cpp ../realarray.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp
   ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp
   ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
-  LIBS parameter  ${math_libs} device
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
