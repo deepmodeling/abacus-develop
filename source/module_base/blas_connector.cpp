@@ -1,3 +1,5 @@
+#ifndef BLAS_CONNECTOR_CPP
+#define BLAS_CONNECTOR_CPP
 #include "blas_connector.h"
 
 #ifdef __DSP
@@ -532,3 +534,5 @@ void BlasConnector::copy(const long n, const std::complex<double> *a, const int 
 		zcopy_(&n, a, &incx, b, &incy);
 	}
 }
+
+#endif
