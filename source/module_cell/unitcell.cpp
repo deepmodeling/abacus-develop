@@ -27,6 +27,8 @@
 #include "module_ri/serialization_cereal.h"
 #endif
 
+
+#include "update_cell.h"
 UnitCell::UnitCell() {
     if (test_unitcell) {
         ModuleBase::TITLE("unitcell", "Constructor");
@@ -312,29 +314,7 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 	return constrain;
 }
 
-void UnitCell::update_pos_tau(const double* pos) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
-                if (atom->mbl[ia][ik]) {
-                    atom->dis[ia][ik]
-                        = pos[3 * iat + ik] / this->lat0 - atom->tau[ia][ik];
-                    atom->tau[ia][ik] = pos[3 * iat + ik] / this->lat0;
-                }
-            }
 
-            // the direct coordinates also need to be updated.
-            atom->dis[ia] = atom->dis[ia] * this->GT;
-            atom->taud[ia] = atom->tau[ia] * this->GT;
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    this->periodic_boundary_adjustment();
-    this->bcast_atoms_tau();
-}
 
 void UnitCell::update_pos_taud(double* posd_in) {
     int iat = 0;
@@ -349,7 +329,7 @@ void UnitCell::update_pos_taud(double* posd_in) {
         }
     }
     assert(iat == this->nat);
-    this->periodic_boundary_adjustment();
+    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
     this->bcast_atoms_tau();
 }
 
@@ -367,7 +347,7 @@ void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {
         }
     }
     assert(iat == this->nat);
-    this->periodic_boundary_adjustment();
+    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
     this->bcast_atoms_tau();
 }
 
@@ -383,54 +363,6 @@ void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {
     assert(iat == this->nat);
 }
 
-void UnitCell::periodic_boundary_adjustment() {
-    //----------------------------------------------
-    // because of the periodic boundary condition
-    // we need to adjust the atom positions,
-    // first adjust direct coordinates,
-    // then update them into cartesian coordinates,
-    //----------------------------------------------
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            // mohan update 2011-03-21
-            if (atom->taud[ia].x < 0) {
-                atom->taud[ia].x += 1.0;
-}
-            if (atom->taud[ia].y < 0) {
-                atom->taud[ia].y += 1.0;
-}
-            if (atom->taud[ia].z < 0) {
-                atom->taud[ia].z += 1.0;
-}
-            if (atom->taud[ia].x >= 1.0) {
-                atom->taud[ia].x -= 1.0;
-}
-            if (atom->taud[ia].y >= 1.0) {
-                atom->taud[ia].y -= 1.0;
-}
-            if (atom->taud[ia].z >= 1.0) {
-                atom->taud[ia].z -= 1.0;
-}
-
-            if (atom->taud[ia].x < 0 || atom->taud[ia].y < 0
-                || atom->taud[ia].z < 0 || atom->taud[ia].x >= 1.0
-                || atom->taud[ia].y >= 1.0 || atom->taud[ia].z >= 1.0) {
-                GlobalV::ofs_warning << " it=" << it + 1 << " ia=" << ia + 1
-                                     << std::endl;
-                GlobalV::ofs_warning << "d=" << atom->taud[ia].x << " "
-                                     << atom->taud[ia].y << " "
-                                     << atom->taud[ia].z << std::endl;
-                ModuleBase::WARNING_QUIT(
-                    "Ions_Move_Basic::move_ions",
-                    "the movement of atom is larger than the length of cell.");
-            }
-
-            atom->tau[ia] = atom->taud[ia] * this->latvec;
-        }
-    }
-    return;
-}
 
 void UnitCell::bcast_atoms_tau() {
 #ifdef __MPI

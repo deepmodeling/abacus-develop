@@ -111,11 +111,23 @@ extern "C"
 		const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, const std::complex<double> *b, const int *ldb,
 		const std::complex<double> *beta, std::complex<double> *c, const int *ldc);
 
-	//a is symmetric
+	// A is symmetric. C = a * A.? * B.? + b * C
+	void ssymm_(const char *side, const char *uplo, const int *m, const int *n,
+		const float *alpha, const float *a, const int *lda, const float *b, const int *ldb,
+		const float *beta, float *c, const int *ldc);
 	void dsymm_(const char *side, const char *uplo, const int *m, const int *n,
 		const double *alpha, const double *a, const int *lda, const double *b, const int *ldb,
 		const double *beta, double *c, const int *ldc);
-	//a is hermitian
+	void csymm_(const char *side, const char *uplo, const int *m, const int *n,
+		const std::complex<float> *alpha, const std::complex<float> *a, const int *lda, const std::complex<float> *b, const int *ldb,
+		const std::complex<float> *beta, std::complex<float> *c, const int *ldc);
+	void zsymm_(const char *side, const char *uplo, const int *m, const int *n,
+		const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, const std::complex<double> *b, const int *ldb,
+		const std::complex<double> *beta, std::complex<double> *c, const int *ldc);
+
+	// A is hermitian. C = a * A.? * B.? + b * C
+	void chemm_(char *side, char *uplo, int *m, int *n,std::complex<float> *alpha,
+		std::complex<float> *a,  int *lda,  std::complex<float> *b, int *ldb, std::complex<float> *beta, std::complex<float> *c, int *ldc);
 	void zhemm_(char *side, char *uplo, int *m, int *n,std::complex<double> *alpha,
 		std::complex<double> *a,  int *lda,  std::complex<double> *b, int *ldb, std::complex<double> *beta, std::complex<double> *c, int *ldc);
 
@@ -175,6 +187,7 @@ public:
 
 	// Peize Lin add 2017-10-27, fix bug trans 2019-01-17
 	// C = a * A.? * B.? + b * C
+	// Row Major by default
 	static
 	void gemm(const char transa, const char transb, const int m, const int n, const int k,
 		const float alpha, const float *a, const int lda, const float *b, const int ldb,
@@ -194,6 +207,61 @@ public:
 	void gemm(const char transa, const char transb, const int m, const int n, const int k,
 		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
 		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	// Col-Major if you need to use it
+
+	static
+	void gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
+		const float alpha, const float *a, const int lda, const float *b, const int ldb,
+		const float beta, float *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
+		const double alpha, const double *a, const int lda, const double *b, const int ldb,
+		const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+    static
+    void gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
+              const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
+              const std::complex<float> beta, std::complex<float> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
+		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
+		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	// Because you cannot pack symm or hemm into a row-major kernel by exchanging parameters, so only col-major functions are provided.
+	static
+	void symm_cm(const char side, const char uplo, const int m, const int n,
+		const float alpha, const float *a, const int lda, const float *b, const int ldb,
+		const float beta, float *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void symm_cm(const char side, const char uplo, const int m, const int n,
+		const double alpha, const double *a, const int lda, const double *b, const int ldb,
+		const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+    static
+    void symm_cm(const char side, const char uplo, const int m, const int n,
+              const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
+              const std::complex<float> beta, std::complex<float> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void symm_cm(const char side, const char uplo, const int m, const int n,
+		const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
+		const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+    void hemm_cm(char side, char uplo, int m, int n,
+            std::complex<float> alpha, std::complex<float> *a, int lda, std::complex<float> *b, int ldb,
+            std::complex<float> beta, std::complex<float> *c, int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void hemm_cm(char side, char uplo, int m, int n,
+		std::complex<double> alpha, std::complex<double> *a, int lda, std::complex<double> *b, int ldb,
+		std::complex<double> beta, std::complex<double> *c, int ldc, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	// y = A*x + beta*y
 
 	static
 	void gemv(const char trans, const int m, const int n,
@@ -234,6 +302,8 @@ public:
 
 	static
 	void copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	// A is symmetric
 };
 
 // If GATHER_INFO is defined, the original function is replaced with a "i" suffix,

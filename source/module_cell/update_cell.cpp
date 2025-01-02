@@ -1,4 +1,5 @@
 #include "update_cell.h"
+#include "bcast_cell.h"
 #include "module_base/global_function.h"
 namespace unitcell
 {
@@ -344,4 +345,99 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
 
     return;
 }
+
+void update_pos_tau(const Lattice& lat,
+                    const double* pos,
+                    const int ntype,
+                    const int nat,
+                    Atom* atoms) 
+{
+    int iat = 0;
+    for (int it = 0; it < ntype; it++) {
+        Atom* atom = &atoms[it];
+        for (int ia = 0; ia < atom->na; ia++) {
+            for (int ik = 0; ik < 3; ++ik) {
+                if (atom->mbl[ia][ik]) 
+                {
+                    atom->dis[ia][ik] = pos[3 * iat + ik] / lat.lat0 - atom->tau[ia][ik];
+                    atom->tau[ia][ik] = pos[3 * iat + ik] / lat.lat0;
+                }
+            }
+            // the direct coordinates also need to be updated.
+            atom->dis[ia] = atom->dis[ia] * lat.GT;
+            atom->taud[ia] = atom->tau[ia] * lat.GT;
+            iat++;
+        }
+    }
+    assert(iat == nat);
+    periodic_boundary_adjustment(atoms,lat.latvec,ntype);
+    bcast_atoms_tau(atoms, ntype);
 }
+
+void periodic_boundary_adjustment(Atom* atoms,
+                                  const ModuleBase::Matrix3& latvec,
+                                  const int ntype) 
+{
+    //----------------------------------------------
+    // because of the periodic boundary condition
+    // we need to adjust the atom positions,
+    // first adjust direct coordinates,
+    // then update them into cartesian coordinates,
+    //----------------------------------------------
+    for (int i=0;i<ntype;i++) {
+        Atom* atom = &atoms[i];
+        for (int j=0;j<atom->na;j++) {
+            printf("the taud is %f %f %f\n",atom->taud[j].x,atom->taud[j].y,atom->taud[j].z);
+        }
+    }
+    for (int it = 0; it < ntype; it++) {
+        Atom* atom = &atoms[it];
+        for (int ia = 0; ia < atom->na; ia++) {
+            // mohan update 2011-03-21
+            if (atom->taud[ia].x < 0)
+            {
+                atom->taud[ia].x += 1.0;
+            }
+            if (atom->taud[ia].y < 0)
+            {
+                atom->taud[ia].y += 1.0;
+            }
+            if (atom->taud[ia].z < 0)
+            {
+                atom->taud[ia].z += 1.0;
+            }
+            if (atom->taud[ia].x >= 1.0)
+            {
+                atom->taud[ia].x -= 1.0;
+            }
+            if (atom->taud[ia].y >= 1.0)
+            {
+                atom->taud[ia].y -= 1.0;
+            }
+            if (atom->taud[ia].z >= 1.0)
+            {
+                atom->taud[ia].z -= 1.0;
+            }
+
+            if (atom->taud[ia].x < 0 
+                || atom->taud[ia].y < 0
+                || atom->taud[ia].z < 0 
+                || atom->taud[ia].x >= 1.0
+                || atom->taud[ia].y >= 1.0 
+                || atom->taud[ia].z >= 1.0) 
+            {
+                GlobalV::ofs_warning << " it=" << it + 1 << " ia=" << ia + 1 << std::endl;
+                GlobalV::ofs_warning << "d=" << atom->taud[ia].x << " "
+                                     << atom->taud[ia].y << " "
+                                     << atom->taud[ia].z << std::endl;
+                ModuleBase::WARNING_QUIT("Ions_Move_Basic::move_ions",
+                    "the movement of atom is larger than the length of cell.");
+            }
+
+            atom->tau[ia] = atom->taud[ia] * latvec;
+        }
+    }
+    return;
+}
+
+} // namespace unitcell

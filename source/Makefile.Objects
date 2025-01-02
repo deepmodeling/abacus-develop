@@ -188,6 +188,7 @@ OBJS_CELL=atom_pseudo.o\
     cell_index.o\
     check_atomic_stru.o\
     update_cell.o\
+    bcast_cell.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_force.o\
@@ -200,7 +201,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_vdelta.o\
         deepks_hmat.o\
         LCAO_deepks_interface.o\
-        orbital_precalc.o\
+        deepks_orbpre.o\
         cal_gdmx.o\
         cal_gedm.o\
         cal_gvx.o\

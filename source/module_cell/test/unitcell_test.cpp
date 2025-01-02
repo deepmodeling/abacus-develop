@@ -783,7 +783,9 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->periodic_boundary_adjustment(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::periodic_boundary_adjustment(
+                ucell->atoms,ucell->latvec,ucell->ntype),
+                ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("the movement of atom is larger than the length of cell"));
 }
@@ -793,7 +795,8 @@ TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    EXPECT_NO_THROW(ucell->periodic_boundary_adjustment());
+    EXPECT_NO_THROW(unitcell::periodic_boundary_adjustment(
+                    ucell->atoms,ucell->latvec,ucell->ntype));
 }
 
 TEST_F(UcellTest, PrintCell)

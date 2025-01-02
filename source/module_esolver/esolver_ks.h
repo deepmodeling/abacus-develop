@@ -95,7 +95,6 @@ class ESolver_KS : public ESolver_FP
     double hsolver_error;           //! the error of HSolver
     int maxniter;                   //! maximum iter steps for scf
     int niter;                      //! iter steps actually used in scf
-    int out_freq_elec;              //! frequency for output
 };
 } // namespace ModuleESolver
 #endif

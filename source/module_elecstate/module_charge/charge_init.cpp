@@ -39,7 +39,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     bool read_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
-        GlobalV::ofs_running << " try to read charge from file : " << std::endl;
+        GlobalV::ofs_running << " try to read charge from file" << std::endl;
 
         // try to read charge from binary file first, which is the same as QE
         // liuyu 2023-12-05
@@ -99,22 +99,43 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                     break;
                 }
             }
+        }
 
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        {
+            GlobalV::ofs_running << " try to read kinetic energy density from file" << std::endl;
+            // try to read charge from binary file first, which is the same as QE
+            std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->ngmc, {0.0, 0.0});
+            std::vector<std::complex<double>*> kin_g;
+            for (int is = 0; is < PARAM.inp.nspin; is++)
+            {
+                kin_g.push_back(kin_g_space.data() + is * this->ngmc);
+            }
+
+            std::stringstream binary;
+            binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-TAU-DENSITY.restart";
+            if (ModuleIO::read_rhog(binary.str(), rhopw, kin_g.data()))
+            {
+                GlobalV::ofs_running << " Read in the kinetic energy density: " << binary.str() << std::endl;
+                for (int is = 0; is < PARAM.inp.nspin; ++is)
+                {
+                    rhopw->recip2real(kin_g[is], this->kin_r[is]);
+                }
+            }
+            else
             {
                 for (int is = 0; is < PARAM.inp.nspin; is++)
                 {
                     std::stringstream ssc;
                     ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
-                    GlobalV::ofs_running << " try to read kinetic energy density from file : " << ssc.str()
-                                         << std::endl;
                     // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_vdata_palgrid(pgrid,
-                        (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
-                        GlobalV::ofs_running,
-                        ssc.str(),
-                        this->kin_r[is],
-                        ucell.nat))
+                    if (ModuleIO::read_vdata_palgrid(
+                            pgrid,
+                            (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                            GlobalV::ofs_running,
+                            ssc.str(),
+                            this->kin_r[is],
+                            ucell.nat))
                     {
                         GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
                     }

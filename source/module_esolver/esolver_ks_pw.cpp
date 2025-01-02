@@ -619,10 +619,10 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
         this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
     }
 
-    if (this->out_freq_elec && iter % this->out_freq_elec == 0)
+    // 4) Print out electronic wavefunctions
+    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
     {
-        // 4) Print out electronic wavefunctions
-        if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || this->conv_esolver)
         {
             std::stringstream ssw;
             ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";

@@ -1,6 +1,9 @@
 #include "LCAO_deepks_test.h"
 #define private public
 #include "module_parameter/parameter.h"
+
+#include <torch/script.h>
+#include <torch/torch.h>
 #undef private
 namespace Test_Deepks
 {
@@ -170,7 +173,9 @@ void test_deepks::check_descriptor()
 
 void test_deepks::check_gvx()
 {
-    this->ld.cal_gvx(ucell.nat);
+    std::vector<torch::Tensor> gevdm;
+    this->ld.cal_gevdm(ucell.nat, gevdm);
+    this->ld.cal_gvx(ucell.nat, gevdm);
     this->ld.check_gvx(ucell.nat);
 
     for (int ia = 0; ia < ucell.nat; ia++)

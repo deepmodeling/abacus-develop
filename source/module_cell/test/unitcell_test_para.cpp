@@ -14,7 +14,8 @@
 #include "mpi.h"
 #endif
 #include "prepare_unitcell.h"
-
+#include "../update_cell.h"
+#include "../bcast_cell.h"
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -44,6 +45,7 @@ Magnetism::~Magnetism()
 /**
  * - Tested Functions:
  *   - UpdatePosTaud
+ *     - update_pos_tau(double* pos)
  *     - update_pos_taud(const double* pos)
  *     - bcast_atoms_tau() is also called in the above function, which calls Atom::bcast_atom with many
  *       atomic info in addition to tau
@@ -123,7 +125,34 @@ TEST_F(UcellTest, BcastUnitcell)
         EXPECT_EQ(atom_labels[1], atom_type2_expected);
     }
 }
-
+TEST_F(UcellTest, UpdatePosTau)
+{
+    double* pos_in = new double[ucell->nat * 3];
+    ucell->set_iat2itia();
+    std::fill(pos_in, pos_in + ucell->nat * 3, 0);
+    for (int iat = 0; iat < ucell->nat; ++iat)
+    {
+        int it, ia;
+        ucell->iat2iait(iat, &ia, &it);
+        for (int ik = 0; ik < 3; ++ik)
+        {
+            ucell->atoms[it].mbl[ia][ik] = true;
+            pos_in[iat * 3 + ik] = (iat * 3 + ik) / (ucell->nat * 3.0) * (ucell->lat.lat0);
+        }
+    }
+    unitcell::update_pos_tau(ucell->lat,pos_in,ucell->ntype,ucell->nat,ucell->atoms);
+    for (int iat = 0; iat < ucell->nat; ++iat)
+    {
+        int it, ia;
+        ucell->iat2iait(iat, &ia, &it);
+        for (int ik = 0; ik < 3; ++ik)
+        {
+            EXPECT_DOUBLE_EQ(ucell->atoms[it].tau[ia][ik],
+                            (iat*3+ik)/(ucell->nat*3.0));
+        }
+    }
+    delete[] pos_in;
+}
 TEST_F(UcellTest, UpdatePosTaud)
 {
     double* pos_in = new double[ucell->nat * 3];
@@ -147,6 +176,7 @@ TEST_F(UcellTest, UpdatePosTaud)
         EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].y, tmp[iat].y + 0.01);
         EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia].z, tmp[iat].z + 0.01);
     }
+    delete[] tmp;
     delete[] pos_in;
 }
 
