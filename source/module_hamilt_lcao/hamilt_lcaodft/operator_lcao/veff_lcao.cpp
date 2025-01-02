@@ -70,17 +70,11 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
 
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-        this->GK->cal_gint(&inout);
+        ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
     }
     else
     {
         ModuleGint::cal_gint_vl(vr_eff1, this->hR);
-    }
-
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-    {
-        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
     }
 
     if(this->nspin == 2) 
@@ -106,17 +100,11 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
 
     if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-        this->GK->cal_gint(&inout);
+        ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
     }
     else
     {
         ModuleGint::cal_gint_vl(vr_eff1, this->hR);
-    }
-
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-    {
-        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
     }
 
     if(this->nspin == 2) 

@@ -15,6 +15,11 @@ void cal_gint_vl(
     std::vector<const double*> vr_eff,
     HContainer<std::complex<double>>* hR);
 
+void cal_gint_vl_metagga(
+    const double* vr_eff,
+    const double* vfork,
+    HContainer<double>* hR);
+
 void cal_gint_rho(
     const std::vector<HContainer<double>*>& DMR_vec,
     const int nspin,

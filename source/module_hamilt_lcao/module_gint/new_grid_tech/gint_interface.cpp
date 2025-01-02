@@ -1,5 +1,6 @@
 #include "gint_interface.h"
 #include "gint_vl.h"
+#include "gint_vl_metagga.h"
 #include "gint_vl_nspin4.h"
 #include "gint_fvl.h"
 #include "gint_rho.h"
@@ -22,6 +23,15 @@ void cal_gint_vl(
 {
     Gint_vl_nspin4 gint_vl_nspin4(vr_eff, hR);
     gint_vl_nspin4.cal_gint();
+}
+
+void cal_gint_vl_metagga(
+    const double* vr_eff,
+    const double* vfork,
+    HContainer<double>* hR)
+{
+    Gint_vl_metagga gint_vl_metagga(vr_eff, vfork, hR);
+    gint_vl_metagga.cal_gint();
 }
 
 void cal_gint_rho(
