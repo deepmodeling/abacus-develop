@@ -17,9 +17,9 @@ protected:
     double tol = 1e-5;
     int final_iter = 0;
     int flag = 0;
-    char *task = NULL;
-    double *p = NULL;
-    double *x = NULL;
+    char *task = nullptr;
+    double *p = nullptr;
+    double *x = nullptr;
 
     void SetUp()
     {
@@ -61,7 +61,8 @@ protected:
         {
             tools.dfuncdx(x, gradient, func_label);
             residual = 0;
-            for (int i = 0; i<3 ;++i) residual += gradient[i] * gradient[i];
+            for (int i = 0; i<3 ;++i) { residual += gradient[i] * gradient[i];
+}
             if (residual < tol) 
             {
                 final_iter = iter;
@@ -75,7 +76,8 @@ protected:
             {
                 tn.next_direct(x, gradient, flag, p, &(tools.mf), &ModuleESolver::ESolver_OF::dfuncdx);
             }
-            for (int i = 0; i < 3; ++i) temp_x[i] = x[i];
+            for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
+}
             task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
             while (true)
             {
@@ -84,7 +86,8 @@ protected:
                 ds.dcSrch(f, g, step, task);
                 if (task[0] == 'F' && task[1] == 'G')
                 {
-                    for (int j = 0; j < 3; ++j) temp_x[j] = x[j] + step * p[j];
+                    for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
+}
                     continue;
                 }
                 else if (task[0] == 'C' && task[1] == 'O')
@@ -100,7 +103,8 @@ protected:
                     break;
                 }
             }
-            for (int i = 0; i < 3; ++i) x[i] += step * p[i];
+            for (int i = 0; i < 3; ++i) { x[i] += step * p[i];
+}
         }
         delete[] temp_x;
         delete[] gradient;

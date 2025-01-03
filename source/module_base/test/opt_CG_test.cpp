@@ -21,10 +21,10 @@ protected:
     double residual = 10.;
     double tol = 1e-5;
     int final_iter = 0;
-    char *task = NULL;
-    double *Ap = NULL;
-    double *p = NULL;
-    double *x = NULL;
+    char *task = nullptr;
+    double *Ap = nullptr;
+    double *p = nullptr;
+    double *x = nullptr;
 
     void SetUp()
     {
@@ -68,7 +68,8 @@ protected:
             tools.le.get_Ap(tools.le.A, p, Ap);
             int ifPD = 0;
             step = cg.step_length(Ap, p, ifPD);
-            for (int i = 0; i < 3; ++i) x[i] += step * p[i]; 
+            for (int i = 0; i < 3; ++i) { x[i] += step * p[i]; 
+}
             residual = cg.get_residual();
         }
     }
@@ -105,14 +106,16 @@ protected:
         {
             tools.dfuncdx(x, gradient, func_label);
             residual = 0;
-            for (int i = 0; i<3 ;++i) residual += gradient[i] * gradient[i];
+            for (int i = 0; i<3 ;++i) { residual += gradient[i] * gradient[i];
+}
             if (residual < tol) 
             {
                 final_iter = iter;
                 break;
             }
             cg.next_direct(gradient, cg_label, p);
-            for (int i = 0; i < 3; ++i) temp_x[i] = x[i];
+            for (int i = 0; i < 3; ++i) { temp_x[i] = x[i];
+}
             task[0] = 'S'; task[1] = 'T'; task[2] = 'A'; task[3] = 'R'; task[4] = 'T';
             while (true)
             {
@@ -121,7 +124,8 @@ protected:
                 ds.dcSrch(f, g, step, task);
                 if (task[0] == 'F' && task[1] == 'G')
                 {
-                    for (int j = 0; j < 3; ++j) temp_x[j] = x[j] + step * p[j];
+                    for (int j = 0; j < 3; ++j) { temp_x[j] = x[j] + step * p[j];
+}
                     continue;
                 }
                 else if (task[0] == 'C' && task[1] == 'O')
@@ -137,7 +141,8 @@ protected:
                     break;
                 }
             }
-            for (int i = 0; i < 3; ++i) x[i] += step * p[i];
+            for (int i = 0; i < 3; ++i) { x[i] += step * p[i];
+}
         }
         delete[] temp_x;
         delete[] gradient;
