@@ -133,7 +133,7 @@ AddTest(
 AddTest(
   TARGET base_math_chebyshev
   LIBS parameter  ${math_libs} base device container
-  SOURCES math_chebyshev_test.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../parallel_reduce.cpp
+  SOURCES math_chebyshev_test.cpp
 )
 
 AddTest(
@@ -145,13 +145,13 @@ AddTest(
 AddTest(
   TARGET base_opt_CG
   LIBS parameter  ${math_libs} base device
-  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
+  SOURCES opt_CG_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
   LIBS parameter  ${math_libs} base device
-  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
+  SOURCES opt_TN_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
