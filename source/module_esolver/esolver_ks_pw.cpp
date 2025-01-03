@@ -255,7 +255,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        this->ppcell.init_vnl(ucell, this->pw_rhod);
+        this->ppcell.rescale_vnl(ucell.omega);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
         this->pw_wfc->initgrids(ucell.lat0, ucell.latvec, this->pw_wfc->nx, this->pw_wfc->ny, this->pw_wfc->nz);
