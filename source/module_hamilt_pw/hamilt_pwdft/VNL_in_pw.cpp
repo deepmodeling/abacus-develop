@@ -550,6 +550,8 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
     ModuleBase::TITLE("pseudopot_cell_vnl", "init_vnl");
     ModuleBase::timer::tick("ppcell_vnl", "init_vnl");
 
+    this->omega_old = cell.omega;
+
     // from init_us_1
     //    a) For each non vanderbilt pseudopotential it computes the D and
     //       the betar in the same form of the Vanderbilt pseudopotential.
@@ -1730,6 +1732,27 @@ void pseudopot_cell_vnl::newd_nc(const int& iat, UnitCell& cell)
             deeq_nc(1, iat, ih, jh) = deeq(1, iat, ih, jh) + ModuleBase::NEG_IMAG_UNIT * deeq(2, iat, ih, jh);
             deeq_nc(2, iat, ih, jh) = deeq(1, iat, ih, jh) + ModuleBase::IMAG_UNIT * deeq(2, iat, ih, jh);
         }
+    }
+}
+
+// scale the non-local pseudopotential tables
+void pseudopot_cell_vnl::rescale_vnl(const double& omega_in)
+{
+    const double ratio = this->omega_old / omega_in;
+    const double sqrt_ratio = std::sqrt(ratio);
+    this->omega_old = omega_in;
+
+    for (int i = 0; i < this->tab.getSize(); i++)
+    {
+        this->tab.ptr[i] *= sqrt_ratio;
+    }
+    for (int i = 0; i < this->tab_at.getSize(); i++)
+    {
+        this->tab_at.ptr[i] *= sqrt_ratio;
+    }
+    for (int i = 0; i < this->qrad.getSize(); i++)
+    {
+        this->qrad.ptr[i] *= ratio;
     }
 }
 
