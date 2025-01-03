@@ -2,6 +2,7 @@
 
 #include "evolve_elec.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/module_container/ATen/kernels/blas.h"
 #include "module_base/scalapack_connector.h"
 
 #include <complex>
@@ -269,6 +270,94 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
 
     // Perform MPI reduction to compute ekb
     info = MPI_Allreduce(Eii.data<double>(), ekb.data<double>(), nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+}
+
+void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
+                               const int nband,
+                               const int nlocal,
+                               const container::Tensor& Htmp,
+                               const container::Tensor& psi_k,
+                               container::Tensor& ekb)
+{
+    // Create Tensor objects for temporary data
+    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
+                           container::DeviceType::CpuDevice,
+                           container::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
+    tmp1.zero();
+
+    container::Tensor Eij(container::DataType::DT_COMPLEX_DOUBLE,
+                          container::DeviceType::CpuDevice,
+                          container::TensorShape({pv->nloc})); // Eij shape: nlocal * nlocal
+    // Why not use nband * nband ?????
+    Eij.zero();
+
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta = {0.0, 0.0};
+
+    // Perform matrix multiplication: tmp1 = Htmp * psi_k
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
+                                                                                 'N',
+                                                                                 nlocal,
+                                                                                 nband,
+                                                                                 nlocal,
+                                                                                 &alpha,
+                                                                                 Htmp.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of Htmp
+                                                                                 psi_k.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of psi_k
+                                                                                 &beta,
+                                                                                 tmp1.data<std::complex<double>>(),
+                                                                                 nlocal); // Leading dimension of tmp1
+
+    // Perform matrix multiplication: Eij = psi_k^dagger * tmp1
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('C',
+                                                                                 'N',
+                                                                                 nband,
+                                                                                 nband,
+                                                                                 nlocal,
+                                                                                 &alpha,
+                                                                                 psi_k.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of psi_k
+                                                                                 tmp1.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of tmp1
+                                                                                 &beta,
+                                                                                 Eij.data<std::complex<double>>(),
+                                                                                 nlocal); // Leading dimension of Eij
+
+    if (Evolve_elec::td_print_eij >= 0.0)
+    {
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << std::endl;
+        GlobalV::ofs_running << " Eij:" << std::endl;
+        for (int i = 0; i < pv->nrow_bands; i++)
+        {
+            for (int j = 0; j < pv->ncol_bands; j++)
+            {
+                double aa = 0.0, bb = 0.0;
+                aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < Evolve_elec::td_print_eij)
+                    aa = 0.0;
+                if (std::abs(bb) < Evolve_elec::td_print_eij)
+                    bb = 0.0;
+                if (aa > 0.0 || bb > 0.0)
+                {
+                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                }
+            }
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running
+            << "------------------------------------------------------------------------------------------------"
+            << std::endl;
+    }
+
+    // Extract diagonal elements of Eij into ekb
+    for (int i = 0; i < nband; ++i)
+    {
+        ekb.data<double>()[i] = Eij.data<std::complex<double>>()[i * nlocal + i].real();
+    }
 }
 
 #endif

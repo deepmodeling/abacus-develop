@@ -1,6 +1,7 @@
 #include "norm_psi.h"
 
 #include "module_base/lapack_connector.h"
+#include "module_base/module_container/ATen/kernels/blas.h"
 #include "module_base/scalapack_connector.h"
 
 #include <complex>
@@ -366,6 +367,178 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                              1,
                              1,
                              pv->desc_wfc);
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << " Cij:" << std::endl;
+        for (int i = 0; i < pv->ncol; i++)
+        {
+            for (int j = 0; j < pv->nrow; j++)
+            {
+                GlobalV::ofs_running << Cij.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
+                                     << Cij.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " psi_k:" << std::endl;
+        for (int i = 0; i < pv->ncol_bands; i++)
+        {
+            for (int j = 0; j < pv->ncol; j++)
+            {
+                double aa, bb;
+                aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " psi_k before normalization:" << std::endl;
+        for (int i = 0; i < pv->ncol_bands; i++)
+        {
+            for (int j = 0; j < pv->ncol; j++)
+            {
+                double aa, bb;
+                aa = tmp1.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = tmp1.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << std::endl;
+    }
+}
+
+void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
+                            const int nband,
+                            const int nlocal,
+                            const container::Tensor& Stmp,
+                            container::Tensor& psi_k,
+                            const int print_matrix)
+{
+    // Create Tensor objects for temporary data
+    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
+                           container::DeviceType::CpuDevice,
+                           container::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
+    tmp1.zero();
+
+    container::Tensor Cij(container::DataType::DT_COMPLEX_DOUBLE,
+                          container::DeviceType::CpuDevice,
+                          container::TensorShape({pv->nloc})); // Cij shape: nlocal * nlocal
+    Cij.zero();
+
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta = {0.0, 0.0};
+
+    // Perform matrix multiplication: tmp1 = Stmp * psi_k
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
+                                                                                 'N',
+                                                                                 nlocal,
+                                                                                 nband,
+                                                                                 nlocal,
+                                                                                 &alpha,
+                                                                                 Stmp.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of Stmp
+                                                                                 psi_k.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of psi_k
+                                                                                 &beta,
+                                                                                 tmp1.data<std::complex<double>>(),
+                                                                                 nlocal); // Leading dimension of tmp1
+
+    // Perform matrix multiplication: Cij = psi_k^dagger * tmp1
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('C',
+                                                                                 'N',
+                                                                                 nband,
+                                                                                 nband,
+                                                                                 nlocal,
+                                                                                 &alpha,
+                                                                                 psi_k.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of psi_k
+                                                                                 tmp1.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of tmp1
+                                                                                 &beta,
+                                                                                 Cij.data<std::complex<double>>(),
+                                                                                 nlocal); // Leading dimension of Cij
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << "original Cij :" << std::endl;
+        for (int i = 0; i < pv->ncol; i++)
+        {
+            for (int j = 0; j < pv->nrow; j++)
+            {
+                double aa, bb;
+                aa = Cij.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = Cij.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+
+    // Normalize Cij: set diagonal elements to 1/sqrt(Cij[i][i]), off-diagonal elements to 0
+    for (int i = 0; i < nband; ++i)
+    {
+        for (int j = 0; j < nband; ++j)
+        {
+            if (i == j)
+            {
+                Cij.data<std::complex<double>>()[i * nlocal + j]
+                    = {1.0 / sqrt(Cij.data<std::complex<double>>()[i * nlocal + j].real()), 0.0};
+            }
+            else
+            {
+                Cij.data<std::complex<double>>()[i * nlocal + j] = {0.0, 0.0};
+            }
+        }
+    }
+
+    // Copy psi_k to tmp1 (using deep copy)
+    // tmp1.CopyFrom(psi_k); // Does not work because this will cause tmp1 and psi_k to share the same data
+    tmp1 = psi_k; // operator= overload for Tensor class
+
+    // Perform matrix multiplication: psi_k = tmp1 * Cij
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
+                                                                                 'N',
+                                                                                 nlocal,
+                                                                                 nband,
+                                                                                 nband,
+                                                                                 &alpha,
+                                                                                 tmp1.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of tmp1
+                                                                                 Cij.data<std::complex<double>>(),
+                                                                                 nlocal, // Leading dimension of Cij
+                                                                                 &beta,
+                                                                                 psi_k.data<std::complex<double>>(),
+                                                                                 nlocal); // Leading dimension of psi_k
 
     if (print_matrix)
     {

@@ -39,6 +39,13 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                      container::Tensor& psi_k,
                      const int print_matrix);
 
+void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
+                            const int nband,
+                            const int nlocal,
+                            const container::Tensor& Stmp,
+                            container::Tensor& psi_k,
+                            const int print_matrix);
+
 #endif
 } // namespace module_tddft
 

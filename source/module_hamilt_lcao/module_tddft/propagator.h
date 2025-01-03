@@ -48,7 +48,8 @@ class Propagator
                                    const container::Tensor& Htmp,
                                    const container::Tensor& H_laststep,
                                    container::Tensor& U_operator,
-                                   const int print_matrix) const;
+                                   const int print_matrix,
+                                   const bool use_lapack) const;
 #endif
 
   private:
@@ -78,6 +79,12 @@ class Propagator
                                        const container::Tensor& Htmp,
                                        container::Tensor& U_operator,
                                        const int print_matrix) const;
+
+    void compute_propagator_cn2_tensor_lapack(const int nlocal,
+                                              const container::Tensor& Stmp,
+                                              const container::Tensor& Htmp,
+                                              container::Tensor& U_operator,
+                                              const int print_matrix) const;
 
     /**
      *  @brief compute propagator of method 4th Taylor

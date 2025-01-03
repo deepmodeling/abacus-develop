@@ -25,7 +25,8 @@ void evolve_psi(const int nband,
                 std::complex<double>* S_laststep,
                 double* ekb,
                 int htype,
-                int propagator)
+                int propagator,
+                const int print_matrix)
 {
     GlobalV::ofs_running << " evolve_psi::start " << std::endl;
 
@@ -35,7 +36,6 @@ void evolve_psi(const int nband,
 
 #ifdef __MPI
 
-    int print_matrix = 0;
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
@@ -118,7 +118,9 @@ void evolve_psi_tensor(const int nband,
                        container::Tensor& S_laststep,
                        container::Tensor& ekb,
                        int htype,
-                       int propagator)
+                       int propagator,
+                       const int print_matrix,
+                       const bool use_lapack)
 {
     GlobalV::ofs_running << " evolve_psi_tensor::start " << std::endl;
 
@@ -128,7 +130,6 @@ void evolve_psi_tensor(const int nband,
 
 #ifdef __MPI
 
-    int print_matrix = 0;
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
@@ -159,7 +160,14 @@ void evolve_psi_tensor(const int nband,
     /// @output Htmp
     if (htype == 1 && propagator != 2)
     {
-        half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+        if (!use_lapack)
+        {
+            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+        }
+        else
+        {
+            half_Hmatrix_tensor_lapack(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+        }
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -168,7 +176,7 @@ void evolve_psi_tensor(const int nband,
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
     Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator_tensor(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
+    prop.compute_propagator_tensor(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix, use_lapack);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -176,129 +184,28 @@ void evolve_psi_tensor(const int nband,
     /// @input U_operator, psi_k_laststep, print_matrix
     /// @output psi_k
     // Use TensorMap to map psi_k_laststep and psi_k to Tensor
-    upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
-
-    // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief normalize psi_k
-    /// @input Stmp, psi_not_norm, psi_k, print_matrix
-    /// @output psi_k
-    norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, print_matrix);
-
-    // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute ekb
-    /// @input Htmp, psi_k
-    /// @output ekb
-    // Create a Tensor for ekb using TensorMap
-    compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb);
-
-#endif
-
-    time_t time_end = time(nullptr);
-    ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
-
-    GlobalV::ofs_running << " evolve_psi_tensor::end " << std::endl;
-
-    return;
-}
-
-void evolve_psi_tensor(const int nband,
-                       const int nlocal,
-                       const Parallel_Orbitals* pv,
-                       hamilt::Hamilt<std::complex<double>>* p_hamilt,
-                       std::complex<double>* psi_k,
-                       std::complex<double>* psi_k_laststep,
-                       std::complex<double>* H_laststep,
-                       std::complex<double>* S_laststep,
-                       double* ekb,
-                       int htype,
-                       int propagator)
-{
-    GlobalV::ofs_running << " evolve_psi_tensor::start " << std::endl;
-
-    ModuleBase::TITLE("Evolve_psi", "evolve_psi");
-    time_t time_start = time(nullptr);
-    GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
-
-#ifdef __MPI
-
-    int print_matrix = 0;
-    hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
-    p_hamilt->matrix(h_mat, s_mat);
-
-    // Convert s_mat.p, h_mat.p to Tensor using TensorMap
-    container::TensorMap s_mat_tensor(s_mat.p,
-                                      container::DataType::DT_COMPLEX_DOUBLE,
-                                      container::DeviceType::CpuDevice,
-                                      container::TensorShape({pv->nloc}));
-    container::TensorMap h_mat_tensor(h_mat.p,
-                                      container::DataType::DT_COMPLEX_DOUBLE,
-                                      container::DeviceType::CpuDevice,
-                                      container::TensorShape({pv->nloc}));
-
-    // Use Tensor's copy constructor to create Stmp, Htmp, and Hold
-    container::Tensor Stmp(s_mat_tensor);
-    container::Tensor Htmp(h_mat_tensor);
-    container::Tensor Hold(h_mat_tensor);
-
-    container::Tensor U_operator(container::DataType::DT_COMPLEX_DOUBLE,
-                                 container::DeviceType::CpuDevice,
-                                 container::TensorShape({pv->nloc}));
-    U_operator.zero();
-
-    // Use TensorMap to map H_laststep and S_laststep to Tensor
-    container::TensorMap H_laststep_tensor(H_laststep,
-                                           container::DataType::DT_COMPLEX_DOUBLE,
-                                           container::DeviceType::CpuDevice,
-                                           container::TensorShape({pv->nloc}));
-    container::TensorMap S_laststep_tensor(S_laststep,
-                                           container::DataType::DT_COMPLEX_DOUBLE,
-                                           container::DeviceType::CpuDevice,
-                                           container::TensorShape({pv->nloc}));
-
-    // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute H(t+dt/2)
-    /// @input H_laststep, Htmp, print_matrix
-    /// @output Htmp
-    if (htype == 1 && propagator != 2)
+    if (!use_lapack)
     {
-        half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep_tensor, S_laststep_tensor, print_matrix);
+        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
     }
-
-    // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute U_operator
-    /// @input Stmp, Htmp, print_matrix
-    /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator_tensor(nlocal, Stmp, Htmp, H_laststep_tensor, U_operator, print_matrix);
-
-    // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief apply U_operator to the wave function of the previous step for new wave function
-    /// @input U_operator, psi_k_laststep, print_matrix
-    /// @output psi_k
-    // Use TensorMap to map psi_k_laststep and psi_k to Tensor
-    container::TensorMap psi_k_laststep_tensor(psi_k_laststep,
-                                               container::DataType::DT_COMPLEX_DOUBLE,
-                                               container::DeviceType::CpuDevice,
-                                               container::TensorShape({pv->ncol_bands, pv->ncol}));
-    std::cout << "pv->ncol_bands = " << pv->ncol_bands << std::endl;
-    std::cout << "pv->ncol = " << pv->ncol << std::endl;
-    container::TensorMap psi_k_tensor(psi_k,
-                                      container::DataType::DT_COMPLEX_DOUBLE,
-                                      container::DeviceType::CpuDevice,
-                                      container::TensorShape({pv->ncol_bands, pv->ncol}));
-    upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep_tensor, psi_k_tensor, print_matrix);
+    else
+    {
+        upsi_tensor_lapack(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+    }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
     /// @input Stmp, psi_not_norm, psi_k, print_matrix
     /// @output psi_k
-    norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k_tensor, print_matrix);
+    if (!use_lapack)
+    {
+        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+    }
+    else
+    {
+        norm_psi_tensor_lapack(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+    }
 
     // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -306,11 +213,14 @@ void evolve_psi_tensor(const int nband,
     /// @input Htmp, psi_k
     /// @output ekb
     // Create a Tensor for ekb using TensorMap
-    container::TensorMap ekb_tensor(ekb,
-                                    container::DataType::DT_DOUBLE,
-                                    container::DeviceType::CpuDevice,
-                                    container::TensorShape({nband}));
-    compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k_tensor, ekb_tensor);
+    if (!use_lapack)
+    {
+        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb);
+    }
+    else
+    {
+        compute_ekb_tensor_lapack(pv, nband, nlocal, Hold, psi_k, ekb);
+    }
 
 #endif
 

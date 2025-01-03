@@ -37,6 +37,13 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const container::Tensor& Htmp,
                         const container::Tensor& psi_k,
                         container::Tensor& ekb);
+
+void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
+                               const int nband,
+                               const int nlocal,
+                               const container::Tensor& Htmp,
+                               const container::Tensor& psi_k,
+                               container::Tensor& ekb);
 #endif
 } // namespace module_tddft
 #endif

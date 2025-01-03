@@ -1,6 +1,7 @@
 #include "upsi.h"
 
 #include "module_base/lapack_connector.h"
+#include "module_base/module_container/ATen/kernels/blas.h"
 #include "module_base/scalapack_connector.h"
 
 #include <complex>
@@ -17,7 +18,6 @@ void upsi(const Parallel_Orbitals* pv,
           std::complex<double>* psi_k,
           const int print_matrix)
 {
-
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
@@ -114,6 +114,81 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                              1,
                              1,
                              pv->desc_wfc);
+
+    if (print_matrix)
+    {
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " psi_k:" << std::endl;
+        for (int i = 0; i < pv->ncol_bands; i++)
+        {
+            for (int j = 0; j < pv->ncol; j++)
+            {
+                double aa, bb;
+                aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+        GlobalV::ofs_running << " psi_k_laststep:" << std::endl;
+        for (int i = 0; i < pv->ncol_bands; i++)
+        {
+            for (int j = 0; j < pv->ncol; j++)
+            {
+                double aa, bb;
+                aa = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].real();
+                bb = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                if (std::abs(aa) < 1e-8)
+                {
+                    aa = 0.0;
+                }
+                if (std::abs(bb) < 1e-8)
+                {
+                    bb = 0.0;
+                }
+                GlobalV::ofs_running << aa << "+" << bb << "i ";
+            }
+            GlobalV::ofs_running << std::endl;
+        }
+        GlobalV::ofs_running << std::endl;
+    }
+}
+
+void upsi_tensor_lapack(const Parallel_Orbitals* pv,
+                        const int nband,
+                        const int nlocal,
+                        const container::Tensor& U_operator,
+                        const container::Tensor& psi_k_laststep,
+                        container::Tensor& psi_k,
+                        const int print_matrix)
+{
+    // Perform the matrix multiplication: psi_k = U_operator * psi_k_laststep
+    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> beta = {0.0, 0.0};
+
+    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()(
+        'N',
+        'N',
+        nlocal,
+        nband,
+        nlocal,
+        &alpha,
+        U_operator.data<std::complex<double>>(),
+        nlocal,
+        psi_k_laststep.data<std::complex<double>>(),
+        nlocal,
+        &beta,
+        psi_k.data<std::complex<double>>(),
+        nlocal);
 
     if (print_matrix)
     {

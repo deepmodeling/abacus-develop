@@ -43,6 +43,15 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          const container::Tensor& S_laststep,
                          const int print_matrix);
 
+void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
+                                const int nband,
+                                const int nlocal,
+                                container::Tensor& Htmp,
+                                container::Tensor& Stmp,
+                                const container::Tensor& H_laststep,
+                                const container::Tensor& S_laststep,
+                                const int print_matrix);
+
 #endif
 } // namespace module_tddft
 

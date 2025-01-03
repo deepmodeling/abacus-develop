@@ -23,7 +23,8 @@ void evolve_psi(const int nband,
                 std::complex<double>* S_laststep,
                 double* ekb,
                 int htype,
-                int propagator);
+                int propagator,
+                const int print_matrix);
 
 void evolve_psi_tensor(const int nband,
                        const int nlocal,
@@ -35,19 +36,10 @@ void evolve_psi_tensor(const int nband,
                        container::Tensor& S_laststep,
                        container::Tensor& ekb,
                        int htype,
-                       int propagator);
+                       int propagator,
+                       const int print_matrix,
+                       const bool use_lapack);
 
-void evolve_psi_tensor(const int nband,
-                       const int nlocal,
-                       const Parallel_Orbitals* pv,
-                       hamilt::Hamilt<std::complex<double>>* p_hamilt,
-                       std::complex<double>* psi_k,
-                       std::complex<double>* psi_k_laststep,
-                       std::complex<double>* H_laststep,
-                       std::complex<double>* S_laststep,
-                       double* ekb,
-                       int htype,
-                       int propagator);
 } // namespace module_tddft
 
 #endif

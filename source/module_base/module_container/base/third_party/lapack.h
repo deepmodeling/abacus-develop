@@ -105,6 +105,15 @@ void dtrtri_(const char* uplo, const char* diag, const int* n, double* a, const 
 void ctrtri_(const char* uplo, const char* diag, const int* n, std::complex<float>* a, const int* lda, int* info);
 void ztrtri_(const char* uplo, const char* diag, const int* n, std::complex<double>* a, const int* lda, int* info);
 
+void sgetrf_(const int* m, const int* n, float* a, const int* lda, int* ipiv, int* info);
+void dgetrf_(const int* m, const int* n, double* a, const int* lda, int* ipiv, int* info);
+void cgetrf_(const int* m, const int* n, std::complex<float>* a, const int* lda, int* ipiv, int* info);
+void zgetrf_(const int* m, const int* n, std::complex<double>* a, const int* lda, int* ipiv, int* info);
+
+void sgetri_(const int* n, float* A, const int* lda, const int* ipiv, float* work, const int* lwork, int* info);
+void dgetri_(const int* n, double* A, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);
+void cgetri_(const int* n, std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* work, const int* lwork, int* info);
+void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.
@@ -319,6 +328,48 @@ static inline
 void trtri( const char &uplo, const char &diag, const int &n, std::complex<double>* A, const int &lda, int &info)
 {
     ztrtri_( &uplo, &diag, &n, A, &lda, &info);
+}
+
+static inline
+void getrf(const int &m, const int &n, float* A, const int &lda, int* ipiv, int &info)
+{
+    sgetrf_(&m, &n, A, &lda, ipiv, &info);
+}
+static inline
+void getrf(const int &m, const int &n, double* A, const int &lda, int* ipiv, int &info)
+{
+    dgetrf_(&m, &n, A, &lda, ipiv, &info);
+}
+static inline
+void getrf(const int &m, const int &n, std::complex<float>* A, const int &lda, int* ipiv, int &info)
+{
+    cgetrf_(&m, &n, A, &lda, ipiv, &info);
+}
+static inline
+void getrf(const int &m, const int &n, std::complex<double>* A, const int &lda, int* ipiv, int &info)
+{
+    zgetrf_(&m, &n, A, &lda, ipiv, &info);
+}
+
+static inline
+void getri(const int& n, float* A, const int& lda, const int* ipiv, float* work, const int& lwork, int& info)
+{
+    sgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
+}
+static inline
+void getri(const int& n, double* A, const int& lda, const int* ipiv, double* work, const int& lwork, int& info)
+{
+    dgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
+}
+static inline
+void getri(const int& n, std::complex<float>* A, const int& lda, const int* ipiv, std::complex<float>* work, const int& lwork, int& info)
+{
+    cgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
+}
+static inline
+void getri(const int& n, std::complex<double>* A, const int& lda, const int* ipiv, std::complex<double>* work, const int& lwork, int& info)
+{
+    zgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
 }
 
 } // namespace lapackConnector
