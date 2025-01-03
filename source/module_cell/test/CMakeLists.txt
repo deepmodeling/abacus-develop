@@ -14,6 +14,8 @@ install(FILES unitcell_test_parallel.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND cell_simple_srcs
     ../unitcell.cpp
+    ../update_cell.cpp
+    ../bcast_cell.cpp
     ../read_atoms.cpp
     ../atom_spec.cpp
     ../atom_pseudo.cpp
@@ -103,14 +105,14 @@ add_test(NAME cell_parallel_kpoints_test
 AddTest(
   TARGET cell_unitcell_test
   LIBS parameter  ${math_libs} base device cell_info  symmetry
-  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../../module_elecstate/cal_ux.cpp ../update_cell.cpp
+  SOURCES unitcell_test.cpp ../../module_io/output.cpp ../../module_elecstate/cal_ux.cpp 
 
 )
 
 AddTest(
   TARGET cell_unitcell_test_readpp
   LIBS parameter  ${math_libs} base device cell_info 
-  SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp
+  SOURCES unitcell_test_readpp.cpp ../../module_io/output.cpp 
 )
 
 AddTest(
@@ -123,7 +125,6 @@ AddTest(
   TARGET cell_unitcell_test_setupcell
   LIBS parameter  ${math_libs} base device cell_info 
   SOURCES unitcell_test_setupcell.cpp ../../module_io/output.cpp 
-  ../../module_cell/update_cell.cpp
 )
 
 add_test(NAME cell_unitcell_test_parallel

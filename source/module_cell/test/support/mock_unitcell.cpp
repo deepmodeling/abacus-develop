@@ -33,11 +33,9 @@ bool UnitCell::read_atom_positions(std::ifstream& ifpos,
                                    std::ofstream& ofs_warning) {
     return true;
 }
-void UnitCell::update_pos_tau(const double* pos) {}
 void UnitCell::update_pos_taud(double* posd_in) {}
 void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {}
 void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {}
-void UnitCell::periodic_boundary_adjustment() {}
 void UnitCell::bcast_atoms_tau() {}
 bool UnitCell::judge_big_cell() const { return true; }
 void UnitCell::update_stress(ModuleBase::matrix& scs) {}

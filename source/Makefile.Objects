@@ -188,6 +188,7 @@ OBJS_CELL=atom_pseudo.o\
     cell_index.o\
     check_atomic_stru.o\
     update_cell.o\
+    bcast_cell.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_force.o\
