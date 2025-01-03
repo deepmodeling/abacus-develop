@@ -5,7 +5,11 @@
 
 #include <iostream>
 
+#ifdef __CUDA
+#undef __CUDA
 #include "global_function.h"
+#define __CUDA
+#endif
 #include "module_base/parallel_reduce.h"
 
 namespace ModuleBase
