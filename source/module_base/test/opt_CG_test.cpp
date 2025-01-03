@@ -143,6 +143,9 @@ protected:
 
 TEST_F(CG_test, Stand_Solve_LinearEq)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     CG_Solve_LinearEq();
     EXPECT_NEAR(x[0], 0.5, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 1.6429086563584579739e-18, DOUBLETHRESHOLD);
@@ -153,6 +156,9 @@ TEST_F(CG_test, Stand_Solve_LinearEq)
 
 TEST_F(CG_test, PR_Solve_LinearEq)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(1, 0);
     EXPECT_NEAR(x[0], 0.50000000000003430589, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
@@ -163,6 +169,9 @@ TEST_F(CG_test, PR_Solve_LinearEq)
 
 TEST_F(CG_test, HZ_Solve_LinearEq)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(2, 0);
     EXPECT_NEAR(x[0], 0.49999999999999944489, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -9.4368957093138305936e-16, DOUBLETHRESHOLD);
@@ -173,6 +182,9 @@ TEST_F(CG_test, HZ_Solve_LinearEq)
 
 TEST_F(CG_test, PR_Min_Func)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(1, 1);
     EXPECT_NEAR(x[0], 4.0006805979150792396, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.0713759992720870429, DOUBLETHRESHOLD);
@@ -183,6 +195,9 @@ TEST_F(CG_test, PR_Min_Func)
 
 TEST_F(CG_test, HZ_Min_Func)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(2, 1);
     EXPECT_NEAR(x[0], 4.0006825378033568086, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.0691732100663737803, DOUBLETHRESHOLD);

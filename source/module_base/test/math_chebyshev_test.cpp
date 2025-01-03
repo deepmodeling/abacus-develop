@@ -336,6 +336,9 @@ TEST_F(MathChebyshevTest, tracepolyA)
 
 TEST_F(MathChebyshevTest, checkconverge)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
     auto fun_sigma_y

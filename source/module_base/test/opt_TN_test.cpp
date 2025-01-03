@@ -110,6 +110,9 @@ protected:
 
 TEST_F(TN_test, TN_Solve_LinearEq)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(0);
     EXPECT_NEAR(x[0], 0.50000000000003430589, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], -3.4028335704761047964e-14, DOUBLETHRESHOLD);
@@ -120,6 +123,9 @@ TEST_F(TN_test, TN_Solve_LinearEq)
 
 TEST_F(TN_test, TN_Min_Func)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     Solve(1);
     EXPECT_NEAR(x[0], 4.0049968540891525137, DOUBLETHRESHOLD);
     EXPECT_NEAR(x[1], 2.1208751163987624722, DOUBLETHRESHOLD);
