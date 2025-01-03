@@ -1,3 +1,6 @@
+#ifdef __MPI
+#undef __MPI
+#endif
 #include "gtest/gtest.h"
 #include "../opt_CG.h"
 #include "../opt_DCsrch.h"

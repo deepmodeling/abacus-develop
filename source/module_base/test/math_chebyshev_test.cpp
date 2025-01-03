@@ -107,6 +107,9 @@ class MathChebyshevTest : public testing::Test
 
 TEST_F(MathChebyshevTest, calcoef_real)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_x6 = [&](double x) { return fun.x6(x); };
     auto fun_x7 = [&](double x) { return fun.x7(x); };
     p_chetest = new ModuleBase::Chebyshev<double>(10);
@@ -130,6 +133,9 @@ TEST_F(MathChebyshevTest, calcoef_real)
 
 TEST_F(MathChebyshevTest, calcoef_pair)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_x6 = [&](double x) { return fun.x6(x); };
     auto fun_x7 = [&](double x) { return fun.x7(x); };
     p_chetest = new ModuleBase::Chebyshev<double>(10);
@@ -148,6 +154,9 @@ TEST_F(MathChebyshevTest, calcoef_pair)
 
 TEST_F(MathChebyshevTest, calcoef_complex)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_expi = [&](std::complex<double> x) { return fun.expi(x); };
     const int norder = 100;
     const double PI = 3.14159265358979323846;
@@ -169,6 +178,9 @@ TEST_F(MathChebyshevTest, calcoef_complex)
 
 TEST_F(MathChebyshevTest, calfinalvec_real)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -203,6 +215,9 @@ TEST_F(MathChebyshevTest, calfinalvec_real)
 
 TEST_F(MathChebyshevTest, calfinalvec_complex)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -237,6 +252,9 @@ TEST_F(MathChebyshevTest, calfinalvec_complex)
 
 TEST_F(MathChebyshevTest, calpolyvec_complex)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const double E = 2.718281828459046;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
@@ -284,6 +302,9 @@ TEST_F(MathChebyshevTest, calpolyvec_complex)
 
 TEST_F(MathChebyshevTest, tracepolyA)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     p_chetest = new ModuleBase::Chebyshev<double>(norder);
 
@@ -384,6 +405,9 @@ TEST_F(MathChebyshevTest, checkconverge)
 
 TEST_F(MathChebyshevTest, recurs)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     testing::internal::CaptureStdout();
     EXPECT_EXIT(ModuleBase::Chebyshev<double> noneche(0), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
@@ -399,6 +423,9 @@ TEST_F(MathChebyshevTest, recurs)
 #ifdef __ENABLE_FLOAT_FFTW
 TEST_F(MathChebyshevTest, calcoef_real_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_x6f = [&](float x) { return fun.x6(x); };
     auto fun_x7f = [&](float x) { return fun.x7(x); };
     p_fchetest = new ModuleBase::Chebyshev<float>(10);
@@ -421,6 +448,9 @@ TEST_F(MathChebyshevTest, calcoef_real_float)
 
 TEST_F(MathChebyshevTest, calcoef_pair_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_x6f = [&](float x) { return fun.x6(x); };
     auto fun_x7f = [&](float x) { return fun.x7(x); };
     p_fchetest = new ModuleBase::Chebyshev<float>(10);
@@ -439,6 +469,9 @@ TEST_F(MathChebyshevTest, calcoef_pair_float)
 
 TEST_F(MathChebyshevTest, calcoef_complex_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     auto fun_expif = [&](std::complex<float> x) { return fun.expi(x); };
     const int norder = 100;
     const float PI = 3.14159265358979323846;
@@ -460,6 +493,9 @@ TEST_F(MathChebyshevTest, calcoef_complex_float)
 
 TEST_F(MathChebyshevTest, calfinalvec_real_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -494,6 +530,9 @@ TEST_F(MathChebyshevTest, calfinalvec_real_float)
 
 TEST_F(MathChebyshevTest, calfinalvec_complex_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -528,6 +567,9 @@ TEST_F(MathChebyshevTest, calfinalvec_complex_float)
 
 TEST_F(MathChebyshevTest, calpolyvec_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     const float E = 2.718281828459046;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
@@ -575,6 +617,9 @@ TEST_F(MathChebyshevTest, calpolyvec_float)
 
 TEST_F(MathChebyshevTest, tracepolyA_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
 
@@ -624,6 +669,9 @@ TEST_F(MathChebyshevTest, tracepolyA_float)
 
 TEST_F(MathChebyshevTest, checkconverge_float)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
     const int norder = 100;
     p_fchetest = new ModuleBase::Chebyshev<float>(norder);
 
