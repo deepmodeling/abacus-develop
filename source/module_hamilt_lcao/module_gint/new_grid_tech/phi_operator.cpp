@@ -210,6 +210,7 @@ void PhiOperator::phi_dot_dphi(
 {
     for(int i = 0; i < biggrid_->get_atom_num(); ++i)
     {
+        const int iat = biggrid_->get_atom(i)->get_iat();
         const int start_idx = atoms_startidx_[i];
         const int phi_len = atoms_phi_len_[i];
         double rx = 0, ry = 0, rz = 0;
@@ -223,9 +224,9 @@ void PhiOperator::phi_dot_dphi(
                 rz += phi_val * dphi_z[j][start_idx + k];
             }
         }
-        fvl[0](i, 0) += rx * 2;
-        fvl[0](i, 1) += ry * 2;
-        fvl[0](i, 2) += rz * 2;
+        fvl[0](iat, 0) += rx * 2;
+        fvl[0](iat, 1) += ry * 2;
+        fvl[0](iat, 2) += rz * 2;
     }
 }
 

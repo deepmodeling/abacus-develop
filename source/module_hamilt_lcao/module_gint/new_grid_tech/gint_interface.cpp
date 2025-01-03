@@ -2,7 +2,9 @@
 #include "gint_vl.h"
 #include "gint_vl_metagga.h"
 #include "gint_vl_nspin4.h"
+#include "gint_vl_metagga_nspin4.h"
 #include "gint_fvl.h"
+#include "gint_fvl_meta.h"
 #include "gint_rho.h"
 #include "gint_tau.h"
 
@@ -34,6 +36,15 @@ void cal_gint_vl_metagga(
     gint_vl_metagga.cal_gint();
 }
 
+void cal_gint_vl_metagga(
+    std::vector<const double*> vr_eff,
+    std::vector<const double*> vofk,
+    HContainer<std::complex<double>>* hR)
+{
+    Gint_vl_metagga_nspin4 gint_vl_metagga_nspin4(vr_eff, vofk, hR);
+    gint_vl_metagga_nspin4.cal_gint();
+}
+
 void cal_gint_rho(
     const std::vector<HContainer<double>*>& DMR_vec,
     const int nspin,
@@ -63,6 +74,20 @@ void cal_gint_fvl(
 {
     Gint_fvl gint_fvl(nspin, vr_eff, DMR_vec, isforce, isstress, fvl, svl);
     gint_fvl.cal_gint();
+}
+
+void cal_gint_fvl_meta(
+    const int nspin,
+    const std::vector<const double*>& vr_eff,
+    const std::vector<const double*>& vofk,
+    const std::vector<HContainer<double>*>& DMR_vec,
+    const bool isforce,
+    const bool isstress,
+    ModuleBase::matrix* fvl,
+    ModuleBase::matrix* svl)
+{
+    Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, DMR_vec, isforce, isstress, fvl, svl);
+    gint_fvl_meta.cal_gint();
 }
 
 } // namespace ModuleGint

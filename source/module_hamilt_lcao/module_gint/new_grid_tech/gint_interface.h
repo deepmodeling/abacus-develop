@@ -20,6 +20,11 @@ void cal_gint_vl_metagga(
     const double* vfork,
     HContainer<double>* hR);
 
+void cal_gint_vl_metagga(
+    std::vector<const double*> vr_eff,
+    std::vector<const double*> vofk,
+    HContainer<std::complex<double>>* hR);
+
 void cal_gint_rho(
     const std::vector<HContainer<double>*>& DMR_vec,
     const int nspin,
@@ -33,6 +38,16 @@ void cal_gint_tau(
 void cal_gint_fvl(
     const int nspin,
     const std::vector<const double*>& vr_eff,
+    const std::vector<HContainer<double>*>& DMR_vec,
+    const bool isforce,
+    const bool isstress,
+    ModuleBase::matrix* fvl,
+    ModuleBase::matrix* svl);
+
+void cal_gint_fvl_meta(
+    const int nspin,
+    const std::vector<const double*>& vr_eff,
+    const std::vector<const double*>& vofk,
     const std::vector<HContainer<double>*>& DMR_vec,
     const bool isforce,
     const bool isstress,

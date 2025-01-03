@@ -123,28 +123,25 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     ModuleBase::timer::tick("Veff", "contributeHR");
 
     std::vector<const double*> vr_eff(4, nullptr);
+    std::vector<const double*> vofk_eff(4, nullptr);
     for (int is = 0; is < 4; is++)
     {
-        const double* vr_eff1 = this->pot->get_effective_v(is);
+        vr_eff[is] = this->pot->get_effective_v(is);
         if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
         {
-            const double* vofk_eff1 = this->pot->get_effective_vofk(is);
-            Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
-            this->GK->cal_gint(&inout);
+            vofk_eff[is] = this->pot->get_effective_vofk(is);
+            if(is == 3)
+            {
+                ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
+            }
         }
         else
         {
-            vr_eff[is] = vr_eff1;
             if(is == 3)
             {
                 ModuleGint::cal_gint_vl(vr_eff, this->hR);
             }
         }
-    }
-
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
-    {
-        this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
     }
 
     ModuleBase::timer::tick("Veff", "contributeHR");

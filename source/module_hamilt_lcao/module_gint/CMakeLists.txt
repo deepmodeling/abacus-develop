@@ -39,9 +39,11 @@ list(APPEND objects
     new_grid_tech/gint_vl.cpp
     new_grid_tech/gint_vl_metagga.cpp
     new_grid_tech/gint_vl_nspin4.cpp
+    new_grid_tech/gint_vl_metagga_nspin4.cpp
     new_grid_tech/gint_rho.cpp
     new_grid_tech/gint_tau.cpp
     new_grid_tech/gint_fvl.cpp
+    new_grid_tech/gint_fvl_meta.cpp
     new_grid_tech/localcell_info.cpp
     new_grid_tech/phi_operator.cpp
     new_grid_tech/set_ddphi.cpp

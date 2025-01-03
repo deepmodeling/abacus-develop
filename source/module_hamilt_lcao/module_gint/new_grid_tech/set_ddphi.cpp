@@ -41,7 +41,7 @@ void GintAtom::set_ddphi(
     std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
     ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
     // TODO: A better data structure such as a 3D tensor can be used to store dphi
-    std::vector<std::vector<std::vector<double>>> dphi(6, std::vector<std::vector<double>>(6, std::vector<double>(3)));
+    std::vector<std::vector<std::vector<double>>> dphi(atom_->nw, std::vector<std::vector<double>>(6, std::vector<double>(3)));
     Vec3d coord1;
     ModuleBase::Array_Pool<double> displ(6, 3);
     displ[0][0] = 0.0001; // in x direction
