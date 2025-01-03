@@ -384,41 +384,21 @@ void periodic_boundary_adjustment(Atom* atoms,
     // first adjust direct coordinates,
     // then update them into cartesian coordinates,
     //----------------------------------------------
-    for (int i=0;i<ntype;i++) {
-        Atom* atom = &atoms[i];
-        for (int j=0;j<atom->na;j++) {
-            printf("the taud is %f %f %f\n",atom->taud[j].x,atom->taud[j].y,atom->taud[j].z);
-        }
-    }
     for (int it = 0; it < ntype; it++) {
         Atom* atom = &atoms[it];
         for (int ia = 0; ia < atom->na; ia++) {
             // mohan update 2011-03-21
-            if (atom->taud[ia].x < 0)
+            for (int ik = 0; ik < 3; ik++) 
             {
-                atom->taud[ia].x += 1.0;
+                if (atom->taud[ia][ik] < 0) 
+                {
+                    atom->taud[ia][ik] += 1.0;
+                }
+                if (atom->taud[ia][ik] >= 1.0) 
+                {
+                    atom->taud[ia][ik] -= 1.0;
+                }
             }
-            if (atom->taud[ia].y < 0)
-            {
-                atom->taud[ia].y += 1.0;
-            }
-            if (atom->taud[ia].z < 0)
-            {
-                atom->taud[ia].z += 1.0;
-            }
-            if (atom->taud[ia].x >= 1.0)
-            {
-                atom->taud[ia].x -= 1.0;
-            }
-            if (atom->taud[ia].y >= 1.0)
-            {
-                atom->taud[ia].y -= 1.0;
-            }
-            if (atom->taud[ia].z >= 1.0)
-            {
-                atom->taud[ia].z -= 1.0;
-            }
-
             if (atom->taud[ia].x < 0 
                 || atom->taud[ia].y < 0
                 || atom->taud[ia].z < 0 
