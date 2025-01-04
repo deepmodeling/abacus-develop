@@ -37,6 +37,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     this->pgrid = &pgrid;
 
     bool read_error = false;
+    bool read_kin_error = false;
     if (PARAM.inp.init_chg == "file" || PARAM.inp.init_chg == "auto")
     {
         GlobalV::ofs_running << " try to read charge from file" << std::endl;
@@ -101,72 +102,100 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             }
         }
 
+        if (read_error)
+        {
+            const std::string warn_msg
+                = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
+                  " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the "
+                  "directory.\n";
+            std::cout << std::endl << warn_msg;
+            if (PARAM.inp.init_chg == "file")
+            {
+                ModuleBase::WARNING_QUIT("Charge::init_rho",
+                                         "Failed to read in charge density from file.\nIf you want to use atomic "
+                                         "charge initialization, \nplease set init_chg to atomic in INPUT.");
+            }
+        }
+
         if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
         {
-            GlobalV::ofs_running << " try to read kinetic energy density from file" << std::endl;
-            // try to read charge from binary file first, which is the same as QE
-            std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->ngmc, {0.0, 0.0});
-            std::vector<std::complex<double>*> kin_g;
-            for (int is = 0; is < PARAM.inp.nspin; is++)
+            // If the charge density is not read in, then the kinetic energy density is not read in either
+            if (!read_error)
             {
-                kin_g.push_back(kin_g_space.data() + is * this->ngmc);
-            }
-
-            std::stringstream binary;
-            binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-TAU-DENSITY.restart";
-            if (ModuleIO::read_rhog(binary.str(), rhopw, kin_g.data()))
-            {
-                GlobalV::ofs_running << " Read in the kinetic energy density: " << binary.str() << std::endl;
-                for (int is = 0; is < PARAM.inp.nspin; ++is)
+                GlobalV::ofs_running << " try to read kinetic energy density from file" << std::endl;
+                // try to read charge from binary file first, which is the same as QE
+                std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->ngmc, {0.0, 0.0});
+                std::vector<std::complex<double>*> kin_g;
+                for (int is = 0; is < PARAM.inp.nspin; is++)
                 {
-                    rhopw->recip2real(kin_g[is], this->kin_r[is]);
+                    kin_g.push_back(kin_g_space.data() + is * this->ngmc);
+                }
+
+                std::stringstream binary;
+                binary << PARAM.globalv.global_readin_dir << PARAM.inp.suffix + "-TAU-DENSITY.restart";
+                if (ModuleIO::read_rhog(binary.str(), rhopw, kin_g.data()))
+                {
+                    GlobalV::ofs_running << " Read in the kinetic energy density: " << binary.str() << std::endl;
+                    for (int is = 0; is < PARAM.inp.nspin; ++is)
+                    {
+                        rhopw->recip2real(kin_g[is], this->kin_r[is]);
+                    }
+                }
+                else
+                {
+                    for (int is = 0; is < PARAM.inp.nspin; is++)
+                    {
+                        std::stringstream ssc;
+                        ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
+                        // mohan update 2012-02-10, sunliang update 2023-03-09
+                        if (ModuleIO::read_vdata_palgrid(
+                                pgrid,
+                                (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                                GlobalV::ofs_running,
+                                ssc.str(),
+                                this->kin_r[is],
+                                ucell.nat))
+                        {
+                            GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
+                        }
+                        else
+                        {
+                            read_kin_error = true;
+                            std::cout << " WARNING: \"init_chg\" is enabled but ABACUS failed to read kinetic energy "
+                                         "density from file.\n"
+                                         " Please check if there is SPINX_TAU.cube (X=1,...) or "
+                                         "{suffix}-TAU-DENSITY.restart in the directory.\n"
+                                      << std::endl;
+                            break;
+                        }
+                    }
                 }
             }
             else
             {
-                for (int is = 0; is < PARAM.inp.nspin; is++)
-                {
-                    std::stringstream ssc;
-                    ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_TAU.cube";
-                    // mohan update 2012-02-10, sunliang update 2023-03-09
-                    if (ModuleIO::read_vdata_palgrid(
-                            pgrid,
-                            (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
-                            GlobalV::ofs_running,
-                            ssc.str(),
-                            this->kin_r[is],
-                            ucell.nat))
-                    {
-                        GlobalV::ofs_running << " Read in the kinetic energy density: " << ssc.str() << std::endl;
-                    }
-                }
+                read_kin_error = true;
             }
         }
     }
-    if (read_error)
+
+    if (PARAM.inp.init_chg == "atomic" || read_error) // mohan add 2007-10-17
     {
-        const std::string warn_msg = " WARNING: \"init_chg\" is enabled but ABACUS failed to read charge density from file.\n"
-                                     " Please check if there is SPINX_CHG.cube (X=1,...) or {suffix}-CHARGE-DENSITY.restart in the directory.\n";
-        std::cout << std::endl << warn_msg;
-        if (PARAM.inp.init_chg == "auto")
+        if (read_error)
         {
-            std::cout << " Charge::init_rho: use atomic initialization instead." << std::endl << std::endl;
+            std::cout << " Charge::init_rho: use atomic initialization instead." << std::endl;
         }
-        else if (PARAM.inp.init_chg == "file")
-        {
-            ModuleBase::WARNING_QUIT("Charge::init_rho", "Failed to read in charge density from file.\nIf you want to use atomic charge initialization, \nplease set init_chg to atomic in INPUT.");
-        }
+        this->atomic_rho(PARAM.inp.nspin, ucell.omega, rho, strucFac, ucell);
     }
 
-    if (PARAM.inp.init_chg == "atomic" || 
-        (PARAM.inp.init_chg == "auto" && read_error)) // mohan add 2007-10-17
+    // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
+    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        this->atomic_rho(PARAM.inp.nspin, ucell.omega, rho, strucFac, ucell);
-
-        // liuyu 2023-06-29 : move here from atomic_rho(), which will be called several times in charge extrapolation
-        // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (PARAM.inp.init_chg == "atomic" || read_kin_error)
         {
+            if (read_kin_error)
+            {
+                std::cout << " Charge::init_rho: init kinetic energy density from rho." << std::endl;
+            }
             const double pi = 3.141592653589790;
             const double fact = (3.0 / 5.0) * pow(3.0 * pi * pi, 2.0 / 3.0);
             for (int is = 0; is < PARAM.inp.nspin; ++is)
