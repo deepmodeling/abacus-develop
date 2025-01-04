@@ -152,9 +152,3 @@ K_Vectors::K_Vectors()
 K_Vectors::~K_Vectors()
 {
 }
-WF_atomic::WF_atomic()
-{
-}
-WF_atomic::~WF_atomic()
-{
-}

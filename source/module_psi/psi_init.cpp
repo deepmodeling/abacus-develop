@@ -84,14 +84,9 @@ template <typename T, typename Device>
 void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         psi::Psi<T, Device>* kspw_psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
-                                        std::ofstream& ofs_running,
-                                        const bool is_already_initpsi)
+                                        std::ofstream& ofs_running)
 {
     if (kspw_psi->get_nbands() == 0 || GlobalV::MY_STOGROUP != 0)
-    {
-        return;
-    }
-    if (is_already_initpsi)
     {
         return;
     }

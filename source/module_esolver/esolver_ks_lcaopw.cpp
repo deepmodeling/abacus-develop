@@ -106,7 +106,7 @@ namespace ModuleESolver
                 this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
                                                                            ucell.symm,
                                                                            &this->kv,
-                                                                           this->p_psi_init,
+                                                                           this->psi_local,
                                                                            this->kspw_psi,
                                                                            this->pw_wfc,
                                                                            this->pw_rho,

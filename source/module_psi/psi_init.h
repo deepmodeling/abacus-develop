@@ -37,8 +37,7 @@ class PSIInit
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,
                         hamilt::Hamilt<T, Device>* p_hamilt,
-                        std::ofstream& ofs_running,
-                        const bool is_already_initpsi);
+                        std::ofstream& ofs_running);
 
     /**
      * @brief initialize NAOs in plane wave basis, only for LCAO_IN_PW

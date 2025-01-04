@@ -9,6 +9,7 @@
 #include "../psi_initializer_nao_random.h"
 #include "../psi_initializer_random.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
+#include "module_cell/klist.h"
 
 /*
 =========================
@@ -89,18 +90,21 @@ std::complex<double>* Structure_Factor::get_sk(int ik, int it, int ia, ModulePW:
     return sk;
 }
 
+int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
+{
+    return ik;
+}
+
 class PsiIntializerUnitTest : public ::testing::Test {
     public:
         Structure_Factor* p_sf = nullptr;
         ModulePW::PW_Basis_K* p_pw_wfc = nullptr;
         UnitCell* p_ucell = nullptr;
         pseudopot_cell_vnl* p_pspot_vnl = nullptr;
-        #ifdef __MPI
         Parallel_Kpoints* p_parakpts = nullptr;
-        #endif
         int random_seed = 1;
 
-        psi_initializer<std::complex<double>, base_device::DEVICE_CPU>* psi_init;
+        psi_initializer<std::complex<double>>* psi_init;
 
       private:
       protected:
@@ -111,9 +115,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pw_wfc = new ModulePW::PW_Basis_K();
             this->p_ucell = new UnitCell();
             this->p_pspot_vnl = new pseudopot_cell_vnl();
-            #ifdef __MPI
             this->p_parakpts = new Parallel_Kpoints();
-            #endif
             // mock
             PARAM.input.nbands = 1;
             PARAM.input.nspin = 1;
@@ -259,10 +261,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
 
             this->p_pspot_vnl->lmaxkb = 0;
 
-            #ifdef __MPI
             this->p_parakpts->startk_pool.resize(1);
             this->p_parakpts->startk_pool[0] = 0;
-            #endif
 
         }
         void TearDown() override
@@ -271,250 +271,81 @@ class PsiIntializerUnitTest : public ::testing::Test {
             delete this->p_pw_wfc;
             delete this->p_ucell;
             delete this->p_pspot_vnl;
-            #ifdef __MPI
             delete this->p_parakpts;
-            #endif
         }
 };
 
 TEST_F(PsiIntializerUnitTest, ConstructorRandom) {
-    this->psi_initer = new psi_initializer_random<std::complex<double>, base_device::DEVICE_CPU>();
-    EXPECT_EQ("random", this->psi_initer->method());
+    this->psi_init = new psi_initializer_random<std::complex<double>>();
+    EXPECT_EQ("random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorAtomic) {
-    this->psi_initer = new psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>();
-    EXPECT_EQ("atomic", this->psi_initer->method());
+    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    EXPECT_EQ("atomic", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorAtomicRandom) {
-    this->psi_initer = new psi_initializer_atomic_random<std::complex<double>, base_device::DEVICE_CPU>();
-    EXPECT_EQ("atomic+random", this->psi_initer->method());
+    this->psi_init = new psi_initializer_atomic_random<std::complex<double>>();
+    EXPECT_EQ("atomic+random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorNao) {
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-    EXPECT_EQ("nao", this->psi_initer->method());
+    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    EXPECT_EQ("nao", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, ConstructorNaoRandom) {
-    this->psi_initer = new psi_initializer_nao_random<std::complex<double>, base_device::DEVICE_CPU>();
-    EXPECT_EQ("nao+random", this->psi_initer->method());
+    this->psi_init = new psi_initializer_nao_random<std::complex<double>>();
+    EXPECT_EQ("nao+random", this->psi_init->method());
 }
 
 TEST_F(PsiIntializerUnitTest, CastToT) {
-    this->psi_initer = new psi_initializer_random<std::complex<double>, base_device::DEVICE_CPU>();
+    this->psi_init = new psi_initializer_random<std::complex<double>>();
     std::complex<double> cd = {1.0, 2.0};
     std::complex<float> cf = {1.0, 2.0};
     double d = 1.0;
     float f = 1.0;
-    EXPECT_EQ(this->psi_initer->template cast_to_T<std::complex<double>>(cd), cd);
-    EXPECT_EQ(this->psi_initer->template cast_to_T<std::complex<float>>(cd), cf);
-    EXPECT_EQ(this->psi_initer->template cast_to_T<double>(cd), d);
-    EXPECT_EQ(this->psi_initer->template cast_to_T<float>(cd), f);
-}
-
-TEST_F(PsiIntializerUnitTest, AllocateRandom) {
-    PARAM.input.init_wfc = "random";
-    this->psi_initer = new psi_initializer_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->p_parakpts, 
-                               this->random_seed,
-                               this->p_pspot_vnl,
-                               GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    EXPECT_EQ(0, this->psi_initer->nbands_complem());
-    EXPECT_EQ(1, psi->get_nk());
-    EXPECT_EQ(1, psi->get_nbands());
-    EXPECT_EQ(1, psi->get_nbasis());
-    auto psig = this->psi_initer->share_psig().lock();
-    EXPECT_EQ(1, psig->get_nk());
-    EXPECT_EQ(1, psig->get_nbands());
-    EXPECT_EQ(1, psig->get_nbasis());
-    delete psi;
-}
-
-TEST_F(PsiIntializerUnitTest, AllocateAtomic) {
-    PARAM.input.init_wfc = "atomic";
-    this->psi_initer = new psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->p_parakpts, 
-                               this->random_seed,
-                               this->p_pspot_vnl,
-                               GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    EXPECT_EQ(0, this->psi_initer->nbands_complem());
-    EXPECT_EQ(1, psi->get_nk());
-    EXPECT_EQ(1, psi->get_nbands());
-    EXPECT_EQ(1, psi->get_nbasis());
-    auto psig = this->psi_initer->share_psig().lock();
-    EXPECT_EQ(1, psig->get_nk());
-    EXPECT_EQ(4, psig->get_nbands());
-    EXPECT_EQ(1, psig->get_nbasis());
-    delete psi;
-}
-
-TEST_F(PsiIntializerUnitTest, AllocateAtomicRandom) {
-    PARAM.input.init_wfc = "atomic+random";
-    this->psi_initer = new psi_initializer_atomic_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->p_parakpts, 
-                               this->random_seed,
-                               this->p_pspot_vnl,
-                               GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    EXPECT_EQ(0, this->psi_initer->nbands_complem());
-    EXPECT_EQ(1, psi->get_nk());
-    EXPECT_EQ(1, psi->get_nbands());
-    EXPECT_EQ(1, psi->get_nbasis());
-    auto psig = this->psi_initer->share_psig().lock();
-    EXPECT_EQ(1, psig->get_nk());
-    EXPECT_EQ(4, psig->get_nbands());
-    EXPECT_EQ(1, psig->get_nbasis());
-    delete psi;
-}
-
-TEST_F(PsiIntializerUnitTest, AllocateNao) {
-    PARAM.input.init_wfc = "nao";
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->p_parakpts, 
-                               this->random_seed,
-                               this->p_pspot_vnl,
-                               GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    EXPECT_EQ(0, this->psi_initer->nbands_complem());
-    EXPECT_EQ(1, psi->get_nk());
-    EXPECT_EQ(1, psi->get_nbands());
-    EXPECT_EQ(1, psi->get_nbasis());
-    auto psig = this->psi_initer->share_psig().lock();
-    EXPECT_EQ(1, psig->get_nk());
-    EXPECT_EQ(13, psig->get_nbands());
-    EXPECT_EQ(1, psig->get_nbasis());
-    delete psi;
-}
-
-TEST_F(PsiIntializerUnitTest, AllocateNaoRandom) {
-    PARAM.input.init_wfc = "nao+random";
-    this->psi_initer = new psi_initializer_nao_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->p_parakpts, 
-                               this->random_seed,
-                               this->p_pspot_vnl,
-                               GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    EXPECT_EQ(0, this->psi_initer->nbands_complem());
-    EXPECT_EQ(1, psi->get_nk());
-    EXPECT_EQ(1, psi->get_nbands());
-    EXPECT_EQ(1, psi->get_nbasis());
-    auto psig = this->psi_initer->share_psig().lock();
-    EXPECT_EQ(1, psig->get_nk());
-    EXPECT_EQ(13, psig->get_nbands());
-    EXPECT_EQ(1, psig->get_nbasis());
-    delete psi;
+    EXPECT_EQ(this->psi_init->template cast_to_T<std::complex<double>>(cd), cd);
+    EXPECT_EQ(this->psi_init->template cast_to_T<std::complex<float>>(cd), cf);
+    EXPECT_EQ(this->psi_init->template cast_to_T<double>(cd), d);
+    EXPECT_EQ(this->psi_init->template cast_to_T<float>(cd), f);
 }
 
 TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
     PARAM.input.init_wfc = "random";
-    this->psi_initer = new psi_initializer_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_random<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
     PARAM.input.init_wfc = "atomic";
-    this->psi_initer = new psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -525,25 +356,19 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc *= 2;
-    this->psi_initer = new psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     PARAM.input.nspin = 1;
     PARAM.sys.npol = 1;
@@ -558,25 +383,19 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
     PARAM.sys.npol = 2;
     this->p_ucell->atoms[0].ncpp.has_so = true;
     this->p_ucell->natomwfc *= 2;
-    this->psi_initer = new psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_atomic<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     PARAM.input.nspin = 1;
     PARAM.sys.npol = 1;
@@ -587,75 +406,57 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
 
 TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
     PARAM.input.init_wfc = "atomic+random";
-    this->psi_initer = new psi_initializer_atomic_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_atomic_random<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
 
 TEST_F(PsiIntializerUnitTest, CalPsigNao) {
     PARAM.input.init_wfc = "nao";
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
 
 TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
     PARAM.input.init_wfc = "nao+random";
-    this->psi_initer = new psi_initializer_nao_random<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_nao_random<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -667,25 +468,19 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     this->p_ucell->atoms[0].ncpp.has_so = false;
     PARAM.sys.domag = false;
     PARAM.sys.domag_z = false;
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -697,25 +492,19 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
     this->p_ucell->atoms[0].ncpp.has_so = true;
     PARAM.sys.domag = false;
     PARAM.sys.domag_z = false;
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }
@@ -727,25 +516,19 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     this->p_ucell->atoms[0].ncpp.has_so = true;
     PARAM.sys.domag = true;
     PARAM.sys.domag_z = false;
-    this->psi_initer = new psi_initializer_nao<std::complex<double>, base_device::DEVICE_CPU>();
-#ifdef __MPI
-    this->psi_initer->initialize(this->p_sf, 
+    this->psi_init = new psi_initializer_nao<std::complex<double>>();
+    this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
                                this->p_parakpts, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
-    #else
-    this->psi_initer->initialize(this->p_sf, 
-                               this->p_pw_wfc, 
-                               this->p_ucell, 
-                               this->random_seed, 
-                               this->p_pspot_vnl);
-    #endif
-    this->psi_initer->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
-    psi::Psi<std::complex<double>>* psi = this->psi_initer->allocate();
-    this->psi_initer->proj_ao_onkG(0);
+    this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
+    const int nbands_start = this->psi_init->nbands_start();
+    const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
+    psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
+    this->psi_init->init_psig(psi->get_pointer(), 0);
     EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
     delete psi;
 }

@@ -386,27 +386,11 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, nullptr, this->kv.get_nks());
     }
-    // after init_rho (in pelec->init_scf), we have rho now.
-    // before hamilt2density, we update Hk and initialize psi
 
-    // before_scf function will be called everytime before scf. However, once
-    // atomic coordinates changed, structure factor will change, therefore all
-    // atomwise properties will change. So we need to reinitialize psi every
-    // time before scf. But for random wavefunction, we dont, because random
-    // wavefunction is not related to atomic coordinates. What the old strategy
-    // does is only to initialize for once...
-    if (((PARAM.inp.init_wfc == "random") && (istep == 0)) || (PARAM.inp.init_wfc != "random"))
+    if (!this->already_initpsi)
     {
-        this->p_psi_init->initialize_psi(this->psi,
-                                         this->kspw_psi,
-                                         this->p_hamilt,
-                                         GlobalV::ofs_running,
-                                         this->already_initpsi);
-
-        if (this->already_initpsi == false)
-        {
-            this->already_initpsi = true;
-        }
+        this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
+        this->already_initpsi = true;
     }
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");

@@ -165,18 +165,6 @@ Structure_Factor::Structure_Factor()
 Structure_Factor::~Structure_Factor()
 {
 }
-WF_atomic::WF_atomic()
-{
-}
-WF_atomic::~WF_atomic()
-{
-}
-wavefunc::wavefunc()
-{
-}
-wavefunc::~wavefunc()
-{
-}
 UnitCell::UnitCell()
 {
     itia2iat.create(1, 1);
