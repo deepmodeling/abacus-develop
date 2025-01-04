@@ -3,6 +3,7 @@
 
 #ifdef __DEEPKS
 
+#include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
@@ -309,9 +310,6 @@ class LCAO_Deepks
     // as well as subroutines that prints the results for checking
 
     // The file contains 8 subroutines:
-    // 1. cal_descriptor : obtains descriptors which are eigenvalues of pdm
-    //       by calling torch::linalg::eigh
-    // 2. check_descriptor : prints descriptor for checking
     // 3. cal_gvx : gvx is used for training with force label, which is gradient of descriptors,
     //       calculated by d(des)/dX = d(pdm)/dX * d(des)/d(pdm) = gdmx * gvdm
     //       using einsum
@@ -329,16 +327,6 @@ class LCAO_Deepks
     // 9. check_gedm : prints gedm for checking
 
   public:
-    /// Calculates descriptors
-    /// which are eigenvalues of pdm in blocks of I_n_l
-    void cal_descriptor(const int nat, std::vector<torch::Tensor>& descriptor);
-    /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell,
-                          const std::string& out_dir,
-                          const std::vector<torch::Tensor>& descriptor);
-
-    void cal_descriptor_equiv(const int nat, std::vector<torch::Tensor>& descriptor);
-
     /// calculates gradient of descriptors w.r.t atomic positions
     ///----------------------------------------------------
     /// m, n: 2*l+1

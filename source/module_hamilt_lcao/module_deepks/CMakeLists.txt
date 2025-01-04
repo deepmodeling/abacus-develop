@@ -1,6 +1,7 @@
 if(ENABLE_DEEPKS)
   list(APPEND objects
       LCAO_deepks.cpp
+      deepks_descriptor.cpp
       deepks_force.cpp
       deepks_orbital.cpp
       deepks_orbpre.cpp
@@ -16,8 +17,6 @@ if(ENABLE_DEEPKS)
       cal_gdmepsl.cpp
       cal_gedm.cpp
       cal_gvx.cpp      
-      cal_descriptor.cpp
-      
   )
 
   add_library(

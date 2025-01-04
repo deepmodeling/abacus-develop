@@ -298,8 +298,18 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
 
         std::vector<torch::Tensor> descriptor;
-        ld->cal_descriptor(nat, descriptor); // final descriptor
-        ld->check_descriptor(ucell, PARAM.globalv.global_out_dir, descriptor);
+        DeePKS_domain::cal_descriptor(nat,
+                                      ld->inlmax,
+                                      ld->inl_l,
+                                      ld->pdm,
+                                      descriptor,
+                                      ld->des_per_atom); // final descriptor
+        DeePKS_domain::check_descriptor(ld->inlmax,
+                                        ld->des_per_atom,
+                                        ld->inl_l,
+                                        ucell,
+                                        PARAM.globalv.global_out_dir,
+                                        descriptor);
 
         if (PARAM.inp.deepks_out_labels)
         {

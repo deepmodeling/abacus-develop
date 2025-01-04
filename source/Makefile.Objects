@@ -192,6 +192,7 @@ OBJS_CELL=atom_pseudo.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_force.o\
+        deepks_descriptor.o\
         deepks_orbital.o\
         deepks_orbpre.o\
         deepks_vdpre.o\
@@ -206,7 +207,6 @@ OBJS_DEEPKS=LCAO_deepks.o\
         cal_gdmepsl.o\
         cal_gedm.o\
         cal_gvx.o\
-        cal_descriptor.o\
         
 
 OBJS_ELECSTAT=elecstate.o\

@@ -198,8 +198,18 @@ void test_deepks::check_gdmx(torch::Tensor& gdmx)
 
 void test_deepks::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
-    GlobalC::ld.cal_descriptor(ucell.nat, descriptor);
-    GlobalC::ld.check_descriptor(ucell, "./", descriptor);
+    DeePKS_domain::cal_descriptor(ucell.nat,
+                                  GlobalC::ld.inlmax,
+                                  GlobalC::ld.inl_l,
+                                  GlobalC::ld.pdm,
+                                  descriptor,
+                                  GlobalC::ld.des_per_atom);
+    DeePKS_domain::check_descriptor(GlobalC::ld.inlmax,
+                                    GlobalC::ld.des_per_atom,
+                                    GlobalC::ld.inl_l,
+                                    ucell,
+                                    "./",
+                                    descriptor);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
 
