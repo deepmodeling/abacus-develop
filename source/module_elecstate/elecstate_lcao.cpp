@@ -8,6 +8,7 @@
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
+#include "elecstate_lcao_cal_tau.h"
 
 #include <vector>
 
@@ -64,7 +65,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        this->cal_tau(psi);
+        elecstate::lcao_cal_tau_k(gint_k, this->charge);
     }
 
     this->charge->renormalize_rho();
@@ -99,7 +100,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
     {
-        this->cal_tau(psi);
+        elecstate::lcao_cal_tau_gamma(gint_gamma, this->charge);
     }
 
     this->charge->renormalize_rho();
