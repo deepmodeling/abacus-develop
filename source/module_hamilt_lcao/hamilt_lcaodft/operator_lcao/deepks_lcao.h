@@ -61,6 +61,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     // LCAO_Deepks* ld = nullptr;
 
     const UnitCell* ucell = nullptr;
+    Grid_Driver* gridD = nullptr;
 
     const Grid_Driver* gd = nullptr;
 

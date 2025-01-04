@@ -36,6 +36,8 @@ class pseudopot_cell_vnl
 
     void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
+    void rescale_vnl(const double& omega_in);
+
     template <typename FPTYPE, typename Device>
     void getvnl(Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
 
@@ -199,6 +201,8 @@ class pseudopot_cell_vnl
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Soc soc;
+
+    double omega_old = 0;
 
     /**
      * @brief Compute interpolation table qrad

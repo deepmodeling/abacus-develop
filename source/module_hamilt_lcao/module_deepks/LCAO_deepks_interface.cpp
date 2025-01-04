@@ -69,7 +69,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
         if (PARAM.inp.deepks_bandgap)
         {
-            const int nocc = PARAM.inp.nelec / 2;
+            const int nocc = (PARAM.inp.nelec+1) / 2;
             std::vector<double> o_tot(nks);
             for (int iks = 0; iks < nks; ++iks)
             {
