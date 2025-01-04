@@ -155,18 +155,17 @@ void test_deepks::check_pdm()
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
 
-void test_deepks::check_gdmx()
+void test_deepks::check_gdmx(torch::Tensor& gdmx)
 {
-    GlobalC::ld.init_gdmx(ucell.nat);
     if (PARAM.sys.gamma_only_local)
     {
-        GlobalC::ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, 0);
+        GlobalC::ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmx);
     }
     else
     {
-        GlobalC::ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, 0);
+        GlobalC::ld.cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmx);
     }
-    GlobalC::ld.check_gdmx(ucell.nat);
+    GlobalC::ld.check_gdmx(ucell.nat, gdmx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -193,19 +192,20 @@ void test_deepks::check_gdmx()
     }
 }
 
-void test_deepks::check_descriptor()
+void test_deepks::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
-    GlobalC::ld.cal_descriptor(ucell.nat);
-    GlobalC::ld.check_descriptor(ucell,"./");
+    GlobalC::ld.cal_descriptor(ucell.nat, descriptor);
+    GlobalC::ld.check_descriptor(ucell,"./",descriptor);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
 
-void test_deepks::check_gvx()
+void test_deepks::check_gvx(torch::Tensor& gdmx)
 {
     std::vector<torch::Tensor> gevdm;
     GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
-    GlobalC::ld.cal_gvx(ucell.nat, gevdm);
-    GlobalC::ld.check_gvx(ucell.nat);
+    torch::Tensor gvx;
+    GlobalC::ld.cal_gvx(ucell.nat, gevdm, gdmx, gvx);
+    GlobalC::ld.check_gvx(ucell.nat, gvx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -231,7 +231,7 @@ void test_deepks::check_gvx()
     }
 }
 
-void test_deepks::check_edelta()
+void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
 {
     GlobalC::ld.load_model("model.ptg");
     if (PARAM.sys.gamma_only_local)
@@ -242,7 +242,7 @@ void test_deepks::check_edelta()
     {
         GlobalC::ld.allocate_V_delta(ucell.nat, kv.nkstot);
     }
-    GlobalC::ld.cal_gedm(ucell.nat);
+    GlobalC::ld.cal_gedm(ucell.nat, descriptor);
 
     std::ofstream ofs("E_delta.dat");
     ofs << std::setprecision(10) << GlobalC::ld.E_delta << std::endl;

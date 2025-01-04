@@ -35,12 +35,15 @@ int calculate()
 	test.check_phialpha();
 
 	test.check_pdm();
-	test.check_gdmx();
 
-	test.check_descriptor();
-	test.check_gvx();
+    torch::Tensor gdmx;
+	test.check_gdmx(gdmx);
 
-	test.check_edelta();
+    std::vector<torch::Tensor> descriptor;
+	test.check_descriptor(descriptor);
+	test.check_gvx(gdmx);
+
+	test.check_edelta(descriptor);
 	test.check_e_deltabands();
 	test.check_f_delta_and_stress_delta();
 
