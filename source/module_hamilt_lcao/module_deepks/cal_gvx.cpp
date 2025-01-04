@@ -99,10 +99,11 @@ void LCAO_Deepks::check_gvx(const int nat, const torch::Tensor& gvx)
     std::ofstream ofs_y;
     std::ofstream ofs_z;
 
-    ofs_x << std::setprecision(12);
-    ofs_y << std::setprecision(12);
-    ofs_z << std::setprecision(12);
-
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+    
     auto accessor = gvx.accessor<double, 4>();
 
     for (int ia = 0; ia < nat; ia++)
@@ -125,7 +126,6 @@ void LCAO_Deepks::check_gvx(const int nat, const torch::Tensor& gvx)
         {
             for (int inl = 0; inl < inlmax / nat; inl++)
             {
-                int nm = 2 * inl_l[inl] + 1;
                 {
                     ofs_x << accessor[ia][0][ib][inl] << " ";
                     ofs_y << accessor[ia][1][ib][inl] << " ";
