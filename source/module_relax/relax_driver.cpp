@@ -95,7 +95,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             // because I move out the dependence on GlobalV from UnitCell::print_stru_file
             // so its parameter is calculated here
             bool need_orb = PARAM.inp.basis_type == "pw";
-            need_orb = need_orb && PARAM.inp.psi_initializer;
             need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3) == "nao";
             need_orb = need_orb || PARAM.inp.basis_type == "lcao";
             need_orb = need_orb || PARAM.inp.basis_type == "lcao_in_pw";

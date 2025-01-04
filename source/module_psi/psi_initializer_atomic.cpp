@@ -26,8 +26,8 @@
 //     std::transform(pswfcr.begin(), pswfcr.end(), pswfcr.begin(), [norm](T pswfc) { return pswfc / norm; });
 // }
 
-template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::allocate_table()
+template <typename T>
+void psi_initializer_atomic<T>::allocate_ps_table()
 {
    // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell_->ntype;
@@ -38,7 +38,7 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
@@ -46,19 +46,19 @@ void psi_initializer_atomic<T, Device>::allocate_table()
     this->ovlp_pswfcjlq_.zero_out();
 }
 
-template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,                                //< structure factor
-                                                   ModulePW::PW_Basis_K* pw_wfc,                        //< planewave basis
-                                                   UnitCell* p_ucell,                                   //< unit cell
-                                                   Parallel_Kpoints* p_parakpts,                        //< parallel kpoints
-                                                   const int& random_seed,                          //< random seed
-                                                   pseudopot_cell_vnl* p_pspot_nl,
-                                                   const int& rank)
+template <typename T>
+void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
+                                           const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+                                           const UnitCell* p_ucell,            //< unit cell
+                                           const Parallel_Kpoints* p_parakpts, //< parallel kpoints
+                                           const int& random_seed,       //< random seed
+                                           const pseudopot_cell_vnl* p_pspot_nl,
+                                           const int& rank)
 {
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
     if(p_pspot_nl == nullptr)
     {
-        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::initialize", 
+        ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::initialize", 
                                  "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
     }
     // import
@@ -68,8 +68,10 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
     this->p_parakpts_ = p_parakpts;
     this->p_pspot_nl_ = p_pspot_nl;
     this->random_seed_ = random_seed;
+    this->nbands_start_ = std::max(this->p_ucell_->natomwfc, PARAM.inp.nbands);
+    this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
     // allocate
-    this->allocate_table();
+    this->allocate_ps_table();
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -77,8 +79,8 @@ void psi_initializer_atomic<T, Device>::initialize(Structure_Factor* sf,        
     ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
 }
 
-template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::tabulate()
+template <typename T>
+void psi_initializer_atomic<T>::tabulate()
 {
     if (PARAM.inp.use_paw)
     {
@@ -233,17 +235,16 @@ std::complex<double> phase_factor(double arg, int mode)
     else { return std::complex<double>(1,0); }
 }
 
-template <typename T, typename Device>
-void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
+template <typename T>
+void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "proj_ao_onkG");
-    const int ik_psig = (this->psig_->get_nk() == 1) ? 0 : ik;
-    this->psig_->fix_k(ik_psig);
-    //this->print_status(psi);
+    ModuleBase::timer::tick("psi_initializer_atomic", "init_psig");
     const int npw = this->pw_wfc_->npwk[ik];
+    const int npwk_max = this->pw_wfc_->npwk_max;
     int lmax = this->p_ucell_->lmax_ppwf;
     const int total_lm = (lmax + 1) * (lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
+    ModuleBase::GlobalFunc::ZEROS(psig, PARAM.globalv.npol * this->nbands_start_ * npwk_max);
 
     std::vector<std::complex<double>> aux(npw);
     std::vector<double> chiaux(npw);
@@ -319,22 +320,16 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                                 }
                                                 for(int ig = 0; ig < npw; ig++)
                                                 {
-                                                    (*(this->psig_))(index, 
-                                                                    ig + this->pw_wfc_->npwk_max*is ) =
-                                                                        this->template cast_to_T<T>(
-                                                                            lphase * cg_coeffs[is] * sk[ig] * aux[ig] * ovlp_pswfcjlg[ig]
-                                                                        );
+                                                    psig[(2 * index + is) * npwk_max + ig] = this->template cast_to_T<T>(
+                                                        lphase * cg_coeffs[is] * sk[ig] * aux[ig] * ovlp_pswfcjlg[ig]);
                                                 }
                                             }
                                             else
                                             {
-                                                for(int ig=0; ig < npw; ig++)
+                                                for (int ig = 0; ig < npw; ig++)
                                                 {
-                                                    (*(this->psig_))(index, 
-                                                                    ig + this->pw_wfc_->npwk_max*is ) = 
-                                                                        this->template cast_to_T<T>(
-                                                                            std::complex<double>(0.0, 0.0)
-                                                                            );
+                                                    psig[(2 * index + is) * npwk_max + ig]
+                                                        = this->template cast_to_T<T>(std::complex<double>(0.0, 0.0));
                                                 }
                                             }
                                         }
@@ -394,7 +389,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                     if(index+2*l+1 > this->p_ucell_->natomwfc)
                                     {
                                         std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                        //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::proj_ao_onkG()","error: too many wfcs");
+                                        //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::init_psig()","error: too many wfcs");
                                     }
                                     for(int ig = 0;ig<npw;ig++)
                                     {
@@ -408,17 +403,17 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                         fdw = phase_factor(0.5*alpha, -1)*aux[ig];
                                         //build the orthogonal wfc
                                         //first rotation with angle (alpha + ModuleBase::PI) around (OX)
-                                        (*(this->psig_))(index, ig) = 
-                                            this->template cast_to_T<T>(phase_factor(0.5*gamma, 0)*fup);
-                                        (*(this->psig_))(index, ig+this->pw_wfc_->npwk_max) = 
-                                            this->template cast_to_T<T>(phase_factor(-0.5*gamma, 0)*fdw);
+                                        psig[index * 2 * npwk_max + ig]
+                                            = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
+                                        psig[(index * 2 + 1) * npwk_max + ig]
+                                            = this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
                                         //second rotation with angle gamma around(OZ)
                                         fup = phase_factor(0.5*(alpha + ModuleBase::PI),  1)*aux[ig];
                                         fdw = phase_factor(0.5*(alpha + ModuleBase::PI), -1)*aux[ig];
-                                        (*(this->psig_))(index+2*l+1, ig) = 
-                                            this->template cast_to_T<T>(phase_factor(0.5*gamma, 0)*fup);
-                                        (*(this->psig_))(index+2*l+1, ig+this->pw_wfc_->npwk_max) = 
-                                            this->template cast_to_T<T>(phase_factor(-0.5*gamma, 0)*fdw);
+                                        psig[(index + 2 * l + 1) * 2 * npwk_max + ig]
+                                            = this->template cast_to_T<T>(phase_factor(0.5 * gamma, 0) * fup);
+                                        psig[((index + 2 * l + 1) * 2 + 1) * npwk_max + ig]
+                                            = this->template cast_to_T<T>(phase_factor(-0.5 * gamma, 0) * fdw);
                                     }
                                     index++;
                                 }
@@ -440,7 +435,7 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                 if(index+2*l+1 > this->p_ucell_->natomwfc)
                                 {
                                     std::cout<<__FILE__<<__LINE__<<" "<<index<<" "<<this->p_ucell_->natomwfc<<std::endl;
-                                    //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T, Device>::proj_ao_onkG()","error: too many wfcs");
+                                    //ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::init_psig()","error: too many wfcs");
                                 }
                                 for(int ig = 0;ig<npw;ig++)
                                 {
@@ -450,29 +445,21 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                                 //first, rotation with angle alpha around(OX)
                                 for(int ig = 0; ig<npw; ig++)
                                 {
-                                     fup = cos(0.5*alpha) * aux[ig];
-                                     fdown = ModuleBase::IMAG_UNIT * sin(0.5* alpha) * aux[ig];
-                                     //build the orthogonal wfc
-                                     //first rotation with angle(alpha+ModuleBase::PI) around(OX)
-                                     (*(this->psig_))(index, ig) = 
-                                        this->template cast_to_T<T>(
-                                            (cos(0.5*gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup
-                                                );
-                                     (*(this->psig_))(index, ig+ this->pw_wfc_->npwk_max) = 
-                                        this->template cast_to_T<T>(
-                                            (cos(0.5*gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown
-                                                );
-                                     //second rotation with angle gamma around(OZ)
-                                     fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-                                     fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
-                                     (*(this->psig_))(index+2*l+1, ig) = 
-                                        this->template cast_to_T<T>(
-                                            (cos(0.5*gamman) + ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fup
-                                                );
-                                     (*(this->psig_))(index+2*l+1, ig+ this->pw_wfc_->npwk_max) = 
-                                        this->template cast_to_T<T>(
-                                            (cos(0.5*gamman) - ModuleBase::IMAG_UNIT * sin(0.5*gamman)) * fdown
-                                                );
+                                    fup = cos(0.5 * alpha) * aux[ig];
+                                    fdown = ModuleBase::IMAG_UNIT * sin(0.5 * alpha) * aux[ig];
+                                    // build the orthogonal wfc
+                                    // first rotation with angle(alpha+ModuleBase::PI) around(OX)
+                                    psig[index * 2 * npwk_max + ig] = this->template cast_to_T<T>(
+                                        (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fup);
+                                    psig[(index * 2 + 1) * npwk_max + ig] = this->template cast_to_T<T>(
+                                        (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown);
+                                    // second rotation with angle gamma around(OZ)
+                                    fup = cos(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
+                                    fdown = ModuleBase::IMAG_UNIT * sin(0.5 * (alpha + ModuleBase::PI)) * aux[ig];
+                                    psig[(index + 2 * l + 1) * 2 * npwk_max + ig] = this->template cast_to_T<T>(
+                                        (cos(0.5 * gamman) + ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fup);
+                                    psig[((index + 2 * l + 1) * 2 + 1) * npwk_max + ig] = this->template cast_to_T<T>(
+                                        (cos(0.5 * gamman) - ModuleBase::IMAG_UNIT * sin(0.5 * gamman)) * fdown);
                                 }
                                 index++;
                             }
@@ -486,10 +473,8 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
                             const int lm = l * l + m;
                             for (int ig = 0; ig < npw; ig++)
                             {
-                                (*(this->psig_))(index, ig) = 
-                                    this->template cast_to_T<T>(
-                                        lphase * sk [ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig]
-                                            );
+                                psig[index * npwk_max + ig]
+                                    = this->template cast_to_T<T>(lphase * sk[ig] * ylm(lm, ig) * ovlp_pswfcjlg[ig]);
                             }
                             index++;
                         }
@@ -502,20 +487,13 @@ void psi_initializer_atomic<T, Device>::proj_ao_onkG(const int ik)
 	/* complement the rest of bands if there are */
 	if(this->nbands_complem() > 0)
 	{
-		this->random_t(this->psig_->get_pointer(), index, this->psig_->get_nbands(), ik);
+		this->random_t(psig, index, this->nbands_start_, ik);
 	}
-    ModuleBase::timer::tick("psi_initializer_atomic", "proj_ao_onkG");
+    ModuleBase::timer::tick("psi_initializer_atomic", "init_psig");
 }
 
-template class psi_initializer_atomic<std::complex<double>, base_device::DEVICE_CPU>;
-template class psi_initializer_atomic<std::complex<float>, base_device::DEVICE_CPU>;
+template class psi_initializer_atomic<std::complex<double>>;
+template class psi_initializer_atomic<std::complex<float>>;
 // gamma point calculation
-template class psi_initializer_atomic<double, base_device::DEVICE_CPU>;
-template class psi_initializer_atomic<float, base_device::DEVICE_CPU>;
-#if ((defined __CUDA) || (defined __ROCM))
-template class psi_initializer_atomic<std::complex<double>, base_device::DEVICE_GPU>;
-template class psi_initializer_atomic<std::complex<float>, base_device::DEVICE_GPU>;
-// gamma point calculation
-template class psi_initializer_atomic<double, base_device::DEVICE_GPU>;
-template class psi_initializer_atomic<float, base_device::DEVICE_GPU>;
-#endif
+template class psi_initializer_atomic<double>;
+template class psi_initializer_atomic<float>;

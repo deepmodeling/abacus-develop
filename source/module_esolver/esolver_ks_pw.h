@@ -53,7 +53,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     // psi_initializer controller
-    psi::PSIInit<T, Device>* p_wf_init = nullptr;
+    psi::PSIInit<T, Device>* p_psi_init = nullptr;
 
     Device* ctx = {};
 
