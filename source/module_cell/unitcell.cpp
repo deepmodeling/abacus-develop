@@ -651,6 +651,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     //========================
     this->lmax = 0;
     this->nmax = 0;
+    this->nmax_total = 0;
     for (int it = 0; it < ntype; it++) {
         lmax = std::max(lmax, atoms[it].nwl);
         for (int l = 0; l < atoms[it].nwl + 1; l++) {

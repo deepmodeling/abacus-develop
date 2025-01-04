@@ -19,6 +19,11 @@ namespace Test_Deepks
 extern Grid_Driver GridD;
 }
 
+namespace GlobalC
+{
+  extern LCAO_Deepks ld;
+}
+
 class test_deepks
 {
 
@@ -36,7 +41,7 @@ class test_deepks
 
     Parallel_Orbitals ParaO;
     Test_Deepks::K_Vectors kv;
-    LCAO_Deepks ld;
+    // LCAO_Deepks ld;
 
     int failed_check = 0;
     int total_check = 0;
@@ -52,13 +57,15 @@ class test_deepks
 
     int lmax = 2;
     int ntype = 0;
-    int nnr;
 
     std::vector<ModuleBase::matrix> dm;
     std::vector<ModuleBase::ComplexMatrix> dm_k;
 
     std::vector<std::vector<double>> dm_new;
     std::vector<std::vector<std::complex<double>>> dm_k_new;
+
+    elecstate::DensityMatrix<double, double>* p_elec_DM;
+    elecstate::DensityMatrix<std::complex<double>, double>* p_elec_DM_k;
 
     // preparation
     void preparation();
@@ -70,14 +77,15 @@ class test_deepks
 
     void prep_neighbour();
     void setup_kpt();
-    void set_orbs(const double& lat0_in);
-
-    void cal_nnr();
-    void folding_nnr(const Test_Deepks::K_Vectors& kv);
+    void set_orbs();
 
     // tranfer Matrix into vector<T>
     void set_dm_new();
     void set_dm_k_new();
+
+    // tranfer vector<T> into DensityMatrix
+    void set_p_elec_DM();
+    void set_p_elec_DM_k();
 
     // checking
     void check_dstable();
@@ -94,8 +102,12 @@ class test_deepks
 
     void check_edelta();
 
+    // calculate H_V_delta
+    void cal_H_V_delta();
+    void cal_H_V_delta_k();
+
     void check_e_deltabands();
-    void check_f_delta();
+    void check_f_delta_and_stress_delta();
 
     // compares numbers stored in two files
     void compare_with_ref(const std::string f1, const std::string f2);
