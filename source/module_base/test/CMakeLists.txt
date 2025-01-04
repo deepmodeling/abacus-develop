@@ -2,8 +2,8 @@ remove_definitions(-D__MPI)
 install(DIRECTORY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET base_blas_connector
-  LIBS parameter  ${math_libs}
-  SOURCES blas_connector_test.cpp ../blas_connector.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES blas_connector_test.cpp
 )
 AddTest(
   TARGET base_atom_in
@@ -31,8 +31,8 @@ AddTest(
 )
 ADDTest(
   TARGET base_global_function
-  LIBS parameter ${math_libs} 
-  SOURCES global_function_test.cpp ../blas_connector.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
+  LIBS parameter ${math_libs}
+  SOURCES global_function_test.cpp ../global_function.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../memory.cpp ../timer.cpp
 )
 AddTest(
   TARGET base_vector3
@@ -41,8 +41,8 @@ AddTest(
 )
 AddTest(
   TARGET base_matrix3
-  LIBS parameter  ${math_libs}
-  SOURCES matrix3_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES matrix3_test.cpp
 )
 AddTest(
   TARGET base_intarray
@@ -56,8 +56,8 @@ AddTest(
 )
 AddTest(
  TARGET base_matrix
-  LIBS parameter  ${math_libs}
-  SOURCES matrix_test.cpp ../blas_connector.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES matrix_test.cpp
 )
 AddTest(
   TARGET base_complexarray
@@ -66,8 +66,8 @@ AddTest(
 )
 AddTest(
   TARGET base_complexmatrix
-  LIBS parameter  ${math_libs}
-  SOURCES complexmatrix_test.cpp ../blas_connector.cpp ../complexmatrix.cpp ../matrix.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES complexmatrix_test.cpp
 )
 AddTest(
   TARGET base_integral
@@ -81,10 +81,8 @@ AddTest(
 )
 AddTest(
   TARGET base_ylmreal
-  LIBS parameter  ${math_libs} device
-  SOURCES math_ylmreal_test.cpp ../blas_connector.cpp ../math_ylmreal.cpp ../complexmatrix.cpp ../global_variable.cpp ../ylm.cpp ../realarray.cpp ../timer.cpp ../matrix.cpp ../vector3.h
-          ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp
-          ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES math_ylmreal_test.cpp ../libm/branred.cpp ../libm/sincos.cpp
 )
 AddTest(
   TARGET base_math_sphbes
@@ -93,13 +91,13 @@ AddTest(
 )
 AddTest(
   TARGET base_mathzone
-  LIBS parameter  ${math_libs}
-  SOURCES mathzone_test.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp ../blas_connector.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES mathzone_test.cpp
 )
 AddTest(
   TARGET base_mathzone_add1
-  LIBS parameter  ${math_libs}
-  SOURCES mathzone_add1_test.cpp ../blas_connector.cpp ../mathzone_add1.cpp ../math_sphbes.cpp ../matrix3.cpp ../matrix.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp 
+  LIBS parameter  ${math_libs} base device
+  SOURCES mathzone_add1_test.cpp
 )
 AddTest(
   TARGET base_math_polyint
@@ -108,8 +106,8 @@ AddTest(
 )
 AddTest(
   TARGET base_gram_schmidt_orth
-  LIBS parameter  ${math_libs}
-  SOURCES gram_schmidt_orth_test.cpp ../blas_connector.cpp ../gram_schmidt_orth.h ../gram_schmidt_orth-inl.h ../global_function.h ../math_integral.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES gram_schmidt_orth_test.cpp
 )
 AddTest(
   TARGET base_math_bspline
@@ -118,8 +116,8 @@ AddTest(
 )
 AddTest(
   TARGET base_inverse_matrix
-  LIBS parameter  ${math_libs}
-  SOURCES inverse_matrix_test.cpp ../blas_connector.cpp ../inverse_matrix.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp 
+  LIBS parameter  ${math_libs} base device
+  SOURCES inverse_matrix_test.cpp 
 )
 AddTest(
   TARGET base_mymath
@@ -134,26 +132,26 @@ AddTest(
 
 AddTest(
   TARGET base_math_chebyshev
-  LIBS parameter  ${math_libs} device container
-  SOURCES math_chebyshev_test.cpp  ../blas_connector.cpp ../math_chebyshev.cpp ../tool_quit.cpp ../global_variable.cpp ../timer.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../parallel_reduce.cpp
+  LIBS parameter  ${math_libs} base device container
+  SOURCES math_chebyshev_test.cpp
 )
 
 AddTest(
   TARGET base_lapack_connector
-  LIBS parameter  ${math_libs}
-  SOURCES lapack_connector_test.cpp ../blas_connector.cpp ../lapack_connector.h
+  LIBS parameter  ${math_libs} base device
+  SOURCES lapack_connector_test.cpp
 )
 
 AddTest(
   TARGET base_opt_CG
-  LIBS parameter  ${math_libs}
-  SOURCES opt_CG_test.cpp opt_test_tools.cpp ../blas_connector.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES opt_CG_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
   TARGET base_opt_TN
-  LIBS parameter  ${math_libs}
-  SOURCES opt_TN_test.cpp opt_test_tools.cpp ../blas_connector.cpp ../opt_CG.cpp ../opt_DCsrch.cpp ../global_variable.cpp ../parallel_reduce.cpp
+  LIBS parameter  ${math_libs} base device
+  SOURCES opt_TN_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
@@ -194,28 +192,26 @@ AddTest(
 
 AddTest(
   TARGET spherical_bessel_transformer
-  SOURCES spherical_bessel_transformer_test.cpp ../blas_connector.cpp ../spherical_bessel_transformer.cpp ../math_sphbes.cpp ../math_integral.cpp ../timer.cpp
-  LIBS parameter  ${math_libs}
+  SOURCES spherical_bessel_transformer_test.cpp
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
   TARGET cubic_spline
-  SOURCES cubic_spline_test.cpp ../blas_connector.cpp ../cubic_spline.cpp
-  LIBS parameter  ${math_libs}
+  SOURCES cubic_spline_test.cpp
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
   TARGET clebsch_gordan_coeff_test
-  SOURCES clebsch_gordan_coeff_test.cpp ../blas_connector.cpp ../clebsch_gordan_coeff.cpp ../intarray.cpp ../realarray.cpp ../complexmatrix.cpp ../matrix.cpp ../timer.cpp
-  ../math_ylmreal.cpp  ../global_variable.cpp ../ylm.cpp  ../timer.cpp  ../vector3.h ../parallel_reduce.cpp ../parallel_global.cpp ../parallel_comm.cpp ../parallel_common.cpp
-  ../memory.cpp ../libm/branred.cpp ../libm/sincos.cpp ../inverse_matrix.cpp ../lapack_connector.h
-  LIBS parameter  ${math_libs} device
+  SOURCES clebsch_gordan_coeff_test.cpp
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
   TARGET assoc_laguerre_test
-  SOURCES assoc_laguerre_test.cpp ../blas_connector.cpp ../assoc_laguerre.cpp ../tool_quit.cpp ../global_variable.cpp ../global_file.cpp ../global_function.cpp ../memory.cpp ../timer.cpp
-  LIBS parameter  ${math_libs}
+  SOURCES assoc_laguerre_test.cpp
+  LIBS parameter  ${math_libs} base device
 )
 
 AddTest(
