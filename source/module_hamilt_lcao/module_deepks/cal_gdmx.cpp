@@ -167,47 +167,23 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                                             for (int i = 0; i < 3; i++)
                                             {
                                                 //(<d/dX chi_mu|alpha_m>)<chi_nu|alpha_m'>
-                                                // gdmx.index_put_({i, iat, inl, m1, m2},
-                                                //        grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current);
                                                 accessor[i][iat][inl][m1][m2]
                                                     += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
 
                                                 //(<d/dX chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                                // gdmx.index_put_({i, iat, inl, m2, m1},
-                                                //        grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current);
-                                                // gdmx[i][iat][inl][m2][m1]
-                                                //     += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current;
                                                 accessor[i][iat][inl][m1][m2]
                                                     += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m1)
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m2) * *dm_current;
 
                                                 // (<chi_mu|d/dX alpha_m>)<chi_nu|alpha_m'> = -(<d/dX
-                                                // chi_mu|alpha_m>)<chi_nu|alpha_m'> gdmx.index_put_({i, ibt2, inl, m1,
-                                                // m2},
-                                                //        -grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current);
+                                                // chi_mu|alpha_m>)<chi_nu|alpha_m'>
                                                 accessor[i][ibt2][inl][m1][m2]
                                                     -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
 
                                                 //(<chi_nu|d/dX alpha_m'>)<chi_mu|alpha_m> = -(<d/dX
-                                                // chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                                // gdmx.index_put_({i, ibt2, inl, m2, m1},
-                                                //        -grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current);
-                                                // gdmx[i][ibt2][inl][m2][m1]
-                                                //     -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                //        * overlap_1->get_value(row_indexes[iw1], ib + m1) *
-                                                //        *dm_current;
+                                                //chi_nu|alpha_m'>)<chi_mu|alpha_m>
                                                 accessor[i][ibt2][inl][m1][m2]
                                                     -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m1)
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m2) * *dm_current;
