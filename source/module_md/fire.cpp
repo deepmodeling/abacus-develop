@@ -18,6 +18,8 @@ FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     f_alpha = 0.99;
     n_min = 4;
     negative_count = 0;
+    max = 0.0;
+    force_thr = 1e-3;
 }
 
 FIRE::~FIRE()

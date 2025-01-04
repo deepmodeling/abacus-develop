@@ -23,6 +23,8 @@ add_library(
     parallel_kpoints.cpp
     cell_index.cpp
     check_atomic_stru.cpp
+    update_cell.cpp
+    bcast_cell.cpp
 )
 
 if(ENABLE_COVERAGE)

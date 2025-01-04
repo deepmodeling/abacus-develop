@@ -34,10 +34,12 @@ public:
         bxyz = bx * by * bz;
     }
     int bx = 1, by = 1, bz = 1, bxyz = 1;
-    int nbx, nby, nbz;
-    int nbzp;
-    int nbxx;
-    int nbzp_start;
+    int nbx=0;
+    int nby=0;
+    int nbz=0;
+    int nbzp=0;
+    int nbxx=0;
+    int nbzp_start=0;
 
     void autoset_big_cell_size(int& b_size, const int& nc_size, const int nproc = 0)
     {

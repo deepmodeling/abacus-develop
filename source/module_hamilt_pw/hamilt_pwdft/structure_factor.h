@@ -19,7 +19,7 @@ public:
     // Part 4: G vectors in reciprocal FFT box
     //===============================================
   public:
-    int nbspline;
+    int nbspline=0;
 
 	// structure factor (ntype, ngmc)
     ModuleBase::ComplexMatrix strucFac;
@@ -59,7 +59,7 @@ public:
                                   ModuleBase::Vector3<double> q);
 
   private:
-    const UnitCell* ucell; 
+    const UnitCell* ucell=nullptr; 
     std::complex<float> * c_eigts1 = nullptr, * c_eigts2 = nullptr, * c_eigts3 = nullptr;
     std::complex<double> * z_eigts1 = nullptr, * z_eigts2 = nullptr, * z_eigts3 = nullptr;
     const ModulePW::PW_Basis* rho_basis = nullptr;

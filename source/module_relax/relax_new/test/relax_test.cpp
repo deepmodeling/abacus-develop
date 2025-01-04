@@ -72,6 +72,8 @@ class Test_SETGRAD : public testing::Test
             ucell.atoms[0].taud[1] = 0.0;
             ucell.atoms[0].taud[2] = 0.0;
 
+            ucell.atoms[0].tau.resize(nat);
+
             ucell.lc[0] = 1;
             ucell.lc[1] = 1;
             ucell.lc[2] = 1;
@@ -105,11 +107,13 @@ class Test_SETGRAD : public testing::Test
             ucell.latvec.Identity();
             input.fixed_axes = "a"; //anything other than "None"
             input.fixed_ibrav = true;
+            ucell.latName = "sc";
             ucell.lc[0] = 0;
             ucell.lc[1] = 0;
             ucell.lc[2] = 0;
             rl.init_relax(nat);
             rl.relax_step(ucell,force_in,stress_in,0.0);
+            
             push_result();
         }
 
@@ -167,7 +171,6 @@ class Test_RELAX : public testing::Test
             this->setup_cell();
 
             ModuleBase::matrix force_in, stress_in;
-
             force_in.create(nat,3);
             stress_in.create(3,3);
 
@@ -192,6 +195,7 @@ class Test_RELAX : public testing::Test
 
                 energy_file >> energy;
 
+                PARAM.input.fixed_ibrav = false;
                 rl.relax_step(ucell,force_in,stress_in,energy);
 
                 result.push_back(ucell.atoms[0].taud[0].x);
@@ -253,6 +257,7 @@ class Test_RELAX : public testing::Test
                 int na = ucell.atoms[i].na;
                 ucell.atoms[i].mbl.resize(na);
                 ucell.atoms[i].taud.resize(na);
+                ucell.atoms[i].tau.resize(na);
                 for (int j=0;j<na;j++)
                 {
                     ucell.atoms[i].mbl[j] = {1,1,1};

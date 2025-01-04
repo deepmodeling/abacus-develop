@@ -63,6 +63,7 @@ class Force_LCAO
                 ModuleBase::matrix& svnl_dbeta,
                 ModuleBase::matrix& svl_dphi,
 #ifdef __DEEPKS
+                ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
 #endif
                 typename TGint<T>::type& gint,

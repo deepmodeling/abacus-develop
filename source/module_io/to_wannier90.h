@@ -48,15 +48,15 @@ class toWannier90
     bool try_read_nnkp(const UnitCell& ucell, const K_Vectors& kv);
 
     // Parameters related to k point
-    int num_kpts;
-    int cal_num_kpts;
+    int num_kpts=0;
+    int cal_num_kpts=0;
     std::vector<std::vector<int>> nnlist;
     std::vector<std::vector<ModuleBase::Vector3<double>>> nncell;
     int nntot = 0;
     int start_k_index = 0;
 
     // Parameters related to trial orbitals
-    int num_wannier; // Number of Wannier orbits
+    int num_wannier=0; // Number of Wannier orbits
     ModuleBase::Vector3<double> *R_centre = nullptr;
     int *L = nullptr;
     int *m = nullptr;

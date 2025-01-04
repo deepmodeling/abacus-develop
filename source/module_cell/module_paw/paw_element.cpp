@@ -67,7 +67,7 @@ void Paw_Element::read_paw_xml(std::string filename)
         this->lstate[istate] = this->extract_int(line,"l=");
         lmax = std::max(lmax, lstate[istate]);
 
-        int pos = line.find("f=");
+        size_t pos = line.find("f=");
         if(pos!=std::string::npos)
         {
             this->lstate_occ[istate] = this->extract_double(line,"f=");
@@ -178,7 +178,7 @@ std::string Paw_Element::scan_file(std::ifstream &ifs, std::string pattern)
 
 double Paw_Element::extract_double(std::string line, std::string key)
 {
-    int index = line.find(key);
+    size_t index = line.find(key);
     if (index != std::string::npos)
     {
         std::stringstream tmp;
@@ -198,7 +198,7 @@ double Paw_Element::extract_double(std::string line, std::string key)
 
 std::string Paw_Element::extract_string(std::string line, std::string key)
 {
-    int index = line.find(key);
+    size_t index = line.find(key);
     if (index != std::string::npos)
     {
         std::stringstream tmp;
@@ -218,7 +218,7 @@ std::string Paw_Element::extract_string(std::string line, std::string key)
 
 int Paw_Element::extract_int(std::string line, std::string key)
 {
-    int index = line.find(key);
+    size_t index = line.find(key);
     if (index != std::string::npos)
     {
         std::stringstream tmp;

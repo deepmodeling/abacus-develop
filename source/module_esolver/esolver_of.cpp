@@ -182,6 +182,8 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
         this->update_rho();
 
         this->iter_++;
+
+        ESolver_FP::iter_finish(ucell, istep, this->iter_);
     }
 
     this->after_opt(istep, ucell);

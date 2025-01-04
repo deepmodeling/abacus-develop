@@ -23,6 +23,9 @@ class Vdwd2Parameters : public VdwParameters
     {
         C6_ = C6_default_;
         R0_ = R0_default_;
+        damping_ = 0.0;
+        scaling_ = 1.0;
+        radius_ = 0.0;
     }
 
     ~Vdwd2Parameters() = default;

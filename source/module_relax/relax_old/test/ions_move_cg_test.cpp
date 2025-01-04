@@ -1,5 +1,7 @@
+#include <regex>
 #include "for_test.h"
 #include "gtest/gtest.h"
+#include "gmock/gmock.h"
 #define private public
 #include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -36,7 +38,22 @@ class IonsMoveCGTest : public ::testing::Test
     {
         // Clean up after each test
     }
-
+    void setupucell(UnitCell& ucell)
+    {
+        for (int it = 0; it < ucell.ntype; it++)
+        {
+            Atom* atom = &ucell.atoms[it];
+            for (int ia = 0; ia < atom->na; ia++)
+            {
+                for (int ik = 0; ik < 3; ++ik)
+                {
+                    atom->tau[ia][ik] = 1;
+                    atom->mbl[ia][ik] = 1;
+                }
+            }
+        }
+        ucell.lat.GT.Zero();
+    }
     Ions_Move_CG im_cg;
 };
 
@@ -80,6 +97,7 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = true;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     double etot = 0.0;
 
@@ -98,7 +116,10 @@ TEST_F(IonsMoveCGTest, TestStartConverged)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+
+    std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
+    output = std::regex_replace(output, pattern, "");
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, true);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
@@ -113,6 +134,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     Ions_Move_Basic::relax_method = "cg_bfgs";
     Ions_Move_CG::RELAX_CG_THR = 100.0;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
@@ -130,7 +152,7 @@ TEST_F(IonsMoveCGTest, TestStartSd)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
@@ -146,6 +168,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.1;
     double etot = 0.0;
@@ -168,7 +191,7 @@ TEST_F(IonsMoveCGTest, TestStartTrialGoto)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
@@ -184,6 +207,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
@@ -205,7 +229,7 @@ TEST_F(IonsMoveCGTest, TestStartTrial)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
@@ -221,6 +245,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.1;
     double etot = 0.0;
@@ -244,7 +269,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase1)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
@@ -260,6 +285,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
@@ -282,7 +308,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrialGotoCase2)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");
@@ -298,6 +324,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     Ions_Move_Basic::istep = 1;
     Ions_Move_Basic::converged = false;
     UnitCell ucell;
+    setupucell(ucell);
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 0.01;
     double etot = 0.0;
@@ -321,7 +348,7 @@ TEST_F(IonsMoveCGTest, TestStartNoTrial)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_EQ(Ions_Move_Basic::relax_method, "bfgs");

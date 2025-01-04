@@ -15,6 +15,10 @@ Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
                                        const int vk_col,
                                        const ModulePW::PW_Basis_K* wfcpw_in)
 {
+    if(isk_in == nullptr || tpiba_in < 1e-10 || wfcpw_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");
+    }
     this->classname = "Meta";
     this->cal_type = calculation_type::pw_meta;
     this->isk = isk_in;
@@ -24,10 +28,7 @@ Meta<OperatorPW<T, Device>>::Meta(Real tpiba_in,
     this->vk_col = vk_col;
     this->wfcpw = wfcpw_in;
     resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Meta<PW>::porter");
-    if(this->isk == nullptr || this->tpiba < 1e-10 || this->wfcpw == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("MetaPW", "Constuctor of Operator::MetaPW is failed, please check your code!");
-    }
+
 }
 
 template<typename T, typename Device>

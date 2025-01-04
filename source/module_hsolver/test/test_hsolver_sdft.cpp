@@ -130,6 +130,8 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
 }
 template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
 
+template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
+
 Charge::Charge(){};
 Charge::~Charge(){};
 

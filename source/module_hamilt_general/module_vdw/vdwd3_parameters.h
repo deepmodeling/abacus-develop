@@ -56,13 +56,13 @@ class Vdwd3Parameters : public VdwParameters
   private:
     std::string version_;
 
-    bool abc_; // third-order term?
-    double rthr2_; // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
-    double cn_thr2_; // R^2 distance to cutoff for CN_calculation (a.u.)
-    double s6_;
-    double rs6_;
-    double s18_;
-    double rs18_;
+    bool abc_=false; // third-order term?
+    double rthr2_=0.0; // R^2 distance neglect threshold (important for speed in case of large systems) (a.u.)
+    double cn_thr2_=0.0; // R^2 distance to cutoff for CN_calculation (a.u.)
+    double s6_=0.0;
+    double rs6_=0.0;
+    double s18_=0.0;
+    double rs18_=0.0;
 
     static constexpr size_t max_elem_ = 94;
     static constexpr double k1_ = 16.0, k2_ = 4.0 / 3.0, k3_ = -4.0;

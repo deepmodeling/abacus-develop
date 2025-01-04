@@ -33,6 +33,10 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     this->nev = nev;
     this->narows = narows;
     this->nacols = nacols;
+    this->method = 0;
+    this->comm_f = 0;
+    this->mpi_comm_cols = 0;
+    this->mpi_comm_rows = 0;
     for (int i = 0; i < 9; ++i)
         this->desc[i] = desc[i];
     cblacs_ctxt = desc[1];
@@ -111,6 +115,10 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     this->nev = nev;
     this->narows = narows;
     this->nacols = nacols;
+    this->method = 0;
+    this->comm_f = 0;
+    this->mpi_comm_cols = 0;
+    this->mpi_comm_rows = 0;
     for (int i = 0; i < 9; ++i)
         this->desc[i] = desc[i];
 

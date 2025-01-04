@@ -109,7 +109,7 @@ public:
 		ucell->latvec.e13 = this->latvec[2];
 		ucell->latvec.e21 = this->latvec[3];
 		ucell->latvec.e22 = this->latvec[4];
-	       	ucell->latvec.e23 = this->latvec[5];
+	    ucell->latvec.e23 = this->latvec[5];
 		ucell->latvec.e31 = this->latvec[6];
 		ucell->latvec.e32 = this->latvec[7];
 		ucell->latvec.e33 = this->latvec[8];

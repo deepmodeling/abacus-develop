@@ -1,6 +1,7 @@
 #include "gint_tools.h"
 #include "module_base/timer.h"
 #include "module_base/ylm.h"
+#include "module_base/blas_connector.h"
 
 namespace Gint_Tools{
 
@@ -60,8 +61,8 @@ void mult_psi_DMR(
             
             const auto tmp_matrix_ptr = tmp_matrix->get_pointer();
             const int idx1 = block_index[ia1];
-            dsymm_(&side, &uplo, &block_size[ia1], &ib_len, &alpha, tmp_matrix_ptr, &block_size[ia1],
-                    &psi[ib_start][idx1], &LD_pool, &beta, &psi_DMR[ib_start][idx1], &LD_pool);
+            BlasConnector::symm_cm(side, uplo, block_size[ia1], ib_len, alpha, tmp_matrix_ptr, block_size[ia1],
+                    &psi[ib_start][idx1], LD_pool, beta, &psi_DMR[ib_start][idx1], LD_pool);
         }
 
         //! get (j,beta,R2)

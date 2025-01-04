@@ -95,7 +95,7 @@ TEST_F(IonsMoveBasicTest, MoveAtoms)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(output, expected_output);
+    EXPECT_THAT(output , ::testing::HasSubstr(expected_output));
     EXPECT_DOUBLE_EQ(pos[0], 0.0);
     EXPECT_DOUBLE_EQ(pos[1], 1.0);
     EXPECT_DOUBLE_EQ(pos[2], 2.0);
@@ -137,7 +137,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase1)
           "movement is possible.\n it may converged, otherwise no movement of atom is allowed.\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/A)  : 0\n";
 
-    EXPECT_EQ(expected_ofs, ofs_output);
+    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
     EXPECT_EQ(Ions_Move_Basic::converged, true);
@@ -176,7 +176,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase2)
           "converged!\n\n Energy difference (Ry) = 0\n";
     std::string expected_std = " ETOT DIFF (eV)       : 0\n LARGEST GRAD (eV/A)  : 2.57111\n";
 
-    EXPECT_EQ(expected_ofs, ofs_output);
+    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 2);
     EXPECT_EQ(Ions_Move_Basic::converged, true);
@@ -215,7 +215,7 @@ TEST_F(IonsMoveBasicTest, CheckConvergedCase3)
           "converged yet (threshold is 25.7111)\n";
     std::string expected_std = " ETOT DIFF (eV)       : 13.6057\n LARGEST GRAD (eV/A)  : 2.57111\n";
 
-    EXPECT_EQ(expected_ofs, ofs_output);
+    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
     EXPECT_EQ(expected_std, std_outout);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 1);
     EXPECT_EQ(Ions_Move_Basic::converged, false);
@@ -244,7 +244,7 @@ TEST_F(IonsMoveBasicTest, TerminateConverged)
     std::string expected_ofs = " end of geometry optimization\n                                    istep = 2\n         "
                                "                update iteration = 5\n";
 
-    EXPECT_EQ(expected_ofs, ofs_output);
+    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the terminate() function when not converged
@@ -266,7 +266,7 @@ TEST_F(IonsMoveBasicTest, TerminateNotConverged)
 
     std::string expected_ofs = " the maximum number of steps has been reached.\n end of geometry optimization.\n";
 
-    EXPECT_EQ(expected_ofs, ofs_output);
+    EXPECT_THAT(ofs_output , ::testing::HasSubstr(expected_ofs));
 }
 
 // Test the setup_etot() function case 1

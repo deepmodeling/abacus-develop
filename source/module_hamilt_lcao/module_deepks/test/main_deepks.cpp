@@ -42,7 +42,7 @@ int calculate()
 
 	test.check_edelta();
 	test.check_e_deltabands();
-	test.check_f_delta();
+	test.check_f_delta_and_stress_delta();
 
 	std::cout << " [  ------  ] Total checks : " << test.total_check <<std::endl;
 	if(test.failed_check>0)

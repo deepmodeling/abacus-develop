@@ -33,11 +33,9 @@ bool UnitCell::read_atom_positions(std::ifstream& ifpos,
                                    std::ofstream& ofs_warning) {
     return true;
 }
-void UnitCell::update_pos_tau(const double* pos) {}
 void UnitCell::update_pos_taud(double* posd_in) {}
 void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {}
 void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {}
-void UnitCell::periodic_boundary_adjustment() {}
 void UnitCell::bcast_atoms_tau() {}
 bool UnitCell::judge_big_cell() const { return true; }
 void UnitCell::update_stress(ModuleBase::matrix& scs) {}
@@ -63,8 +61,6 @@ void UnitCell::print_stru_file(const std::string& fn,
                                const bool& dpks_desc,
                                const int& iproc) const {}
 void UnitCell::check_dtau() {}
-void UnitCell::setup_cell_after_vc(std::ofstream& log) {}
-void UnitCell::remake_cell() {}
 void UnitCell::cal_nwfc(std::ofstream& log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream& log) {}

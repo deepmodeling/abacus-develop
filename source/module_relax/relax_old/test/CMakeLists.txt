@@ -1,7 +1,11 @@
 remove_definitions(-D__MPI)
 remove_definitions(-D__LCAO)
 
-
+list(APPEND cell_source_files
+    ../../../module_cell/update_cell.cpp
+    ../../../module_cell/bcast_cell.cpp
+    ../../../module_io/output.cpp
+)
 AddTest(
   TARGET lattice_change_methods_test
   LIBS parameter ${math_libs} base device 
@@ -33,13 +37,13 @@ AddTest(
 AddTest(
   TARGET bfgs_test
   LIBS parameter ${math_libs} base device 
-  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp
+  SOURCES bfgs_test.cpp ../bfgs.cpp ../ions_move_basic.cpp ${cell_source_files}
 )
 
 AddTest(
   TARGET ions_move_basic_test
   LIBS parameter ${math_libs} base device 
-  SOURCES ions_move_basic_test.cpp ../ions_move_basic.cpp
+  SOURCES ions_move_basic_test.cpp ../ions_move_basic.cpp ${cell_source_files}
 )
 
 AddTest(
@@ -50,6 +54,7 @@ AddTest(
           ../ions_move_basic.cpp 
           ../bfgs_basic.cpp
           ../../../module_io/orb_io.cpp
+          ${cell_source_files}
 )
 
 AddTest(
@@ -59,10 +64,11 @@ AddTest(
           ../ions_move_cg.cpp 
           ../ions_move_basic.cpp
           ../../../module_io/orb_io.cpp
+          ${cell_source_files}
 )
 
 AddTest(
   TARGET ions_move_sd_test
   LIBS parameter ${math_libs} base device 
-  SOURCES ions_move_sd_test.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp
+  SOURCES ions_move_sd_test.cpp ../ions_move_sd.cpp ../ions_move_basic.cpp ${cell_source_files}
 )

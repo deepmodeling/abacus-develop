@@ -41,6 +41,9 @@ class ESolver_FP : public ESolver
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
     virtual void after_scf(UnitCell& ucell, const int istep);
 
+    //! Something to do after hamilt2density function in each iter loop.
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter);
+
     //! ------------------------------------------------------------------------------
     //! These pointers will be deleted in the free_pointers() function every ion step.
     //! ------------------------------------------------------------------------------
