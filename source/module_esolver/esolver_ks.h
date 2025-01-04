@@ -43,7 +43,7 @@ class ESolver_KS : public ESolver_FP
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2density function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter);
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
     virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
