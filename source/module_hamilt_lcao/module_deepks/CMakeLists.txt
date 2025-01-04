@@ -7,7 +7,6 @@ if(ENABLE_DEEPKS)
       deepks_vdpre.cpp
       deepks_hmat.cpp
       LCAO_deepks_io.cpp
-      LCAO_deepks_mpi.cpp
       LCAO_deepks_pdm.cpp
       LCAO_deepks_phialpha.cpp
       LCAO_deepks_torch.cpp

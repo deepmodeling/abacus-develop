@@ -365,15 +365,6 @@ class LCAO_Deepks
 
   private:
     const Parallel_Orbitals* pv;
-
-#ifdef __MPI
-
-  public:
-    // reduces a dim 2 array
-    void allsum_deepks(int inlmax,    // first dimension
-                       int ndim,      // second dimension
-                       double** mat); // the array being reduced
-#endif
 };
 
 namespace GlobalC

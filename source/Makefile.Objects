@@ -197,7 +197,6 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_vdpre.o\
         deepks_hmat.o\
         LCAO_deepks_io.o\
-        LCAO_deepks_mpi.o\
         LCAO_deepks_pdm.o\
         LCAO_deepks_phialpha.o\
         LCAO_deepks_torch.o\
