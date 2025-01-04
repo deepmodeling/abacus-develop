@@ -68,7 +68,9 @@ void LCAO_Deepks::cal_descriptor(const int nat, std::vector<torch::Tensor>& desc
     return;
 }
 
-void LCAO_Deepks::check_descriptor(const UnitCell& ucell, const std::string& out_dir, const std::vector<torch::Tensor>& descriptor)
+void LCAO_Deepks::check_descriptor(const UnitCell& ucell,
+                                   const std::string& out_dir,
+                                   const std::vector<torch::Tensor>& descriptor)
 {
     ModuleBase::TITLE("LCAO_Deepks", "check_descriptor");
 

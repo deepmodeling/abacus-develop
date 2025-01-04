@@ -186,7 +186,6 @@ void LCAO_Deepks::init_index(const int ntype,
     return;
 }
 
-
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");

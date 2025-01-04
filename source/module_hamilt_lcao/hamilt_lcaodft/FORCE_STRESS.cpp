@@ -518,15 +518,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        
-                        GlobalC::ld.cal_gdmx(dm_gamma,
-                                             ucell,
-                                             orb,
-                                             gd,
-                                             kv.get_nks(),
-                                             kv.kvec_d,
-                                             GlobalC::ld.phialpha,
-                                             gdmx);
+
+                        GlobalC::ld
+                            .cal_gdmx(dm_gamma, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmx);
                     }
                     else
                     {
@@ -535,8 +529,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld
-                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmx);
+                        GlobalC::ld.cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmx);
                     }
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -746,9 +739,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             {
                 const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
                 LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
-                                        file_sbase,
-                                        ucell.omega,
-                                        GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
+                                           file_sbase,
+                                           ucell.omega,
+                                           GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
 
                 if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
@@ -757,15 +750,15 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        
+
                         GlobalC::ld.cal_gdmepsl(dm_gamma,
-                                             ucell,
-                                             orb,
-                                             gd,
-                                             kv.get_nks(),
-                                             kv.kvec_d,
-                                             GlobalC::ld.phialpha,
-                                             gdmepsl);
+                                                ucell,
+                                                orb,
+                                                gd,
+                                                kv.get_nks(),
+                                                kv.kvec_d,
+                                                GlobalC::ld.phialpha,
+                                                gdmepsl);
                     }
                     else
                     {
@@ -781,7 +774,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     {
                         GlobalC::ld.check_gdmepsl(gdmepsl);
                     }
-                    
+
                     std::vector<torch::Tensor> gevdm;
                     GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
                     torch::Tensor gvepsl;

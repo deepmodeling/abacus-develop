@@ -420,7 +420,9 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                                     static_cast<unsigned long>(des_per_atom)};
 
     std::vector<TK> npy_v_delta_precalc;
-    auto accessor = v_delta_precalc.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
+    auto accessor
+        = v_delta_precalc
+              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iks = 0; iks < nks; ++iks)
     {
         for (int mu = 0; mu < nlocal; ++mu)
@@ -477,7 +479,9 @@ void LCAO_deepks_io::save_npy_phialpha(const int nat,
                                     static_cast<unsigned long>(nlocal),
                                     static_cast<unsigned long>(mmax)};
     std::vector<TK> npy_phialpha;
-    auto accessor = phialpha_tensor.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
+    auto accessor
+        = phialpha_tensor
+              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iat = 0; iat < nat; iat++)
     {
         for (int nl = 0; nl < nlmax; nl++)

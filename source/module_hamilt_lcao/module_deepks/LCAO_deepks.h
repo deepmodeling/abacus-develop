@@ -333,7 +333,9 @@ class LCAO_Deepks
     /// which are eigenvalues of pdm in blocks of I_n_l
     void cal_descriptor(const int nat, std::vector<torch::Tensor>& descriptor);
     /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell, const std::string& out_dir, const std::vector<torch::Tensor>& descriptor);
+    void check_descriptor(const UnitCell& ucell,
+                          const std::string& out_dir,
+                          const std::vector<torch::Tensor>& descriptor);
 
     void cal_descriptor_equiv(const int nat, std::vector<torch::Tensor>& descriptor);
 
@@ -350,7 +352,10 @@ class LCAO_Deepks
     void check_gvx(const int nat, const torch::Tensor& gvx);
 
     // for stress
-    void cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmepsl, torch::Tensor& gvepsl);
+    void cal_gvepsl(const int nat,
+                    const std::vector<torch::Tensor>& gevdm,
+                    const torch::Tensor& gdmepsl,
+                    torch::Tensor& gvepsl);
 
     // load the trained neural network model
     void load_model(const std::string& model_file);

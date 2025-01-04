@@ -47,7 +47,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 
     torch::Tensor v_delta_pdm
         = torch::zeros({nks, nlocal, nlocal, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(dtype));
-    auto accessor = v_delta_pdm.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 6>();
+    auto accessor
+        = v_delta_pdm.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 6>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -168,7 +169,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                                 {
                                                     c10::complex<double> tmp;
                                                     tmp = overlap_1->get_value(iw1, ib + m1)
-                                                          * overlap_2->get_value(iw2, ib + m2) * kphase; // from std::complex to c10::complex
+                                                          * overlap_2->get_value(iw2, ib + m2)
+                                                          * kphase; // from std::complex to c10::complex
                                                     accessor[ik][iw1][iw2][inl][m1][m2] += tmp;
                                                 }
                                             }
@@ -282,7 +284,9 @@ void DeePKS_domain::check_v_delta_precalc(const int nat,
 {
     std::ofstream ofs("v_delta_precalc.dat");
     ofs << std::setprecision(10);
-    auto accessor = v_delta_precalc.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
+    auto accessor
+        = v_delta_precalc
+              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iks = 0; iks < nks; ++iks)
     {
         for (int mu = 0; mu < nlocal; ++mu)
@@ -456,7 +460,8 @@ void DeePKS_domain::check_vdp_phialpha(const int nat,
 {
     std::ofstream ofs("vdp_phialpha.dat");
     ofs << std::setprecision(10);
-    auto accessor = phialpha_out.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
+    auto accessor
+        = phialpha_out.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
 
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;

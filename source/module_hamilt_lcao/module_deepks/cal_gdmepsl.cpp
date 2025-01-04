@@ -3,9 +3,9 @@
 #include "LCAO_deepks.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
-#include "module_base/parallel_reduce.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
@@ -19,13 +19,13 @@
 
 template <typename TK>
 void LCAO_Deepks::cal_gdmepsl(const std::vector<std::vector<TK>>& dm,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD,
-                           const int nks,
-                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           std::vector<hamilt::HContainer<double>*> phialpha,
-                           torch::Tensor& gdmepsl)
+                              const UnitCell& ucell,
+                              const LCAO_Orbitals& orb,
+                              const Grid_Driver& GridD,
+                              const int nks,
+                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                              std::vector<hamilt::HContainer<double>*> phialpha,
+                              torch::Tensor& gdmepsl)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmepsl");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmepsl");
@@ -179,17 +179,19 @@ void LCAO_Deepks::cal_gdmepsl(const std::vector<std::vector<TK>>& dm,
                                                 {
                                                     accessor[mm][inl][m2][m1]
                                                         += ucell.lat0 * *dm_current
-                                                            * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
-                                                                * overlap_1->get_value(row_indexes[iw1], ib + m1)
-                                                                * r0[ipol]);
+                                                           * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
+                                                              * overlap_1->get_value(row_indexes[iw1], ib + m1)
+                                                              * r0[ipol]);
                                                     accessor[mm][inl][m2][m1]
                                                         += ucell.lat0 * *dm_current
-                                                            * (overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                                * grad_overlap_1[jpol]->get_value(row_indexes[iw1], ib + m2)
-                                                                * r1[ipol]);
+                                                           * (overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                              * grad_overlap_1[jpol]->get_value(row_indexes[iw1],
+                                                                                                ib + m2)
+                                                              * r1[ipol]);
                                                     // gdmepsl.index_put_({mm, inl, m2, m1},
                                                     //      ucell.lat0 * *dm_current
-                                                    //         * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
+                                                    //         * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib +
+                                                    //         m2)
                                                     //             * overlap_1->get_value(row_indexes[iw1], ib + m1)
                                                     //             * r0[ipol]));
                                                     // gdmepsl.index_put_({mm, inl, m2, m1},
@@ -252,21 +254,21 @@ void LCAO_Deepks::check_gdmepsl(const torch::Tensor& gdmepsl)
 }
 
 template void LCAO_Deepks::cal_gdmepsl<double>(const std::vector<std::vector<double>>& dm,
-                                            const UnitCell& ucell,
-                                            const LCAO_Orbitals& orb,
-                                            const Grid_Driver& GridD,
-                                            const int nks,
-                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                            std::vector<hamilt::HContainer<double>*> phialpha,
-                                            torch::Tensor& gdmepsl);
+                                               const UnitCell& ucell,
+                                               const LCAO_Orbitals& orb,
+                                               const Grid_Driver& GridD,
+                                               const int nks,
+                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                               std::vector<hamilt::HContainer<double>*> phialpha,
+                                               torch::Tensor& gdmepsl);
 
 template void LCAO_Deepks::cal_gdmepsl<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
-                                                          const UnitCell& ucell,
-                                                          const LCAO_Orbitals& orb,
-                                                          const Grid_Driver& GridD,
-                                                          const int nks,
-                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                          std::vector<hamilt::HContainer<double>*> phialpha,
-                                                          torch::Tensor& gdmepsl);
+                                                             const UnitCell& ucell,
+                                                             const LCAO_Orbitals& orb,
+                                                             const Grid_Driver& GridD,
+                                                             const int nks,
+                                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                             std::vector<hamilt::HContainer<double>*> phialpha,
+                                                             torch::Tensor& gdmepsl);
 
 #endif

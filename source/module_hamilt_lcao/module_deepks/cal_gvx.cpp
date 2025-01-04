@@ -16,7 +16,10 @@
 
 // calculates gradient of descriptors from gradient of projected density
 // matrices
-void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmx, torch::Tensor& gvx)
+void LCAO_Deepks::cal_gvx(const int nat,
+                          const std::vector<torch::Tensor>& gevdm,
+                          const torch::Tensor& gdmx,
+                          torch::Tensor& gvx)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gvx");
 

@@ -24,9 +24,12 @@
 
 // calculates stress of descriptors from gradient of projected density matrices
 // gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
-void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmepsl, torch::Tensor& gvepsl)
+void LCAO_Deepks::cal_gvepsl(const int nat,
+                             const std::vector<torch::Tensor>& gevdm,
+                             const torch::Tensor& gdmepsl,
+                             torch::Tensor& gvepsl)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_gvepsl"); 
+    ModuleBase::TITLE("LCAO_Deepks", "cal_gvepsl");
     // dD/d\epsilon_{\alpha\beta}, tensor vector form of gdmepsl
     std::vector<torch::Tensor> gdmepsl_vector;
     auto accessor = gdmepsl.accessor<double, 4>();

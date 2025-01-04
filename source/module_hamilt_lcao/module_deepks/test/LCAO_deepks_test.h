@@ -23,7 +23,7 @@ extern Grid_Driver GridD;
 
 namespace GlobalC
 {
-  extern LCAO_Deepks ld;
+extern LCAO_Deepks ld;
 }
 
 class test_deepks
