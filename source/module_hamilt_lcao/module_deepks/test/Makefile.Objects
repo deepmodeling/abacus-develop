@@ -7,7 +7,6 @@ HEADERS= *.h
 
 OBJS_MAIN=klist_1.o\
 parallel_orbitals.o\
-nnr.o\
 LCAO_deepks.o\
 LCAO_deepks_fdelta.o\
 LCAO_deepks_io.o\

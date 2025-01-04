@@ -38,6 +38,7 @@ int calculate()
 
     torch::Tensor gdmx;
     test.check_gdmx(gdmx);
+    test.check_gdmepsl();
 
     std::vector<torch::Tensor> descriptor;
     test.check_descriptor(descriptor);

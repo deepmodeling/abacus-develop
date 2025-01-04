@@ -196,6 +196,32 @@ void test_deepks::check_gdmx(torch::Tensor& gdmx)
     }
 }
 
+void test_deepks::check_gdmepsl()
+{
+    torch::Tensor gdmepsl;
+    if (PARAM.sys.gamma_only_local)
+    {
+        GlobalC::ld.cal_gdmepsl(dm_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmepsl);
+    }
+    else
+    {
+        GlobalC::ld
+            .cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmepsl);
+    }
+    GlobalC::ld.check_gdmepsl(gdmepsl);
+
+    for (int i = 0; i < 6; i++)
+    {
+        std::stringstream ss;
+        std::stringstream ss1;
+        ss.str("");
+        ss << "gdmepsl_" << i << ".dat";
+        ss1.str("");
+        ss1 << "gdmepsl_" << i << "_ref.dat";
+        this->compare_with_ref(ss.str(), ss1.str());
+    }
+}
+
 void test_deepks::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
     DeePKS_domain::cal_descriptor(ucell.nat,

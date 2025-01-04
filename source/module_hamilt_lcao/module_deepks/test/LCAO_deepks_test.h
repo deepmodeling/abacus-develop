@@ -98,6 +98,7 @@ class test_deepks
 
     void check_pdm();
     void check_gdmx(torch::Tensor& gdmx);
+    void check_gdmepsl();
 
     void check_descriptor(std::vector<torch::Tensor>& descriptor);
     void check_gvx(torch::Tensor& gdmx);
