@@ -5,7 +5,7 @@
 // The file contains 3 subroutines:
 //  cal_gvepsl : gvepsl is used for training with stress label, which is derivative of
 //        descriptors wrt strain tensor, calculated by
-//        d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdm_epsl * gvdm
+//        d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdmepsl * gvdm
 //        using einsum
 //  cal_gevdm : d(des)/d(pdm)
 //        calculated using torch::autograd::grad
@@ -23,14 +23,13 @@
 #include "module_parameter/parameter.h"
 
 // calculates stress of descriptors from gradient of projected density matrices
-void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm)
+// gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
+void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmepsl, torch::Tensor& gvepsl)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_gvepsl");
-    if (!gdmepsl_vector.empty())
-    {
-        gdmepsl_vector.erase(gdmepsl_vector.begin(), gdmepsl_vector.end());
-    }
-    // gdmr_vector : nat(derivative) * 3 * inl(projector) * nm * nm
+    ModuleBase::TITLE("LCAO_Deepks", "cal_gvepsl"); 
+    // dD/d\epsilon_{\alpha\beta}, tensor vector form of gdmepsl
+    std::vector<torch::Tensor> gdmepsl_vector;
+    auto accessor = gdmepsl.accessor<double, 4>();
     if (GlobalV::MY_RANK == 0)
     {
         // make gdmx as tensor
@@ -38,9 +37,6 @@ void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& ge
         for (int nl = 0; nl < nlmax; ++nl)
         {
             std::vector<torch::Tensor> bmmv;
-            // for (int ipol=0;ipol<6;++ipol)
-            //{
-            //     std::vector<torch::Tensor> xmmv;
             for (int i = 0; i < 6; ++i)
             {
                 std::vector<torch::Tensor> ammv;
@@ -53,7 +49,7 @@ void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& ge
                     {
                         for (int m2 = 0; m2 < nm; ++m2)
                         {
-                            mmv.push_back(this->gdm_epsl[i][inl][m1 * nm + m2]);
+                            mmv.push_back(accessor[i][inl][m1][m2]);
                         }
                     } // nm^2
                     torch::Tensor mm
@@ -63,12 +59,9 @@ void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& ge
                 torch::Tensor bmm = torch::stack(ammv, 0); // nat*nm*nm
                 bmmv.push_back(bmm);
             }
-            // torch::Tensor bmm = torch::stack(xmmv, 0);  //3*nat*nm*nm
-            // bmmv.push_back(bmm);
-            //}
-            this->gdmepsl_vector.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+            gdmepsl_vector.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
         }
-        assert(this->gdmepsl_vector.size() == nlmax);
+        assert(gdmepsl_vector.size() == nlmax);
 
         // einsum for each inl:
         // gdmepsl_vector : b:npol * a:inl(projector) * m:nm * n:nm
@@ -78,15 +71,15 @@ void LCAO_Deepks::cal_gvepsl(const int nat, const std::vector<torch::Tensor>& ge
         std::vector<torch::Tensor> gvepsl_vector;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {this->gdmepsl_vector[nl], gevdm[nl]}));
+            gvepsl_vector.push_back(at::einsum("bamn, avmn->bav", {gdmepsl_vector[nl], gevdm[nl]}));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom
         // concatenate index a(inl) and m(nm)
-        this->gvepsl_tensor = torch::cat(gvepsl_vector, -1);
-        assert(this->gvepsl_tensor.size(0) == 6);
-        assert(this->gvepsl_tensor.size(1) == nat);
-        assert(this->gvepsl_tensor.size(2) == this->des_per_atom);
+        gvepsl = torch::cat(gvepsl_vector, -1);
+        assert(gvepsl.size(0) == 6);
+        assert(gvepsl.size(1) == nat);
+        assert(gvepsl.size(2) == this->des_per_atom);
     }
 
     return;

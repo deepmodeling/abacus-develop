@@ -297,9 +297,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
         ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
 
-        ld->cal_descriptor(nat); // final descriptor
-
-        ld->check_descriptor(ucell, PARAM.globalv.global_out_dir);
+        std::vector<torch::Tensor> descriptor;
+        ld->cal_descriptor(nat, descriptor); // final descriptor
+        ld->check_descriptor(ucell, PARAM.globalv.global_out_dir, descriptor);
 
         if (PARAM.inp.deepks_out_labels)
         {
@@ -308,7 +308,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                        ld->inlmax,
                                        ld->inl_l,
                                        PARAM.inp.deepks_equiv,
-                                       ld->d_tensor,
+                                       descriptor,
                                        PARAM.globalv.global_out_dir,
                                        GlobalV::MY_RANK); // libnpy needed
         }

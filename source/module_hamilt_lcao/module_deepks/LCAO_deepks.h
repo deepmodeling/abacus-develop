@@ -109,38 +109,11 @@ class LCAO_Deepks
     // [nat][nlm*nlm] for equivariant version
     std::vector<torch::Tensor> pdm;
 
-    // descriptors
-    std::vector<torch::Tensor> d_tensor;
-
     // gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
     std::vector<torch::Tensor> gedm_tensor;
 
-    // gdmx: dD/dX		\sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
-    double*** gdmx; //[natom][tot_Inl][2l+1][2l+1]
-    double*** gdmy;
-    double*** gdmz;
-
-    // gdm_epsl: dD/d\epsilon_{\alpha\beta}
-    double*** gdm_epsl; //[6][tot_Inl][2l+1][2l+1]
-
-    // dD/d\epsilon_{\alpha\beta}, tensor form of gdm_epsl
-    std::vector<torch::Tensor> gdmepsl_vector;
-
-    // gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
-    torch::Tensor gvepsl_tensor;
-
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm; //[tot_Inl][2l+1][2l+1]
-
-    // gvx:d(d)/dX, [natom][3][natom][des_per_atom]
-    torch::Tensor gvx_tensor;
-
-    // dD/dX, tensor form of gdmx
-    std::vector<torch::Tensor> gdmr_vector;
-
-    // for v_delta==2 , new v_delta_precalc storage method
-    torch::Tensor phialpha_tensor;
-    torch::Tensor gevdm_tensor;
 
     /// size of descriptor(projector) basis set
     int n_descriptor;
@@ -172,12 +145,8 @@ class LCAO_Deepks
     // 1. subroutines that are related to calculating descriptors:
     //   - init : allocates some arrays
     //   - init_index : records the index (inl)
-    // 2. subroutines that are related to calculating force label:
-    //   - init_gdmx : allocates gdmx; it is a private subroutine
-    //   - del_gdmx : releases gdmx
-    // 3. subroutines that are related to V_delta:
-    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
-    //       init_gdmx, as well as allocating F_delta
+    // 2. subroutines that are related to V_delta:
+    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
 
   public:
     explicit LCAO_Deepks();
@@ -194,15 +163,6 @@ class LCAO_Deepks
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
-
-    // array for storing gdmx, used for calculating gvx
-    void init_gdmx(const int nat);
-    // void del_gdmx(const int nat);
-    void del_gdmx();
-
-    // array for storing gdm_epsl, used for calculating gvx
-    void init_gdmepsl();
-    void del_gdmepsl();
 
   private:
     // arrange index of descriptor in all atoms
@@ -255,7 +215,7 @@ class LCAO_Deepks
     // 1. cal_projected_DM, which is used for calculating pdm
     // 2. check_projected_dm, which prints pdm to descriptor.dat
 
-    // 3. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress)
+    // 3. cal_gdmx, calculating gdmx (and optionally gdmepsl for stress)
     // 4. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
@@ -287,9 +247,22 @@ class LCAO_Deepks
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         std::vector<hamilt::HContainer<double>*> phialpha,
-        const bool isstress);
+        torch::Tensor& gdmx);
 
-    void check_gdmx(const int nat);
+    void check_gdmx(const int nat, const torch::Tensor& gdmx);
+
+    template <typename TK>
+    void cal_gdmepsl( // const ModuleBase::matrix& dm,
+        const std::vector<std::vector<TK>>& dm,
+        const UnitCell& ucell,
+        const LCAO_Orbitals& orb,
+        const Grid_Driver& GridD,
+        const int nks,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+        std::vector<hamilt::HContainer<double>*> phialpha,
+        torch::Tensor& gdmepsl);
+
+    void check_gdmepsl(const torch::Tensor& gdmepsl);
 
     /**
      * @brief set init_pdm to skip the calculation of pdm in SCF iteration
@@ -345,7 +318,7 @@ class LCAO_Deepks
     // 4. check_gvx : prints gvx into gvx.dat for checking
     // 5. cal_gvepsl : gvepsl is used for training with stress label, which is derivative of
     //       descriptors wrt strain tensor, calculated by
-    //       d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdm_epsl * gvdm
+    //       d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdmepsl * gvdm
     //       using einsum
     // 6. cal_gevdm : d(des)/d(pdm)
     //       calculated using torch::autograd::grad
@@ -358,11 +331,11 @@ class LCAO_Deepks
   public:
     /// Calculates descriptors
     /// which are eigenvalues of pdm in blocks of I_n_l
-    void cal_descriptor(const int nat);
+    void cal_descriptor(const int nat, std::vector<torch::Tensor>& descriptor);
     /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell, const std::string& out_dir);
+    void check_descriptor(const UnitCell& ucell, const std::string& out_dir, const std::vector<torch::Tensor>& descriptor);
 
-    void cal_descriptor_equiv(const int nat);
+    void cal_descriptor_equiv(const int nat, std::vector<torch::Tensor>& descriptor);
 
     /// calculates gradient of descriptors w.r.t atomic positions
     ///----------------------------------------------------
@@ -373,19 +346,19 @@ class LCAO_Deepks
     ///  - b: the atoms whose force being calculated)
     /// gvdm*gdmx->gvx
     ///----------------------------------------------------
-    void cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm);
-    void check_gvx(const int nat);
+    void cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmx, torch::Tensor& gvx);
+    void check_gvx(const int nat, const torch::Tensor& gvx);
 
     // for stress
-    void cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm);
+    void cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmepsl, torch::Tensor& gvepsl);
 
     // load the trained neural network model
     void load_model(const std::string& model_file);
 
     /// calculate partial of energy correction to descriptors
-    void cal_gedm(const int nat);
+    void cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor);
     void check_gedm();
-    void cal_gedm_equiv(const int nat);
+    void cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor);
 
     // calculate gevdm
     void cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm);

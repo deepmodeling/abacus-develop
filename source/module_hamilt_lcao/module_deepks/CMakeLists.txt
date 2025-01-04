@@ -14,6 +14,7 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_vdelta.cpp
       LCAO_deepks_interface.cpp
       cal_gdmx.cpp
+      cal_gdmepsl.cpp
       cal_gedm.cpp
       cal_gvx.cpp      
       cal_descriptor.cpp

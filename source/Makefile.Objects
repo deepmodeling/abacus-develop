@@ -204,6 +204,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         LCAO_deepks_vdelta.o\
         LCAO_deepks_interface.o\
         cal_gdmx.o\
+        cal_gdmepsl.o\
         cal_gedm.o\
         cal_gvx.o\
         cal_descriptor.o\

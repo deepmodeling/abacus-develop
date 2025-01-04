@@ -162,8 +162,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
         GlobalC::ld.cal_projected_DM<TK>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
-        GlobalC::ld.cal_descriptor(this->ucell->nat);
-        GlobalC::ld.cal_gedm(this->ucell->nat);
+
+        std::vector<torch::Tensor> descriptor;
+        GlobalC::ld.cal_descriptor(this->ucell->nat, descriptor);
+        GlobalC::ld.cal_gedm(this->ucell->nat, descriptor);
 
         // recalculate the H_V_delta
         if (this->H_V_delta == nullptr)
