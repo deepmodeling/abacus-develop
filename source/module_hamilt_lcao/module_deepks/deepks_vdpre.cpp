@@ -47,6 +47,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 
     torch::Tensor v_delta_pdm
         = torch::zeros({nks, nlocal, nlocal, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(dtype));
+    auto accessor = v_delta_pdm.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 6>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -159,7 +160,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                             {
                                                 if constexpr (std::is_same<TK, double>::value)
                                                 {
-                                                    v_delta_pdm[ik][iw1][iw2][inl][m1][m2]
+                                                    accessor[ik][iw1][iw2][inl][m1][m2]
                                                         += overlap_1->get_value(iw1, ib + m1)
                                                            * overlap_2->get_value(iw2, ib + m2);
                                                 }
@@ -167,8 +168,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                                 {
                                                     c10::complex<double> tmp;
                                                     tmp = overlap_1->get_value(iw1, ib + m1)
-                                                          * overlap_2->get_value(iw2, ib + m2) * kphase;
-                                                    v_delta_pdm.index_put_({ik, iw1, iw2, inl, m1, m2}, tmp);
+                                                          * overlap_2->get_value(iw2, ib + m2) * kphase; // from std::complex to c10::complex
+                                                    accessor[ik][iw1][iw2][inl][m1][m2] += tmp;
                                                 }
                                             }
                                         }
@@ -225,12 +226,11 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                             {
                                 if constexpr (std::is_same<TK, double>::value)
                                 {
-                                    mmv.push_back(v_delta_pdm[iks][mu][nu][inl][m1][m2].item<double>());
+                                    mmv.push_back(accessor[iks][mu][nu][inl][m1][m2]);
                                 }
                                 else
                                 {
-                                    c10::complex<double> tmp_c10
-                                        = v_delta_pdm[iks][mu][nu][inl][m1][m2].item<c10::complex<double>>();
+                                    c10::complex<double> tmp_c10 = accessor[iks][mu][nu][inl][m1][m2];
                                     std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
                                     mmv.push_back(tmp);
                                 }
@@ -282,6 +282,7 @@ void DeePKS_domain::check_v_delta_precalc(const int nat,
 {
     std::ofstream ofs("v_delta_precalc.dat");
     ofs << std::setprecision(10);
+    auto accessor = v_delta_precalc.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iks = 0; iks < nks; ++iks)
     {
         for (int mu = 0; mu < nlocal; ++mu)
@@ -294,14 +295,13 @@ void DeePKS_domain::check_v_delta_precalc(const int nat,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            ofs << v_delta_precalc.index({iks, mu, nu, iat, p}).item().toDouble() << " ";
+                            ofs << accessor[iks][mu][nu][iat][p] << " ";
                         }
                         else
                         {
-                            auto tensor_value = v_delta_precalc.index({iks, mu, nu, iat, p});
-                            ofs << std::complex<double>(torch::real(tensor_value).item<double>(),
-                                                        torch::imag(tensor_value).item<double>())
-                                << " ";
+                            c10::complex<double> tmp_c10 = accessor[iks][mu][nu][iat][p];
+                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
+                            ofs << tmp << " ";
                         }
                     }
                 }
@@ -456,6 +456,7 @@ void DeePKS_domain::check_vdp_phialpha(const int nat,
 {
     std::ofstream ofs("vdp_phialpha.dat");
     ofs << std::setprecision(10);
+    auto accessor = phialpha_out.accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
 
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
@@ -471,14 +472,13 @@ void DeePKS_domain::check_vdp_phialpha(const int nat,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            ofs << phialpha_out.index({iat, nl, iks, mu, m}).item().toDouble() << " ";
+                            ofs << accessor[iat][nl][iks][mu][m] << " ";
                         }
                         else
                         {
-                            auto tensor_value = phialpha_out.index({iat, nl, iks, mu, m});
-                            ofs << std::complex<double>(torch::real(tensor_value).item<double>(),
-                                                        torch::imag(tensor_value).item<double>())
-                                << " ";
+                            c10::complex<double> tmp_c10 = accessor[iat][nl][iks][mu][m];
+                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
+                            ofs << tmp << " ";
                         }
                     }
                 }
@@ -530,6 +530,8 @@ void DeePKS_domain::check_vdp_gevdm(const int nat, const int lmaxd, const int in
     std::ofstream ofs("vdp_gevdm.dat");
     ofs << std::setprecision(10);
 
+    auto accessor = gevdm.accessor<double, 5>();
+
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
     for (int iat = 0; iat < nat; iat++)
@@ -542,7 +544,7 @@ void DeePKS_domain::check_vdp_gevdm(const int nat, const int lmaxd, const int in
                 {
                     for (int n = 0; n < mmax; n++)
                     {
-                        ofs << gevdm.index({iat, nl, v, m, n}).item().toDouble() << " ";
+                        ofs << accessor[iat][nl][v][m][n] << " ";
                     }
                 }
             }

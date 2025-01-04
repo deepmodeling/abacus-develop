@@ -23,8 +23,8 @@ namespace DeePKS_domain
 
 // This file contains 6 subroutines for calculating v_delta,
 // 1. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
-//                         which equals gvdm * v_delta_pdm_shell,
-//                         v_delta_pdm_shell = overlap * overlap
+//                         which equals gvdm * v_delta_pdm,
+//                         v_delta_pdm = overlap * overlap
 // 2. check_v_delta_precalc : check v_delta_precalc
 // 3. prepare_phialpha : prepare phialpha for outputting npy file
 // 4. check_vdp_phialpha : check phialpha

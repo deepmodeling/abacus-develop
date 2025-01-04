@@ -41,13 +41,14 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
             for (int inl = 0; inl < this->inlmax; inl++)
             {
                 int nm = this->inl_l[inl] * 2 + 1;
+                auto accessor = this->pdm[inl].accessor<double, 2>();
                 for (int m1 = 0; m1 < nm; m1++)
                 {
                     for (int m2 = 0; m2 < nm; m2++)
                     {
                         double c;
                         ifs >> c;
-                        this->pdm[inl][m1][m2] = c;
+                        accessor[m1][m2] = c;
                     }
                 }
             }
@@ -63,11 +64,12 @@ void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Num
             pdm_size = nproj * nproj;
             for (int inl = 0; inl < this->inlmax; inl++)
             {
+                auto accessor = this->pdm[inl].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
                     double c;
                     ifs >> c;
-                    this->pdm[inl][ind] = c;
+                    accessor[ind] = c;
                 }
             }
         }
@@ -324,12 +326,12 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                             const int inl = this->inl_index[T0](I0, L0, N0);
                             const int nm = 2 * L0 + 1;
 
+                            auto accessor = this->pdm[inl].accessor<double, 2>();
                             for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    int ind = m1 * nm + m2;
-                                    pdm[inl][m1][m2] += ddot_(&row_size,
+                                    accessor[m1][m2] += ddot_(&row_size,
                                                               g_1dmt.data() + index * row_size,
                                                               &inc,
                                                               s_1t.data() + index * row_size,
@@ -343,6 +345,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                 }
                 else
                 {
+                    auto accessor = this->pdm[iat].accessor<double, 1>();
                     int index = 0, inc = 1;
                     int nproj = 0;
                     for (int il = 0; il < this->lmaxd + 1; il++)
@@ -353,7 +356,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
                     {
                         for (int jproj = 0; jproj < nproj; jproj++)
                         {
-                            pdm[iat][iproj * nproj + jproj] += ddot_(&row_size,
+                            accessor[iproj * nproj + jproj] += ddot_(&row_size,
                                                                      g_1dmt.data() + index * row_size,
                                                                      &inc,
                                                                      s_1t.data() + index * row_size,
@@ -386,11 +389,12 @@ void LCAO_Deepks::check_projected_dm()
     for (int inl = 0; inl < inlmax; inl++)
     {
         const int nm = 2 * this->inl_l[inl] + 1;
+        auto accessor = pdm[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; m1++)
         {
             for (int m2 = 0; m2 < nm; m2++)
             {
-                ofs << pdm[inl][m1][m2].item<double>() << " ";
+                ofs << accessor[m1][m2] << " ";
             }
         }
         ofs << std::endl;
