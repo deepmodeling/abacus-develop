@@ -98,6 +98,11 @@ void LCAO_Deepks::check_gvx(const int nat, const torch::Tensor& gvx)
     std::ofstream ofs_x;
     std::ofstream ofs_y;
     std::ofstream ofs_z;
+    
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     ofs_x << std::setprecision(12);
     ofs_y << std::setprecision(12);
