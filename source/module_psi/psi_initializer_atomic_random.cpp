@@ -28,7 +28,7 @@ void psi_initializer_atomic_random<T>::init_psig(T* psig, const int& ik)
     {
         for (int ibasis = 0; ibasis < nbasis; ibasis++)
         {
-            psig[iband * nbasis + ibasis] *= (1.0 + Real(rm) * psi_random(iband, ibasis));
+            psig[iband * nbasis + ibasis] *= (T(1.0) + Real(rm) * psi_random(iband, ibasis));
         }
     }
 }

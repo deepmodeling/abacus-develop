@@ -23,12 +23,12 @@ void psi_initializer_nao_random<T>::init_psig(T* psig, const int& ik)
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     psi::Psi<T> psi_random(1, this->nbands_start_, nbasis, nullptr);
     psi_random.fix_k(0);
-    this->random_t(psi_random.get_pointer(), 0, this->nbands_start_, ik);
+    this->random_t(psi_random.get_pointer(), 0, this->nbands_start_, ik, 0);
     for (int iband = 0; iband < this->nbands_start_; iband++)
     {
         for (int ibasis = 0; ibasis < nbasis; ibasis++)
         {
-            psig[iband * nbasis + ibasis] *= ((Real)(1 + rm)) * psi_random(iband, ibasis);
+            psig[iband * nbasis + ibasis] *= (T(1.0) + Real(rm) * psi_random(iband, ibasis));
         }
     }
 }
