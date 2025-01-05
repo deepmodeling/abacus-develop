@@ -162,6 +162,15 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
     } // end k-point loop
 
+    if (another_psi_space)
+    {
+        delete psi_cpu;
+        if(PARAM.inp.device == "gpu")
+        {
+            delete psi_device;
+        }
+    }
+
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
 }
 

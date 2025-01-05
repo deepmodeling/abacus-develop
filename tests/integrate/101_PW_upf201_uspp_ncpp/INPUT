@@ -5,6 +5,7 @@ calculation             scf
 symmetry                0
 latname                 fcc
 pseudo_dir              ../../PP_ORB
+pw_seed                 1
 
 #Parameters (2.Iteration)
 ecutwfc                 20

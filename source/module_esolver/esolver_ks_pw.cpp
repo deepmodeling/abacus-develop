@@ -387,7 +387,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         dftu->init(ucell, nullptr, this->kv.get_nks());
     }
 
-    if (!this->already_initpsi)
+    if (!this->already_initpsi || PARAM.inp.init_wfc.substr(0,3)=="nao")
     {
         this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
         this->already_initpsi = true;
