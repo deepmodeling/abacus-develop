@@ -147,7 +147,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 }
 
 void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
-double ESolver_GetS::cal_energy() {};
+double ESolver_GetS::cal_energy() { return 0.0; };
 void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
 void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
 

@@ -379,7 +379,7 @@ void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* d
 
 void LCAO_Deepks::check_projected_dm()
 {
-    const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
+    const std::string file_projdm = PARAM.globalv.global_out_dir + "pdm.dat";
     std::ofstream ofs(file_projdm.c_str());
 
     ofs << std::setprecision(10);

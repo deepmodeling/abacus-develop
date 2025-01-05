@@ -22,7 +22,7 @@ class Atom
     std::vector<bool> iw2_new;
     int nw = 0; // number of local orbitals (l,n,m) of this type
 
-    void set_index(void);
+    void set_index();
 
     int type = 0; // Index of atom type
     int na = 0;   // Number of atoms in this type.
@@ -34,8 +34,7 @@ class Atom
 
     std::string label = "\0";                     // atomic symbol
     std::vector<ModuleBase::Vector3<double>> tau; // Cartesian coordinates of each atom in this type.
-    std::vector<ModuleBase::Vector3<double>>
-        dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
+    std::vector<ModuleBase::Vector3<double>> dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
     std::vector<ModuleBase::Vector3<double>> taud;  // Direct coordinates of each atom in this type.
     std::vector<ModuleBase::Vector3<double>> vel;   // velocities of each atom in this type.
     std::vector<ModuleBase::Vector3<double>> force; // force acting on each atom in this type.
@@ -54,8 +53,8 @@ class Atom
     void print_Atom(std::ofstream& ofs);
     void update_force(ModuleBase::matrix& fcs);
 #ifdef __MPI
-    void bcast_atom(void);
-    void bcast_atom2(void);
+    void bcast_atom();
+    void bcast_atom2();
 #endif
 };
 

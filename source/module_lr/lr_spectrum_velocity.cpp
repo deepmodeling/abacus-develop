@@ -23,9 +23,14 @@ namespace LR
         return vR;
     }
 
-    inline double lorentz_delta(const double freq_diff, const double eta)
+    inline double lorentz_delta(const double dfreq_au, const double eta_au)
     {
-        return eta / (freq_diff * freq_diff + eta * eta) / M_PI;
+        return eta_au / (dfreq_au * dfreq_au + eta_au * eta_au) / M_PI;
+    }
+    inline double gauss_delta(const double dfreq_au, const double eta_au)
+    {
+        const double c = eta_au / std::sqrt(2. * std::log(2.));
+        return std::exp(-dfreq_au * dfreq_au / (2 * c * c)) / (std::sqrt(2 * M_PI) * c);
     }
 
     template<typename T> inline ModuleBase::Vector3<T> convert_vector_to_vector3(const std::vector<std::complex<double>>& vec);
@@ -109,13 +114,13 @@ namespace LR
         // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
         std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
         if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
-        const double fac = 4 * M_PI * M_PI / ucell.omega * ModuleBase::e2 / this->nk;  // e2: Ry to Hartree in the denominator
+        const double fac = 4 * M_PI * M_PI / ucell.omega / this->nk;
         for (int f = 0;f < freq.size();++f)
         {
             double abs_value = 0.0;
             for (int i = 0;i < nstate;++i)
             {
-                abs_value += this->mean_squared_transition_dipole_[i] * lorentz_delta((freq[f] - eig[i]), eta);
+                abs_value += this->mean_squared_transition_dipole_[i] * lorentz_delta((freq[f] - eig[i]) / ModuleBase::e2, eta / ModuleBase::e2); // e2: Ry to Hartree 
             }
             abs_value *= fac;
             if (GlobalV::MY_RANK == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << abs_value << std::endl; }

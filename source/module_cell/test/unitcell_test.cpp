@@ -1021,7 +1021,7 @@ TEST_F(UcellTest, UpdateVel)
     {
         vel_in[iat].set(iat * 0.1, iat * 0.1, iat * 0.1);
     }
-    ucell->update_vel(vel_in);
+    unitcell::update_vel(vel_in,ucell->ntype,ucell->nat,ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         EXPECT_DOUBLE_EQ(vel_in[iat].x, 0.1 * iat);

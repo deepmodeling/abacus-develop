@@ -1,9 +1,22 @@
 #include "LCAO_deepks_test.h"
 #include "module_base/global_variable.h"
-#include "module_elecstate/read_pseudo.h"
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_elecstate/read_pseudo.h"
+#include "module_hamilt_general/module_xc/exx_info.h"
+
+Magnetism::Magnetism() {
+    this->tot_magnetization = 0.0;
+    this->abs_magnetization = 0.0;
+    this->start_magnetization = nullptr;
+}
+Magnetism::~Magnetism() { delete[] this->start_magnetization; }
+namespace GlobalC
+{
+	Exx_Info exx_info;
+}
+
 void test_deepks::preparation()
 {
     this->count_ntype();
@@ -14,10 +27,15 @@ void test_deepks::preparation()
     this->setup_kpt();
 
     this->set_ekcut();
-    this->set_orbs(ucell.lat0);
+    this->set_orbs();
     this->prep_neighbour();
 
-    this->ParaO.set_serial(PARAM.sys.nlocal, PARAM.sys.nlocal);
+    this->ParaO.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
+    this->ParaO.nrow_bands = PARAM.globalv.nlocal;
+    this->ParaO.ncol_bands = PARAM.inp.nbands;
+    // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
+
+    this->ParaO.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
 }
 
 void test_deepks::set_parameters()
@@ -145,47 +163,46 @@ void test_deepks::prep_neighbour()
                          Test_Deepks::GridD,
                          ucell,
                          search_radius,
-                         GlobalV::test_atom_input);
+                         PARAM.inp.test_atom_input);
 }
 
-void test_deepks::set_orbs(const double& lat0_in)
+void test_deepks::set_orbs()
 {
-    for (int it = 0; it < ntype; it++)
-    {
-        ORB.init(GlobalV::ofs_running,
-                           ucell.ntype,
-                           PARAM.inp.orbital_dir,
-                           ucell.orbital_fn,
-                           ucell.descriptor_file,
-                           ucell.lmax,
-                           lcao_ecut,
-                           lcao_dk,
-                           lcao_dr,
-                           lcao_rmax,
-                           PARAM.sys.deepks_setorb,
-                           out_mat_r,
-                           PARAM.input.cal_force,
-                           my_rank);
+    ORB.init(GlobalV::ofs_running,
+                        ucell.ntype,
+                        PARAM.inp.orbital_dir,
+                        ucell.orbital_fn,
+                        ucell.descriptor_file,
+                        ucell.lmax,
+                        lcao_ecut,
+                        lcao_dk,
+                        lcao_dr,
+                        lcao_rmax,
+                        PARAM.sys.deepks_setorb,
+                        out_mat_r,
+                        PARAM.input.cal_force,
+                        my_rank);
 
-        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
+    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
 
-        std::vector<std::string> file_orb(ntype);
-        std::transform(ucell.orbital_fn, ucell.orbital_fn + ntype, file_orb.begin(), [](const std::string& file) {
-            return PARAM.inp.orbital_dir + file;
-        });
-        orb_.build(ntype, file_orb.data());
+    std::vector<std::string> file_orb(ntype);
+    std::transform(ucell.orbital_fn, ucell.orbital_fn + ntype, file_orb.begin(), [](const std::string& file) {
+        return PARAM.inp.orbital_dir + file;
+    });
+    orb_.build(ntype, file_orb.data());
 
-        std::string file_alpha = PARAM.inp.orbital_dir + ucell.descriptor_file;
-        alpha_.build(1, &file_alpha);
+    std::string file_alpha = PARAM.inp.orbital_dir + ucell.descriptor_file;
+    alpha_.build(1, &file_alpha);
 
-        double cutoff = orb_.rcut_max() + alpha_.rcut_max();
-        int nr = static_cast<int>(cutoff / lcao_dr) + 1;
-        overlap_orb_alpha_.tabulate(orb_, alpha_, 'S', nr, cutoff);
+    double rmax = std::max(orb_.rcut_max(), alpha_.rcut_max());
+    double cutoff = 2.0 * rmax;
+    int nr = static_cast<int>(rmax / lcao_dr) + 1;
 
-        GlobalV::ofs_running << "read and set from orbital_file : " << ORB.orbital_file[it] << std::endl;
-        GlobalV::ofs_running << "ucell.ntype, ucell.lmax : " << ucell.ntype << " " << ucell.lmax << std::endl;
-#endif
-    }
+    orb_.set_uniform_grid(true,nr,cutoff,'i',true);
+    alpha_.set_uniform_grid(true,nr,cutoff,'i',true);
+
+    overlap_orb_alpha_.tabulate(orb_, alpha_, 'S', nr, cutoff);
+
     return;
 }
 

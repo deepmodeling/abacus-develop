@@ -153,7 +153,7 @@ TEST_F(UcellTest, UpdatePosTau)
     }
     delete[] pos_in;
 }
-TEST_F(UcellTest, UpdatePosTaud)
+TEST_F(UcellTest, UpdatePosTaud_pointer)
 {
     double* pos_in = new double[ucell->nat * 3];
     ModuleBase::Vector3<double>* tmp = new ModuleBase::Vector3<double>[ucell->nat];
@@ -167,7 +167,8 @@ TEST_F(UcellTest, UpdatePosTaud)
         ucell->iat2iait(iat, &ia, &it);
         tmp[iat] = ucell->atoms[it].taud[ia];
     }
-    ucell->update_pos_taud(pos_in);
+    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
+                              ucell->nat,ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         int it, ia;
@@ -180,6 +181,37 @@ TEST_F(UcellTest, UpdatePosTaud)
     delete[] pos_in;
 }
 
+//test update_pos_taud with ModuleBase::Vector3<double> version
+TEST_F(UcellTest, UpdatePosTaud_Vector3)
+{
+    ModuleBase::Vector3<double>* pos_in = new ModuleBase::Vector3<double>[ucell->nat];
+    ModuleBase::Vector3<double>* tmp = new ModuleBase::Vector3<double>[ucell->nat];
+    ucell->set_iat2itia();
+    for (int iat = 0; iat < ucell->nat; ++iat)
+    {
+        for (int ik = 0; ik < 3; ++ik)
+        {
+            pos_in[iat][ik] = 0.01;
+        }
+        int it=0;
+        int ia=0;
+        ucell->iat2iait(iat, &ia, &it);
+        tmp[iat] = ucell->atoms[it].taud[ia];
+    }
+    unitcell::update_pos_taud(ucell->lat,pos_in,ucell->ntype,
+                              ucell->nat,ucell->atoms);
+    for (int iat = 0; iat < ucell->nat; ++iat)
+    {
+        int it, ia;
+        ucell->iat2iait(iat, &ia, &it);
+        for (int ik = 0; ik < 3; ++ik)
+        {
+            EXPECT_DOUBLE_EQ(ucell->atoms[it].taud[ia][ik], tmp[iat][ik] + 0.01);
+        }
+    }
+    delete[] tmp;
+    delete[] pos_in;
+}
 TEST_F(UcellTest, ReadPseudo)
 {
     PARAM.input.pseudo_dir = pp_dir;
