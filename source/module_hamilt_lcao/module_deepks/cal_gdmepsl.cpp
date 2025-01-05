@@ -9,34 +9,34 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
-/// this subroutine calculates the gradient of projected density matrices
-/// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
+/// this subroutine calculates the gradient of PDM wrt strain tensor:
+/// gdmepsl = d/d\epsilon_{ab} *
+///           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 
 // There are 2 subroutines in this file:
-// 1. cal_gdmx, calculating gdmx
-// 2. check_gdmx, which prints gdmx to a series of .dat files
+// 1. cal_gdmepsl, calculating gdmepsl
+// 2. check_gdmepsl, which prints gdmepsl to a series of .dat files
 
 template <typename TK>
-void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD,
-                           const int nks,
-                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           std::vector<hamilt::HContainer<double>*> phialpha,
-                           torch::Tensor& gdmx)
+void LCAO_Deepks::cal_gdmepsl(const std::vector<std::vector<TK>>& dm,
+                              const UnitCell& ucell,
+                              const LCAO_Orbitals& orb,
+                              const Grid_Driver& GridD,
+                              const int nks,
+                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                              std::vector<hamilt::HContainer<double>*> phialpha,
+                              torch::Tensor& gdmepsl)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
-    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
+    ModuleBase::TITLE("LCAO_Deepks", "cal_gdmepsl");
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmepsl");
     // get DS_alpha_mu and S_nu_beta
 
     int nrow = this->pv->nrow;
     const int nm = 2 * lmaxd + 1;
-    // gdmx: dD/dX
-    // \sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
-    // size: [3][natom][tot_Inl][2l+1][2l+1]
-    gdmx = torch::zeros({3, ucell.nat, inlmax, nm, nm}, torch::dtype(torch::kFloat64));
-    auto accessor = gdmx.accessor<double, 5>();
+    // gdmepsl: dD/d\epsilon_{\alpha\beta}
+    // size: [6][tot_Inl][2l+1][2l+1]
+    gdmepsl = torch::zeros({6, inlmax, nm, nm}, torch::dtype(torch::kFloat64));
+    auto accessor = gdmepsl.accessor<double, 4>();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -83,6 +83,14 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                         continue;
                     }
 
+                    double r0[3];
+                    double r1[3];
+                    r1[0] = (tau1.x - tau0.x);
+                    r1[1] = (tau1.y - tau0.y);
+                    r1[2] = (tau1.z - tau0.z);
+                    r0[0] = (tau2.x - tau0.x);
+                    r0[1] = (tau2.y - tau0.y);
+                    r0[2] = (tau2.z - tau0.z);
                     auto row_indexes = pv->get_indexes_row(ibt1);
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     if (row_indexes.size() * col_indexes.size() == 0)
@@ -164,29 +172,24 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                                     {
                                         for (int m2 = 0; m2 < nm; ++m2)
                                         {
-                                            for (int i = 0; i < 3; i++)
+                                            int mm = 0;
+                                            for (int ipol = 0; ipol < 3; ipol++)
                                             {
-                                                //(<d/dX chi_mu|alpha_m>)<chi_nu|alpha_m'>
-                                                accessor[i][iat][inl][m1][m2]
-                                                    += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                                //(<d/dX chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                                accessor[i][iat][inl][m2][m1]
-                                                    += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                                // (<chi_mu|d/dX alpha_m>)<chi_nu|alpha_m'> = -(<d/dX
-                                                // chi_mu|alpha_m>)<chi_nu|alpha_m'>
-                                                accessor[i][ibt2][inl][m1][m2]
-                                                    -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                                //(<chi_nu|d/dX alpha_m'>)<chi_mu|alpha_m> = -(<d/dX
-                                                //chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                                accessor[i][ibt2][inl][m2][m1]
-                                                    -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
-                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
+                                                for (int jpol = ipol; jpol < 3; jpol++)
+                                                {
+                                                    accessor[mm][inl][m2][m1]
+                                                        += ucell.lat0 * *dm_current
+                                                           * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
+                                                              * overlap_1->get_value(row_indexes[iw1], ib + m1)
+                                                              * r0[ipol]);
+                                                    accessor[mm][inl][m2][m1]
+                                                        += ucell.lat0 * *dm_current
+                                                           * (overlap_2->get_value(col_indexes[iw2], ib + m1)
+                                                              * grad_overlap_1[jpol]->get_value(row_indexes[iw1],
+                                                                                                ib + m2)
+                                                              * r1[ipol]);
+                                                    mm++;
+                                                }
                                             }
                                         }
                                     }
@@ -203,36 +206,26 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
     }                     // T0
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(gdmx.data_ptr<double>(), 3 * ucell.nat * inlmax * nm * nm);
+    Parallel_Reduce::reduce_all(gdmepsl.data_ptr<double>(), 6 * inlmax * nm * nm);
 #endif
-    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmepsl");
     return;
 }
 
-void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
+void LCAO_Deepks::check_gdmepsl(const torch::Tensor& gdmepsl)
 {
     std::stringstream ss;
-    std::ofstream ofs_x;
-    std::ofstream ofs_y;
-    std::ofstream ofs_z;
+    std::ofstream ofs;
 
-    ofs_x << std::setprecision(10);
-    ofs_y << std::setprecision(10);
-    ofs_z << std::setprecision(10);
+    ofs << std::setprecision(10);
 
     const int nm = 2 * this->lmaxd + 1;
-    auto accessor = gdmx.accessor<double, 5>();
-    for (int ia = 0; ia < nat; ia++)
+    auto accessor = gdmepsl.accessor<double, 4>();
+    for (int i = 0; i < 6; i++)
     {
         ss.str("");
-        ss << "gdmx_" << ia << ".dat";
-        ofs_x.open(ss.str().c_str());
-        ss.str("");
-        ss << "gdmy_" << ia << ".dat";
-        ofs_y.open(ss.str().c_str());
-        ss.str("");
-        ss << "gdmz_" << ia << ".dat";
-        ofs_z.open(ss.str().c_str());
+        ss << "gdmepsl_" << i << ".dat";
+        ofs.open(ss.str().c_str());
 
         for (int inl = 0; inl < inlmax; inl++)
         {
@@ -240,37 +233,31 @@ void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
             {
                 for (int m2 = 0; m2 < nm; m2++)
                 {
-                    ofs_x << accessor[0][ia][inl][m1][m2] << " ";
-                    ofs_y << accessor[1][ia][inl][m1][m2] << " ";
-                    ofs_z << accessor[2][ia][inl][m1][m2] << " ";
+                    ofs << accessor[i][inl][m1][m2] << " ";
                 }
             }
-            ofs_x << std::endl;
-            ofs_y << std::endl;
-            ofs_z << std::endl;
+            ofs << std::endl;
         }
-        ofs_x.close();
-        ofs_y.close();
-        ofs_z.close();
+        ofs.close();
     }
 }
 
-template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double>>& dm,
-                                            const UnitCell& ucell,
-                                            const LCAO_Orbitals& orb,
-                                            const Grid_Driver& GridD,
-                                            const int nks,
-                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                            std::vector<hamilt::HContainer<double>*> phialpha,
-                                            torch::Tensor& gdmx);
+template void LCAO_Deepks::cal_gdmepsl<double>(const std::vector<std::vector<double>>& dm,
+                                               const UnitCell& ucell,
+                                               const LCAO_Orbitals& orb,
+                                               const Grid_Driver& GridD,
+                                               const int nks,
+                                               const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                               std::vector<hamilt::HContainer<double>*> phialpha,
+                                               torch::Tensor& gdmepsl);
 
-template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
-                                                          const UnitCell& ucell,
-                                                          const LCAO_Orbitals& orb,
-                                                          const Grid_Driver& GridD,
-                                                          const int nks,
-                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                          std::vector<hamilt::HContainer<double>*> phialpha,
-                                                          torch::Tensor& gdmx);
+template void LCAO_Deepks::cal_gdmepsl<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
+                                                             const UnitCell& ucell,
+                                                             const LCAO_Orbitals& orb,
+                                                             const Grid_Driver& GridD,
+                                                             const int nks,
+                                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                             std::vector<hamilt::HContainer<double>*> phialpha,
+                                                             torch::Tensor& gdmepsl);
 
 #endif

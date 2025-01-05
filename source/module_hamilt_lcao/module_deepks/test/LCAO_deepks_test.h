@@ -13,6 +13,8 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <torch/script.h>
+#include <torch/torch.h>
 
 namespace Test_Deepks
 {
@@ -21,7 +23,7 @@ extern Grid_Driver GridD;
 
 namespace GlobalC
 {
-  extern LCAO_Deepks ld;
+extern LCAO_Deepks ld;
 }
 
 class test_deepks
@@ -95,12 +97,13 @@ class test_deepks
     void read_dm_k(const int nks);
 
     void check_pdm();
-    void check_gdmx();
+    void check_gdmx(torch::Tensor& gdmx);
+    void check_gdmepsl();
 
-    void check_descriptor();
-    void check_gvx();
+    void check_descriptor(std::vector<torch::Tensor>& descriptor);
+    void check_gvx(torch::Tensor& gdmx);
 
-    void check_edelta();
+    void check_edelta(std::vector<torch::Tensor>& descriptor);
 
     // calculate H_V_delta
     void cal_H_V_delta();

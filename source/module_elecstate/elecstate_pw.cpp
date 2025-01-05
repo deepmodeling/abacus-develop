@@ -183,7 +183,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
     this->init_rho_data();
     int ik = psi.get_current_k();
-    int npw = psi.get_current_nbas();
+    int npw = psi.get_current_ngk();
     int current_spin = 0;
     if (PARAM.inp.nspin == 2)
     {
@@ -287,7 +287,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         const T* psi_now = psi.get_pointer();
         const int currect_spin = this->klist->isk[ik];
-        const int npw = psi.get_current_nbas();
+        const int npw = psi.get_current_ngk();
 
         // get |beta>
         if (this->ppcell->nkb > 0)

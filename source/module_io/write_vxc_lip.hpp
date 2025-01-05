@@ -59,24 +59,27 @@ namespace ModuleIO
         assert(nbands >= 0);
 #endif
         std::vector<FPTYPE> e(nbands, 0.0);
-        for (int i = 0; i < nbands; ++i)
+        for (int i = 0; i < nbands; ++i) {
             e[i] = get_real(mat_mo[i * nbands + i]);
+}
         return e;
     }
     template <typename FPTYPE>
     FPTYPE all_band_energy(const int ik, const int nbands, const std::vector<std::complex<FPTYPE>>& mat_mo, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < nbands; ++i)
+        for (int i = 0; i < nbands; ++i) {
             e += get_real(mat_mo[i * nbands + i]) * (FPTYPE)wg(ik, i);
+}
         return e;
     }
     template <typename FPTYPE>
     FPTYPE all_band_energy(const int ik, const std::vector<FPTYPE>& orbital_energy, const ModuleBase::matrix& wg)
     {
         FPTYPE e = 0.0;
-        for (int i = 0; i < orbital_energy.size(); ++i)
+        for (int i = 0; i < orbital_energy.size(); ++i) {
             e += orbital_energy[i] * (FPTYPE)wg(ik, i);
+}
         return e;
     }
 
@@ -122,7 +125,7 @@ namespace ModuleIO
         // const ModuleBase::matrix vr_localxc = potxc->get_veff_smooth();
 
         // 2. allocate xc operator
-        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), psi_pw.get_ngk_pointer());
+        psi::Psi<T> hpsi_localxc(psi_pw.get_nk(), psi_pw.get_nbands(), psi_pw.get_nbasis(), kv.ngk, true);
         hpsi_localxc.zero_out();
         // std::cout << "hpsi.nk=" << hpsi_localxc.get_nk() << std::endl;
         // std::cout << "hpsi.nbands=" << hpsi_localxc.get_nbands() << std::endl;
@@ -170,9 +173,11 @@ namespace ModuleIO
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
             if (GlobalC::exx_info.info_global.cal_exx)
             {
-                for (int n = 0; n < naos; ++n)
-                    for (int m = 0; m < naos; ++m)
+                for (int n = 0; n < naos; ++n) {
+                    for (int m = 0; m < naos; ++m) {
                         vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
+}
+}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));

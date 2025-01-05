@@ -55,7 +55,7 @@ class ESolver_KS : public ESolver_FP
     virtual void after_scf(UnitCell& ucell, const int istep) override;
 
     //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) {};
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter){};
 
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
@@ -72,7 +72,7 @@ class ESolver_KS : public ESolver_FP
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
 
-    //! plane wave or LCAO 
+    //! plane wave or LCAO
     std::string basisname;
 
     //! number of electrons
@@ -83,18 +83,18 @@ class ESolver_KS : public ESolver_FP
 
     //! the start time of scf iteration
 #ifdef __MPI
-    double iter_time;               
+    double iter_time;
 #else
     std::chrono::system_clock::time_point iter_time;
 #endif
 
-    double diag_ethr;               //! the threshold for diagonalization
-    double scf_thr;                 //! scf density threshold
-    double scf_ene_thr;             //! scf energy threshold
-    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;           //! the error of HSolver
-    int maxniter;                   //! maximum iter steps for scf
-    int niter;                      //! iter steps actually used in scf
+    double diag_ethr;     //! the threshold for diagonalization
+    double scf_thr;       //! scf density threshold
+    double scf_ene_thr;   //! scf energy threshold
+    double drho;          //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error; //! the error of HSolver
+    int maxniter;         //! maximum iter steps for scf
+    int niter;            //! iter steps actually used in scf
 };
 } // namespace ModuleESolver
 #endif

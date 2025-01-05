@@ -27,7 +27,12 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
         //dm.fix_k(ik);
         dm[ik].create(ParaV->ncol, ParaV->nrow);
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi::Psi<double> wg_wfc(wfc, 1);
+        psi::Psi<double> wg_wfc(1, 
+                                wfc.get_nbands(), 
+                                wfc.get_nbasis(),
+                                wfc.get_nbasis(),
+                                true);
+        wg_wfc.set_all_psi(wfc.get_pointer(), wg_wfc.size());
 
         int ib_global = 0;
         for (int ib_local = 0; ib_local < nbands_local; ++ib_local)
@@ -41,7 +46,8 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-            if (ib_global >= wg.nc) continue;
+            if (ib_global >= wg.nc) { continue;
+}
             const double wg_local = wg(ik, ib_global);
             double* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);
@@ -99,7 +105,8 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
                     ModuleBase::WARNING_QUIT("ElecStateLCAO::cal_dm", "please check global2local_col!");
                 }
             }
-            if (ib_global >= wg.nc) continue;
+            if (ib_global >= wg.nc) { continue;
+}
             const double wg_local = wg(ik, ib_global);
             std::complex<double>* wg_wfc_pointer = &(wg_wfc(0, ib_local, 0));
             BlasConnector::scal(nbasis_local, wg_local, wg_wfc_pointer, 1);

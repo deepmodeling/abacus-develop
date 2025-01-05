@@ -195,7 +195,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     if (this->nbands == PARAM.inp.nbands) { move_gs(); }
     else    // copy the part of ground state info according to paraC_
     {
-        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), 
+                                       this->paraC_.get_col_size(), 
+                                       this->paraC_.get_row_size(),
+                                       this->kv.ngk,
+                                       true);
         this->eig_ks.create(this->kv.get_nks(), this->nbands);
         const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
         for (int ik = 0;ik < this->kv.get_nks();++ik)
@@ -309,8 +313,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
     this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
-        this->paraMat_.ncol_bands,
-        this->paraMat_.get_row_size());
+                                   this->paraMat_.ncol_bands,
+                                   this->paraMat_.get_row_size(), 
+                                   this->kv.ngk,
+                                   true);
     this->read_ks_wfc();
     if (nspin == 2)
     {

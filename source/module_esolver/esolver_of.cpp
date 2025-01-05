@@ -222,7 +222,11 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
         // Refresh the arrays
         delete this->psi_;
-        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
+        this->psi_ = new psi::Psi<double>(1, 
+                                          PARAM.inp.nspin, 
+                                          this->pw_rho->nrxx,
+                                          this->pw_rho->nrxx,
+                                          true);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
             this->pphi_[is] = this->psi_->get_pointer(is);

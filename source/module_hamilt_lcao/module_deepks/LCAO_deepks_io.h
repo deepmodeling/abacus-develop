@@ -51,7 +51,7 @@ void save_npy_d(const int nat,
                 const int inlmax,
                 const int* inl_l,
                 const bool deepks_equiv,
-                const std::vector<torch::Tensor>& d_tensor,
+                const std::vector<torch::Tensor>& descriptor,
                 const std::string& out_dir,
                 const int rank);
 
@@ -68,7 +68,7 @@ void save_npy_f(const ModuleBase::matrix& f, /**<[in] \f$F_{base}\f$ or \f$F_{to
 
 void save_npy_gvx(const int nat,
                   const int des_per_atom,
-                  const torch::Tensor& gvx_tensor,
+                  const torch::Tensor& gvx,
                   const std::string& out_dir,
                   const int rank);
 
@@ -80,7 +80,7 @@ void save_npy_s(const ModuleBase::matrix& stress, /**<[in] \f$S_{base}\f$ or \f$
 
 void save_npy_gvepsl(const int nat,
                      const int des_per_atom,
-                     const torch::Tensor& gvepsl_tensor,
+                     const torch::Tensor& gvepsl,
                      const std::string& out_dir,
                      const int rank);
 
@@ -110,7 +110,7 @@ void save_npy_v_delta_precalc(const int nat,
                               const int nks,
                               const int nlocal,
                               const int des_per_atom,
-                              const torch::Tensor& v_delta_precalc_tensor,
+                              const torch::Tensor& v_delta_precalc,
                               const std::string& out_dir,
                               const int rank);
 
@@ -128,7 +128,7 @@ void save_npy_phialpha(const int nat,
 void save_npy_gevdm(const int nat,
                     const int inlmax,
                     const int lmaxd,
-                    const torch::Tensor& gevdm_tensor,
+                    const torch::Tensor& gevdm,
                     const std::string& out_dir,
                     const int rank);
 }; // namespace LCAO_deepks_io

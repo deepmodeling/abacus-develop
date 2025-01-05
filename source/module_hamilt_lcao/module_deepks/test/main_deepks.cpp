@@ -5,54 +5,58 @@
 
 int calculate();
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
 #ifdef __MPI
-	MPI_Init(&argc,&argv);
+    MPI_Init(&argc, &argv);
 #endif
     int status = calculate();
 #ifdef __MPI
-	MPI_Finalize();
+    MPI_Finalize();
 #endif
 
-	if(status>0)
-	{
-		return 1;
-	}
-	else
-	{
-    	return 0;
-	}
+    if (status > 0)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
 
 int calculate()
 {
-	test_deepks test;
+    test_deepks test;
 
-	test.preparation();
+    test.preparation();
 
-	test.check_dstable();
-	test.check_phialpha();
+    test.check_dstable();
+    test.check_phialpha();
 
-	test.check_pdm();
-	test.check_gdmx();
+    test.check_pdm();
 
-	test.check_descriptor();
-	test.check_gvx();
+    torch::Tensor gdmx;
+    test.check_gdmx(gdmx);
+    test.check_gdmepsl();
 
-	test.check_edelta();
-	test.check_e_deltabands();
-	test.check_f_delta_and_stress_delta();
+    std::vector<torch::Tensor> descriptor;
+    test.check_descriptor(descriptor);
+    test.check_gvx(gdmx);
 
-	std::cout << " [  ------  ] Total checks : " << test.total_check <<std::endl;
-	if(test.failed_check>0)
-	{
-		std::cout << "\e[1;31m [  FAILED  ]\e[0m Failed checks : " << test.failed_check <<std::endl;
-	}
-	else
-	{
-		std::cout << "\e[1;32m [  PASS    ]\e[0m All checks passed!" << std::endl;
-	}
+    test.check_edelta(descriptor);
+    test.check_e_deltabands();
+    test.check_f_delta_and_stress_delta();
+
+    std::cout << " [  ------  ] Total checks : " << test.total_check << std::endl;
+    if (test.failed_check > 0)
+    {
+        std::cout << "\e[1;31m [  FAILED  ]\e[0m Failed checks : " << test.failed_check << std::endl;
+    }
+    else
+    {
+        std::cout << "\e[1;32m [  PASS    ]\e[0m All checks passed!" << std::endl;
+    }
 
     return test.failed_check;
 }
