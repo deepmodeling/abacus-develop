@@ -314,65 +314,6 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 	return constrain;
 }
 
-
-
-void UnitCell::update_pos_taud(double* posd_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
-                atom->taud[ia][ik] += posd_in[3 * iat + ik];
-                atom->dis[ia][ik] = posd_in[3 * iat + ik];
-            }
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
-    this->bcast_atoms_tau();
-}
-
-// posd_in is atomic displacements here  liuyu 2023-03-22
-void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
-                atom->taud[ia][ik] += posd_in[iat][ik];
-                atom->dis[ia][ik] = posd_in[iat][ik];
-            }
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
-    this->bcast_atoms_tau();
-}
-
-void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia) {
-            this->atoms[it].vel[ia] = vel_in[iat];
-            ++iat;
-        }
-    }
-    assert(iat == this->nat);
-}
-
-
-void UnitCell::bcast_atoms_tau() {
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-    for (int i = 0; i < ntype; i++) {
-        atoms[i].bcast_atom(); // bcast tau array
-    }
-#endif
-}
-
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================

@@ -200,10 +200,6 @@ class UnitCell {
     void print_cell(std::ofstream& ofs) const;
     void print_cell_xyz(const std::string& fn) const;
 
-    void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
-    void update_pos_taud(double* posd_in);
-    void update_vel(const ModuleBase::Vector3<double>* vel_in);
-    void bcast_atoms_tau();
     bool judge_big_cell() const;
 
     void update_stress(ModuleBase::matrix& scs); // updates stress
