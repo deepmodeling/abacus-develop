@@ -53,7 +53,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
-    bool in_place = false;
+    bool in_place = false; ///< if temp and evc share the same memory
     if (psi.get_pointer() != evc.get_pointer() && psi.get_nbands() == evc.get_nbands())
     { // use memory of evc as temp
         temp = evc.get_pointer();
@@ -62,7 +62,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     else
     {
         resmem_complex_op()(ctx, temp, nstart * dmax, "DiagSub::temp");
-        setmem_complex_op()(ctx, temp, 0, nstart * dmax);
     }
 
     { // code block to calculate hcc and scc

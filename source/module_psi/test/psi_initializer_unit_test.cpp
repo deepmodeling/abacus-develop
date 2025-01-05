@@ -132,6 +132,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->a2 = {0.0, 10.0, 0.0};
             this->p_ucell->a3 = {0.0, 0.0, 10.0};
             this->p_ucell->lat0 = 1.0;
+            this->p_ucell->omega = 1000.0;
             this->p_ucell->latvec.e11 = 10.0; this->p_ucell->latvec.e12 = 0.0; this->p_ucell->latvec.e13 = 0.0;
             this->p_ucell->latvec.e21 = 0.0; this->p_ucell->latvec.e22 = 10.0; this->p_ucell->latvec.e23 = 0.0;
             this->p_ucell->latvec.e31 = 0.0; this->p_ucell->latvec.e32 = 0.0; this->p_ucell->latvec.e33 = 10.0;
@@ -141,14 +142,14 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->tpiba = 2.0 * M_PI / this->p_ucell->lat0;
             this->p_ucell->tpiba2 = this->p_ucell->tpiba * this->p_ucell->tpiba;
             // atom
-            if(this->p_ucell->atom_label != nullptr) { delete[] this->p_ucell->atom_label;
-}
+            delete[] this->p_ucell->atom_label;
             this->p_ucell->atom_label = new std::string[1];
             this->p_ucell->atom_label[0] = "Si";
             // atom properties
             this->p_ucell->nat = 1;
             this->p_ucell->ntype = 1;
             this->p_ucell->atoms = new Atom[1];
+            this->p_ucell->set_atom_flag = true;
             this->p_ucell->atoms[0].label = "Si";
             this->p_ucell->atoms[0].mass = 28.0855;
             this->p_ucell->atoms[0].na = 1;
@@ -165,19 +166,20 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->pseudo_fn[0] = "Si_NCSR_ONCVPSP_v0.5_dojo.upf";
             this->p_ucell->natomwfc = 4;
             this->p_ucell->atoms[0].ncpp.nchi = 2;
-            this->p_ucell->atoms[0].ncpp.mesh = 10;
-            this->p_ucell->atoms[0].ncpp.msh = 10;
+            this->p_ucell->atoms[0].ncpp.els = std::vector<std::string>(2, "");
+            this->p_ucell->atoms[0].ncpp.mesh = 11;
+            this->p_ucell->atoms[0].ncpp.msh = 11;
             this->p_ucell->atoms[0].ncpp.lmax = 2;
             //if(this->p_ucell->atoms[0].ncpp.rab != nullptr) delete[] this->p_ucell->atoms[0].ncpp.rab;
-            this->p_ucell->atoms[0].ncpp.rab = std::vector<double>(10, 0.0);
-            for(int i = 0; i < 10; ++i) { this->p_ucell->atoms[0].ncpp.rab[i] = 0.01;
+            this->p_ucell->atoms[0].ncpp.rab = std::vector<double>(11, 0.0);
+            for(int i = 0; i < 11; ++i) { this->p_ucell->atoms[0].ncpp.rab[i] = 0.01;
 }
             //if(this->p_ucell->atoms[0].ncpp.r != nullptr) delete[] this->p_ucell->atoms[0].ncpp.r;
-            this->p_ucell->atoms[0].ncpp.r = std::vector<double>(10, 0.0);
-            for(int i = 0; i < 10; ++i) { this->p_ucell->atoms[0].ncpp.r[i] = 0.01*i;
+            this->p_ucell->atoms[0].ncpp.r = std::vector<double>(11, 0.0);
+            for(int i = 0; i < 11; ++i) { this->p_ucell->atoms[0].ncpp.r[i] = 0.01*i;
 }
-            this->p_ucell->atoms[0].ncpp.chi.create(2, 10);
-            for(int i = 0; i < 2; ++i) { for(int j = 0; j < 10; ++j) { this->p_ucell->atoms[0].ncpp.chi(i, j) = 0.01;
+            this->p_ucell->atoms[0].ncpp.chi.create(2, 11);
+            for(int i = 0; i < 2; ++i) { for(int j = 0; j < 11; ++j) { this->p_ucell->atoms[0].ncpp.chi(i, j) = 0.01;
 }
 }
             //if(this->p_ucell->atoms[0].ncpp.lchi != nullptr) delete[] this->p_ucell->atoms[0].ncpp.lchi;
@@ -259,7 +261,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pw_wfc->kvec_d = new ModuleBase::Vector3<double>[1];
             this->p_pw_wfc->kvec_d[0] = {0.0, 0.0, 0.0};
 
-            this->p_pspot_vnl->lmaxkb = 0;
+            this->p_pspot_vnl->lmaxkb = 1;
 
             this->p_parakpts->startk_pool.resize(1);
             this->p_parakpts->startk_pool[0] = 0;
@@ -267,12 +269,13 @@ class PsiIntializerUnitTest : public ::testing::Test {
         }
         void TearDown() override
         {
+            delete this->psi_init;
             delete this->p_sf;
             delete this->p_pw_wfc;
             delete this->p_ucell;
             delete this->p_pspot_vnl;
             delete this->p_parakpts;
-        }
+         }
 };
 
 TEST_F(PsiIntializerUnitTest, ConstructorRandom) {
@@ -327,7 +330,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
     psi::Psi<std::complex<double>>* psi = new psi::Psi<std::complex<double>>(1, nbands_start, nbasis, nullptr);
     this->psi_init->init_psig(psi->get_pointer(), 0);
-    EXPECT_NEAR(0, psi->operator()(0,0,0).real(), 1e-12);
+    EXPECT_NEAR(-0.66187696761064307, psi->operator()(0,0,0).real(), 1e-4);
     delete psi;
 }
 
