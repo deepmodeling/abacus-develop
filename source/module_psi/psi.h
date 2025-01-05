@@ -132,7 +132,7 @@ class Psi
     // return psi_bias
     const int& get_psi_bias() const;
 
-    const int& get_cur_effective_basis() const;
+    const int& get_current_ngk() const;
 
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;

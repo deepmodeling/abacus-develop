@@ -473,7 +473,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                                          ct::DeviceTypeToEnum<ct::DEVICE_CPU>::value,
                                          ct::TensorShape({static_cast<int>(pre_condition.size())}))
                                .to_device<ct_Device>()
-                               .slice({0}, {psi.get_cur_effective_basis()});
+                               .slice({0}, {psi.get_current_ngk()});
 
         cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, this->ethr_band, prec_tensor);
         // TODO: Double check tensormap's potential problem
@@ -523,7 +523,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
 
         Diago_DavSubspace<T, Device> dav_subspace(pre_condition,
                                                   psi.get_nbands(),
-                                                  psi.get_k_first() ? psi.get_cur_effective_basis()
+                                                  psi.get_k_first() ? psi.get_current_ngk()
                                                                     : psi.get_nk() * psi.get_nbasis(),
                                                   PARAM.inp.pw_diag_ndim,
                                                   this->diag_thr,
@@ -549,7 +549,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int david_maxiter = this->diag_iter_max;
 
         // dimensions of matrix to be solved
-        const int dim = psi.get_cur_effective_basis(); /// dimension of matrix
+        const int dim = psi.get_current_ngk(); /// dimension of matrix
         const int nband = psi.get_nbands();            /// number of eigenpairs sought
         const int ld_psi = psi.get_nbasis();           /// leading dimension of psi
 

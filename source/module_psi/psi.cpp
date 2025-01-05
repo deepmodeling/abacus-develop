@@ -329,7 +329,7 @@ const int& Psi<T, Device>::get_psi_bias() const
 }
 
 template <typename T, typename Device>
-const int& Psi<T, Device>::get_cur_effective_basis() const
+const int& Psi<T, Device>::get_current_ngk() const
 {
     if (this->npol == 1)
     {
