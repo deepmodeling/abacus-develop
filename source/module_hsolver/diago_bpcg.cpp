@@ -97,7 +97,23 @@ void DiagoBPCG<T, Device>::orth_cholesky(
     // hsub_out = psi_out * transc(psi_out)
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
-    hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
+    // hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
+
+    // gemm: hsub_out(n_band x n_band) = psi_out^T(n_band x n_basis) * psi_out(n_basis x n_band)
+    gemm_op()(this->ctx,
+                'C',
+                'N',
+                this->n_band,      //m
+                this->n_band,      //n
+                this->n_dim,       //k
+                this->one,
+                psi_out.data<T>(),
+                this->n_basis,     //lda
+                psi_out.data<T>(),
+                this->n_basis,     //ldb
+                this->zero,
+                hsub_out.data<T>(),
+                this->n_band);     //ldc
 
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
