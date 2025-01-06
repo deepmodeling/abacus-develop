@@ -10,7 +10,7 @@ namespace LR
     // c: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
     // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
 template <>
-std::vector<container::Tensor> cal_dm_trans_pblas(const double* X_istate,
+std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
     const Parallel_2D& px,
     const psi::Psi<double>& c,
     const Parallel_2D& pc,
@@ -62,7 +62,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* X_istate,
     return dm_trans;
 }
 template <>
-std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* X_istate,
+std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* const X_istate,
     const Parallel_2D& px,
     const psi::Psi<std::complex<double>>& c,
     const Parallel_2D& pc,

@@ -6,7 +6,7 @@
 namespace LR
 {
     template<> std::vector<container::Tensor> cal_dm_trans_forloop_serial(
-        const double* X_istate,
+        const double* const X_istate,
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
@@ -41,7 +41,7 @@ namespace LR
     }
 
     template<> std::vector<container::Tensor> cal_dm_trans_forloop_serial(
-        const std::complex<double>* X_istate,
+        const std::complex<double>* const X_istate,
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
@@ -78,7 +78,7 @@ namespace LR
 
 
     template<> std::vector<container::Tensor> cal_dm_trans_blas(
-        const double* X_istate,
+        const double* const X_istate,
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
@@ -112,7 +112,7 @@ namespace LR
 
 
     template<> std::vector<container::Tensor> cal_dm_trans_blas(
-        const std::complex<double>* X_istate,
+        const std::complex<double>* const X_istate,
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
