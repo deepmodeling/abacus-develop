@@ -30,11 +30,11 @@ DiagoBPCG<T, Device>::~DiagoBPCG() {
 }
 
 template<typename T, typename Device>
-void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis) {
+void DiagoBPCG<T, Device>::init_iter(const int nband, const int nbasis, const int ndim) {
     // Specify the problem size n_basis, n_band, while lda is n_basis
     this->n_band        = nband;
     this->n_basis       = nbasis;
-
+    this->n_dim         = ndim;
 
     // All column major tensors
 
