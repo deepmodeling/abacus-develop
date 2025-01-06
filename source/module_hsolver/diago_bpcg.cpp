@@ -224,7 +224,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
     gemm_op()(this->ctx,
                 'N',
                 'N',
-                this->n_dim,        //m
+                this->n_basis,        //m
                 this->n_band,       //n
                 this->n_band,       //k
                 this->one,          //1.0
