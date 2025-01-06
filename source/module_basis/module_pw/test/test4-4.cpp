@@ -213,13 +213,6 @@ TEST_F(PWTEST,test4_4)
             }
         }
 
-        //check getig2ixyz_k
-        pwtest.get_ig2ixyz_k();
-        for(int igl = 0; igl < npwk ; ++igl)
-        { 
-            EXPECT_GE(pwtest.ig2ixyz_k_[igl + ik * pwtest.npwk_max], 0);
-        }
-
     }
     delete []tmp; 
     delete [] rhor;

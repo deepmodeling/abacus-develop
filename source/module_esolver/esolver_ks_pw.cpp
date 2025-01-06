@@ -138,12 +138,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
 {
     // 1) call before_all_runners() of ESolver_KS
     ESolver_KS<T, Device>::before_all_runners(ucell, inp);
-#if defined(__CUDA) || defined(__ROCM)
-    if (PARAM.inp.device == "gpu")
-    {
-        this->pw_wfc->get_ig2ixyz_k();
-    }
-#endif
 
     // 3) initialize ElecState,
     if (this->pelec == nullptr)
