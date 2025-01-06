@@ -40,6 +40,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
     torch::Tensor orbital_pdm
         = torch::zeros({nks, inlmax, (2 * lmaxd + 1), (2 * lmaxd + 1)}, torch::dtype(torch::kFloat64));
+    auto accessor = orbital_pdm.accessor<double, 4>();
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -275,11 +276,11 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                                 {
-                                    orbital_pdm[ik][inl][m1][m2] += ddot_(&row_size,
-                                                                          p_g1dmt + index * row_size * nks,
-                                                                          &inc,
-                                                                          s_1t.data() + index * row_size,
-                                                                          &inc);
+                                    accessor[ik][inl][m1][m2] += ddot_(&row_size,
+                                                                       p_g1dmt + index * row_size * nks,
+                                                                       &inc,
+                                                                       s_1t.data() + index * row_size,
+                                                                       &inc);
                                     index++;
                                 }
                             }
@@ -291,14 +292,8 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
         }
     }
 #ifdef __MPI
-    for (int iks = 0; iks < nks; iks++)
-    {
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            auto tensor_slice = orbital_pdm[iks][inl];
-            Parallel_Reduce::reduce_all(tensor_slice.data_ptr<double>(), (2 * lmaxd + 1) * (2 * lmaxd + 1));
-        }
-    }
+    const int size = nks * inlmax * (2 * lmaxd + 1) * (2 * lmaxd + 1);
+    Parallel_Reduce::reduce_all(orbital_pdm.data_ptr<double>(), size);
 #endif
 
     // transfer orbital_pdm [nks,inl,nm,nm] to orbital_pdm_vector [nl,[nks,nat,nm,nm]]
@@ -321,7 +316,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
                 {
                     for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
                     {
-                        mmv.push_back(orbital_pdm[iks][inl][m1][m2].item<double>());
+                        mmv.push_back(accessor[iks][inl][m1][m2]);
                     }
                 }
                 torch::Tensor mm

@@ -16,16 +16,17 @@
 
 // calculates gradient of descriptors from gradient of projected density
 // matrices
-void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm)
+void LCAO_Deepks::cal_gvx(const int nat,
+                          const std::vector<torch::Tensor>& gevdm,
+                          const torch::Tensor& gdmx,
+                          torch::Tensor& gvx)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gvx");
 
-    if (!gdmr_vector.empty())
-    {
-        gdmr_vector.erase(gdmr_vector.begin(), gdmr_vector.end());
-    }
+    // gdmr : nat(derivative) * 3 * inl(projector) * nm * nm
+    std::vector<torch::Tensor> gdmr;
+    auto accessor = gdmx.accessor<double, 5>();
 
-    // gdmr_vector : nat(derivative) * 3 * inl(projector) * nm * nm
     if (GlobalV::MY_RANK == 0)
     {
         // make gdmx as tensor
@@ -48,18 +49,7 @@ void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm
                         {
                             for (int m2 = 0; m2 < nm; ++m2)
                             {
-                                if (i == 0)
-                                {
-                                    mmv.push_back(this->gdmx[ibt][inl][m1 * nm + m2]);
-                                }
-                                if (i == 1)
-                                {
-                                    mmv.push_back(this->gdmy[ibt][inl][m1 * nm + m2]);
-                                }
-                                if (i == 2)
-                                {
-                                    mmv.push_back(this->gdmz[ibt][inl][m1 * nm + m2]);
-                                }
+                                mmv.push_back(accessor[i][ibt][inl][m1][m2]);
                             }
                         } // nm^2
                         torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64))
@@ -72,45 +62,49 @@ void LCAO_Deepks::cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm
                 torch::Tensor bmm = torch::stack(xmmv, 0); // 3*nat*nm*nm
                 bmmv.push_back(bmm);
             }
-            this->gdmr_vector.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+            gdmr.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
         }
 
-        assert(this->gdmr_vector.size() == nlmax);
+        assert(gdmr.size() == nlmax);
 
         // einsum for each inl:
-        // gdmr_vector : b:nat(derivative) * x:3 * a:inl(projector) * m:nm *
+        // gdmr : b:nat(derivative) * x:3 * a:inl(projector) * m:nm *
         // n:nm gevdm : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) *
         // n:nm (pdm, dim2) gvx_vector : b:nat(derivative) * x:3 *
         // a:inl(projector) * m:nm(descriptor)
         std::vector<torch::Tensor> gvx_vector;
         for (int nl = 0; nl < nlmax; ++nl)
         {
-            gvx_vector.push_back(at::einsum("bxamn, avmn->bxav", {this->gdmr_vector[nl], gevdm[nl]}));
+            gvx_vector.push_back(at::einsum("bxamn, avmn->bxav", {gdmr[nl], gevdm[nl]}));
         }
 
         // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom
         // concatenate index a(inl) and m(nm)
-        this->gvx_tensor = torch::cat(gvx_vector, -1);
+        // gvx:d(d)/dX, size: [natom][3][natom][des_per_atom]
+        gvx = torch::cat(gvx_vector, -1);
 
-        assert(this->gvx_tensor.size(0) == nat);
-        assert(this->gvx_tensor.size(1) == 3);
-        assert(this->gvx_tensor.size(2) == nat);
-        assert(this->gvx_tensor.size(3) == this->des_per_atom);
+        assert(gvx.size(0) == nat);
+        assert(gvx.size(1) == 3);
+        assert(gvx.size(2) == nat);
+        assert(gvx.size(3) == this->des_per_atom);
     }
 
     return;
 }
 
-void LCAO_Deepks::check_gvx(const int nat)
+void LCAO_Deepks::check_gvx(const int nat, const torch::Tensor& gvx)
 {
     std::stringstream ss;
     std::ofstream ofs_x;
     std::ofstream ofs_y;
     std::ofstream ofs_z;
 
-    ofs_x << std::setprecision(12);
-    ofs_y << std::setprecision(12);
-    ofs_z << std::setprecision(12);
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+    
+    auto accessor = gvx.accessor<double, 4>();
 
     for (int ia = 0; ia < nat; ia++)
     {
@@ -132,12 +126,10 @@ void LCAO_Deepks::check_gvx(const int nat)
         {
             for (int inl = 0; inl < inlmax / nat; inl++)
             {
-                int nm = 2 * inl_l[inl] + 1;
                 {
-                    const int ind = ib * inlmax / nat + inl;
-                    ofs_x << gvx_tensor.index({ia, 0, ib, inl}).item().toDouble() << " ";
-                    ofs_y << gvx_tensor.index({ia, 1, ib, inl}).item().toDouble() << " ";
-                    ofs_z << gvx_tensor.index({ia, 2, ib, inl}).item().toDouble() << " ";
+                    ofs_x << accessor[ia][0][ib][inl] << " ";
+                    ofs_y << accessor[ia][1][ib][inl] << " ";
+                    ofs_z << accessor[ia][2][ib][inl] << " ";
                 }
             }
             ofs_x << std::endl;

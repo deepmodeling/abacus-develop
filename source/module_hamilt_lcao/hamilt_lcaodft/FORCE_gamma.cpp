@@ -248,13 +248,19 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
 #ifdef __DEEPKS
     const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
+    std::vector<torch::Tensor> descriptor;
     if (PARAM.inp.deepks_scf)
     {
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
         // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
 
-        GlobalC::ld.cal_descriptor(ucell.nat);
-        GlobalC::ld.cal_gedm(ucell.nat);
+        DeePKS_domain::cal_descriptor(ucell.nat,
+                                      GlobalC::ld.inlmax,
+                                      GlobalC::ld.inl_l,
+                                      GlobalC::ld.pdm,
+                                      descriptor,
+                                      GlobalC::ld.des_per_atom);
+        GlobalC::ld.cal_gedm(ucell.nat, descriptor);
 
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,
@@ -305,7 +311,12 @@ void Force_LCAO<double>::ftable(const bool isforce,
 
         GlobalC::ld.check_projected_dm();
 
-        GlobalC::ld.check_descriptor(ucell, PARAM.globalv.global_out_dir);
+        DeePKS_domain::check_descriptor(GlobalC::ld.inlmax,
+                                        GlobalC::ld.des_per_atom,
+                                        GlobalC::ld.inl_l,
+                                        ucell,
+                                        PARAM.globalv.global_out_dir,
+                                        descriptor);
 
         GlobalC::ld.check_gedm();
 

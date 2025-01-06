@@ -3,10 +3,12 @@
 
 #ifdef __DEEPKS
 
+#include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
+#include "deepks_vdpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
 #include "module_base/matrix.h"
@@ -108,43 +110,11 @@ class LCAO_Deepks
     // [nat][nlm*nlm] for equivariant version
     std::vector<torch::Tensor> pdm;
 
-    // descriptors
-    std::vector<torch::Tensor> d_tensor;
-
     // gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
     std::vector<torch::Tensor> gedm_tensor;
 
-    // gdmx: dD/dX		\sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
-    double*** gdmx; //[natom][tot_Inl][2l+1][2l+1]
-    double*** gdmy;
-    double*** gdmz;
-
-    // gdm_epsl: dD/d\epsilon_{\alpha\beta}
-    double*** gdm_epsl; //[6][tot_Inl][2l+1][2l+1]
-
-    // dD/d\epsilon_{\alpha\beta}, tensor form of gdm_epsl
-    std::vector<torch::Tensor> gdmepsl_vector;
-
-    // gv_epsl:d(d)/d\epsilon_{\alpha\beta}, [natom][6][des_per_atom]
-    torch::Tensor gvepsl_tensor;
-
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm; //[tot_Inl][2l+1][2l+1]
-
-    // gvx:d(d)/dX, [natom][3][natom][des_per_atom]
-    torch::Tensor gvx_tensor;
-
-    // dD/dX, tensor form of gdmx
-    std::vector<torch::Tensor> gdmr_vector;
-
-    // v_delta_pdm_shell[nks,nlocal,nlocal,Inl,nm*nm] = overlap * overlap
-    double***** v_delta_pdm_shell;
-    std::complex<double>***** v_delta_pdm_shell_complex; // for multi-k
-    // v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm_shell;
-    torch::Tensor v_delta_precalc_tensor;
-    // for v_delta==2 , new v_delta_precalc storage method
-    torch::Tensor phialpha_tensor;
-    torch::Tensor gevdm_tensor;
 
     /// size of descriptor(projector) basis set
     int n_descriptor;
@@ -176,12 +146,8 @@ class LCAO_Deepks
     // 1. subroutines that are related to calculating descriptors:
     //   - init : allocates some arrays
     //   - init_index : records the index (inl)
-    // 2. subroutines that are related to calculating force label:
-    //   - init_gdmx : allocates gdmx; it is a private subroutine
-    //   - del_gdmx : releases gdmx
-    // 3. subroutines that are related to V_delta:
-    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
-    //       init_gdmx, as well as allocating F_delta
+    // 2. subroutines that are related to V_delta:
+    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
 
   public:
     explicit LCAO_Deepks();
@@ -199,22 +165,9 @@ class LCAO_Deepks
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
 
-    // array for storing gdmx, used for calculating gvx
-    void init_gdmx(const int nat);
-    // void del_gdmx(const int nat);
-    void del_gdmx();
-
-    // array for storing gdm_epsl, used for calculating gvx
-    void init_gdmepsl();
-    void del_gdmepsl();
-
   private:
     // arrange index of descriptor in all atoms
     void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
-
-    // for v_delta label calculation; xinyuan added on 2023-2-22
-    void init_v_delta_pdm_shell(const int nks, const int nlocal);
-    void del_v_delta_pdm_shell(const int nks, const int nlocal);
 
     //-------------------
     // LCAO_deepks_phialpha.cpp
@@ -263,7 +216,7 @@ class LCAO_Deepks
     // 1. cal_projected_DM, which is used for calculating pdm
     // 2. check_projected_dm, which prints pdm to descriptor.dat
 
-    // 3. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress)
+    // 3. cal_gdmx, calculating gdmx (and optionally gdmepsl for stress)
     // 4. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
@@ -295,9 +248,22 @@ class LCAO_Deepks
         const int nks,
         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
         std::vector<hamilt::HContainer<double>*> phialpha,
-        const bool isstress);
+        torch::Tensor& gdmx);
 
-    void check_gdmx(const int nat);
+    void check_gdmx(const int nat, const torch::Tensor& gdmx);
+
+    template <typename TK>
+    void cal_gdmepsl( // const ModuleBase::matrix& dm,
+        const std::vector<std::vector<TK>>& dm,
+        const UnitCell& ucell,
+        const LCAO_Orbitals& orb,
+        const Grid_Driver& GridD,
+        const int nks,
+        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+        std::vector<hamilt::HContainer<double>*> phialpha,
+        torch::Tensor& gdmepsl);
+
+    void check_gdmepsl(const torch::Tensor& gdmepsl);
 
     /**
      * @brief set init_pdm to skip the calculation of pdm in SCF iteration
@@ -344,16 +310,13 @@ class LCAO_Deepks
     // as well as subroutines that prints the results for checking
 
     // The file contains 8 subroutines:
-    // 1. cal_descriptor : obtains descriptors which are eigenvalues of pdm
-    //       by calling torch::linalg::eigh
-    // 2. check_descriptor : prints descriptor for checking
     // 3. cal_gvx : gvx is used for training with force label, which is gradient of descriptors,
     //       calculated by d(des)/dX = d(pdm)/dX * d(des)/d(pdm) = gdmx * gvdm
     //       using einsum
     // 4. check_gvx : prints gvx into gvx.dat for checking
     // 5. cal_gvepsl : gvepsl is used for training with stress label, which is derivative of
     //       descriptors wrt strain tensor, calculated by
-    //       d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdm_epsl * gvdm
+    //       d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdmepsl * gvdm
     //       using einsum
     // 6. cal_gevdm : d(des)/d(pdm)
     //       calculated using torch::autograd::grad
@@ -362,25 +325,8 @@ class LCAO_Deepks
     //       this is the term V(D) that enters the expression H_V_delta = |alpha>V(D)<alpha|
     //       caculated using torch::autograd::grad
     // 9. check_gedm : prints gedm for checking
-    // 10. cal_orbital_precalc : orbital_precalc is usted for training with orbital label,
-    //                          which equals gvdm * orbital_pdm,
-    //                          orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
-    // 11. cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
-    //                         which equals gvdm * v_delta_pdm_shell,
-    //                         v_delta_pdm_shell = overlap * overlap
-    // 12. check_v_delta_precalc : check v_delta_precalc
-    // 13. prepare_phialpha : prepare phialpha for outputting npy file
-    // 14. prepare_gevdm : prepare gevdm for outputting npy file
 
   public:
-    /// Calculates descriptors
-    /// which are eigenvalues of pdm in blocks of I_n_l
-    void cal_descriptor(const int nat);
-    /// print descriptors based on LCAO basis
-    void check_descriptor(const UnitCell& ucell, const std::string& out_dir);
-
-    void cal_descriptor_equiv(const int nat);
-
     /// calculates gradient of descriptors w.r.t atomic positions
     ///----------------------------------------------------
     /// m, n: 2*l+1
@@ -390,80 +336,28 @@ class LCAO_Deepks
     ///  - b: the atoms whose force being calculated)
     /// gvdm*gdmx->gvx
     ///----------------------------------------------------
-    void cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm);
-    void check_gvx(const int nat);
+    void cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmx, torch::Tensor& gvx);
+    void check_gvx(const int nat, const torch::Tensor& gvx);
 
     // for stress
-    void cal_gvepsl(const int nat, const std::vector<torch::Tensor>& gevdm);
+    void cal_gvepsl(const int nat,
+                    const std::vector<torch::Tensor>& gevdm,
+                    const torch::Tensor& gdmepsl,
+                    torch::Tensor& gvepsl);
 
     // load the trained neural network model
     void load_model(const std::string& model_file);
 
     /// calculate partial of energy correction to descriptors
-    void cal_gedm(const int nat);
+    void cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor);
     void check_gedm();
-    void cal_gedm_equiv(const int nat);
+    void cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor);
 
-    // calculates orbital_precalc
-    // template <typename TK, typename TH>
-    // void cal_orbital_precalc(const std::vector<TH>& dm_hl,
-    //                          const int lmaxd,
-    //                          const int inlmax,
-    //                          const int nat,
-    //                          const int nks,
-    //                          const int* inl_l,
-    //                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-    //                          const std::vector<hamilt::HContainer<double>*> phialpha,
-    //                          const std::vector<torch::Tensor> gevdm,
-    //                          const ModuleBase::IntArray* inl_index,
-    //                          const UnitCell& ucell,
-    //                          const LCAO_Orbitals& orb,
-    //                          const Parallel_Orbitals& pv,
-    //                          const Grid_Driver& GridD,
-    //                          torch::Tensor& orbital_precalc);
-
-    // calculates v_delta_precalc
-    template <typename TK>
-    void cal_v_delta_precalc(const int nlocal,
-                             const int nat,
-                             const int nks,
-                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                             const UnitCell& ucell,
-                             const LCAO_Orbitals& orb,
-                             const Grid_Driver& GridD);
-
-    template <typename TK>
-    void check_v_delta_precalc(const int nat, const int nks, const int nlocal);
-
-    // prepare phialpha for outputting npy file
-    template <typename TK>
-    void prepare_phialpha(const int nlocal,
-                          const int nat,
-                          const int nks,
-                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                          const UnitCell& ucell,
-                          const LCAO_Orbitals& orb,
-                          const Grid_Driver& GridD);
-
-    template <typename TK>
-    void check_vdp_phialpha(const int nat, const int nks, const int nlocal);
-
-    // prepare gevdm for outputting npy file
-    void prepare_gevdm(const int nat, const LCAO_Orbitals& orb);
+    // calculate gevdm
     void cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm);
-    void check_vdp_gevdm(const int nat);
 
   private:
     const Parallel_Orbitals* pv;
-
-#ifdef __MPI
-
-  public:
-    // reduces a dim 2 array
-    void allsum_deepks(int inlmax,    // first dimension
-                       int ndim,      // second dimension
-                       double** mat); // the array being reduced
-#endif
 };
 
 namespace GlobalC

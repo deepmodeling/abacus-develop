@@ -70,7 +70,8 @@ TEST_F(AXTest, DoubleSerial)
         int size_v = s.naos * s.naos;
         for (int istate = 0;istate < nstate;++istate)
         {
-            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos);
+            std::vector<int> temp(s.nks, s.naos);
+            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(&c(0, 0, 0), size_c);
             for (auto& v : V) { set_rand(v.data<double>(), size_v); }
@@ -91,7 +92,8 @@ TEST_F(AXTest, ComplexSerial)
         int size_v = s.naos * s.naos;
         for (int istate = 0;istate < nstate;++istate)
         {
-            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos);
+            std::vector<int> temp(s.nks, s.naos);
+            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(&c(0, 0, 0), size_c);
             for (auto& v : V) { set_rand(v.data<std::complex<double>>(), size_v); }
@@ -113,7 +115,9 @@ TEST_F(AXTest, DoubleParallel)
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size());
+        
+        std::vector<int> ngk_temp(s.nks, pc.get_row_size());
+        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp.data(), true);
         Parallel_2D px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
@@ -139,7 +143,9 @@ TEST_F(AXTest, DoubleParallel)
             }
             // compare to global AX
             std::vector<container::Tensor> V_full(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
-            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos);
+            
+            std::vector<int> ngk_temp_1(s.nks, s.naos);
+            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_1.data(), true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 LR_Util::gather_2d_to_full(pV, V.at(isk).data<double>(), V_full.at(isk).data<double>(), false, s.naos, s.naos);
@@ -165,7 +171,9 @@ TEST_F(AXTest, ComplexParallel)
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size());
+
+        std::vector<int> ngk_temp_1(s.nks, pc.get_row_size());
+        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp_1.data(), true);
         Parallel_2D px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
 
@@ -187,7 +195,10 @@ TEST_F(AXTest, ComplexParallel)
             }
             // compare to global AX
             std::vector<container::Tensor> V_full(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
-            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos);
+
+
+            std::vector<int> ngk_temp_2(s.nks, s.naos);
+            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2.data(), true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 LR_Util::gather_2d_to_full(pV, V.at(isk).data<std::complex<double>>(), V_full.at(isk).data<std::complex<double>>(), false, s.naos, s.naos);

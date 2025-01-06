@@ -3,6 +3,7 @@
 #include "LCAO_deepks.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
+#include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
@@ -10,13 +11,9 @@
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-/// if stress label is enabled, the gradient of PDM wrt strain tensor will
-/// be calculated:
-/// gdm_epsl = d/d\epsilon_{ab} *
-///           sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 
 // There are 2 subroutines in this file:
-// 1. cal_gdmx, calculating gdmx (and optionally gdm_epsl for stress) for gamma point
+// 1. cal_gdmx, calculating gdmx
 // 2. check_gdmx, which prints gdmx to a series of .dat files
 
 template <typename TK>
@@ -27,34 +24,19 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                            const int nks,
                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                            std::vector<hamilt::HContainer<double>*> phialpha,
-                           const bool isstress)
+                           torch::Tensor& gdmx)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
     ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
     // get DS_alpha_mu and S_nu_beta
 
-    int size = (2 * lmaxd + 1) * (2 * lmaxd + 1);
     int nrow = this->pv->nrow;
-    for (int iat = 0; iat < ucell.nat; iat++)
-    {
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            ModuleBase::GlobalFunc::ZEROS(gdmx[iat][inl], size);
-            ModuleBase::GlobalFunc::ZEROS(gdmy[iat][inl], size);
-            ModuleBase::GlobalFunc::ZEROS(gdmz[iat][inl], size);
-        }
-    }
-
-    if (isstress)
-    {
-        for (int ipol = 0; ipol < 6; ipol++)
-        {
-            for (int inl = 0; inl < inlmax; inl++)
-            {
-                ModuleBase::GlobalFunc::ZEROS(gdm_epsl[ipol][inl], size);
-            }
-        }
-    }
+    const int nm = 2 * lmaxd + 1;
+    // gdmx: dD/dX
+    // \sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
+    // size: [3][natom][tot_Inl][2l+1][2l+1]
+    gdmx = torch::zeros({3, ucell.nat, inlmax, nm, nm}, torch::dtype(torch::kFloat64));
+    auto accessor = gdmx.accessor<double, 5>();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
@@ -101,17 +83,6 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                         continue;
                     }
 
-                    double r0[3];
-                    double r1[3];
-                    if (isstress)
-                    {
-                        r1[0] = (tau1.x - tau0.x);
-                        r1[1] = (tau1.y - tau0.y);
-                        r1[2] = (tau1.z - tau0.z);
-                        r0[0] = (tau2.x - tau0.x);
-                        r0[1] = (tau2.y - tau0.y);
-                        r0[2] = (tau2.z - tau0.z);
-                    }
                     auto row_indexes = pv->get_indexes_row(ibt1);
                     auto col_indexes = pv->get_indexes_col(ibt2);
                     if (row_indexes.size() * col_indexes.size() == 0)
@@ -193,68 +164,29 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                                     {
                                         for (int m2 = 0; m2 < nm; ++m2)
                                         {
-                                            //(<d/dX chi_mu|alpha_m>)<chi_nu|alpha_m'>
-                                            gdmx[iat][inl][m1 * nm + m2]
-                                                += grad_overlap_2[0]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmy[iat][inl][m1 * nm + m2]
-                                                += grad_overlap_2[1]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmz[iat][inl][m1 * nm + m2]
-                                                += grad_overlap_2[2]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                            //(<d/dX chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                            gdmx[iat][inl][m2 * nm + m1]
-                                                += grad_overlap_2[0]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmy[iat][inl][m2 * nm + m1]
-                                                += grad_overlap_2[1]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmz[iat][inl][m2 * nm + m1]
-                                                += grad_overlap_2[2]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                            //(<chi_mu|d/dX alpha_m>)<chi_nu|alpha_m'> = -(<d/dX
-                                            //chi_mu|alpha_m>)<chi_nu|alpha_m'>
-                                            gdmx[ibt2][inl][m1 * nm + m2]
-                                                -= grad_overlap_2[0]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmy[ibt2][inl][m1 * nm + m2]
-                                                -= grad_overlap_2[1]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmz[ibt2][inl][m1 * nm + m2]
-                                                -= grad_overlap_2[2]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                            //(<chi_nu|d/dX alpha_m'>)<chi_mu|alpha_m> = -(<d/dX
-                                            //chi_nu|alpha_m'>)<chi_mu|alpha_m>
-                                            gdmx[ibt2][inl][m2 * nm + m1]
-                                                -= grad_overlap_2[0]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmy[ibt2][inl][m2 * nm + m1]
-                                                -= grad_overlap_2[1]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-                                            gdmz[ibt2][inl][m2 * nm + m1]
-                                                -= grad_overlap_2[2]->get_value(col_indexes[iw2], ib + m2)
-                                                   * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
-
-                                            if (isstress)
+                                            for (int i = 0; i < 3; i++)
                                             {
-                                                int mm = 0;
-                                                for (int ipol = 0; ipol < 3; ipol++)
-                                                {
-                                                    for (int jpol = ipol; jpol < 3; jpol++)
-                                                    {
-                                                        gdm_epsl[mm][inl][m2 * nm + m1]
-                                                            += ucell.lat0 * *dm_current
-                                                               * (grad_overlap_2[jpol]->get_value(col_indexes[iw2],
-                                                                                                  ib + m2)
-                                                                  * overlap_1->get_value(row_indexes[iw1], ib + m1)
-                                                                  * r0[ipol]);
-                                                        mm++;
-                                                    }
-                                                }
+                                                //(<d/dX chi_mu|alpha_m>)<chi_nu|alpha_m'>
+                                                accessor[i][iat][inl][m1][m2]
+                                                    += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
+                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
+
+                                                //(<d/dX chi_nu|alpha_m'>)<chi_mu|alpha_m>
+                                                accessor[i][iat][inl][m2][m1]
+                                                    += grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
+                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
+
+                                                // (<chi_mu|d/dX alpha_m>)<chi_nu|alpha_m'> = -(<d/dX
+                                                // chi_mu|alpha_m>)<chi_nu|alpha_m'>
+                                                accessor[i][ibt2][inl][m1][m2]
+                                                    -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
+                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
+
+                                                //(<chi_nu|d/dX alpha_m'>)<chi_mu|alpha_m> = -(<d/dX
+                                                //chi_nu|alpha_m'>)<chi_mu|alpha_m>
+                                                accessor[i][ibt2][inl][m2][m1]
+                                                    -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
+                                                       * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
                                             }
                                         }
                                     }
@@ -262,39 +194,6 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                                 }
                             }
                             assert(ib == overlap_1->get_col_size());
-                            if (isstress)
-                            {
-                                int ib = 0;
-                                for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
-                                {
-                                    for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
-                                    {
-                                        const int inl = this->inl_index[T0](I0, L0, N0);
-                                        const int nm = 2 * L0 + 1;
-                                        for (int m1 = 0; m1 < nm; ++m1)
-                                        {
-                                            for (int m2 = 0; m2 < nm; ++m2)
-                                            {
-                                                int mm = 0;
-                                                for (int ipol = 0; ipol < 3; ipol++)
-                                                {
-                                                    for (int jpol = ipol; jpol < 3; jpol++)
-                                                    {
-                                                        gdm_epsl[mm][inl][m2 * nm + m1]
-                                                            += ucell.lat0 * *dm_current
-                                                               * (overlap_2->get_value(col_indexes[iw2], ib + m1)
-                                                                  * grad_overlap_1[jpol]->get_value(row_indexes[iw1],
-                                                                                                    ib + m2)
-                                                                  * r1[ipol]);
-                                                        mm++;
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        ib += nm;
-                                    }
-                                }
-                            }
                             dm_current++;
                         } // iw2
                     }     // iw1
@@ -304,25 +203,13 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
     }                     // T0
 
 #ifdef __MPI
-    for (int iat = 0; iat < ucell.nat; iat++)
-    {
-        allsum_deepks(this->inlmax, size, this->gdmx[iat]);
-        allsum_deepks(this->inlmax, size, this->gdmy[iat]);
-        allsum_deepks(this->inlmax, size, this->gdmz[iat]);
-    }
-    if (isstress)
-    {
-        for (int ipol = 0; ipol < 6; ipol++)
-        {
-            allsum_deepks(this->inlmax, size, this->gdm_epsl[ipol]);
-        }
-    }
+    Parallel_Reduce::reduce_all(gdmx.data_ptr<double>(), 3 * ucell.nat * inlmax * nm * nm);
 #endif
     ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
     return;
 }
 
-void LCAO_Deepks::check_gdmx(const int nat)
+void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
 {
     std::stringstream ss;
     std::ofstream ofs_x;
@@ -333,7 +220,8 @@ void LCAO_Deepks::check_gdmx(const int nat)
     ofs_y << std::setprecision(10);
     ofs_z << std::setprecision(10);
 
-    const int pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
+    const int nm = 2 * this->lmaxd + 1;
+    auto accessor = gdmx.accessor<double, 5>();
     for (int ia = 0; ia < nat; ia++)
     {
         ss.str("");
@@ -348,11 +236,14 @@ void LCAO_Deepks::check_gdmx(const int nat)
 
         for (int inl = 0; inl < inlmax; inl++)
         {
-            for (int ind = 0; ind < pdm_size; ind++)
+            for (int m1 = 0; m1 < nm; m1++)
             {
-                ofs_x << gdmx[ia][inl][ind] << " ";
-                ofs_y << gdmy[ia][inl][ind] << " ";
-                ofs_z << gdmz[ia][inl][ind] << " ";
+                for (int m2 = 0; m2 < nm; m2++)
+                {
+                    ofs_x << accessor[0][ia][inl][m1][m2] << " ";
+                    ofs_y << accessor[1][ia][inl][m1][m2] << " ";
+                    ofs_z << accessor[2][ia][inl][m1][m2] << " ";
+                }
             }
             ofs_x << std::endl;
             ofs_y << std::endl;
@@ -371,7 +262,7 @@ template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double
                                             const int nks,
                                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                             std::vector<hamilt::HContainer<double>*> phialpha,
-                                            const bool isstress);
+                                            torch::Tensor& gdmx);
 
 template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
                                                           const UnitCell& ucell,
@@ -380,6 +271,6 @@ template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std:
                                                           const int nks,
                                                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                           std::vector<hamilt::HContainer<double>*> phialpha,
-                                                          const bool isstress);
+                                                          torch::Tensor& gdmx);
 
 #endif

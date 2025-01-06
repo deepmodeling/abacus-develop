@@ -374,6 +374,75 @@ void update_pos_tau(const Lattice& lat,
     bcast_atoms_tau(atoms, ntype);
 }
 
+void update_pos_taud(const Lattice& lat,
+                     const double* posd_in,
+                     const int ntype,
+                     const int nat,
+                     Atom* atoms)
+{
+    int iat = 0;
+    for (int it = 0; it < ntype; it++) 
+    {
+        Atom* atom = &atoms[it];
+        for (int ia = 0; ia < atom->na; ia++) 
+        {
+            for (int ik = 0; ik < 3; ++ik) 
+            {
+                atom->taud[ia][ik] += posd_in[3 * iat + ik];
+                atom->dis[ia][ik] = posd_in[3 * iat + ik];
+            }
+            iat++;
+        }
+    }
+    assert(iat == nat);
+    periodic_boundary_adjustment(atoms,lat.latvec,ntype);
+    bcast_atoms_tau(atoms, ntype);
+}
+
+// posd_in is atomic displacements here  liuyu 2023-03-22
+void update_pos_taud(const Lattice& lat,
+                     const ModuleBase::Vector3<double>* posd_in,
+                     const int ntype,
+                     const int nat,
+                     Atom* atoms)
+{
+    int iat = 0;
+    for (int it = 0; it < ntype; it++) 
+    {
+        Atom* atom = &atoms[it];
+        for (int ia = 0; ia < atom->na; ia++) 
+        {
+            for (int ik = 0; ik < 3; ++ik) 
+            {
+                atom->taud[ia][ik] += posd_in[iat][ik];
+                atom->dis[ia][ik] = posd_in[iat][ik];
+            }
+            iat++;
+        }
+    }
+    assert(iat == nat);
+    periodic_boundary_adjustment(atoms,lat.latvec,ntype);
+    bcast_atoms_tau(atoms, ntype);
+}
+
+void update_vel(const ModuleBase::Vector3<double>* vel_in,
+                const int ntype,
+                const int nat,
+                Atom* atoms) 
+{
+    int iat = 0;
+    for (int it = 0; it < ntype; ++it) 
+    {
+        Atom* atom = &atoms[it];
+        for (int ia = 0; ia < atom->na; ++ia) 
+        {
+            atoms[it].vel[ia] = vel_in[iat];
+            ++iat;
+        }
+    }
+    assert(iat == nat);
+}
+
 void periodic_boundary_adjustment(Atom* atoms,
                                   const ModuleBase::Matrix3& latvec,
                                   const int ntype) 

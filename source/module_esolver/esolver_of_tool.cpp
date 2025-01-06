@@ -71,7 +71,11 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
 void ESolver_OF::allocate_array()
 {
     // Initialize the "wavefunction", which is sqrt(rho)
-    this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, this->pw_rho->nrxx);
+    this->psi_ = new psi::Psi<double>(1, 
+                                      PARAM.inp.nspin, 
+                                      this->pw_rho->nrxx,
+                                      this->pw_rho->nrxx,
+                                      true);
     ModuleBase::Memory::record("OFDFT::Psi", sizeof(double) * PARAM.inp.nspin * this->pw_rho->nrxx);
     this->pphi_ = new double*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)

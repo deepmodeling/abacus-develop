@@ -90,7 +90,7 @@ public:
        	const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
 
-		const int dim = phi.get_current_nbas() ;
+		const int dim = phi.get_current_ngk() ;
 		const int nband = phi.get_nbands();
 		const int ld_psi =phi.get_nbasis();
 		hsolver::DiagoDavid<std::complex<float>> dav(precondition, nband, dim, order, false, comm_info);

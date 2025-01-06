@@ -148,7 +148,8 @@ template<> double LR::LR_Spectrum<double>::cal_mean_squared_dipole(ModuleBase::V
 }
 template<> double LR::LR_Spectrum<std::complex<double>>::cal_mean_squared_dipole(ModuleBase::Vector3<std::complex<double>> dipole)
 {
-    return dipole.norm2().real() / 3.;
+    // return dipole.norm2().real() / 3.;       // ModuleBase::Vector3::norm2 calculates x*x + y*y + z*z, but here we need x*x.conj() + y*y.conj() + z*z.conj()
+    return (std::norm(dipole.x) + std::norm(dipole.y) + std::norm(dipole.z)) / 3.;
 }
 
 template<typename T>
@@ -217,12 +218,12 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
     ofs << std::setw(40) << spintype << std::endl;
     ofs << "==================================================================== " << std::endl;
     ofs << std::setw(8) << "State" << std::setw(30) << "Excitation Energy (Ry, eV)" <<
-        std::setw(45) << "Transition dipole x, y, z (a.u.)" << std::setw(30) << "Oscillator strength(a.u.)" << std::endl;
+        std::setw(90) << "Transition dipole x, y, z (a.u.)" << std::setw(30) << "Oscillator strength(a.u.)" << std::endl;
     ofs << "------------------------------------------------------------------------------------ " << std::endl;
     for (int istate = 0;istate < nstate;++istate)
         ofs << std::setw(8) << istate << std::setw(15) << std::setprecision(6) << eig[istate] << std::setw(15) << eig[istate] * ModuleBase::Ry_to_eV
-        << std::setw(15) << transition_dipole_[istate].x << std::setw(15) << transition_dipole_[istate].y << std::setw(15) << transition_dipole_[istate].z
-        << std::setw(30) << oscillator_strength_[istate] << std::endl;
+        << std::setprecision(4) << std::setw(30) << transition_dipole_[istate].x << std::setw(30) << transition_dipole_[istate].y << std::setw(30) << transition_dipole_[istate].z
+        << std::setprecision(6) << std::setw(30) << oscillator_strength_[istate] << std::endl;
     ofs << "------------------------------------------------------------------------------------ " << std::endl;
     ofs << std::setw(8) << "State" << std::setw(20) << "Occupied orbital"
         << std::setw(20) << "Virtual orbital" << std::setw(30) << "Excitation amplitude"

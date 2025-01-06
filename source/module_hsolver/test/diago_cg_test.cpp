@@ -176,7 +176,7 @@ class DiagoCGPrepare
             psi_local.get_pointer(), 
             ct::DataType::DT_COMPLEX_DOUBLE, 
             ct::DeviceType::CpuDevice,
-            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_nbas()});
+            ct::TensorShape({psi_local.get_nbands(), psi_local.get_nbasis()})).slice({0, 0}, {psi_local.get_nbands(), psi_local.get_current_ngk()});
         auto eigen_tensor = ct::TensorMap(
             en,
             ct::DataType::DT_DOUBLE,
@@ -186,7 +186,7 @@ class DiagoCGPrepare
             precondition_local,
             ct::DataType::DT_DOUBLE, 
             ct::DeviceType::CpuDevice,
-            ct::TensorShape({static_cast<int>(psi_local.get_current_nbas())})).slice({0}, {psi_local.get_current_nbas()});
+            ct::TensorShape({static_cast<int>(psi_local.get_current_ngk())})).slice({0}, {psi_local.get_current_ngk()});
 
         std::vector<double> ethr_band(nband, 1e-5);
         cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, prec_tensor);

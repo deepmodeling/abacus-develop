@@ -1,16 +1,16 @@
 #include "unk_overlap_pw.h"
 
-#include "module_parameter/parameter.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
+#include "module_parameter/parameter.h"
 
 unkOverlap_pw::unkOverlap_pw()
 {
-	//GlobalV::ofs_running << "this is unkOverlap_pw()" << std::endl;
+    // GlobalV::ofs_running << "this is unkOverlap_pw()" << std::endl;
 }
 
 unkOverlap_pw::~unkOverlap_pw()
 {
-	//GlobalV::ofs_running << "this is ~unkOverlap_pw()" << std::endl;
+    // GlobalV::ofs_running << "this is ~unkOverlap_pw()" << std::endl;
 }
 
 std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
@@ -20,50 +20,44 @@ std::complex<double> unkOverlap_pw::unkdotp_G(const ModulePW::PW_Basis_K* wfcpw,
                                               const int iband_R,
                                               const psi::Psi<std::complex<double>>* evc)
 {
-	
-	std::complex<double> result(0.0,0.0);
-	const int number_pw = wfcpw->npw;
-	std::complex<double> *unk_L = new std::complex<double>[number_pw];
-	std::complex<double> *unk_R = new std::complex<double>[number_pw];
-	ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw);
-	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw);
-	
 
-	for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
-	{
-		unk_L[wfcpw->getigl2ig(ik_L,igl)] = evc[0](ik_L, iband_L, igl);
-	}
-	
-	for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
-	{
-		unk_R[wfcpw->getigl2ig(ik_R,igl)] = evc[0](ik_R, iband_R, igl);
-	}
+    std::complex<double> result(0.0, 0.0);
+    const int number_pw = wfcpw->npw;
+    std::complex<double>* unk_L = new std::complex<double>[number_pw];
+    std::complex<double>* unk_R = new std::complex<double>[number_pw];
+    ModuleBase::GlobalFunc::ZEROS(unk_L, number_pw);
+    ModuleBase::GlobalFunc::ZEROS(unk_R, number_pw);
 
-	
-	for (int iG = 0; iG < number_pw; iG++)
-	{
+    for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
+    {
+        unk_L[wfcpw->getigl2ig(ik_L, igl)] = evc[0](ik_L, iband_L, igl);
+    }
 
-		result = result + conj(unk_L[iG]) * unk_R[iG];
+    for (int igl = 0; igl < evc->get_ngk(ik_R); igl++)
+    {
+        unk_R[wfcpw->getigl2ig(ik_R, igl)] = evc[0](ik_R, iband_R, igl);
+    }
 
-	}
+    for (int iG = 0; iG < number_pw; iG++)
+    {
 
+        result = result + conj(unk_L[iG]) * unk_R[iG];
+    }
 
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
-	double in_date_real = result.real();
-	double in_date_imag = result.imag();
-	double out_date_real = 0.0;
-	double out_date_imag = 0.0;
-	MPI_Allreduce(&in_date_real , &out_date_real , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	MPI_Allreduce(&in_date_imag , &out_date_imag , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	result = std::complex<double>(out_date_real,out_date_imag);
+    double in_date_real = result.real();
+    double in_date_imag = result.imag();
+    double out_date_real = 0.0;
+    double out_date_imag = 0.0;
+    MPI_Allreduce(&in_date_real, &out_date_real, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce(&in_date_imag, &out_date_imag, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    result = std::complex<double>(out_date_real, out_date_imag);
 #endif
 
-	delete[] unk_L;
-	delete[] unk_R;
-	return result;
-
-
+    delete[] unk_L;
+    delete[] unk_R;
+    return result;
 }
 
 std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
@@ -75,24 +69,24 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
                                                const psi::Psi<std::complex<double>>* evc,
                                                const ModuleBase::Vector3<double> G)
 {
-	// (1) set value
-	std::complex<double> result(0.0,0.0);
+    // (1) set value
+    std::complex<double> result(0.0, 0.0);
     std::complex<double>* psi_r = new std::complex<double>[wfcpw->nmaxgr];
     std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
 
     // get the phase value in realspace
     for (int ig = 0; ig < rhopw->nmaxgr; ig++)
     {
-		ModuleBase::Vector3<double> delta_G = rhopw->gdirect[ig] - G;
-		if (delta_G.norm2() < 1e-10) // rhopw->gdirect[ig] == G
-		{
-			phase[ig] = std::complex<double>(1.0,0.0);
-			break;
-		}
-	}
-	
-	// (2) fft and get value
-	rhopw->recip2real(phase, phase);
+        ModuleBase::Vector3<double> delta_G = rhopw->gdirect[ig] - G;
+        if (delta_G.norm2() < 1e-10) // rhopw->gdirect[ig] == G
+        {
+            phase[ig] = std::complex<double>(1.0, 0.0);
+            break;
+        }
+    }
+
+    // (2) fft and get value
+    rhopw->recip2real(phase, phase);
     wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_r, ik_L);
 
     for (int ir = 0; ir < rhopw->nmaxgr; ir++)
@@ -110,17 +104,17 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
 
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
-	double in_date_real = result.real();
-	double in_date_imag = result.imag();
-	double out_date_real = 0.0;
-	double out_date_imag = 0.0;
-	MPI_Allreduce(&in_date_real , &out_date_real , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	MPI_Allreduce(&in_date_imag , &out_date_imag , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	result = std::complex<double>(out_date_real,out_date_imag);
+    double in_date_real = result.real();
+    double in_date_imag = result.imag();
+    double out_date_real = 0.0;
+    double out_date_imag = 0.0;
+    MPI_Allreduce(&in_date_real, &out_date_real, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce(&in_date_imag, &out_date_imag, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    result = std::complex<double>(out_date_real, out_date_imag);
 #endif
-	
-	delete[] psi_r;
-	delete[] phase;
+
+    delete[] psi_r;
+    delete[] phase;
     return result;
 }
 
@@ -133,18 +127,18 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
                                                   const int npwx,
                                                   const psi::Psi<std::complex<double>>* evc)
 {
-	
-	std::complex<double> result(0.0,0.0);
+
+    std::complex<double> result(0.0, 0.0);
     const int number_pw = wfcpw->npw;
     std::complex<double>* unk_L = new std::complex<double>[number_pw * PARAM.globalv.npol];
     std::complex<double>* unk_R = new std::complex<double>[number_pw * PARAM.globalv.npol];
-    ModuleBase::GlobalFunc::ZEROS(unk_L,number_pw*PARAM.globalv.npol);
-	ModuleBase::GlobalFunc::ZEROS(unk_R,number_pw*PARAM.globalv.npol);
-	
-	for(int i = 0; i < PARAM.globalv.npol; i++)
-	{
-		for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
-		{
+    ModuleBase::GlobalFunc::ZEROS(unk_L, number_pw * PARAM.globalv.npol);
+    ModuleBase::GlobalFunc::ZEROS(unk_R, number_pw * PARAM.globalv.npol);
+
+    for (int i = 0; i < PARAM.globalv.npol; i++)
+    {
+        for (int igl = 0; igl < evc->get_ngk(ik_L); igl++)
+        {
             unk_L[wfcpw->getigl2ig(ik_L, igl) + i * number_pw] = evc[0](ik_L, iband_L, igl + i * npwx);
         }
 
@@ -154,32 +148,29 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G(const ModulePW::PW_Basis_K* wf
         }
     }
 
-    for (int iG = 0; iG < number_pw*PARAM.globalv.npol; iG++)
-	{
+    for (int iG = 0; iG < number_pw * PARAM.globalv.npol; iG++)
+    {
 
-		result = result + conj(unk_L[iG]) * unk_R[iG];
+        result = result + conj(unk_L[iG]) * unk_R[iG];
+    }
 
-	}
-	
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
-	double in_date_real = result.real();
-	double in_date_imag = result.imag();
-	double out_date_real = 0.0;
-	double out_date_imag = 0.0;
-	MPI_Allreduce(&in_date_real , &out_date_real , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	MPI_Allreduce(&in_date_imag , &out_date_imag , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	result = std::complex<double>(out_date_real,out_date_imag);
+    double in_date_real = result.real();
+    double in_date_imag = result.imag();
+    double out_date_real = 0.0;
+    double out_date_imag = 0.0;
+    MPI_Allreduce(&in_date_real, &out_date_real, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce(&in_date_imag, &out_date_imag, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    result = std::complex<double>(out_date_real, out_date_imag);
 #endif
 
-	delete[] unk_L;
-	delete[] unk_R;
-	return result;
-
-
+    delete[] unk_L;
+    delete[] unk_R;
+    return result;
 }
 
-//here G is in direct coordinate
+// here G is in direct coordinate
 std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rhopw,
                                                    const ModulePW::PW_Basis_K* wfcpw,
                                                    const int ik_L,
@@ -189,32 +180,32 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
                                                    const psi::Psi<std::complex<double>>* evc,
                                                    const ModuleBase::Vector3<double> G)
 {
-	// (1) set value
-	std::complex<double> result(0.0,0.0);
-	std::complex<double> *phase =new std::complex<double>[rhopw->nmaxgr];
+    // (1) set value
+    std::complex<double> result(0.0, 0.0);
+    std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
     std::complex<double>* psi_up = new std::complex<double>[wfcpw->nmaxgr];
     std::complex<double>* psi_down = new std::complex<double>[wfcpw->nmaxgr];
     const int npwx = wfcpw->npwk_max;
 
     // get the phase value in realspace
     for (int ig = 0; ig < rhopw->npw; ig++)
-	{
-		if (rhopw->gdirect[ig] == G)
-		{
-			phase[ig] = std::complex<double>(1.0,0.0);
-			break;
-		}
-	}
-	
-	// (2) fft and get value
-	rhopw->recip2real(phase, phase);
+    {
+        if (rhopw->gdirect[ig] == G)
+        {
+            phase[ig] = std::complex<double>(1.0, 0.0);
+            break;
+        }
+    }
+
+    // (2) fft and get value
+    rhopw->recip2real(phase, phase);
     wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_up, ik_L);
     wfcpw->recip2real(&evc[0](ik_L, iband_L, npwx), psi_down, ik_L);
 
     for (int ir = 0; ir < wfcpw->nrxx; ir++)
     {
         psi_up[ir] = psi_up[ir] * phase[ir];
-		psi_down[ir] = psi_down[ir] * phase[ir];
+        psi_down[ir] = psi_down[ir] * phase[ir];
     }
 
     // (3) calculate the overlap in ik_L and ik_R
@@ -223,27 +214,31 @@ std::complex<double> unkOverlap_pw::unkdotp_soc_G0(const ModulePW::PW_Basis* rho
 
     for (int i = 0; i < PARAM.globalv.npol; i++)
     {
-		for(int ig = 0; ig < evc->get_ngk(ik_R); ig++)
-		{
-			if( i == 0 ) { result = result + conj( psi_up[ig] ) * evc[0](ik_R, iband_R, ig);
-}
-			if( i == 1 ) { result = result + conj( psi_down[ig] ) * evc[0](ik_R, iband_R, ig + npwx);
-}
-		}
-	}
-	
+        for (int ig = 0; ig < evc->get_ngk(ik_R); ig++)
+        {
+            if (i == 0)
+            {
+                result = result + conj(psi_up[ig]) * evc[0](ik_R, iband_R, ig);
+            }
+            if (i == 1)
+            {
+                result = result + conj(psi_down[ig]) * evc[0](ik_R, iband_R, ig + npwx);
+            }
+        }
+    }
+
 #ifdef __MPI
     // note: the mpi uses MPI_COMMON_WORLD,so you must make the GlobalV::KPAR = 1.
-	double in_date_real = result.real();
-	double in_date_imag = result.imag();
-	double out_date_real = 0.0;
-	double out_date_imag = 0.0;
-	MPI_Allreduce(&in_date_real , &out_date_real , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	MPI_Allreduce(&in_date_imag , &out_date_imag , 1, MPI_DOUBLE , MPI_SUM , POOL_WORLD);
-	result = std::complex<double>(out_date_real,out_date_imag);
+    double in_date_real = result.real();
+    double in_date_imag = result.imag();
+    double out_date_real = 0.0;
+    double out_date_imag = 0.0;
+    MPI_Allreduce(&in_date_real, &out_date_real, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    MPI_Allreduce(&in_date_imag, &out_date_imag, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
+    result = std::complex<double>(out_date_real, out_date_imag);
 #endif
-	
-	delete[] psi_up;
-	delete[] psi_down;
+
+    delete[] psi_up;
+    delete[] psi_down;
     return result;
 }

@@ -7,15 +7,8 @@
 // 1. subroutines that are related to calculating descriptors:
 //   - init : allocates some arrays
 //   - init_index : records the index (inl)
-// 2. subroutines that are related to calculating force label:
-//   - init_gdmx : allocates gdmx; it is a private subroutine
-//   - del_gdmx : releases gdmx
-// 3. subroutines that are related to calculating force label:
-//   - init_gdmepsl : allocates gdm_epsl; it is a private subroutine
-//   - del_gdmepsl : releases gdm_epsl
-// 4. subroutines that are related to V_delta:
-//   - allocate_V_delta : allocates H_V_delta; if calculating force, it also calls
-//       init_gdmx, as well as allocating F_delta
+// 2. subroutines that are related to V_delta:
+//   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
 
 #ifdef __DEEPKS
 
@@ -57,8 +50,6 @@ LCAO_Deepks::~LCAO_Deepks()
         }
         delete[] gedm;
     }
-
-    del_gdmx();
 }
 
 void LCAO_Deepks::init(const LCAO_Orbitals& orb,
@@ -120,7 +111,6 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
             int nm = 2 * inl_l[inl] + 1;
             pdm_size += nm * nm;
             this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
-            // this->pdm[inl].requires_grad_(true);
         }
     }
     else
@@ -196,101 +186,6 @@ void LCAO_Deepks::init_index(const int ntype,
     return;
 }
 
-void LCAO_Deepks::init_gdmx(const int nat)
-{
-    this->gdmx = new double**[nat];
-    this->gdmy = new double**[nat];
-    this->gdmz = new double**[nat];
-    int pdm_size = 0;
-    if (!PARAM.inp.deepks_equiv)
-    {
-        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
-    }
-    else
-    {
-        pdm_size = this->des_per_atom;
-    }
-
-    for (int iat = 0; iat < nat; iat++)
-    {
-        this->gdmx[iat] = new double*[inlmax];
-        this->gdmy[iat] = new double*[inlmax];
-        this->gdmz[iat] = new double*[inlmax];
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            this->gdmx[iat][inl] = new double[pdm_size];
-            this->gdmy[iat][inl] = new double[pdm_size];
-            this->gdmz[iat][inl] = new double[pdm_size];
-            ModuleBase::GlobalFunc::ZEROS(gdmx[iat][inl], pdm_size);
-            ModuleBase::GlobalFunc::ZEROS(gdmy[iat][inl], pdm_size);
-            ModuleBase::GlobalFunc::ZEROS(gdmz[iat][inl], pdm_size);
-        }
-    }
-    this->nat_gdm = nat;
-    return;
-}
-
-// void LCAO_Deepks::del_gdmx(const int nat)
-void LCAO_Deepks::del_gdmx()
-{
-    for (int iat = 0; iat < nat_gdm; iat++)
-    {
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            delete[] this->gdmx[iat][inl];
-            delete[] this->gdmy[iat][inl];
-            delete[] this->gdmz[iat][inl];
-        }
-        delete[] this->gdmx[iat];
-        delete[] this->gdmy[iat];
-        delete[] this->gdmz[iat];
-    }
-    delete[] this->gdmx;
-    delete[] this->gdmy;
-    delete[] this->gdmz;
-    return;
-}
-
-void LCAO_Deepks::init_gdmepsl()
-{
-    this->gdm_epsl = new double**[6];
-
-    int pdm_size = 0;
-    if (!PARAM.inp.deepks_equiv)
-    {
-        pdm_size = (this->lmaxd * 2 + 1) * (this->lmaxd * 2 + 1);
-    }
-    else
-    {
-        pdm_size = this->des_per_atom;
-    }
-
-    for (int ipol = 0; ipol < 6; ipol++)
-    {
-        this->gdm_epsl[ipol] = new double*[inlmax];
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            this->gdm_epsl[ipol][inl] = new double[pdm_size];
-            ModuleBase::GlobalFunc::ZEROS(gdm_epsl[ipol][inl], pdm_size);
-        }
-    }
-    return;
-}
-
-void LCAO_Deepks::del_gdmepsl()
-{
-    for (int ipol = 0; ipol < 6; ipol++)
-    {
-        for (int inl = 0; inl < inlmax; inl++)
-        {
-            delete[] this->gdm_epsl[ipol][inl];
-        }
-        delete[] this->gdm_epsl[ipol];
-    }
-    delete[] this->gdm_epsl;
-    return;
-}
-
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
@@ -329,116 +224,6 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     {
         this->gedm[inl] = new double[pdm_size];
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
-    }
-    if (PARAM.inp.cal_force)
-    {
-        if (PARAM.inp.deepks_out_labels)
-        {
-            this->init_gdmx(nat);
-            this->init_gdmepsl();
-        }
-        // gdmx is used only in calculating gvx
-    }
-
-    return;
-}
-
-void LCAO_Deepks::init_v_delta_pdm_shell(const int nks, const int nlocal)
-{
-    const int mn_size = (2 * this->lmaxd + 1) * (2 * this->lmaxd + 1);
-    if (nks == 1)
-    {
-        this->v_delta_pdm_shell = new double****[nks];
-        for (int iks = 0; iks < nks; iks++)
-        {
-            this->v_delta_pdm_shell[iks] = new double***[nlocal];
-
-            for (int mu = 0; mu < nlocal; mu++)
-            {
-                this->v_delta_pdm_shell[iks][mu] = new double**[nlocal];
-
-                for (int nu = 0; nu < nlocal; nu++)
-                {
-                    this->v_delta_pdm_shell[iks][mu][nu] = new double*[this->inlmax];
-
-                    for (int inl = 0; inl < this->inlmax; inl++)
-                    {
-                        this->v_delta_pdm_shell[iks][mu][nu][inl] = new double[mn_size];
-                        ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell[iks][mu][nu][inl], mn_size);
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        this->v_delta_pdm_shell_complex = new std::complex<double>****[nks];
-        for (int iks = 0; iks < nks; iks++)
-        {
-            this->v_delta_pdm_shell_complex[iks] = new std::complex<double>***[nlocal];
-
-            for (int mu = 0; mu < nlocal; mu++)
-            {
-                this->v_delta_pdm_shell_complex[iks][mu] = new std::complex<double>**[nlocal];
-
-                for (int nu = 0; nu < nlocal; nu++)
-                {
-                    this->v_delta_pdm_shell_complex[iks][mu][nu] = new std::complex<double>*[this->inlmax];
-
-                    for (int inl = 0; inl < this->inlmax; inl++)
-                    {
-                        this->v_delta_pdm_shell_complex[iks][mu][nu][inl] = new std::complex<double>[mn_size];
-                        ModuleBase::GlobalFunc::ZEROS(v_delta_pdm_shell_complex[iks][mu][nu][inl], mn_size);
-                    }
-                }
-            }
-        }
-    }
-
-    return;
-}
-
-void LCAO_Deepks::del_v_delta_pdm_shell(const int nks, const int nlocal)
-{
-    if (nks == 1)
-    {
-        for (int iks = 0; iks < nks; iks++)
-        {
-            for (int mu = 0; mu < nlocal; mu++)
-            {
-                for (int nu = 0; nu < nlocal; nu++)
-                {
-                    for (int inl = 0; inl < this->inlmax; inl++)
-                    {
-                        delete[] this->v_delta_pdm_shell[iks][mu][nu][inl];
-                    }
-                    delete[] this->v_delta_pdm_shell[iks][mu][nu];
-                }
-                delete[] this->v_delta_pdm_shell[iks][mu];
-            }
-            delete[] this->v_delta_pdm_shell[iks];
-        }
-        delete[] this->v_delta_pdm_shell;
-    }
-    else
-    {
-        for (int iks = 0; iks < nks; iks++)
-        {
-            for (int mu = 0; mu < nlocal; mu++)
-            {
-                for (int nu = 0; nu < nlocal; nu++)
-                {
-                    for (int inl = 0; inl < this->inlmax; inl++)
-                    {
-                        delete[] this->v_delta_pdm_shell_complex[iks][mu][nu][inl];
-                    }
-                    delete[] this->v_delta_pdm_shell_complex[iks][mu][nu];
-                }
-                delete[] this->v_delta_pdm_shell_complex[iks][mu];
-            }
-            delete[] this->v_delta_pdm_shell_complex[iks];
-        }
-        delete[] this->v_delta_pdm_shell_complex;
     }
 
     return;

@@ -36,53 +36,53 @@ template <typename T, typename Device = base_device::DEVICE_CPU>
 class Psi
 {
   public:
-    // Constructor 1: basic
+    // Constructor 0: basic
     Psi();
 
-    // Constructor 3: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
-    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in = nullptr, const bool k_first_in = true);
+    // Constructor 1-1: specify nk, nbands, nbasis, ngk, and do not need to call resize() later
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in = true);
 
-    // Constructor 4: copy a new Psi which have several k-points and several bands from inputted psi_in
-    Psi(const Psi& psi_in, const int nk_in, int nband_in = 0);
+    // Constructor 1-2:
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const std::vector<int>& ngk_in, const bool k_first_in);
 
-    // Constructor 5: a wrapper of a data pointer, used for Operator::hPsi()
-    // in this case, fix_k can not be used
-    Psi(T* psi_pointer, const Psi& psi_in, const int nk_in, int nband_in = 0);
-
-    // Constructor 6: initialize a new psi from the given psi_in
+    // Constructor 2-1: initialize a new psi from the given psi_in
     Psi(const Psi& psi_in);
 
-    // Constructor 7: initialize a new psi from the given psi_in with a different class template
+    // Constructor 2-2: initialize a new psi from the given psi_in with a different class template
     // in this case, psi_in may have a different device type.
     template <typename T_in, typename Device_in = Device>
     Psi(const Psi<T_in, Device_in>& psi_in);
 
-    // Constructor 8-1: a pointer version of constructor 3
-    // only used in hsolver-pw function pointer.
+    // Constructor 3-1: 2D Psi version
+    // used in hsolver-pw function pointer and somewhere.
     Psi(T* psi_pointer,
         const int nk_in,
         const int nbd_in,
         const int nbs_in,
-        const std::vector<int>& ngk_vector_in,
+        const int current_nbasis_in,
         const bool k_first_in = true);
 
-    // Constructor 8-2: a pointer version of constructor 3
-    // only used in operator.cpp call_act func
-    Psi(T* psi_pointer,
-        const int nk_in,
-        const int nbd_in,
-        const int nbs_in,
-        const bool k_first_in);
+    // Constructor 3-2: 2D Psi version
+    Psi(const int nk_in, const int nbd_in, const int nbs_in, const int current_nbasis_in, const bool k_first_in);
 
-    
     // Destructor for deleting the psi array manually
     ~Psi();
+
+    // set psi value func 1
+    void set_all_psi(const T* another_pointer, const std::size_t size_in);
+
+    // set psi value func 2
+    void zero_out();
+
+    // size_t size() const {return this->psi.size();}
+    size_t size() const;
 
     // allocate psi for three dimensions
     void resize(const int nks_in, const int nbands_in, const int nbasis_in);
 
     // get the pointer for the 1st index
     T* get_pointer() const;
+
     // get the pointer for the 2nd index (iband for k_first = true, ik for k_first = false)
     T* get_pointer(const int& ikb) const;
 
@@ -90,8 +90,6 @@ class Psi
     const int& get_nk() const;
     const int& get_nbands() const;
     const int& get_nbasis() const;
-    // size_t size() const {return this->psi.size();}
-    size_t size() const;
 
     /// if k_first=true: choose k-point index , then Psi(iband, ibasis) can reach Psi(ik, iband, ibasis)
     /// if k_first=false: choose k-point index, then Psi(ibasis) can reach Psi(iband, ik, ibasis)
@@ -122,27 +120,29 @@ class Psi
     int get_current_nbas() const;
 
     const int& get_ngk(const int ik_in) const;
-    // return ngk array of psi
+
     const int* get_ngk_pointer() const;
+
     // return k_first
     const bool& get_k_first() const;
+
     // return device type of psi
     const Device* get_device() const;
+
     // return psi_bias
     const int& get_psi_bias() const;
 
-    // mark
-    void zero_out();
+    const int& get_current_ngk() const;
 
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;
+
     int npol = 1;
 
   private:
     T* psi = nullptr; // avoid using C++ STL
 
-    base_device::AbacusDevice_t device = {}; // track the device type (CPU, GPU and SYCL are supported currented)
-    Device* ctx = {};                        // an context identifier for obtaining the device variable
+    Device* ctx = {}; // an context identifier for obtaining the device variable
 
     // dimensions
     int nk = 1;     // number of k points

@@ -100,7 +100,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
                                 const int inlmax,
                                 const int* inl_l,
                                 const bool deepks_equiv,
-                                const std::vector<torch::Tensor>& d_tensor,
+                                const std::vector<torch::Tensor>& descriptor,
                                 const std::string& out_dir,
                                 const int rank)
 {
@@ -118,10 +118,11 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         std::vector<double> npy_des;
         for (int inl = 0; inl < inlmax; ++inl)
         {
+            auto accessor = descriptor[inl].accessor<double, 1>();
             int nm = 2 * inl_l[inl] + 1;
             for (int im = 0; im < nm; im++)
             {
-                npy_des.push_back(d_tensor[inl].index({im}).item().toDouble());
+                npy_des.push_back(accessor[im]);
             }
         }
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
@@ -138,9 +139,10 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         std::vector<double> npy_des;
         for (int iat = 0; iat < nat; iat++)
         {
+            auto accessor = descriptor[iat].accessor<double, 1>();
             for (int i = 0; i < des_per_atom; i++)
             {
-                npy_des.push_back(d_tensor[iat].index({i}).item().toDouble());
+                npy_des.push_back(accessor[i]);
             }
         }
         const long unsigned dshape[] = {static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
@@ -157,7 +159,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
 // saves gvx into grad_vx.npy
 void LCAO_deepks_io::save_npy_gvx(const int nat,
                                   const int des_per_atom,
-                                  const torch::Tensor& gvx_tensor,
+                                  const torch::Tensor& gvx,
                                   const std::string& out_dir,
                                   const int rank)
 {
@@ -178,6 +180,7 @@ void LCAO_deepks_io::save_npy_gvx(const int nat,
                                     static_cast<unsigned long>(des_per_atom)};
 
     std::vector<double> npy_gvx;
+    auto accessor = gvx.accessor<double, 4>();
     for (int ibt = 0; ibt < nat; ++ibt)
     {
         for (int i = 0; i < 3; i++)
@@ -186,7 +189,7 @@ void LCAO_deepks_io::save_npy_gvx(const int nat,
             {
                 for (int p = 0; p < des_per_atom; ++p)
                 {
-                    npy_gvx.push_back(gvx_tensor.index({ibt, i, iat, p}).item().toDouble());
+                    npy_gvx.push_back(accessor[ibt][i][iat][p]);
                 }
             }
         }
@@ -200,7 +203,7 @@ void LCAO_deepks_io::save_npy_gvx(const int nat,
 // saves gvx into grad_vepsl.npy
 void LCAO_deepks_io::save_npy_gvepsl(const int nat,
                                      const int des_per_atom,
-                                     const torch::Tensor& gvepsl_tensor,
+                                     const torch::Tensor& gvepsl,
                                      const std::string& out_dir,
                                      const int rank)
 {
@@ -216,6 +219,7 @@ void LCAO_deepks_io::save_npy_gvepsl(const int nat,
     const long unsigned gshape[] = {6UL, static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
 
     std::vector<double> npy_gvepsl;
+    auto accessor = gvepsl.accessor<double, 3>();
 
     for (int i = 0; i < 6; i++)
     {
@@ -224,7 +228,7 @@ void LCAO_deepks_io::save_npy_gvepsl(const int nat,
 
             for (int p = 0; p < des_per_atom; ++p)
             {
-                npy_gvepsl.push_back(gvepsl_tensor.index({i, ibt, p}).item().toDouble());
+                npy_gvepsl.push_back(accessor[i][ibt][p]);
             }
         }
     }
@@ -341,13 +345,14 @@ void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
         = {static_cast<unsigned long>(nks), static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
 
     std::vector<double> npy_orbital_precalc;
+    auto accessor = orbital_precalc.accessor<double, 3>();
     for (int iks = 0; iks < nks; ++iks)
     {
         for (int iat = 0; iat < nat; ++iat)
         {
             for (int p = 0; p < des_per_atom; ++p)
             {
-                npy_orbital_precalc.push_back(orbital_precalc.index({iks, iat, p}).item().toDouble());
+                npy_orbital_precalc.push_back(accessor[iks][iat][p]);
             }
         }
     }
@@ -394,7 +399,7 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                                               const int nks,
                                               const int nlocal,
                                               const int des_per_atom,
-                                              const torch::Tensor& v_delta_precalc_tensor,
+                                              const torch::Tensor& v_delta_precalc,
                                               const std::string& out_dir,
                                               const int rank)
 {
@@ -415,6 +420,9 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                                     static_cast<unsigned long>(des_per_atom)};
 
     std::vector<TK> npy_v_delta_precalc;
+    auto accessor
+        = v_delta_precalc
+              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iks = 0; iks < nks; ++iks)
     {
         for (int mu = 0; mu < nlocal; ++mu)
@@ -427,15 +435,13 @@ void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            npy_v_delta_precalc.push_back(
-                                v_delta_precalc_tensor.index({iks, mu, nu, iat, p}).item().toDouble());
+                            npy_v_delta_precalc.push_back(accessor[iks][mu][nu][iat][p]);
                         }
                         else
                         {
-                            std::complex<double> value(
-                                torch::real(v_delta_precalc_tensor.index({iks, mu, nu, iat, p})).item<double>(),
-                                torch::imag(v_delta_precalc_tensor.index({iks, mu, nu, iat, p})).item<double>());
-                            npy_v_delta_precalc.push_back(value);
+                            c10::complex<double> tmp_c10 = accessor[iks][mu][nu][iat][p];
+                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
+                            npy_v_delta_precalc.push_back(tmp);
                         }
                     }
                 }
@@ -473,6 +479,9 @@ void LCAO_deepks_io::save_npy_phialpha(const int nat,
                                     static_cast<unsigned long>(nlocal),
                                     static_cast<unsigned long>(mmax)};
     std::vector<TK> npy_phialpha;
+    auto accessor
+        = phialpha_tensor
+              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
     for (int iat = 0; iat < nat; iat++)
     {
         for (int nl = 0; nl < nlmax; nl++)
@@ -485,14 +494,13 @@ void LCAO_deepks_io::save_npy_phialpha(const int nat,
                     {
                         if constexpr (std::is_same<TK, double>::value)
                         {
-                            npy_phialpha.push_back(phialpha_tensor.index({iat, nl, iks, mu, m}).item().toDouble());
+                            npy_phialpha.push_back(accessor[iat][nl][iks][mu][m]);
                         }
                         else
                         {
-                            std::complex<double> value(
-                                torch::real(phialpha_tensor.index({iat, nl, iks, mu, m})).item<double>(),
-                                torch::imag(phialpha_tensor.index({iat, nl, iks, mu, m})).item<double>());
-                            npy_phialpha.push_back(value);
+                            c10::complex<double> tmp_c10 = accessor[iat][nl][iks][mu][m];
+                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
+                            npy_phialpha.push_back(tmp);
                         }
                     }
                 }
@@ -507,7 +515,7 @@ void LCAO_deepks_io::save_npy_phialpha(const int nat,
 void LCAO_deepks_io::save_npy_gevdm(const int nat,
                                     const int inlmax,
                                     const int lmaxd,
-                                    const torch::Tensor& gevdm_tensor,
+                                    const torch::Tensor& gevdm,
                                     const std::string& out_dir,
                                     const int rank)
 {
@@ -529,6 +537,7 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
                                     static_cast<unsigned long>(mmax),
                                     static_cast<unsigned long>(mmax)};
     std::vector<double> npy_gevdm;
+    auto accessor = gevdm.accessor<double, 5>();
     for (int iat = 0; iat < nat; iat++)
     {
         for (int nl = 0; nl < nlmax; nl++)
@@ -539,7 +548,7 @@ void LCAO_deepks_io::save_npy_gevdm(const int nat,
                 {
                     for (int n = 0; n < mmax; n++)
                     {
-                        npy_gevdm.push_back(gevdm_tensor.index({iat, nl, v, m, n}).item().toDouble());
+                        npy_gevdm.push_back(accessor[iat][nl][v][m][n]);
                     }
                 }
             }
