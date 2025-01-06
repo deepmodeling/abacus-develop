@@ -108,7 +108,8 @@ void wfc_nao_write2file(const std::string &name, const double* ctot, const int n
 		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
                 for (int j=0; j<nlocal; j++)
                 {
-                    if (j % 5 == 0) ofs << "\n";
+                    if (j % 5 == 0) { ofs << "\n";
+}
                     ofs << ctot[i*nlocal + j] << " ";
                 }
             }
@@ -173,8 +174,8 @@ void wfc_nao_write2file_complex(const std::string &name, const std::complex<doub
             {
                 ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
             }
-            ofs << std::setprecision(25);
-		    ofs << ik+1 << " (index of k points)" << std::endl;
+            ofs << std::setprecision(8);
+            ofs << ik+1 << " (index of k points)" << std::endl;
 		    ofs << kvec_c.x << " " << kvec_c.y << " " << kvec_c.z << std::endl;
             ofs << nbands << " (number of bands)" << std::endl;
             ofs << nlocal << " (number of orbitals)";
@@ -189,7 +190,8 @@ void wfc_nao_write2file_complex(const std::string &name, const std::complex<doub
 		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
                 for (int j=0; j<nlocal; j++)
                 {
-                    if (j % 5 == 0) ofs << "\n";
+                    if (j % 5 == 0) { ofs << "\n";
+}
                     ofs << ctot[i*nlocal + j].real() << " " << ctot[i*nlocal + j].imag() << " ";
                 }
             }
