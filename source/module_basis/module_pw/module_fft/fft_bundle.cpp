@@ -45,8 +45,15 @@ void FFT_Bundle::initfft(int nx_in,
 
     if (this->precision=="single")
     {
-        #ifndef __ENABLE_FLOAT_FFTW
-        float_define = false;
+        #if not defined (__ENABLE_FLOAT_FFTW)
+        if (this->device == "cpu"){
+            float_define = false;
+        }
+        #endif
+        #if defined(__CUDA) || defined (__ROCM)
+        if (this->device == "gpu"){
+            float_flag = float_define;
+        }
         #endif
         float_flag = float_define;
         double_flag = true;
