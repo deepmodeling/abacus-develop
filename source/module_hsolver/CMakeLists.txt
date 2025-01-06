@@ -9,6 +9,9 @@ list(APPEND objects
     hsolver_pw_sdft.cpp
     diago_iter_assist.cpp
     hsolver.cpp
+    diago_pxxxgvx.cpp
+    diag_hs_para.cpp
+
 )
 
 if(ENABLE_LCAO)

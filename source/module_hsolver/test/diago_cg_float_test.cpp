@@ -314,7 +314,14 @@ TEST(DiagoCGFloatTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<std::complex<float>> hm;
     std::ifstream ifs;
-    ifs.open("H-KPoints-Si64.dat");
+    std::string filename = "H-KPoints-Si64.dat";
+    // open file and check status
+    ifs.open(filename);
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
     int dim = DIAGOTEST::npw;

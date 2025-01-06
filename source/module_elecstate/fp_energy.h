@@ -45,7 +45,7 @@ struct fenergy
     double escon = 0.0; ///< spin constraint energy
 
     double ekinetic = 0.0;  /// kinetic energy, used in OFDFT
-    double eion_elec = 0.0; /// ion-electron interaction energy, used in OFDFT
+    double e_local_pp = 0.0; /// ion-electron interaction energy contributed by local pp, used in OFDFT
 
     double calculate_etot();
     double calculate_harris();

@@ -289,7 +289,14 @@ TEST(DiagoCGTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<double> hm;
     std::ifstream ifs;
-    ifs.open("H-GammaOnly-Si64.dat");
+    std::string filename = "H-GammaOnly-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
     int dim = DIAGOTEST::npw;
