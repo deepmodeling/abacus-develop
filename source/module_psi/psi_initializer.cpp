@@ -80,8 +80,9 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
                 for (int ig = 0; ig < ng; ig++)
                 {
                     // get the correct value of "rr" and "arg" by indexing map "getigl2isz"
-                    const double rr = tmprr[this->pw_wfc_->getigl2isz(ik, ig)];
-                    const double arg = ModuleBase::TWO_PI * tmparg[this->pw_wfc_->getigl2isz(ik, ig)];
+                    const int isz = this->pw_wfc_->getigl2isz(ik, ig);
+                    const double rr = tmprr[isz];
+                    const double arg = ModuleBase::TWO_PI * tmparg[isz];
                     // initialize the wavefunction value with rr * exp(i*arg)
                     psi_slice[ig] = this->template cast_to_T<T>(std::complex<double>(rr * cos(arg), rr * sin(arg)));
                 }
@@ -114,9 +115,6 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
             }
             if (npol == 2)
             {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(T))
-#endif
                 for (int ig = npwk_max; ig < npwk_max + ng; ig++)
                 {
                     const double rr = std::rand() / double(RAND_MAX);
