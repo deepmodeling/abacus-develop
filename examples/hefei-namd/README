@@ -1,3 +1,3 @@
 Example case for Hefei-NAMD. 
  If cal_syns = 1 , the maximum displacement of all atoms in one step dmax(bohr) need to be set  for calculating asynchronous overlap matrix.
- Find overlap matrix file in OUT.autotest/data-0-S and wavefunction file in OUT.autotest/LOWF_GAMMA_S1.dat .
+ Find overlap matrix file in OUT.autotest/data-0-S and wavefunction file in OUT.autotest/WFC_NAO_GAMMA1.dat .

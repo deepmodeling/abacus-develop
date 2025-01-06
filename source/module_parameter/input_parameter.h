@@ -89,6 +89,7 @@ struct Input_para
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
     int pw_diag_ndim = 4;      ///< dimension of workspace for Davidson diagonalization
     int diago_cg_prec = 1;     ///< mohan add 2012-03-31
+    int diag_subspace = 0; // 0: Lapack, 1: elpa, 2: scalapack
 
     std::string smearing_method = "gauss"; ///< "gauss",
                                            ///< "mp","methfessel-paxton"
