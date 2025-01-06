@@ -12,8 +12,8 @@
 #include <iomanip>
 #include <iostream>
 #include <regex.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -31,7 +31,7 @@ void tmp_convert();
  * @brief Pass the data members from the INPUT instance(defined in
  * module_io/input.cpp) to GlobalV and GlobalC.
  */
-void Convert(void);
+void Convert();
 
 /**
  * @brief To parse input parameters as expressions into vectors
