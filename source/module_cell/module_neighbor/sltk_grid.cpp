@@ -152,12 +152,19 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
     this->clear_atoms();
 
     // random selection, in order to estimate again.
-    this->x_min = ucell.atoms[0].tau[0].x;
-    this->y_min = ucell.atoms[0].tau[0].y;
-    this->z_min = ucell.atoms[0].tau[0].z;
-    this->x_max = ucell.atoms[0].tau[0].x;
-    this->y_max = ucell.atoms[0].tau[0].y;
-    this->z_max = ucell.atoms[0].tau[0].z;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        if (ucell.atoms[it].na > 0)
+        {
+            this->x_min = ucell.atoms[it].tau[0].x;
+            this->y_min = ucell.atoms[it].tau[0].y;
+            this->z_min = ucell.atoms[it].tau[0].z;
+            this->x_max = ucell.atoms[it].tau[0].x;
+            this->y_max = ucell.atoms[it].tau[0].y;
+            this->z_max = ucell.atoms[it].tau[0].z;
+            break;
+        }
+    }
 
     ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
