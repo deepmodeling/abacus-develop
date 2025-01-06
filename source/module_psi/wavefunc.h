@@ -21,7 +21,7 @@ class wavefunc : public WF_atomic
 
     void wfcinit(psi::Psi<std::complex<double>>* psi_in, ModulePW::PW_Basis_K* wfc_basis);
 
-    int get_starting_nw(void) const;
+    int get_starting_nw(const int natomwfc) const;
 
     void init_after_vc(const int nks); // LiuXh 20180515
 };
@@ -33,13 +33,21 @@ void diago_PAO_in_pw_k2(const int& ik,
                         psi::Psi<std::complex<float>>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray& tab_at,
+                        const int& lmaxkb,
                         hamilt::Hamilt<std::complex<float>>* phm_in = nullptr);
 void diago_PAO_in_pw_k2(const int& ik,
                         psi::Psi<std::complex<double>>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray& tab_at,
+                        const int& lmaxkb,
                         hamilt::Hamilt<std::complex<double>>* phm_in = nullptr);
-void diago_PAO_in_pw_k2(const int& ik, ModuleBase::ComplexMatrix& wvf, wavefunc* p_wf);
+void diago_PAO_in_pw_k2(const int& ik,
+                        ModuleBase::ComplexMatrix& wvf,
+                        const ModuleBase::realArray& tab_at,
+                        const int& lmaxkb,
+                        wavefunc* p_wf);
 
 template <typename FPTYPE, typename Device>
 void diago_PAO_in_pw_k2(const Device* ctx,
@@ -47,6 +55,9 @@ void diago_PAO_in_pw_k2(const Device* ctx,
                         psi::Psi<std::complex<FPTYPE>, Device>& wvf,
                         ModulePW::PW_Basis_K* wfc_basis,
                         wavefunc* p_wf,
+                        const ModuleBase::realArray& tab_at,
+                        const int& lmaxkb,
+                        const UnitCell& ucell,
                         hamilt::Hamilt<std::complex<FPTYPE>, Device>* phm_in = nullptr);
 } // namespace hamilt
 

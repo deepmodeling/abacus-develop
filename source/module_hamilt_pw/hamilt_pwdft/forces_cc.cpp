@@ -1,7 +1,6 @@
 #include "forces.h"
 #include "stress_func.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/output_log.h"
 // new
 #include "module_base/complexmatrix.h"
@@ -10,12 +9,13 @@
 #include "module_base/mathzone.h"
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_surchem/surchem.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
-#include "module_elecstate/cal_ux.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -33,6 +33,7 @@ template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                           ModulePW::PW_Basis* rho_basis,
                                           const Charge* const chr,
+                                          const bool* numeric,
                                            UnitCell& ucell_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_cc");
@@ -71,10 +72,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        if (PARAM.inp.nspin == 4) 
-        {
-            elecstate::cal_ux(ucell_in);
-        }
+        elecstate::cal_ux(ucell_in);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in);
 
         // etxc = std::get<0>(etxc_vtxc_v);
@@ -155,13 +153,13 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
         if (ucell_in.atoms[it].ncpp.nlcc)
         {
 
-            // chr->non_linear_core_correction(GlobalC::ppcell.numeric,
+            // chr->non_linear_core_correction(numeric.numeric,
             //                                 ucell_in.atoms[it].ncpp.msh,
             //                                 ucell_in.atoms[it].ncpp.r,
             //                                 ucell_in.atoms[it].ncpp.rab,
             //                                 ucell_in.atoms[it].ncpp.rho_atc,
             //                                 rhocg);
-            this->deriv_drhoc(GlobalC::ppcell.numeric,
+            this->deriv_drhoc(numeric,
                               ucell_in.atoms[it].ncpp.msh,
                               ucell_in.atoms[it].ncpp.r.data(),
                               ucell_in.atoms[it].ncpp.rab.data(),

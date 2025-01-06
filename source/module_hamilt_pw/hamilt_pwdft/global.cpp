@@ -7,9 +7,7 @@ namespace GlobalC
 #ifdef __EXX
     Exx_Info exx_info;
 #endif
-pseudopot_cell_vnl ppcell;
 UnitCell ucell;
-Parallel_Grid Pgrid; //mohan add 2010-06-06 
 Parallel_Kpoints Pkpoints; // mohan add 2010-06-07
 Restart restart; // Peize Lin add 2020.04.04
 }

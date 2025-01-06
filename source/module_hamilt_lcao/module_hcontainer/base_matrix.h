@@ -80,7 +80,7 @@ class BaseMatrix
     */
     size_t get_memory_size() const;
 
-        /**
+    /**
      * @brief get col_size for this matrix
     */
     int get_col_size() const {return ncol_local;};
@@ -88,6 +88,10 @@ class BaseMatrix
      * @brief get row_size for this matrix
     */
     int get_row_size() const {return nrow_local;};
+    /**
+     * @brief set col_size and row_size
+    */
+    void set_size(const int& col_size_in, const int& row_size_in);
 
   private:
     bool allocated = false;

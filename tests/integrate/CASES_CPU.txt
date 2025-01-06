@@ -18,6 +18,7 @@
 101_PW_upf201_upf100_pseudopots
 101_PW_upf201_uspp_Fe
 101_PW_upf201_uspp_NaCl
+101_PW_upf201_uspp_ncpp
 101_PW_VW_pseudopots
 101_PW_Coulomb
 101_PW_GTH_CF_CS_Si
@@ -25,6 +26,7 @@
 102_PW_BPCG
 102_PW_CG
 102_PW_DS_davsubspace
+102_PW_DS_davsubspace_sca
 102_PW_PINT_RKS
 102_PW_PINT_UKS
 103_PW_15_CF_CS_S1_smallg
@@ -98,6 +100,7 @@
 121_PW_KPAR
 121_PW_kspacing
 127_PW_15_PK_AF
+123_PW_zero_atom
 128_PW_zero_ntype
 133_PW_DJ_PK
 135_PW_15_PK
@@ -105,6 +108,7 @@
 140_PW_15_SO_average
 140_PW_15_SO_wfcinit
 150_PW_15_CR_VDW3
+160_PW_DJ_PK_PU_SO
 170_PW_MD_1O
 170_PW_MD_2O
 180_PW_SDFT_10S_M
@@ -185,6 +189,7 @@
 #220_NO_KP_MD_MSST_level2
 220_NO_KP_MD_NVT
 220_NO_KP_MD_wfc_out
+223_NO_zero_atom
 #230_NO_KP_MD_TD
 240_NO_KP_15_SO
 240_NO_KP_15_SO_average
@@ -224,7 +229,7 @@
 311_NO_GO_elec_minus
 311_NO_GO_S2_elec_minus
 312_NO_GO_wfc_file
-312_NO_GO_wfc_get_wf
+#312_NO_GO_wfc_get_wf
 312_NO_GO_wfc_get_pchg
 312_NO_GO_wfc_out
 313_NO_GO_mulliken
@@ -243,6 +248,7 @@
 385_NO_GO_RE_S1_HSE
 386_NO_GO_MD_S1_HSE
 391_NO_GO_LR
+391_NO_GO_LR_PBE
 392_NO_GO_LR_HF
 393_NO_GO_ULR_HF
 401_NP_KP_sp
@@ -337,6 +343,8 @@
 902_OF_KE_vW
 902_OF_KE_WT
 902_OF_KE_LKT
+902_OF_KE_MPN
+902_OF_KE_CPN5
 903_OF_TF_weight
 903_OF_vW_weight
 903_OF_WT_alphabeta
@@ -355,3 +363,4 @@
 920_OF_MD_LibxcPBE
 921_OF_CR_LDA
 922_NO_FeBiTe
+1001_NO_Si2_dzp_rdmft

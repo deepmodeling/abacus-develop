@@ -26,6 +26,12 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_hybrid_alpha = "0.25";
                 }
+                // added by jghan 2024-07-06
+                else if (dft_functional_lower == "muller" || dft_functional_lower == "power" 
+                        || dft_functional_lower == "wp22" || dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_hybrid_alpha = "1";
+                }
                 else
                 { // no exx in scf, but will change to non-zero in
                     // postprocess like rpa
@@ -193,6 +199,20 @@ void ReadInput::item_exx()
                 {
                     para.input.exx_ccp_rmesh_times = "1.5";
                 }
+                // added by jghan 2024-07-06
+                else if (dft_functional_lower == "muller" || dft_functional_lower == "power")
+                {
+                    para.input.exx_ccp_rmesh_times = "5";
+                }
+                else if (dft_functional_lower == "wp22")
+                {
+                    para.input.exx_ccp_rmesh_times = "5";
+                    // exx_ccp_rmesh_times = "1.5";
+                }
+                else if (dft_functional_lower == "cwp22")
+                {
+                    para.input.exx_ccp_rmesh_times = "1.5";
+                }
                 else
                 { // no exx in scf
                     para.input.exx_ccp_rmesh_times = "1";
@@ -319,16 +339,9 @@ void ReadInput::item_dftu()
             const Input_para& input = para.input;
             if (input.dft_plus_u != 0)
             {
-                if (input.basis_type != "lcao")
+                if (input.basis_type == "pw" && input.nspin != 4)
                 {
-                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS OF basis_type, only lcao is support");
-                }
-                if (input.ks_solver != "genelpa" && input.ks_solver != "scalapack_gvx" && input.ks_solver != "default")
-                {
-                    std::cout << " You'are using " << input.ks_solver << std::endl;
-                    ModuleBase::WARNING_QUIT("ReadInput",
-                                             "WRONG ARGUMENTS OF ks_solver in DFT+U routine, only "
-                                             "genelpa and scalapack_gvx are supported ");
+                    ModuleBase::WARNING_QUIT("ReadInput", "WRONG ARGUMENTS, only nspin2 with PW base is not supported now");
                 }
             }
         };

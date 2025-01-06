@@ -182,25 +182,27 @@ inline void write_orb_energy(const K_Vectors& kv,
 /// including terms: local/semi-local XC, EXX, DFTU
 template <typename TK, typename TR>
 void write_Vxc(const int nspin,
-    const int nbasis,
-    const int drank,
-    const Parallel_Orbitals* pv,
-    const psi::Psi<TK>& psi,
-    const UnitCell& ucell,
-    Structure_Factor& sf,
-    const ModulePW::PW_Basis& rho_basis,
-    const ModulePW::PW_Basis& rhod_basis,
-    const ModuleBase::matrix& vloc,
-    const Charge& chg,
-    Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-    Gint_k& gint_k,         // mohan add 2024-04-01
-    const K_Vectors& kv,
-    const std::vector<double>& orb_cutoff,
-    const ModuleBase::matrix& wg,
-    Grid_Driver& gd
+               const int nbasis,
+               const int drank,
+               const Parallel_Orbitals* pv,
+               const psi::Psi<TK>& psi,
+               const UnitCell& ucell,
+               Structure_Factor& sf,
+               surchem& solvent,
+               const ModulePW::PW_Basis& rho_basis,
+               const ModulePW::PW_Basis& rhod_basis,
+               const ModuleBase::matrix& vloc,
+               const Charge& chg,
+               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
+               Gint_k& gint_k,         // mohan add 2024-04-01
+               const K_Vectors& kv,
+               const std::vector<double>& orb_cutoff,
+               const ModuleBase::matrix& wg,
+               Grid_Driver& gd
 #ifdef __EXX
-    , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
-    , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+               ,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
 )
 {
@@ -212,7 +214,8 @@ void write_Vxc(const int nspin,
     double vtxc = 0.0;
     // elecstate::PotXC* potxc(&rho_basis, &etxc, vtxc, nullptr);
     // potxc.cal_v_eff(&chg, &ucell, vr_xc);
-    elecstate::Potential* potxc = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &etxc, &vtxc);
+    elecstate::Potential* potxc
+        = new elecstate::Potential(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
     std::vector<std::string> compnents_list = {"xc"};
     potxc->pot_register(compnents_list);
     potxc->update_from_charge(&chg, &ucell);
@@ -246,10 +249,10 @@ void write_Vxc(const int nspin,
     std::vector<std::vector<double>> e_orb_tot;   // orbital energy (total)
 #ifdef __EXX
     hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexx_op_ao(&vxc_k_ao,
-        &vxcs_R_ao[0] /*for paraV*/, kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     hamilt::HS_Matrix_K<TK> vexxonly_k_ao(pv, 1); // only hk is needed, sk is skipped
     hamilt::OperatorEXX<hamilt::OperatorLCAO<TK, TR>> vexxonly_op_ao(&vexxonly_k_ao,
-        &vxcs_R_ao[0]/*for paraV*/, kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
+        &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
     hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, kv.isk);

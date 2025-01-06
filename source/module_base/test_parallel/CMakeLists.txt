@@ -34,7 +34,20 @@ add_test(NAME base_parallel_reduce_test
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-if(ENABLE_LCAO)
+AddTest(
+    TARGET parallel_2d_test
+    SOURCES parallel_2d_test.cpp ../parallel_2d.cpp
+    LIBS parameter ${math_libs} 
+)
+
+install(FILES parallel_2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+find_program(BASH bash)
+add_test(NAME parallel_2d_test_para
+      COMMAND ${BASH} parallel_2d_test.sh
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+
   # figure out the lib that provides BLACS
   if(MKLROOT)
     list(APPEND BLACS_LIB MKL::MKL MKL::MKL_SCALAPACK)
@@ -52,4 +65,4 @@ if(ENABLE_LCAO)
         COMMAND ${BASH} blacs_connector_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
-endif()
+

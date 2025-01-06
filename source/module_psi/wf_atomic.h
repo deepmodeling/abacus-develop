@@ -7,13 +7,11 @@
 #include "module_base/realarray.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-
 #include "module_psi/psi.h"
 
 class WF_atomic
 {
-	public:
-
+  public:
     WF_atomic();
     ~WF_atomic();
 
@@ -22,26 +20,34 @@ class WF_atomic
 
     // ModuleBase::IntArray igk;
 #ifdef __CUDA
-    double *d_g2kin;
+    double* d_g2kin;
 #endif
 
-    ModuleBase::realArray table_local;//mohan add 2009-09-10
+    ModuleBase::realArray table_local; // mohan add 2009-09-10
 
-    //temporary psi for new code
+    // temporary psi for new code
     psi::Psi<std::complex<double>>* psi = nullptr;
 
-    ModuleBase::ComplexMatrix *wanf2 = nullptr; // wannier functions in the PW basis
+    ModuleBase::ComplexMatrix* wanf2 = nullptr; // wannier functions in the PW basis
 
-    void init_at_1(Structure_Factor *sf_in); // from init_at_1.f90
+    /**
+     * @brief init a table with the radial Fourier transform of the atomic WF_atomictions
+     * @param sf_in [out] the structure factor
+     * @param tab_at [out] atomic table
+     */
+    void init_at_1(const UnitCell& ucell,
+                   Structure_Factor* sf_in, 
+                   ModuleBase::realArray* tab_at);
 
-    void print_PAOs()const;
+    void print_PAOs(const UnitCell& ucell) const;
 
-    public: //template change to public, will be refactor later. added by zhengdy 20230302
-    int *irindex = nullptr;
+  public: // template change to public, will be refactor later. added by zhengdy 20230302
+    int* irindex = nullptr;
 
-    void atomic_wfc(const int ik,
-                    const int np,
-                    const int lmax_wfc,
+    void atomic_wfc(const UnitCell& ucell,
+                    const int& ik,
+                    const int& np,
+                    const int& lmaxkb,
                     const ModulePW::PW_Basis_K* wfc_basis,
                     ModuleBase::ComplexMatrix& wfcatom,
                     const ModuleBase::realArray& table_q,
@@ -63,6 +69,7 @@ class WF_atomic
                 const int iw_end,
                 const int ik,
                 const ModulePW::PW_Basis_K* wfc_basis);
+
     void random(std::complex<float>* psi,
                 const int iw_start,
                 const int iw_end,
@@ -80,8 +87,9 @@ class WF_atomic
     void stick_to_pool(double* stick, const int& ir, double* out, const ModulePW::PW_Basis_K* wfc_basis) const;
     void stick_to_pool(float* stick, const int& ir, float* out, const ModulePW::PW_Basis_K* wfc_basis) const;
 #endif
+
   private:
-    Structure_Factor *psf;
+    Structure_Factor* psf;
 };
 
-#endif 
+#endif

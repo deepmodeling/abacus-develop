@@ -10,8 +10,7 @@ namespace hamilt
 
 // initialize_HR()
 template <typename TK, typename TR>
-void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in,
-                                        Grid_Driver* GridD)
+void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("Veff", "initialize_HR");
     ModuleBase::timer::tick("Veff", "initialize_HR");
@@ -75,7 +74,6 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
     // pvpR = < phi0 | v(spin) | phiR> for a new spin.
     //--------------------------------------------
     // GlobalV::ofs_running << " (spin change)" << std::endl;
-    this->GK->reset_spin(this->current_spin);
 
     // if you change the place of the following code,
     // rememeber to delete the #include

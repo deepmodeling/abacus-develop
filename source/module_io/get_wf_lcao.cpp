@@ -19,10 +19,12 @@ IState_Envelope::~IState_Envelope()
 }
 
 // For gamma_only
-void IState_Envelope::begin(const psi::Psi<double>* psid,
+void IState_Envelope::begin(const UnitCell& ucell,
+                            const psi::Psi<double>* psid,
                             const ModulePW::PW_Basis* pw_rhod,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const ModulePW::PW_Basis_Big* pw_big,
+                            const Parallel_Grid& pgrid,
                             const Parallel_Orbitals& para_orb,
                             Gint_Gamma& gg,
                             const int& out_wfc_pw,
@@ -113,7 +115,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 }
 #endif
 
-                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], GlobalC::ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
 
                 pes_->charge->save_rho_before_sum_band();
 
@@ -121,14 +123,14 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 ss << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_ENV.cube";
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     pes_->charge->rho_save[is],
                     is,
                     nspin,
                     0,
                     ss.str(),
                     ef_tmp,
-                    &(GlobalC::ucell));
+                    &(ucell));
             }
         }
     }
@@ -176,7 +178,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 }
 #endif
 
-                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], GlobalC::ucell);
+                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
 
                 pes_->charge->save_rho_before_sum_band();
 
@@ -203,26 +205,26 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     wfc_real.data(),
                     is,
                     nspin,
                     0,
                     ss_real.str(),
                     ef_tmp,
-                    &(GlobalC::ucell));
+                    &(ucell));
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     wfc_imag.data(),
                     is,
                     nspin,
                     0,
                     ss_imag.str(),
                     ef_tmp,
-                    &(GlobalC::ucell));
+                    &(ucell));
             }
         }
     }
@@ -238,7 +240,7 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(psi_g, pw_wfc, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(ucell,psi_g, pw_wfc, "wfc_realspace", false, kv);
     }
 
     for (int is = 0; is < nspin; ++is)
@@ -253,10 +255,12 @@ void IState_Envelope::begin(const psi::Psi<double>* psid,
 }
 
 // For multi-k
-void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
+void IState_Envelope::begin(const UnitCell& ucell,
+                            const psi::Psi<std::complex<double>>* psi,
                             const ModulePW::PW_Basis* pw_rhod,
                             const ModulePW::PW_Basis_K* pw_wfc,
                             const ModulePW::PW_Basis_Big* pw_big,
+                            const Parallel_Grid& pgrid,
                             const Parallel_Orbitals& para_orb,
                             Gint_k& gk,
                             const int& out_wf,
@@ -301,7 +305,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
     printf(" Estimated on-the-fly memory consuming by IState_Envelope::begin::wfc_k_grid: %f MB\n", mem_size);
 
     // for pw_wfc in G space
-    psi::Psi<std::complex<double>> psi_g(kv.ngk.data());
+    psi::Psi<std::complex<double>> psi_g;
     if (out_wf || out_wf_r)
     {
         psi_g.resize(nks, nbands, pw_wfc->npwk_max);
@@ -348,20 +352,20 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                 }
 #endif
                 // deal with NSPIN=4
-                gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, GlobalC::ucell);
+                gk.cal_env_k(ik, wfc_k_grid[ik][ib], pes_->charge->rho[ispin], kv.kvec_c, kv.kvec_d, ucell);
 
                 std::stringstream ss;
                 ss << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1 << "_ENV.cube";
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
-                ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                ModuleIO::write_vdata_palgrid(pgrid,
                     pes_->charge->rho[ispin],
                     ispin,
                     nspin,
                     0,
                     ss.str(),
                     ef_tmp,
-                    &(GlobalC::ucell),
+                    &(ucell),
                     3,
                     1);
 
@@ -386,7 +390,7 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(psi_g, pw_wfc, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(ucell,psi_g, pw_wfc, "wfc_realspace", false, kv);
         }
 
         std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
@@ -422,27 +426,27 @@ void IState_Envelope::begin(const psi::Psi<std::complex<double>>* psi,
                     ss_real << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_REAL.cube";
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(pgrid,
                         wfc_real.data(),
                         ispin,
                         nspin,
                         0,
                         ss_real.str(),
                         ef_tmp,
-                        &(GlobalC::ucell));
+                        &(ucell));
 
                     // Output imaginary part
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
-                    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+                    ModuleIO::write_vdata_palgrid(pgrid,
                         wfc_imag.data(),
                         ispin,
                         nspin,
                         0,
                         ss_imag.str(),
                         ef_tmp,
-                        &(GlobalC::ucell));
+                        &(ucell));
                 }
             }
         }

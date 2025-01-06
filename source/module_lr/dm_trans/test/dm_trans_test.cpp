@@ -1,7 +1,8 @@
 #include <gtest/gtest.h>
-#include "mpi.h"
+#include <fstream>
 #include "../dm_trans.h"
 #ifdef __MPI
+#include "mpi.h"
 #include "module_lr/utils/lr_util.h"
 #endif
 struct matsize
@@ -65,7 +66,9 @@ TEST_F(DMTransTest, DoubleSerial)
         for (int istate = 0;istate < nstate;++istate)
         {
             int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
-            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos);
+
+            std::vector<int> temp(s.nks, s.naos);
+            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
             set_rand(c.get_pointer(), size_c);
             X.fix_b(istate);
             const std::vector<container::Tensor>& dm_for = LR::cal_dm_trans_forloop_serial(X.get_pointer(), c, s.nocc, s.nvirt);
@@ -84,7 +87,9 @@ TEST_F(DMTransTest, ComplexSerial)
         for (int istate = 0;istate < nstate;++istate)
         {
             int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
-            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos);
+
+            std::vector<int> temp(s.nks, s.naos);
+            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
             set_rand(c.get_pointer(), size_c);
             X.fix_b(istate);
             const std::vector<container::Tensor>& dm_for = LR::cal_dm_trans_forloop_serial(X.get_pointer(), c, s.nocc, s.nvirt);
@@ -104,10 +109,14 @@ TEST_F(DMTransTest, DoubleParallel)
         // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
         Parallel_2D px;
         LR_Util::setup_2d_division(px, s.nb, s.nvirt, s.nocc);
-        psi::Psi<double> X(s.nks, nstate, px.get_local_size(), nullptr, false);
+
+        std::vector<int> temp_1(s.nks, px.get_local_size());
+        psi::Psi<double> X(s.nks, nstate, px.get_local_size(), temp_1.data(), false);
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.blacs_ctxt);
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size());
+
+        std::vector<int> temp_2(s.nks, pc.get_row_size());
+        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp_2.data(), true);
         Parallel_2D pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
 
@@ -146,7 +155,8 @@ TEST_F(DMTransTest, DoubleParallel)
                 LR_Util::gather_2d_to_full(pmat, dm_pblas_loc[isk].data<double>(), dm_gather[isk].data<double>(), false, s.naos, s.naos);
 
             // compare to global matrix
-            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos);
+            std::vector<int> temp(s.nks, s.naos);
+            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);
@@ -172,7 +182,9 @@ TEST_F(DMTransTest, ComplexParallel)
         psi::Psi<std::complex<double>> X(s.nks, nstate, px.get_local_size(), nullptr, false);
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px.blacs_ctxt);
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size());
+
+        std::vector<int> temp(s.nks, pc.get_row_size());
+        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp.data(), true);
         Parallel_2D pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px.blacs_ctxt);
 
@@ -205,7 +217,8 @@ TEST_F(DMTransTest, ComplexParallel)
                 LR_Util::gather_2d_to_full(pmat, dm_pblas_loc[isk].data<std::complex<double>>(), dm_gather[isk].data<std::complex<double>>(), false, s.naos, s.naos);
 
             // compare to global matrix
-            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos);
+            std::vector<int> ngk_temp_2(s.nks, s.naos);
+            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2.data(), true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);
@@ -226,9 +239,13 @@ TEST_F(DMTransTest, ComplexParallel)
 int main(int argc, char** argv)
 {
     srand(time(NULL));  // for random number generator
+#ifdef __MPI
     MPI_Init(&argc, &argv);
+#endif
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
+#ifdef __MPI
     MPI_Finalize();
+#endif
     return result;
 }

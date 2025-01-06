@@ -62,6 +62,39 @@ class DiagoIterAssist
                              Real* e,
                              T* vcc);
 
+    /// @brief calculate Hamiltonian and overlap matrix in subspace spanned by nstart states psi
+    /// @param pHamilt : hamiltonian operator carrier
+    /// @param psi : wavefunction
+    /// @param hcc : Hamiltonian matrix
+    /// @param scc : overlap matrix
+    static void cal_hs_subspace(const hamilt::Hamilt<T, Device>* pHamilt, // hamiltonian operator carrier
+                                                const psi::Psi<T, Device>& psi,     // [in] wavefunction
+                                                T *hcc, 
+                                                T *scc);
+
+    /// @brief calculate the response matrix from rotation matrix solved by diagonalization of H and S matrix
+    /// @param hcc : Hamiltonian matrix
+    /// @param scc : overlap matrix
+    /// @param nbands : number of bands
+    /// @param mat_in : input matrix to be rotated
+    /// @param mat_out : output matrix to be rotated
+    /// @param mat_col : number of columns of target matrix
+    /// @param en : eigenvalues
+    static void diag_responce(const T* hcc,
+                              const T* scc,
+                              const int nbands,
+                              const T* mat_in, 
+                              T* mat_out, 
+                              int mat_col, 
+                              Real* en);
+    
+    /// @brief calculate the response wavefunction psi from rotation matrix solved by diagonalization of H and S matrix
+    static void diag_subspace_psi(const T* hcc,
+                              const T* scc,
+                              const int dim_subspace,
+                              psi::Psi<T, Device>& evc,
+                              Real* en);
+
     static bool test_exit_cond(const int& ntry, const int& notconv);
 
   private:

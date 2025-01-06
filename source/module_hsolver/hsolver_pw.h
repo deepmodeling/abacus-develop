@@ -47,14 +47,17 @@ class HSolverPW
                double* out_eigenvalues,
                const int rank_in_pool_in,
                const int nproc_in_pool_in,
-               const bool skip_charge);
+               const bool skip_charge,
+               const double tpiba,
+               const int nat);
 
   protected:
     // diago caller
     void hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
                          psi::Psi<T, Device>& psi,
                          std::vector<Real>& pre_condition,
-                         Real* eigenvalue);
+                         Real* eigenvalue,
+                         const int& nk_nums);
 
     // calculate the precondition array for diagonalization in PW base
     void update_precondition(std::vector<Real>& h_diag, const int ik, const int npw, const Real vl_of_0);
@@ -82,18 +85,19 @@ class HSolverPW
     int rank_in_pool = 0;
     int nproc_in_pool = 1;
 
-  private:
-    /// @brief calculate the threshold for iterative-diagonalization for each band
-    void cal_ethr_band(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
-
     std::vector<double> ethr_band;
 
+  private:
+    /// @brief calculate the threshold for iterative-diagonalization for each band
+    void cal_smooth_ethr(const double& wk, const double* wg, const double& ethr, std::vector<double>& ethrs);
+
 #ifdef USE_PAW
-    void paw_func_in_kloop(const int ik);
+    void paw_func_in_kloop(const int ik,
+                           const double tpiba);
 
     void call_paw_cell_set_currentk(const int ik);
 
-    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes);
+    void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
 #endif
 };
 

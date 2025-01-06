@@ -7,7 +7,7 @@
 // FIXME: should update with pyabacus
 // #include "module_io/orb_io.h"
 
-#include "projgen.h"
+#include "module_base/projgen.h"
 
 #include <fstream>
 #include <iostream>

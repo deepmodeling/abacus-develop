@@ -78,8 +78,6 @@ class DMTest : public testing::Test
     {
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
     }
 
 #ifdef __MPI

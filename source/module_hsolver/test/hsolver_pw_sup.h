@@ -97,6 +97,7 @@ void DiagoCG<T, Device>::diag(const Func& hpsi_func,
                               const Func& spsi_func,
                               ct::Tensor& psi,
                               ct::Tensor& eigen,
+                              const std::vector<double>& ethr_band,
                               const ct::Tensor& prec) {
     auto n_bands = psi.shape().dim_size(0);
     auto n_basis = psi.shape().dim_size(1);
@@ -153,9 +154,9 @@ template <typename T, typename Device>
 int DiagoDavid<T, Device>::diag(const std::function<void(T*, T*, const int, const int)>& hpsi_func,
                                 const std::function<void(T*, T*, const int, const int)>& spsi_func,
                                 const int ld_psi,
-                                T *psi_in,
+                                T* psi_in,
                                 Real* eigenvalue_in,
-                                const Real david_diag_thr,
+                                const std::vector<double>& ethr_band,
                                 const int david_maxiter,
                                 const int ntry_max,
                                 const int notconv_max) {
@@ -190,6 +191,9 @@ void diago_PAO_in_pw_k2(
     psi::Psi<std::complex<float>, base_device::DEVICE_CPU>& wvf,
     ModulePW::PW_Basis_K* wfc_basis,
     wavefunc* p_wf,
+    const ModuleBase::realArray& tab_at,
+    const int& lmaxkb,
+    const UnitCell& ucell,
     hamilt::Hamilt<std::complex<float>, base_device::DEVICE_CPU>* phm_in) {
     for (int i = 0; i < wvf.size(); i++) {
         wvf.get_pointer()[i] = std::complex<float>((float)i + 1, 0);
@@ -203,6 +207,9 @@ void diago_PAO_in_pw_k2(
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& wvf,
     ModulePW::PW_Basis_K* wfc_basis,
     wavefunc* p_wf,
+    const ModuleBase::realArray& tab_at,
+    const int& lmaxkb,
+    const UnitCell& ucell,
     hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* phm_in) {
     for (int i = 0; i < wvf.size(); i++) {
         wvf.get_pointer()[i] = std::complex<double>((double)i + 1, 0);

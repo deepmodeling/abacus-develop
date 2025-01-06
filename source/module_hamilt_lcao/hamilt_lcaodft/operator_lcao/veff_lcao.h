@@ -36,14 +36,14 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GK_in: the pointer of Gint_k object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_k* GK_in,
-        HS_Matrix_K<TK>* hsk_in,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-        elecstate::Potential* pot_in,
-        hamilt::HContainer<TR>* hR_in,
-        const UnitCell* ucell_in,
-        const std::vector<double>& orb_cutoff,
-        Grid_Driver* GridD_in,
-        const int& nspin)
+                               HS_Matrix_K<TK>* hsk_in,
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                               elecstate::Potential* pot_in,
+                               hamilt::HContainer<TR>* hR_in,
+                               const UnitCell* ucell_in,
+                               const std::vector<double>& orb_cutoff,
+                               const Grid_Driver* GridD_in,
+                               const int& nspin)
         : GK(GK_in), orb_cutoff_(orb_cutoff), pot(pot_in), ucell(ucell_in),
           gd(GridD_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
@@ -57,14 +57,14 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param GG_in: the pointer of Gint_Gamma object, used for grid integration
     */
     Veff<OperatorLCAO<TK, TR>>(Gint_Gamma* GG_in,
-        HS_Matrix_K<TK>* hsk_in,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-        elecstate::Potential* pot_in,
-        hamilt::HContainer<TR>* hR_in,
-        const UnitCell* ucell_in,
-        const std::vector<double>& orb_cutoff,
-        Grid_Driver* GridD_in,
-        const int& nspin)
+                               HS_Matrix_K<TK>* hsk_in,
+                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                               elecstate::Potential* pot_in,
+                               hamilt::HContainer<TR>* hR_in,
+                               const UnitCell* ucell_in,
+                               const std::vector<double>& orb_cutoff,
+                               const Grid_Driver* GridD_in,
+                               const int& nspin)
         : GG(GG_in), orb_cutoff_(orb_cutoff), pot(pot_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_gint;
@@ -84,29 +84,29 @@ class Veff<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     virtual void contributeHR() override;
   
   const UnitCell* ucell;
-  Grid_Driver* gd;
-  private:
-    // used for k-dependent grid integration.
-    Gint_k* GK = nullptr;
+  const Grid_Driver* gd;
 
-    // used for gamma only algorithms.
-    Gint_Gamma* GG = nullptr;
+private:
+  // used for k-dependent grid integration.
+  Gint_k* GK = nullptr;
 
-    std::vector<double> orb_cutoff_;
+  // used for gamma only algorithms.
+  Gint_Gamma* GG = nullptr;
 
-    // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
+  std::vector<double> orb_cutoff_;
 
-    elecstate::Potential* pot = nullptr;
+  // Charge calculating method in LCAO base and contained grid base calculation: DM_R, DM, pvpR_reduced
 
-    int nspin = 1;
+  elecstate::Potential* pot = nullptr;
 
-    /**
-     * @brief initialize HR, search the nearest neighbor atoms
-     * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
-     * the size of HR will be fixed after initialization
-     */
-    void initialize_HR(const UnitCell* ucell_in, Grid_Driver* GridD_in);
+  int nspin = 1;
 
+  /**
+   * @brief initialize HR, search the nearest neighbor atoms
+   * HContainer is used to store the electronic kinetic matrix with specific <I,J,R> atom-pairs
+   * the size of HR will be fixed after initialization
+   */
+  void initialize_HR(const UnitCell* ucell_in, const Grid_Driver* GridD_in);
 };
 
 } // namespace hamilt

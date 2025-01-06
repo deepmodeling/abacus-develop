@@ -56,12 +56,12 @@ void Structure_Factor::set(const ModulePW::PW_Basis* rho_basis_in, const int& nb
 
 // Peize Lin optimize and add OpenMP 2021.04.01
 //  Calculate structure factor
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid& pgrid, const ModulePW::PW_Basis* rho_basis)
 {
     ModuleBase::TITLE("PW_Basis","setup_structure_factor");
     ModuleBase::timer::tick("PW_Basis","setup_struc_factor");
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
-
+    this->ucell = Ucell;
     this->strucFac.create(Ucell->ntype, rho_basis->npw);
     ModuleBase::Memory::record("SF::strucFac", sizeof(std::complex<double>) * Ucell->ntype*rho_basis->npw);
 
@@ -76,7 +76,7 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
     if(usebspline)
     {
         nbspline = int((nbspline+1)/2)*2; // nbspline must be a positive even number.
-        this->bspline_sf(nbspline,Ucell, rho_basis);
+        this->bspline_sf(nbspline, Ucell, pgrid, rho_basis);
     }
     else
     {
@@ -194,7 +194,10 @@ void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::P
 //    1. Use "r2c" fft
 //    2. Add parallel algorithm for fftw or na loop
 //
-void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis)
+void Structure_Factor::bspline_sf(const int norder,
+                                  const UnitCell* Ucell,
+                                  const Parallel_Grid& pgrid,
+                                  const ModulePW::PW_Basis* rho_basis)
 {
     double *r = new double [rho_basis->nxyz]; 
     double *tmpr = new double[rho_basis->nrxx];
@@ -267,7 +270,7 @@ void Structure_Factor::bspline_sf(const int norder, UnitCell* Ucell, const Modul
 	    	}
         
         #ifdef __MPI
-	    	GlobalC::Pgrid.zpiece_to_all(zpiece, iz, tmpr);
+	    	pgrid.zpiece_to_all(zpiece, iz, tmpr);
         #endif
         
 	    }

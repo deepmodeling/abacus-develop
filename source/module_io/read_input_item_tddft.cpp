@@ -361,6 +361,12 @@ void ReadInput::item_lr_tddft()
         this->add_item(item);
     }
     {
+        Input_Item item("abs_gauge");
+        item.annotation = "whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT";
+        read_sync_string(input.abs_gauge);
+        this->add_item(item);
+    }
+    {
         Input_Item item("abs_broadening");
         item.annotation = "the broadening (eta) for LR-TDDFT absorption spectrum";
         read_sync_double(input.abs_broadening);

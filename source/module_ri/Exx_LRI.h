@@ -56,9 +56,17 @@ public:
     void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
     void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
 
-	void init(const MPI_Comm &mpi_comm_in, const K_Vectors &kv_in, const LCAO_Orbitals& orb);
-	void cal_exx_force();
-    void cal_exx_stress();
+	void init(const MPI_Comm &mpi_comm_in, 
+			  const UnitCell &ucell,
+			  const K_Vectors &kv_in, 
+			  const LCAO_Orbitals& orb);
+	void cal_exx_force(const int& nat);
+    void cal_exx_stress(const double& omega, const double& lat0);
+	void cal_exx_ions(const UnitCell& ucell, const bool write_cv = false);
+    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+		const UnitCell& ucell,
+        const Parallel_Orbitals& pv,
+        const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
     std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
@@ -80,10 +88,6 @@ private:
 	LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
 
-	void cal_exx_ions(const bool write_cv = false);
-    void cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
-        const Parallel_Orbitals& pv,
-        const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;
     double post_process_Eexx(const double& Eexx_in) const;
 

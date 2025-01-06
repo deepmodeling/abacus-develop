@@ -27,12 +27,12 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 {
   public:
     DeltaSpin<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                                      const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                                      hamilt::HContainer<TR>* hR_in,
-                                      const UnitCell& ucell_in,
-                                      Grid_Driver* gridD_in,
-                                      const TwoCenterIntegrator* intor,
-                                      const std::vector<double>& orb_cutoff);
+                                    const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
+                                    hamilt::HContainer<TR>* hR_in,
+                                    const UnitCell& ucell_in,
+                                    const Grid_Driver* gridD_in,
+                                    const TwoCenterIntegrator* intor,
+                                    const std::vector<double>& orb_cutoff);
     ~DeltaSpin<OperatorLCAO<TK, TR>>();
 
     /**
@@ -69,7 +69,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     const UnitCell* ucell = nullptr;
 
-    Grid_Driver* gridD = nullptr;
+    const Grid_Driver* gridD = nullptr;
 
     const Parallel_Orbitals* paraV = nullptr;
 

@@ -31,19 +31,26 @@ ElecStatePW<T, Device>::ElecStatePW(ModulePW::PW_Basis_K* wfc_basis_in,
 template<typename T, typename Device>
 ElecStatePW<T, Device>::~ElecStatePW() 
 {
-    if (base_device::get_device_type<Device>(this->ctx) == base_device::GpuDevice)
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         delmem_var_op()(this->ctx, this->rho_data);
+        delete[] this->rho;
+
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
+        {
+            delmem_complex_op()(this->ctx, this->rhog_data);
+            delete[] this->rhog;
+        }
         if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             delmem_var_op()(this->ctx, this->kin_r_data);
+            delete[] this->kin_r;
         }
     }
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
-        delete[] this->rho;
-        delete[] this->kin_r;
+    if (PARAM.globalv.use_uspp)
+    {
+        delmem_var_op()(this->ctx, this->becsum);
     }
-    delmem_var_op()(this->ctx, becsum);
     delmem_complex_op()(this->ctx, this->wfcr);
     delmem_complex_op()(this->ctx, this->wfcr_another_spin);
 }
@@ -51,15 +58,27 @@ ElecStatePW<T, Device>::~ElecStatePW()
 template<typename T, typename Device>
 void ElecStatePW<T, Device>::init_rho_data() 
 {
-    if(this->init_rho) {
+    if (this->init_rho)
+    {
         return;
     }
-    
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
+
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    {
         this->rho = new Real*[this->charge->nspin];
         resmem_var_op()(this->ctx, this->rho_data, this->charge->nspin * this->charge->nrxx);
-        for (int ii = 0; ii < this->charge->nspin; ii++) {
+        for (int ii = 0; ii < this->charge->nspin; ii++)
+        {
             this->rho[ii] = this->rho_data + ii * this->charge->nrxx;
+        }
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
+        {
+            this->rhog = new T*[this->charge->nspin];
+            resmem_complex_op()(this->ctx, this->rhog_data, this->charge->nspin * this->charge->rhopw->npw);
+            for (int ii = 0; ii < this->charge->nspin; ii++)
+            {
+                this->rhog[ii] = this->rhog_data + ii * this->charge->rhopw->npw;
+            }
         }
         if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
@@ -70,8 +89,13 @@ void ElecStatePW<T, Device>::init_rho_data()
             }
         }
     }
-    else {
+    else
+    {
         this->rho = reinterpret_cast<Real **>(this->charge->rho);
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
+        {
+            this->rhog = reinterpret_cast<T**>(this->charge->rhog);
+        }
         if (get_xc_func_type() == 3 || PARAM.inp.out_elf[0] > 0)
         {
             this->kin_r = reinterpret_cast<Real **>(this->charge->kin_r);
@@ -100,19 +124,24 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
             // ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[is], this->charge->nrxx);
             setmem_var_op()(this->ctx, this->kin_r[is], 0,  this->charge->nrxx);
         }
-	}
+        if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
+        {
+            setmem_complex_op()(this->ctx, this->rhog[is], 0, this->charge->rhopw->npw);
+        }
+    }
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-    if (PARAM.globalv.use_uspp)
+
+    this->add_usrho(psi);
+
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
-        this->add_usrho(psi);
-    }
-    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
-        for (int ii = 0; ii < PARAM.inp.nspin; ii++) {
+        for (int ii = 0; ii < PARAM.inp.nspin; ii++)
+        {
             castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
             if (get_xc_func_type() == 3)
             {
@@ -154,7 +183,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
     this->init_rho_data();
     int ik = psi.get_current_k();
-    int npw = psi.get_current_nbas();
+    int npw = psi.get_current_ngk();
     int current_spin = 0;
     if (PARAM.inp.nspin == 2)
     {
@@ -176,7 +205,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,npwx), this->wfcr_another_spin, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
             if (w1 != 0.0)
             {
@@ -202,7 +231,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
             this->basis->recip_to_real(this->ctx, &psi(ibnd,0), this->wfcr, ik);
 
-            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / get_ucell_omega());
+            const auto w1 = static_cast<Real>(this->wg(ik, ibnd) / ucell->omega);
 
             if (w1 != 0.0)
             {
@@ -222,7 +251,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                               j,
                               npw,
                               this->basis->npwk_max,
-                              static_cast<Real>(get_ucell_tpiba()),
+                              static_cast<Real>(ucell->tpiba),
                               this->basis->template get_gcar_data<Real>(),
                               this->basis->template get_kvec_c_data<Real>(),
                               &psi(ibnd, 0),
@@ -238,7 +267,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
+void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 {
     const T one{1, 0};
     const T zero{0, 0};
@@ -258,12 +287,12 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         const T* psi_now = psi.get_pointer();
         const int currect_spin = this->klist->isk[ik];
-        const int npw = psi.get_current_nbas();
+        const int npw = psi.get_current_ngk();
 
         // get |beta>
         if (this->ppcell->nkb > 0)
         {
-            this->ppcell->getvnl(this->ctx, ik, this->vkb);
+            this->ppcell->getvnl(this->ctx, *ucell,ik, this->vkb);
         }
 
         // becp = <beta|psi>
@@ -392,31 +421,44 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
         }
     }
     delmem_complex_op()(this->ctx, becp);
+}
+
+template <typename T, typename Device>
+void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
+{
+    if (PARAM.globalv.use_uspp)
+    {
+        this->cal_becsum(psi);
+    }
 
     // transform soft charge to recip space using smooth grids
-    T* rhog = nullptr;
-    resmem_complex_op()(this->ctx, rhog, this->charge->rhopw->npw * PARAM.inp.nspin, "ElecState<PW>::rhog");
-    setmem_complex_op()(this->ctx, rhog, 0, this->charge->rhopw->npw * PARAM.inp.nspin);
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
     {
-        this->rhopw_smooth->real2recip(this->rho[is], &rhog[is * this->charge->rhopw->npw]);
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            this->rhopw_smooth->real2recip(this->rho[is], this->rhog[is]);
+        }
     }
 
     // \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
     // add to the charge density in reciprocal space the part which is due to the US augmentation.
-    this->addusdens_g(becsum, rhog);
-
-    // transform back to real space using dense grids
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    if (PARAM.globalv.use_uspp)
     {
-        this->charge->rhopw->recip2real(&rhog[is * this->charge->rhopw->npw], this->rho[is]);
+        this->addusdens_g(becsum, rhog);
     }
 
-    delmem_complex_op()(this->ctx, rhog);
+    // transform back to real space using dense grids
+    if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
+    {
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            this->charge->rhopw->recip2real(this->rhog[is], this->rho[is]);
+        }
+    }
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
+void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
 {
     const T one{1, 0};
     const T zero{0, 0};
@@ -500,7 +542,7 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T* rhog)
                         this->ppcell->radial_fft_q(this->ctx, npw, ih, jh, it, qmod, ylmk0, qgm);
                         for (int ig = 0; ig < npw; ig++)
                         {
-                            rhog[is * npw + ig] += qgm[ig] * aux2[ijh * npw + ig];
+                            rhog[is][ig] += qgm[ig] * aux2[ijh * npw + ig];
                         }
                         ijh++;
                     }

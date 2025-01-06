@@ -22,7 +22,9 @@ In the nested procedure mentioned above, we used CG method to perform cell relax
 
 The [BFGS method](https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm) is a quasi-Newton method for solving nonlinear optimization problem. It belongs to the class of quasi-Newton method where the Hessian matrix is approximated during the optimization process. If the initial point is not far from the extrema, BFGS tends to work better than gradient-based methods.
 
-In ABACUS, we implemented the BFGS method for doing fixed-cell structural relaxation.
+There is an alternative traditional BFGS method, which can be called by using the keyword 'bfgs_trad'. The bfgs_trad method is a quasi-Newton method that substitute an approximate matrix B for the Hessian matrix. The main difference between 'bfgs' and 'bfgs_trad' is that 'bfgs' updates the inverse of matrix B while 'bfgs_trad' updates matrix B and obtains the inverse of B by solving the matrix eigenvalues and taking the reciprocal of the eigenvalues. Both methods are mathematically equivalent, but in some cases, 'bfgs_trad' performs better.
+
+In ABACUS, we implemented the BFGS method for doing fixed-cell structural relaxation. Users can choose which implementation of BFGS to call by adding the 'bfgs_trad' or 'bfgs' parameter.
 
 ### SD method
 

@@ -1,3 +1,4 @@
+#ifdef __LCAO
 #include "dftu.h"
 #include "module_base/timer.h"
 #include "module_parameter/parameter.h"
@@ -10,17 +11,16 @@
 namespace ModuleDFTU
 {
 
-void DFTU::fold_dSR_gamma(
-    const UnitCell &ucell,
-    const Parallel_Orbitals &pv,
-    Grid_Driver* gd,
-    double* dsloc_x,
-    double* dsloc_y,
-    double* dsloc_z,
-    double* dh_r,
-    const int dim1, 
-    const int dim2, 
-    double* dSR_gamma)
+void DFTU::fold_dSR_gamma(const UnitCell& ucell,
+                          const Parallel_Orbitals& pv,
+                          const Grid_Driver* gd,
+                          double* dsloc_x,
+                          double* dsloc_y,
+                          double* dsloc_z,
+                          double* dh_r,
+                          const int dim1,
+                          const int dim2,
+                          double* dSR_gamma)
 {
     ModuleBase::TITLE("DFTU", "fold_dSR_gamma");
 
@@ -125,24 +125,33 @@ void DFTU::fold_dSR_gamma(
     return;
 }
 
-void DFTU::folding_matrix_k(
-        ForceStressArrays &fsr,
-        const Parallel_Orbitals &pv,
-		const int ik, 
-		const int dim1, 
-		const int dim2, 
-		std::complex<double>* mat_k, 
-		const std::vector<ModuleBase::Vector3<double>> &kvec_d)
+void DFTU::folding_matrix_k(const UnitCell& ucell,
+                            const Grid_Driver& gd,
+                            ForceStressArrays& fsr,
+                            const Parallel_Orbitals& pv,
+                            const int ik,
+                            const int dim1,
+                            const int dim2,
+                            std::complex<double>* mat_k,
+                            const std::vector<ModuleBase::Vector3<double>>& kvec_d)
 {
     ModuleBase::TITLE("DFTU", "folding_matrix_k");
     ModuleBase::timer::tick("DFTU", "folding_matrix_k");
     ModuleBase::GlobalFunc::ZEROS(mat_k, pv.nloc);
 
     double* mat_ptr;
-    if      (dim1 == 1 || dim1 == 4) { mat_ptr = fsr.DSloc_Rx;
-    } else if (dim1 == 2 || dim1 == 5) { mat_ptr = fsr.DSloc_Ry;
-    } else if (dim1 == 3 || dim1 == 6) { mat_ptr = fsr.DSloc_Rz;
-}
+    if (dim1 == 1 || dim1 == 4)
+    {
+        mat_ptr = fsr.DSloc_Rx;
+    }
+    else if (dim1 == 2 || dim1 == 5)
+    {
+        mat_ptr = fsr.DSloc_Ry;
+    }
+    else if (dim1 == 3 || dim1 == 6)
+    {
+        mat_ptr = fsr.DSloc_Rz;
+    }
 
     int nnr = 0;
     ModuleBase::Vector3<double> dtau;
@@ -153,26 +162,26 @@ void DFTU::folding_matrix_k(
     ModuleBase::Vector3<double> dtau2;
     ModuleBase::Vector3<double> tau0;
 
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+        Atom* atom1 = &ucell.atoms[T1];
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            GlobalC::GridD.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start1 = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            gd.Find_atom(ucell, tau1, T1, I1);
+            Atom* atom1 = &ucell.atoms[T1];
+            const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 
             // (2) search among all adjacent atoms.
-            for (int ad = 0; ad < GlobalC::GridD.getAdjacentNum() + 1; ++ad)
+            for (int ad = 0; ad < gd.getAdjacentNum() + 1; ++ad)
             {
-                const int T2 = GlobalC::GridD.getType(ad);
-                const int I2 = GlobalC::GridD.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                const int T2 = gd.getType(ad);
+                const int I2 = gd.getNatom(ad);
+                Atom* atom2 = &ucell.atoms[T2];
 
-                tau2 = GlobalC::GridD.getAdjacentTau(ad);
+                tau2 = gd.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
+                double distance = dtau.norm() * ucell.lat0;
                 double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
 
                 bool adj = false;
@@ -183,20 +192,20 @@ void DFTU::folding_matrix_k(
                 }
                 else if (distance >= rcut)
                 {
-                    for (int ad0 = 0; ad0 < GlobalC::GridD.getAdjacentNum() + 1; ++ad0)
+                    for (int ad0 = 0; ad0 < gd.getAdjacentNum() + 1; ++ad0)
                     {
-                        const int T0 = GlobalC::GridD.getType(ad0);
-                        const int I0 = GlobalC::GridD.getNatom(ad0);
+                        const int T0 = gd.getType(ad0);
+                        const int I0 = gd.getNatom(ad0);
 
-                        tau0 = GlobalC::GridD.getAdjacentTau(ad0);
+                        tau0 = gd.getAdjacentTau(ad0);
                         dtau1 = tau0 - tau1;
                         dtau2 = tau0 - tau2;
 
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+                        double distance1 = dtau1.norm() * ucell.lat0;
+                        double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff_[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff_[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -209,14 +218,12 @@ void DFTU::folding_matrix_k(
                 if (adj)
                 {
                     // (3) calculate the nu of atom (T2, I2)
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                     //------------------------------------------------
                     // exp(k dot dR)
                     // dR is the index of box in Crystal coordinates
                     //------------------------------------------------
-                    ModuleBase::Vector3<double> dR(GlobalC::GridD.getBox(ad).x,
-                                                   GlobalC::GridD.getBox(ad).y,
-                                                   GlobalC::GridD.getBox(ad).z);
+                    ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
                     const double arg = (kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
 
@@ -304,3 +311,4 @@ void DFTU::folding_matrix_k_new(const int ik,
     
 
 } // namespace ModuleDFTU
+#endif // __LCAO

@@ -23,24 +23,6 @@ class Gint_k : public Gint {
     // pvpR and reset_spin/get_spin : auxilliary methods
     // for calculating hamiltonian
 
-    // reset the spin.
-    void reset_spin(const int& spin_now_in) { this->spin_now = spin_now_in; };
-    // get the spin.
-    int get_spin() const { return spin_now; }
-
-    // renew gint index for new iteration
-    void renew(const bool& soft = false) {
-        if (soft
-            && this->spin_now
-                   == 0) { // in this case, gint will not be recalculated
-            return;
-        } else if (this->spin_now != -1) {
-            int start_spin = -1;
-            this->reset_spin(start_spin);
-        }
-        return;
-    }
-
     // allocate the <phi_0 | V | dphi_R> matrix element.
     void allocate_pvdpR();
     // destroy the temporary <phi_0 | V | dphi_R> matrix element.
@@ -50,11 +32,8 @@ class Gint_k : public Gint {
      * @brief transfer pvpR to this->hRGint
      * then pass this->hRGint to Veff<OperatorLCAO>::hR
      */
-    void transfer_pvpR(hamilt::HContainer<double>* hR,
-                       const UnitCell* ucell_in, Grid_Driver* gd);
-    void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR,
-                       const UnitCell* ucell_in,
-                       Grid_Driver* gd);
+    void transfer_pvpR(hamilt::HContainer<double>* hR, const UnitCell* ucell_in, const Grid_Driver* gd);
+    void transfer_pvpR(hamilt::HContainer<std::complex<double>>* hR, const UnitCell* ucell_in, const Grid_Driver* gd);
 
     //------------------------------------------------------
     // in gint_k_env.cpp
@@ -65,7 +44,7 @@ class Gint_k : public Gint {
                    double* rho,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_c,
                    const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                   UnitCell& ucell);
+                   const UnitCell& ucell);
 
     //------------------------------------------------------
     // in gint_k_sparse1.cpp
@@ -95,16 +74,13 @@ class Gint_k : public Gint {
                                     const double& sparse_threshold,
                                     LCAO_HS_Arrays& HS_Arrays,
                                     const Parallel_Orbitals* pv,
-                                    UnitCell& ucell,
-                                    Grid_Driver& gdriver);
+                                    const UnitCell& ucell,
+                                    const Grid_Driver& gdriver);
 
   private:
     //----------------------------
     // key variable
     //----------------------------
-
-    // used only in vlocal.
-    int spin_now = -1;
 };
 
 #endif

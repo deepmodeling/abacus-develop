@@ -16,7 +16,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            const UnitCell& ucell,
                            const LCAO_Orbitals& orb,
                            const TwoCenterIntegrator& intor_orb_beta,
-                           Grid_Driver* GridD)
+                           const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("LCAO_domain", "vnl_mu_new");
     ModuleBase::timer::tick("LCAO_domain", "vnl_mu_new");

@@ -10,6 +10,7 @@
 #include "operator_pw/ekinetic_pw.h"
 #include "operator_pw/meta_pw.h"
 #include "operator_pw/nonlocal_pw.h"
+#include "operator_pw/onsite_proj_pw.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -18,16 +19,20 @@
 namespace hamilt
 {
 
-template<typename T, typename Device>
-HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K* wfc_basis, K_Vectors* pkv)
+template <typename T, typename Device>
+HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
+                              ModulePW::PW_Basis_K* wfc_basis,
+                              K_Vectors* pkv,
+                              pseudopot_cell_vnl* nlpp,
+                              const UnitCell* ucell): ucell(ucell)
 {
     this->classname = "HamiltPW";
-    this->ppcell = &GlobalC::ppcell;
+    this->ppcell = nlpp;
     this->qq_nt = this->ppcell->template get_qq_nt_data<Real>();
     this->qq_so = this->ppcell->template get_qq_so_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-    const auto tpiba2 = static_cast<Real>(GlobalC::ucell.tpiba2);
-    const auto tpiba = static_cast<Real>(GlobalC::ucell.tpiba);
+    const auto tpiba2 = static_cast<Real>(ucell->tpiba2);
+    const auto tpiba = static_cast<Real>(ucell->tpiba);
     const int* isk = pkv->isk.data();
     const Real* gk2 = wfc_basis->get_gk2_data<Real>();
 
@@ -100,7 +105,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
     if (PARAM.inp.vnl_in_h)
     {
         Operator<T, Device>* nonlocal
-            = new Nonlocal<OperatorPW<T, Device>>(isk, &GlobalC::ppcell, &GlobalC::ucell, wfc_basis);
+            = new Nonlocal<OperatorPW<T, Device>>(isk, this->ppcell, ucell, wfc_basis);
         if(this->ops == nullptr)
         {
             this->ops = nonlocal;
@@ -109,6 +114,12 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, ModulePW::PW_Basis_K
         {
             this->ops->add(nonlocal);
         }
+    }
+    if(PARAM.inp.sc_mag_switch || PARAM.inp.dft_plus_u)
+    {
+        Operator<T, Device>* onsite_proj
+            = new OnsiteProj<OperatorPW<T, Device>>(isk, ucell, PARAM.inp.sc_mag_switch, (PARAM.inp.dft_plus_u>0));
+        this->ops->add(onsite_proj);
     }
     return;
 }
@@ -186,6 +197,17 @@ HamiltPW<T, Device>::HamiltPW(const HamiltPW<T_in, Device_in> *hamilt)
             }
             else {
                 this->ops->add(meta);
+            }
+        }
+        else if (node->classname == "OnsiteProj") {
+            Operator<T, Device>* onsite_proj =
+                    new OnsiteProj<OperatorPW<T, Device>>(
+                            reinterpret_cast<const OnsiteProj<OperatorPW<T_in, Device_in>>*>(node));
+            if(this->ops == nullptr) {
+                this->ops = onsite_proj;
+            }
+            else {
+                this->ops->add(onsite_proj);
             }
         }
         else {
@@ -287,9 +309,9 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             // qq <beta|psi>
             char transa = 'N';
             char transb = 'N';
-            for (int it = 0; it < GlobalC::ucell.ntype; it++)
+            for (int it = 0; it < ucell->ntype; it++)
             {
-                Atom* atoms = &GlobalC::ucell.atoms[it];
+                Atom* atoms = &ucell->atoms[it];
                 if (atoms->ncpp.tvanp)
                 {
                     const int nh = atoms->ncpp.nh;
@@ -306,7 +328,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     }
                     for (int ia = 0; ia < atoms->na; ia++)
                     {
-                        const int iat = GlobalC::ucell.itia2iat(it, ia);
+                        const int iat = ucell->itia2iat(it, ia);
                         gemm_op()(this->ctx,
                                   transa,
                                   transb,

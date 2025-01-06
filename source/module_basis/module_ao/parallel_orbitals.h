@@ -1,6 +1,6 @@
 #ifndef _PARALLEL_ORBITALS_H_
 #define _PARALLEL_ORBITALS_H_
-#include "parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include <fstream>
 
 /// This class packs the information of 2D-block-cyclic for LCAO code:
@@ -29,7 +29,7 @@ public:
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(2D division)
     ///---------------------------------------
-    int nnr;
+    int nnr=1;
 	int *nlocdim;
 	int *nlocstart;
     
@@ -80,7 +80,7 @@ public:
 
     int get_nbands() const;
 
-    int nbands = 0;
+    int nbands;
 
     /**
      * @brief gather global indexes of orbitals in this processor

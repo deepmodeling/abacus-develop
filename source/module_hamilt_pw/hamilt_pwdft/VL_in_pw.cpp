@@ -17,9 +17,11 @@ pseudopot_cell_vl::~pseudopot_cell_vl()
 	delete[] zp;
 }
 
-void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::PW_Basis* rho_basis)
+void pseudopot_cell_vl::init_vloc(const UnitCell& ucell,
+								  const ModulePW::PW_Basis* rho_basis)
 {
-	if(PARAM.inp.use_paw) return;
+	if(PARAM.inp.use_paw) { return;
+}
 	ModuleBase::TITLE("pseudopot_cell_vl","init_vloc");
 
 	// This routine computes the fourier coefficient of the local
@@ -29,11 +31,11 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 	double *vloc1d = new double[rho_basis->ngg];
 	ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
 
-	this->allocate(rho_basis->ngg);
+	this->allocate(ucell,rho_basis->ngg);
 	
-	for (int it = 0; it < GlobalC::ucell.ntype; it++) 
+	for (int it = 0; it < ucell.ntype; it++) 
 	{
-		const Atom* atom = &GlobalC::ucell.atoms[it];
+		const Atom* atom = &ucell.atoms[it];
 
 		ModuleBase::GlobalFunc::ZEROS(vloc1d, rho_basis->ngg);
 
@@ -41,7 +43,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 		// compute V_loc(G) for a given type of atom
 		if(atom->coulomb_potential)
 		{
-			this->vloc_coulomb(this->zp[it], vloc1d, rho_basis);
+			this->vloc_coulomb(ucell,this->zp[it], vloc1d, rho_basis);
 		}
 		else if(numeric[it]==true)
 		{
@@ -52,6 +54,7 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 					atom->ncpp.vloc_at.data(), // local potential in real space radial form.  
 		          	this->zp[it],
 					vloc1d,
+					ucell,
 					rho_basis);
 		}
 		else
@@ -59,33 +62,36 @@ void pseudopot_cell_vl::init_vloc(ModuleBase::matrix& vloc_in, const ModulePW::P
 			ModuleBase::WARNING_QUIT("init_vloc","not available now.");
 		}
 
-		if(it>=0 && it<vloc_in.nr && vloc_in.nc>=0)
+		if(it>=0 && it<this->vloc.nr && this->vloc.nc>=0)
 		{
-			ModuleBase::GlobalFunc::COPYARRAY(vloc1d, &vloc_in(it, 0), rho_basis->ngg);
+			ModuleBase::GlobalFunc::COPYARRAY(vloc1d, &this->vloc(it, 0), rho_basis->ngg);
 		}
 	} 
 
 
 	delete[] vloc1d;
 
-	this->print_vloc(rho_basis);
+	this->print_vloc(ucell,rho_basis);
 
 	ModuleBase::timer::tick("ppcell_vl","init_vloc");
 	return;
 }
 
 
-void pseudopot_cell_vl::allocate(const int ngg)
+void pseudopot_cell_vl::allocate(const UnitCell& ucell,
+							     const int ngg)
 {
-	if(PARAM.inp.test_pp>0) ModuleBase::TITLE("pseudopot_cell_vl","allocate");
-	if(PARAM.inp.use_paw) return;
-	this->vloc.create(GlobalC::ucell.ntype, ngg);
+	if(PARAM.inp.test_pp>0) { ModuleBase::TITLE("pseudopot_cell_vl","allocate");
+}
+	if(PARAM.inp.use_paw) { return;
+}
+	this->vloc.create(ucell.ntype, ngg);
 
 	delete[] numeric;
-	this->numeric = new bool[GlobalC::ucell.ntype];
-	ModuleBase::GlobalFunc::ZEROS(numeric, GlobalC::ucell.ntype);
+	this->numeric = new bool[ucell.ntype];
+	ModuleBase::GlobalFunc::ZEROS(numeric, ucell.ntype);
 
-	for (int it = 0; it < GlobalC::ucell.ntype; it++)
+	for (int it = 0; it < ucell.ntype; it++)
 	{ 
 		this->numeric[it] = true; 
 	}
@@ -101,7 +107,10 @@ void pseudopot_cell_vl::allocate(const int ngg)
 	return;
 }
 
-void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::vloc_coulomb(const UnitCell& ucell,
+									 const double& zp_in, 
+									 double* vloc_1d, 
+									 const ModulePW::PW_Basis* rho_basis) const
 {
     int igl0 = 0;
     // start from |G|=0 or not.
@@ -114,14 +123,14 @@ void pseudopot_cell_vl::vloc_coulomb(const double& zp_in, double* vloc_1d, const
     {
         igl0 = 0;
     }
-    const double d_fpi_omega = ModuleBase::FOUR_PI / GlobalC::ucell.omega; // mohan add 2008-06-04
+    const double d_fpi_omega = ModuleBase::FOUR_PI / ucell.omega; // mohan add 2008-06-04
     double fac = -zp_in * ModuleBase::e2 * d_fpi_omega;
 #ifdef _OPENMP
 #pragma omp for
 #endif
     for (int ig = igl0; ig < rho_basis->ngg; ig++)
     {
-        double gx2 = rho_basis->gg_uniq[ig] * GlobalC::ucell.tpiba2;
+        double gx2 = rho_basis->gg_uniq[ig] * ucell.tpiba2;
         vloc_1d[ig] = fac / gx2;
     }
     return;
@@ -142,6 +151,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
                                   const double* vloc_at,
                                   const double& zp_in,
                                   double* vloc_1d,
+								  const UnitCell& ucell,
                                   const ModulePW::PW_Basis* rho_basis) const
 {
 	//----------------------------------------------------------------
@@ -170,7 +180,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 	/*
 	for(ir=0; ir<msh; ir++)
 	{
-		aux[ir] = r[ir] * zp_in * e2 / GlobalC::ucell.omega;
+		aux[ir] = r[ir] * zp_in * e2 / ucell.omega;
 	}
 	ModuleBase::Integral::Simpson_Integral(msh, aux, rab, vloc_1d[0] );
 	vloc_1d[0] *= 4*3.1415926;
@@ -221,7 +231,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 #endif
 	for (int ig = igl0;ig < rho_basis->ngg;ig++) 
 	{
-		double gx2= rho_basis->gg_uniq[ig] * GlobalC::ucell.tpiba2;
+		double gx2= rho_basis->gg_uniq[ig] * ucell.tpiba2;
 		double gx = std::sqrt(gx2);
 		for (int ir = 0;ir < msh;ir++) 
 		{
@@ -232,7 +242,7 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 		vloc_1d[ig] -= fac * ModuleBase::libm::exp(- gx2 * 0.25)/ gx2;
 	} // enddo
 
-	const double d_fpi_omega = ModuleBase::FOUR_PI/GlobalC::ucell.omega;//mohan add 2008-06-04
+	const double d_fpi_omega = ModuleBase::FOUR_PI/ucell.omega;//mohan add 2008-06-04
 #ifdef _OPENMP
 #pragma omp for
 #endif
@@ -250,20 +260,22 @@ void pseudopot_cell_vl::vloc_of_g(const int& msh,
 	return;
 } // end subroutine vloc_of_g
 
-void pseudopot_cell_vl::print_vloc(const ModulePW::PW_Basis* rho_basis) const
+void pseudopot_cell_vl::print_vloc(const UnitCell& ucell,
+								   const ModulePW::PW_Basis* rho_basis) const
 {
-	if(GlobalV::MY_RANK!=0) return; //mohan fix bug 2011-10-13
+	if(GlobalV::MY_RANK!=0) { return; //mohan fix bug 2011-10-13
+}
 	bool check_vl = PARAM.inp.out_element_info;
 	if(check_vl)
 	{
-		for(int it=0; it<GlobalC::ucell.ntype; it++)
+		for(int it=0; it<ucell.ntype; it++)
 		{
 			std::stringstream ss ;
-			ss << PARAM.globalv.global_out_dir << GlobalC::ucell.atoms[it].label << "/v_loc_g.dat" ;
+			ss << PARAM.globalv.global_out_dir << ucell.atoms[it].label << "/v_loc_g.dat" ;
 			std::ofstream ofs_vg( ss.str().c_str() );
 			for(int ig=0;ig<rho_basis->ngg;ig++)
 			{
-				ofs_vg << std::setw(15) << rho_basis->gg_uniq [ig] * GlobalC::ucell.tpiba2 
+				ofs_vg << std::setw(15) << rho_basis->gg_uniq [ig] * ucell.tpiba2 
 				   	<< std::setw(15) << this->vloc(it, ig) << std::endl;
 			}
 			ofs_vg.close();

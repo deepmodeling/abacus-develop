@@ -4,7 +4,7 @@
 #include <utility>
 #include "module_base/matrix.h"
 #include "module_base/complexmatrix.h"
-#include "module_basis/module_ao/parallel_2d.h"
+#include "module_base/parallel_2d.h"
 #include "module_psi/psi.h"
 #include <ATen/core/tensor.h>
 #include "module_basis/module_pw/pw_basis.h"
@@ -103,5 +103,9 @@ namespace LR_Util
     /// @brief  diagonalize a general matrix
     void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
     void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
+
+    ///=================string option====================
+    std::string tolower(const std::string& str);
+    std::string toupper(const std::string& str);
 }
 #include "lr_util.hpp"

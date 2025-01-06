@@ -12,14 +12,14 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                                           ModulePW::PW_Basis* rho_basis,
-                                          pseudopot_cell_vnl* ppcell_in,
+                                          const pseudopot_cell_vnl& nlpp,
                                           const UnitCell& ucell)
 {
     ModuleBase::TITLE("Stress_Func", "stress_us");
     ModuleBase::timer::tick("Stress_Func", "stress_us");
 
     const int npw = rho_basis->npw;
-    const int nh_tot = ppcell_in->nhm * (ppcell_in->nhm + 1) / 2;
+    const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
     const std::complex<double> fac = ModuleBase::NEG_IMAG_UNIT * ucell.tpiba;
     const std::complex<double> ci_tpi = ModuleBase::IMAG_UNIT * ModuleBase::TWO_PI;
     double* becsum = static_cast<const elecstate::ElecStatePW<std::complex<FPTYPE>, Device>*>(this->pelec)->becsum;
@@ -34,8 +34,8 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
         rho_basis->real2recip(&veff.c[is * veff.nc], &vg(is, 0));
     }
 
-    ModuleBase::matrix ylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
-    ModuleBase::YlmReal::Ylm_Real(ppcell_in->lmaxq * ppcell_in->lmaxq, npw, rho_basis->gcar, ylmk0);
+    ModuleBase::matrix ylmk0(nlpp.lmaxq * nlpp.lmaxq, npw);
+    ModuleBase::YlmReal::Ylm_Real(nlpp.lmaxq * nlpp.lmaxq, npw, rho_basis->gcar, ylmk0);
 
     // double* qnorm = new double[npw];
     std::vector<double> qnorm_vec(npw);
@@ -48,11 +48,11 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     // here we compute the integral Q*V for each atom,
     //      I = sum_G G_a exp(-iR.G) Q_nm v^*
     // (no contribution from G=0)
-    ModuleBase::matrix dylmk0(ppcell_in->lmaxq * ppcell_in->lmaxq, npw);
+    ModuleBase::matrix dylmk0(nlpp.lmaxq * nlpp.lmaxq, npw);
     for (int ipol = 0; ipol < 3; ipol++)
     {
         double* gcar_ptr = reinterpret_cast<double*>(rho_basis->gcar);
-        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(ppcell_in->lmaxq * ppcell_in->lmaxq,
+        hamilt::Nonlocal_maths<FPTYPE, Device>::dylmr2(nlpp.lmaxq * nlpp.lmaxq,
                                                        npw,
                                                        gcar_ptr,
                                                        dylmk0.c,
@@ -75,7 +75,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                 {
                     for (int jh = ih; jh < atom->ncpp.nh; jh++)
                     {
-                        this->dqvan2(ppcell_in,
+                        this->dqvan2(nlpp,
                                      ih,
                                      jh,
                                      it,
@@ -189,7 +189,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
 }
 
 template <typename FPTYPE, typename Device>
-void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
+void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const int ih,
                                          const int jh,
                                          const int itype,
@@ -207,10 +207,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
 }
 
     // computes the indices which correspond to ih,jh
-    const int nb = ppcell_in->indv(itype, ih);
-    const int mb = ppcell_in->indv(itype, jh);
-    assert(nb < ppcell_in->nbetam);
-    assert(mb < ppcell_in->nbetam);
+    const int nb = nlpp.indv(itype, ih);
+    const int mb = nlpp.indv(itype, jh);
+    assert(nb < nlpp.nbetam);
+    assert(mb < nlpp.nbetam);
     int ijv = 0;
     if (nb >= mb)
     {
@@ -220,8 +220,8 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
     {
         ijv = mb * (mb + 1) / 2 + nb;
     }
-    const int ivl = ppcell_in->nhtolm(itype, ih);
-    const int jvl = ppcell_in->nhtolm(itype, jh);
+    const int ivl = nlpp.nhtolm(itype, ih);
+    const int jvl = nlpp.nhtolm(itype, jh);
 
     for (int ig = 0; ig < ng; ig++)
     {
@@ -231,9 +231,9 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
     // make the sum over the non zero LM
     int l = -1;
     std::complex<double> pref(0.0, 0.0);
-    for (int lm = 0; lm < ppcell_in->lpx(ivl, jvl); lm++)
+    for (int lm = 0; lm < nlpp.lpx(ivl, jvl); lm++)
     {
-        int lp = ppcell_in->lpl(ivl, jvl, lm);
+        int lp = nlpp.lpl(ivl, jvl, lm);
         assert(lp >= 0);
         assert(lp < 49);
         if (lp == 0)
@@ -264,7 +264,7 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
         {
             l = 6;
         }
-        pref = pow(ModuleBase::NEG_IMAG_UNIT, l) * ppcell_in->ap(lp, ivl, jvl);
+        pref = pow(ModuleBase::NEG_IMAG_UNIT, l) * nlpp.ap(lp, ivl, jvl);
 
         double qm1 = -1.0; // any number smaller than qnorm
         double work = 0.0, work1 = 0.0;
@@ -272,14 +272,14 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl* ppcell_in,
         {
             if (std::abs(qnorm[ig] - qm1) > 1e-6)
             {
-                work = ModuleBase::PolyInt::Polynomial_Interpolation(ppcell_in->qrad,
+                work = ModuleBase::PolyInt::Polynomial_Interpolation(nlpp.qrad,
                                                                      itype,
                                                                      l,
                                                                      ijv,
                                                                      PARAM.globalv.nqxq,
                                                                      PARAM.globalv.dq,
                                                                      qnorm[ig]);
-                work1 = this->Polynomial_Interpolation_nl(ppcell_in->qrad, itype, l, ijv, PARAM.globalv.dq, qnorm[ig]);
+                work1 = this->Polynomial_Interpolation_nl(nlpp.qrad, itype, l, ijv, PARAM.globalv.dq, qnorm[ig]);
                 qm1 = qnorm[ig];
             }
             dqg[ig] += pref * work * dylmk0(lp, ig) / tpiba;

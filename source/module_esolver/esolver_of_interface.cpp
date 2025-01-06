@@ -13,7 +13,10 @@ namespace ModuleESolver
 void ESolver_OF::init_kedf(const Input_para& inp)
 {
     //! Thomas-Fermi (TF) KEDF, TF+ KEDF, and Want-Teter (WT) KEDF
-    if (this->of_kinetic_ == "tf" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt")
+    if (this->of_kinetic_ == "tf"
+     || this->of_kinetic_ == "tf+"
+     || this->of_kinetic_ == "wt"
+     || this->of_kinetic_ == "ml")
     {
         if (this->tf_ == nullptr)
         {
@@ -24,7 +27,7 @@ void ESolver_OF::init_kedf(const Input_para& inp)
 
     //! vW, TF+, WT, and LKT KEDFs
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "lkt")
+        || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         if (this->vw_ == nullptr)
         {
@@ -62,6 +65,19 @@ void ESolver_OF::init_kedf(const Input_para& inp)
         }
         this->lkt_->set_para(this->dV_, inp.of_lkt_a);
     }
+#ifdef __MLKEDF
+    if (this->of_kinetic_ == "ml")
+    {
+        if (this->ml_ == nullptr)
+            this->ml_ = new KEDF_ML();
+        this->ml_->set_para(this->pw_rho->nrxx, this->dV_, this->nelec_[0], inp.of_tf_weight, inp.of_vw_weight, 
+                        inp.of_ml_chi_p, inp.of_ml_chi_q, inp.of_ml_chi_xi, inp.of_ml_chi_pnl, inp.of_ml_chi_qnl,
+                        inp.of_ml_nkernel, inp.of_ml_kernel, inp.of_ml_kernel_scaling,
+                        inp.of_ml_yukawa_alpha, inp.of_ml_kernel_file, inp.of_ml_gamma, inp.of_ml_p, inp.of_ml_q, inp.of_ml_tanhp, inp.of_ml_tanhq,
+                        inp.of_ml_gammanl, inp.of_ml_pnl, inp.of_ml_qnl, inp.of_ml_xi, inp.of_ml_tanhxi,
+                        inp.of_ml_tanhxi_nl, inp.of_ml_tanh_pnl, inp.of_ml_tanh_qnl, inp.of_ml_tanhp_nl, inp.of_ml_tanhq_nl, inp.of_ml_device, this->pw_rho);
+    }
+#endif
 }
 
 /**
@@ -86,6 +102,13 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::mat
     {
         this->lkt_->lkt_potential(prho, this->pw_rho, rpot);
     }
+#ifdef __MLKEDF
+    if (this->of_kinetic_ == "ml")
+    {
+        this->ml_->ml_potential(prho, this->pw_rho, rpot);
+        this->tf_->get_energy(prho); // temp
+    }
+#endif
 
     // Before call vw_potential, change rpot to rpot * 2 * pphi
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -97,7 +120,7 @@ void ESolver_OF::kinetic_potential(double** prho, double** pphi, ModuleBase::mat
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "lkt")
+        || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         this->vw_->vw_potential(pphi, this->pw_rho, rpot);
     }
@@ -119,7 +142,7 @@ double ESolver_OF::kinetic_energy()
     }
 
     if (this->of_kinetic_ == "vw" || this->of_kinetic_ == "tf+" || this->of_kinetic_ == "wt"
-        || this->of_kinetic_ == "lkt")
+        || this->of_kinetic_ == "lkt" || this->of_kinetic_ == "ml")
     {
         kinetic_energy += this->vw_->vw_energy;
     }
@@ -133,6 +156,17 @@ double ESolver_OF::kinetic_energy()
     {
         kinetic_energy += this->lkt_->lkt_energy;
     }
+#ifdef __MLKEDF
+    if (this->of_kinetic_ == "ml")
+    {
+        kinetic_energy += this->ml_->ml_energy;
+        if (this->ml_->ml_energy >= this->tf_->tf_energy)
+        {
+            std::cout << "WARNING: ML >= TF" << std::endl;
+            std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+        }
+    }
+#endif
 
     return kinetic_energy;
 }
@@ -210,6 +244,10 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
     {
         this->lkt_->get_stress(pelec->charge->rho, this->pw_rho);
         kinetic_stress_ += this->lkt_->stress;
+    }
+    if (this->of_kinetic_ == "ml")
+    {
+        std::cout << "Sorry, the stress of MPN KEDF is not yet supported." << std::endl;
     }
 }
 

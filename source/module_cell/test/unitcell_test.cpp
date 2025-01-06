@@ -3,13 +3,14 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_cell/unitcell.h"
 #include "module_elecstate/cal_ux.h"
+#include "module_elecstate/read_pseudo.h"
 
 #include "memory"
 #include "module_base/global_variable.h"
 #include "module_base/mathzone.h"
 #include "prepare_unitcell.h"
+#include "module_cell/update_cell.h"
 #include <streambuf>
 #include <valarray>
 #include <vector>
@@ -345,7 +346,7 @@ TEST_F(UcellTest, RemakeCell)
         ucell->latvec.e32 = 0.00;
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
-        ucell->remake_cell();
+        unitcell::remake_cell(ucell->lat);
         if (latname_in[i] == "sc")
         {
             double celldm
@@ -590,7 +591,7 @@ TEST_F(UcellDeathTest, RemakeCellWarnings)
         ucell->latvec.e33 = 10.0;
         ucell->latName = latname_in[i];
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ucell->remake_cell(), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(unitcell::remake_cell(ucell->lat), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         if (latname_in[i] == "none")
         {
@@ -782,7 +783,9 @@ TEST_F(UcellDeathTest, PeriodicBoundaryAdjustment1)
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->periodic_boundary_adjustment(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::periodic_boundary_adjustment(
+                ucell->atoms,ucell->latvec,ucell->ntype),
+                ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("the movement of atom is larger than the length of cell"));
 }
@@ -792,7 +795,8 @@ TEST_F(UcellTest, PeriodicBoundaryAdjustment2)
     UcellTestPrepare utp = UcellTestLib["C1H2-Index"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    EXPECT_NO_THROW(ucell->periodic_boundary_adjustment());
+    EXPECT_NO_THROW(unitcell::periodic_boundary_adjustment(
+                    ucell->atoms,ucell->latvec,ucell->ntype));
 }
 
 TEST_F(UcellTest, PrintCell)
@@ -822,7 +826,7 @@ TEST_F(UcellTest, PrintUnitcellPseudo)
     ucell = utp.SetUcellInfo();
     PARAM.input.test_pseudo_cell = 1;
     std::string fn = "printcell.log";
-    ucell->print_unitcell_pseudo(fn);
+    elecstate::print_unitcell_pseudo(fn, *ucell);
     std::ifstream ifs;
     ifs.open("printcell.log");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -1017,7 +1021,7 @@ TEST_F(UcellTest, UpdateVel)
     {
         vel_in[iat].set(iat * 0.1, iat * 0.1, iat * 0.1);
     }
-    ucell->update_vel(vel_in);
+    unitcell::update_vel(vel_in,ucell->ntype,ucell->nat,ucell->atoms);
     for (int iat = 0; iat < ucell->nat; ++iat)
     {
         EXPECT_DOUBLE_EQ(vel_in[iat].x, 0.1 * iat);
@@ -1035,6 +1039,7 @@ TEST_F(UcellTest, CalUx1)
     ucell->atoms[0].m_loc_[0].set(0, -1, 0);
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_FALSE(ucell->magnet.lsign_);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0], 0);
@@ -1051,6 +1056,7 @@ TEST_F(UcellTest, CalUx2)
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     //(0,0,0) is also parallel to (1,1,1)
+    PARAM.input.nspin = 4;
     elecstate::cal_ux(*ucell);
     EXPECT_TRUE(ucell->magnet.lsign_);
     EXPECT_NEAR(ucell->magnet.ux_[0], 0.57735, 1e-5);

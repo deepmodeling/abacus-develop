@@ -21,6 +21,7 @@
     - [kspacing](#kspacing)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
+    - [nb2d](#nb2d)
     - [precision](#precision)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -37,14 +38,15 @@
     - [ndx, ndy, ndz](#ndx-ndy-ndz)
     - [pw\_seed](#pw_seed)
     - [pw\_diag\_thr](#pw_diag_thr)
+    - [diago\_smooth\_ethr](#diago_smooth_ethr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [diag\_subspace](#diag_subspace)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-    - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
     - [lcao\_ecut](#lcao_ecut)
     - [lcao\_dk](#lcao_dk)
@@ -208,6 +210,36 @@
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
     - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft)
+    - [of\_ml\_gene\_data](#of_ml_gene_data)
+    - [of\_ml\_device](#of_ml_device)
+    - [of\_ml\_feg](#of_ml_feg)
+    - [of\_ml\_nkernel](#of_ml_nkernel)
+    - [of\_ml\_kernel](#of_ml_kernel)
+    - [of\_ml\_kernel\_scaling](#of_ml_kernel_scaling)
+    - [of\_ml\_yukawa\_alpha](#of_ml_yukawa_alpha)
+    - [of\_ml\_kernel\_file](#of_ml_kernel_file)
+    - [of\_ml\_gamma](#of_ml_gamma)
+    - [of\_ml\_p](#of_ml_p)
+    - [of\_ml\_q](#of_ml_q)
+    - [of\_ml\_tanhp](#of_ml_tanhp)
+    - [of\_ml\_tanhq](#of_ml_tanhq)
+    - [of\_ml\_gammanl](#of_ml_gammanl)
+    - [of\_ml\_pnl](#of_ml_pnl)
+    - [of\_ml\_qnl](#of_ml_qnl)
+    - [of\_ml\_xi](#of_ml_xi)
+    - [of\_ml\_tanhxi](#of_ml_tanhxi)
+    - [of\_ml\_tanhxi\_nl](#of_ml_tanhxi_nl)
+    - [of\_ml\_tanh\_pnl](#of_ml_tanh_pnl)
+    - [of\_ml\_tanh\_qnl](#of_ml_tanh_qnl)
+    - [of\_ml\_tanhp\_nl](#of_ml_tanhp_nl)
+    - [of\_ml\_tanhq\_nl](#of_ml_tanhq_nl)
+    - [of\_ml\_chi\_p](#of_ml_chi_p)
+    - [of\_ml\_chi\_q](#of_ml_chi_q)
+    - [of\_ml\_chi\_xi](#of_ml_chi_xi)
+    - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
+    - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
+    - [of\_ml\_local\_test](#of_ml_local_test)
   - [Electric field and dipole correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
@@ -435,6 +467,9 @@
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
+  - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
+    - [rdmft](#rdmft)
+    - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
 [back to top](#full-list-of-input-keywords)
 ## System variables
@@ -663,6 +698,19 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
 
+### nb2d
+
+- **Type**: Integer
+- **Description**: When using elpa or scalapack to solver the eigenvalue problem, the data should be distributed by the two-dimensional block-cyclic distribution. This paramter specifies the size of the block. It is valid for:
+  - [ks_solver](#ks_solver) is genelpa or scalapack_gvx. If nb2d is set to 0, then it will be automatically set in the program according to the size of atomic orbital basis:
+    - if size <= 500: nb2d = 1
+    - if 500 < size <= 1000: nb2d = 32
+    - if size > 1000: nb2d = 64;
+  - [ks_solver](#ks_solver) is dav_subspace, and [diag_subspace](#diag_subspace) is 1 or 2. It is the block size for the diagonization of subspace. If it is set to 0, then it will be automatically set in the program according to the number of band:
+    - if number of band > 500: nb2d = 32
+    - if number of band < 500: nb2d = 16
+- **Default**: 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Variables related to input files
@@ -774,6 +822,12 @@ These variables are used to control the plane wave related parameters.
 - **Description**: Only used when you use `ks_solver = cg/dav/dav_subspace/bpcg`. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. **For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.**
 - **Default**: 0.01
 
+### diago_smooth_ethr
+
+- **Type**: bool
+- **Description**: If `TRUE`, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If `FALSE`, the smooth threshold strategy will not be applied.
+- **Default**: false
+
 ### pw_diag_nmax
 
 - **Type**: Integer
@@ -784,7 +838,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-- **Default**: 4
+- **Default**: 4 
+
+### diag_subspace
+
+- **Type**: Integer
+- **Description**: The method to diagonalize subspace in dav_subspace method. The available options are:
+  - 0: by LAPACK
+  - 1: by GenELPA
+  - 2: by ScaLAPACK
+  LAPACK only solve in one core, GenELPA and ScaLAPACK can solve in parallel. If the system is small (such as the band number is less than 100), LAPACK is recommended. If the system is large and MPI parallel is used, then GenELPA or ScaLAPACK is recommended, and GenELPA usually has better performance. For GenELPA and ScaLAPACK, the block size can be set by [nb2d](#nb2d).
+
+- **Default**: 0
 
 ### erf_ecut
 
@@ -826,15 +891,6 @@ These variables are used to control the plane wave related parameters.
 ## Numerical atomic orbitals related variables
 
 These variables are used to control the numerical atomic orbitals related parameters.
-
-### nb2d
-
-- **Type**: Integer
-- **Description**: In LCAO calculations, we arrange the total number of processors in an 2D array, so that we can partition the wavefunction matrix (number of bands*total size of atomic orbital basis) and distribute them in this 2D array. When the system is large, we group processors into sizes of nb2d, so that multiple processors take care of one row block (a group of atomic orbitals) in the wavefunction matrix. If set to 0, nb2d will be automatically set in the program according to the size of atomic orbital basis:
-  - if size <= 500 : nb2d = 1
-  - if 500 < size <= 1000 : nb2d = 32
-  - if size > 1000 : nb2d = 64;
-- **Default**: 0
 
 ### lmaxmax
 
@@ -1232,6 +1288,12 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Description**: To determine the number of old iterations' `drho` used in slope calculations.
 - **Default**: `mixing_ndim`
 
+### sc_os_ndim
+
+- **Type**: int
+- **Description**: To determine the number of old iterations to judge oscillation, it occured,  more accurate lambda with DeltaSpin method would be calculated, only for PW base.
+- **Default**: 5
+
 ### chg_extrap
 
 - **Type**: String
@@ -1366,6 +1428,7 @@ These variables are used to control the geometry relaxation.
 - **Description**: The methods to do geometry optimization.
   - cg: using the conjugate gradient (CG) algorithm. Note that there are two implementations of the conjugate gradient (CG) method, see [relax_new](#relax_new).
   - bfgs: using the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm.
+  - bfgs_trad: using the traditional Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm. 
   - cg_bfgs: using the CG method for the initial steps, and switching to BFGS method when the force convergence is smaller than [relax_cg_thr](#relax_cg_thr).
   - sd: using the steepest descent (SD) algorithm.
   - fire: the Fast Inertial Relaxation Engine method (FIRE), a kind of molecular-dynamics-based relaxation algorithm, is implemented in the molecular dynamics (MD) module. The algorithm can be used by setting [calculation](#calculation) to `md` and [md_type](#md_type) to `fire`. Also ionic velocities should be set in this case. See [fire](../md.md#fire) for more details.
@@ -1544,10 +1607,8 @@ These variables are used to control the output of properties.
 ### out_freq_elec
 
 - **Type**: Integer
-- **Description**: The output frequency of the charge density (controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)), and density matrix of localized orbitals (controlled by [out_dm](#out_dm)).
-  - \>0: Output them every `out_freq_elec` iteration numbers in electronic iterations.
-  - 0: Output them when the electronic iteration is converged or reaches the maximal iteration number.
-- **Default**: 0
+- **Description**: Output the charge density (only binary format, controlled by [out_chg](#out_chg)), wavefunction (controlled by [out_wfc_pw](#out_wfc_pw) or [out_wfc_r](#out_wfc_r)) per `out_freq_elec` electronic iterations. Note that they are always output when converged or reach the maximum iterations [scf_nmax](#scf_nmax).
+- **Default**: [scf_nmax](#scf_nmax)
 
 ### out_chg
 
@@ -1717,7 +1778,7 @@ These variables are used to control the output of properties.
 
 - **Type**: Boolean
 - **Availability**: Numerical atomic orbital basis (not gamma-only algorithm)
-- **Description**: Whether to print the matrix representation of the position matrix (in Bohr) into a file named `data-rR-tr` in the directory `OUT.${suffix}`. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
+- **Description**: Whether to print the matrix representation of the position matrix (in Bohr) into a file named `data-rR-tr` in the directory `OUT.${suffix}`. If [calculation](#calculation) is set to `get_S`, the position matrix can be obtained without scf iterations. For more information, please refer to [position_matrix.md](../elec_properties/position_matrix.md#extracting-position-matrices).
 - **Default**: False
 
 ### out_mat_hs2
@@ -2043,7 +2104,7 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: int
 - **Availability**: numerical atomic orbital basis
 - **Description**: Include V_delta label for DeePKS training. When `deepks_out_labels` is true and `deepks_v_delta` > 0, ABACUS will output h_base.npy, v_delta.npy and h_tot.npy(h_tot=h_base+v_delta). 
-  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output psialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
+  Meanwhile, when `deepks_v_delta` equals 1, ABACUS will also output v_delta_precalc.npy, which is used to calculate V_delta during DeePKS training. However, when the number of atoms grows, the size of v_delta_precalc.npy will be very large. In this case, it's recommended to set `deepks_v_delta` as 2, and ABACUS will output phialpha.npy and grad_evdm.npy but not v_delta_precalc.npy. These two files are small and can be used to calculate v_delta_precalc in the procedure of training DeePKS.
 - **Default**: 0
 
 ### deepks_out_unittest
@@ -2062,11 +2123,18 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The type of KEDF (kinetic energy density functional).
+
+  Analytical functionals:
   - **wt**: Wang-Teter.
   - **tf**: Thomas-Fermi.
   - **vw**: von Weizsäcker.
-  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **tf+**: TF $\rm{\lambda}$ vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
   - **lkt**: Luo-Karasiev-Trickey.
+
+  Machine learning (ML) based functionals:
+  - **ml**: ML-based KEDF allows for greater flexibility, enabling users to set related ML model parameters themselves. see [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft).
+  - **mpn**: ML-based Physically-constrained Non-local (MPN) KEDF. ABACUS automatically configures the necessary parameters, requiring no manual intervention from the user.
+  - **cpn5**: Multi-Channel MPN (CPN) KEDF with 5 channels. Similar to mpn, ABACUS handles all parameter settings automatically.
 - **Default**: wt
 
 ### of_method
@@ -2194,6 +2262,221 @@ Warning: this function is not robust enough for the current version. Please try 
   Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
 
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
+
+## ML-KEDF: machine learning based kinetic energy density functional for OFDFT
+
+### of_ml_gene_data
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Generate training data or not.
+- **Default**: False
+
+### of_ml_device
+
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: Run Neural Network on GPU or CPU.
+  - **cpu**: CPU
+  - **gpu**: GPU
+- **Default**: cpu
+
+### of_ml_feg
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: The method to incorporate the Free Electron Gas (FEG) limit: $F_\theta |_{\rm{FEG}} = 1$, where $F_\theta$ is enhancement factor of Pauli energy.
+  - **0**: Do not incorporate the FEG limit.
+  - **1**: Incorporate the FEG limit by translation: $F_\theta = F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + 1$.
+  - **3**: Incorporate the FEG limit by nonlinear transformation: $F_\theta = f(F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + \ln(e - 1))$, where $f = \ln(1 + e^x)$ is softplus function, satisfying $f(x)|_{x=\ln(e-1)} = 1$. 
+- **Default**: 0
+
+### of_ml_nkernel
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: Number of kernel functions.
+- **Default**: 1
+
+### of_ml_kernel
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the type of the $i$-th kernel function.
+  - **1**: Wang-Teter kernel function.
+  - **2**: Modified Yukawa function: $k_{\rm{F}}^2\frac{\exp{({-\alpha k_{\rm{F}}|\mathbf{r}-\mathbf{r}'|})}}{|\mathbf{r}-\mathbf{r}'|}$, and $\alpha$ is specified by [of_ml_yukawa_alpha](#of_ml_yukawa_alpha).
+  - **3**: Truncated kinetic kernel (TKK), the file containing TKK is specified by [of_ml_kernel_file](#of_kernel_file).
+- **Default**: 1
+
+### of_ml_kernel_scaling
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the RECIPROCAL of scaling parameter $\lambda$ of the $i$-th kernel function. $w_i(\mathbf{r}-\mathbf{r}') = \lambda^3 w_i'(\lambda(\mathbf{r}-\mathbf{r}'))$.
+- **Default**: 1.0
+
+### of_ml_yukawa_alpha
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the parameter $\alpha$ of $i$-th kernel function. ONLY used for Yukawa kernel function.
+- **Default**: 1.0
+
+### of_ml_kernel_file
+
+- **Type**: Vector of String
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the file containint the $i$-th kernel function. ONLY used for TKK.
+- **Default**: none
+
+### of_ml_gamma
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Local descriptor: $\gamma(\mathbf{r}) = (\rho(\mathbf{r}) / \rho_0)^{1/3}$.
+- **Default**: False
+
+### of_ml_p
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $p(\mathbf{r}) = \frac{|\nabla \rho(\mathbf{r})|^2} {[2 (3 \pi^2)^{1/3} \rho^{4/3}(\mathbf{r})]^2}$.
+- **Default**: False
+
+### of_ml_q
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $q(\mathbf{r}) = \frac{\nabla^2 \rho(\mathbf{r})} {[4 (3 \pi^2)^{2/3} \rho^{5/3}(\mathbf{r})]}$.
+- **Default**: False
+
+### of_ml_tanhp
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_tanhq
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_chi_p
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_p$: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: 1.0
+
+### of_ml_chi_q
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_q$: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_gammanl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\gamma_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \gamma(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $p_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') p(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $q_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') q(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_xi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\xi(\mathbf{r}) = \frac{\int{w_i(\mathbf{r}-\mathbf{r}') \rho^{1/3}(\mathbf{r}') dr'}}{\rho^{1/3}(\mathbf{r})}$. 
+- **Default**: 0
+
+### of_ml_tanhxi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 0
+
+### of_ml_tanhxi_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{\xi}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanh_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanh_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanhp_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{p}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanhq_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{q}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_chi_xi
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_\xi$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 1.0
+
+### of_ml_chi_pnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{p_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_chi_qnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{q_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_local_test
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: FOR TEST. Read in the density, and output the F and Pauli potential.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
@@ -2429,10 +2712,11 @@ These variables are relevant when using hybrid functionals.
 ### exx_ccp_rmesh_times
 
 - **Type**: Real
-- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. For HSE, setting it to 1 is enough. But for PBE0, a much larger number must be used.
+- **Description**: This parameter determines how many times larger the radial mesh required for calculating Columb potential is to that of atomic orbitals. The value should be at least 1. Reducing this value can effectively increase the speed of self-consistent calculations using hybrid functionals.
 - **Default**:
-  - 1.5: if *[dft_functional](#dft_functional)==hse*
-  - 5: else
+  - 5: if *[dft_functional](#dft_functional)==hf/pbe0/scan0/muller/power/wp22*
+  - 1.5: if *[dft_functional](#dft_functional)==hse/cwp22*
+  - 1: else
 
 ### exx_distribute_type
 
@@ -2471,6 +2755,7 @@ These variables are relevant when using hybrid functionals.
 - **Description**:
   - True: Enforce LibRI to use `double` data type.
   - False: Enforce LibRI to use `complex` data type.
+  Setting it to True can effectively improve the speed of self-consistent calculations with hybrid functionals.
 - **Default**: depends on the [gamma_only](#gamma_only) option
   - True: if gamma_only
   - False: else
@@ -4030,5 +4315,22 @@ The output files are `OUT.${suffix}/Excitation_Energy.dat` and `OUT.${suffix}/Ex
 - **Availability**: `ri_hartree_benchmark` = `aims`
 - **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
+
+## Reduced Density Matrix Functional Theory
+
+ab-initio methods and the xc-functional parameters used in RDMFT.
+The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
+
+### rdmft
+
+- **Type**: Boolean
+- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
+- **Default**: false
+
+### rdmft_power_alpha
+
+- **Type**: Real
+- **Description**: The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha
+- **Default**: 0.656
 
 [back to top](#full-list-of-input-keywords)

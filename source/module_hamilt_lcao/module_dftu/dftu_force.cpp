@@ -3,6 +3,7 @@
 #include "module_parameter/parameter.h"
 // DATE : 2019-12-10
 //==========================================================
+#ifdef __LCAO
 #include "dftu.h"
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -71,7 +72,9 @@ extern "C"
 namespace ModuleDFTU
 {
 
-void DFTU::force_stress(const elecstate::ElecState* pelec,
+void DFTU::force_stress(const UnitCell& ucell,
+                        const Grid_Driver& gd,
+                        const elecstate::ElecState* pelec,
                         const Parallel_Orbitals& pv,
                         ForceStressArrays& fsr, // mohan add 2024-06-16
                         ModuleBase::matrix& force_dftu,
@@ -140,14 +143,14 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
             if (PARAM.inp.cal_force)
             {
-                this->cal_force_gamma(&rho_VU[0], pv, fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
+                this->cal_force_gamma(ucell,&rho_VU[0], pv, fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
             }
 
             if (PARAM.inp.cal_stress)
             {
-                this->cal_stress_gamma(GlobalC::ucell,
+                this->cal_stress_gamma(ucell,
                                        pv,
-                                       &GlobalC::GridD,
+                                       &gd,
                                        fsr.DSloc_x,
                                        fsr.DSloc_y,
                                        fsr.DSloc_z,
@@ -206,11 +209,11 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
 
             if (PARAM.inp.cal_force)
             {
-                cal_force_k(fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d);
+                cal_force_k(ucell, gd, fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d);
             }
             if (PARAM.inp.cal_stress)
             {
-                cal_stress_k(fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d);
+                cal_stress_k(ucell, gd, fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d);
             }
         } // ik
     }
@@ -237,7 +240,7 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
         {
             for (int j = 0; j < 3; j++)
             {
-                stress_dftu(i, j) *= GlobalC::ucell.lat0 / GlobalC::ucell.omega;
+                stress_dftu(i, j) *= ucell.lat0 / ucell.omega;
             }
         }
     }
@@ -246,7 +249,9 @@ void DFTU::force_stress(const elecstate::ElecState* pelec,
     return;
 }
 
-void DFTU::cal_force_k(ForceStressArrays& fsr,
+void DFTU::cal_force_k(const UnitCell& ucell,
+                       const Grid_Driver& gd,
+                       ForceStressArrays& fsr,
                        const Parallel_Orbitals& pv,
                        const int ik,
                        const std::complex<double>* rho_VU,
@@ -267,7 +272,7 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
 
     for (int dim = 0; dim < 3; dim++)
     {
-        this->folding_matrix_k(fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
+        this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
 
 #ifdef __MPI
         pzgemm_(&transN,
@@ -294,7 +299,7 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
         for (int ir = 0; ir < pv.nrow; ir++)
         {
             const int iwt1 = pv.local2global_row(ir);
-            const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
+            const int iat1 = ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < pv.ncol; ic++)
             {
@@ -329,22 +334,22 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
                 pv.desc);
 #endif
 
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            const int NL = GlobalC::ucell.atoms[it].nwl + 1;
+            const int NL = ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
             if (LC == -1)
                 continue;
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                const int iat = GlobalC::ucell.itia2iat(it, ia);
+                const int iat = ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
                     if (l != orbital_corr[it])
                         continue;
-                    const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+                    const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
@@ -374,7 +379,9 @@ void DFTU::cal_force_k(ForceStressArrays& fsr,
     return;
 }
 
-void DFTU::cal_stress_k(ForceStressArrays& fsr,
+void DFTU::cal_stress_k(const UnitCell& ucell,
+                        const Grid_Driver& gd,
+                        ForceStressArrays& fsr,
                         const Parallel_Orbitals& pv,
                         const int ik,
                         const std::complex<double>* rho_VU,
@@ -399,13 +406,7 @@ void DFTU::cal_stress_k(ForceStressArrays& fsr,
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->folding_matrix_k(fsr, // mohan add 2024-06-16
-                                   pv,
-                                   ik,
-                                   dim1 + 4,
-                                   dim2,
-                                   &dSR_k[0],
-                                   kvec_d);
+            this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
 
 #ifdef __MPI
             pzgemm_(&transN,
@@ -449,7 +450,8 @@ void DFTU::cal_stress_k(ForceStressArrays& fsr,
     return;
 }
 
-void DFTU::cal_force_gamma(const double* rho_VU,
+void DFTU::cal_force_gamma(const UnitCell& ucell,
+                           const double* rho_VU,
                            const Parallel_Orbitals& pv,
                            double* dsloc_x,
                            double* dsloc_y,
@@ -505,7 +507,7 @@ void DFTU::cal_force_gamma(const double* rho_VU,
         for (int ir = 0; ir < pv.nrow; ir++)
         {
             const int iwt1 = pv.local2global_row(ir);
-            const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
+            const int iat1 = ucell.iwt2iat[iwt1];
 
             for (int ic = 0; ic < pv.ncol; ic++)
             {
@@ -540,23 +542,23 @@ void DFTU::cal_force_gamma(const double* rho_VU,
                 pv.desc);
 #endif
 
-        for (int it = 0; it < GlobalC::ucell.ntype; it++)
+        for (int it = 0; it < ucell.ntype; it++)
         {
-            const int NL = GlobalC::ucell.atoms[it].nwl + 1;
+            const int NL = ucell.atoms[it].nwl + 1;
             const int LC = orbital_corr[it];
 
             if (LC == -1)
                 continue;
-            for (int ia = 0; ia < GlobalC::ucell.atoms[it].na; ia++)
+            for (int ia = 0; ia < ucell.atoms[it].na; ia++)
             {
-                const int iat = GlobalC::ucell.itia2iat(it, ia);
+                const int iat = ucell.itia2iat(it, ia);
 
                 for (int l = 0; l < NL; l++)
                 {
                     if (l != orbital_corr[it])
                         continue;
 
-                    const int N = GlobalC::ucell.atoms[it].l_nchi[l];
+                    const int N = ucell.atoms[it].l_nchi[l];
 
                     for (int n = 0; n < N; n++)
                     {
@@ -590,7 +592,7 @@ void DFTU::cal_force_gamma(const double* rho_VU,
 
 void DFTU::cal_stress_gamma(const UnitCell& ucell,
                             const Parallel_Orbitals& pv,
-                            Grid_Driver* gd,
+                            const Grid_Driver* gd,
                             double* dsloc_x,
                             double* dsloc_y,
                             double* dsloc_z,
@@ -660,3 +662,4 @@ void DFTU::cal_stress_gamma(const UnitCell& ucell,
     return;
 }
 } // namespace ModuleDFTU
+#endif

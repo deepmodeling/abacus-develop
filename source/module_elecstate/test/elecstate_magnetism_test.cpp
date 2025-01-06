@@ -31,10 +31,6 @@ Charge::~Charge()
 {
 }
 
-double elecstate::get_ucell_omega()
-{
-    return 500.0;
-}
 
 class MagnetismTest : public ::testing::Test
 {
@@ -55,11 +51,6 @@ TEST_F(MagnetismTest, Magnetism)
     EXPECT_EQ(0.0, magnetism->tot_magnetization);
     EXPECT_EQ(0.0, magnetism->abs_magnetization);
     EXPECT_EQ(nullptr, magnetism->start_magnetization);
-}
-
-TEST_F(MagnetismTest, GlobalInfo)
-{
-    EXPECT_EQ(500.0, elecstate::get_ucell_omega());
 }
 
 TEST_F(MagnetismTest, JudgeParallel)
@@ -91,7 +82,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
                                     chr->rho[1][ir] = 1.01;
                   }
                   double* nelec_spin = new double[2];
-                  magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+                  magnetism->compute_magnetization(500.0,chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
                   EXPECT_DOUBLE_EQ(-0.5, magnetism->tot_magnetization);
                   EXPECT_DOUBLE_EQ(0.5, magnetism->abs_magnetization);
                   EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
@@ -125,7 +116,7 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
                                         chr->rho[3][ir] = 1.00;
                     }
                     double* nelec_spin = new double[4];
-                    magnetism->compute_magnetization(chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+                    magnetism->compute_magnetization(500.0,chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
                     EXPECT_DOUBLE_EQ(100.0, magnetism->abs_magnetization);
                     EXPECT_DOUBLE_EQ(50.0*std::sqrt(2.0), magnetism->tot_magnetization_nc[0]);
                     EXPECT_DOUBLE_EQ(50.0, magnetism->tot_magnetization_nc[1]);

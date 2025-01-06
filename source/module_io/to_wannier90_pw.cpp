@@ -28,6 +28,7 @@ toWannier90_PW::~toWannier90_PW()
 }
 
 void toWannier90_PW::calculate(
+    const UnitCell& ucell,
     const ModuleBase::matrix& ekb,
     const ModulePW::PW_Basis_K* wfcpw,
     const ModulePW::PW_Basis_Big* bigpw,
@@ -35,7 +36,7 @@ void toWannier90_PW::calculate(
     const psi::Psi<std::complex<double>>* psi
 )
 {
-    read_nnkp(kv);
+    read_nnkp(ucell,kv);
 
     if (PARAM.inp.nspin == 2)
     {
@@ -73,6 +74,12 @@ void toWannier90_PW::calculate(
         out_unk(*psi, wfcpw, bigpw);
     }
 
+}
+void toWannier90_PW::set_tpiba_omega(const double& tpiba, const double& omega)
+{
+    this->tpiba = &tpiba;
+    this->omega = &omega;
+    
 }
 
 void toWannier90_PW::cal_Mmn(
@@ -946,9 +953,10 @@ void toWannier90_PW::get_trial_orbitals_lm_k(
     std::complex<double> *orbital_in_G_single
 )
 {
+    const double tpiba = *this->tpiba;
     for (int ig = 0; ig < npw; ig++)
     {
-        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * GlobalC::ucell.tpiba);
+        orbital_in_G_single[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(radial_in_q_single, PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * tpiba);
     }
 
     std::complex<double> lphase = pow(ModuleBase::NEG_IMAG_UNIT, orbital_L);
@@ -970,7 +978,7 @@ void toWannier90_PW::integral(
     double *table
 )
 {
-    const double pref = ModuleBase::FOUR_PI / sqrt(GlobalC::ucell.omega);
+    const double pref = ModuleBase::FOUR_PI / sqrt(*this->omega);
 
     double *inner_part = new double[meshr];
     for (int ir = 0; ir < meshr; ir++)

@@ -4,9 +4,10 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include <vector>
 
-void sparse_format::cal_dH(const Parallel_Orbitals& pv,
+void sparse_format::cal_dH(const UnitCell& ucell,
+                           const Parallel_Orbitals& pv,
                            LCAO_HS_Arrays& HS_Arrays,
-                           Grid_Driver& grid,
+                           const Grid_Driver& grid,
                            const TwoCenterBundle& two_center_bundle,
                            const LCAO_Orbitals& orb,
                            const int& current_spin,
@@ -33,47 +34,46 @@ void sparse_format::cal_dH(const Parallel_Orbitals& pv,
     const bool cal_deri = true;
     const bool cal_stress = false;
     LCAO_domain::build_ST_new(fsr_dh,
-                                'T',
-                                cal_deri,
-                                cal_stress,
-                                GlobalC::ucell,
-                                orb,
-                                pv,
-                                two_center_bundle,
-                                &GlobalC::GridD,
-                                nullptr,
-                                false); // delete unused parameter lm.Hloc_fixedR
+                              'T',
+                              cal_deri,
+                              cal_stress,
+                              ucell,
+                              orb,
+                              pv,
+                              two_center_bundle,
+                              &grid,
+                              nullptr,
+                              false); // delete unused parameter lm.Hloc_fixedR
 
     LCAO_domain::build_Nonlocal_mu_new(pv,
                                        fsr_dh,
                                        nullptr,
                                        true,
-                                       GlobalC::ucell,
+                                       ucell,
                                        orb,
                                        *(two_center_bundle.overlap_orb_beta),
-                                       &GlobalC::GridD);
+                                       &grid);
 
-    sparse_format::cal_dSTN_R(pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
+    sparse_format::cal_dSTN_R(ucell,pv, HS_Arrays, fsr_dh, grid, orb.cutoffs(), current_spin, sparse_thr);
 
     delete[] fsr_dh.DHloc_fixedR_x;
     delete[] fsr_dh.DHloc_fixedR_y;
     delete[] fsr_dh.DHloc_fixedR_z;
 
-    gint_k
-        .cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, GlobalC::ucell, GlobalC::GridD);
+    gint_k.cal_dvlocal_R_sparseMatrix(current_spin, sparse_thr, HS_Arrays, &pv, ucell, grid);
 
     return;
 }
 
-void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, Grid_Driver& grid)
+void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid)
 {
-    const int RminX = int(grid.getD_minX());
-    const int RminY = int(grid.getD_minY());
-    const int RminZ = int(grid.getD_minZ());
+    int RminX = int(-grid.getGlayerX_minus());
+    int RminY = int(-grid.getGlayerY_minus());
+    int RminZ = int(-grid.getGlayerZ_minus());
 
-    const int Rx = grid.getCellX();
-    const int Ry = grid.getCellY();
-    const int Rz = grid.getCellZ();
+    int Rx = grid.getGlayerX() + grid.getGlayerX_minus();
+    int Ry = grid.getGlayerY() + grid.getGlayerY_minus();
+    int Rz = grid.getGlayerZ() + grid.getGlayerZ_minus();
 
     for (int ix = 0; ix < Rx; ix++)
     {
@@ -90,10 +90,11 @@ void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, 
     return;
 }
 
-void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
+void sparse_format::cal_dSTN_R(const UnitCell& ucell,
+                               const Parallel_Orbitals& pv,
                                LCAO_HS_Arrays& HS_Arrays,
                                ForceStressArrays& fsr,
-                               Grid_Driver& grid,
+                               const Grid_Driver& grid,
                                const std::vector<double>& orb_cutoff,
                                const int& current_spin,
                                const double& sparse_thr)
@@ -107,25 +108,25 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
     double temp_value_double;
     std::complex<double> temp_value_complex;
 
-    for (int T1 = 0; T1 < GlobalC::ucell.ntype; ++T1)
+    for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
-        Atom* atom1 = &GlobalC::ucell.atoms[T1];
+        Atom* atom1 = &ucell.atoms[T1];
         for (int I1 = 0; I1 < atom1->na; ++I1)
         {
             tau1 = atom1->tau[I1];
-            grid.Find_atom(GlobalC::ucell, tau1, T1, I1);
-            Atom* atom1 = &GlobalC::ucell.atoms[T1];
-            const int start = GlobalC::ucell.itiaiw2iwt(T1, I1, 0);
+            grid.Find_atom(ucell, tau1, T1, I1);
+            Atom* atom1 = &ucell.atoms[T1];
+            const int start = ucell.itiaiw2iwt(T1, I1, 0);
 
             for (int ad = 0; ad < grid.getAdjacentNum() + 1; ++ad)
             {
                 const int T2 = grid.getType(ad);
                 const int I2 = grid.getNatom(ad);
-                Atom* atom2 = &GlobalC::ucell.atoms[T2];
+                Atom* atom2 = &ucell.atoms[T2];
 
                 tau2 = grid.getAdjacentTau(ad);
                 dtau = tau2 - tau1;
-                double distance = dtau.norm() * GlobalC::ucell.lat0;
+                double distance = dtau.norm() * ucell.lat0;
                 double rcut = orb_cutoff[T1] + orb_cutoff[T2];
 
                 bool adj = false;
@@ -144,11 +145,11 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
                         dtau1 = tau0 - tau1;
                         dtau2 = tau0 - tau2;
 
-                        double distance1 = dtau1.norm() * GlobalC::ucell.lat0;
-                        double distance2 = dtau2.norm() * GlobalC::ucell.lat0;
+                        double distance1 = dtau1.norm() * ucell.lat0;
+                        double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + GlobalC::ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
@@ -160,7 +161,7 @@ void sparse_format::cal_dSTN_R(const Parallel_Orbitals& pv,
 
                 if (adj)
                 {
-                    const int start2 = GlobalC::ucell.itiaiw2iwt(T2, I2, 0);
+                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
 
                     Abfs::Vector3_Order<int> dR(grid.getBox(ad).x, grid.getBox(ad).y, grid.getBox(ad).z);
 

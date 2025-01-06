@@ -50,21 +50,27 @@ class DiagoBPCG
      * This function allocates all the related variables, such as hpsi, hsub, before the diag call.
      * It is called by the HsolverPW::initDiagh() function.
      *
-     * @param psi_in The input wavefunction psi.
+     * @param nband The number of bands.
+     * @param nbasis The number of basis functions. Leading dimension of psi.
      */
-    void init_iter(const psi::Psi<T, Device> &psi_in);
+    void init_iter(const int nband, const int nbasis);
+
+    using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
     /**
      * @brief Diagonalize the Hamiltonian using the BPCG method.
      *
      * This function is called by the HsolverPW::solve() function.
      *
-     * @param phm_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
-     * @param psi The input wavefunction psi matrix with [dim: n_basis x n_band, column major].
+     * @param hpsi_func A function computing the product of the Hamiltonian matrix H
+     * and a wavefunction blockvector X.
+     * @param psi_in Pointer to input wavefunction psi matrix with [dim: n_basis x n_band, column major].
      * @param eigenvalue_in Pointer to the eigen array with [dim: n_band, column major].
      */
-    void diag(hamilt::Hamilt<T, Device> *phm_in, psi::Psi<T, Device> &psi, Real *eigenvalue_in);
-
+    void diag(const HPsiFunc& hpsi_func,
+              T* psi_in,
+              Real* eigenvalue_in,
+              const std::vector<double>& ethr_band);
 
   private:
     /// the number of rows of the input psi
@@ -73,8 +79,6 @@ class DiagoBPCG
     int n_basis = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
-    /// cg convergence thr
-    Real all_band_cg_thr = 1E-5;
 
     ct::DataType r_type  = ct::DataType::DT_INVALID;
     ct::DataType t_type  = ct::DataType::DT_INVALID;
@@ -103,7 +107,6 @@ class DiagoBPCG
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
 
-    psi::Psi<T, Device>* grad_wrapper;
     /**
      * @brief Update the precondition array.
      *
@@ -134,13 +137,14 @@ class DiagoBPCG
      * psi_in[dim: n_basis x n_band, column major, lda = n_basis_max],
      * hpsi_out[dim: n_basis x n_band, column major, lda = n_basis_max].
      *
-     * @param hamilt_in A pointer to the hamilt::Hamilt object representing the Hamiltonian operator.
+     * @param hpsi_func A function computing the product of the Hamiltonian matrix H
+     * and a wavefunction blockvector X.
      * @param psi_in The input wavefunction psi.
      * @param hpsi_out Pointer to the array where the resulting hpsi matrix will be stored.
      */
     void calc_hpsi_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in, 
-        const psi::Psi<T, Device>& psi_in,  
+        const HPsiFunc& hpsi_func,
+        T *psi_in, 
         ct::Tensor& hpsi_out);
 
     /**
@@ -220,16 +224,16 @@ class DiagoBPCG
      * hsub_out[dim: n_band x n_band, column major, lda = n_band],
      * eigenvalue_out[dim: n_basis_max, column major].
      *
-     * @param hamilt_in Pointer to the Hamiltonian object.
-     * @param psi_in Input wavefunction.
+     * @param hpsi_func A function computing the product of matrix H and wavefunction blockvector X.
+     * @param psi_in Input wavefunction pointer.
      * @param psi_out Output wavefunction.
      * @param hpsi_out Product of psi_out and Hamiltonian.
      * @param hsub_out Subspace matrix output.
      * @param eigenvalue_out Computed eigen.
      */
     void calc_hsub_with_block(
-        hamilt::Hamilt<T, Device>* hamilt_in,
-        const psi::Psi<T, Device>& psi_in,
+        const HPsiFunc& hpsi_func,
+        T *psi_in,
         ct::Tensor& psi_out, ct::Tensor& hpsi_out,
         ct::Tensor& hsub_out, ct::Tensor& workspace_in,
         ct::Tensor& eigenvalue_out);
@@ -312,9 +316,7 @@ class DiagoBPCG
      * @param thr_in The threshold.
      * @return Returns true if all error values are less than or equal to the threshold, false otherwise.
      */
-    bool test_error(const ct::Tensor& err_in, Real thr_in);
-
-    using hpsi_info = typename hamilt::Operator<T, Device>::hpsi_info;
+    bool test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band);
 
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     using setmem_var_op = ct::kernels::set_memory<Real, ct_Device>;

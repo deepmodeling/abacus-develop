@@ -3,12 +3,12 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "../psi_initializer.h"
-#include "../psi_initializer_random.h"
 #include "../psi_initializer_atomic.h"
-#include "../psi_initializer_nao.h"
 #include "../psi_initializer_atomic_random.h"
+#include "../psi_initializer_nao.h"
 #include "../psi_initializer_nao_random.h"
-
+#include "../psi_initializer_random.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 
 /*
 =========================
@@ -79,7 +79,7 @@ InfoNonlocal::~InfoNonlocal() {}
 #endif
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
-void Structure_Factor::setup_structure_factor(UnitCell* Ucell, const ModulePW::PW_Basis* rho_basis) {}
+void Structure_Factor::setup_structure_factor(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}
 std::complex<double>* Structure_Factor::get_sk(int ik, int it, int ia, ModulePW::PW_Basis_K const*wfc_basis) const
 {
     int npw = wfc_basis->npwk[ik];

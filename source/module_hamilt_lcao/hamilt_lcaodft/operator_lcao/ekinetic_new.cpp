@@ -14,7 +14,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::EkineticNew(
     hamilt::HContainer<TR>* hR_in,
     const UnitCell* ucell_in,
     const std::vector<double>& orb_cutoff,
-    Grid_Driver* GridD_in,
+    const Grid_Driver* GridD_in,
     const TwoCenterIntegrator* intor)
     : hamilt::OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), orb_cutoff_(orb_cutoff), intor_(intor)
 {
@@ -40,7 +40,7 @@ hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::~EkineticNew()
 
 // initialize_HR()
 template <typename TK, typename TR>
-void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(Grid_Driver* GridD)
+void hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driver* GridD)
 {
     ModuleBase::TITLE("EkineticNew", "initialize_HR");
     ModuleBase::timer::tick("EkineticNew", "initialize_HR");

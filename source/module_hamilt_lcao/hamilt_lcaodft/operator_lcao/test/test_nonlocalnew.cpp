@@ -90,8 +90,6 @@ class NonlocalNewTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
         delete[] ucell.infoNL.Beta;
     }
 

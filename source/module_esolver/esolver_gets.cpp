@@ -3,9 +3,11 @@
 #include "module_base/timer.h"
 #include "module_cell/module_neighbor/sltk_atom_arrange.h"
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/read_pseudo.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
+#include "module_io/cal_r_overlap_R.h"
 #include "module_io/print_info.h"
 #include "module_io/write_HS_R.h"
 
@@ -28,7 +30,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    ucell.read_pseudo(GlobalV::ofs_running);
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
@@ -38,7 +40,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // 1.3) Setup k-points according to symmetry.
-    this->kv.set(ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::setup_parameters(ucell, this->kv);
@@ -51,8 +53,8 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->pelec = new elecstate::ElecStateLCAO<std::complex<double>>(&(this->chr), // use which parameter?
                                                                          &(this->kv),
                                                                          this->kv.get_nks(),
-                                                                         &(this->GG), // mohan add 2024-04-01
-                                                                         &(this->GK), // mohan add 2024-04-01
+                                                                         nullptr, // mohan add 2024-04-01
+                                                                         nullptr, // mohan add 2024-04-01
                                                                          this->pw_rho,
                                                                          this->pw_big);
     }
@@ -92,21 +94,26 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                                             ucell.infoNL.get_rcutmax_Beta(),
                                             PARAM.globalv.gamma_only_local);
 
+    Grid_Driver gd;
+
     atom_arrange::search(PARAM.inp.search_pbc,
                          GlobalV::ofs_running,
-                         GlobalC::GridD,
+                         gd,
                          ucell,
                          search_radius,
                          PARAM.inp.test_atom_input);
 
-    this->RA.for_2d(this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
+    Record_adj RA;
+    RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {
         if (PARAM.inp.nspin == 4)
         {
             this->p_hamilt
-                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(&this->pv,
+                = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
+                                                                                     gd,
+                                                                                     &this->pv,
                                                                                      this->kv,
                                                                                      *(two_center_bundle_.overlap_orb),
                                                                                      orb_.cutoffs());
@@ -115,7 +122,9 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
         else
         {
-            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(&this->pv,
+            this->p_hamilt = new hamilt::HamiltLCAO<std::complex<double>, double>(ucell,
+                                                                                  gd,
+                                                                                  &this->pv,
                                                                                   this->kv,
                                                                                   *(two_center_bundle_.overlap_orb),
                                                                                   orb_.cutoffs());
@@ -125,9 +134,21 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
 
     const std::string fn = PARAM.globalv.global_out_dir + "SR.csr";
     std::cout << " The file is saved in " << fn << std::endl;
-    ModuleIO::output_SR(pv, GlobalC::GridD, this->p_hamilt, fn);
+    ModuleIO::output_SR(pv, gd, this->p_hamilt, fn);
+
+    if (PARAM.inp.out_mat_r)
+    {
+        cal_r_overlap_R r_matrix;
+        r_matrix.init(ucell,pv, orb_);
+        r_matrix.out_rR(ucell, gd, istep);
+    }
 
     ModuleBase::timer::tick("ESolver_GetS", "runner");
 }
+
+void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
+double ESolver_GetS::cal_energy() { return 0.0; };
+void ESolver_GetS::cal_force(UnitCell& ucell, ModuleBase::matrix& force) {};
+void ESolver_GetS::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) {};
 
 } // namespace ModuleESolver

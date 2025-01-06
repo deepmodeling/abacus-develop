@@ -1,191 +1,115 @@
 #ifndef GRID_H
 #define GRID_H
 
-#include <stdexcept>
-#include <functional>
-#include "sltk_util.h"
-#include "sltk_atom.h"
-#include "sltk_atom_input.h"
-
 #include "module_cell/unitcell.h"
-//extern Structure_Factor sf;
+#include "sltk_atom.h"
+#include "sltk_util.h"
 
-//==========================================================
-// STRUCT :
-// NAME : AtomLink
-// NAME : CellSet
-//==========================================================
+#include <functional>
+#include <stdexcept>
+#include <tuple>
+#include <unordered_map>
 
-struct AtomLink
-{
-	FAtom fatom;
-	AtomLink* next_p;
-
-	// Constructors and destructor
-	AtomLink(const FAtom& atom = FAtom(), AtomLink* const pointNext = NULL);
-	 //mohan fix bug 2011/09/26, from NullPtr->NULL
-
-};
-
-struct CellSet
-{
-	AtomLink* address;
-	int length;
-	int in_grid[3];
-	CellSet();
-};
-
-//==========================================================
-// CLASS NAME :
-// Atom_input : defined elsewhere
-//==========================================================
-
-class Atom_input;
-
-//==========================================================
-// CLASS NAME :
-// Grid :
-//==========================================================
+typedef std::vector<FAtom> AtomMap;
 
 class Grid
 {
-public:
+  public:
+    // Constructors and destructor
+    // Grid is Global class,so init it with constant number
+    Grid() : test_grid(0){};
+    Grid(const int& test_grid_in);
+    virtual ~Grid();
 
-	// Constructors and destructor
-	// Grid is Global class,so init it with constant number
-	Grid():test_grid(0){};
-	Grid(const int &test_grid_in);
-	virtual ~Grid();
+    Grid& operator=(Grid&&) = default;
 
-	void init(
-		std::ofstream &ofs,
-		const UnitCell &ucell, 
-		const Atom_input &input);
+    void init(std::ofstream& ofs, const UnitCell& ucell, const double radius_in, const bool boundary = true);
 
-	//2015-05-07
-	void delete_vector(const Atom_input &input);
+    // Data
+    bool pbc=false; // When pbc is set to false, periodic boundary conditions are explicitly ignored.
+    double sradius2=0.0; // searching radius squared (unit:lat0)
+    double sradius=0.0;  // searching radius (unit:lat0)
+    
+    // coordinate range of the input atom (unit:lat0)
+    double x_min=0.0;
+    double y_min=0.0;
+    double z_min=0.0;
+    double x_max=0.0;
+    double y_max=0.0;
+    double z_max=0.0;
 
+    // The algorithm for searching neighboring atoms uses a "box" partitioning method. 
+    // Each box has an edge length of sradius, and the number of boxes in each direction is recorded here.
+    double box_edge_length=0.0;
+    int box_nx=0;
+    int box_ny=0;
+    int box_nz=0;
 
-	//Static data
-	static const double TOLERATE_ERROR;
-	static const std::hash<int> INT_HASHER;
-	static const char* const ERROR[3];
+    void getBox(int& bx, int& by, int& bz, const double& x, const double& y, const double& z)
+    {
+        bx = std::floor((x - x_min) / box_edge_length);
+        by = std::floor((y - y_min) / box_edge_length);
+        bz = std::floor((z - z_min) / box_edge_length);
+    }
+    // Stores the atoms after box partitioning.
+    std::vector<std::vector<std::vector<AtomMap>>> atoms_in_box;
 
-	//Data
-	int natom;// Total atoms.
-	bool pbc; // periodic boundary condition
-	bool expand_flag;
-	double sradius;// searching radius
-	double d_minX;// origin of all cells
-	double d_minY;
-	double d_minZ;
-	int dx;
-	int dy;
-	int dz;
-	int layer;
-	double cell_x_length;
-	double cell_y_length;
-	double cell_z_length;
-	CellSet ***Cell; //dx , dy ,dz is cell number in each direction,respectly.
-	void delete_Cell() //it will replace by container soon!
-	{
-		if (this->init_cell_flag)
-		{
-			for (int i = 0;i < this->dx;i++)
-			{
-				for (int j = 0;j < this->dy;j++)
-				{
-					delete[] this->Cell[i][j];
-				}
-			}
+    // Stores the adjacent information of atoms. [ntype][natom][adj list]
+    std::vector<std::vector< std::vector<FAtom *> >> all_adj_info;
+    void clear_atoms()
+    {
+        // we have to clear the all_adj_info
+        // because the pointers point to the memory in vector atoms_in_box
+        all_adj_info.clear();
 
-			for (int i = 0;i < this->dx;i++)
-			{
-				delete[] this->Cell[i];
-			}
+        atoms_in_box.clear();
+    }
+    void clear_adj_info()
+    {
+        // here dont need to free the memory, 
+        // because the pointers point to the memory in vector atoms_in_box
+        all_adj_info.clear();
+    }
+    int getGlayerX() const
+    {
+        return glayerX;
+    }
+    int getGlayerY() const
+    {
+        return glayerY;
+    }
+    int getGlayerZ() const
+    {
+        return glayerZ;
+    }
+    int getGlayerX_minus() const
+    {
+        return glayerX_minus;
+    }
+    int getGlayerY_minus() const
+    {
+        return glayerY_minus;
+    }
+    int getGlayerZ_minus() const
+    {
+        return glayerZ_minus;
+    }
+  private:
+    int test_grid;
 
-			delete[] this->Cell;
-			this->init_cell_flag = false;
-		}
-	}
+    void setMemberVariables(std::ofstream& ofs_in, const UnitCell& ucell);
 
-	double grid_length[3];
-	double vec1[3];
-	double vec2[3];
-	double vec3[3];
-	double lat_now;
-	bool init_cell_flag;
-    //LiuXh add 2019-07-15
-    const double& getD_minX(void) const {return d_minX;}
-    const double& getD_minY(void) const {return d_minY;}
-    const double& getD_minZ(void) const {return d_minZ;}
+    void Construct_Adjacent(const UnitCell& ucell);
+    void Construct_Adjacent_near_box(const FAtom& fatom);
+    void Construct_Adjacent_final(const FAtom& fatom1, FAtom* fatom2);
 
-    const int& getCellX(void) const {return dx;}
-    const int& getCellY(void) const {return dy;}
-    const int& getCellZ(void) const {return dz;}
-
-	// Inner Function
-protected:
-	AtomLink* getHashCode(const UnitCell &ucell, const FAtom &atom)const;		// Peize Lin delete const 2018-07-14
-//	AtomLink* const getHashCode(const FAtom &atom)const;
-	AtomLink* atomlink;
-	AtomLink* cordon_p;// Warning! A guard! Don't delete it!
-
-private:
-
-	const int test_grid;
-//==========================================================
-// MEMBER FUNCTIONS :
-// Three Main Steps:
-// NAME : setMemberVariables (read in datas from Atom_input,
-// 			init cells.)
-// NAME : setAtomLinkArray( set the AtomLinkArray twice,
-// 			first use Build_Hash,second use Fold_Hash)
-// NAME : setBoundaryAdjacent( Consider different situations,
-// 			if not_expand case : nature/periodic boundary
-// 			condition , if expand_case)
-//==========================================================
-	void setMemberVariables(
-		std::ofstream &ofs_in, 
-		const Atom_input &input);
-
-	void setAtomLinkArray(
-		const UnitCell &ucell, 
-		const Atom_input &input);
-
-	void setBoundaryAdjacent(
-		std::ofstream &ofs_in, 
-		const Atom_input &input);
-
-//==========================================================
-//
-//==========================================================
-	AtomLink* Build_Cache(const UnitCell &ucell, const Atom_input &input);		
-	// Peize Lin delete const and throw(std::out_of_range, std::logic_error) 2018-07-14
-
-	//	AtomLink* const Build_Cache(const Atom_input &input) throw(std::out_of_range, std::logic_error);
-	bool Push(const UnitCell &ucell, const FAtom& atom);
-	void In_Which_Cell(const UnitCell &ucell, int &a, int &b, int &c, const FAtom &atom)const;
-	void Build_Cell(void);
-	void Build_Hash_Table(const UnitCell &ucell, AtomLink* const pointCache);
-	void Fold_Hash_Table(void);		// Peize Lin delete const and throw(std::logic_error) 2018-07-14
-	static int Hash_one_hit;
-
-//==========================================================
-//
-//==========================================================
-	void Construct_Adjacent_expand(const int i, const int j, const int k);
-	void Construct_Adjacent_expand_periodic(
-	    const int i, const int j, const int k, const int ia);
-
-	void Construct_Adjacent_begin(void);
-	void Construct_Adjacent_nature(
-	    const int i, const int j, const int k, const int ia);
-	void Construct_Adjacent_periodic(
-	    const int i, const int j, const int k, const int ia);
-	void Construct_Adjacent_final(
-	    const int i, const int j, const int k, const int ia,
-	    const int i2, const int j2, const int k2, const int ia2);
+    void Check_Expand_Condition(const UnitCell& ucell);
+    int glayerX=0;
+    int glayerX_minus=0;
+    int glayerY=0;
+    int glayerY_minus=0;
+    int glayerZ=0;
+    int glayerZ_minus=0;
 };
 
 #endif

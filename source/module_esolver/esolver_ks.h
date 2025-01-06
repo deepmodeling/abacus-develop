@@ -37,13 +37,13 @@ class ESolver_KS : public ESolver_FP
 
   protected:
     //! Something to do before SCF iterations.
-    virtual void before_scf(UnitCell& ucell, const int istep) {};
+    virtual void before_scf(UnitCell& ucell, const int istep) override;
 
     //! Something to do before hamilt2density function in each iter loop.
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2density function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter);
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
     virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
@@ -55,7 +55,7 @@ class ESolver_KS : public ESolver_FP
     virtual void after_scf(UnitCell& ucell, const int istep) override;
 
     //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) {};
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter){};
 
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;
@@ -66,10 +66,13 @@ class ESolver_KS : public ESolver_FP
     //! Charge mixing method, only used in KDSFT, not in OFDFT
     Charge_Mixing* p_chgmix = nullptr;
 
+    //! nonlocal pseudo potential
+    pseudopot_cell_vnl ppcell;
+
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
 
-    //! plane wave or LCAO 
+    //! plane wave or LCAO
     std::string basisname;
 
     //! number of electrons
@@ -80,19 +83,18 @@ class ESolver_KS : public ESolver_FP
 
     //! the start time of scf iteration
 #ifdef __MPI
-    double iter_time;               
+    double iter_time;
 #else
     std::chrono::system_clock::time_point iter_time;
 #endif
 
-    double diag_ethr;               //! the threshold for diagonalization
-    double scf_thr;                 //! scf density threshold
-    double scf_ene_thr;             //! scf energy threshold
-    double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error;           //! the error of HSolver
-    int maxniter;                   //! maximum iter steps for scf
-    int niter;                      //! iter steps actually used in scf
-    int out_freq_elec;              //! frequency for output
+    double diag_ethr;     //! the threshold for diagonalization
+    double scf_thr;       //! scf density threshold
+    double scf_ene_thr;   //! scf energy threshold
+    double drho;          //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error; //! the error of HSolver
+    int maxniter;         //! maximum iter steps for scf
+    int niter;            //! iter steps actually used in scf
 };
 } // namespace ModuleESolver
 #endif

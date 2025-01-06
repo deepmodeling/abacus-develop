@@ -9,6 +9,7 @@
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
@@ -33,11 +34,15 @@ class Forces
     Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
-    void cal_force(ModuleBase::matrix& force,
+    void cal_force(UnitCell& ucell,
+                   ModuleBase::matrix& force,
                    const elecstate::ElecState& elec,
                    ModulePW::PW_Basis* rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
+                   surchem& solvent,
+                   const pseudopot_cell_vl* locpp,
+                   const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
                    ModulePW::PW_Basis_K* psi_basis = nullptr,
                    const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
@@ -46,9 +51,20 @@ class Forces
     int nat = 0;
     int npwx = 0;
 
-    void cal_force_loc(ModuleBase::matrix& forcelc, ModulePW::PW_Basis* rho_basis, const Charge* const chr);
-    void cal_force_ew(ModuleBase::matrix& forceion, ModulePW::PW_Basis* rho_basis, const Structure_Factor* p_sf);
-    void cal_force_cc(ModuleBase::matrix& forcecc, ModulePW::PW_Basis* rho_basis, const Charge* const chr, UnitCell& ucell_in);
+    void cal_force_loc(const UnitCell& ucell,
+                       ModuleBase::matrix& forcelc,
+                       ModulePW::PW_Basis* rho_basis,
+                       const ModuleBase::matrix& vloc,
+                       const Charge* const chr);
+    void cal_force_ew(const UnitCell& ucell,
+                      ModuleBase::matrix& forceion, 
+                      ModulePW::PW_Basis* rho_basis, 
+                      const Structure_Factor* p_sf);
+    void cal_force_cc(ModuleBase::matrix& forcecc,
+                      ModulePW::PW_Basis* rho_basis,
+                      const Charge* const chr,
+                      const bool* numeric,
+                      UnitCell& ucell_in);
     /**
      * @brief This routine computes the atomic force of non-local pseudopotential
      *    F^{NL}_i = \sum_{n,k}f_{nk}\sum_I \sum_{lm,l'm'}D_{l,l'}^{I} [
@@ -65,17 +81,29 @@ class Forces
                       const K_Vectors* p_kv,
                       const ModulePW::PW_Basis_K* psi_basis,
                       const Structure_Factor* p_sf,
-                      pseudopot_cell_vnl* nlpp_in,
+                      const pseudopot_cell_vnl& nlpp_in,
                       const UnitCell& ucell_in,
                       const psi::Psi<std::complex<FPTYPE>, Device>* psi_in = nullptr);
+    /// @brief atomic force for DFT+U and DeltaSpin
+    /// @param force_onsite , the output atomic force
+    /// @param wg , the weight of k points
+    /// @param wfc_basis , the plane wave basis
+    /// @param ucell_in , the unit cell
+    /// @param psi_in , the wave function
+    void cal_force_onsite(ModuleBase::matrix& force_onsite,
+                      const ModuleBase::matrix& wg,
+                      const ModulePW::PW_Basis_K* wfc_basis,
+                      const UnitCell& ucell_in,
+                      const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
                        ModulePW::PW_Basis* rho_basis,
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist,
+                       const bool* numeric,
                        const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
                       ModulePW::PW_Basis* rho_basis,
-                      pseudopot_cell_vnl* ppcell_in,
+                      const pseudopot_cell_vnl& ppcell_in,
                       const elecstate::ElecState& elec,
                       const UnitCell& ucell);
     void cal_ylm(int lmax, int npw, const FPTYPE* gk_in, FPTYPE* ylm);

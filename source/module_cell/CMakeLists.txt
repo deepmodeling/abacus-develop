@@ -18,12 +18,13 @@ add_library(
     read_pp_vwr.cpp
     unitcell.cpp
     read_atoms.cpp
-    read_cell_pseudopots.cpp
     setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
     check_atomic_stru.cpp
+    update_cell.cpp
+    bcast_cell.cpp
 )
 
 if(ENABLE_COVERAGE)

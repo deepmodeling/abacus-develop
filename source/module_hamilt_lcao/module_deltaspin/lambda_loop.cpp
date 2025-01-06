@@ -202,7 +202,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         {
             //add_scalar_multiply_2d(initial_lambda, dnu_last_step, 1.0, this->lambda_);
             this->update_psi_charge(dnu_last_step.data(), rerun);
-            /*if(PARAM.inp.basis_type == "pw")
+            if(PARAM.inp.basis_type == "pw")
             {
                 //double check Atomic spin moment
                 this->cal_mi_pw();
@@ -224,7 +224,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
                     std::cout<<"Error: RMS error is too large, rerun the loop"<<std::endl;
                     this->run_lambda_loop(outer_step, false);
                 }
-            }*/
+            }
             break;
         }
 #ifdef __MPI

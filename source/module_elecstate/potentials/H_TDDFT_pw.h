@@ -95,7 +95,7 @@ class H_TDDFT_pw : public PotBase
     static std::vector<double> heavi_amp; // Ry/bohr
 
     //update At for velocity gauge by intergral of E(t)dt
-    static void update_At(void);
+    static void update_At();
 
   private:
     // internal time-step,
@@ -127,7 +127,7 @@ class H_TDDFT_pw : public PotBase
     //get ncut number for At integral
     static int check_ncut(int t_type);
 
-    void prepare(const UnitCell& cell, int& dir);
+    void prepare(const ModuleBase::Matrix3& G, int& dir);
 };
 
 } // namespace elecstate

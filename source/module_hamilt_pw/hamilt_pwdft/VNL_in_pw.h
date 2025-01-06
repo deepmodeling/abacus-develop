@@ -1,7 +1,6 @@
 #ifndef VNL_IN_PW_H
 #define VNL_IN_PW_H
 
-#include "VL_in_pw.h"
 #include "module_base/complexarray.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
@@ -18,37 +17,39 @@
 // Calculate the non-local pseudopotential in reciprocal
 // space using plane wave as basis set.
 //==========================================================
-class pseudopot_cell_vnl : public pseudopot_cell_vl
+class pseudopot_cell_vnl
 {
 
   public:
     pseudopot_cell_vnl();
     ~pseudopot_cell_vnl();
-    void init(const int ntype,
+    void init(const UnitCell& cell,
               Structure_Factor* psf_in,
               const ModulePW::PW_Basis_K* wfc_basis = nullptr,
-              const bool allocate_vkb = 1);
+              const bool allocate_vkb = true);
 
-    double cell_factor; // LiuXh add 20180619
+    double cell_factor = 0.0; // LiuXh add 20180619
 
-    int nkb; // total number of beta functions considering all atoms
+    int nkb = 0; // total number of beta functions considering all atoms
 
-    int lmaxkb; // max angular momentum for non-local projectors
+    int lmaxkb = 0; // max angular momentum for non-local projectors
 
     void init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_basis);
 
-    template <typename FPTYPE, typename Device>
-    void getvnl(Device* ctx, const int& ik, std::complex<FPTYPE>* vkb_in) const;
+    void rescale_vnl(const double& omega_in);
 
-    void getvnl(const int& ik, ModuleBase::ComplexMatrix& vkb_in) const;
+    template <typename FPTYPE, typename Device>
+    void getvnl(Device* ctx, const UnitCell& ucell, const int& ik, std::complex<FPTYPE>* vkb_in) const;
+
+    void getvnl(const int& ik, const UnitCell& ucell, ModuleBase::ComplexMatrix& vkb_in) const;
 
     // void getvnl_alpha(const int &ik);
 
-    void init_vnl_alpha(void);
+    void init_vnl_alpha(const UnitCell& cell);
 
     void initgradq_vnl(const UnitCell& cell);
 
-    void getgradq_vnl(const int ik);
+    void getgradq_vnl(const UnitCell& ucell, const int ik);
 
     //===============================================================
     // MEMBER VARIABLES :
@@ -60,10 +61,10 @@ class pseudopot_cell_vnl : public pseudopot_cell_vl
     //===============================================================
     // private:
 
-    int nhm;
-    int nbetam; // max number of beta functions
+    int nhm = 0;
+    int nbetam = 0; // max number of beta functions
 
-    int lmaxq;
+    int lmaxq = 0;
 
     ModuleBase::matrix indv;   // indes linking  atomic beta's to beta's in the solid
     ModuleBase::matrix nhtol;  // correspondence n <-> angular momentum l
@@ -200,6 +201,8 @@ class pseudopot_cell_vnl : public pseudopot_cell_vl
     const ModulePW::PW_Basis_K* wfcpw = nullptr;
 
     Soc soc;
+
+    double omega_old = 0;
 
     /**
      * @brief Compute interpolation table qrad

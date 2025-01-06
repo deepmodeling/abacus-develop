@@ -36,7 +36,6 @@ class FoldingTest : public ::testing::Test
     void TearDown() override
     {
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
     }
 
     UnitCell ucell;

@@ -114,7 +114,9 @@ namespace ModuleSymmetry
     private:
         //--------------------------------------------------------------------------------
         std::vector<TC> get_Rs_from_BvK(const K_Vectors& kv)const;
-        std::vector<TC> get_Rs_from_adjacent_list(const UnitCell& ucell, Grid_Driver& gd, const Parallel_Orbitals& pv)const;
+        std::vector<TC> get_Rs_from_adjacent_list(const UnitCell& ucell,
+                                                  const Grid_Driver& gd,
+                                                  const Parallel_Orbitals& pv) const;
         //--------------------------------------------------------------------------------
 
         /// The sub functions to rotate matrices

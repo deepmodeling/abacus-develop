@@ -19,7 +19,7 @@ public:
     std::vector<int> ngk; /// ngk, number of plane waves for each k point
     std::vector<int> isk; /// distinguish spin up and down k points
 
-    int nmp[3];                 /// Number of Monhorst-Pack
+    int nmp[3]={0};                 /// Number of Monhorst-Pack
     std::vector<int> kl_segids; /// index of kline segment
 
     /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
@@ -50,7 +50,8 @@ public:
      *       it will output a warning and suggest possible solutions.
      * @note Only available for nspin = 1 or 2 or 4.
      */
-    void set(const ModuleSymmetry::Symmetry& symm,
+    void set(const UnitCell& ucell,
+        const ModuleSymmetry::Symmetry& symm,
         const std::string& k_file_name,
         const int& nspin,
         const ModuleBase::Matrix3& reciprocal_vec,
@@ -162,7 +163,7 @@ private:
     int nspin;
     bool kc_done;
     bool kd_done;
-    double koffset[3];   // used only in automatic k-points.
+    double koffset[3]={0.0};   // used only in automatic k-points.
     std::string k_kword; // LiuXh add 20180619
     int k_nkstot;        // LiuXh add 20180619
     bool is_mp = false;  // Monkhorst-Pack
@@ -204,7 +205,8 @@ private:
      * @note If the k-points type is Line mode and the symmetry flag is 1, it will quit with a warning.
      * @note If the number of k-points is greater than 100000, it will quit with a warning.
      */
-    bool read_kpoints(const std::string& fn); // return 0: something wrong.
+    bool read_kpoints(const UnitCell& ucell,
+                      const std::string& fn); // return 0: something wrong.
 
     /**
      * @brief Adds k-points linearly between special points.

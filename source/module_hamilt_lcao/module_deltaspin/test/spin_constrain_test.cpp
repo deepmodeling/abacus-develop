@@ -149,12 +149,11 @@ TYPED_TEST(SpinConstrainTest, SetSolverParameters)
 {
     K_Vectors kv;
     this->sc.set_nspin(4);
-    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr, "genelpa");
+    this->sc.set_solver_parameters(kv, nullptr, nullptr, nullptr);
     EXPECT_EQ(this->sc.get_nspin(), 4);
     EXPECT_EQ(this->sc.p_hamilt, nullptr);
     EXPECT_EQ(this->sc.psi, nullptr);
     EXPECT_EQ(this->sc.pelec, nullptr);
-    EXPECT_EQ(this->sc.KS_SOLVER, "genelpa");
 }
 
 TYPED_TEST(SpinConstrainTest, SetParaV)

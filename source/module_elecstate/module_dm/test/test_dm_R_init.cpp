@@ -78,8 +78,6 @@ class DMTest : public testing::Test
     {
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
     }
 
 #ifdef __MPI
@@ -100,7 +98,7 @@ class DMTest : public testing::Test
 #endif
 };
 
-// test for construct DMR from GlobalC::GridD and UnitCell
+// test for construct DMR from GridD and UnitCell
 TEST_F(DMTest, DMInit1)
 {
     // initalize a kvectors

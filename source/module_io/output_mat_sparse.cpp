@@ -18,7 +18,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       Grid_Driver& grid,
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<double>* p_ham)
 {
@@ -36,7 +36,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
                        const TwoCenterBundle& two_center_bundle,
                        const LCAO_Orbitals& orb,
                        UnitCell& ucell,
-                       Grid_Driver& grid,
+                       const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<std::complex<double>>* p_ham)
 {
@@ -45,7 +45,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
     //! generate a file containing the Hamiltonian and S(overlap) matrices
     if (out_mat_hsR)
     {
-        output_HSR(istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
+        output_HSR(ucell,istep, v_eff, pv, HS_Arrays, grid, kv, p_ham);
     }
 
     //! generate a file containing the kinetic energy matrix
@@ -60,6 +60,7 @@ void output_mat_sparse(const bool& out_mat_hsR,
         output_dHR(istep,
                    v_eff,
                    gint_k, // mohan add 2024-04-01
+                   ucell,
                    pv,
                    HS_Arrays,
                    grid, // mohan add 2024-04-06
@@ -72,14 +73,14 @@ void output_mat_sparse(const bool& out_mat_hsR,
     if (out_mat_r)
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(pv, orb);
+        r_matrix.init(ucell, pv, orb);
         if (out_mat_hsR)
         {
-            r_matrix.out_rR_other(istep, HS_Arrays.output_R_coor);
+            r_matrix.out_rR_other(ucell,istep, HS_Arrays.output_R_coor);
         }
         else
         {
-            r_matrix.out_rR(istep);
+            r_matrix.out_rR(ucell, grid, istep);
         }
     }
 

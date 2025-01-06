@@ -104,12 +104,16 @@ class ElecState
      * @brief Init rho_core, init rho, renormalize rho, init pot
      * 
      * @param istep i-th step
+     * @param ucell unit cell
      * @param strucfac structure factor
      * @param symm symmetry
      * @param wfcpw PW basis for wave function if needed
      */
     void init_scf(const int istep,
+                  const UnitCell& ucell,
+                  const Parallel_Grid& pgrid,
                   const ModuleBase::ComplexMatrix& strucfac,
+                  const bool* numeric,
                   ModuleSymmetry::Symmetry& symm,
                   const void* wfcpw = nullptr);
     std::string classname = "elecstate";
@@ -125,7 +129,7 @@ class ElecState
     void cal_bandgap();
     void cal_bandgap_updw();
 
-    double cal_delta_eband() const;
+    double cal_delta_eband(const UnitCell& ucell) const;
     double cal_delta_escf() const;
 
     ModuleBase::matrix vnew;
@@ -150,9 +154,8 @@ class ElecState
         return 0.0;
     }
 
-#ifdef __LCAO
     double get_dftu_energy();
-#endif
+    double get_local_pp_energy();
 
 #ifdef __DEEPKS
     double get_deepks_E_delta();
@@ -172,7 +175,8 @@ class ElecState
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
   public: // print something. See elecstate_print.cpp
-    void print_etot(const bool converged,
+    void print_etot(const Magnetism& magnet,
+                    const bool converged,
                     const int& iter,
                     const double& scf_thr,
                     const double& scf_thr_kin,

@@ -15,13 +15,13 @@ void grid_prepare(
 		const Grid_Technique& gt, 
         Gint_Gamma &gint_gamma,
         Gint_k &gint_k,
+		const UnitCell& ucell,
         const LCAO_Orbitals& orb,
 		const ModulePW::PW_Basis& rhopw, 
 		const ModulePW::PW_Basis_Big& bigpw)
 {
     ModuleBase::TITLE("LCAO_domain","grid_prepare");
     ModuleBase::timer::tick("LCAO_domain","grid_prepare");
-	const UnitCell* ucell = &GlobalC::ucell;
     if(PARAM.globalv.gamma_only_local)
     {
 		gint_gamma.prep_grid(
@@ -39,7 +39,7 @@ void grid_prepare(
 				rhopw.ny, 
 				rhopw.nplane, 
 				rhopw.startz_current,
-				ucell,
+				&ucell,
 				&orb);
 	}
     else // multiple k-points
@@ -60,7 +60,7 @@ void grid_prepare(
 				rhopw.ny, 
 				rhopw.nplane, 
 				rhopw.startz_current,
-				ucell,
+				&ucell,
 				&orb);
 	}
 

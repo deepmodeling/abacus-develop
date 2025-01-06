@@ -29,7 +29,12 @@ inline RI::Tensor<std::complex<double>> tensor_conj(const RI::Tensor<std::comple
     return r;
 }
 template<typename Tdata, typename Tmatrix>
-auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tmatrix*>&mks_2D, const Parallel_2D & pv, const int nspin, const bool spgsym)
+auto RI_2D_Comm::split_m2D_ktoR(const UnitCell& ucell,
+                                const K_Vectors & kv, 
+                                const std::vector<const Tmatrix*>&mks_2D, 
+                                const Parallel_2D & pv, 
+                                const int nspin, 
+                                const bool spgsym)
 -> std::vector<std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>>
 {
 	ModuleBase::TITLE("RI_2D_Comm","split_m2D_ktoR");
@@ -63,7 +68,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
                     RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik], pv.get_col_size(), pv.get_row_size());
                     const Tdata_m frac = SPIN_multiple
                         * RI::Global_Func::convert<Tdata_m>(std::exp(
-                            -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                            -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
                     if (static_cast<int>(std::round(SPIN_multiple * kv.wk[ik] * kv.get_nkstot_full())) == 2)
                         { set_mR_2D(mk_2D * (frac * 0.5) + tensor_conj(mk_2D * (frac * 0.5))); }
                     else { set_mR_2D(mk_2D * frac); }
@@ -75,7 +80,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
                         RI::Tensor<Tdata_m> mk_2D = RI_Util::Vector_to_Tensor<Tdata_m>(*mks_2D[ik_full + is_k * kv.get_nkstot_full()], pv.get_col_size(), pv.get_row_size());
                         const Tdata_m frac = SPIN_multiple
                             * RI::Global_Func::convert<Tdata_m>(std::exp(
-                                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * ((isym_kvd.second * GlobalC::ucell.G) * (RI_Util::array3_to_Vector3(cell) * GlobalC::ucell.latvec))));
+                                -ModuleBase::TWO_PI * ModuleBase::IMAG_UNIT * ((isym_kvd.second * ucell.G) * (RI_Util::array3_to_Vector3(cell) * ucell.latvec))));
                         set_mR_2D(mk_2D * frac);
                         ++ik_full;
                     }
@@ -87,24 +92,24 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
                     ? pv.local2global_col(iwt0_2D)
                     : pv.local2global_row(iwt0_2D);
 				int iat0, iw0_b, is0_b;
-				std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(iwt0);
-				const int it0 = GlobalC::ucell.iat2it[iat0];
+				std::tie(iat0,iw0_b,is0_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt0);
+				const int it0 = ucell.iat2it[iat0];
 				for(int iwt1_2D=0; iwt1_2D!=mR_2D.shape[1]; ++iwt1_2D)
 				{
 					const int iwt1 =ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver)
                         ? pv.local2global_row(iwt1_2D)
                         : pv.local2global_col(iwt1_2D);
 					int iat1, iw1_b, is1_b;
-					std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(iwt1);
-					const int it1 = GlobalC::ucell.iat2it[iat1];
+					std::tie(iat1,iw1_b,is1_b) = RI_2D_Comm::get_iat_iw_is_block(ucell,iwt1);
+					const int it1 = ucell.iat2it[iat1];
 
 					const int is_b = RI_2D_Comm::get_is_block(is_k, is0_b, is1_b);
 					RI::Tensor<Tdata> &mR_a2D = mRs_a2D[is_b][iat0][{iat1,cell}];
                     if (mR_a2D.empty()) {
                         mR_a2D = RI::Tensor<Tdata>(
-                            {static_cast<size_t>(GlobalC::ucell.atoms[it0].nw),
+                            {static_cast<size_t>(ucell.atoms[it0].nw),
                              static_cast<size_t>(
-                                 GlobalC::ucell.atoms[it1].nw)});
+                                 ucell.atoms[it1].nw)});
                     }
                     mR_a2D(iw0_b,iw1_b) = mR_2D(iwt0_2D, iwt1_2D);
 				}
@@ -118,6 +123,7 @@ auto RI_2D_Comm::split_m2D_ktoR(const K_Vectors & kv, const std::vector<const Tm
 
 template<typename Tdata, typename TK>
 void RI_2D_Comm::add_Hexx(
+    const UnitCell &ucell,
 	const K_Vectors &kv,
 	const int ik,
 	const double alpha,
@@ -141,17 +147,17 @@ void RI_2D_Comm::add_Hexx(
 				const TA &iat1 = Hs_tmpB.first.first;
 				const TC &cell1 = Hs_tmpB.first.second;
 				const std::complex<double> frac = alpha
-					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*GlobalC::ucell.latvec)) );
+					* std::exp( ModuleBase::TWO_PI*ModuleBase::IMAG_UNIT * (kv.kvec_c[ik] * (RI_Util::array3_to_Vector3(cell1)*ucell.latvec)) );
 				const RI::Tensor<Tdata> &H = Hs_tmpB.second;
 				for(size_t iw0_b=0; iw0_b<H.shape[0]; ++iw0_b)
 				{
-					const int iwt0 = RI_2D_Comm::get_iwt(iat0, iw0_b, is0_b);
+					const int iwt0 = RI_2D_Comm::get_iwt(ucell,iat0, iw0_b, is0_b);
                     if (pv.global2local_row(iwt0) < 0) {
                         continue;
                     }
                     for(size_t iw1_b=0; iw1_b<H.shape[1]; ++iw1_b)
 					{
-						const int iwt1 = RI_2D_Comm::get_iwt(iat1, iw1_b, is1_b);
+						const int iwt1 = RI_2D_Comm::get_iwt(ucell,iat1, iw1_b, is1_b);
                         if (pv.global2local_col(iwt1) < 0) {
                             continue;
                         }
@@ -165,10 +171,10 @@ void RI_2D_Comm::add_Hexx(
 }
 
 std::tuple<int,int,int>
-RI_2D_Comm::get_iat_iw_is_block(const int iwt)
+RI_2D_Comm::get_iat_iw_is_block(const UnitCell& ucell,const int& iwt)
 {
-	const int iat = GlobalC::ucell.iwt2iat[iwt];
-	const int iw = GlobalC::ucell.iwt2iw[iwt];
+	const int iat = ucell.iwt2iat[iwt];
+	const int iw = ucell.iwt2iw[iwt];
 	switch(PARAM.inp.nspin)
 	{
 		case 1: case 2:
@@ -207,10 +213,13 @@ RI_2D_Comm::split_is_block(const int is_b)
 
 
 
-int RI_2D_Comm::get_iwt(const int iat, const int iw_b, const int is_b)
+int RI_2D_Comm::get_iwt(const UnitCell& ucell,
+                        const int iat, 
+                        const int iw_b, 
+                        const int is_b)
 {
-	const int it = GlobalC::ucell.iat2it[iat];
-	const int ia = GlobalC::ucell.iat2ia[iat];
+	const int it = ucell.iat2it[iat];
+	const int ia = ucell.iat2ia[iat];
 	int iw=-1;
 	switch(PARAM.inp.nspin)
 	{
@@ -221,7 +230,7 @@ int RI_2D_Comm::get_iwt(const int iat, const int iw_b, const int is_b)
 		default:
 			throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
 	}
-	const int iwt = GlobalC::ucell.itiaiw2iwt(it,ia,iw);
+	const int iwt = ucell.itiaiw2iwt(it,ia,iw);
 	return iwt;
 }
 

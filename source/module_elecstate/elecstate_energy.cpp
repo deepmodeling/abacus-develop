@@ -90,7 +90,7 @@ void ElecState::cal_bandgap_updw()
 }
 
 /// @brief calculate deband
-double ElecState::cal_delta_eband() const
+double ElecState::cal_delta_eband(const UnitCell& ucell) const
 {
     // out potentials from potential mixing
     // total energy and band energy corrections
@@ -103,13 +103,14 @@ double ElecState::cal_delta_eband() const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-
+    const bool v_ofk_flag =(get_xc_func_type() == 3 
+                            || get_xc_func_type() == 5);
 #ifdef USE_PAW
     if(PARAM.inp.use_paw)
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &GlobalC::ucell);
+            = XC_Functional::v_xc(this->charge->nrxx, this->charge, &ucell);
         v_xc = std::get<2>(etxc_vtxc_v);
 
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
@@ -128,28 +129,39 @@ double ElecState::cal_delta_eband() const
 
     if(!PARAM.inp.use_paw)
     {
-        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
-        {
-            v_ofk = this->pot->get_effective_vofk(0);
-        }
-
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
             deband_aux -= this->charge->rho[0][ir] * (v_eff[ir] - v_fixed[ir]);
-            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+        }
+        if (v_ofk_flag)
+        {
+            v_ofk = this->pot->get_effective_vofk(0);
+            // cause in the get_effective_vofk, the func will return nullptr
+            if(v_ofk==nullptr && this->charge->rhopw->nrxx>0)
+            {
+                ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband","v_ofk is nullptr");
+            }
+            for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
                 deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
             }
         }
-
+        
         if (PARAM.inp.nspin == 2)
         {
             v_eff = this->pot->get_effective_v(1);
-            v_ofk = this->pot->get_effective_vofk(1);
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
                 deband_aux -= this->charge->rho[1][ir] * (v_eff[ir] - v_fixed[ir]);
-                if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+            }
+            if (v_ofk_flag)
+            {
+                v_ofk = this->pot->get_effective_vofk(1);
+                if(v_ofk==nullptr && this->charge->rhopw->nrxx>0)
+                {
+                    ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband","v_ofk is nullptr");
+                }
+                for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
                 {
                     deband_aux -= this->charge->kin_r[1][ir] * v_ofk[ir];
                 }
@@ -201,12 +213,13 @@ double ElecState::cal_delta_escf() const
     {
         v_ofk = this->pot->get_effective_vofk(0);
     }
-
     for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
     {
         descf -= (this->charge->rho[0][ir] - this->charge->rho_save[0][ir]) * (v_eff[ir] - v_fixed[ir]);
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
+            // cause in the get_effective_vofk, the func will return nullptr
+            assert(v_ofk!=nullptr);
             descf -= (this->charge->kin_r[0][ir] - this->charge->kin_r_save[0][ir]) * v_ofk[ir];
         }
     }
@@ -287,7 +300,6 @@ void ElecState::cal_energies(const int type)
     }
 
     //! spin constrained energy
-#ifdef __LCAO
     if (PARAM.inp.sc_mag_switch)
     {
         this->f_en.escon = get_spin_constrain_energy();
@@ -298,7 +310,8 @@ void ElecState::cal_energies(const int type)
     {
         this->f_en.edftu = get_dftu_energy();
     }
-#endif
+
+    this->f_en.e_local_pp = get_local_pp_energy();
 
 #ifdef __DEEPKS
     // energy from deepks

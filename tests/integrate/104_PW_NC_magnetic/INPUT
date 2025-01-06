@@ -22,6 +22,7 @@ mixing_beta    0.2
 mixing_ndim 10
 
 ks_solver     dav_subspace
+diago_smooth_ethr true
 pw_diag_ndim  2
 basis_type    pw
 symmetry      0

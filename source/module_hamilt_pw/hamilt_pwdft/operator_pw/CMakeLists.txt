@@ -5,6 +5,7 @@ list(APPEND operator_ks_pw_srcs
     nonlocal_pw.cpp
     meta_pw.cpp
     velocity_pw.cpp
+    onsite_proj_pw.cpp
 )
 
 # this library is included in hamilt_pwdft now

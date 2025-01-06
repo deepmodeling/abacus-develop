@@ -17,6 +17,10 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
                                                const UnitCell* ucell_in,
                                                const ModulePW::PW_Basis_K* wfc_basis)
 {
+    if( isk_in == nullptr || ppcell_in == nullptr || ucell_in == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
+    }
     this->classname = "Nonlocal";
     this->cal_type = calculation_type::pw_nonlocal;
     this->wfcpw = wfc_basis;
@@ -26,10 +30,7 @@ Nonlocal<OperatorPW<T, Device>>::Nonlocal(const int* isk_in,
     this->deeq = this->ppcell->template get_deeq_data<Real>();
     this->deeq_nc = this->ppcell->template get_deeq_nc_data<Real>();
     this->vkb = this->ppcell->template get_vkb_data<Real>();
-    if( this->isk == nullptr || this->ppcell == nullptr || this->ucell == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("NonlocalPW", "Constuctor of Operator::NonlocalPW is failed, please check your code!");
-    }
+
 }
 
 template<typename T, typename Device>
@@ -46,7 +47,7 @@ void Nonlocal<OperatorPW<T, Device>>::init(const int ik_in)
     // Calculate nonlocal pseudopotential vkb
 	if(this->ppcell->nkb > 0) //xiaohui add 2013-09-02. Attention...
 	{
-		this->ppcell->getvnl(this->ctx, this->ik, this->vkb);
+		this->ppcell->getvnl(this->ctx, *this->ucell, this->ik, this->vkb);
 	}
 
     if(this->next_op != nullptr)

@@ -33,7 +33,7 @@ namespace ModuleESolver
                                            const int iter,
                                            const double ethr) override;
 
-        virtual void allocate_hamilt() override;
+        virtual void allocate_hamilt(const UnitCell& ucell) override;
         virtual void deallocate_hamilt() override;
 
 #ifdef __EXX

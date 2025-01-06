@@ -32,6 +32,62 @@
  *  - 8. solve()
  *      - lcao_in_pw specific implementation
  */
+
+// mock diago_hs_para
+namespace hsolver {
+template <typename T>
+void diago_hs_para(T* h,
+                   T* s,
+                   const int lda,
+                   const int nband,
+                   typename GetTypeReal<T>::type* const ekb,
+                   T* const wfc,
+                   const MPI_Comm& comm,
+                   const int diag_subspace,
+                   const int block_size = 0)
+{}
+template void diago_hs_para<double>(double* h,
+                                    double* s,
+                                    const int lda,
+                                    const int nband,
+                                    typename GetTypeReal<double>::type* const ekb,
+                                    double* const wfc,
+                                    const MPI_Comm& comm,
+                                    const int diag_subspace,
+                                    const int block_size);
+
+template void diago_hs_para<std::complex<double>>(std::complex<double>* h,
+                                                  std::complex<double>* s,
+                                                  const int lda,
+                                                  const int nband,
+                                                  typename GetTypeReal<std::complex<double>>::type* const ekb,
+                                                  std::complex<double>* const wfc,
+                                                  const MPI_Comm& comm,
+                                                  const int diag_subspace,
+                                                  const int block_size);
+
+template void diago_hs_para<float>(float* h,
+                                   float* s,
+                                   const int lda,
+                                   const int nband,
+                                   typename GetTypeReal<float>::type* const ekb,
+                                   float* const wfc,
+                                   const MPI_Comm& comm,
+                                   const int diag_subspace,
+                                   const int block_size);
+                                   
+template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
+                                                 std::complex<float>* s,
+                                                 const int lda,
+                                                 const int nband,
+                                                 typename GetTypeReal<std::complex<float>>::type* const ekb,
+                                                 std::complex<float>* const wfc,
+                                                 const MPI_Comm& comm,
+                                                 const int diag_subspace,
+                                                 const int block_size);
+
+}
+
 class TestHSolverPW : public ::testing::Test {
   public:
     ModulePW::PW_Basis_K pwbk;
@@ -249,8 +305,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
         = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
-    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,
-        transform_test_cf, true);
+    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)
     {
@@ -261,7 +316,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true);
+    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cd.size(); i++)
     {

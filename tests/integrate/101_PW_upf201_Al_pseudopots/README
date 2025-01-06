@@ -3,3 +3,5 @@ This test for:
 *upf201 pseudopotential
 *mixing_type broyden-kerker
 *mixing_beta 0.7
+*ecutwfc 30
+*ecutrho 160

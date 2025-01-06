@@ -18,11 +18,11 @@
 #include "module_ri/exx_abfs-jle.h"
 #endif
 
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "module_basis/module_ao/ORB_read.h"
 #include "module_elecstate/potentials/H_TDDFT_pw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #endif
@@ -170,11 +170,6 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
-    GlobalC::ucell.setup(PARAM.inp.latname,
-                         PARAM.inp.ntype,
-                         PARAM.inp.lmaxmax,
-                         PARAM.inp.init_vel,
-                         PARAM.inp.fixed_axes);
 
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
     {
@@ -243,7 +238,6 @@ void Input_Conv::Convert()
     // iteration (1/3)
     //----------------------------------------------------------
 
-#ifdef __LCAO
     if (PARAM.inp.dft_plus_u)
     {
         GlobalC::dftu.Yukawa = PARAM.inp.yukawa_potential;
@@ -255,10 +249,9 @@ void Input_Conv::Convert()
         GlobalC::dftu.U0 = PARAM.globalv.hubbard_u;
         if (PARAM.globalv.uramping > 0.01)
         {
-            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), GlobalC::ucell.ntype);
+            ModuleBase::GlobalFunc::ZEROS(GlobalC::dftu.U.data(), PARAM.inp.ntype);
         }
     }
-#endif
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18
@@ -319,7 +312,15 @@ void Input_Conv::Convert()
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_save.save_charge = true;
             GlobalC::restart.info_save.save_H = true;
-        } else {
+        }
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
+            || dft_functional_lower == "wp22" 
+            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
+        {
+            GlobalC::restart.info_save.save_charge = true;
+            GlobalC::restart.info_save.save_H = true;
+        }
+        else {
             GlobalC::restart.info_save.save_charge = true;
         }
     }
@@ -337,7 +338,15 @@ void Input_Conv::Convert()
             || dft_functional_lower == "scan0") {
             GlobalC::restart.info_load.load_charge = true;
             GlobalC::restart.info_load.load_H = true;
-        } else {
+        }
+        else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" 
+            || dft_functional_lower == "wp22" 
+            || dft_functional_lower == "cwp22" ) // added by jghan, 2024-07-07
+        {
+            GlobalC::restart.info_load.load_charge = true;
+            GlobalC::restart.info_load.load_H = true;
+        } 
+        else {
             GlobalC::restart.info_load.load_charge = true;
         }
     }
@@ -361,11 +370,28 @@ void Input_Conv::Convert()
     } else if (dft_functional_lower == "hse") {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type
-            = Conv_Coulomb_Pot_K::Ccp_Type::Hse;
+            = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
     } else if (dft_functional_lower == "opt_orb") {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
-    } else {
+    }
+    // muller, power, wp22, cwp22 added by jghan, 2024-07-07
+    else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
+    else if ( dft_functional_lower == "wp22" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf; // use the error function erf(w|r-r'|), exx just has the long-range part
+    }
+    else if ( dft_functional_lower == "cwp22" )
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; // use the erfc(w|r-r'|), exx just has the short-range part
+    }
+    else {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
@@ -408,7 +434,6 @@ void Input_Conv::Convert()
     }
 #endif                                                   // __LCAO
 #endif                                                   // __EXX
-    GlobalC::ppcell.cell_factor = PARAM.inp.cell_factor; // LiuXh add 20180619
 
     //----------------------------------------------------------
     // reset symmetry flag to avoid error

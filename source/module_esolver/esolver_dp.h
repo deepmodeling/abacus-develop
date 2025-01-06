@@ -108,16 +108,13 @@ class ESolver_DP : public ESolver
      */
 
     std::string dp_file;             ///< directory of DP model file
-    std::vector<double> cell = {};   ///< lattice vectors
     std::vector<int> atype = {};     ///< atom type corresponding to DP model
-    std::vector<double> coord = {};  ///< atomic positions
     std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
     std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
     double rescaling = 1.0;          ///< rescaling factor for DP model
     double dp_potential = 0.0;       ///< computed potential energy
     ModuleBase::matrix dp_force;     ///< computed atomic forces
     ModuleBase::matrix dp_virial;    ///< computed lattice virials
-    UnitCell* ucell_;                ///< pointer to the unit cell object
 };
 
 } // namespace ModuleESolver
