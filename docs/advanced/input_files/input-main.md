@@ -21,6 +21,7 @@
     - [kspacing](#kspacing)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
+    - [nb2d](#nb2d)
     - [precision](#precision)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
@@ -40,12 +41,12 @@
     - [diago\_smooth\_ethr](#diago_smooth_ethr)
     - [pw\_diag\_nmax](#pw_diag_nmax)
     - [pw\_diag\_ndim](#pw_diag_ndim)
+    - [diag\_subspace](#diag_subspace)
     - [erf\_ecut](#erf_ecut)
     - [fft\_mode](#fft_mode)
     - [erf\_height](#erf_height)
     - [erf\_sigma](#erf_sigma)
   - [Numerical atomic orbitals related variables](#numerical-atomic-orbitals-related-variables)
-    - [nb2d](#nb2d)
     - [lmaxmax](#lmaxmax)
     - [lcao\_ecut](#lcao_ecut)
     - [lcao\_dk](#lcao_dk)
@@ -667,6 +668,19 @@ If only one value is set (such as `kspacing 0.5`), then kspacing values of a/b/c
   - cg/bpcg/dav ks_solver: required by the `single` precision options
 - **Default**: double
 
+### nb2d
+
+- **Type**: Integer
+- **Description**: When using elpa or scalapack to solver the eigenvalue problem, the data should be distributed by the two-dimensional block-cyclic distribution. This paramter specifies the size of the block. It is valid for:
+  - [ks_solver](#ks_solver) is genelpa or scalapack_gvx. If nb2d is set to 0, then it will be automatically set in the program according to the size of atomic orbital basis:
+    - if size <= 500: nb2d = 1
+    - if 500 < size <= 1000: nb2d = 32
+    - if size > 1000: nb2d = 64;
+  - [ks_solver](#ks_solver) is dav_subspace, and [diag_subspace](#diag_subspace) is 1 or 2. It is the block size for the diagonization of subspace. If it is set to 0, then it will be automatically set in the program according to the number of band:
+    - if number of band > 500: nb2d = 32
+    - if number of band < 500: nb2d = 16
+- **Default**: 0
+
 [back to top](#full-list-of-input-keywords)
 
 ## Variables related to input files
@@ -794,7 +808,18 @@ These variables are used to control the plane wave related parameters.
 
 - **Type**: Integer
 - **Description**: Only useful when you use `ks_solver = dav` or `ks_solver = dav_subspace`. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
-- **Default**: 4
+- **Default**: 4 
+
+### diag_subspace
+
+- **Type**: Integer
+- **Description**: The method to diagonalize subspace in dav_subspace method. The available options are:
+  - 0: by LAPACK
+  - 1: by GenELPA
+  - 2: by ScaLAPACK
+  LAPACK only solve in one core, GenELPA and ScaLAPACK can solve in parallel. If the system is small (such as the band number is less than 100), LAPACK is recommended. If the system is large and MPI parallel is used, then GenELPA or ScaLAPACK is recommended, and GenELPA usually has better performance. For GenELPA and ScaLAPACK, the block size can be set by [nb2d](#nb2d).
+
+- **Default**: 0
 
 ### erf_ecut
 
@@ -836,15 +861,6 @@ These variables are used to control the plane wave related parameters.
 ## Numerical atomic orbitals related variables
 
 These variables are used to control the numerical atomic orbitals related parameters.
-
-### nb2d
-
-- **Type**: Integer
-- **Description**: In LCAO calculations, we arrange the total number of processors in an 2D array, so that we can partition the wavefunction matrix (number of bands*total size of atomic orbital basis) and distribute them in this 2D array. When the system is large, we group processors into sizes of nb2d, so that multiple processors take care of one row block (a group of atomic orbitals) in the wavefunction matrix. If set to 0, nb2d will be automatically set in the program according to the size of atomic orbital basis:
-  - if size <= 500 : nb2d = 1
-  - if 500 < size <= 1000 : nb2d = 32
-  - if size > 1000 : nb2d = 64;
-- **Default**: 0
 
 ### lmaxmax
 

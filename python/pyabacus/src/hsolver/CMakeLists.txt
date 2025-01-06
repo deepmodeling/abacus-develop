@@ -5,6 +5,9 @@ list(APPEND _diago
     ${HSOLVER_PATH}/diago_cg.cpp
     ${HSOLVER_PATH}/diag_const_nums.cpp
     ${HSOLVER_PATH}/diago_iter_assist.cpp
+    ${HSOLVER_PATH}/diag_hs_para.cpp
+    ${HSOLVER_PATH}/diago_pxxxgvx.cpp
+
 
     ${HSOLVER_PATH}/kernels/dngvd_op.cpp
     ${HSOLVER_PATH}/kernels/math_kernel_op.cpp

@@ -34,7 +34,9 @@ def dav_subspace(
     max_iter: int = 1000,
     need_subspace: bool = False,
     diag_ethr: Union[List[float], None] = None,
-    scf_type: bool = False
+    scf_type: bool = False,
+    diag_subspace: int = 0,
+    nb2d: int = 0
 ) -> Tuple[NDArray[np.float64], NDArray[np.complex128]]:
     """ A function to diagonalize a matrix using the Davidson-Subspace method.
 
@@ -67,6 +69,11 @@ def dav_subspace(
         If True, the initial precision of eigenvalue calculation can be coarse. 
         If False, it indicates a non-self-consistent field (non-SCF) calculation, 
         where high precision in eigenvalue calculation is required from the start.  
+    diag_subspace : int, optional
+        The method to do the diagonalization, by default 0.
+        0: LAPACK, 1: Gen-elpa, 2: Scalapack
+    nb2d : int, optional
+        The block size for 2D decomposition, by default 0, which will be automatically set.
     
     Returns
     -------
@@ -101,7 +108,9 @@ def dav_subspace(
         need_subspace,
         diag_ethr,
         scf_type,
-        comm_info
+        comm_info,
+        diag_subspace,
+        nb2d
     )
     
     e = _diago_obj_dav_subspace.get_eigenvalue()
