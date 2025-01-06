@@ -209,6 +209,42 @@ struct Input_para
                                                  ///< formula. Only usable for WT KEDF.
     std::string of_kernel_file = "WTkernel.txt"; ///< The name of WT kernel file.
 
+    // ML KEDF, sunliang added on 2022-11-07
+    bool of_ml_gene_data = false;                ///< Generate training data or not
+    // device
+    std::string of_ml_device = "cpu";                      ///< Run NN on GPU or CPU
+    int of_ml_feg = 0;                                     ///< The Free Electron Gas limit: 0: no, 3: yes
+    // kernel
+    int of_ml_nkernel = 1;                                 ///< Number of kernels
+    std::vector<int> of_ml_kernel = {1};                   ///< Type of kernel, 1 for wt, 2 for yukawa, and 3 for TKK
+    std::vector<double> of_ml_kernel_scaling = {1.0};      ///< Scaling parameter of kernel, w(r-r') = lambda^3 * w(lambda (r-r')), lambda = 1/scaling
+    std::vector<double> of_ml_yukawa_alpha = {1.0};        ///< Parameter alpha of yukawa kernel
+    std::vector<std::string> of_ml_kernel_file = {"none"}; ///< The file of TKK
+    // semi-local descriptors
+    bool of_ml_gamma = false;                    ///< Descriptor: gamma = (rho / rho0)^(1/3)
+    bool of_ml_p = false;                        ///< Descriptor: p = |nabla rho|^2 / [2 (3 pi^2)^(1/3) rho^(4/3)]^2
+    bool of_ml_q = false;                        ///< Descriptor: q = nabla^2 rho / [4 (3 pi^2)^(2/3) rho^(5/3)]
+    bool of_ml_tanhp = false;                    ///< Descriptor: tanhp = tanh(chi_p * p)
+    bool of_ml_tanhq = false;                    ///< Descriptor: tanhq = tanh(chi_q * q)
+    double of_ml_chi_p = 1.0;                    ///< Hyperparameter: tanhp = tanh(chi_p * p)
+    double of_ml_chi_q = 1.0;                    ///< Hyperparameter: tanhq = tanh(chi_q * q)
+    // non-local descriptors
+    // of_ml_gammanl should be a vector of bool, but here we use a vector of int for convinience
+    std::vector<int> of_ml_gammanl = {0};        ///< Descriptor: gammanl = int{gamma(r') * w(r-r') dr'}
+    std::vector<int> of_ml_pnl = {0};            ///< Descriptor: pnl = int{p(r') * w(r-r') dr'}
+    std::vector<int> of_ml_qnl = {0};            ///< Descriptor: qnl = int{q(r') * w(r-r') dr'}
+    std::vector<int> of_ml_xi = {0};             ///< Descriptor: xi = int{rho(r')^(1/3) * w(r-r') dr'} / rho^(1/3)
+    std::vector<int> of_ml_tanhxi = {0};         ///< Descriptor: tanhxi = tanh(chi_xi * xi)
+    std::vector<int> of_ml_tanhxi_nl = {0};      ///< Descriptor: tanhxi_nl = int{tanhxi(r') * w(r-r') dr'}
+    std::vector<int> of_ml_tanh_pnl = {0};       ///< Descriptor: tanh_pnl = tanh(chi_pnl * pnl)
+    std::vector<int> of_ml_tanh_qnl = {0};       ///< Descriptor: tanh_qnl = tanh(chi_qnl * qnl)
+    std::vector<int> of_ml_tanhp_nl = {0};       ///< Descriptor: tanhp_nl = int{tanhp(r') * w(r-r') dr'}
+    std::vector<int> of_ml_tanhq_nl = {0};       ///< Descriptor: tanhq_nl = int{tanhq(r') * w(r-r') dr'}
+    std::vector<double> of_ml_chi_xi = {1.0};    ///< Hyperparameter: tanhpxi = tanh(chi_xi * xi)
+    std::vector<double> of_ml_chi_pnl = {1.0};   ///< Hyperparameter: tanh_pnl = tanh(chi_pnl * pnl)
+    std::vector<double> of_ml_chi_qnl = {1.0};   ///< Hyperparameter: tanh_qnl = tanh(chi_qnl * qnl)
+    bool of_ml_local_test = false;               ///< Test: read in the density, and output the F and Pauli potential
+
     // ==============   #Parameters (7.stochastic DFT) ===========================
     int method_sto = 2;        ///< different methods for sdft, 1: slow, less memory 2:
                                ///< fast, more memory

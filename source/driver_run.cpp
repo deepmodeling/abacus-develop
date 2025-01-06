@@ -7,7 +7,6 @@
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
 #include "module_md/run_md.h"
-#include "module_parameter/parameter.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS

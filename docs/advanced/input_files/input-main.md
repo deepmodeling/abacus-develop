@@ -210,6 +210,36 @@
     - [of\_kernel\_file](#of_kernel_file)
     - [of\_full\_pw](#of_full_pw)
     - [of\_full\_pw\_dim](#of_full_pw_dim)
+  - [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft)
+    - [of\_ml\_gene\_data](#of_ml_gene_data)
+    - [of\_ml\_device](#of_ml_device)
+    - [of\_ml\_feg](#of_ml_feg)
+    - [of\_ml\_nkernel](#of_ml_nkernel)
+    - [of\_ml\_kernel](#of_ml_kernel)
+    - [of\_ml\_kernel\_scaling](#of_ml_kernel_scaling)
+    - [of\_ml\_yukawa\_alpha](#of_ml_yukawa_alpha)
+    - [of\_ml\_kernel\_file](#of_ml_kernel_file)
+    - [of\_ml\_gamma](#of_ml_gamma)
+    - [of\_ml\_p](#of_ml_p)
+    - [of\_ml\_q](#of_ml_q)
+    - [of\_ml\_tanhp](#of_ml_tanhp)
+    - [of\_ml\_tanhq](#of_ml_tanhq)
+    - [of\_ml\_gammanl](#of_ml_gammanl)
+    - [of\_ml\_pnl](#of_ml_pnl)
+    - [of\_ml\_qnl](#of_ml_qnl)
+    - [of\_ml\_xi](#of_ml_xi)
+    - [of\_ml\_tanhxi](#of_ml_tanhxi)
+    - [of\_ml\_tanhxi\_nl](#of_ml_tanhxi_nl)
+    - [of\_ml\_tanh\_pnl](#of_ml_tanh_pnl)
+    - [of\_ml\_tanh\_qnl](#of_ml_tanh_qnl)
+    - [of\_ml\_tanhp\_nl](#of_ml_tanhp_nl)
+    - [of\_ml\_tanhq\_nl](#of_ml_tanhq_nl)
+    - [of\_ml\_chi\_p](#of_ml_chi_p)
+    - [of\_ml\_chi\_q](#of_ml_chi_q)
+    - [of\_ml\_chi\_xi](#of_ml_chi_xi)
+    - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
+    - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
+    - [of\_ml\_local\_test](#of_ml_local_test)
   - [Electric field and dipole correction](#electric-field-and-dipole-correction)
     - [efield\_flag](#efield_flag)
     - [dip\_cor\_flag](#dip_cor_flag)
@@ -2093,11 +2123,18 @@ Warning: this function is not robust enough for the current version. Please try 
 - **Type**: String
 - **Availability**: OFDFT
 - **Description**: The type of KEDF (kinetic energy density functional).
+
+  Analytical functionals:
   - **wt**: Wang-Teter.
   - **tf**: Thomas-Fermi.
   - **vw**: von Weizsäcker.
-  - **tf+**: TF$\rm{\lambda}$vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
+  - **tf+**: TF $\rm{\lambda}$ vW, the parameter $\rm{\lambda}$ can be set by `of_vw_weight`.
   - **lkt**: Luo-Karasiev-Trickey.
+
+  Machine learning (ML) based functionals:
+  - **ml**: ML-based KEDF allows for greater flexibility, enabling users to set related ML model parameters themselves. see [ML-KEDF: machine learning based kinetic energy density functional for OFDFT](#ml-kedf-machine-learning-based-kinetic-energy-density-functional-for-ofdft).
+  - **mpn**: ML-based Physically-constrained Non-local (MPN) KEDF. ABACUS automatically configures the necessary parameters, requiring no manual intervention from the user.
+  - **cpn5**: Multi-Channel MPN (CPN) KEDF with 5 channels. Similar to mpn, ABACUS handles all parameter settings automatically.
 - **Default**: wt
 
 ### of_method
@@ -2225,6 +2262,221 @@ Warning: this function is not robust enough for the current version. Please try 
   Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set `of_full_pw_dim = 1` if `nbspline != -1`.
 
 - **Default**: 0
+
+[back to top](#full-list-of-input-keywords)
+
+## ML-KEDF: machine learning based kinetic energy density functional for OFDFT
+
+### of_ml_gene_data
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Generate training data or not.
+- **Default**: False
+
+### of_ml_device
+
+- **Type**: String
+- **Availability**: OFDFT
+- **Description**: Run Neural Network on GPU or CPU.
+  - **cpu**: CPU
+  - **gpu**: GPU
+- **Default**: cpu
+
+### of_ml_feg
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: The method to incorporate the Free Electron Gas (FEG) limit: $F_\theta |_{\rm{FEG}} = 1$, where $F_\theta$ is enhancement factor of Pauli energy.
+  - **0**: Do not incorporate the FEG limit.
+  - **1**: Incorporate the FEG limit by translation: $F_\theta = F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + 1$.
+  - **3**: Incorporate the FEG limit by nonlinear transformation: $F_\theta = f(F^{\rm{NN}}_\theta - F^{\rm{NN}}_\theta|_{\rm{FEG}} + \ln(e - 1))$, where $f = \ln(1 + e^x)$ is softplus function, satisfying $f(x)|_{x=\ln(e-1)} = 1$. 
+- **Default**: 0
+
+### of_ml_nkernel
+
+- **Type**: Integer
+- **Availability**: OFDFT
+- **Description**: Number of kernel functions.
+- **Default**: 1
+
+### of_ml_kernel
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the type of the $i$-th kernel function.
+  - **1**: Wang-Teter kernel function.
+  - **2**: Modified Yukawa function: $k_{\rm{F}}^2\frac{\exp{({-\alpha k_{\rm{F}}|\mathbf{r}-\mathbf{r}'|})}}{|\mathbf{r}-\mathbf{r}'|}$, and $\alpha$ is specified by [of_ml_yukawa_alpha](#of_ml_yukawa_alpha).
+  - **3**: Truncated kinetic kernel (TKK), the file containing TKK is specified by [of_ml_kernel_file](#of_kernel_file).
+- **Default**: 1
+
+### of_ml_kernel_scaling
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the RECIPROCAL of scaling parameter $\lambda$ of the $i$-th kernel function. $w_i(\mathbf{r}-\mathbf{r}') = \lambda^3 w_i'(\lambda(\mathbf{r}-\mathbf{r}'))$.
+- **Default**: 1.0
+
+### of_ml_yukawa_alpha
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the parameter $\alpha$ of $i$-th kernel function. ONLY used for Yukawa kernel function.
+- **Default**: 1.0
+
+### of_ml_kernel_file
+
+- **Type**: Vector of String
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the file containint the $i$-th kernel function. ONLY used for TKK.
+- **Default**: none
+
+### of_ml_gamma
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Local descriptor: $\gamma(\mathbf{r}) = (\rho(\mathbf{r}) / \rho_0)^{1/3}$.
+- **Default**: False
+
+### of_ml_p
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $p(\mathbf{r}) = \frac{|\nabla \rho(\mathbf{r})|^2} {[2 (3 \pi^2)^{1/3} \rho^{4/3}(\mathbf{r})]^2}$.
+- **Default**: False
+
+### of_ml_q
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $q(\mathbf{r}) = \frac{\nabla^2 \rho(\mathbf{r})} {[4 (3 \pi^2)^{2/3} \rho^{5/3}(\mathbf{r})]}$.
+- **Default**: False
+
+### of_ml_tanhp
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_tanhq
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: Semi-local descriptor: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_chi_p
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_p$: $\tilde{p}(\mathbf{r}) = \tanh(\chi_p p(\mathbf{r}))$.
+- **Default**: 1.0
+
+### of_ml_chi_q
+
+- **Type**: Real
+- **Availability**: OFDFT
+- **Description**: Hyperparameter $\chi_q$: $\tilde{q}(\mathbf{r}) = \tanh(\chi_q q(\mathbf{r}))$.
+- **Default**: False
+
+### of_ml_gammanl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\gamma_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \gamma(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $p_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') p(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $q_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') q(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_xi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\xi(\mathbf{r}) = \frac{\int{w_i(\mathbf{r}-\mathbf{r}') \rho^{1/3}(\mathbf{r}') dr'}}{\rho^{1/3}(\mathbf{r})}$. 
+- **Default**: 0
+
+### of_ml_tanhxi
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 0
+
+### of_ml_tanhxi_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{\xi}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanh_pnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanh_qnl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 0
+
+### of_ml_tanhp_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{p}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_tanhq_nl
+
+- **Type**: Vector of Integer 
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element controls the non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q}_{\rm{nl}}(\mathbf{r}) = \int{w_i(\mathbf{r}-\mathbf{r}') \tilde{q}(\mathbf{r}') dr'}$. 
+- **Default**: 0
+
+### of_ml_chi_xi
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_\xi$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{\xi}(\mathbf{r}) = \tanh(\chi_{\xi} \xi(\mathbf{r}))$. 
+- **Default**: 1.0
+
+### of_ml_chi_pnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{p_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{p_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{p_{\rm{nl}}} p_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_chi_qnl
+
+- **Type**: Vector of Real
+- **Availability**: OFDFT
+- **Description**: Containing nkernel (see [of_ml_nkernel](#of_ml_nkernel)) elements. The $i$-th element specifies the hyperparameter $\chi_{q_{\rm{nl}}}$ of non-local descriptor defined by the $i$-th kernel function $w_i(\mathbf{r}-\mathbf{r}')$: $\tilde{q_{\rm{nl}}}(\mathbf{r}) = \tanh{(\chi_{q_{\rm{nl}}} q_{\rm{nl}}(\mathbf{r}))}$. 
+- **Default**: 1.0
+
+### of_ml_local_test
+
+- **Type**: Boolean
+- **Availability**: OFDFT
+- **Description**: FOR TEST. Read in the density, and output the F and Pauli potential.
+- **Default**: False
 
 [back to top](#full-list-of-input-keywords)
 
