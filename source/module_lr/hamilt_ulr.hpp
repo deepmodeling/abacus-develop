@@ -68,7 +68,7 @@ namespace LR
             }
 #endif
 
-            this->cal_dm_trans = [&, this](const int& is, const T* X)->void
+            this->cal_dm_trans = [&, this](const int& is, const T* const X)->void
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks_in, is, nk);
                     // LR_Util::print_value(X, pX_in[is].get_local_size());
@@ -88,7 +88,7 @@ namespace LR
         {
             for (auto& op : ops) { delete op; }
         }
-        void hPsi(const T* psi_in, T* hpsi, const int ld_psi, const int& nband) const
+        void hPsi(const T* const psi_in, T* const hpsi, const int ld_psi, const int& nband) const
         {
             ModuleBase::TITLE("HamiltULR", "hPsi");
             assert(ld_psi == this->ldim);
@@ -224,7 +224,7 @@ namespace LR
         /// Hxc+Exx: size=nbands, store the result of each bands for common use
         std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans;
 
-        std::function<void(const int&, const T*)> cal_dm_trans;
+        std::function<void(const int&, const T* const)> cal_dm_trans;
         const bool tdm_sym = false;     ///< whether to symmetrize the transition density matrix
     };
 }
