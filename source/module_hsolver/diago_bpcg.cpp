@@ -167,10 +167,43 @@ void DiagoBPCG<T, Device>::orth_projection(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_in);
     hsub_in = ct::op::einsum("ij,kj->ik", grad_out, psi_in, option);
 
+    // this->orth_projection(this->psi, this->hsub, this->grad);
+    // gemm: hsub_in(n_band x n_band) = grad_out^T(n_band x n_basis) * psi_in(n_basis x n_band)
+    // gemm_op()(this->ctx,
+    //             'C',
+    //             'N',
+    //             this->n_band,      //m
+    //             this->n_band,      //n
+    //             this->n_dim,       //k
+    //             this->one,
+    //             grad_out.data<T>(),
+    //             this->n_basis,     //lda
+    //             psi_in.data<T>(),
+    //             this->n_basis,     //ldb
+    //             this->zero,
+    //             hsub_in.data<T>(),
+    //             this->n_band);     //ldc
+
     // set_matrix_op()('L', hsub_in->data<T>(), this->n_band);
     option = ct::EinsumOption(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/-1.0, /*beta=*/1.0, /*Tensor out=*/&grad_out);
     grad_out = ct::op::einsum("ij,jk->ik", hsub_in, psi_in, option);
+
+    // grad_out(n_basis x n_band) = psi_in(n_basis x n_band) * hsub_in(n_band x n_band)
+    // gemm_op()(this->ctx,
+    //             'N',
+    //             'N',
+    //             this->n_basis,    //m
+    //             this->n_band,     //n
+    //             this->n_band,     //k
+    //             this->one,
+    //             psi_in.data<T>(),
+    //             this->n_basis,    //lda
+    //             hsub_in.data<T>(),
+    //             this->n_band,     //ldb
+    //             this->zero,
+    //             grad_out.data<T>(),
+    //             this->n_basis);  //ldc
 
     return;
 }
