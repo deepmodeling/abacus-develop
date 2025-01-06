@@ -339,6 +339,8 @@ OBJS_HSOLVER=diago_cg.o\
     math_kernel_op.o\
     dngvd_op.o\
     diag_const_nums.o\
+    diag_hs_para.o\
+    diago_pxxxgvx.o\
     
 OBJS_HSOLVER_LCAO=hsolver_lcao.o\
       diago_scalapack.o\

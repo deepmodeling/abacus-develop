@@ -8,7 +8,13 @@
 #include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_base/kernels/dsp/dsp_connector.h"
 
+#include "module_hsolver/diag_hs_para.h"
+
 #include <vector>
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 using namespace hsolver;
 
@@ -20,9 +26,12 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
                                                 const double& diag_thr_in,
                                                 const int& diag_nmax_in,
                                                 const bool& need_subspace_in,
-                                                const diag_comm_info& diag_comm_in)
+                                                const diag_comm_info& diag_comm_in,
+                                                const int diag_subspace_in,
+                                                const int diago_subspace_bs_in)
     : precondition(precondition_in), n_band(nband_in), dim(nbasis_in), nbase_x(nband_in * david_ndim_in),
-      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in)
+      diag_thr(diag_thr_in), iter_nmax(diag_nmax_in), is_subspace(need_subspace_in), diag_comm(diag_comm_in),
+        diag_subspace(diag_subspace_in), diago_subspace_bs(diago_subspace_bs_in)
 {
     this->device = base_device::get_device_type<Device>(this->ctx);
 
@@ -32,6 +41,7 @@ Diago_DavSubspace<T, Device>::Diago_DavSubspace(const std::vector<Real>& precond
 
     assert(david_ndim_in > 1);
     assert(david_ndim_in * nband_in < nbasis_in * this->diag_comm.nproc);
+    assert(diag_subspace >= 0 && diag_subspace < 3);
 
     // TODO: Added memory usage statistics
 
@@ -526,14 +536,13 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
                                                T* vcc)
 {
     ModuleBase::timer::tick("Diago_DavSubspace", "diag_zhegvx");
+    assert(nbase_x >= std::max(1, nbase));
 
-    if (this->diag_comm.rank == 0)
+    if (this->device == base_device::GpuDevice)
     {
-        assert(nbase_x >= std::max(1, nbase));
-
-        if (this->device == base_device::GpuDevice)
-        {
 #if defined(__CUDA) || defined(__ROCM)
+        if (this->diag_comm.rank == 0)
+        {
             Real* eigenvalue_gpu = nullptr;
             resmem_real_op()(this->ctx, eigenvalue_gpu, this->nbase_x);
 
@@ -562,46 +571,96 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
             syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, (*eigenvalue_iter).data(), eigenvalue_gpu, this->nbase_x);
 
             delmem_real_op()(this->ctx, eigenvalue_gpu);
+        }
 #endif
+    }
+    else
+    {
+        if (this->diag_subspace == 0)
+        {
+            if (this->diag_comm.rank == 0)
+            {
+                std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
+                std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
+
+                for (size_t i = 0; i < nbase; i++)
+                {
+                    for (size_t j = 0; j < nbase; j++)
+                    {
+                        h_diag[i][j] = hcc[i * this->nbase_x + j];
+                        s_diag[i][j] = scc[i * this->nbase_x + j];
+                    }
+                }
+                dngvx_op<T, Device>()(this->ctx,
+                                      nbase,
+                                      this->nbase_x,
+                                      this->hcc,
+                                      this->scc,
+                                      nband,
+                                      (*eigenvalue_iter).data(),
+                                      this->vcc);
+                // reset:
+                for (size_t i = 0; i < nbase; i++)
+                {
+                    for (size_t j = 0; j < nbase; j++)
+                    {
+                        hcc[i * this->nbase_x + j] = h_diag[i][j];
+                        scc[i * this->nbase_x + j] = s_diag[i][j];
+                    }
+
+                    for (size_t j = nbase; j < this->nbase_x; j++)
+                    {
+                        hcc[i * this->nbase_x + j] = *this->zero;
+                        hcc[j * this->nbase_x + i] = *this->zero;
+                        scc[i * this->nbase_x + j] = *this->zero;
+                        scc[j * this->nbase_x + i] = *this->zero;
+                    }
+                }
+            }
         }
         else
         {
-            std::vector<std::vector<T>> h_diag(nbase, std::vector<T>(nbase, *this->zero));
-            std::vector<std::vector<T>> s_diag(nbase, std::vector<T>(nbase, *this->zero));
-
-            for (size_t i = 0; i < nbase; i++)
+#ifdef __MPI  
+            std::vector<T> h_diag;
+            std::vector<T> s_diag;
+            std::vector<T> vcc_tmp;
+            if (this->diag_comm.rank == 0)
             {
-                for (size_t j = 0; j < nbase; j++)
+                h_diag.resize(nbase * nbase, *this->zero);
+                s_diag.resize(nbase * nbase, *this->zero);
+                vcc_tmp.resize(nbase * nbase, *this->zero);
+                for (size_t i = 0; i < nbase; i++)
                 {
-                    h_diag[i][j] = hcc[i * this->nbase_x + j];
-                    s_diag[i][j] = scc[i * this->nbase_x + j];
+                    for (size_t j = 0; j < nbase; j++)
+                    {
+                        h_diag[i * nbase + j] = hcc[i * this->nbase_x + j];
+                        s_diag[i * nbase + j] = scc[i * this->nbase_x + j];
+                    }
                 }
             }
-            dngvx_op<T, Device>()(this->ctx,
-                                  nbase,
-                                  this->nbase_x,
-                                  this->hcc,
-                                  this->scc,
-                                  nband,
-                                  (*eigenvalue_iter).data(),
-                                  this->vcc);
-            // reset:
-            for (size_t i = 0; i < nbase; i++)
+            diago_hs_para(h_diag.data(),
+                          s_diag.data(),
+                          nbase,
+                          nband,
+                          (*eigenvalue_iter).data(),
+                          vcc_tmp.data(),
+                          this->diag_comm.comm,
+                          this->diag_subspace,
+                          this->diago_subspace_bs);
+            if (this->diag_comm.rank == 0)
             {
-                for (size_t j = 0; j < nbase; j++)
+                for (size_t i = 0; i < nband; i++)
                 {
-                    hcc[i * this->nbase_x + j] = h_diag[i][j];
-                    scc[i * this->nbase_x + j] = s_diag[i][j];
-                }
-
-                for (size_t j = nbase; j < this->nbase_x; j++)
-                {
-                    hcc[i * this->nbase_x + j] = *this->zero;
-                    hcc[j * this->nbase_x + i] = *this->zero;
-                    scc[i * this->nbase_x + j] = *this->zero;
-                    scc[j * this->nbase_x + i] = *this->zero;
+                    for (size_t j = 0; j < nbase; j++)
+                    {
+                        vcc[i * this->nbase_x + j] = vcc_tmp[i * nbase + j];
+                    }
                 }
             }
+#else
+            std::cout << "Error: parallel diagonalization is not supported in serial mode." << std::endl;
+            exit(1);    
+#endif
         }
     }
 

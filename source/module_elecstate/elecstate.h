@@ -155,6 +155,7 @@ class ElecState
     }
 
     double get_dftu_energy();
+    double get_local_pp_energy();
 
 #ifdef __DEEPKS
     double get_deepks_E_delta();

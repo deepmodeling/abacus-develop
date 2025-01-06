@@ -67,6 +67,13 @@ void bind_hsolver(py::module& m)
                 where the initial precision of eigenvalue calculation can be coarse.
                 If false, it indicates a non-self-consistent field (non-SCF) calculation,
                 where high precision in eigenvalue calculation is required from the start.
+            comm_info : diag_comm_info
+                The communicator information.
+            diago_subspace : int
+                The method to solve the generalized eigenvalue problem.
+                0: LAPACK, 1: Gen-ELPA, 2: ScaLAPACK
+            nb2d : int
+                The block size in 2d block cyclic distribution if use elpa or scalapack.
         )pbdoc", 
         "mm_op"_a, 
         "precond_vec"_a, 
@@ -76,7 +83,9 @@ void bind_hsolver(py::module& m)
         "need_subspace"_a, 
         "diag_ethr"_a, 
         "scf_type"_a, 
-        "comm_info"_a)
+        "comm_info"_a,
+        "diago_subspace"_a,
+        "nb2d"_a)
         .def("set_psi", &py_hsolver::PyDiagoDavSubspace::set_psi, R"pbdoc(
             Set the initial guess of the eigenvectors, i.e. the wave functions.
         )pbdoc", "psi_in"_a)
