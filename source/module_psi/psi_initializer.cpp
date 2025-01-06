@@ -103,9 +103,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
         for (int iw = iw_start; iw < iw_end; iw++)
         {
             T* psi_slice = &(psi[iw * npwk_max * npol]); // get the memory to write directly. For nspin 4, nbasis*2
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096 / sizeof(T))
-#endif
+            // donot use openmp here, because the random number generator is not thread-safe
             for (int ig = 0; ig < ng; ig++)
             {
                 const double rr = std::rand() / double(RAND_MAX);
