@@ -110,6 +110,13 @@ class DiagoBPCG
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
 
+    // These are for hsolver gemm_op use
+    /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
+    Device * ctx = {};
+    // Pointer to objects of 1 and 0 for gemm 
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
+
     /**
      * @brief Update the precondition array.
      *

@@ -22,6 +22,10 @@ DiagoBPCG<T, Device>::DiagoBPCG(const Real* precondition_in)
     this->device_type    = ct::DeviceTypeToEnum<Device>::value;
 
     this->h_prec  = std::move(ct::TensorMap((void *) precondition_in, r_type, device_type, {this->n_basis}));
+
+    this->one = &one_;
+    this->zero = &zero_;
+    this->neg_one = &neg_one_;
 }
 
 template<typename T, typename Device>
