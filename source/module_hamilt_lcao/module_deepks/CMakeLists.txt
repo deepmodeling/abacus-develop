@@ -1,6 +1,7 @@
 if(ENABLE_DEEPKS)
   list(APPEND objects
       LCAO_deepks.cpp
+      deepks_basic.cpp
       deepks_descriptor.cpp
       deepks_force.cpp
       deepks_fpre.cpp
@@ -12,7 +13,6 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_io.cpp
       LCAO_deepks_pdm.cpp
       LCAO_deepks_phialpha.cpp
-      LCAO_deepks_torch.cpp
       LCAO_deepks_vdelta.cpp
       LCAO_deepks_interface.cpp
       cal_gedm.cpp    

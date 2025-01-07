@@ -225,7 +225,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(PARAM.inp.deepks_model);
+        DeePKS_domain::load_model(PARAM.inp.deepks_model, GlobalC::ld.model_deepks);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
         GlobalC::ld.read_projected_DM((PARAM.inp.init_chg == "file"), PARAM.inp.deepks_equiv, *orb_.Alpha);
     }
@@ -928,9 +928,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
-        elecstate::lcao_cal_tau<TK>(&(this->GG), 
-                                    &(this->GK),
-                                    this->pelec->charge);
+        elecstate::lcao_cal_tau<TK>(&(this->GG), &(this->GK), this->pelec->charge);
     }
 
     //! 2) call after_scf() of ESolver_KS

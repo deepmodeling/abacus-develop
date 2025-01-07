@@ -189,7 +189,6 @@ void LCAO_Deepks::init_index(const int ntype,
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
-    nks_V_delta = nks;
 
     // initialize the H matrix H_V_delta
     if (PARAM.globalv.gamma_only_local)

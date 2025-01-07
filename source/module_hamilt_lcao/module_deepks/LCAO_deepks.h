@@ -3,6 +3,7 @@
 
 #ifdef __DEEPKS
 
+#include "deepks_basic.h"
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_fpre.h"
@@ -90,18 +91,21 @@ class LCAO_Deepks
     // private variables
     //-------------------
     //  private:
-  public:           // change to public to reconstuct the code, 2024-07-22 by mohan
-    int lmaxd = 0;  // max l of descirptors
-    int nmaxd = 0;  //#. descriptors per l
-    int inlmax = 0; // tot. number {i,n,l} - atom, n, l
-    int nat_gdm = 0;
-    int nks_V_delta = 0;
+  public:                              // change to public to reconstuct the code, 2024-07-22 by mohan
+    int lmaxd = 0;                     // max l of descirptors
+    int nmaxd = 0;                     //#. descriptors per l
+    int inlmax = 0;                    // tot. number {i,n,l} - atom, n, l
+    int n_descriptor;                  // natoms * des_per_atom, size of descriptor(projector) basis set
+    int des_per_atom;                  // \sum_L{Nchi(L)*(2L+1)}
+    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
+    ModuleBase::IntArray* alpha_index; // seems not used in the code
+    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
 
     bool init_pdm = false; // for DeePKS NSCF calculation
 
     // deep neural network module that provides corrected Hamiltonian term and
-    // related derivatives.
-    torch::jit::script::Module module;
+    // related derivatives. Used in cal_gedm.
+    torch::jit::script::Module model_deepks;
 
     // saves <phi(0)|alpha(R)> and its derivatives
     // index 0 for itself and index 1-3 for derivatives over x,y,z
@@ -117,16 +121,6 @@ class LCAO_Deepks
 
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm; //[tot_Inl][2l+1][2l+1]
-
-    /// size of descriptor(projector) basis set
-    int n_descriptor;
-
-    // \sum_L{Nchi(L)*(2L+1)}
-    int des_per_atom;
-
-    ModuleBase::IntArray* alpha_index; // seems not used in the code
-    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
-    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
 
     // HR status,
     // true : HR should be calculated
@@ -267,39 +261,18 @@ class LCAO_Deepks
     template <typename TK>
     void cal_e_delta_band(const std::vector<std::vector<TK>>& dm /**<[in] density matrix*/, const int nks);
 
-    //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k
+    //! a temporary interface for cal_e_delta_band
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
 
-  public:
-    //-------------------
-    // LCAO_deepks_torch.cpp
-    //-------------------
-
-    // This file contains interfaces with libtorch,
-    // including loading of model and calculating gradients
-    // as well as subroutines that prints the results for checking
-
-    // The file contains 8 subroutines:
-    // 6. cal_gevdm : d(des)/d(pdm)
-    //       calculated using torch::autograd::grad
-    // 7. load_model : loads model for applying V_delta
     // 8. cal_gedm : calculates d(E_delta)/d(pdm)
     //       this is the term V(D) that enters the expression H_V_delta = |alpha>V(D)<alpha|
     //       caculated using torch::autograd::grad
     // 9. check_gedm : prints gedm for checking
-
-  public:
-    // load the trained neural network model
-    void load_model(const std::string& model_file);
-
     /// calculate partial of energy correction to descriptors
     void cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor);
     void check_gedm();
     void cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor);
-
-    // calculate gevdm
-    void cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm);
 
   private:
     const Parallel_Orbitals* pv;

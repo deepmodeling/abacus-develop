@@ -225,7 +225,6 @@ void LCAO_deepks_io::save_npy_gvepsl(const int nat,
     {
         for (int ibt = 0; ibt < nat; ++ibt)
         {
-
             for (int p = 0; p < des_per_atom; ++p)
             {
                 npy_gvepsl.push_back(accessor[i][ibt][p]);

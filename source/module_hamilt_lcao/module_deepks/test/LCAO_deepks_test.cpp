@@ -283,7 +283,7 @@ void test_deepks::check_descriptor(std::vector<torch::Tensor>& descriptor)
 void test_deepks::check_gvx(torch::Tensor& gdmx)
 {
     std::vector<torch::Tensor> gevdm;
-    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm, gevdm);
     torch::Tensor gvx;
     DeePKS_domain::cal_gvx(ucell.nat,
                            GlobalC::ld.inlmax,
@@ -321,7 +321,7 @@ void test_deepks::check_gvx(torch::Tensor& gdmx)
 void test_deepks::check_gvepsl(torch::Tensor& gdmepsl)
 {
     std::vector<torch::Tensor> gevdm;
-    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm, gevdm);
     torch::Tensor gvepsl;
     DeePKS_domain::cal_gvepsl(ucell.nat,
                               GlobalC::ld.inlmax,
@@ -346,7 +346,7 @@ void test_deepks::check_gvepsl(torch::Tensor& gdmepsl)
 
 void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
 {
-    GlobalC::ld.load_model("model.ptg");
+    DeePKS_domain::load_model("model.ptg", GlobalC::ld.model_deepks);
     if (PARAM.sys.gamma_only_local)
     {
         GlobalC::ld.allocate_V_delta(ucell.nat, 1); // 1 for gamma-only

@@ -116,8 +116,8 @@ void LCAO_Deepks::cal_gedm(const int nat, const std::vector<torch::Tensor>& desc
     // input_dim:(natom, des_per_atom)
     inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, this->des_per_atom}));
     std::vector<torch::Tensor> ec;
-    ec.push_back(module.forward(inputs).toTensor()); // Hartree
-    this->E_delta = ec[0].item<double>() * 2;        // Ry; *2 is for Hartree to Ry
+    ec.push_back(this->model_deepks.forward(inputs).toTensor()); // Hartree
+    this->E_delta = ec[0].item<double>() * 2;                    // Ry; *2 is for Hartree to Ry
 
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
