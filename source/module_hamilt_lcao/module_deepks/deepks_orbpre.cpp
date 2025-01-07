@@ -1,7 +1,7 @@
 #ifdef __DEEPKS
 
 /// cal_orbital_precalc : orbital_precalc is used for training with orbital label,
-///                       which equals gvdm * orbital_pdm,
+///                       which equals gevdm * orbital_pdm,
 ///                       orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap
 
 #include "deepks_orbpre.h"
@@ -14,7 +14,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
-// calculates orbital_precalc[nks,NAt,NDscrpt] = gvdm * orbital_pdm;
+// calculates orbital_precalc[nks,NAt,NDscrpt] = gevdm * orbital_pdm;
 // orbital_pdm[nks,Inl,nm,nm] = dm_hl * overlap * overlap;
 template <typename TK, typename TH>
 void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,

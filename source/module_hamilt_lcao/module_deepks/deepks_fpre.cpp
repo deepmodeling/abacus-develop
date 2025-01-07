@@ -1,6 +1,7 @@
 #ifdef __DEEPKS
 
-#include "LCAO_deepks.h"
+#include "deepks_fpre.h"
+
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
 #include "module_base/parallel_reduce.h"
@@ -11,26 +12,25 @@
 
 /// this subroutine calculates the gradient of projected density matrices
 /// gdmx_m,m = d/dX sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
-
-// There are 2 subroutines in this file:
-// 1. cal_gdmx, calculating gdmx
-// 2. check_gdmx, which prints gdmx to a series of .dat files
-
 template <typename TK>
-void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD,
-                           const int nks,
-                           const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                           std::vector<hamilt::HContainer<double>*> phialpha,
-                           torch::Tensor& gdmx)
+void DeePKS_domain::cal_gdmx(const int lmaxd,
+                             const int inlmax,
+                             const int nks,
+                             const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                             std::vector<hamilt::HContainer<double>*> phialpha,
+                             const ModuleBase::IntArray* inl_index,
+                             const std::vector<std::vector<TK>>& dm,
+                             const UnitCell& ucell,
+                             const LCAO_Orbitals& orb,
+                             const Parallel_Orbitals& pv,
+                             const Grid_Driver& GridD,
+                             torch::Tensor& gdmx)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "cal_gdmx");
-    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
+    ModuleBase::TITLE("DeePKS_domain", "cal_gdmx");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmx");
     // get DS_alpha_mu and S_nu_beta
 
-    int nrow = this->pv->nrow;
+    int nrow = pv.nrow;
     const int nm = 2 * lmaxd + 1;
     // gdmx: dD/dX
     // \sum_{mu,nu} 2*c_mu*c_nu * <dphi_mu/dx|alpha_m><alpha_m'|phi_nu>
@@ -83,8 +83,8 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                         continue;
                     }
 
-                    auto row_indexes = pv->get_indexes_row(ibt1);
-                    auto col_indexes = pv->get_indexes_col(ibt2);
+                    auto row_indexes = pv.get_indexes_row(ibt1);
+                    auto col_indexes = pv.get_indexes_col(ibt2);
                     if (row_indexes.size() * col_indexes.size() == 0)
                     {
                         continue;
@@ -108,7 +108,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                     }
                     ModuleBase::Vector3<double> dR(dRx, dRy, dRz);
 
-                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, pv);
+                    hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
                     dm_pair.allocate(nullptr, 1);
                     for (int ik = 0; ik < nks; ik++)
                     {
@@ -126,11 +126,11 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                         }
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_row_size(), kphase, 1);
+                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_row_size(), kphase, 1);
                         }
                         else
                         {
-                            dm_pair.add_from_matrix(dm[ik].data(), pv->get_col_size(), kphase, 0);
+                            dm_pair.add_from_matrix(dm[ik].data(), pv.get_col_size(), kphase, 0);
                         }
                     }
 
@@ -158,7 +158,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                             {
                                 for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                                 {
-                                    const int inl = this->inl_index[T0](I0, L0, N0);
+                                    const int inl = inl_index[T0](I0, L0, N0);
                                     const int nm = 2 * L0 + 1;
                                     for (int m1 = 0; m1 < nm; ++m1)
                                     {
@@ -183,7 +183,7 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
 
                                                 //(<chi_nu|d/dX alpha_m'>)<chi_mu|alpha_m> = -(<d/dX
-                                                //chi_nu|alpha_m'>)<chi_mu|alpha_m>
+                                                // chi_nu|alpha_m'>)<chi_mu|alpha_m>
                                                 accessor[i][ibt2][inl][m2][m1]
                                                     -= grad_overlap_2[i]->get_value(col_indexes[iw2], ib + m2)
                                                        * overlap_1->get_value(row_indexes[iw1], ib + m1) * *dm_current;
@@ -205,11 +205,11 @@ void LCAO_Deepks::cal_gdmx(const std::vector<std::vector<TK>>& dm,
 #ifdef __MPI
     Parallel_Reduce::reduce_all(gdmx.data_ptr<double>(), 3 * ucell.nat * inlmax * nm * nm);
 #endif
-    ModuleBase::timer::tick("LCAO_Deepks", "cal_gdmx");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gdmx");
     return;
 }
 
-void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
+void DeePKS_domain::check_gdmx(const torch::Tensor& gdmx)
 {
     std::stringstream ss;
     std::ofstream ofs_x;
@@ -220,9 +220,10 @@ void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
     ofs_y << std::setprecision(10);
     ofs_z << std::setprecision(10);
 
-    const int nm = 2 * this->lmaxd + 1;
+    // size: [3][natom][inlmax][nm][nm]
+    auto size = gdmx.sizes();
     auto accessor = gdmx.accessor<double, 5>();
-    for (int ia = 0; ia < nat; ia++)
+    for (int ia = 0; ia < size[1]; ia++)
     {
         ss.str("");
         ss << "gdmx_" << ia << ".dat";
@@ -234,11 +235,11 @@ void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
         ss << "gdmz_" << ia << ".dat";
         ofs_z.open(ss.str().c_str());
 
-        for (int inl = 0; inl < inlmax; inl++)
+        for (int inl = 0; inl < size[2]; inl++)
         {
-            for (int m1 = 0; m1 < nm; m1++)
+            for (int m1 = 0; m1 < size[3]; m1++)
             {
-                for (int m2 = 0; m2 < nm; m2++)
+                for (int m2 = 0; m2 < size[4]; m2++)
                 {
                     ofs_x << accessor[0][ia][inl][m1][m2] << " ";
                     ofs_y << accessor[1][ia][inl][m1][m2] << " ";
@@ -255,22 +256,159 @@ void LCAO_Deepks::check_gdmx(const int nat, const torch::Tensor& gdmx)
     }
 }
 
-template void LCAO_Deepks::cal_gdmx<double>(const std::vector<std::vector<double>>& dm,
-                                            const UnitCell& ucell,
-                                            const LCAO_Orbitals& orb,
-                                            const Grid_Driver& GridD,
-                                            const int nks,
-                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                            std::vector<hamilt::HContainer<double>*> phialpha,
-                                            torch::Tensor& gdmx);
+// calculates gradient of descriptors from gradient of projected density matrices
+void DeePKS_domain::cal_gvx(const int nat,
+                            const int inlmax,
+                            const int des_per_atom,
+                            const int* inl_l,
+                            const std::vector<torch::Tensor>& gevdm,
+                            const torch::Tensor& gdmx,
+                            torch::Tensor& gvx)
+{
+    ModuleBase::TITLE("DeePKS_domain", "cal_gvx");
 
-template void LCAO_Deepks::cal_gdmx<std::complex<double>>(const std::vector<std::vector<std::complex<double>>>& dm,
-                                                          const UnitCell& ucell,
-                                                          const LCAO_Orbitals& orb,
-                                                          const Grid_Driver& GridD,
-                                                          const int nks,
-                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-                                                          std::vector<hamilt::HContainer<double>*> phialpha,
-                                                          torch::Tensor& gdmx);
+    // gdmr : nat(derivative) * 3 * inl(projector) * nm * nm
+    std::vector<torch::Tensor> gdmr;
+    auto accessor = gdmx.accessor<double, 5>();
+
+    if (GlobalV::MY_RANK == 0)
+    {
+        // make gdmx as tensor
+        int nlmax = inlmax / nat;
+        for (int nl = 0; nl < nlmax; ++nl)
+        {
+            std::vector<torch::Tensor> bmmv;
+            for (int ibt = 0; ibt < nat; ++ibt)
+            {
+                std::vector<torch::Tensor> xmmv;
+                for (int i = 0; i < 3; ++i)
+                {
+                    std::vector<torch::Tensor> ammv;
+                    for (int iat = 0; iat < nat; ++iat)
+                    {
+                        int inl = iat * nlmax + nl;
+                        int nm = 2 * inl_l[inl] + 1;
+                        std::vector<double> mmv;
+                        for (int m1 = 0; m1 < nm; ++m1)
+                        {
+                            for (int m2 = 0; m2 < nm; ++m2)
+                            {
+                                mmv.push_back(accessor[i][ibt][inl][m1][m2]);
+                            }
+                        } // nm^2
+                        torch::Tensor mm = torch::tensor(mmv, torch::TensorOptions().dtype(torch::kFloat64))
+                                               .reshape({nm, nm}); // nm*nm
+                        ammv.push_back(mm);
+                    }
+                    torch::Tensor amm = torch::stack(ammv, 0); // nat*nm*nm
+                    xmmv.push_back(amm);
+                }
+                torch::Tensor bmm = torch::stack(xmmv, 0); // 3*nat*nm*nm
+                bmmv.push_back(bmm);
+            }
+            gdmr.push_back(torch::stack(bmmv, 0)); // nbt*3*nat*nm*nm
+        }
+
+        assert(gdmr.size() == nlmax);
+
+        // einsum for each inl:
+        // gdmr : b:nat(derivative) * x:3 * a:inl(projector) * m:nm *
+        // n:nm gevdm : a:inl * v:nm (descriptor) * m:nm (pdm, dim1) *
+        // n:nm (pdm, dim2) gvx_vector : b:nat(derivative) * x:3 *
+        // a:inl(projector) * m:nm(descriptor)
+        std::vector<torch::Tensor> gvx_vector;
+        for (int nl = 0; nl < nlmax; ++nl)
+        {
+            gvx_vector.push_back(at::einsum("bxamn, avmn->bxav", {gdmr[nl], gevdm[nl]}));
+        }
+
+        // cat nv-> \sum_nl(nv) = \sum_nl(nm_nl)=des_per_atom
+        // concatenate index a(inl) and m(nm)
+        // gvx:d(d)/dX, size: [natom][3][natom][des_per_atom]
+        gvx = torch::cat(gvx_vector, -1);
+
+        assert(gvx.size(0) == nat);
+        assert(gvx.size(1) == 3);
+        assert(gvx.size(2) == nat);
+        assert(gvx.size(3) == des_per_atom);
+    }
+
+    return;
+}
+
+void DeePKS_domain::check_gvx(const torch::Tensor& gvx)
+{
+    std::stringstream ss;
+    std::ofstream ofs_x;
+    std::ofstream ofs_y;
+    std::ofstream ofs_z;
+
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    auto size = gvx.sizes();
+    auto accessor = gvx.accessor<double, 4>();
+
+    for (int ia = 0; ia < size[0]; ia++)
+    {
+        ss.str("");
+        ss << "gvx_" << ia << ".dat";
+        ofs_x.open(ss.str().c_str());
+        ss.str("");
+        ss << "gvy_" << ia << ".dat";
+        ofs_y.open(ss.str().c_str());
+        ss.str("");
+        ss << "gvz_" << ia << ".dat";
+        ofs_z.open(ss.str().c_str());
+
+        ofs_x << std::setprecision(10);
+        ofs_y << std::setprecision(10);
+        ofs_z << std::setprecision(10);
+
+        for (int ib = 0; ib < size[2]; ib++)
+        {
+            for (int nlm = 0; nlm < size[3]; nlm++)
+            {
+                ofs_x << accessor[ia][0][ib][nlm] << " ";
+                ofs_y << accessor[ia][1][ib][nlm] << " ";
+                ofs_z << accessor[ia][2][ib][nlm] << " ";
+            }
+            ofs_x << std::endl;
+            ofs_y << std::endl;
+            ofs_z << std::endl;
+        }
+        ofs_x.close();
+        ofs_y.close();
+        ofs_z.close();
+    }
+}
+
+template void DeePKS_domain::cal_gdmx<double>(const int lmaxd,
+                                              const int inlmax,
+                                              const int nks,
+                                              const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                              std::vector<hamilt::HContainer<double>*> phialpha,
+                                              const ModuleBase::IntArray* inl_index,
+                                              const std::vector<std::vector<double>>& dm,
+                                              const UnitCell& ucell,
+                                              const LCAO_Orbitals& orb,
+                                              const Parallel_Orbitals& pv,
+                                              const Grid_Driver& GridD,
+                                              torch::Tensor& gdmx);
+
+template void DeePKS_domain::cal_gdmx<std::complex<double>>(const int lmaxd,
+                                                            const int inlmax,
+                                                            const int nks,
+                                                            const std::vector<ModuleBase::Vector3<double>>& kvec_d,
+                                                            std::vector<hamilt::HContainer<double>*> phialpha,
+                                                            const ModuleBase::IntArray* inl_index,
+                                                            const std::vector<std::vector<std::complex<double>>>& dm,
+                                                            const UnitCell& ucell,
+                                                            const LCAO_Orbitals& orb,
+                                                            const Parallel_Orbitals& pv,
+                                                            const Grid_Driver& GridD,
+                                                            torch::Tensor& gdmx);
 
 #endif

@@ -5,9 +5,11 @@
 
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
+#include "deepks_fpre.h"
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
+#include "deepks_spre.h"
 #include "deepks_vdpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
@@ -122,9 +124,9 @@ class LCAO_Deepks
     // \sum_L{Nchi(L)*(2L+1)}
     int des_per_atom;
 
-    ModuleBase::IntArray* alpha_index;
-    ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
-    int* inl_l;                      // inl_l[inl_index] = l of descriptor with inl_index
+    ModuleBase::IntArray* alpha_index; // seems not used in the code
+    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
+    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
 
     // HR status,
     // true : HR should be calculated
@@ -212,12 +214,9 @@ class LCAO_Deepks
     // It also contains subroutines for printing pdm and gdmx
     // for checking purpose
 
-    // There are 4 subroutines in this file:
+    // There are 2 subroutines in this file:
     // 1. cal_projected_DM, which is used for calculating pdm
     // 2. check_projected_dm, which prints pdm to descriptor.dat
-
-    // 3. cal_gdmx, calculating gdmx (and optionally gdmepsl for stress)
-    // 4. check_gdmx, which prints gdmx to a series of .dat files
 
   public:
     /**
@@ -236,34 +235,6 @@ class LCAO_Deepks
                           const Grid_Driver& GridD);
 
     void check_projected_dm();
-
-    // calculate the gradient of pdm with regard to atomic positions
-    // d/dX D_{Inl,mm'}
-    template <typename TK>
-    void cal_gdmx( // const ModuleBase::matrix& dm,
-        const std::vector<std::vector<TK>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        const Grid_Driver& GridD,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        std::vector<hamilt::HContainer<double>*> phialpha,
-        torch::Tensor& gdmx);
-
-    void check_gdmx(const int nat, const torch::Tensor& gdmx);
-
-    template <typename TK>
-    void cal_gdmepsl( // const ModuleBase::matrix& dm,
-        const std::vector<std::vector<TK>>& dm,
-        const UnitCell& ucell,
-        const LCAO_Orbitals& orb,
-        const Grid_Driver& GridD,
-        const int nks,
-        const std::vector<ModuleBase::Vector3<double>>& kvec_d,
-        std::vector<hamilt::HContainer<double>*> phialpha,
-        torch::Tensor& gdmepsl);
-
-    void check_gdmepsl(const torch::Tensor& gdmepsl);
 
     /**
      * @brief set init_pdm to skip the calculation of pdm in SCF iteration
@@ -310,14 +281,6 @@ class LCAO_Deepks
     // as well as subroutines that prints the results for checking
 
     // The file contains 8 subroutines:
-    // 3. cal_gvx : gvx is used for training with force label, which is gradient of descriptors,
-    //       calculated by d(des)/dX = d(pdm)/dX * d(des)/d(pdm) = gdmx * gvdm
-    //       using einsum
-    // 4. check_gvx : prints gvx into gvx.dat for checking
-    // 5. cal_gvepsl : gvepsl is used for training with stress label, which is derivative of
-    //       descriptors wrt strain tensor, calculated by
-    //       d(des)/d\epsilon_{ab} = d(pdm)/d\epsilon_{ab} * d(des)/d(pdm) = gdmepsl * gvdm
-    //       using einsum
     // 6. cal_gevdm : d(des)/d(pdm)
     //       calculated using torch::autograd::grad
     // 7. load_model : loads model for applying V_delta
@@ -327,24 +290,6 @@ class LCAO_Deepks
     // 9. check_gedm : prints gedm for checking
 
   public:
-    /// calculates gradient of descriptors w.r.t atomic positions
-    ///----------------------------------------------------
-    /// m, n: 2*l+1
-    /// v: eigenvalues of dm , 2*l+1
-    /// a,b: natom
-    ///  - (a: the center of descriptor orbitals
-    ///  - b: the atoms whose force being calculated)
-    /// gvdm*gdmx->gvx
-    ///----------------------------------------------------
-    void cal_gvx(const int nat, const std::vector<torch::Tensor>& gevdm, const torch::Tensor& gdmx, torch::Tensor& gvx);
-    void check_gvx(const int nat, const torch::Tensor& gvx);
-
-    // for stress
-    void cal_gvepsl(const int nat,
-                    const std::vector<torch::Tensor>& gevdm,
-                    const torch::Tensor& gdmepsl,
-                    torch::Tensor& gvepsl);
-
     // load the trained neural network model
     void load_model(const std::string& model_file);
 

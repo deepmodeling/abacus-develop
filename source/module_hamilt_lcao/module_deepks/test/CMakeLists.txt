@@ -1,3 +1,4 @@
+remove_definitions(-DUSE_PAW)
 add_executable(
     test_deepks
     main_deepks.cpp klist_1.cpp LCAO_deepks_test_prep.cpp LCAO_deepks_test.cpp
@@ -35,7 +36,7 @@ add_executable(
 target_link_libraries(
     test_deepks
     base device  parameter deepks psi planewave neighbor container
-    orb gint numerical_atomic_orbitals paw
+    orb gint numerical_atomic_orbitals
     ${math_libs}
 )
 

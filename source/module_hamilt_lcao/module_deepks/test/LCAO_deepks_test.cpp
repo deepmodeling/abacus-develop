@@ -162,14 +162,35 @@ void test_deepks::check_gdmx(torch::Tensor& gdmx)
 {
     if (PARAM.sys.gamma_only_local)
     {
-        GlobalC::ld.cal_gdmx(dm_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmx);
+        DeePKS_domain::cal_gdmx(GlobalC::ld.lmaxd,
+                                GlobalC::ld.inlmax,
+                                kv.nkstot,
+                                kv.kvec_d,
+                                GlobalC::ld.phialpha,
+                                GlobalC::ld.inl_index,
+                                dm_new,
+                                ucell,
+                                ORB,
+                                ParaO,
+                                Test_Deepks::GridD,
+                                gdmx);
     }
     else
     {
-        GlobalC::ld
-            .cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmx);
+        DeePKS_domain::cal_gdmx(GlobalC::ld.lmaxd,
+                                GlobalC::ld.inlmax,
+                                kv.nkstot,
+                                kv.kvec_d,
+                                GlobalC::ld.phialpha,
+                                GlobalC::ld.inl_index,
+                                dm_k_new,
+                                ucell,
+                                ORB,
+                                ParaO,
+                                Test_Deepks::GridD,
+                                gdmx);
     }
-    GlobalC::ld.check_gdmx(ucell.nat, gdmx);
+    DeePKS_domain::check_gdmx(gdmx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -196,19 +217,39 @@ void test_deepks::check_gdmx(torch::Tensor& gdmx)
     }
 }
 
-void test_deepks::check_gdmepsl()
+void test_deepks::check_gdmepsl(torch::Tensor& gdmepsl)
 {
-    torch::Tensor gdmepsl;
     if (PARAM.sys.gamma_only_local)
     {
-        GlobalC::ld.cal_gdmepsl(dm_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmepsl);
+        DeePKS_domain::cal_gdmepsl(GlobalC::ld.lmaxd,
+                                   GlobalC::ld.inlmax,
+                                   kv.nkstot,
+                                   kv.kvec_d,
+                                   GlobalC::ld.phialpha,
+                                   GlobalC::ld.inl_index,
+                                   dm_new,
+                                   ucell,
+                                   ORB,
+                                   ParaO,
+                                   Test_Deepks::GridD,
+                                   gdmepsl);
     }
     else
     {
-        GlobalC::ld
-            .cal_gdmx(dm_k_new, ucell, ORB, Test_Deepks::GridD, kv.nkstot, kv.kvec_d, GlobalC::ld.phialpha, gdmepsl);
+        DeePKS_domain::cal_gdmepsl(GlobalC::ld.lmaxd,
+                                   GlobalC::ld.inlmax,
+                                   kv.nkstot,
+                                   kv.kvec_d,
+                                   GlobalC::ld.phialpha,
+                                   GlobalC::ld.inl_index,
+                                   dm_k_new,
+                                   ucell,
+                                   ORB,
+                                   ParaO,
+                                   Test_Deepks::GridD,
+                                   gdmepsl);
     }
-    GlobalC::ld.check_gdmepsl(gdmepsl);
+    DeePKS_domain::check_gdmepsl(gdmepsl);
 
     for (int i = 0; i < 6; i++)
     {
@@ -244,8 +285,14 @@ void test_deepks::check_gvx(torch::Tensor& gdmx)
     std::vector<torch::Tensor> gevdm;
     GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
     torch::Tensor gvx;
-    GlobalC::ld.cal_gvx(ucell.nat, gevdm, gdmx, gvx);
-    GlobalC::ld.check_gvx(ucell.nat, gvx);
+    DeePKS_domain::cal_gvx(ucell.nat,
+                           GlobalC::ld.inlmax,
+                           GlobalC::ld.des_per_atom,
+                           GlobalC::ld.inl_l,
+                           gevdm,
+                           gdmx,
+                           gvx);
+    DeePKS_domain::check_gvx(gvx);
 
     for (int ia = 0; ia < ucell.nat; ia++)
     {
@@ -267,6 +314,32 @@ void test_deepks::check_gvx(torch::Tensor& gdmx)
         ss << "gvz_" << ia << ".dat";
         ss1.str("");
         ss1 << "gvz_" << ia << "_ref.dat";
+        this->compare_with_ref(ss.str(), ss1.str());
+    }
+}
+
+void test_deepks::check_gvepsl(torch::Tensor& gdmepsl)
+{
+    std::vector<torch::Tensor> gevdm;
+    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+    torch::Tensor gvepsl;
+    DeePKS_domain::cal_gvepsl(ucell.nat,
+                              GlobalC::ld.inlmax,
+                              GlobalC::ld.des_per_atom,
+                              GlobalC::ld.inl_l,
+                              gevdm,
+                              gdmepsl,
+                              gvepsl);
+    DeePKS_domain::check_gvepsl(gvepsl);
+
+    for (int i = 0; i < 6; i++)
+    {
+        std::stringstream ss;
+        std::stringstream ss1;
+        ss.str("");
+        ss << "gvepsl_" << i << ".dat";
+        ss1.str("");
+        ss1 << "gvepsl_" << i << "_ref.dat";
         this->compare_with_ref(ss.str(), ss1.str());
     }
 }
