@@ -97,23 +97,23 @@ void DiagoBPCG<T, Device>::orth_cholesky(
     // hsub_out = psi_out * transc(psi_out)
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
-    // hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
+    hsub_out = ct::op::einsum("ij,kj->ik", psi_out, psi_out, option);
 
     // gemm: hsub_out(n_band x n_band) = psi_out^T(n_band x n_basis) * psi_out(n_basis x n_band)
-    gemm_op()(this->ctx,
-                'C',
-                'N',
-                this->n_band,      //m
-                this->n_band,      //n
-                this->n_dim,       //k
-                this->one,         //1.0
-                psi_out.data<T>(),
-                this->n_basis,     //lda
-                psi_out.data<T>(),
-                this->n_basis,     //ldb
-                this->zero,        //0.0
-                hsub_out.data<T>(),
-                this->n_band);     //ldc
+    // gemm_op()(this->ctx,
+    //             'C',
+    //             'N',
+    //             this->n_band,      //m
+    //             this->n_band,      //n
+    //             this->n_dim,       //k
+    //             this->one,         //1.0
+    //             psi_out.data<T>(),
+    //             this->n_basis,     //lda
+    //             psi_out.data<T>(),
+    //             this->n_basis,     //ldb
+    //             this->zero,        //0.0
+    //             hsub_out.data<T>(),
+    //             this->n_band);     //ldc
 
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
@@ -165,45 +165,45 @@ void DiagoBPCG<T, Device>::orth_projection(
 {
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_in);
-    // hsub_in = ct::op::einsum("ij,kj->ik", grad_out, psi_in, option);
+    hsub_in = ct::op::einsum("ij,kj->ik", grad_out, psi_in, option);
 
     // this->orth_projection(this->psi, this->hsub, this->grad);
     // gemm: hsub_in(n_band x n_band) = psi_in^T(n_band x n_basis) * grad_out(n_basis x n_band)
-    gemm_op()(this->ctx,
-                'C',
-                'N',
-                this->n_band,      //m
-                this->n_band,      //n
-                this->n_dim,       //k
-                this->one,         //1.0
-                psi_in.data<T>(),
-                this->n_basis,     //lda
-                grad_out.data<T>(),
-                this->n_basis,     //ldb
-                this->zero,        //0.0
-                hsub_in.data<T>(),
-                this->n_band);     //ldc
+    // gemm_op()(this->ctx,
+    //             'C',
+    //             'N',
+    //             this->n_band,      //m
+    //             this->n_band,      //n
+    //             this->n_dim,       //k
+    //             this->one,         //1.0
+    //             psi_in.data<T>(),
+    //             this->n_basis,     //lda
+    //             grad_out.data<T>(),
+    //             this->n_basis,     //ldb
+    //             this->zero,        //0.0
+    //             hsub_in.data<T>(),
+    //             this->n_band);     //ldc
 
     // set_matrix_op()('L', hsub_in->data<T>(), this->n_band);
     option = ct::EinsumOption(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/-1.0, /*beta=*/1.0, /*Tensor out=*/&grad_out);
-    // grad_out = ct::op::einsum("ij,jk->ik", hsub_in, psi_in, option);
+    grad_out = ct::op::einsum("ij,jk->ik", hsub_in, psi_in, option);
 
     // grad_out(n_basis x n_band) = 1.0 * grad_out(n_basis x n_band) - psi_in(n_basis x n_band) * hsub_in(n_band x n_band)
-    gemm_op()(this->ctx,
-                'N',
-                'N',
-                this->n_dim,      //m
-                this->n_band,     //n
-                this->n_band,     //k
-                this->neg_one,    //-1.0
-                psi_in.data<T>(),
-                this->n_basis,    //lda
-                hsub_in.data<T>(),
-                this->n_band,     //ldb
-                this->one,        //1.0
-                grad_out.data<T>(),
-                this->n_basis);   //ldc
+    // gemm_op()(this->ctx,
+    //             'N',
+    //             'N',
+    //             this->n_dim,      //m
+    //             this->n_band,     //n
+    //             this->n_band,     //k
+    //             this->neg_one,    //-1.0
+    //             psi_in.data<T>(),
+    //             this->n_basis,    //lda
+    //             hsub_in.data<T>(),
+    //             this->n_band,     //ldb
+    //             this->one,        //1.0
+    //             grad_out.data<T>(),
+    //             this->n_basis);   //ldc
 
     return;
 }
@@ -263,23 +263,23 @@ void DiagoBPCG<T, Device>::diag_hsub(
     // it controls the ops to use the corresponding device to calculate results
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_out);
-    // hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
+    hsub_out = ct::op::einsum("ij,kj->ik", psi_in, hpsi_in, option);
 
     // gemm: hsub_out(n_band x n_band) = hpsi_in^T(n_band x n_basis) * psi_in(n_basis x n_band)
-    gemm_op()(this->ctx,
-                'C',
-                'N',
-                this->n_band,       //m
-                this->n_band,       //n
-                this->n_dim,        //k
-                this->one,          //1.0
-                hpsi_in.data<T>(),
-                this->n_basis,      //lda
-                psi_in.data<T>(),
-                this->n_basis,      //ldb
-                this->zero,         //0.0
-                hsub_out.data<T>(),
-                this->n_band);      //ldc
+    // gemm_op()(this->ctx,
+    //             'C',
+    //             'N',
+    //             this->n_band,       //m
+    //             this->n_band,       //n
+    //             this->n_dim,        //k
+    //             this->one,          //1.0
+    //             hpsi_in.data<T>(),
+    //             this->n_basis,      //lda
+    //             psi_in.data<T>(),
+    //             this->n_basis,      //ldb
+    //             this->zero,         //0.0
+    //             hsub_out.data<T>(),
+    //             this->n_band);      //ldc
 
     ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 
