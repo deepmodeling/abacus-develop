@@ -216,25 +216,25 @@ void DiagoBPCG<T, Device>::rotate_wf(
 {
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&workspace_in);
-    // workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
+    workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
 
     // this->rotate_wf(hsub_out, psi_out, workspace_in);
     // this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
     // gemm: workspace_in(n_basis x n_band) = psi_out(n_basis x n_band) * hsub_in(n_band x n_band)
-    gemm_op()(this->ctx,
-                'N',
-                'N',
-                this->n_basis,        //m
-                this->n_band,       //n
-                this->n_band,       //k
-                this->one,          //1.0
-                psi_out.data<T>(),
-                this->n_basis,      //lda
-                hsub_in.data<T>(),
-                this->n_band,       //ldb
-                this->zero,         //0.0
-                workspace_in.data<T>(),
-                this->n_basis);     //ldc
+    // gemm_op()(this->ctx,
+    //             'N',
+    //             'N',
+    //             this->n_basis,        //m
+    //             this->n_band,       //n
+    //             this->n_band,       //k
+    //             this->one,          //1.0
+    //             psi_out.data<T>(),
+    //             this->n_basis,      //lda
+    //             hsub_in.data<T>(),
+    //             this->n_band,       //ldb
+    //             this->zero,         //0.0
+    //             workspace_in.data<T>(),
+    //             this->n_basis);     //ldc
 
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
 
