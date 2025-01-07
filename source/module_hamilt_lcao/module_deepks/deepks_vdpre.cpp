@@ -1,5 +1,5 @@
 /// cal_v_delta_precalc : v_delta_precalc is used for training with v_delta label,
-//                         which equals gvdm * v_delta_pdm,
+//                         which equals gevdm * v_delta_pdm,
 //                         v_delta_pdm = overlap * overlap
 /// check_v_delta_precalc : check v_delta_precalc
 //  prepare_phialpha : prepare phialpha for outputting npy file
@@ -17,7 +17,7 @@
 #include "module_hamilt_lcao/module_hcontainer/atom_pair.h"
 #include "module_parameter/parameter.h"
 
-// calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gvdm * v_delta_pdm;
+// calculates v_delta_precalc[nks,nlocal,nlocal,NAt,NDscrpt] = gevdm * v_delta_pdm;
 // v_delta_pdm[nks,nlocal,nlocal,Inl,nm,nm] = overlap * overlap;
 // for deepks_v_delta = 1
 template <typename TK>

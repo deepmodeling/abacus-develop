@@ -3,6 +3,8 @@ if(ENABLE_DEEPKS)
       LCAO_deepks.cpp
       deepks_descriptor.cpp
       deepks_force.cpp
+      deepks_fpre.cpp
+      deepks_spre.cpp
       deepks_orbital.cpp
       deepks_orbpre.cpp
       deepks_vdpre.cpp
@@ -13,10 +15,7 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_torch.cpp
       LCAO_deepks_vdelta.cpp
       LCAO_deepks_interface.cpp
-      cal_gdmx.cpp
-      cal_gdmepsl.cpp
-      cal_gedm.cpp
-      cal_gvx.cpp      
+      cal_gedm.cpp    
   )
 
   add_library(
