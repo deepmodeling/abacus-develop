@@ -260,7 +260,17 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                       GlobalC::ld.pdm,
                                       descriptor,
                                       GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+        DeePKS_domain::cal_gedm(ucell.nat,
+                                GlobalC::ld.lmaxd,
+                                GlobalC::ld.nmaxd,
+                                GlobalC::ld.inlmax,
+                                GlobalC::ld.des_per_atom,
+                                GlobalC::ld.inl_l,
+                                descriptor,
+                                GlobalC::ld.pdm,
+                                GlobalC::ld.model_deepks,
+                                GlobalC::ld.gedm,
+                                GlobalC::ld.E_delta);
 
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,

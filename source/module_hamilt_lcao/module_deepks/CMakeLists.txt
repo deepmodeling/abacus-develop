@@ -15,7 +15,6 @@ if(ENABLE_DEEPKS)
       LCAO_deepks_pdm.cpp
       LCAO_deepks_phialpha.cpp
       LCAO_deepks_interface.cpp
-      cal_gedm.cpp    
   )
 
   add_library(

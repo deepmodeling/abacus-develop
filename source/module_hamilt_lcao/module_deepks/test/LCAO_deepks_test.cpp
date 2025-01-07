@@ -355,14 +355,24 @@ void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
     {
         GlobalC::ld.allocate_V_delta(ucell.nat, kv.nkstot);
     }
-    GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+    DeePKS_domain::cal_gedm(ucell.nat,
+                            GlobalC::ld.lmaxd,
+                            GlobalC::ld.nmaxd,
+                            GlobalC::ld.inlmax,
+                            GlobalC::ld.des_per_atom,
+                            GlobalC::ld.inl_l,
+                            descriptor,
+                            GlobalC::ld.pdm,
+                            GlobalC::ld.model_deepks,
+                            GlobalC::ld.gedm,
+                            GlobalC::ld.E_delta);
 
     std::ofstream ofs("E_delta.dat");
     ofs << std::setprecision(10) << GlobalC::ld.E_delta << std::endl;
     ofs.close();
     this->compare_with_ref("E_delta.dat", "E_delta_ref.dat");
 
-    GlobalC::ld.check_gedm();
+    DeePKS_domain::check_gedm(GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.gedm);
     this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 

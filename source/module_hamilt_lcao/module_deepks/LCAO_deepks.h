@@ -117,9 +117,6 @@ class LCAO_Deepks
     // [nat][nlm*nlm] for equivariant version
     std::vector<torch::Tensor> pdm;
 
-    // gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
-    std::vector<torch::Tensor> gedm_tensor;
-
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm; //[tot_Inl][(2l+1)*(2l+1)]
 
@@ -247,15 +244,6 @@ class LCAO_Deepks
     //! a temporary interface for cal_e_delta_band
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
-
-    // 8. cal_gedm : calculates d(E_delta)/d(pdm)
-    //       this is the term V(D) that enters the expression H_V_delta = |alpha>V(D)<alpha|
-    //       caculated using torch::autograd::grad
-    // 9. check_gedm : prints gedm for checking
-    /// calculate partial of energy correction to descriptors
-    void cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor);
-    void check_gedm();
-    void cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor);
 
   private:
     const Parallel_Orbitals* pv;

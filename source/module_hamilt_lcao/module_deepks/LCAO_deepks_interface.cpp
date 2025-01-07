@@ -383,7 +383,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         {
             LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
 
-            ld->check_gedm();
+            DeePKS_domain::check_gedm(inlmax, inl_l, ld->gedm);
 
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << ld->e_delta_band;

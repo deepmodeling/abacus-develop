@@ -169,7 +169,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       GlobalC::ld.pdm,
                                       descriptor,
                                       GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(this->ucell->nat, descriptor);
+        DeePKS_domain::cal_gedm(this->ucell->nat,
+                                GlobalC::ld.lmaxd,
+                                GlobalC::ld.nmaxd,
+                                GlobalC::ld.inlmax,
+                                GlobalC::ld.des_per_atom,
+                                GlobalC::ld.inl_l,
+                                descriptor,
+                                GlobalC::ld.pdm,
+                                GlobalC::ld.model_deepks,
+                                GlobalC::ld.gedm,
+                                GlobalC::ld.E_delta);
 
         // // recalculate the H_V_delta
         // if (this->H_V_delta == nullptr)
