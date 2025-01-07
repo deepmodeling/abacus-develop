@@ -136,6 +136,8 @@ void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
 {
     stress = dp_virial;
 
+    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+
     // external stress
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
     double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
@@ -143,8 +145,6 @@ void ESolver_DP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
     {
         stress(i, i) -= external_stress[i] / unit_transform;
     }
-
-    ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
 }
 
 void ESolver_DP::after_all_runners(UnitCell& ucell)
