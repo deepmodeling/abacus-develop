@@ -132,7 +132,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                              nstart,
                              &zero,
                              temp,
-                             dmin);
+                             dmax);
     }
 
     if (!in_place)
