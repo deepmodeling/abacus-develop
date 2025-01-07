@@ -120,7 +120,7 @@ class LCAO_Deepks
     std::vector<torch::Tensor> gedm_tensor;
 
     /// dE/dD, autograd from loaded model(E: Ry)
-    double** gedm; //[tot_Inl][2l+1][2l+1]
+    double** gedm; //[tot_Inl][(2l+1)*(2l+1)]
 
     // HR status,
     // true : HR should be calculated

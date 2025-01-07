@@ -88,7 +88,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         if (PARAM.inp.cal_force)
         {
             if (PARAM.inp.deepks_scf
-                || !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
+                && !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
             {
                 std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
                 torch::Tensor gdmx;
@@ -115,7 +115,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         if (PARAM.inp.cal_stress)
         {
             if (PARAM.inp.deepks_scf
-                || !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
+                && !PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
             {
                 std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
                 torch::Tensor gdmepsl;
@@ -379,6 +379,18 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN = " << std::setprecision(8) << ld->E_delta << " Ry"
                   << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (PARAM.inp.deepks_out_unittest)
+        {
+            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
+
+            ld->check_gedm();
+
+            std::ofstream ofs("E_delta_bands.dat");
+            ofs << std::setprecision(10) << ld->e_delta_band;
+
+            std::ofstream ofs1("E_delta.dat");
+            ofs1 << std::setprecision(10) << ld->E_delta;
+        }
     }
 }
 

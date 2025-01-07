@@ -399,6 +399,13 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 #endif
     }
 
+#ifdef __DEEPKS
+    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
+    {
+        DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
+    }
+#endif
+
     ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;
 }

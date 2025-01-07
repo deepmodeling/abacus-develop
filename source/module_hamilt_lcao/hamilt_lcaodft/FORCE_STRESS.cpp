@@ -501,11 +501,11 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
             LCAO_deepks_io::save_npy_f(fcs, file_ftot, ucell.nat,
-                                       GlobalV::MY_RANK); // Ty/Bohr, F_tot
+                                       GlobalV::MY_RANK); // Ry/Bohr, F_tot
 
+            const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha,
                                            file_fbase,
                                            ucell.nat,
@@ -513,7 +513,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             else
             {
-                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
                 LCAO_deepks_io::save_npy_f(fcs, file_fbase, ucell.nat,
                                            GlobalV::MY_RANK); // no scf, F_base=F_tot
             }
@@ -693,14 +692,21 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                        ucell.omega,
                                        GlobalV::MY_RANK); // change to energy unit Ry when printing, S_tot, w/ model
 
-            // wenfei add 2021/11/2
+            const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+                
                 LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
                                            file_sbase,
                                            ucell.omega,
                                            GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
+            }
+            else
+            {
+                LCAO_deepks_io::save_npy_s(scs,
+                                           file_sbase,
+                                           ucell.omega,
+                                           GlobalV::MY_RANK); // sbase = stot
             }
         }
 #endif
