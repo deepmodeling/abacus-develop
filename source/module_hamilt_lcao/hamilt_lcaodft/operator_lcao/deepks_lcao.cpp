@@ -444,14 +444,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
     }
 }
 
-inline void get_h_delta_k(int ik, double*& h_delta_k)
+template <typename TK>
+inline void get_h_delta_k(int ik, TK*& h_delta_k)
 {
-    h_delta_k = GlobalC::ld.H_V_delta[ik].data();
-    return;
-}
-inline void get_h_delta_k(int ik, std::complex<double>*& h_delta_k)
-{
-    h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        h_delta_k = GlobalC::ld.H_V_delta[ik].data();
+    }
+    else
+    {
+        h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+    }
     return;
 }
 
@@ -463,7 +466,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("DeePKS", "contributeHk");
 
     TK* h_delta_k = nullptr;
-    get_h_delta_k(ik, h_delta_k);
+    get_h_delta_k<TK>(ik, h_delta_k);
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 

@@ -8,12 +8,12 @@ if(ENABLE_DEEPKS)
       deepks_spre.cpp
       deepks_orbital.cpp
       deepks_orbpre.cpp
+      deepks_vdelta.cpp
       deepks_vdpre.cpp
       deepks_hmat.cpp
       LCAO_deepks_io.cpp
       LCAO_deepks_pdm.cpp
       LCAO_deepks_phialpha.cpp
-      LCAO_deepks_vdelta.cpp
       LCAO_deepks_interface.cpp
       cal_gedm.cpp    
   )

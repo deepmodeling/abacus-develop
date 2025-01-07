@@ -99,6 +99,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>
 }
 
 // obtain from the machine learning model dE_delta/dDescriptor
+// E_delta is also calculated here
 void LCAO_Deepks::cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor)
 {
 

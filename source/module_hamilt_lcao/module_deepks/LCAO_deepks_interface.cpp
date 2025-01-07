@@ -46,6 +46,17 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const int my_rank = GlobalV::MY_RANK;
     const int nspin = PARAM.inp.nspin;
 
+    // Used for deepks_bandgap == 1 and deepks_v_delta > 0
+    std::vector<std::vector<TK>>* h_delta = nullptr;
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        h_delta = &ld->H_V_delta;
+    }
+    else
+    {
+        h_delta = &ld->H_V_delta_k;
+    }
+
     // calculating deepks correction to bandgap and save the results
     if (PARAM.inp.deepks_out_labels)
     {
@@ -54,17 +65,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         if (PARAM.inp.deepks_scf)
         {
             DeePKS_domain::cal_gevdm(nat, inlmax, inl_l, pdm, gevdm);
-        }
-
-        // Used for deepks_bandgap == 1 and deepks_v_delta > 0
-        std::vector<std::vector<TK>>* h_delta = nullptr;
-        if constexpr (std::is_same<TK, double>::value)
-        {
-            h_delta = &ld->H_V_delta;
-        }
-        else
-        {
-            h_delta = &ld->H_V_delta_k;
         }
 
         // Energy Part
@@ -374,7 +374,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     /// print out deepks information to the screen
     if (PARAM.inp.deepks_scf)
     {
-        ld->cal_e_delta_band(dm->get_DMK_vector(), nks);
+        DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, ParaV, ld->e_delta_band);
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN = " << std::setprecision(8) << ld->E_delta << " Ry"

@@ -412,12 +412,12 @@ void test_deepks::check_e_deltabands()
     if (PARAM.sys.gamma_only_local)
     {
         this->cal_H_V_delta();
-        GlobalC::ld.cal_e_delta_band(dm_new, 1);
+        GlobalC::ld.dpks_cal_e_delta_band(dm_new, 1);
     }
     else
     {
         this->cal_H_V_delta_k();
-        GlobalC::ld.cal_e_delta_band(dm_k_new, kv.nkstot);
+        GlobalC::ld.dpks_cal_e_delta_band(dm_k_new, kv.nkstot);
     }
 
     std::ofstream ofs("E_delta_bands.dat");

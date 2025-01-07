@@ -11,6 +11,7 @@
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
 #include "deepks_spre.h"
+#include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
@@ -242,25 +243,7 @@ class LCAO_Deepks
      */
     void read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha);
 
-    //-------------------
-    // LCAO_deepks_vdelta.cpp
-    //-------------------
-
-    // This file contains subroutines related to V_delta, which is the deepks contribution to Hamiltonian
-    // defined as |alpha>V(D)<alpha|
-    // as well as subroutines for printing them for checking
-    // It also contains subroutine related to calculating e_delta_bands, which is basically
-    // tr (rho * V_delta)
-
-    // Four subroutines are contained in the file:
-    // 5. cal_e_delta_band : calculates e_delta_bands
-
   public:
-    /// calculate tr(\rho V_delta)
-    // void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    template <typename TK>
-    void cal_e_delta_band(const std::vector<std::vector<TK>>& dm /**<[in] density matrix*/, const int nks);
-
     //! a temporary interface for cal_e_delta_band
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);

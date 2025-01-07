@@ -198,12 +198,12 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_spre.o\
         deepks_orbital.o\
         deepks_orbpre.o\
+        deepks_vdelta.o\
         deepks_vdpre.o\
         deepks_hmat.o\
         LCAO_deepks_io.o\
         LCAO_deepks_pdm.o\
         LCAO_deepks_phialpha.o\
-        LCAO_deepks_vdelta.o\
         LCAO_deepks_interface.o\
         cal_gedm.o\
         
