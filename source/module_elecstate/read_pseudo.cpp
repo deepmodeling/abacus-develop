@@ -2,6 +2,7 @@
 #include "module_parameter/parameter.h"
 #include "module_base/global_file.h"
 #include "module_cell/read_pp.h"
+#include "module_cell/bcast_cell.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/parallel_common.h"
 
@@ -135,7 +136,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     }
 
 #ifdef __MPI
-    ucell.bcast_unitcell2();
+    unitcell::bcast_atoms_pseudo(ucell.atoms,ucell.ntype);
 #endif
 
     for (int it = 0; it < ucell.ntype; it++) {

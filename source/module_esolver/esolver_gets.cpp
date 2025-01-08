@@ -72,12 +72,6 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
                                  two_center_bundle_,
                                  orb_);
 
-    // 4) initialize the density matrix
-    // DensityMatrix is allocated here, DMK is also initialized here
-    // DMR is not initialized here, it will be constructed in each before_scf
-    dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec)
-        ->init_DM(&this->kv, &(this->pv), inp.nspin);
-
     ModuleBase::timer::tick("ESolver_GetS", "before_all_runners");
 }
 

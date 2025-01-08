@@ -332,7 +332,7 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
     }
 
 #ifdef __MPI
-    ucell.bcast_unitcell();
+    bcast_unitcell(ucell);
 #endif
 
     log << std::endl;

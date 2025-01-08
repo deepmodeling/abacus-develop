@@ -45,7 +45,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
     // * reading the localized orbitals/projectors
     // * construct the interpolation tables.
 
-    two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn.data());
     two_center_bundle.build_alpha(PARAM.globalv.deepks_setorb, &ucell.descriptor_file);
     two_center_bundle.build_orb_onsite(onsite_radius);
     // currently deepks only use one descriptor file, so cast bool to int is
