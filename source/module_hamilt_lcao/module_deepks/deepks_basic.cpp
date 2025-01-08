@@ -4,6 +4,7 @@
 
 #ifdef __DEEPKS
 #include "deepks_basic.h"
+#include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
 // Dimension is different for each inl, so there's a vector of tensors

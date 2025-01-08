@@ -5,7 +5,6 @@
 #include "LCAO_deepks_io.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/tool_title.h"
-#include "module_parameter/parameter.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>
