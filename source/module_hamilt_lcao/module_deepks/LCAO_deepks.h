@@ -11,6 +11,7 @@
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
 #include "deepks_pdm.h"
+#include "deepks_phialpha.h"
 #include "deepks_spre.h"
 #include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
@@ -158,47 +159,14 @@ class LCAO_Deepks
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
 
-  private:
-    // arrange index of descriptor in all atoms
-    void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
-
-    //-------------------
-    // LCAO_deepks_phialpha.cpp
-    //-------------------
-
-    // E.Wu 2024-12-24
-    // This file contains 3 subroutines:
-    // 1. allocate_phialpha, which allocates memory for phialpha
-    // 2. build_phialpha, which calculates the overlap
-    // between atomic basis and projector alpha : <phi_mu|alpha>
-    // which will be used in calculating pdm, gdmx, H_V_delta, F_delta;
-    // 3. check_phialpha, which prints the results into .dat files
-    // for checking
-
-  public:
-    // calculates <chi|alpha>
-    void allocate_phialpha(const bool& cal_deri,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD);
-
-    void build_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const Grid_Driver& GridD,
-                        const TwoCenterIntegrator& overlap_orb_alpha);
-
-    void check_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const Grid_Driver& GridD);
-
-  public:
     //! a temporary interface for cal_e_delta_band
     template <typename TK>
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
 
   private:
+    // arrange index of descriptor in all atoms
+    void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
+
     const Parallel_Orbitals* pv;
 };
 

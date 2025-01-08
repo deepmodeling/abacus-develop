@@ -36,11 +36,22 @@ void test_deepks::check_phialpha()
     }
     GlobalC::ld.init(ORB, ucell.nat, ucell.ntype, kv.nkstot, ParaO, na);
 
-    GlobalC::ld.allocate_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    DeePKS_domain::allocate_phialpha(PARAM.input.cal_force,
+                                     ucell,
+                                     ORB,
+                                     Test_Deepks::GridD,
+                                     &ParaO,
+                                     GlobalC::ld.phialpha);
 
-    GlobalC::ld.build_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
+    DeePKS_domain::build_phialpha(PARAM.input.cal_force,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  &ParaO,
+                                  overlap_orb_alpha_,
+                                  GlobalC::ld.phialpha);
 
-    GlobalC::ld.check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    DeePKS_domain::check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, &ParaO, GlobalC::ld.phialpha);
 
     this->compare_with_ref("phialpha.dat", "phialpha_ref.dat");
     this->compare_with_ref("dphialpha_x.dat", "dphialpha_x_ref.dat");
