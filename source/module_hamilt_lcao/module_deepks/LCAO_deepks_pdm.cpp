@@ -9,13 +9,13 @@
 // for checking purpose
 
 // There are 3 subroutines in this file:
-// 1. read_pdm, which reads pdm from file
-// 2. cal_pdm, which is used for calculating pdm
-// 3. check_pdm, which prints pdm to descriptor.dat
+// 1. read_projected_DM, which reads pdm from file
+// 2. cal_projected_DM, which is used for calculating pdm
+// 3. check_projected_dm, which prints pdm to descriptor.dat
 
 #ifdef __DEEPKS
 
-#include "deepks_pdm.h"
+#include "LCAO_deepks.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
 #include "module_base/timer.h"
@@ -25,30 +25,23 @@
 #include "module_base/parallel_reduce.h"
 #endif
 
-void DeePKS_domain::read_pdm(bool read_pdm_file,
-                             bool is_equiv,
-                             bool& init_pdm,
-                             const int inlmax,
-                             const int lmaxd,
-                             const int* inl_l,
-                             const Numerical_Orbital& alpha,
-                             std::vector<torch::Tensor>& pdm)
+void LCAO_Deepks::read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha)
 {
-    if (read_pdm_file && !init_pdm) // for DeePKS NSCF calculation
+    if (read_pdm_file && !this->init_pdm) // for DeePKS NSCF calculation
     {
         const std::string file_projdm = PARAM.globalv.global_out_dir + "deepks_projdm.dat";
         std::ifstream ifs(file_projdm.c_str());
 
         if (!ifs)
         {
-            ModuleBase::WARNING_QUIT("DeePKS_domain::read_pdm", "Cannot find the file deepks_projdm.dat");
+            ModuleBase::WARNING_QUIT("LCAO_Deepks::read_projected_DM", "Cannot find the file deepks_projdm.dat");
         }
         if (!is_equiv)
         {
-            for (int inl = 0; inl < inlmax; inl++)
+            for (int inl = 0; inl < this->inlmax; inl++)
             {
-                int nm = inl_l[inl] * 2 + 1;
-                auto accessor = pdm[inl].accessor<double, 2>();
+                int nm = this->inl_l[inl] * 2 + 1;
+                auto accessor = this->pdm[inl].accessor<double, 2>();
                 for (int m1 = 0; m1 < nm; m1++)
                 {
                     for (int m2 = 0; m2 < nm; m2++)
@@ -64,14 +57,14 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
         {
             int pdm_size = 0;
             int nproj = 0;
-            for (int il = 0; il < lmaxd + 1; il++)
+            for (int il = 0; il < this->lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * alpha.getNchi(il);
             }
             pdm_size = nproj * nproj;
-            for (int inl = 0; inl < inlmax; inl++)
+            for (int inl = 0; inl < this->inlmax; inl++)
             {
-                auto accessor = pdm[inl].accessor<double, 1>();
+                auto accessor = this->pdm[inl].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
                     double c;
@@ -81,60 +74,52 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
             }
         }
 
-        init_pdm = true;
+        this->init_pdm = true;
     }
 }
 
 // this subroutine performs the calculation of projected density matrices
 // pdm_m,m'=\sum_{mu,nu} rho_{mu,nu} <chi_mu|alpha_m><alpha_m'|chi_nu>
 template <typename TK>
-void DeePKS_domain::cal_pdm(bool& init_pdm,
-                            const int inlmax,
-                            const int lmaxd,
-                            const int* inl_l,
-                            const ModuleBase::IntArray* inl_index,
-                            const elecstate::DensityMatrix<TK, double>* dm,
-                            const std::vector<hamilt::HContainer<double>*> phialpha,
-                            const UnitCell& ucell,
-                            const LCAO_Orbitals& orb,
-                            const Grid_Driver& GridD,
-                            const Parallel_Orbitals& pv,
-                            std::vector<torch::Tensor>& pdm)
+void LCAO_Deepks::cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm,
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD)
 
 {
-    ModuleBase::TITLE("DeePKS_domain", "cal_pdm");
+    ModuleBase::TITLE("LCAO_Deepks", "cal_projected_DM");
 
     // if pdm has been initialized, skip the calculation
-    if (init_pdm)
+    if (this->init_pdm)
     {
-        init_pdm = false;
+        this->init_pdm = false;
         return;
     }
 
     if (!PARAM.inp.deepks_equiv)
     {
-        for (int inl = 0; inl < inlmax; inl++)
+        for (int inl = 0; inl < this->inlmax; inl++)
         {
-            int nm = inl_l[inl] * 2 + 1;
-            pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
+            int nm = this->inl_l[inl] * 2 + 1;
+            this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
         }
     }
     else
     {
         int pdm_size = 0;
         int nproj = 0;
-        for (int il = 0; il < lmaxd + 1; il++)
+        for (int il = 0; il < this->lmaxd + 1; il++)
         {
             nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = nproj * nproj;
         for (int inl = 0; inl < inlmax; inl++)
         {
-            pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
+            this->pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
         }
     }
 
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_projected_DM");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     for (int T0 = 0; T0 < ucell.ntype; T0++)
@@ -156,7 +141,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 {
                     for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                     {
-                        const int inl = inl_index[T0](I0, L0, N0);
+                        const int inl = this->inl_index[T0](I0, L0, N0);
                         const int nm = 2 * L0 + 1;
 
                         for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -174,7 +159,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             else
             {
                 int nproj = 0;
-                for (int il = 0; il < lmaxd + 1; il++)
+                for (int il = 0; il < this->lmaxd + 1; il++)
                 {
                     nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
                 }
@@ -207,13 +192,13 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 ModuleBase::Vector3<int> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
                 if constexpr (std::is_same<TK, std::complex<double>>::value)
                 {
-                    if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
+                    if (this->phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                     {
                         continue;
                     }
                 }
 
-                auto row_indexes = pv.get_indexes_row(ibt1);
+                auto row_indexes = pv->get_indexes_row(ibt1);
                 const int row_size = row_indexes.size();
                 if (row_size == 0)
                 {
@@ -225,7 +210,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 std::vector<double> g_1dmt(trace_alpha_size * row_size, 0.0);
                 for (int irow = 0; irow < row_size; irow++)
                 {
-                    hamilt::BaseMatrix<double>* row_ptr = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                    hamilt::BaseMatrix<double>* row_ptr = this->phialpha[0]->find_matrix(iat, ibt1, dR1);
 
                     for (int i = 0; i < trace_alpha_size; i++)
                     {
@@ -245,7 +230,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     ModuleBase::Vector3<int> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
                     if constexpr (std::is_same<TK, std::complex<double>>::value)
                     {
-                        if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
+                        if (this->phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                         {
                             continue;
                         }
@@ -259,7 +244,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         continue;
                     }
 
-                    auto col_indexes = pv.get_indexes_col(ibt2);
+                    auto col_indexes = pv->get_indexes_col(ibt2);
                     const int col_size = col_indexes.size();
                     if (col_size == 0)
                     {
@@ -270,7 +255,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     // no possible to unexist key
                     for (int icol = 0; icol < col_size; icol++)
                     {
-                        hamilt::BaseMatrix<double>* col_ptr = phialpha[0]->find_matrix(iat, ibt2, dR2);
+                        hamilt::BaseMatrix<double>* col_ptr = this->phialpha[0]->find_matrix(iat, ibt2, dR2);
                         for (int i = 0; i < trace_alpha_size; i++)
                         {
                             s_2t[i * col_size + icol] = col_ptr->get_value(col_indexes[icol], trace_alpha_col[i]);
@@ -338,10 +323,10 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     {
                         for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
                         {
-                            const int inl = inl_index[T0](I0, L0, N0);
+                            const int inl = this->inl_index[T0](I0, L0, N0);
                             const int nm = 2 * L0 + 1;
 
-                            auto accessor = pdm[inl].accessor<double, 2>();
+                            auto accessor = this->pdm[inl].accessor<double, 2>();
                             for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
                             {
                                 for (int m2 = 0; m2 < nm; ++m2) // m1 = 1 for s, 3 for p, 5 for d
@@ -360,10 +345,10 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 }
                 else
                 {
-                    auto accessor = pdm[iat].accessor<double, 1>();
+                    auto accessor = this->pdm[iat].accessor<double, 1>();
                     int index = 0, inc = 1;
                     int nproj = 0;
-                    for (int il = 0; il < lmaxd + 1; il++)
+                    for (int il = 0; il < this->lmaxd + 1; il++)
                     {
                         nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
                     }
@@ -391,11 +376,11 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
         Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);
     }
 #endif
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::tick("LCAO_Deepks", "cal_projected_DM");
     return;
 }
 
-void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vector<torch::Tensor>& pdm)
+void LCAO_Deepks::check_projected_dm()
 {
     const std::string file_projdm = PARAM.globalv.global_out_dir + "pdm.dat";
     std::ofstream ofs(file_projdm.c_str());
@@ -403,7 +388,7 @@ void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vec
     ofs << std::setprecision(10);
     for (int inl = 0; inl < inlmax; inl++)
     {
-        const int nm = 2 * inl_l[inl] + 1;
+        const int nm = 2 * this->inl_l[inl] + 1;
         auto accessor = pdm[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; m1++)
         {
@@ -416,31 +401,15 @@ void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vec
     }
 }
 
-template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
-                                             const int inlmax,
-                                             const int lmaxd,
-                                             const int* inl_l,
-                                             const ModuleBase::IntArray* inl_index,
-                                             const elecstate::DensityMatrix<double, double>* dm,
-                                             const std::vector<hamilt::HContainer<double>*> phialpha,
-                                             const UnitCell& ucell,
-                                             const LCAO_Orbitals& orb,
-                                             const Grid_Driver& GridD,
-                                             const Parallel_Orbitals& pv,
-                                             std::vector<torch::Tensor>& pdm);
+template void LCAO_Deepks::cal_projected_DM<double>(const elecstate::DensityMatrix<double, double>* dm,
+                                                    const UnitCell& ucell,
+                                                    const LCAO_Orbitals& orb,
+                                                    const Grid_Driver& GridD);
 
-template void DeePKS_domain::cal_pdm<std::complex<double>>(
-    bool& init_pdm,
-    const int inlmax,
-    const int lmaxd,
-    const int* inl_l,
-    const ModuleBase::IntArray* inl_index,
+template void LCAO_Deepks::cal_projected_DM<std::complex<double>>(
     const elecstate::DensityMatrix<std::complex<double>, double>* dm,
-    const std::vector<hamilt::HContainer<double>*> phialpha,
     const UnitCell& ucell,
     const LCAO_Orbitals& orb,
-    const Grid_Driver& GridD,
-    const Parallel_Orbitals& pv,
-    std::vector<torch::Tensor>& pdm);
+    const Grid_Driver& GridD);
 
 #endif

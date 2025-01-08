@@ -10,7 +10,6 @@
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
-#include "deepks_pdm.h"
 #include "deepks_spre.h"
 #include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
@@ -103,7 +102,7 @@ class LCAO_Deepks
     ModuleBase::IntArray* alpha_index; // seems not used in the code
     ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
 
-    bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
+    bool init_pdm = false; // for DeePKS NSCF calculation
 
     // deep neural network module that provides corrected Hamiltonian term and
     // related derivatives. Used in cal_gedm.
@@ -194,6 +193,52 @@ class LCAO_Deepks
                         const UnitCell& ucell,
                         const LCAO_Orbitals& orb,
                         const Grid_Driver& GridD);
+
+    //-------------------
+    // LCAO_deepks_pdm.cpp
+    //-------------------
+
+    // This file contains subroutines for calculating pdm,
+    // which is defind as sum_mu,nu rho_mu,nu (<chi_mu|alpha><alpha|chi_nu>);
+    // as well as gdmx, which is the gradient of pdm, defined as
+    // sum_mu,nu rho_mu,nu d/dX(<chi_mu|alpha><alpha|chi_nu>)
+
+    // It also contains subroutines for printing pdm and gdmx
+    // for checking purpose
+
+    // There are 2 subroutines in this file:
+    // 1. cal_projected_DM, which is used for calculating pdm
+    // 2. check_projected_dm, which prints pdm to descriptor.dat
+
+  public:
+    /**
+     * @brief calculate projected density matrix:
+     * pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
+     * 3 cases to skip calculation of pdm:
+     *    1. NSCF calculation of DeePKS, init_chg = file and pdm has been read
+     *    2. SCF calculation of DeePKS with init_chg = file and pdm has been read for restarting SCF
+     *    3. Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial
+     * pdm
+     */
+    template <typename TK>
+    void cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm,
+                          const UnitCell& ucell,
+                          const LCAO_Orbitals& orb,
+                          const Grid_Driver& GridD);
+
+    void check_projected_dm();
+
+    /**
+     * @brief set init_pdm to skip the calculation of pdm in SCF iteration
+     */
+    void set_init_pdm(bool ipdm)
+    {
+        this->init_pdm = ipdm;
+    }
+    /**
+     * @brief read pdm from file, do it only once in whole calculation
+     */
+    void read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha);
 
   public:
     //! a temporary interface for cal_e_delta_band

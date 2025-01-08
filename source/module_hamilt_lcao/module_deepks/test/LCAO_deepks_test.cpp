@@ -145,16 +145,16 @@ void test_deepks::check_pdm()
         this->read_dm();
         this->set_dm_new();
         this->set_p_elec_DM();
-        DeePKS_domain::cal_pdm(p_elec_DM, ucell, ORB, Test_Deepks::GridD);
+        GlobalC::ld.cal_projected_DM(p_elec_DM, ucell, ORB, Test_Deepks::GridD);
     }
     else
     {
         this->read_dm_k(kv.nkstot);
         this->set_dm_k_new();
         this->set_p_elec_DM_k();
-        DeePKS_domain::cal_pdm(p_elec_DM_k, ucell, ORB, Test_Deepks::GridD);
+        GlobalC::ld.cal_projected_DM(p_elec_DM_k, ucell, ORB, Test_Deepks::GridD);
     }
-    DeePKS_domain::check_pdm(GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm);
+    GlobalC::ld.check_projected_dm();
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
 

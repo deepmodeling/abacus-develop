@@ -252,6 +252,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     if (PARAM.inp.deepks_scf)
     {
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
+        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
+
         DeePKS_domain::cal_descriptor(ucell.nat,
                                       GlobalC::ld.inlmax,
                                       GlobalC::ld.inl_l,

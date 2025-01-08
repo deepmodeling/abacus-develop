@@ -160,18 +160,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        DeePKS_domain::cal_pdm<TK>(GlobalC::ld.init_pdm,
-                                   GlobalC::ld.inlmax,
-                                   GlobalC::ld.lmaxd,
-                                   GlobalC::ld.inl_l,
-                                   GlobalC::ld.inl_index,
-                                   this->DM,
-                                   GlobalC::ld.phialpha,
-                                   *this->ucell,
-                                   *ptr_orb_,
-                                   *(this->gd),
-                                   *(this->hR->get_paraV()),
-                                   GlobalC::ld.pdm);
+        GlobalC::ld.cal_projected_DM<TK>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
