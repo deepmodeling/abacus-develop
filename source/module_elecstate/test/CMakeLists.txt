@@ -33,7 +33,7 @@ AddTest(
 AddTest(
   TARGET elecstate_fp_energy
   LIBS parameter  ${math_libs} base device
-  SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp
+  SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp ../elecstate_energy_terms.cpp
 )
 
 AddTest(
@@ -64,7 +64,7 @@ AddTest(
 AddTest(
   TARGET elecstate_energy
   LIBS parameter  ${math_libs} base device 
-  SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp
+  SOURCES elecstate_energy_test.cpp ../elecstate_energy.cpp ../fp_energy.cpp ../elecstate_energy_terms.cpp
 )
 
 AddTest(

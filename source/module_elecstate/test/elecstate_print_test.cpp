@@ -1,5 +1,7 @@
 #include <string>
 
+#include"module_cell/setup_nonlocal.h"
+
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
