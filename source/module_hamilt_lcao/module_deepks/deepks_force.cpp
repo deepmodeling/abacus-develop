@@ -112,7 +112,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
                     hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
 
-                    dm_pair.allocate(nullptr, 1);
+                    dm_pair.allocate(nullptr, true);
 
                     if constexpr (std::is_same<TK, double>::value) // for gamma-only
                     {
