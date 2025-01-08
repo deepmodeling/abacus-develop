@@ -69,7 +69,7 @@ VPATH=./src_global:\
 ./module_ri:\
 ./module_parameter:\
 ./module_lr:\
-./module_lr/AX:\
+./module_lr/ao_to_mo_transformer:\
 ./module_lr/dm_trans:\
 ./module_lr/operator_casida:\
 ./module_lr/potentials:\
@@ -723,8 +723,8 @@ OBJS_TENSOR=tensor.o\
 
     OBJS_LR=lr_util.o\
     lr_util_hcontainer.o\
-    AX_parallel.o\
-    AX_serial.o\
+    ao_to_mo_parallel.o\
+    ao_to_mo_serial.o\
     dm_trans_parallel.o\
     dm_trans_serial.o\
     dmr_complex.o\

@@ -2,7 +2,7 @@
 #ifdef __MPI
 #include "mpi.h"
 #endif
-#include "../AX.h"
+#include "../ao_to_mo.h"
 
 #include "module_lr/utils/lr_util.h"
 
@@ -20,7 +20,7 @@ struct matsize
     };
 };
 
-class AXTest : public testing::Test
+class AO2MOTest : public testing::Test
 {
 public:
     std::vector<matsize> sizes{
@@ -60,7 +60,7 @@ public:
     };
 };
 
-TEST_F(AXTest, DoubleSerial)
+TEST_F(AO2MOTest, DoubleSerial)
 {
     for (auto s : this->sizes)
     {
@@ -92,7 +92,7 @@ TEST_F(AXTest, DoubleSerial)
     }
 }
 
-TEST_F(AXTest, ComplexSerial)
+TEST_F(AO2MOTest, ComplexSerial)
 {
     for (auto s : this->sizes)
     {
@@ -124,7 +124,7 @@ TEST_F(AXTest, ComplexSerial)
     }
 }
 #ifdef __MPI
-TEST_F(AXTest, DoubleParallel)
+TEST_F(AO2MOTest, DoubleParallel)
 {
     for (auto s : this->sizes)
     {
@@ -135,7 +135,7 @@ TEST_F(AXTest, DoubleParallel)
         std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { pV.get_col_size(), pV.get_row_size() }));
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
-        
+
         std::vector<int> ngk_temp(s.nks, pc.get_row_size());
         psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp.data(), true);
         Parallel_2D pvo, poo, pvv;
@@ -195,7 +195,7 @@ TEST_F(AXTest, DoubleParallel)
         }
     }
 }
-TEST_F(AXTest, ComplexParallel)
+TEST_F(AO2MOTest, ComplexParallel)
 {
     for (auto s : this->sizes)
     {
