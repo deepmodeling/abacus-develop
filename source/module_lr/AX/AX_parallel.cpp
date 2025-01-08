@@ -20,7 +20,8 @@ namespace LR
         const int& nvirt,
         const Parallel_2D& pmat_mo,
         double* mat_mo,
-        const bool add_on)
+        const bool add_on,
+        MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
@@ -28,9 +29,15 @@ namespace LR
         assert(pmat_mo.get_local_size() > 0);
 
         const int nks = mat_ao.size();
+        const int i1 = 1;
+        const int ivirt = nocc + 1;
+        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
+        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
+        const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
 
         Parallel_2D pVc;        // for intermediate Vc
-        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nocc, pmat_ao.blacs_ctxt);
+        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
             const int ax_start = isk * pmat_mo.get_local_size();
@@ -40,23 +47,20 @@ namespace LR
             container::Tensor Vc(DAT::DT_DOUBLE, DEV::CpuDevice, { pVc.get_col_size(), pVc.get_row_size() });//row is "inside"(memory contiguity) for pblas
             Vc.zero();
 
-            int i1 = 1;
-            int ivirt = nocc + 1;
-
             char transa = 'N';
             char transb = 'N';
             const double alpha = 1.0;
             const double beta = add_on ? 1.0 : 0.0;
-            pdgemm_(&transa, &transb, &naos, &nocc, &naos,
+            pdgemm_(&transa, &transb, &naos, &nmo1, &naos,
                 &alpha, mat_ao[isk].data<double>(), &i1, &i1, pmat_ao.desc,
-                coeff.get_pointer(), &i1, &i1, pcoeff.desc,
+                coeff.get_pointer(), &i1, &imo1, pcoeff.desc,
                 &beta, Vc.data<double>(), &i1, &i1, pVc.desc);
 
             transa = 'T';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
-            pdgemm_(&transa, &transb, &nvirt, &nocc, &naos,
-                &alpha, coeff.get_pointer(), &i1, &ivirt, pcoeff.desc,
+            pdgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
+                &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
                 Vc.data<double>(), &i1, &i1, pVc.desc,
                 &beta, mat_mo + ax_start, &i1, &i1, pmat_mo.desc);
 
@@ -74,7 +78,8 @@ namespace LR
         const int& nvirt,
         const Parallel_2D& pmat_mo,
         std::complex<double>* const mat_mo,
-        const bool add_on)
+        const bool add_on,
+        MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_plas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
@@ -82,9 +87,15 @@ namespace LR
         assert(pmat_mo.get_local_size() > 0);
 
         const int nks = mat_ao.size();
+        const int i1 = 1;
+        const int ivirt = nocc + 1;
+        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
+        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
+        const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
+        const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
 
         Parallel_2D pVc;        // for intermediate Vc
-        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nocc, pmat_ao.blacs_ctxt);
+        LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
             const int ax_start = isk * pmat_mo.get_local_size();
@@ -94,23 +105,20 @@ namespace LR
             container::Tensor Vc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pVc.get_col_size(), pVc.get_row_size() });
             Vc.zero();
 
-            int i1 = 1;
-            int ivirt = nocc + 1;
-
             char transa = 'N';
             char transb = 'N';
             const std::complex<double> alpha(1.0, 0.0);
             const std::complex<double> beta = add_on ? std::complex<double>(1.0, 0.0) : std::complex<double>(0.0, 0.0);
-            pzgemm_(&transa, &transb, &naos, &nocc, &naos,
+            pzgemm_(&transa, &transb, &naos, &nmo1, &naos,
                 &alpha, mat_ao[isk].data<std::complex<double>>(), &i1, &i1, pmat_ao.desc,
-                coeff.get_pointer(), &i1, &i1, pcoeff.desc,
+                coeff.get_pointer(), &i1, &imo1, pcoeff.desc,
                 &beta, Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc);
 
             transa = 'C';
             // mat_mo = c ^ TVc
             // descC puts M(nvirt) to row
-            pzgemm_(&transa, &transb, &nvirt, &nocc, &naos,
-                &alpha, coeff.get_pointer(), &i1, &ivirt, pcoeff.desc,
+            pzgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
+                &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
                 Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc,
                 &beta, mat_mo + ax_start, &i1, &i1, pmat_mo.desc);
         }
