@@ -695,7 +695,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                
                 LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
                                            file_sbase,
                                            ucell.omega,
@@ -703,9 +702,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             }
             else
             {
-                LCAO_deepks_io::save_npy_s(scs,
-                                           file_sbase,
-                                           ucell.omega,
+                LCAO_deepks_io::save_npy_s(scs, file_sbase, ucell.omega,
                                            GlobalV::MY_RANK); // sbase = stot
             }
         }
