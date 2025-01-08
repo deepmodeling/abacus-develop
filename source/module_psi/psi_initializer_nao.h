@@ -32,7 +32,7 @@ class psi_initializer_nao : public psi_initializer<T>
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
                             const int& = 0) override;      //< MPI rank
 
-    void read_external_orbs(std::string* orbital_files, const int& rank);
+    void read_external_orbs(const std::string* orbital_files, const int& rank);
     virtual void tabulate() override;
     std::vector<std::string> external_orbs() const
     {

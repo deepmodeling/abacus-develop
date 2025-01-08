@@ -43,7 +43,7 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
-void psi_initializer_nao<T>::read_external_orbs(std::string* orbital_files, const int& rank)
+void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
 {
     ModuleBase::timer::tick("psi_initializer_nao", "read_external_orbs");
 
