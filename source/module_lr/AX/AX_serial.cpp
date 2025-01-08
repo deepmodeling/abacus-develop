@@ -5,7 +5,7 @@
 namespace LR
 {
     template<>
-    void cal_AX_forloop_serial(
+    void ao_to_mo_forloop_serial(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<double>& coeff,
         const int& nocc,
@@ -13,7 +13,7 @@ namespace LR
         double* mat_mo,
         MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
+        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
         const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
@@ -26,7 +26,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             coeff.fix_k(isk);
-            const int ax_start = isk * nmo1 * nmo2;
+            const int start = isk * nmo1 * nmo2;
             for (int p = 0;p < nmo1;++p)
             {
                 for (int q = 0;q < nmo2;++q)
@@ -35,7 +35,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            mat_mo[ax_start + p * nmo2 + q] += coeff(imo2 + q, mu) * mat_ao[isk].data<double>()[nu * naos + mu] * coeff(imo1 + p, nu);
+                            mat_mo[start + p * nmo2 + q] += coeff(imo2 + q, mu) * mat_ao[isk].data<double>()[nu * naos + mu] * coeff(imo1 + p, nu);
                         }
                     }
                 }
@@ -43,7 +43,7 @@ namespace LR
         }
     }
     template<>
-    void cal_AX_forloop_serial(
+    void ao_to_mo_forloop_serial(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<std::complex<double>>& coeff,
         const int& nocc,
@@ -51,7 +51,7 @@ namespace LR
         std::complex<double>* const mat_mo,
         MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
+        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
         const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
@@ -64,7 +64,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             coeff.fix_k(isk);
-            const int ax_start = isk * nmo1 * nmo2;
+            const int start = isk * nmo1 * nmo2;
             for (int p = 0;p < nmo1;++p)
             {
                 for (int q = 0;q < nmo2;++q)
@@ -73,7 +73,7 @@ namespace LR
                     {
                         for (int mu = 0;mu < naos;++mu)
                         {
-                            mat_mo[ax_start + p * nmo2 + q] += std::conj(coeff(imo2 + q, mu)) * mat_ao[isk].data<std::complex<double>>()[nu * naos + mu] * coeff(imo1 + p, nu);
+                            mat_mo[start + p * nmo2 + q] += std::conj(coeff(imo2 + q, mu)) * mat_ao[isk].data<std::complex<double>>()[nu * naos + mu] * coeff(imo1 + p, nu);
                         }
                     }
                 }
@@ -81,7 +81,7 @@ namespace LR
         }
     }
     template<>
-    void cal_AX_blas(
+    void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<double>& coeff,
         const int& nocc,
@@ -90,7 +90,7 @@ namespace LR
         const bool add_on,
         MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
+        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
         const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
@@ -101,7 +101,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             coeff.fix_k(isk);
-            const int ax_start = isk * nmo1 * nmo2;
+            const int start = isk * nmo1 * nmo2;
 
             // Vc[naos*nocc]
             container::Tensor Vc(DAT::DT_DOUBLE, DEV::CpuDevice, { nmo1, naos });// (Vc)^T
@@ -118,11 +118,11 @@ namespace LR
             //mat_mo=coeff^TVc (nvirt major)
             dgemm_(&transa, &transb, &nmo2, &nmo1, &naos, &alpha,
                 coeff.get_pointer(imo2), &naos, Vc.data<double>(), &naos, &beta,
-                mat_mo + ax_start, &nmo2);
+                mat_mo + start, &nmo2);
         }
     }
     template<>
-    void cal_AX_blas(
+    void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<std::complex<double>>& coeff,
         const int& nocc,
@@ -131,7 +131,7 @@ namespace LR
         const bool add_on,
         MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
+        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
         const int nks = mat_ao.size();
         const int naos = coeff.get_nbasis();
         const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
@@ -142,7 +142,7 @@ namespace LR
         for (int isk = 0;isk < nks;++isk)
         {
             coeff.fix_k(isk);
-            const int ax_start = isk * nmo1 * nmo2;
+            const int start = isk * nmo1 * nmo2;
 
             // Vc[naos*nocc] (V is hermitian)
             container::Tensor Vc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { nmo1, naos });// (Vc)^T
@@ -159,7 +159,7 @@ namespace LR
             //mat_mo=coeff^\dagger Vc (nvirt major)
             zgemm_(&transa, &transb, &nmo2, &nmo1, &naos, &alpha,
                 coeff.get_pointer(imo2), &naos, Vc.data<std::complex<double>>(), &naos, &beta,
-                mat_mo + ax_start, &nmo2);
+                mat_mo + start, &nmo2);
         }
     }
 }

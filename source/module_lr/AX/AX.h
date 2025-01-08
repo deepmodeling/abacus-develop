@@ -9,7 +9,7 @@ namespace LR
 {
     enum MO_TYPE { OO, VO, VV };
     template<typename T>
-    void  cal_AX_forloop_serial(
+    void  ao_to_mo_forloop_serial(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<T>& coeff,
         const int& nocc,
@@ -17,7 +17,7 @@ namespace LR
         T* const mat_mo,
         MO_TYPE type = VO);
     template<typename T>
-    void cal_AX_blas(
+    void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
         const psi::Psi<T>& coeff,
         const int& nocc,
@@ -27,7 +27,7 @@ namespace LR
         MO_TYPE type = VO);
 #ifdef __MPI
     template<typename T>
-    void cal_AX_pblas(
+    void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
         const Parallel_2D& pmat_ao,
         const psi::Psi<T>& coeff,

@@ -10,7 +10,7 @@ namespace LR
     // coeff: nao*nbands in para2d, nbands*nao in psi  (row-para and constructed: nao)
     // X: nvirt*nocc in para2d, nocc*nvirt in psi (row-para and constructed: nvirt)
     template<>
-    void cal_AX_pblas(
+    void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
         const Parallel_2D& pmat_ao,
         const psi::Psi<double>& coeff,
@@ -23,7 +23,7 @@ namespace LR
         const bool add_on,
         MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_pblas");
+        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
         assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
         assert(pmat_mo.get_local_size() > 0);
@@ -40,7 +40,7 @@ namespace LR
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
-            const int ax_start = isk * pmat_mo.get_local_size();
+            const int start = isk * pmat_mo.get_local_size();
             coeff.fix_k(isk);
 
             //Vc
@@ -62,13 +62,13 @@ namespace LR
             pdgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
                 &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
                 Vc.data<double>(), &i1, &i1, pVc.desc,
-                &beta, mat_mo + ax_start, &i1, &i1, pmat_mo.desc);
+                &beta, mat_mo + start, &i1, &i1, pmat_mo.desc);
 
         }
     }
 
     template<>
-    void cal_AX_pblas(
+    void ao_to_mo_pblas(
         const std::vector<container::Tensor>& mat_ao,
         const Parallel_2D& pmat_ao,
         const psi::Psi<std::complex<double>>& coeff,
@@ -98,7 +98,7 @@ namespace LR
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
         for (int isk = 0;isk < nks;++isk)
         {
-            const int ax_start = isk * pmat_mo.get_local_size();
+            const int start = isk * pmat_mo.get_local_size();
             coeff.fix_k(isk);
 
             //Vc
@@ -120,7 +120,7 @@ namespace LR
             pzgemm_(&transa, &transb, &nmo2, &nmo1, &naos,
                 &alpha, coeff.get_pointer(), &i1, &imo2, pcoeff.desc,
                 Vc.data<std::complex<double>>(), &i1, &i1, pVc.desc,
-                &beta, mat_mo + ax_start, &i1, &i1, pmat_mo.desc);
+                &beta, mat_mo + start, &i1, &i1, pmat_mo.desc);
         }
     }
 }
