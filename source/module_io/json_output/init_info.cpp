@@ -66,7 +66,7 @@ void gen_stru(UnitCell* ucell)
     std::string* pseudo_fn = ucell->pseudo_fn;
 
     // array of orbital file
-    std::string* orbital_fn = ucell->orbital_fn;
+    std::string* orbital_fn = ucell->orbital_fn.data();
 
     // add atom element,orbital file and pseudopotential file
     for (int i = 0; i < ntype; i++)
