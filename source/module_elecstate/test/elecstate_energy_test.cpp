@@ -47,6 +47,10 @@ double ElecState::get_dftu_energy()
     return 0.6;
 }
 #endif
+double ElecState::get_local_pp_energy()
+{
+    return 0.7;
+}
 } // namespace elecstate
 
 #include "module_cell/klist.h"

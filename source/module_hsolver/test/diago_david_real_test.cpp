@@ -89,7 +89,7 @@ public:
         const hsolver::diag_comm_info comm_info = {mypnum, nprocs};
 #endif
 
-		const int dim = phi.get_current_nbas();
+		const int dim = phi.get_current_ngk();
         const int nband = phi.get_nbands();
         const int ld_psi = phi.get_nbasis();
         hsolver::DiagoDavid<double> dav(precondition, nband, dim, order, false, comm_info);
@@ -194,7 +194,15 @@ INSTANTIATE_TEST_SUITE_P(VerifyDiag, DiagoDavTest, ::testing::Values(
 TEST(DiagoDavRealSystemTest, dataH)
 {
     std::vector<double> hmatrix;
-    std::ifstream ifs("H-GammaOnly-Si64.dat");
+    std::ifstream ifs;
+    std::string filename = "H-GammaOnly-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hmatrix);
     ifs.close();
     DIAGOTEST::hmatrix_d = hmatrix;

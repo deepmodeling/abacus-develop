@@ -34,6 +34,7 @@
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
+#include "module_elecstate/elecstate_lcao_cal_tau.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
@@ -927,8 +928,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
-        assert(this->psi != nullptr);
-        this->pelec->cal_tau(*(this->psi));
+        elecstate::lcao_cal_tau<TK>(&(this->GG), 
+                                    &(this->GK),
+                                    this->pelec->charge);
     }
 
     //! 2) call after_scf() of ESolver_KS
@@ -1081,7 +1083,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         //! initialize the gradients of Etotal with respect to occupation numbers and wfc,
         //! and set all elements to 0.
         ModuleBase::matrix dE_dOccNum(this->pelec->wg.nr, this->pelec->wg.nc, true);
-        psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis());
+        psi::Psi<TK> dE_dWfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis(), this->kv.ngk, true);
         dE_dWfc.zero_out();
 
         double Etotal_RDMFT = this->rdmft_solver.run(dE_dOccNum, dE_dWfc);

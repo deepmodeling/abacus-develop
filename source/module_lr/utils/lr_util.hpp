@@ -99,7 +99,11 @@ namespace LR_Util
     template<typename T>
     psi::Psi<T> get_psi_spin(const psi::Psi<T>& psi_in, const int& is, const int& nk)
     {
-        return psi::Psi<T>(&psi_in(is * nk, 0, 0), psi_in, nk, psi_in.get_nbands());
+        return psi::Psi<T>(&psi_in(is * nk, 0, 0), 
+                           nk, 
+                           psi_in.get_nbands(),
+                           psi_in.get_nbasis(),
+                           true);
     }
 
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
@@ -111,7 +115,12 @@ namespace LR_Util
 
         int ib_now = psi_kfirst.get_current_b();
         psi_kfirst.fix_b(0);    // for get_pointer() to get the head pointer
-        psi::Psi<T, Device> psi_bfirst(psi_kfirst.get_pointer(), nk_in, psi_kfirst.get_nbands(), nbasis_in, false);
+        psi::Psi<T, Device> psi_bfirst(psi_kfirst.get_pointer(), 
+                                       nk_in, 
+                                       psi_kfirst.get_nbands(), 
+                                       nbasis_in, 
+                                       nbasis_in, 
+                                       false);
         psi_kfirst.fix_b(ib_now);
         return psi_bfirst;
     }
@@ -124,7 +133,12 @@ namespace LR_Util
         int ik_now = psi_bfirst.get_current_k();
 
         psi_bfirst.fix_kb(0, 0);    // for get_pointer() to get the head pointer
-        psi::Psi<T, Device> psi_kfirst(psi_bfirst.get_pointer(), 1, psi_bfirst.get_nbands(), psi_bfirst.get_nk() * psi_bfirst.get_nbasis(), true);
+        psi::Psi<T, Device> psi_kfirst(psi_bfirst.get_pointer(), 
+                                       1, 
+                                       psi_bfirst.get_nbands(), 
+                                       psi_bfirst.get_nk() * psi_bfirst.get_nbasis(), 
+                                       psi_bfirst.get_nk() * psi_bfirst.get_nbasis(),
+                                       true);
         psi_bfirst.fix_kb(ik_now, ib_now);
         return psi_kfirst;
     }

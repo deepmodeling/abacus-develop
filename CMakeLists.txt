@@ -12,6 +12,7 @@ project(
 
 option(ENABLE_LCAO "Enable LCAO calculation." ON)
 option(ENABLE_DEEPKS "Enable DeePKS functionality" OFF)
+option(ENABLE_MLKEDF "Enable Machine Learning based KEDF for OFDFT" OFF)
 option(ENABLE_LIBXC "Enable LibXC functionality" OFF)
 option(USE_CUDA "Enable support to CUDA for ABACUS." OFF)
 option(ENABLE_FLOAT_FFTW "Enable support to single precision FFTW library." OFF)
@@ -469,10 +470,29 @@ if(ENABLE_DEEPKS)
   add_compile_definitions(__DEEPKS)
 endif()
 
+if(ENABLE_MLKEDF)
+  target_link_libraries(${ABACUS_BIN_NAME} hamilt_mlkedf)
+
+  find_path(libnpy_SOURCE_DIR npy.hpp HINTS ${libnpy_INCLUDE_DIR})
+  if(NOT libnpy_SOURCE_DIR)
+    include(FetchContent)
+    FetchContent_Declare(
+      libnpy
+      GIT_REPOSITORY https://github.com/llohse/libnpy.git
+      GIT_SHALLOW TRUE
+      GIT_PROGRESS TRUE)
+    FetchContent_MakeAvailable(libnpy)
+  else()
+    include_directories(${libnpy_INCLUDE_DIR})
+  endif()
+  include_directories(${libnpy_SOURCE_DIR}/include)
+  add_compile_definitions(__MLKEDF)
+endif()
+
 # Torch uses outdated components to detect CUDA arch, causing failure on
 # latest CUDA kits. Set CMake variable TORCH_CUDA_ARCH_LIST in the form of
 # "major.minor" if required.
-if(ENABLE_DEEPKS OR DEFINED Torch_DIR)
+if(ENABLE_DEEPKS OR ENABLE_MLKEDF OR DEFINED Torch_DIR)
   find_package(Torch REQUIRED)
   if(NOT Torch_VERSION VERSION_LESS "2.1.0")
     set_if_higher(CMAKE_CXX_STANDARD 17)

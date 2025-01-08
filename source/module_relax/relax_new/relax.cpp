@@ -633,7 +633,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
         ucell.symm.symmetrize_vec3_nat(move_ion);
     }
 
-    ucell.update_pos_taud(move_ion);
+    unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
     ucell.print_tau();

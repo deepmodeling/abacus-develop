@@ -68,7 +68,7 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
     }
 }
 
-void LCAO_Deepks::cal_gedm_equiv(const int nat)
+void LCAO_Deepks::cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor)
 {
     ModuleBase::TITLE("LCAO_Deepks", "cal_gedm_equiv");
 
@@ -77,7 +77,7 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat)
                                this->inlmax,
                                this->inl_l,
                                PARAM.inp.deepks_equiv,
-                               this->d_tensor,
+                               descriptor,
                                PARAM.globalv.global_out_dir,
                                GlobalV::MY_RANK); // libnpy needed
 
@@ -99,12 +99,12 @@ void LCAO_Deepks::cal_gedm_equiv(const int nat)
 }
 
 // obtain from the machine learning model dE_delta/dDescriptor
-void LCAO_Deepks::cal_gedm(const int nat)
+void LCAO_Deepks::cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor)
 {
 
     if (PARAM.inp.deepks_equiv)
     {
-        this->cal_gedm_equiv(nat);
+        this->cal_gedm_equiv(nat, descriptor);
         return;
     }
 
@@ -114,10 +114,10 @@ void LCAO_Deepks::cal_gedm(const int nat)
     std::vector<torch::jit::IValue> inputs;
 
     // input_dim:(natom, des_per_atom)
-    inputs.push_back(torch::cat(this->d_tensor, 0).reshape({1, nat, this->des_per_atom}));
+    inputs.push_back(torch::cat(descriptor, 0).reshape({1, nat, this->des_per_atom}));
     std::vector<torch::Tensor> ec;
     ec.push_back(module.forward(inputs).toTensor()); // Hartree
-    this->E_delta = ec[0].item().toDouble() * 2;     // Ry; *2 is for Hartree to Ry
+    this->E_delta = ec[0].item<double>() * 2;        // Ry; *2 is for Hartree to Ry
 
     // cal gedm
     std::vector<torch::Tensor> gedm_shell;
@@ -133,13 +133,14 @@ void LCAO_Deepks::cal_gedm(const int nat)
     for (int inl = 0; inl < inlmax; ++inl)
     {
         int nm = 2 * inl_l[inl] + 1;
+        auto accessor = this->gedm_tensor[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; ++m1)
         {
             for (int m2 = 0; m2 < nm; ++m2)
             {
                 int index = m1 * nm + m2;
                 //*2 is for Hartree to Ry
-                this->gedm[inl][index] = this->gedm_tensor[inl].index({m1, m2}).item().toDouble() * 2;
+                this->gedm[inl][index] = accessor[m1][m2] * 2;
             }
         }
     }

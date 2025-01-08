@@ -49,7 +49,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
     setmem_complex_op()(ctx, vcc, 0, nstart * nstart);
 
-    const int dmin = psi.get_current_nbas();
+    const int dmin = psi.get_current_ngk();
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
@@ -167,7 +167,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     const int nstart = psi_nr;
     const int n_band = evc.get_nbands();
     const int dmax = evc.get_nbasis();
-    const int dmin = evc.get_current_nbas();
+    const int dmin = evc.get_current_ngk();
 
     // skip the diagonalization if the operators are not allocated
     if (pHamilt->ops == nullptr)
@@ -199,7 +199,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, &evc.get_ngk(0));
+        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, dmin, true);
+
         T* ppsi = psi_temp.get_pointer();
         // hpsi and spsi share the temp space
         T* temp = nullptr;
@@ -212,7 +213,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
         {
             // psi_temp is one band psi, psi is all bands psi, the range always is 1 for the only band in psi_temp
             syncmem_complex_op()(ctx, ctx, ppsi, psi + i * psi_nc, psi_nc);
-            psi::Range band_by_band_range(1, 0, 0, 0);
+            psi::Range band_by_band_range(true, 0, 0, 0);
             hpsi_info hpsi_in(&psi_temp, band_by_band_range, hpsi);
 
             // H|Psi> to get hpsi for target band
@@ -246,7 +247,8 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     }
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, &evc.get_ngk(0));
+        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, dmin, true);
+
         T* ppsi = psi_temp.get_pointer();
         syncmem_complex_op()(ctx, ctx, ppsi, psi, psi_temp.size());
         // hpsi and spsi share the temp space
@@ -256,7 +258,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         T* hpsi = temp;
         // do hPsi for all bands
-        psi::Range all_bands_range(1, 0, 0, nstart - 1);
+        psi::Range all_bands_range(true, 0, 0, nstart - 1);
         hpsi_info hpsi_in(&psi_temp, all_bands_range, hpsi);
         pHamilt->ops->hPsi(hpsi_in);
 
@@ -264,7 +266,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
 
         T* spsi = temp;
         // do sPsi for all bands
-        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_current_nbas(), psi_temp.get_nbands());
+        pHamilt->sPsi(ppsi, spsi, psi_temp.get_nbasis(), psi_temp.get_nbasis(), psi_temp.get_nbands());
 
         gemm_op<T, Device>()(ctx, 'C', 'N', nstart, nstart, dmin, &one, ppsi, dmax, spsi, dmax, &zero, scc, nstart);
         delmem_complex_op()(ctx, temp);
@@ -423,7 +425,7 @@ void DiagoIterAssist<T, Device>::cal_hs_subspace(const hamilt::Hamilt<T, Device>
     setmem_complex_op()(ctx, hcc, 0, nstart * nstart);
     setmem_complex_op()(ctx, scc, 0, nstart * nstart);
 
-    const int dmin = psi.get_current_nbas();
+    const int dmin = psi.get_current_ngk();
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
@@ -549,7 +551,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
     DiagoIterAssist::diagH_LAPACK(nstart, nstart, hcc, scc, nstart, en, vcc);
 
     { // code block to calculate tar_mat
-        const int dmin = evc.get_current_nbas();
+        const int dmin = evc.get_current_ngk();
         const int dmax = evc.get_nbasis();
         T* temp = nullptr;
         resmem_complex_op()(ctx, temp, nstart * dmax, "DiagSub::temp");
@@ -586,8 +588,9 @@ bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notc
     //================================================================
 
     bool scf = true;
-    if (PARAM.inp.calculation == "nscf")
+    if (PARAM.inp.calculation == "nscf") {
         scf = false;
+}
 
     // If ntry <=5, try to do it better, if ntry > 5, exit.
     const bool f1 = (ntry <= 5);

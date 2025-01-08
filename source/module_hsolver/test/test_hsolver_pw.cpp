@@ -32,6 +32,62 @@
  *  - 8. solve()
  *      - lcao_in_pw specific implementation
  */
+
+// mock diago_hs_para
+namespace hsolver {
+template <typename T>
+void diago_hs_para(T* h,
+                   T* s,
+                   const int lda,
+                   const int nband,
+                   typename GetTypeReal<T>::type* const ekb,
+                   T* const wfc,
+                   const MPI_Comm& comm,
+                   const int diag_subspace,
+                   const int block_size = 0)
+{}
+template void diago_hs_para<double>(double* h,
+                                    double* s,
+                                    const int lda,
+                                    const int nband,
+                                    typename GetTypeReal<double>::type* const ekb,
+                                    double* const wfc,
+                                    const MPI_Comm& comm,
+                                    const int diag_subspace,
+                                    const int block_size);
+
+template void diago_hs_para<std::complex<double>>(std::complex<double>* h,
+                                                  std::complex<double>* s,
+                                                  const int lda,
+                                                  const int nband,
+                                                  typename GetTypeReal<std::complex<double>>::type* const ekb,
+                                                  std::complex<double>* const wfc,
+                                                  const MPI_Comm& comm,
+                                                  const int diag_subspace,
+                                                  const int block_size);
+
+template void diago_hs_para<float>(float* h,
+                                   float* s,
+                                   const int lda,
+                                   const int nband,
+                                   typename GetTypeReal<float>::type* const ekb,
+                                   float* const wfc,
+                                   const MPI_Comm& comm,
+                                   const int diag_subspace,
+                                   const int block_size);
+                                   
+template void diago_hs_para<std::complex<float>>(std::complex<float>* h,
+                                                 std::complex<float>* s,
+                                                 const int lda,
+                                                 const int nband,
+                                                 typename GetTypeReal<std::complex<float>>::type* const ekb,
+                                                 std::complex<float>* const wfc,
+                                                 const MPI_Comm& comm,
+                                                 const int diag_subspace,
+                                                 const int block_size);
+
+}
+
 class TestHSolverPW : public ::testing::Test {
   public:
     ModulePW::PW_Basis_K pwbk;

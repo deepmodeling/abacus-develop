@@ -4,7 +4,6 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "../vector3.h"
-#include "../blas_connector.h"
 #include "../tool_quit.h"
 #include <string>
 #include <cstring>
@@ -692,6 +691,9 @@ TEST_F(GlobalFunctionTest,MemAvailable)
 
 TEST_F(GlobalFunctionTest,BlockHere)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=1;
@@ -706,6 +708,9 @@ TEST_F(GlobalFunctionTest,BlockHere)
 
 TEST_F(GlobalFunctionTest,BlockHere2)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=0;
@@ -724,6 +729,9 @@ TEST_F(GlobalFunctionTest,BlockHere2)
 
 TEST_F(GlobalFunctionTest,BlockHere3)
 {
+#ifdef __MPI
+#undef __MPI
+#endif
 	std::string output2;
 	std::string block_in="111";
 	GlobalV::MY_RANK=0;

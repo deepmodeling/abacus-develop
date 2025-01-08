@@ -204,3 +204,12 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         }
     }
 }
+
+template <typename T>
+void reset_vector(std::vector<T>& vec, int size, T default_value)
+{
+    if (vec.size() != size)
+    {
+        vec.resize(size, default_value);
+    }
+}

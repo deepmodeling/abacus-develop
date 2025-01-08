@@ -26,6 +26,7 @@
 102_PW_BPCG
 102_PW_CG
 102_PW_DS_davsubspace
+102_PW_DS_davsubspace_sca
 102_PW_PINT_RKS
 102_PW_PINT_UKS
 103_PW_15_CF_CS_S1_smallg
@@ -188,6 +189,7 @@
 #220_NO_KP_MD_MSST_level2
 220_NO_KP_MD_NVT
 220_NO_KP_MD_wfc_out
+223_NO_zero_atom
 #230_NO_KP_MD_TD
 240_NO_KP_15_SO
 240_NO_KP_15_SO_average
@@ -341,6 +343,8 @@
 902_OF_KE_vW
 902_OF_KE_WT
 902_OF_KE_LKT
+902_OF_KE_MPN
+902_OF_KE_CPN5
 903_OF_TF_weight
 903_OF_vW_weight
 903_OF_WT_alphabeta

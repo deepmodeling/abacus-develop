@@ -7,7 +7,6 @@
 #include "module_io/print_info.h"
 #include "module_io/winput.h"
 #include "module_md/run_md.h"
-#include "module_parameter/parameter.h"
 
 /**
  * @brief This is the driver function which defines the workflow of ABACUS
@@ -41,10 +40,10 @@ void Driver::driver_run()
     // the life of ucell should begin here, mohan 2024-05-12
     UnitCell ucell;
     ucell.setup(PARAM.inp.latname,
-                    PARAM.inp.ntype,
-                    PARAM.inp.lmaxmax,
-                    PARAM.inp.init_vel,
-                    PARAM.inp.fixed_axes);
+                PARAM.inp.ntype,
+                PARAM.inp.lmaxmax,
+                PARAM.inp.init_vel,
+                PARAM.inp.fixed_axes);
 
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);

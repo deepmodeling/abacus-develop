@@ -15,7 +15,7 @@ void ElecStatePW<T, Device>::cal_tau(const psi::Psi<T, Device>& psi)
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
         psi.fix_k(ik);
-        int npw = psi.get_current_nbas();
+        int npw = psi.get_current_ngk();
         int current_spin = 0;
         if (PARAM.inp.nspin == 2)
         {

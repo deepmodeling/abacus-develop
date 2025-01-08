@@ -1,11 +1,10 @@
 #include "md_base.h"
-
 #include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
 #include "module_io/print_info.h"
-
+#include "module_cell/update_cell.h"
 MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) : mdp(param_in.mdp), ucell(unit_in)
 {
     my_rank = param_in.globalv.myrank;
@@ -112,7 +111,7 @@ void MD_base::update_pos()
     MPI_Bcast(pos, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
-    ucell.update_pos_taud(pos);
+    unitcell::update_pos_taud(ucell.lat,pos,ucell.ntype,ucell.nat,ucell.atoms);
 
     return;
 }

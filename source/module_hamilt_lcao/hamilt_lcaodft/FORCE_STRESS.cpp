@@ -513,18 +513,24 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
                 if (!PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
                 {
+                    torch::Tensor gdmx;
                     if (PARAM.globalv.gamma_only_local)
                     {
                         const std::vector<std::vector<double>>& dm_gamma
                             = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-                        GlobalC::ld.cal_gdmx(dm_gamma,
-                                             ucell,
-                                             orb,
-                                             gd,
-                                             kv.get_nks(),
-                                             kv.kvec_d,
-                                             GlobalC::ld.phialpha,
-                                             isstress);
+
+                        DeePKS_domain::cal_gdmx(GlobalC::ld.lmaxd,
+                                                GlobalC::ld.inlmax,
+                                                kv.get_nks(),
+                                                kv.kvec_d,
+                                                GlobalC::ld.phialpha,
+                                                GlobalC::ld.inl_index,
+                                                dm_gamma,
+                                                ucell,
+                                                orb,
+                                                pv,
+                                                gd,
+                                                gdmx);
                     }
                     else
                     {
@@ -533,25 +539,39 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                   ->get_DM()
                                   ->get_DMK_vector();
 
-                        GlobalC::ld
-                            .cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, isstress);
-                    }
-                    if (PARAM.inp.deepks_out_unittest)
-                    {
-                        GlobalC::ld.check_gdmx(ucell.nat);
+                        DeePKS_domain::cal_gdmx(GlobalC::ld.lmaxd,
+                                                GlobalC::ld.inlmax,
+                                                kv.get_nks(),
+                                                kv.kvec_d,
+                                                GlobalC::ld.phialpha,
+                                                GlobalC::ld.inl_index,
+                                                dm_k,
+                                                ucell,
+                                                orb,
+                                                pv,
+                                                gd,
+                                                gdmx);
                     }
                     std::vector<torch::Tensor> gevdm;
                     GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
-                    GlobalC::ld.cal_gvx(ucell.nat, gevdm);
+                    torch::Tensor gvx;
+                    DeePKS_domain::cal_gvx(ucell.nat,
+                                           GlobalC::ld.inlmax,
+                                           GlobalC::ld.des_per_atom,
+                                           GlobalC::ld.inl_l,
+                                           gevdm,
+                                           gdmx,
+                                           gvx);
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
-                        GlobalC::ld.check_gvx(ucell.nat);
+                        DeePKS_domain::check_gdmx(gdmx);
+                        DeePKS_domain::check_gvx(gvx);
                     }
 
                     LCAO_deepks_io::save_npy_gvx(ucell.nat,
                                                  GlobalC::ld.des_per_atom,
-                                                 GlobalC::ld.gvx_tensor,
+                                                 gvx,
                                                  PARAM.globalv.global_out_dir,
                                                  GlobalV::MY_RANK);
                 }
@@ -716,6 +736,12 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     scs(i, j) += stress_exx(i, j);
                 }
 #endif
+#ifdef __DEEPKS
+                if (PARAM.inp.deepks_scf)
+                {
+                    scs(i, j) += svnl_dalpha(i, j);
+                }
+#endif
             }
         }
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
@@ -726,47 +752,83 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __DEEPKS
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
-            const std::string file_s = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+            const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
             LCAO_deepks_io::save_npy_s(scs,
-                                       file_s,
-                                       ucell.omega,
-                                       GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
-        }
-        if (PARAM.inp.deepks_scf)
-        {
-            if (ModuleSymmetry::Symmetry::symm_flag == 1)
-            {
-                symm->symmetrize_mat3(svnl_dalpha, ucell.lat);
-            } // end symmetry
-            for (int i = 0; i < 3; i++)
-            {
-                for (int j = 0; j < 3; j++)
-                {
-                    scs(i, j) += svnl_dalpha(i, j);
-                }
-            }
-        }
-        if (PARAM.inp.deepks_out_labels) // not parallelized yet
-        {
-            const std::string file_s = PARAM.globalv.global_out_dir + "deepks_stot.npy";
-            LCAO_deepks_io::save_npy_s(scs,
-                                       file_s,
+                                       file_stot,
                                        ucell.omega,
                                        GlobalV::MY_RANK); // change to energy unit Ry when printing, S_tot, w/ model
 
             // wenfei add 2021/11/2
             if (PARAM.inp.deepks_scf)
             {
+                const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
+                LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
+                                           file_sbase,
+                                           ucell.omega,
+                                           GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
 
                 if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
                 {
+                    torch::Tensor gdmepsl;
+                    if (PARAM.globalv.gamma_only_local)
+                    {
+                        const std::vector<std::vector<double>>& dm_gamma
+                            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
+
+                        DeePKS_domain::cal_gdmepsl(GlobalC::ld.lmaxd,
+                                                   GlobalC::ld.inlmax,
+                                                   kv.get_nks(),
+                                                   kv.kvec_d,
+                                                   GlobalC::ld.phialpha,
+                                                   GlobalC::ld.inl_index,
+                                                   dm_gamma,
+                                                   ucell,
+                                                   orb,
+                                                   pv,
+                                                   gd,
+                                                   gdmepsl);
+                    }
+                    else
+                    {
+                        const std::vector<std::vector<std::complex<double>>>& dm_k
+                            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)
+                                  ->get_DM()
+                                  ->get_DMK_vector();
+
+                        DeePKS_domain::cal_gdmepsl(GlobalC::ld.lmaxd,
+                                                   GlobalC::ld.inlmax,
+                                                   kv.get_nks(),
+                                                   kv.kvec_d,
+                                                   GlobalC::ld.phialpha,
+                                                   GlobalC::ld.inl_index,
+                                                   dm_k,
+                                                   ucell,
+                                                   orb,
+                                                   pv,
+                                                   gd,
+                                                   gdmepsl);
+                    }
+
                     std::vector<torch::Tensor> gevdm;
                     GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
-                    GlobalC::ld.cal_gvepsl(ucell.nat, gevdm);
+                    torch::Tensor gvepsl;
+                    DeePKS_domain::cal_gvepsl(ucell.nat,
+                                              GlobalC::ld.inlmax,
+                                              GlobalC::ld.des_per_atom,
+                                              GlobalC::ld.inl_l,
+                                              gevdm,
+                                              gdmepsl,
+                                              gvepsl);
+
+                    if (PARAM.inp.deepks_out_unittest)
+                    {
+                        DeePKS_domain::check_gdmepsl(gdmepsl);
+                        DeePKS_domain::check_gvepsl(gvepsl);
+                    }
 
                     LCAO_deepks_io::save_npy_gvepsl(ucell.nat,
                                                     GlobalC::ld.des_per_atom,
-                                                    GlobalC::ld.gvepsl_tensor,
+                                                    gvepsl,
                                                     PARAM.globalv.global_out_dir,
                                                     GlobalV::MY_RANK); //  unitless, grad_vepsl
                 }

@@ -2,8 +2,8 @@ INPUT_PARAMETERS
 calculation scf
 suffix autotest
 
-ecutwfc 100.000000
-scf_thr 5.000000e-07
+ecutwfc 50.000000
+scf_thr 1.000000e-06
 scf_nmax 35
 pseudo_dir ../../PP_ORB
 orbital_dir ../../PP_ORB

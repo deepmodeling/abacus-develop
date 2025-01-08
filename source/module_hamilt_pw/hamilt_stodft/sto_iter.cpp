@@ -60,7 +60,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
     if (PARAM.inp.nbands > 0)
     {
         const int nchipk = stowf.nchip[ik];
-        const int npw = psi.get_current_nbas();
+        const int npw = psi.get_current_ngk();
         const int npwx = psi.get_nbasis();
         stowf.chi0->fix_k(ik);
         stowf.chiortho->fix_k(ik);

@@ -172,9 +172,9 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     const int allbands = bandinfo[5];
     const int dim_jmatrix = perbands_ks * allbands_sto + perbands_sto * allbands;
 
-    psi::Psi<std::complex<double>> right_hchi(1, perbands_sto, npwx, p_kv->ngk.data());
-    psi::Psi<std::complex<float>> f_rightchi(1, perbands_sto, npwx, p_kv->ngk.data());
-    psi::Psi<std::complex<float>> f_right_hchi(1, perbands_sto, npwx, p_kv->ngk.data());
+    psi::Psi<std::complex<double>> right_hchi(1, perbands_sto, npwx, npw, true);
+    psi::Psi<std::complex<float>> f_rightchi(1, perbands_sto, npwx, npw, true);
+    psi::Psi<std::complex<float>> f_right_hchi(1, perbands_sto, npwx, npw, true);
 
     this->p_hamilt_sto->hPsi(leftchi.get_pointer(), left_hchi.get_pointer(), perbands_sto);
     this->p_hamilt_sto->hPsi(rightchi.get_pointer(), right_hchi.get_pointer(), perbands_sto);
@@ -206,8 +206,8 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
     }
 #endif
 
-    psi::Psi<std::complex<float>> f_batch_vchi(1, bsize_psi * ndim, npwx, p_kv->ngk.data());
-    psi::Psi<std::complex<float>> f_batch_vhchi(1, bsize_psi * ndim, npwx, p_kv->ngk.data());
+    psi::Psi<std::complex<float>> f_batch_vchi(1, bsize_psi * ndim, npwx, npw, true);
+    psi::Psi<std::complex<float>> f_batch_vhchi(1, bsize_psi * ndim, npwx, npw, true);
     std::vector<std::complex<float>> tmpj(ndim * allbands_sto * perbands_sto);
 
     // 1. (<\psi|J|\chi>)^T
@@ -663,19 +663,19 @@ void Sto_EleCond::sKG(const int& smear_type,
         //-----------------------------------------------------------
         //-------------------     allocate  -------------------------
         size_t ks_memory_cost = perbands_ks * npwx * sizeof(std::complex<float>);
-        psi::Psi<std::complex<double>> kspsi(1, perbands_ks, npwx, p_kv->ngk.data());
-        psi::Psi<std::complex<double>> vkspsi(1, perbands_ks * ndim, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<double>> kspsi(1, perbands_ks, npwx, npw, true);
+        psi::Psi<std::complex<double>> vkspsi(1, perbands_ks * ndim, npwx, npw, true);
         std::vector<std::complex<double>> expmtmf_fact(perbands_ks), expmtf_fact(perbands_ks);
-        psi::Psi<std::complex<float>> f_kspsi(1, perbands_ks, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<float>> f_kspsi(1, perbands_ks, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::kspsi", ks_memory_cost);
-        psi::Psi<std::complex<float>> f_vkspsi(1, perbands_ks * ndim, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<float>> f_vkspsi(1, perbands_ks * ndim, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::vkspsi", ks_memory_cost);
         psi::Psi<std::complex<float>>* kspsi_all = &f_kspsi;
 
         size_t sto_memory_cost = perbands_sto * npwx * sizeof(std::complex<double>);
-        psi::Psi<std::complex<double>> sfchi(1, perbands_sto, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<double>> sfchi(1, perbands_sto, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::sfchi", sto_memory_cost);
-        psi::Psi<std::complex<double>> smfchi(1, perbands_sto, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<double>> smfchi(1, perbands_sto, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::smfchi", sto_memory_cost);
 #ifdef __MPI
         psi::Psi<std::complex<float>> chi_all, hchi_all, psi_all;
@@ -702,8 +702,8 @@ void Sto_EleCond::sKG(const int& smear_type,
 
         const int nbatch_psi = npart_sto;
         const int bsize_psi = ceil(double(perbands_sto) / nbatch_psi);
-        psi::Psi<std::complex<double>> batch_vchi(1, bsize_psi * ndim, npwx, p_kv->ngk.data());
-        psi::Psi<std::complex<double>> batch_vhchi(1, bsize_psi * ndim, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<double>> batch_vchi(1, bsize_psi * ndim, npwx, npw, true);
+        psi::Psi<std::complex<double>> batch_vhchi(1, bsize_psi * ndim, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::batchjpsi", 3 * bsize_psi * ndim * npwx * sizeof(std::complex<double>));
 
         //-------------------     sqrt(f)|psi>   sqrt(1-f)|psi>   ---------------
@@ -781,7 +781,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         std::vector<std::complex<float>> j1r(ndim * dim_jmatrix), j2r(ndim * dim_jmatrix);
         ModuleBase::Memory::record("SDFT::j1r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
         ModuleBase::Memory::record("SDFT::j2r", sizeof(std::complex<float>) * ndim * dim_jmatrix);
-        psi::Psi<std::complex<double>> tmphchil(1, perbands_sto, npwx, p_kv->ngk.data());
+        psi::Psi<std::complex<double>> tmphchil(1, perbands_sto, npwx, npw, true);
         ModuleBase::Memory::record("SDFT::tmphchil/r", sto_memory_cost * 2);
 
         //------------------------  t loop  --------------------------

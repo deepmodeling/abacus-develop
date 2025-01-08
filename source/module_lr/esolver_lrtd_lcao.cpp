@@ -195,7 +195,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
     if (this->nbands == PARAM.inp.nbands) { move_gs(); }
     else    // copy the part of ground state info according to paraC_
     {
-        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), this->paraC_.get_col_size(), this->paraC_.get_row_size());
+        this->psi_ks = new psi::Psi<T>(this->kv.get_nks(), 
+                                       this->paraC_.get_col_size(), 
+                                       this->paraC_.get_row_size(),
+                                       this->kv.ngk,
+                                       true);
         this->eig_ks.create(this->kv.get_nks(), this->nbands);
         const int start_band = this->nocc_max - *std::max_element(nocc.begin(), nocc.end());
         for (int ik = 0;ik < this->kv.get_nks();++ik)
@@ -283,7 +287,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     this->parameter_check();
 
     /// read orbitals and build the interpolation table
-    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn);
+    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data());
 
     LCAO_Orbitals orb;
     two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
@@ -309,8 +313,10 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     // now ModuleIO::read_wfc_nao needs `Parallel_Orbitals` and can only read all the bands
     // it need improvement to read only the bands needed
     this->psi_ks = new psi::Psi<T>(this->kv.get_nks(),
-        this->paraMat_.ncol_bands,
-        this->paraMat_.get_row_size());
+                                   this->paraMat_.ncol_bands,
+                                   this->paraMat_.get_row_size(), 
+                                   this->kv.ngk,
+                                   true);
     this->read_ks_wfc();
     if (nspin == 2)
     {
@@ -568,7 +574,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
         {
             spectrum.optical_absorption_method1(freq, input.abs_broadening);
             // =============================================== for test ====================================================
-            // spectrum.optical_absorption_method2(freq, input.abs_broadening, spin_types[is]);
+            // spectrum.optical_absorption_method2(freq, input.abs_broadening);
             // spectrum.test_transition_dipoles_velocity_ks(eig_ks.c);
             // spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity_ks.dat");
             // =============================================== for test ====================================================

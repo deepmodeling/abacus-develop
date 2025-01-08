@@ -7,6 +7,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "unitcell.h"
+#include "bcast_cell.h"
 #include "module_parameter/parameter.h"
 
 #ifdef __LCAO
@@ -22,17 +23,10 @@
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-#ifdef __EXX
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_ri/serialization_cereal.h"
-#endif
 
 
 #include "update_cell.h"
 UnitCell::UnitCell() {
-    if (test_unitcell) {
-        ModuleBase::TITLE("unitcell", "Constructor");
-}
     itia2iat.create(1, 1);
 }
 
@@ -41,108 +35,13 @@ UnitCell::~UnitCell() {
     delete[] atom_mass;
     delete[] pseudo_fn;
     delete[] pseudo_type;
-    delete[] orbital_fn;
     if (set_atom_flag) {
         delete[] atoms;
     }
 }
 
-#include "module_base/parallel_common.h"
-#ifdef __MPI
-void UnitCell::bcast_unitcell() {
-    if (test_unitcell) {
-        ModuleBase::TITLE("UnitCell", "bcast_unitcell");
-}
-    Parallel_Common::bcast_string(Coordinate);
-    Parallel_Common::bcast_int(nat);
-
-    Parallel_Common::bcast_double(lat0);
-    Parallel_Common::bcast_double(lat0_angstrom);
-    Parallel_Common::bcast_double(tpiba);
-    Parallel_Common::bcast_double(tpiba2);
-
-    // distribute lattice vectors.
-    Parallel_Common::bcast_double(latvec.e11);
-    Parallel_Common::bcast_double(latvec.e12);
-    Parallel_Common::bcast_double(latvec.e13);
-    Parallel_Common::bcast_double(latvec.e21);
-    Parallel_Common::bcast_double(latvec.e22);
-    Parallel_Common::bcast_double(latvec.e23);
-    Parallel_Common::bcast_double(latvec.e31);
-    Parallel_Common::bcast_double(latvec.e32);
-    Parallel_Common::bcast_double(latvec.e33);
-
-    Parallel_Common::bcast_int(lc[0]);
-    Parallel_Common::bcast_int(lc[1]);
-    Parallel_Common::bcast_int(lc[2]);
-
-    if(this->orbital_fn == nullptr)
-    {
-        this->orbital_fn = new std::string[ntype];
-    }
-    for (int i = 0; i < ntype; i++)
-    {
-        Parallel_Common::bcast_string(orbital_fn[i]);
-    }
-
-    // distribute lattice vectors.
-    Parallel_Common::bcast_double(a1.x);
-    Parallel_Common::bcast_double(a1.y);
-    Parallel_Common::bcast_double(a1.z);
-    Parallel_Common::bcast_double(a2.x);
-    Parallel_Common::bcast_double(a2.y);
-    Parallel_Common::bcast_double(a2.z);
-    Parallel_Common::bcast_double(a3.x);
-    Parallel_Common::bcast_double(a3.y);
-    Parallel_Common::bcast_double(a3.z);
-
-    // distribute latcenter
-    Parallel_Common::bcast_double(latcenter.x);
-    Parallel_Common::bcast_double(latcenter.y);
-    Parallel_Common::bcast_double(latcenter.z);
-
-    // distribute superlattice vectors.
-    Parallel_Common::bcast_double(latvec_supercell.e11);
-    Parallel_Common::bcast_double(latvec_supercell.e12);
-    Parallel_Common::bcast_double(latvec_supercell.e13);
-    Parallel_Common::bcast_double(latvec_supercell.e21);
-    Parallel_Common::bcast_double(latvec_supercell.e22);
-    Parallel_Common::bcast_double(latvec_supercell.e23);
-    Parallel_Common::bcast_double(latvec_supercell.e31);
-    Parallel_Common::bcast_double(latvec_supercell.e32);
-    Parallel_Common::bcast_double(latvec_supercell.e33);
-    Parallel_Common::bcast_double(magnet.start_magnetization, ntype);
-
-    if (PARAM.inp.nspin == 4) {
-        Parallel_Common::bcast_double(magnet.ux_[0]);
-        Parallel_Common::bcast_double(magnet.ux_[1]);
-        Parallel_Common::bcast_double(magnet.ux_[2]);
-    }
-
-    for (int i = 0; i < ntype; i++) {
-        atoms[i].bcast_atom(); // init tau and mbl array
-    }
-
-#ifdef __EXX
-    ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs,
-                                  MPI_COMM_WORLD,
-                                  0);
-#endif
-    return;
-}
-
-void UnitCell::bcast_unitcell2() {
-    for (int i = 0; i < ntype; i++) {
-        atoms[i].bcast_atom2();
-    }
-    return;
-}
-#endif
 
 void UnitCell::print_cell(std::ofstream& ofs) const {
-    if (test_unitcell) {
-        ModuleBase::TITLE("UnitCell", "print_cell");
-}
 
     ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
 
@@ -166,8 +65,6 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
 /*
 void UnitCell::print_cell_xyz(const std::string& fn) const
 {
-    if (test_unitcell)
-        ModuleBase::TITLE("UnitCell", "print_cell_xyz");
 
     if (GlobalV::MY_RANK != 0)
         return; // xiaohui add 2015-03-15
@@ -314,65 +211,6 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 	return constrain;
 }
 
-
-
-void UnitCell::update_pos_taud(double* posd_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
-                atom->taud[ia][ik] += posd_in[3 * iat + ik];
-                atom->dis[ia][ik] = posd_in[3 * iat + ik];
-            }
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
-    this->bcast_atoms_tau();
-}
-
-// posd_in is atomic displacements here  liuyu 2023-03-22
-void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ia++) {
-            for (int ik = 0; ik < 3; ++ik) {
-                atom->taud[ia][ik] += posd_in[iat][ik];
-                atom->dis[ia][ik] = posd_in[iat][ik];
-            }
-            iat++;
-        }
-    }
-    assert(iat == this->nat);
-    unitcell::periodic_boundary_adjustment(this->atoms,this->latvec, this->ntype);
-    this->bcast_atoms_tau();
-}
-
-void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {
-    int iat = 0;
-    for (int it = 0; it < this->ntype; ++it) {
-        Atom* atom = &this->atoms[it];
-        for (int ia = 0; ia < atom->na; ++ia) {
-            this->atoms[it].vel[ia] = vel_in[iat];
-            ++iat;
-        }
-    }
-    assert(iat == this->nat);
-}
-
-
-void UnitCell::bcast_atoms_tau() {
-#ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-    for (int i = 0; i < ntype; i++) {
-        atoms[i].bcast_atom(); // bcast tau array
-    }
-#endif
-}
-
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
@@ -394,6 +232,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     bool ok2 = true;
 
     // (3) read in atom information
+    orbital_fn.resize(ntype);
     if (GlobalV::MY_RANK == 0) {
         // open "atom_unitcell" file.
         std::ifstream ifa(fn.c_str(), std::ios::in);
@@ -473,7 +312,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     }
 
 #ifdef __MPI
-    this->bcast_unitcell();
+    unitcell::bcast_unitcell(*this);
 #endif
 
     //========================================================
@@ -651,6 +490,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     //========================
     this->lmax = 0;
     this->nmax = 0;
+    this->nmax_total = 0;
     for (int it = 0; it < ntype; it++) {
         lmax = std::max(lmax, atoms[it].nwl);
         for (int l = 0; l < atoms[it].nwl + 1; l++) {
@@ -888,8 +728,7 @@ void UnitCell::setup(const std::string& latname_in,
 
 
 void UnitCell::compare_atom_labels(std::string label1, std::string label2) {
-    if (label1
-        != label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
+    if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
     {
         atom_in ai;
         if (!(std::to_string(ai.atom_Z[label1]) == label2

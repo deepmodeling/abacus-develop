@@ -17,7 +17,6 @@ UnitCell::~UnitCell() {
     delete[] atom_mass;
     delete[] pseudo_fn;
     delete[] pseudo_type;
-    delete[] orbital_fn;
     if (set_atom_flag) {
         delete[] atoms;
     }
@@ -33,17 +32,10 @@ bool UnitCell::read_atom_positions(std::ifstream& ifpos,
                                    std::ofstream& ofs_warning) {
     return true;
 }
-void UnitCell::update_pos_taud(double* posd_in) {}
-void UnitCell::update_pos_taud(const ModuleBase::Vector3<double>* posd_in) {}
-void UnitCell::update_vel(const ModuleBase::Vector3<double>* vel_in) {}
-void UnitCell::bcast_atoms_tau() {}
+
 bool UnitCell::judge_big_cell() const { return true; }
 void UnitCell::update_stress(ModuleBase::matrix& scs) {}
 void UnitCell::update_force(ModuleBase::matrix& fcs) {}
-#ifdef __MPI
-void UnitCell::bcast_unitcell() {}
-void UnitCell::bcast_unitcell2() {}
-#endif
 void UnitCell::set_iat2itia() {}
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
 void UnitCell::read_orb_file(int it,

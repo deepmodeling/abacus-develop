@@ -78,7 +78,6 @@ class UnitCell {
   private:
     std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
     int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
-    const int test_unitcell = 0;
                   // ----------------- END of iat2iwt part -----------------
 
   public:
@@ -200,10 +199,6 @@ class UnitCell {
     void print_cell(std::ofstream& ofs) const;
     void print_cell_xyz(const std::string& fn) const;
 
-    void update_pos_taud(const ModuleBase::Vector3<double>* posd_in);
-    void update_pos_taud(double* posd_in);
-    void update_vel(const ModuleBase::Vector3<double>* vel_in);
-    void bcast_atoms_tau();
     bool judge_big_cell() const;
 
     void update_stress(ModuleBase::matrix& scs); // updates stress
@@ -214,14 +209,8 @@ class UnitCell {
     std::string* pseudo_fn = new std::string[1];
     std::string* pseudo_type = new std::string[1]; // pseudopotential types for each elements,
                                                    // sunliang added 2022-09-15.
-    std::string* orbital_fn = nullptr;  // filenames of orbitals, liuyu add 2022-10-19
-    std::string
-        descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
-
-#ifdef __MPI
-    void bcast_unitcell();
-    void bcast_unitcell2();
-#endif
+    std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
+    std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 
     void set_iat2itia();
 

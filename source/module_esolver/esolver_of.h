@@ -9,6 +9,7 @@
 #include "module_hamilt_pw/hamilt_ofdft/kedf_tf.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_vw.h"
 #include "module_hamilt_pw/hamilt_ofdft/kedf_wt.h"
+#include "module_hamilt_pw/hamilt_ofdft/kedf_ml.h"
 #include "module_psi/psi.h"
 
 namespace ModuleESolver
@@ -38,6 +39,9 @@ class ESolver_OF : public ESolver_FP
     KEDF_vW* vw_ = nullptr;
     KEDF_WT* wt_ = nullptr;
     KEDF_LKT* lkt_ = nullptr;
+#ifdef __MLKEDF
+    KEDF_ML* ml_ = nullptr;
+#endif
 
     // ----------------- the optimization methods ------------------
     ModuleBase::Opt_CG* opt_cg_ = nullptr;
