@@ -214,22 +214,6 @@ double BlasConnector::dot( const int n, const double *X, const int incX, const d
 	return ddot_(&n, X, &incX, Y, &incY);
 }
 
-double BlasConnector::dot( const int n, const double *X, const int incX, const double *Y, const int incY, base_device::AbacusDevice_t device_type)
-{
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-		return ddot_(&n, X, &incX, Y, &incY);
-	}
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
-#ifdef __CUDA
-		double result = 0.0;
-		cublasErrcheck(cublasDdot(BlasUtils::cublas_handle, n, X, incX, Y, incY, &result));
-		return result;
-#endif
-	}
-	return ddot_(&n, X, &incX, Y, &incY);
-}
-
-
 // C = a * A.? * B.? + b * C
 // Row-Major part
 void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
