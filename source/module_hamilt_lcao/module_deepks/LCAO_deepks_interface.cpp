@@ -40,8 +40,8 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const int des_per_atom = ld->des_per_atom;
     const int* inl_l = ld->inl_l;
     const ModuleBase::IntArray* inl_index = ld->inl_index;
-    const std::vector<torch::Tensor> pdm = ld->pdm;
     const std::vector<hamilt::HContainer<double>*> phialpha = ld->phialpha;
+    std::vector<torch::Tensor> pdm = ld->pdm;
 
     const int my_rank = GlobalV::MY_RANK;
     const int nspin = PARAM.inp.nspin;
@@ -348,10 +348,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
         if (!PARAM.inp.deepks_scf)
         {
-            ld->cal_projected_DM<TK>(dm, ucell, orb, GridD);
+            DeePKS_domain::cal_pdm<
+                TK>(ld->init_pdm, inlmax, lmaxd, inl_l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
         }
 
-        ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
+        DeePKS_domain::check_pdm(inlmax, inl_l, pdm); // print out the projected dm for NSCF calculaiton
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(nat, inlmax, inl_l, pdm, descriptor,
