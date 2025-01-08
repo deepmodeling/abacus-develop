@@ -347,8 +347,6 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
-
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(ucell.nat,
                                       GlobalC::ld.inlmax,
