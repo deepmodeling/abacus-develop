@@ -47,7 +47,7 @@ UnitCell::UnitCell()
     atom_mass = nullptr;
     pseudo_fn = new std::string[1];
     pseudo_type = new std::string[1];
-    orbital_fn = new std::string[1];
+    orbital_fn.resize(1);
 
     atoms = new Atom[ntype];
     set_atom_flag = true;
@@ -68,7 +68,7 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-void UnitCell::print_tau(void) const
+void UnitCell::print_tau() const
 {
 }
 Magnetism::Magnetism()

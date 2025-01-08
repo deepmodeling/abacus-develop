@@ -42,8 +42,9 @@ void toQO::initialize(const std::string& out_dir,
         init_info += "qo_basis: " + qo_basis_ + "\n";
         init_info += "qo_thr: " + std::to_string(qo_thr_) + "\n";
         init_info += "qo_strategies: ";
-        for (auto s: strategies_)
+        for (auto s: strategies_) {
             init_info += s + " ";
+}
         init_info += "\n";
         init_info += "Output directory: " + out_dir + "\n";
         init_info += "Pseudopotential directory: " + pseudo_dir + "\n";
@@ -80,7 +81,7 @@ void toQO::initialize(const std::string& out_dir,
     // build two-center overlap calculator
     overlap_calculator_ = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
     // build the numerical atomic orbital basis
-    build_nao(ntype_, orbital_dir_, p_ucell_->orbital_fn, iproc_);
+    build_nao(ntype_, orbital_dir_, p_ucell_->orbital_fn.data(), iproc_);
     // build another atomic orbital
     build_ao(ntype_, pseudo_dir_, p_ucell_->pseudo_fn, screening_coeffs_, qo_thr_, ofs_running, iproc_);
 
@@ -159,32 +160,35 @@ bool toQO::orbital_filter_out(const int& itype, const int& l, const int& izeta)
         // means for the first atom type, use s and p orbitals, for the second, use
         // s, p, d, and f orbitals
         // default is `all` for all types, and for each type, all orbitals are used
-        if (strategies_[itype] == "all")
+        if (strategies_[itype] == "all") {
             return false;
-        else if (l >= l2symbol.size())
+        } else if (l >= l2symbol.size()) {
             return true;
-        else if (strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos)
+        } else if (strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) {
             return false;
-        else
+        } else {
             return true;
+}
     }
     else if (qo_basis_ == "szv")
     {
         // use two individual logic branch allows them have different orbital filtering logic,
         // although presently they are almost the same
-        if (izeta != 0)
+        if (izeta != 0) {
             return true; // filter out
-        else if (strategies_[itype] == "all")
+        } else if (strategies_[itype] == "all") {
             return false; // keep
-        else if (l >= l2symbol.size())
+        } else if (l >= l2symbol.size()) {
             return true; // filter out
-        else if (strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos)
+        } else if (strategies_[itype].find_first_of(l2symbol[l]) != std::string::npos) {
             return false; // keep
-        else
+        } else {
             return true; // filter out
+}
     }
-    else
+    else {
         return false;
+}
 }
 
 void toQO::build_hydrogen(const int ntype,
@@ -283,8 +287,9 @@ void toQO::build_ao(const int ntype,
                     qo_thr,                  /// qo_thr
                     rank);                   /// rank
     }
-    else if (qo_basis_ == "szv")
+    else if (qo_basis_ == "szv") {
         build_szv();
+}
     if (rank == 0)
     {
         std::string ao_build_info = "toQO::build_ao: built atomic orbitals for calculating QO overlap integrals\n";
@@ -370,10 +375,12 @@ void toQO::calculate_ovlpk(int ik)
         MPI_Barrier(MPI_COMM_WORLD);
 #endif
         // ik == -1 corresponds to the case of those processes with less kpoints than others
-        if (ik != -1)
+        if (ik != -1) {
             read_ovlp(out_dir_, nchi_, nphi_, true, barrier_iR);
-        if (ik != -1)
+}
+        if (ik != -1) {
             append_ovlpR_eiRk(ik, barrier_iR);
+}
     }
 }
 
@@ -390,8 +397,9 @@ void toQO::calculate()
         // while for zero_out overlap, it can be not so strictly synchronized
         zero_out_ovlps(false);
         calculate_ovlpk(ik);
-        if (ik != -1)
+        if (ik != -1) {
             write_ovlp<std::complex<double>>(out_dir_, ovlpk_, nchi_, nphi_, false, ik);
+}
     }
 #ifdef __MPI
     // once the calculation of S(k) is finished, prone to delete all QO_ovlpR_*.dat files. But the most
@@ -420,16 +428,18 @@ void toQO::append_ovlpR_eiRk(int ik, int iR)
     ModuleBase::libm::sincos(arg, &sinp, &cosp);
     std::complex<double> phase = std::complex<double>(cosp, sinp);
     // add all values of ovlpR_ to ovlpk_ with multiplication of phase
-    for (int i = 0; i < nchi_ * nphi_; i++)
+    for (int i = 0; i < nchi_ * nphi_; i++) {
         ovlpk_[i] += ovlpR_[i] * phase;
+}
 }
 
 void toQO::allocate_ovlp(const bool& is_R)
 {
-    if (is_R)
+    if (is_R) {
         ovlpR_.resize(nchi_ * nphi_, 0.0);
-    else
+    } else {
         ovlpk_.resize(nchi_ * nphi_, std::complex<double>(0.0, 0.0));
+}
 }
 
 void toQO::deallocate_ovlp(const bool& is_R)
@@ -448,10 +458,11 @@ void toQO::deallocate_ovlp(const bool& is_R)
 
 void toQO::zero_out_ovlps(const bool& is_R)
 {
-    if (is_R)
+    if (is_R) {
         std::fill(ovlpR_.begin(), ovlpR_.end(), 0.0);
-    else
+    } else {
         std::fill(ovlpk_.begin(), ovlpk_.end(), std::complex<double>(0.0, 0.0));
+}
 }
 
 void toQO::radialcollection_indexing(const RadialCollection& radcol,
@@ -475,15 +486,17 @@ void toQO::radialcollection_indexing(const RadialCollection& radcol,
                 for (int m_abs = 0; m_abs <= l; m_abs++)
                 {
                     ms.push_back(m_abs);
-                    if (m_abs != 0)
+                    if (m_abs != 0) {
                         ms.push_back(-m_abs);
+}
                 }
                 for (int izeta = 0; izeta < radcol.nzeta(itype, l); izeta++)
                 {
                     // usually, the orbital is distinguished by it, l and zeta, the ia and m are not
                     // commonly used.
-                    if (orbital_filter_out(itype, l, izeta) && with_filter)
+                    if (orbital_filter_out(itype, l, izeta) && with_filter) {
                         continue;
+}
                     for (int m: ms)
                     {
                         index_map[std::make_tuple(itype, iatom, l, izeta, m)] = index;
@@ -554,12 +567,14 @@ std::complex<double> str2complex(const std::string& str)
 {
     std::string real_str, imag_str;
     int i = 1; // skip '('
-    while (str[i] != ',')
+    while (str[i] != ',') {
         real_str += str[i];
+}
     i++;
     i++; // skip ','
-    while (str[i] != ')')
+    while (str[i] != ')') {
         imag_str += str[i];
+}
     i++;
     return std::complex<double>(std::stod(real_str), std::stod(imag_str));
 }
@@ -586,20 +601,22 @@ void toQO::read_ovlp(const std::string& dir, const int& nrows, const int& ncols,
             double val;
             ifs >> val;
             inum++;
-            if (inum <= nchi_ * nphi_)
+            if (inum <= nchi_ * nphi_) {
                 ovlpR_[inum - 1] = val;
-            else
+            } else {
                 break;
+}
         }
         else
         {
             std::string val_str;
             ifs >> val_str;
             inum++;
-            if (inum <= nchi_ * nphi_)
+            if (inum <= nchi_ * nphi_) {
                 ovlpk_[inum - 1] = str2complex(val_str);
-            else
+            } else {
                 break;
+}
         }
     }
 }

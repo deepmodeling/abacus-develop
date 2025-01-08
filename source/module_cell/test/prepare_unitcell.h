@@ -79,13 +79,13 @@ public:
 		delete[] ucell->atom_mass;
 		delete[] ucell->pseudo_fn;
 		delete[] ucell->pseudo_type;
-		delete[] ucell->orbital_fn;
+		
 		delete[] ucell->magnet.start_magnetization; //mag set here
 		ucell->atom_label = new std::string[ucell->ntype];
 		ucell->atom_mass = new double[ucell->ntype];
 		ucell->pseudo_fn = new std::string[ucell->ntype];
 		ucell->pseudo_type = new std::string[ucell->ntype];
-		ucell->orbital_fn = new std::string[ucell->ntype];
+		ucell->orbital_fn.resize(ucell->ntype);
 		ucell->magnet.start_magnetization = new double[ucell->ntype]; //mag set here
 		ucell->magnet.ux_[0] = 0.0; // ux_ set here
 		ucell->magnet.ux_[1] = 0.0;
