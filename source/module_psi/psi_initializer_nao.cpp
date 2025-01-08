@@ -171,7 +171,7 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
   
     // allocate
     this->allocate_table();
-    this->read_external_orbs(this->p_ucell_->orbital_fn, rank);
+    this->read_external_orbs(this->p_ucell_->orbital_fn.data(), rank);
 
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
@@ -198,7 +198,7 @@ void psi_initializer_nao<T, Device>::initialize(Structure_Factor* sf,
   
     // allocate
     this->allocate_table();
-    this->read_external_orbs(this->p_ucell_->orbital_fn, 0);
+    this->read_external_orbs(this->p_ucell_->orbital_fn.data(), 0);
 
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();

@@ -104,6 +104,8 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     {
         stress = lj_virial;
 
+        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
+
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
@@ -111,8 +113,6 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         {
             stress(i, i) -= external_stress[i] / unit_transform;
         }
-
-        ModuleIO::print_stress("TOTAL-STRESS", stress, true, false);
     }
 
     void ESolver_LJ::after_all_runners(UnitCell& ucell)

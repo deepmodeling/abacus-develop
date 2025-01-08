@@ -193,9 +193,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->atoms[0].ncpp.jchi[1] = 1.5;
             // atom numerical orbital
             this->p_ucell->lmax = 2;
-            if(this->p_ucell->orbital_fn != nullptr) { delete[] this->p_ucell->orbital_fn;
-}
-            this->p_ucell->orbital_fn = new std::string[1];
+            p_ucell->orbital_fn.shrink_to_fit();
+            p_ucell->orbital_fn.resize(1);
             this->p_ucell->orbital_fn[0] = "Si_gga_8au_60Ry_2s2p1d.orb";
             this->p_ucell->atoms[0].nwl = 2;
             this->p_ucell->atoms[0].l_nchi.resize(3);

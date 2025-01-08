@@ -171,7 +171,7 @@ void test_deepks::set_orbs()
     ORB.init(GlobalV::ofs_running,
                         ucell.ntype,
                         PARAM.inp.orbital_dir,
-                        ucell.orbital_fn,
+                        ucell.orbital_fn.data(),
                         ucell.descriptor_file,
                         ucell.lmax,
                         lcao_ecut,
@@ -185,11 +185,7 @@ void test_deepks::set_orbs()
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
 
-    std::vector<std::string> file_orb(ntype);
-    std::transform(ucell.orbital_fn, ucell.orbital_fn + ntype, file_orb.begin(), [](const std::string& file) {
-        return PARAM.inp.orbital_dir + file;
-    });
-    orb_.build(ntype, file_orb.data());
+    orb_.build(ntype, ucell.orbital_fn.data());
 
     std::string file_alpha = PARAM.inp.orbital_dir + ucell.descriptor_file;
     alpha_.build(1, &file_alpha);

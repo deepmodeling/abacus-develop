@@ -28,7 +28,6 @@ void test_orb::TearDown()
 }
     ooo.clear_after_ions(OGT, ORB, 0, nproj);
     delete[] nproj;
-    delete[] orbital_fn;
     return;
 }
 
@@ -75,7 +74,7 @@ void test_orb::set_orbs()
     ORB.init(ofs_running,
                        ntype_read,
                        "./",
-                       orbital_fn,
+                       orbital_fn.data(),
                        descriptor_file,
                        lmax,
                        lcao_ecut,
@@ -114,7 +113,7 @@ void test_orb::set_files()
 
     ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "NUMERICAL_ORBITAL");
 
-    orbital_fn = new std::string[ntype_read];
+    orbital_fn.resize(ntype_read);
 
     for (int it = 0; it < ntype_read; it++)
     {
