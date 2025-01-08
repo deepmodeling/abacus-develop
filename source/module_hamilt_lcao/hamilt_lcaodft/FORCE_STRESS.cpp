@@ -500,21 +500,16 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
-            LCAO_deepks_io::save_npy_f(fcs, file_ftot, ucell.nat,
-                                       GlobalV::MY_RANK); // Ry/Bohr, F_tot
+            LCAO_deepks_io::save_npy_f(fcs, file_ftot, GlobalV::MY_RANK); // Ry/Bohr, F_tot
 
             const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha,
-                                           file_fbase,
-                                           ucell.nat,
-                                           GlobalV::MY_RANK); // Ry/Bohr, F_base
+                LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha, file_fbase, GlobalV::MY_RANK); // Ry/Bohr, F_base
             }
             else
             {
-                LCAO_deepks_io::save_npy_f(fcs, file_fbase, ucell.nat,
-                                           GlobalV::MY_RANK); // no scf, F_base=F_tot
+                LCAO_deepks_io::save_npy_f(fcs, file_fbase, GlobalV::MY_RANK); // no scf, F_base=F_tot
             }
         }
 #endif
