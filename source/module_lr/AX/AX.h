@@ -7,59 +7,33 @@
 #endif
 namespace LR
 {
-    // double
+    template<typename T>
     void  cal_AX_forloop_serial(
-        const std::vector<container::Tensor>& V_istate,
-        const psi::Psi<double>& c,
+        const std::vector<container::Tensor>& mat_ao,
+        const psi::Psi<T>& coeff,
         const int& nocc,
         const int& nvirt,
-        double* const AX_istate);
+        T* const mat_mo);
+    template<typename T>
     void cal_AX_blas(
-        const std::vector<container::Tensor>& V_istate,
-        const psi::Psi<double>& c,
+        const std::vector<container::Tensor>& mat_ao,
+        const psi::Psi<T>& coeff,
         const int& nocc,
         const int& nvirt,
-        double* const AX_istate,
+        T* const mat_mo,
         const bool add_on = true);
 #ifdef __MPI
+    template<typename T>
     void cal_AX_pblas(
-        const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
-        const psi::Psi<double>& c,
-        const Parallel_2D& pc,
+        const std::vector<container::Tensor>& mat_ao,
+        const Parallel_2D& pmat_ao,
+        const psi::Psi<T>& coeff,
+        const Parallel_2D& pcoeff,
         const int& naos,
         const int& nocc,
         const int& nvirt,
-        const Parallel_2D& pX,
-        double* const AX_istate,
+        const Parallel_2D& pmat_mo,
+        T* const mat_mo,
         const bool add_on=true);
-#endif
-    // complex
-    void cal_AX_forloop_serial(
-        const std::vector<container::Tensor>& V_istate,
-        const psi::Psi<std::complex<double>>& c,
-        const int& nocc,
-        const int& nvirt,
-        std::complex<double>* const AX_istate);
-    void cal_AX_blas(
-        const std::vector<container::Tensor>& V_istate,
-        const psi::Psi<std::complex<double>>& c,
-        const int& nocc,
-        const int& nvirt,
-        std::complex<double>* const AX_istate,
-        const bool add_on = true);
-
-#ifdef __MPI
-    void  cal_AX_pblas(
-        const std::vector<container::Tensor>& V_istate,
-        const Parallel_2D& pmat,
-        const psi::Psi<std::complex<double>>& c,
-        const Parallel_2D& pc,
-        const int& naos,
-        const int& nocc,
-        const int& nvirt,
-        const Parallel_2D& pX,
-        std::complex<double>* const AX_istate,
-        const bool add_on = true);
 #endif
 }
