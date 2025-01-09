@@ -136,7 +136,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
 
     if (!in_place)
     {
-        matrixSetToAnother<T, Device>()(ctx, n_band, temp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, temp, dmax, evc.get_pointer(), dmax);
         delmem_complex_op()(ctx, temp);
     }
     delmem_complex_op()(ctx, hcc);
