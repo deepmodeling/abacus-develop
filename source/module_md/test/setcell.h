@@ -43,11 +43,9 @@ class Setcell
 
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
-
-        delete[] ucell.atom_label;
-        delete[] ucell.atom_mass;
-        ucell.atom_mass = new double[ucell.ntype];
-        ucell.atom_label = new std::string[ucell.ntype];
+        
+        ucell.atom_mass.resize(ucell.ntype);
+        ucell.atom_label.resize(ucell.ntype);
         ucell.atom_mass[0] = 39.948;
         ucell.atom_label[0] = "Ar";
 

@@ -53,7 +53,7 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
     else if (this->init_wfc == "atomic"
-             || (this->init_wfc == "atomic+random" && this->ucell.natomwfc != PARAM.inp.nbands))
+             || (this->init_wfc == "atomic+random" && this->ucell.natomwfc < PARAM.inp.nbands))
     {
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic<T>());
     }
@@ -99,16 +99,29 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     const int nbands_start = this->psi_initer->nbands_start();
     const int nbands = psi->get_nbands();
     const int nbasis = psi->get_nbasis();
-    const bool another_psi_space = (nbands_start != nbands || PARAM.inp.precision == "single");
+    const bool not_equal = (nbands_start != nbands);
 
     Psi<T>* psi_cpu = reinterpret_cast<psi::Psi<T>*>(psi);
     Psi<T, Device>* psi_device = kspw_psi;
 
-    if (another_psi_space)
+    if (not_equal)
     {
         psi_cpu = new Psi<T>(1, nbands_start, nbasis, nullptr);
         psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
                                                : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
+    }
+    else if (PARAM.inp.precision == "single")
+    {
+        if (PARAM.inp.device == "cpu")
+        {
+            psi_cpu = reinterpret_cast<psi::Psi<T>*>(kspw_psi);
+            psi_device = kspw_psi;
+        }
+        else
+        {
+            psi_cpu = new Psi<T>(1, nbands_start, nbasis, nullptr);
+            psi_device = kspw_psi;  
+        }
     }
 
     // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
@@ -126,16 +139,16 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
         if (psi_device->get_pointer() != psi_cpu->get_pointer())
         {
-            castmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+            syncmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
         }
 
         std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
 
         if (this->ks_solver == "cg")
         {
-            if (another_psi_space)
+            if (not_equal)
             {
-                // for diagH_subspace_init, psi_cpu->get_pointer() and kspw_psi->get_pointer() should be different
+                // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be different
                 hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
                                                                          psi_device->get_pointer(),
                                                                          nbands_start,
@@ -145,7 +158,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             }
             else
             {
-                // for diagH_subspace_init, psi_cpu->get_pointer() and kspw_psi->get_pointer() can be the same
+                // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
                 hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
                                                                     *psi_device,
                                                                     *kspw_psi,
@@ -155,20 +168,24 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
         else // dav, bpcg
         {
-            if (another_psi_space)
+            if (psi_device->get_pointer() != kspw_psi->get_pointer())
             {
                 syncmem_complex_op()(ctx, ctx, kspw_psi->get_pointer(), psi_device->get_pointer(), nbands * nbasis);
             }
         }
     } // end k-point loop
 
-    if (another_psi_space)
+    if (not_equal)
     {
         delete psi_cpu;
         if(PARAM.inp.device == "gpu")
         {
             delete psi_device;
         }
+    }
+    else if (PARAM.inp.precision == "single" && PARAM.inp.device == "gpu")
+    {
+        delete psi_cpu;
     }
 
     ModuleBase::timer::tick("PSIInit", "initialize_psi");

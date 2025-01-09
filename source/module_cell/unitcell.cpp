@@ -9,7 +9,7 @@
 #include "unitcell.h"
 #include "bcast_cell.h"
 #include "module_parameter/parameter.h"
-
+#include "read_stru.h"
 #ifdef __LCAO
 #include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
@@ -31,10 +31,6 @@ UnitCell::UnitCell() {
 }
 
 UnitCell::~UnitCell() {
-    delete[] atom_label;
-    delete[] atom_mass;
-    delete[] pseudo_fn;
-    delete[] pseudo_type;
     if (set_atom_flag) {
         delete[] atoms;
     }
@@ -232,17 +228,22 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     bool ok2 = true;
 
     // (3) read in atom information
-    orbital_fn.resize(ntype);
+    this->atom_mass.resize(ntype);
+    this->atom_label.resize(ntype);
+    this->pseudo_fn.resize(ntype);
+    this->pseudo_type.resize(ntype);
+    this->orbital_fn.resize(ntype);
     if (GlobalV::MY_RANK == 0) {
         // open "atom_unitcell" file.
         std::ifstream ifa(fn.c_str(), std::ios::in);
-        if (!ifa) {
+        if (!ifa) 
+        {
             GlobalV::ofs_warning << fn;
             ok = false;
         }
 
-        if (ok) {
-
+        if (ok) 
+        {
             log << "\n\n\n\n";
             log << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
                    ">>>>>>>>>>>>"
@@ -289,8 +290,11 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
             //========================
             // call read_atom_species
             //========================
-            const int error = this->read_atom_species(ifa, log);
-
+            const bool read_atom_species = unitcell::read_atom_species(ifa, log ,*this);
+            //========================
+            // call read_lattice_constant
+            //========================
+            const bool read_lattice_constant = unitcell::read_lattice_constant(ifa, log ,this->lat);
             //==========================
             // call read_atom_positions
             //==========================

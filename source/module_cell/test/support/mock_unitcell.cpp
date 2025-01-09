@@ -13,20 +13,12 @@ UnitCell::UnitCell() {
     itia2iat.create(1, 1);
 }
 UnitCell::~UnitCell() {
-    delete[] atom_label;
-    delete[] atom_mass;
-    delete[] pseudo_fn;
-    delete[] pseudo_type;
     if (set_atom_flag) {
         delete[] atoms;
     }
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 void UnitCell::print_cell_xyz(const std::string& fn) const {}
-int UnitCell::read_atom_species(std::ifstream& ifa,
-                                std::ofstream& ofs_running) {
-    return 0;
-}
 bool UnitCell::read_atom_positions(std::ifstream& ifpos,
                                    std::ofstream& ofs_running,
                                    std::ofstream& ofs_warning) {
@@ -56,7 +48,6 @@ void UnitCell::check_dtau() {}
 void UnitCell::cal_nwfc(std::ofstream& log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream& log) {}
-bool UnitCell::check_tau() const { return true; }
 bool UnitCell::if_atoms_can_move() const { return true; }
 bool UnitCell::if_cell_can_change() const { return true; }
 void UnitCell::setup(const std::string& latname_in,

@@ -142,8 +142,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->tpiba = 2.0 * M_PI / this->p_ucell->lat0;
             this->p_ucell->tpiba2 = this->p_ucell->tpiba * this->p_ucell->tpiba;
             // atom
-            delete[] this->p_ucell->atom_label;
-            this->p_ucell->atom_label = new std::string[1];
+            this->p_ucell->atom_label.shrink_to_fit();
+            this->p_ucell->atom_label.resize(1);
             this->p_ucell->atom_label[0] = "Si";
             // atom properties
             this->p_ucell->nat = 1;
@@ -160,9 +160,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->atoms[0].taud.resize(1, {0.25, 0.25, 0.25});
             this->p_ucell->atoms[0].mbl.resize(1, {0, 0, 0});
             // atom pseudopotential
-            if(this->p_ucell->pseudo_fn != nullptr) { delete[] this->p_ucell->pseudo_fn;
-}
-            this->p_ucell->pseudo_fn = new std::string[1];
+            this->p_ucell->pseudo_fn.shrink_to_fit();
+            this->p_ucell->pseudo_fn.resize(1);
             this->p_ucell->pseudo_fn[0] = "Si_NCSR_ONCVPSP_v0.5_dojo.upf";
             this->p_ucell->natomwfc = 4;
             this->p_ucell->atoms[0].ncpp.nchi = 2;

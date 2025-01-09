@@ -106,15 +106,18 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
         container::kernels::destroyGpuBlasHandle();
         container::kernels::destroyGpuSolverHandle();
 #endif
-        delete reinterpret_cast<psi::Psi<T, Device>*>(this->kspw_psi);
     }
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
     dspDestoryHandle(GlobalV::MY_RANK);
 #endif
+    if(PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    {
+        delete this->kspw_psi;
+    }
     if (PARAM.inp.precision == "single")
     {
-        delete reinterpret_cast<psi::Psi<std::complex<double>, Device>*>(this->__kspw_psi);
+        delete this->__kspw_psi;
     }
 
     delete this->psi;
