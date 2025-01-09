@@ -367,6 +367,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             ofs1 << std::setprecision(10) << ld->E_delta;
         }
     }
+    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
 }
 
 template class LCAO_Deepks_Interface<double, double>;
