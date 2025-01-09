@@ -532,9 +532,12 @@ void pseudopot_cell_vnl::getvnl(Device* ctx,
     delmem_var_op()(ctx, ylm);
     delmem_var_op()(ctx, vkb1);
     delmem_complex_op()(ctx, sk);
-    if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         delmem_var_op()(ctx, gk);
+    }
+    if (PARAM.inp.device == "gpu")
+    {
         delmem_int_op()(ctx, atom_nh);
         delmem_int_op()(ctx, atom_nb);
         delmem_int_op()(ctx, atom_na);
