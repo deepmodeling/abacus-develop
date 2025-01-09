@@ -63,7 +63,7 @@ void gen_stru(UnitCell* ucell)
     int ntype = ucell->ntype;
 
     // array of pseudopotential file
-    std::string* pseudo_fn = ucell->pseudo_fn;
+    std::string* pseudo_fn = ucell->pseudo_fn.data();
 
     // array of orbital file
     std::string* orbital_fn = ucell->orbital_fn.data();
@@ -99,7 +99,7 @@ void gen_stru(UnitCell* ucell)
 
     // atom coordinate, mag and label
     double lat0 = ucell->lat0;
-    std::string* label = ucell->atom_label;
+    std::string* label = ucell->atom_label.data();
     for (int i = 0; i < ntype; i++)
     {
         ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();

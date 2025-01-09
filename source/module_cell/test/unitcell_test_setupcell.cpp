@@ -67,6 +67,12 @@ protected:
 	void SetUp()
     {
     	ucell->lmaxmax = 2;
+		ucell->ntype   = 2;
+        ucell->atom_mass.resize(ucell->ntype);
+        ucell->atom_label.resize(ucell->ntype);
+        ucell->pseudo_fn.resize(ucell->ntype);
+        ucell->pseudo_type.resize(ucell->ntype);
+        ucell->orbital_fn.resize(ucell->ntype);
     }
 };
 
@@ -78,7 +84,7 @@ TEST_F(UcellTest,SetupCellS1)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 1;
-	ucell->ntype = 2;
+	
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
 	remove("setup_cell.tmp");
@@ -90,7 +96,7 @@ TEST_F(UcellTest,SetupCellS2)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 2;
-	ucell->ntype = 2;
+	
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
 	remove("setup_cell.tmp");
@@ -102,7 +108,7 @@ TEST_F(UcellTest,SetupCellS4)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 4;
-	ucell->ntype = 2;
+	
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
 	remove("setup_cell.tmp");
@@ -113,7 +119,7 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
 	std::string fn = "./STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	ucell->ntype = 2;
+	
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
@@ -127,7 +133,7 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
 	std::string fn = "./support/STRU_MgO_WarningC2";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	ucell->ntype = 2;
+	
 	testing::internal::CaptureStdout();
 	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
@@ -142,7 +148,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 1;
-	ucell->ntype = 2;
+	
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
 

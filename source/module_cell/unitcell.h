@@ -204,11 +204,11 @@ class UnitCell {
     void update_stress(ModuleBase::matrix& scs); // updates stress
     void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
 
-    double* atom_mass = nullptr;
-    std::string* atom_label = new std::string[1];
-    std::string* pseudo_fn = new std::string[1];
-    std::string* pseudo_type = new std::string[1]; // pseudopotential types for each elements,
-                                                   // sunliang added 2022-09-15.
+    std::vector<double>      atom_mass;
+    std::vector<std::string> atom_label;
+    std::vector<std::string> pseudo_fn;
+    std::vector<std::string> pseudo_type;
+
     std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
     std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
 
@@ -230,10 +230,6 @@ class UnitCell {
                        std::string& orb_file,
                        std::ofstream& ofs_running,
                        Atom* atom);
-    int read_atom_species(
-        std::ifstream& ifa,
-        std::ofstream&
-            ofs_running); // read in the atom information for each type of atom
     bool read_atom_positions(
         std::ifstream& ifpos,
         std::ofstream& ofs_running,
@@ -275,7 +271,6 @@ class UnitCell {
     void cal_nwfc(std::ofstream& log);
     void cal_meshx();
     void cal_natomwfc(std::ofstream& log);
-    bool check_tau() const; // mohan add 2011-03-03
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,

@@ -11,7 +11,6 @@
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
-    - [psi\_initializer](#psi_initializer)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -93,6 +92,7 @@
     - [scf\_os\_stop](#scf_os_stop)
     - [scf\_os\_thr](#scf_os_thr)
     - [scf\_os\_ndim](#scf_os_ndim)
+    - [sc\_os\_ndim](#sc_os_ndim)
     - [chg\_extrap](#chg_extrap)
     - [lspinorb](#lspinorb)
     - [noncolin](#noncolin)
@@ -467,7 +467,7 @@
     - [abs\_broadening](#abs_broadening)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
-  - [Reduced Density Matrix Functional Theory](#Reduced-Density-Matrix-Functional-Theory)
+  - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
 
@@ -580,17 +580,6 @@ These variables are used to control general system parameters.
   - triclinic: triclinic (14)
 - **Default**: none
 
-### psi_initializer
-
-- **Type**: Integer
-- **Description**: enable the experimental feature psi_initializer, to support use numerical atomic orbitals initialize wavefunction (`basis_type pw` case).
-
-  NOTE: this feature is not well-implemented for `nspin 4` case (closed presently), and cannot use with `calculation nscf`/`esolver_type sdft` cases.
-  Available options are:
-  - 0: disable psi_initializer
-  - 1: enable psi_initializer
-- **Default**: 0
-
 ### init_wfc
 
 - **Type**: String
@@ -602,8 +591,6 @@ These variables are used to control general system parameters.
   - atomic+random: add small random numbers on atomic pseudo-wavefunctions
   - file: from binary files `WAVEFUNC*.dat`, which are output by setting [out_wfc_pw](#out_wfc_pw) to `2`.
   - random: random numbers
-
-  with `psi_initializer 1`, two more options are supported:
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
 - **Default**: atomic

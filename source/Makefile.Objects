@@ -69,7 +69,7 @@ VPATH=./src_global:\
 ./module_ri:\
 ./module_parameter:\
 ./module_lr:\
-./module_lr/AX:\
+./module_lr/ao_to_mo_transformer:\
 ./module_lr/dm_trans:\
 ./module_lr/operator_casida:\
 ./module_lr/potentials:\
@@ -189,6 +189,8 @@ OBJS_CELL=atom_pseudo.o\
     check_atomic_stru.o\
     update_cell.o\
     bcast_cell.o\
+    read_stru.o\
+    read_atom_species.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_force.o\
@@ -398,6 +400,7 @@ OBJS_PSI=psi.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_random.o\
+                     psi_initializer_file.o\
                      psi_initializer_atomic.o\
                      psi_initializer_atomic_random.o\
                      psi_initializer_nao.o\
@@ -494,6 +497,7 @@ OBJS_IO=input_conv.o\
     to_wannier90_lcao.o\
     fR_overlap.o\
     unk_overlap_pw.o\
+    write_pao.o\
     write_wfc_pw.o\
     winput.o\
     write_cube.o\
@@ -669,8 +673,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
     symmetry_rhog.o\
-    wavefunc.o\
-    wf_atomic.o\
     psi_init.o\
     elecond.o\
     sto_tool.o\
@@ -723,8 +725,8 @@ OBJS_TENSOR=tensor.o\
 
     OBJS_LR=lr_util.o\
     lr_util_hcontainer.o\
-    AX_parallel.o\
-    AX_serial.o\
+    ao_to_mo_parallel.o\
+    ao_to_mo_serial.o\
     dm_trans_parallel.o\
     dm_trans_serial.o\
     dmr_complex.o\

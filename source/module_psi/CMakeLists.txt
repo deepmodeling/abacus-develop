@@ -8,8 +8,6 @@ add_library(
     psi_overall_init
     OBJECT
     psi_init.cpp
-    wavefunc.cpp
-    wf_atomic.cpp
 )
 
 add_library(
@@ -17,6 +15,7 @@ add_library(
   OBJECT
   psi_initializer.cpp
   psi_initializer_random.cpp
+  psi_initializer_file.cpp
   psi_initializer_atomic.cpp
   psi_initializer_atomic_random.cpp
   psi_initializer_nao.cpp
