@@ -27,6 +27,8 @@ class GintInfo
         int nbx_local, int nby_local, int nbz_local,
         const Numerical_Orbital* Phi,
         const UnitCell& ucell, Grid_Driver& gd);
+    
+    ~GintInfo();
 
     // getter functions
     std::vector<std::shared_ptr<BigGrid>> get_biggrids() const { return biggrids_; };
@@ -61,8 +63,7 @@ class GintInfo
     std::vector<std::shared_ptr<BigGrid>> biggrids_;
 
     // the total atoms in the unitcell(include extended unitcell)
-    // Not Used Now
-    std::vector<std::shared_ptr<GintAtom>> atoms_;
+    std::vector<GintAtom *> atoms_;
 
     // if the iat-th(global index) atom is in this processor, return true
     std::vector<bool> is_atom_in_proc_;

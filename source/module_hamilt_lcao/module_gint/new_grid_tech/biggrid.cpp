@@ -8,7 +8,7 @@ BigGrid::BigGrid(int idx, std::shared_ptr<const LocalCellInfo> localcell_info)
       unitcell_info_(localcell_info->get_unitcell_info()),
       biggrid_info_(localcell_info_->get_biggrid_info()) {}
 
-void BigGrid::add_atom(std::shared_ptr<GintAtom> atom)
+void BigGrid::add_atom(const GintAtom* atom)
 {
     atoms_.push_back(atom);
 }
@@ -90,12 +90,12 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
 }
 
 
-void BigGrid::set_atom_relative_coords(std::shared_ptr<const GintAtom> atom, std::vector<Vec3d>& atom_coord) const
+void BigGrid::set_atom_relative_coords(const GintAtom* atom, std::vector<Vec3d>& atom_coord) const
 {
     return set_atom_relative_coords(atom->get_biggrid_idx(), atom->get_tau_in_biggrid(), atom_coord);
 }
 
-bool BigGrid::is_atom_on_bgrid(std::shared_ptr<const GintAtom> atom) const
+bool BigGrid::is_atom_on_bgrid(const GintAtom* atom) const
 {
     std::vector<Vec3d> coords;
     this->set_atom_relative_coords(atom, coords);

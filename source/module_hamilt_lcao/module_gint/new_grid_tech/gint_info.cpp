@@ -41,6 +41,14 @@ GintInfo::GintInfo(
     init_ijr_info_(ucell, gd);
 }
 
+GintInfo::~GintInfo()
+{
+    for (auto& atom: atoms_)
+    {
+        delete atom;
+    }
+}
+
 template <typename T>
 std::shared_ptr<HContainer<T>> GintInfo::get_hr(int npol) const
 {
@@ -98,7 +106,8 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                                          delta.z * unitcell_info_->get_biggrid_info()->get_vec3();
 
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
-            std::map<Vec3i, std::shared_ptr<GintAtom>> gint_atom_map;
+            // a map to store the atom in different unitcells
+            std::map<Vec3i, GintAtom*> gint_atom_map;
 
             for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid_x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid_x; bgrid_x++)
             {
@@ -126,10 +135,10 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                         {
                             Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
                                                      atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
-                                                     atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz()); 
-                            auto gint_atom = std::make_shared<GintAtom>(&atom, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb);
-                            gint_atom_map[ucell_idx_relative] = gint_atom;
+                                                     atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
+                            GintAtom* gint_atom = new GintAtom(&atom, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb);
                             atoms_.push_back(gint_atom);
+                            gint_atom_map[ucell_idx_relative] = gint_atom;
                         }
                         if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(gint_atom_map[ucell_idx_relative]))
                         {
