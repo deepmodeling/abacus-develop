@@ -398,6 +398,7 @@ OBJS_PSI=psi.o\
 
 OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_initializer_random.o\
+                     psi_initializer_file.o\
                      psi_initializer_atomic.o\
                      psi_initializer_atomic_random.o\
                      psi_initializer_nao.o\
@@ -494,6 +495,7 @@ OBJS_IO=input_conv.o\
     to_wannier90_lcao.o\
     fR_overlap.o\
     unk_overlap_pw.o\
+    write_pao.o\
     write_wfc_pw.o\
     winput.o\
     write_cube.o\
@@ -669,8 +671,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     of_stress_pw.o\
     symmetry_rho.o\
     symmetry_rhog.o\
-    wavefunc.o\
-    wf_atomic.o\
     psi_init.o\
     elecond.o\
     sto_tool.o\

@@ -20,12 +20,10 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
     delete[] atom_mass;
     delete[] pseudo_fn;
     delete[] pseudo_type;
-    delete[] orbital_fn;
     this->atom_mass  = new double[ntype]; //atom masses
     this->atom_label = new std::string[ntype]; //atom labels
     this->pseudo_fn  = new std::string[ntype]; //file name of pseudopotential
     this->pseudo_type = new std::string[ntype]; // type of pseudopotential
-    this->orbital_fn = new std::string[ntype]; // filename of orbitals
 
     std::string word;
     //==========================================
@@ -99,7 +97,6 @@ int UnitCell::read_atom_species(std::ifstream &ifa, std::ofstream &ofs_running)
       ||(PARAM.inp.basis_type == "lcao_in_pw")
       ||(
           (PARAM.inp.basis_type == "pw")
-        &&(PARAM.inp.psi_initializer)
         &&(PARAM.inp.init_wfc.substr(0, 3) == "nao")
         )
         || PARAM.inp.onsite_radius > 0.0
@@ -455,7 +452,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
             }
             else if(PARAM.inp.basis_type == "pw")
             {
-                if ((PARAM.inp.psi_initializer)&&(PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
+                if ((PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
                 {
                     std::string orbital_file = PARAM.inp.orbital_dir + orbital_fn[it];
                     this->read_orb_file(it, orbital_file, ofs_running, &(atoms[it]));

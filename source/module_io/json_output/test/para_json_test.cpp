@@ -338,7 +338,7 @@ TEST(AbacusJsonTest, Init_stru_test)
     double lat0 = 10.0;
     ucell.ntype = 1;
     ucell.pseudo_fn = new std::string[1];
-    ucell.orbital_fn = new std::string[1];
+    ucell.orbital_fn.resize(1);
     ucell.atoms = atomlist;
     ucell.atom_label = new std::string[1];
     ucell.lat0 = lat0;
