@@ -139,7 +139,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
         if (psi_device->get_pointer() != psi_cpu->get_pointer())
         {
-            castmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+            syncmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
         }
 
         std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
