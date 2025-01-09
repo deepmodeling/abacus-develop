@@ -37,7 +37,7 @@
 #include "module_elecstate/elecstate_lcao_cal_tau.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
+#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
 #include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -113,15 +113,14 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 //! 2) init ElecState
 //! 3) init LCAO basis
 //! 4) initialize the density matrix
-//! 5) initialize Hamilt in LCAO
-//! 6) initialize exx
-//! 7) initialize DFT+U
-//! 8) ppcell
-//! 9) inititlize the charge density
-//! 10) initialize the potential.
-//! 11) initialize deepks
-//! 12) set occupations
-//! 13) print a warning if needed
+//! 5) initialize exx
+//! 6) initialize DFT+U
+//! 7) ppcell
+//! 8) inititlize the charge density
+//! 9) initialize the potential.
+//! 10) initialize deepks
+//! 11) set occupations
+//! 12) print a warning if needed
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
 void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
@@ -163,13 +162,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
 
-    // 5) initialize Hamilt in LCAO
-    // * allocate H and S matrices according to computational resources
-    // * set the 'trace' between local H/S and global H/S
-    LCAO_domain::divide_HS_in_frag(PARAM.globalv.gamma_only_local, ucell, pv, this->kv.get_nks(), orb_);
-
 #ifdef __EXX
-    // 6) initialize exx
+    // 5) initialize exx
     // PLEASE simplify the Exx_Global interface
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
@@ -192,22 +186,22 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 #endif
 
-    // 7) initialize DFT+U
+    // 6) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
-    // 8) initialize ppcell
+    // 7) initialize ppcell
     this->locpp.init_vloc(ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-    // 9) inititlize the charge density
+    // 8) inititlize the charge density
     this->pelec->charge->allocate(PARAM.inp.nspin);
     this->pelec->omega = ucell.omega;
 
-    // 10) initialize the potential
+    // 9) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -221,31 +215,32 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
 #ifdef __DEEPKS
-    // 11) initialize deepks
+    // 10) initialize deepks
+    LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld);
     if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        DeePKS_domain::load_model(PARAM.inp.deepks_model, GlobalC::ld.model_deepks);
+        DeePKS_domain::load_model(PARAM.inp.deepks_model, ld.model_deepks);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
         DeePKS_domain::read_pdm((PARAM.inp.init_chg == "file"),
                                 PARAM.inp.deepks_equiv,
-                                GlobalC::ld.init_pdm,
-                                GlobalC::ld.inlmax,
-                                GlobalC::ld.lmaxd,
-                                GlobalC::ld.inl_l,
+                                ld.init_pdm,
+                                orb_.Alpha[0].getTotal_nchi() * ucell.nat,
+                                ld.lmaxd,
+                                ld.inl_l,
                                 *orb_.Alpha,
-                                GlobalC::ld.pdm);
+                                ld.pdm);
     }
 #endif
 
-    // 12) set occupations
+    // 11) set occupations
     // tddft does not need to set occupations in the first scf
     if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
         this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
     }
 
-    // 13) if kpar is not divisible by nks, print a warning
+    // 12) if kpar is not divisible by nks, print a warning
     if (GlobalV::KPAR_LCAO > 1)
     {
         if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
@@ -266,7 +261,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         }
     }
 
-    // 14) initialize rdmft, added by jghan
+    // 13) initialize rdmft, added by jghan
     if (PARAM.inp.rdmft == true)
     {
         rdmft_solver.init(this->GG,
@@ -330,6 +325,9 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        this->kv,
                        this->pw_rho,
                        this->solvent,
+#ifdef __DEEPKS
+                       this->ld,
+#endif
 #ifdef __EXX
                        *this->exx_lri_double,
                        *this->exx_lri_complex,
@@ -675,7 +673,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 
 #ifdef __DEEPKS
     // the density matrixes of DeePKS have been updated in each iter
-    GlobalC::ld.set_hr_cal(true);
+    ld.set_hr_cal(true);
 
     // HR in HamiltLCAO should be recalculate
     if (PARAM.inp.deepks_scf)
@@ -841,7 +839,9 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
         const std::vector<std::vector<TK>>& dm
             = dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMK_vector();
 
-        GlobalC::ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
+        ld.dpks_cal_e_delta_band(dm, this->kv.get_nks());
+        this->pelec->f_en.edeepks_scf = ld.E_delta - ld.e_delta_band;
+        this->pelec->f_en.edeepks_delta = ld.E_delta;
     }
 #endif
 
@@ -1049,7 +1049,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
     {
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld, [](LCAO_Deepks*) {});
+        std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&ld, [](LCAO_Deepks*) {});
         LCAO_Deepks_Interface<TK, TR> LDI(ld_shared_ptr);
 
         LDI.out_deepks_labels(this->pelec->f_en.etot,

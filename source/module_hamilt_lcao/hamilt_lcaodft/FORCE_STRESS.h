@@ -49,6 +49,9 @@ class Force_Stress_LCAO
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
+#ifdef __DEEPKS
+                        LCAO_Deepks& ld,
+#endif
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
                         Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -62,9 +65,7 @@ class Force_Stress_LCAO
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;
 
-    void forceSymmetry(const UnitCell& ucell, 
-                       ModuleBase::matrix& fcs, 
-                       ModuleSymmetry::Symmetry* symm);
+    void forceSymmetry(const UnitCell& ucell, ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
 
     void calForcePwPart(UnitCell& ucell,
                         ModuleBase::matrix& fvl_dvl,
@@ -98,6 +99,7 @@ class Force_Stress_LCAO
 #if __DEEPKS
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
+                       LCAO_Deepks& ld,
 #endif
                        Gint_Gamma& gint_gamma,
                        Gint_k& gint_k,

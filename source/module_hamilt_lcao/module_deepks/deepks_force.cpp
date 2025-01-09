@@ -15,7 +15,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                 const LCAO_Orbitals& orb,
                                 const Grid_Driver& GridD,
                                 const Parallel_Orbitals& pv,
-                                const int lmaxd,
                                 const int nks,
                                 const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                 std::vector<hamilt::HContainer<double>*> phialpha,
@@ -30,7 +29,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
     f_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
-
+    const int lmaxd = orb.get_lmax_d();
     const int nrow = pv.nrow;
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
@@ -346,7 +345,6 @@ template void DeePKS_domain::cal_f_delta<double>(const std::vector<std::vector<d
                                                  const LCAO_Orbitals& orb,
                                                  const Grid_Driver& GridD,
                                                  const Parallel_Orbitals& pv,
-                                                 const int lmaxd,
                                                  const int nks,
                                                  const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                  std::vector<hamilt::HContainer<double>*> phialpha,
@@ -361,7 +359,6 @@ template void DeePKS_domain::cal_f_delta<std::complex<double>>(const std::vector
                                                                const LCAO_Orbitals& orb,
                                                                const Grid_Driver& GridD,
                                                                const Parallel_Orbitals& pv,
-                                                               const int lmaxd,
                                                                const int nks,
                                                                const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                                std::vector<hamilt::HContainer<double>*> phialpha,

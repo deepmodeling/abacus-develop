@@ -1,6 +1,5 @@
 #include "elecstate.h"
 #include "elecstate_getters.h"
-#include "module_parameter/parameter.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
@@ -8,6 +7,7 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_parameter/parameter.h"
 #include "occupy.h"
 namespace elecstate
 {
@@ -311,9 +311,10 @@ void ElecState::print_etot(const Magnetism& magnet,
 
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
-    if (PARAM.inp.basis_type == "pw") {
+    if (PARAM.inp.basis_type == "pw")
+    {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Error Threshold", pw_diag_thr); // xiaohui add 2013-09-02
-}
+    }
 
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
@@ -378,7 +379,7 @@ void ElecState::print_etot(const Magnetism& magnet,
         if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
         {
             titles.push_back("E_DeePKS");
-            energies_Ry.push_back(GlobalC::ld.E_delta);
+            energies_Ry.push_back(this->f_en.edeepks_delta);
         }
 #endif
     }

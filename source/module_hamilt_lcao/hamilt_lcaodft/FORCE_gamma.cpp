@@ -190,6 +190,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
+                                LCAO_Deepks& ld,
 #endif
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
@@ -247,28 +248,23 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    false /*reset dm to gint*/);
 
 #ifdef __DEEPKS
-    const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
-    std::vector<torch::Tensor> descriptor;
     if (PARAM.inp.deepks_scf)
     {
+        const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
+        std::vector<torch::Tensor> descriptor;
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        DeePKS_domain::cal_descriptor(ucell.nat,
-                                      GlobalC::ld.inlmax,
-                                      GlobalC::ld.inl_l,
-                                      GlobalC::ld.pdm,
-                                      descriptor,
-                                      GlobalC::ld.des_per_atom);
+        DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
         DeePKS_domain::cal_gedm(ucell.nat,
-                                GlobalC::ld.lmaxd,
-                                GlobalC::ld.nmaxd,
-                                GlobalC::ld.inlmax,
-                                GlobalC::ld.des_per_atom,
-                                GlobalC::ld.inl_l,
+                                ld.lmaxd,
+                                ld.nmaxd,
+                                ld.inlmax,
+                                ld.des_per_atom,
+                                ld.inl_l,
                                 descriptor,
-                                GlobalC::ld.pdm,
-                                GlobalC::ld.model_deepks,
-                                GlobalC::ld.gedm,
-                                GlobalC::ld.E_delta);
+                                ld.pdm,
+                                ld.model_deepks,
+                                ld.gedm,
+                                ld.E_delta);
 
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,
@@ -276,12 +272,11 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            orb,
                                            gd,
                                            *this->ParaV,
-                                           GlobalC::ld.lmaxd,
                                            nks,
                                            kv->kvec_d,
-                                           GlobalC::ld.phialpha,
-                                           GlobalC::ld.gedm,
-                                           GlobalC::ld.inl_index,
+                                           ld.phialpha,
+                                           ld.gedm,
+                                           ld.inl_index,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);
