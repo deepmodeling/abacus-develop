@@ -1,26 +1,4 @@
-// wenfei 2022-1-11
-// This file contains subroutines that contains interface with libnpy
 #include "module_parameter/parameter.h"
-// since many arrays must be saved in numpy format
-// It also contains subroutines for printing density matrices
-// which is used in unit tests
-
-// There are 2 subroutines for printing density matrices:
-// 1. print_dm : for gamma only
-// 2. print_dm_k : for multi-k
-
-// There are 4 subroutines in this file that prints to npy file:
-// 1. save_npy_d : descriptor ->dm_eig.npy
-// 2. save_npy_gvx : gvx ->grad_vx.npy
-// 3. save_npy_e : energy
-// 4. save_npy_f : force
-// 5. save_npy_s : stress
-// 6. save_npy_o : bandgap
-// 7. save_npy_orbital_precalc : orbital_precalc
-// 8. save_npy_h : Hamiltonian
-// 9. save_npy_v_delta_precalc : v_delta_precalc
-// 10. save_npy_phialpha : phialpha
-// 11. save_npy_gevdm : grav_evdm , can use phialpha and gevdm to calculate v_delta_precalc
 
 #ifdef __DEEPKS
 
@@ -156,89 +134,6 @@ void LCAO_deepks_io::save_npy_d(const int nat,
     return;
 }
 
-// saves gvx into grad_vx.npy
-void LCAO_deepks_io::save_npy_gvx(const int nat,
-                                  const int des_per_atom,
-                                  const torch::Tensor& gvx,
-                                  const std::string& out_dir,
-                                  const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gvx");
-
-    if (rank != 0)
-    {
-        return;
-    }
-
-    assert(nat > 0);
-
-    // save grad_vx.npy (when  force label is in use)
-    // unit: /Bohr
-    const long unsigned gshape[] = {static_cast<unsigned long>(nat),
-                                    3UL,
-                                    static_cast<unsigned long>(nat),
-                                    static_cast<unsigned long>(des_per_atom)};
-
-    std::vector<double> npy_gvx;
-    auto accessor = gvx.accessor<double, 4>();
-    for (int ibt = 0; ibt < nat; ++ibt)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            for (int iat = 0; iat < nat; ++iat)
-            {
-                for (int p = 0; p < des_per_atom; ++p)
-                {
-                    npy_gvx.push_back(accessor[ibt][i][iat][p]);
-                }
-            }
-        }
-    }
-
-    std::string file_gradvx = out_dir + "deepks_gradvx.npy";
-    npy::SaveArrayAsNumpy(file_gradvx, false, 4, gshape, npy_gvx);
-    return;
-}
-
-// saves gvx into grad_vepsl.npy
-void LCAO_deepks_io::save_npy_gvepsl(const int nat,
-                                     const int des_per_atom,
-                                     const torch::Tensor& gvepsl,
-                                     const std::string& out_dir,
-                                     const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gvepsl");
-
-    if (rank != 0)
-    {
-        return;
-    }
-
-    // save grad_vepsl.npy (when  stress label is in use)
-    // unit: none
-    const long unsigned gshape[] = {6UL, static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
-
-    std::vector<double> npy_gvepsl;
-    auto accessor = gvepsl.accessor<double, 3>();
-
-    for (int i = 0; i < 6; i++)
-    {
-        for (int ibt = 0; ibt < nat; ++ibt)
-        {
-
-            for (int p = 0; p < des_per_atom; ++p)
-            {
-                npy_gvepsl.push_back(accessor[i][ibt][p]);
-            }
-        }
-    }
-
-    // change the name from grad_vepsl.npy to deepks_gvepsl.npy
-    const std::string file = out_dir + "deepks_gvepsl.npy";
-    npy::SaveArrayAsNumpy(file, false, 3, gshape, npy_gvepsl);
-    return;
-}
-
 // saves energy in numpy format
 void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, const int rank)
 {
@@ -248,16 +143,14 @@ void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, cons
         return;
     }
 
-    // save e_base
+    // save energy in .npy format
     const long unsigned eshape[] = {1};
-    std::vector<double> npy_e;
-    npy_e.push_back(e);
-    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, npy_e);
+    npy::SaveArrayAsNumpy(e_file, false, 1, eshape, &e);
     return;
 }
 
 // saves force in numpy format
-void LCAO_deepks_io::save_npy_f(const ModuleBase::matrix& f, const std::string& f_file, const int nat, const int rank)
+void LCAO_deepks_io::save_npy_f(const ModuleBase::matrix& f, const std::string& f_file, const int rank)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_npy_f");
 
@@ -266,20 +159,9 @@ void LCAO_deepks_io::save_npy_f(const ModuleBase::matrix& f, const std::string& 
         return;
     }
 
-    assert(nat > 0);
-
-    // save f_base
-    // caution: unit: Rydberg/Bohr
-    const long unsigned fshape[] = {static_cast<unsigned long>(nat), 3};
-    std::vector<double> npy_f;
-    for (int iat = 0; iat < nat; ++iat)
-    {
-        for (int i = 0; i < 3; i++)
-        {
-            npy_f.push_back(f(iat, i));
-        }
-    }
-    npy::SaveArrayAsNumpy(f_file, false, 2, fshape, npy_f);
+    // save force in unit: Rydberg/Bohr
+    const long unsigned fshape[] = {static_cast<unsigned long>(f.nr), static_cast<unsigned long>(f.nc)};
+    npy::SaveArrayAsNumpy(f_file, false, 2, fshape, f.c);
     return;
 }
 
@@ -326,42 +208,6 @@ void LCAO_deepks_io::save_npy_o(const std::vector<double>& bandgap,
     return;
 }
 
-void LCAO_deepks_io::save_npy_orbital_precalc(const int nat,
-                                              const int nks,
-                                              const int des_per_atom,
-                                              const torch::Tensor& orbital_precalc,
-                                              const std::string& out_dir,
-                                              const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_orbital_precalc");
-    if (rank != 0)
-    {
-        return;
-    }
-
-    // save orbital_precalc.npy (when bandgap label is in use)
-    // unit: a.u.
-    const long unsigned gshape[]
-        = {static_cast<unsigned long>(nks), static_cast<unsigned long>(nat), static_cast<unsigned long>(des_per_atom)};
-
-    std::vector<double> npy_orbital_precalc;
-    auto accessor = orbital_precalc.accessor<double, 3>();
-    for (int iks = 0; iks < nks; ++iks)
-    {
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            for (int p = 0; p < des_per_atom; ++p)
-            {
-                npy_orbital_precalc.push_back(accessor[iks][iat][p]);
-            }
-        }
-    }
-
-    const std::string file_orbpre = out_dir + "deepks_orbpre.npy";
-    npy::SaveArrayAsNumpy(file_orbpre, false, 3, gshape, npy_orbital_precalc);
-    return;
-}
-
 template <typename TK, typename TH>
 void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
                                 const std::string& h_file,
@@ -394,169 +240,61 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
     return;
 }
 
-template <typename TK>
-void LCAO_deepks_io::save_npy_v_delta_precalc(const int nat,
-                                              const int nks,
-                                              const int nlocal,
-                                              const int des_per_atom,
-                                              const torch::Tensor& v_delta_precalc,
-                                              const std::string& out_dir,
-                                              const int rank)
+void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
+                                     const ModuleBase::matrix& matrix,
+                                     const int rank,
+                                     const double& scale)
 {
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_v_delta_precalc");
+    ModuleBase::TITLE("LCAO_deepks_io", "save_matrix2npy");
+
     if (rank != 0)
     {
         return;
     }
 
-    // timeval t_start;
-    // gettimeofday(&t_start,NULL);
-    // save v_delta_precalc.npy (when v_delta label is in use)
-    // unit: a.u.
-    const long unsigned gshape[] = {static_cast<unsigned long>(nks),
-                                    static_cast<unsigned long>(nlocal),
-                                    static_cast<unsigned long>(nlocal),
-                                    static_cast<unsigned long>(nat),
-                                    static_cast<unsigned long>(des_per_atom)};
+    const unsigned long shape[] = {static_cast<unsigned long>(matrix.nr), static_cast<unsigned long>(matrix.nc)};
 
-    std::vector<TK> npy_v_delta_precalc;
-    auto accessor
-        = v_delta_precalc
-              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
-    for (int iks = 0; iks < nks; ++iks)
+    std::vector<double> scaled_data(matrix.nr * matrix.nc);
+    for (int i = 0; i < matrix.nr * matrix.nc; ++i)
     {
-        for (int mu = 0; mu < nlocal; ++mu)
-        {
-            for (int nu = 0; nu < nlocal; ++nu)
-            {
-                for (int iat = 0; iat < nat; ++iat)
-                {
-                    for (int p = 0; p < des_per_atom; ++p)
-                    {
-                        if constexpr (std::is_same<TK, double>::value)
-                        {
-                            npy_v_delta_precalc.push_back(accessor[iks][mu][nu][iat][p]);
-                        }
-                        else
-                        {
-                            c10::complex<double> tmp_c10 = accessor[iks][mu][nu][iat][p];
-                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
-                            npy_v_delta_precalc.push_back(tmp);
-                        }
-                    }
-                }
-            }
-        }
+        scaled_data[i] = matrix.c[i] * scale;
     }
-    const std::string file_vdpre = out_dir + "deepks_vdpre.npy";
-    npy::SaveArrayAsNumpy(file_vdpre, false, 5, gshape, npy_v_delta_precalc);
+
+    npy::SaveArrayAsNumpy(file_name, false, 2, shape, scaled_data.data());
     return;
 }
 
-template <typename TK>
-void LCAO_deepks_io::save_npy_phialpha(const int nat,
-                                       const int nks,
-                                       const int nlocal,
-                                       const int inlmax,
-                                       const int lmaxd,
-                                       const torch::Tensor& phialpha_tensor,
-                                       const std::string& out_dir,
-                                       const int rank)
+template <typename T>
+void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::Tensor& tensor, const int rank)
 {
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_phialpha");
     if (rank != 0)
     {
         return;
     }
-
-    // save phialpha.npy (when v_delta label == 2)
-    // unit: a.u.
-    const int nlmax = inlmax / nat;
-    const int mmax = 2 * lmaxd + 1;
-    const long unsigned gshape[] = {static_cast<unsigned long>(nat),
-                                    static_cast<unsigned long>(nlmax),
-                                    static_cast<unsigned long>(nks),
-                                    static_cast<unsigned long>(nlocal),
-                                    static_cast<unsigned long>(mmax)};
-    std::vector<TK> npy_phialpha;
-    auto accessor
-        = phialpha_tensor
-              .accessor<std::conditional_t<std::is_same<TK, double>::value, double, c10::complex<double>>, 5>();
-    for (int iat = 0; iat < nat; iat++)
+    ModuleBase::TITLE("LCAO_deepks_io", "save_tensor2npy");
+    const int dim = tensor.dim();
+    std::vector<long unsigned> shape(dim);
+    for (int i = 0; i < dim; i++)
     {
-        for (int nl = 0; nl < nlmax; nl++)
+        shape[i] = tensor.size(i);
+    }
+
+    std::vector<T> data(tensor.numel());
+
+    if constexpr (std::is_same<T, double>::value)
+    {
+        std::memcpy(data.data(), tensor.data_ptr<double>(), tensor.numel() * sizeof(double));
+    }
+    else
+    {
+        auto tensor_data = tensor.data_ptr<c10::complex<double>>();
+        for (size_t i = 0; i < tensor.numel(); ++i)
         {
-            for (int iks = 0; iks < nks; iks++)
-            {
-                for (int mu = 0; mu < nlocal; mu++)
-                {
-                    for (int m = 0; m < mmax; m++)
-                    {
-                        if constexpr (std::is_same<TK, double>::value)
-                        {
-                            npy_phialpha.push_back(accessor[iat][nl][iks][mu][m]);
-                        }
-                        else
-                        {
-                            c10::complex<double> tmp_c10 = accessor[iat][nl][iks][mu][m];
-                            std::complex<double> tmp = std::complex<double>(tmp_c10.real(), tmp_c10.imag());
-                            npy_phialpha.push_back(tmp);
-                        }
-                    }
-                }
-            }
+            data[i] = std::complex<double>(tensor_data[i].real(), tensor_data[i].imag());
         }
     }
-    const std::string file_phialpha = out_dir + "deepks_phialpha.npy";
-    npy::SaveArrayAsNumpy(file_phialpha, false, 5, gshape, npy_phialpha);
-    return;
-}
 
-void LCAO_deepks_io::save_npy_gevdm(const int nat,
-                                    const int inlmax,
-                                    const int lmaxd,
-                                    const torch::Tensor& gevdm,
-                                    const std::string& out_dir,
-                                    const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_gevdm");
-    if (rank != 0)
-    {
-        return;
-    }
-
-    assert(nat > 0);
-
-    // save grad_evdm.npy (when v_delta label == 2)
-    // unit: a.u.
-    const int nlmax = inlmax / nat;
-    const int mmax = 2 * lmaxd + 1;
-    const long unsigned gshape[] = {static_cast<unsigned long>(nat),
-                                    static_cast<unsigned long>(nlmax),
-                                    static_cast<unsigned long>(mmax),
-                                    static_cast<unsigned long>(mmax),
-                                    static_cast<unsigned long>(mmax)};
-    std::vector<double> npy_gevdm;
-    auto accessor = gevdm.accessor<double, 5>();
-    for (int iat = 0; iat < nat; iat++)
-    {
-        for (int nl = 0; nl < nlmax; nl++)
-        {
-            for (int v = 0; v < mmax; v++)
-            {
-                for (int m = 0; m < mmax; m++)
-                {
-                    for (int n = 0; n < mmax; n++)
-                    {
-                        npy_gevdm.push_back(accessor[iat][nl][v][m][n]);
-                    }
-                }
-            }
-        }
-    }
-    const std::string file_gevdm = out_dir + "deepks_gevdm.npy";
-    npy::SaveArrayAsNumpy(file_gevdm, false, 5, gshape, npy_gevdm);
-    return;
+    npy::SaveArrayAsNumpy(file_name, false, shape.size(), shape.data(), data);
 }
 
 template void LCAO_deepks_io::print_dm<double>(const int nks,
@@ -581,39 +319,11 @@ template void LCAO_deepks_io::save_npy_h<std::complex<double>>(const std::vector
                                                                const int nks,
                                                                const int rank);
 
-template void LCAO_deepks_io::save_npy_v_delta_precalc<double>(const int nat,
-                                                               const int nks,
-                                                               const int nlocal,
-                                                               const int des_per_atom,
-                                                               const torch::Tensor& v_delta_precalc_tensor,
-                                                               const std::string& out_dir,
-                                                               const int rank);
+template void LCAO_deepks_io::save_tensor2npy<double>(const std::string& file_name,
+                                                      const torch::Tensor& tensor,
+                                                      const int rank);
 
-template void LCAO_deepks_io::save_npy_v_delta_precalc<std::complex<double>>(
-    const int nat,
-    const int nks,
-    const int nlocal,
-    const int des_per_atom,
-    const torch::Tensor& v_delta_precalc_tensor,
-    const std::string& out_dir,
-    const int rank);
-
-template void LCAO_deepks_io::save_npy_phialpha<double>(const int nat,
-                                                        const int nks,
-                                                        const int nlocal,
-                                                        const int inlmax,
-                                                        const int lmaxd,
-                                                        const torch::Tensor& phialpha_tensor,
-                                                        const std::string& out_dir,
-                                                        const int rank);
-
-template void LCAO_deepks_io::save_npy_phialpha<std::complex<double>>(const int nat,
-                                                                      const int nks,
-                                                                      const int nlocal,
-                                                                      const int inlmax,
-                                                                      const int lmaxd,
-                                                                      const torch::Tensor& phialpha_tensor,
-                                                                      const std::string& out_dir,
-                                                                      const int rank);
-
+template void LCAO_deepks_io::save_tensor2npy<std::complex<double>>(const std::string& file_name,
+                                                                    const torch::Tensor& tensor,
+                                                                    const int rank);
 #endif

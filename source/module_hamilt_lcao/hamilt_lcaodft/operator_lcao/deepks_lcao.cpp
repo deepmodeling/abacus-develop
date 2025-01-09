@@ -160,7 +160,18 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        GlobalC::ld.cal_projected_DM<TK>(this->DM, *this->ucell, *ptr_orb_, *(this->gd));
+        DeePKS_domain::cal_pdm<TK>(GlobalC::ld.init_pdm,
+                                   GlobalC::ld.inlmax,
+                                   GlobalC::ld.lmaxd,
+                                   GlobalC::ld.inl_l,
+                                   GlobalC::ld.inl_index,
+                                   this->DM,
+                                   GlobalC::ld.phialpha,
+                                   *this->ucell,
+                                   *ptr_orb_,
+                                   *(this->gd),
+                                   *(this->hR->get_paraV()),
+                                   GlobalC::ld.pdm);
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
@@ -169,7 +180,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       GlobalC::ld.pdm,
                                       descriptor,
                                       GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(this->ucell->nat, descriptor);
+        DeePKS_domain::cal_gedm(this->ucell->nat,
+                                GlobalC::ld.lmaxd,
+                                GlobalC::ld.nmaxd,
+                                GlobalC::ld.inlmax,
+                                GlobalC::ld.des_per_atom,
+                                GlobalC::ld.inl_l,
+                                descriptor,
+                                GlobalC::ld.pdm,
+                                GlobalC::ld.model_deepks,
+                                GlobalC::ld.gedm,
+                                GlobalC::ld.E_delta);
 
         // // recalculate the H_V_delta
         // if (this->H_V_delta == nullptr)
@@ -444,14 +465,17 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
     }
 }
 
-inline void get_h_delta_k(int ik, double*& h_delta_k)
+template <typename TK>
+inline void get_h_delta_k(int ik, TK*& h_delta_k)
 {
-    h_delta_k = GlobalC::ld.H_V_delta[ik].data();
-    return;
-}
-inline void get_h_delta_k(int ik, std::complex<double>*& h_delta_k)
-{
-    h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        h_delta_k = GlobalC::ld.H_V_delta[ik].data();
+    }
+    else
+    {
+        h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+    }
     return;
 }
 
@@ -463,7 +487,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("DeePKS", "contributeHk");
 
     TK* h_delta_k = nullptr;
-    get_h_delta_k(ik, h_delta_k);
+    get_h_delta_k<TK>(ik, h_delta_k);
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 

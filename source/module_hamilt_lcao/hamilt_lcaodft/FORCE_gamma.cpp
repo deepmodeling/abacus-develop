@@ -252,15 +252,23 @@ void Force_LCAO<double>::ftable(const bool isforce,
     if (PARAM.inp.deepks_scf)
     {
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
-
         DeePKS_domain::cal_descriptor(ucell.nat,
                                       GlobalC::ld.inlmax,
                                       GlobalC::ld.inl_l,
                                       GlobalC::ld.pdm,
                                       descriptor,
                                       GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+        DeePKS_domain::cal_gedm(ucell.nat,
+                                GlobalC::ld.lmaxd,
+                                GlobalC::ld.nmaxd,
+                                GlobalC::ld.inlmax,
+                                GlobalC::ld.des_per_atom,
+                                GlobalC::ld.inl_l,
+                                descriptor,
+                                GlobalC::ld.pdm,
+                                GlobalC::ld.model_deepks,
+                                GlobalC::ld.gedm,
+                                GlobalC::ld.E_delta);
 
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,
@@ -302,32 +310,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     }
 
 #ifdef __DEEPKS
-    // It seems these test should not all be here, should be moved in the future
-    // Also, these test are not in multi-k case now
     if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
     {
-        const int nks = 1; // 1 for gamma-only
-        LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma);
-
-        GlobalC::ld.check_projected_dm();
-
-        DeePKS_domain::check_descriptor(GlobalC::ld.inlmax,
-                                        GlobalC::ld.des_per_atom,
-                                        GlobalC::ld.inl_l,
-                                        ucell,
-                                        PARAM.globalv.global_out_dir,
-                                        descriptor);
-
-        GlobalC::ld.check_gedm();
-
-        GlobalC::ld.cal_e_delta_band(dm_gamma, nks);
-
-        std::ofstream ofs("E_delta_bands.dat");
-        ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-
-        std::ofstream ofs1("E_delta.dat");
-        ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
-
         DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
     }
 #endif

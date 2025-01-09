@@ -3,13 +3,17 @@
 
 #ifdef __DEEPKS
 
+#include "deepks_basic.h"
 #include "deepks_descriptor.h"
 #include "deepks_force.h"
 #include "deepks_fpre.h"
 #include "deepks_hmat.h"
 #include "deepks_orbital.h"
 #include "deepks_orbpre.h"
+#include "deepks_pdm.h"
+#include "deepks_phialpha.h"
 #include "deepks_spre.h"
+#include "deepks_vdelta.h"
 #include "deepks_vdpre.h"
 #include "module_base/complexmatrix.h"
 #include "module_base/intarray.h"
@@ -18,13 +22,11 @@
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
-#include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_io/winput.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>
-#include <unordered_map>
 
 ///
 /// The LCAO_Deepks contains subroutines for implementation of the DeePKS method in atomic basis.
@@ -90,18 +92,21 @@ class LCAO_Deepks
     // private variables
     //-------------------
     //  private:
-  public:           // change to public to reconstuct the code, 2024-07-22 by mohan
-    int lmaxd = 0;  // max l of descirptors
-    int nmaxd = 0;  //#. descriptors per l
-    int inlmax = 0; // tot. number {i,n,l} - atom, n, l
-    int nat_gdm = 0;
-    int nks_V_delta = 0;
+  public:                              // change to public to reconstuct the code, 2024-07-22 by mohan
+    int lmaxd = 0;                     // max l of descirptors
+    int nmaxd = 0;                     //#. descriptors per l
+    int inlmax = 0;                    // tot. number {i,n,l} - atom, n, l
+    int n_descriptor;                  // natoms * des_per_atom, size of descriptor(projector) basis set
+    int des_per_atom;                  // \sum_L{Nchi(L)*(2L+1)}
+    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
+    ModuleBase::IntArray* alpha_index; // seems not used in the code
+    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
 
-    bool init_pdm = false; // for DeePKS NSCF calculation
+    bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
 
     // deep neural network module that provides corrected Hamiltonian term and
-    // related derivatives.
-    torch::jit::script::Module module;
+    // related derivatives. Used in cal_gedm.
+    torch::jit::script::Module model_deepks;
 
     // saves <phi(0)|alpha(R)> and its derivatives
     // index 0 for itself and index 1-3 for derivatives over x,y,z
@@ -112,21 +117,8 @@ class LCAO_Deepks
     // [nat][nlm*nlm] for equivariant version
     std::vector<torch::Tensor> pdm;
 
-    // gedm:dE/dD, [tot_Inl][2l+1][2l+1]	(E: Hartree)
-    std::vector<torch::Tensor> gedm_tensor;
-
     /// dE/dD, autograd from loaded model(E: Ry)
-    double** gedm; //[tot_Inl][2l+1][2l+1]
-
-    /// size of descriptor(projector) basis set
-    int n_descriptor;
-
-    // \sum_L{Nchi(L)*(2L+1)}
-    int des_per_atom;
-
-    ModuleBase::IntArray* alpha_index; // seems not used in the code
-    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
-    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
+    double** gedm; //[tot_Inl][(2l+1)*(2l+1)]
 
     // HR status,
     // true : HR should be calculated
@@ -167,141 +159,14 @@ class LCAO_Deepks
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
 
+    //! a temporary interface for cal_e_delta_band
+    template <typename TK>
+    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
+
   private:
     // arrange index of descriptor in all atoms
     void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
 
-    //-------------------
-    // LCAO_deepks_phialpha.cpp
-    //-------------------
-
-    // E.Wu 2024-12-24
-    // This file contains 3 subroutines:
-    // 1. allocate_phialpha, which allocates memory for phialpha
-    // 2. build_phialpha, which calculates the overlap
-    // between atomic basis and projector alpha : <phi_mu|alpha>
-    // which will be used in calculating pdm, gdmx, H_V_delta, F_delta;
-    // 3. check_phialpha, which prints the results into .dat files
-    // for checking
-
-  public:
-    // calculates <chi|alpha>
-    void allocate_phialpha(const bool& cal_deri,
-                           const UnitCell& ucell,
-                           const LCAO_Orbitals& orb,
-                           const Grid_Driver& GridD);
-
-    void build_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const Grid_Driver& GridD,
-                        const TwoCenterIntegrator& overlap_orb_alpha);
-
-    void check_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 1 for its derivation*/,
-                        const UnitCell& ucell,
-                        const LCAO_Orbitals& orb,
-                        const Grid_Driver& GridD);
-
-    //-------------------
-    // LCAO_deepks_pdm.cpp
-    //-------------------
-
-    // This file contains subroutines for calculating pdm,
-    // which is defind as sum_mu,nu rho_mu,nu (<chi_mu|alpha><alpha|chi_nu>);
-    // as well as gdmx, which is the gradient of pdm, defined as
-    // sum_mu,nu rho_mu,nu d/dX(<chi_mu|alpha><alpha|chi_nu>)
-
-    // It also contains subroutines for printing pdm and gdmx
-    // for checking purpose
-
-    // There are 2 subroutines in this file:
-    // 1. cal_projected_DM, which is used for calculating pdm
-    // 2. check_projected_dm, which prints pdm to descriptor.dat
-
-  public:
-    /**
-     * @brief calculate projected density matrix:
-     * pdm = sum_i,occ <phi_i|alpha1><alpha2|phi_k>
-     * 3 cases to skip calculation of pdm:
-     *    1. NSCF calculation of DeePKS, init_chg = file and pdm has been read
-     *    2. SCF calculation of DeePKS with init_chg = file and pdm has been read for restarting SCF
-     *    3. Relax/Cell-Relax/MD calculation, non-first step will use the convergence pdm from the last step as initial
-     * pdm
-     */
-    template <typename TK>
-    void cal_projected_DM(const elecstate::DensityMatrix<TK, double>* dm,
-                          const UnitCell& ucell,
-                          const LCAO_Orbitals& orb,
-                          const Grid_Driver& GridD);
-
-    void check_projected_dm();
-
-    /**
-     * @brief set init_pdm to skip the calculation of pdm in SCF iteration
-     */
-    void set_init_pdm(bool ipdm)
-    {
-        this->init_pdm = ipdm;
-    }
-    /**
-     * @brief read pdm from file, do it only once in whole calculation
-     */
-    void read_projected_DM(bool read_pdm_file, bool is_equiv, const Numerical_Orbital& alpha);
-
-    //-------------------
-    // LCAO_deepks_vdelta.cpp
-    //-------------------
-
-    // This file contains subroutines related to V_delta, which is the deepks contribution to Hamiltonian
-    // defined as |alpha>V(D)<alpha|
-    // as well as subroutines for printing them for checking
-    // It also contains subroutine related to calculating e_delta_bands, which is basically
-    // tr (rho * V_delta)
-
-    // Four subroutines are contained in the file:
-    // 5. cal_e_delta_band : calculates e_delta_bands
-
-  public:
-    /// calculate tr(\rho V_delta)
-    // void cal_e_delta_band(const std::vector<ModuleBase::matrix>& dm/**<[in] density matrix*/);
-    template <typename TK>
-    void cal_e_delta_band(const std::vector<std::vector<TK>>& dm /**<[in] density matrix*/, const int nks);
-
-    //! a temporary interface for cal_e_delta_band and cal_e_delta_band_k
-    template <typename TK>
-    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
-
-  public:
-    //-------------------
-    // LCAO_deepks_torch.cpp
-    //-------------------
-
-    // This file contains interfaces with libtorch,
-    // including loading of model and calculating gradients
-    // as well as subroutines that prints the results for checking
-
-    // The file contains 8 subroutines:
-    // 6. cal_gevdm : d(des)/d(pdm)
-    //       calculated using torch::autograd::grad
-    // 7. load_model : loads model for applying V_delta
-    // 8. cal_gedm : calculates d(E_delta)/d(pdm)
-    //       this is the term V(D) that enters the expression H_V_delta = |alpha>V(D)<alpha|
-    //       caculated using torch::autograd::grad
-    // 9. check_gedm : prints gedm for checking
-
-  public:
-    // load the trained neural network model
-    void load_model(const std::string& model_file);
-
-    /// calculate partial of energy correction to descriptors
-    void cal_gedm(const int nat, const std::vector<torch::Tensor>& descriptor);
-    void check_gedm();
-    void cal_gedm_equiv(const int nat, const std::vector<torch::Tensor>& descriptor);
-
-    // calculate gevdm
-    void cal_gevdm(const int nat, std::vector<torch::Tensor>& gevdm);
-
-  private:
     const Parallel_Orbitals* pv;
 };
 

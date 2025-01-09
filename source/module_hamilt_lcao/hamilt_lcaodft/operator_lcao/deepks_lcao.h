@@ -58,8 +58,6 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
   private:
     elecstate::DensityMatrix<TK, double>* DM;
 
-    // LCAO_Deepks* ld = nullptr;
-
     const UnitCell* ucell = nullptr;
     Grid_Driver* gridD = nullptr;
 
@@ -72,6 +70,8 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     const LCAO_Orbitals* ptr_orb_ = nullptr;
 
 #ifdef __DEEPKS
+
+    LCAO_Deepks* ld = nullptr;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
