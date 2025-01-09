@@ -3,6 +3,7 @@
 
 #include <complex>
 #include "module_base/module_device/types.h"
+#include "macros.h"
 
 // These still need to be linked in the header file
 // Because quite a lot of code will directly use the original cblas kernels.
@@ -303,7 +304,26 @@ public:
 	static
 	void copy(const long n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
-	// A is symmetric
+	// There is some other operators needed, so implemented manually here
+	template <typename T>
+	static
+	void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	template <typename T>
+	static
+	void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void constantvector_addORsub_constantVector_op(const int& dim, float* result, const float* vector1, const float constant1, const float* vector2, const float constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void constantvector_addORsub_constantVector_op(const int& dim, double* result, const double* vector1, const double constant1, const double* vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void constantvector_addORsub_constantVector_op(const int& dim, std::complex<float>* result, const std::complex<float>* vector1, const float constant1, const std::complex<float>* vector2, const float constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+
+	static
+	void constantvector_addORsub_constantVector_op(const int& dim, std::complex<double>* result, const std::complex<double>* vector1, const double constant1, const std::complex<double>* vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 };
 
 // If GATHER_INFO is defined, the original function is replaced with a "i" suffix,

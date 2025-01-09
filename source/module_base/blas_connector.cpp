@@ -1,4 +1,5 @@
 #include "blas_connector.h"
+#include "macros.h"
 
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
@@ -653,3 +654,81 @@ void BlasConnector::copy(const long n, const std::complex<double> *a, const int 
 		zcopy_(&n, a, &incx, b, &incy);
 	}
 }
+
+template <typename T>
+void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * vector2[i];
+        }
+	}
+}
+
+
+template <typename T>
+void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+		for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] / vector2[i];
+        }
+	}
+}
+
+
+void constantvector_addORsub_constantVector_op(const int& dim, float* result, const float* vector1, const float constant1, const float* vector2, const float constant2, base_device::AbacusDevice_t device_type){
+	if (device_type == base_device::AbacusDevice_t::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+}
+
+void constantvector_addORsub_constantVector_op(const int& dim, double* result, const double* vector1, const double constant1, const double* vector2, const double constant2, base_device::AbacusDevice_t device_type){
+	if (device_type == base_device::AbacusDevice_t::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+}
+
+void constantvector_addORsub_constantVector_op(const int& dim, std::complex<float>* result, const std::complex<float>* vector1, const float constant1, const std::complex<float>* vector2, const float constant2, base_device::AbacusDevice_t device_type){
+	if (device_type == base_device::AbacusDevice_t::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+} 
+
+void constantvector_addORsub_constantVector_op(const int& dim, std::complex<double>* result, const std::complex<double>* vector1, const double constant1, const std::complex<double>* vector2, const double constant2, base_device::AbacusDevice_t device_type){
+	if (device_type == base_device::AbacusDevice_t::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(T))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+} 
