@@ -45,7 +45,6 @@ struct Input_para
     double erf_sigma = 0.1;             ///< the width of the energy step for reciprocal vectors
     int fft_mode = 0;                   ///< fftw mode 0: estimate, 1: measure, 2: patient, 3: exhaustive
     std::string init_wfc = "atomic";    ///< "file","atomic","random"
-    bool psi_initializer = false;       ///< whether use psi_initializer to initialize wavefunctions
     int pw_seed = 0;                    ///< random seed for initializing wave functions
     std::string init_chg = "atomic";    ///< "file","atomic"
     bool dm_to_rho = false;             ///< read density matrix from npz format and calculate charge density

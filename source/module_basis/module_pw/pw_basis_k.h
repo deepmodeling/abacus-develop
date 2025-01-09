@@ -71,8 +71,6 @@ public:
         const bool xprime_in = true
     );
 
-    void get_ig2ixyz_k();
-
   public:
     int nks=0;//number of k points in this pool
     ModuleBase::Vector3<double> *kvec_d=nullptr; // Direct coordinates of k points
@@ -88,8 +86,7 @@ public:
 
     int *igl2isz_k=nullptr, * d_igl2isz_k = nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz)
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
-    int *ig2ixyz_k=nullptr;
-    int *ig2ixyz_k_=nullptr;
+    int *ig2ixyz_k=nullptr; ///< [npw] map ig to ixyz
 
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
@@ -108,6 +105,8 @@ public:
     double * d_gk2 = nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
     //create igl2isz_k map array for fft
     void setupIndGk();
+    // get ig2ixyz_k
+    void get_ig2ixyz_k();
     //calculate G+K, it is a private function
     ModuleBase::Vector3<double> cal_GplusK_cartesian(const int ik, const int ig) const;
 

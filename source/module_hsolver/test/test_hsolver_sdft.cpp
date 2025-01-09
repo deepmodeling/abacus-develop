@@ -129,6 +129,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
                                              ModulePW::PW_Basis_K* wfc_basis)
 {
 }
+template class Stochastic_Iter<std::complex<double>, base_device::DEVICE_CPU>;
 
 Charge::Charge(){};
 Charge::~Charge(){};
@@ -155,7 +156,6 @@ class TestHSolverPW_SDFT : public ::testing::Test
     ModulePW::PW_Basis_K pwbk;
     Stochastic_WF<std::complex<double>> stowf;
     K_Vectors kv;
-    wavefunc wf;
     StoChe<double> stoche;
     hamilt::HamiltSdftPW<std::complex<double>>* p_hamilt_sto = nullptr;
     hsolver::HSolverPW_SDFT<std::complex<double>, base_device::DEVICE_CPU> hs_d

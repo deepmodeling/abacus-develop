@@ -23,6 +23,8 @@ namespace ModuleESolver
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
         void after_all_runners(UnitCell& ucell) override;
 
+        virtual void before_scf(UnitCell& ucell, const int istep) override;
+
       protected:
         virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
         virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
@@ -35,6 +37,8 @@ namespace ModuleESolver
 
         virtual void allocate_hamilt(const UnitCell& ucell) override;
         virtual void deallocate_hamilt() override;
+        
+        psi::Psi<T, base_device::DEVICE_CPU>* psi_local = nullptr; ///< psi for all local NAOs
 
 #ifdef __EXX
         std::unique_ptr<Exx_Lip<T>> exx_lip;

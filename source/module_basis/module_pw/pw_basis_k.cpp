@@ -22,7 +22,6 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2isz_k;
     delete[] igl2ig_k;
     delete[] gk2;
-    delete[] ig2ixyz_k_;
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
         if (this->precision == "single") {
@@ -169,6 +168,7 @@ void PW_Basis_K::setupIndGk()
         syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_igl2isz_k, this->igl2isz_k, this->npwk_max * this->nks);
     }
 #endif
+    this->get_ig2ixyz_k();
     return;
 }
 
@@ -334,8 +334,12 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
 
 void PW_Basis_K::get_ig2ixyz_k()
 {
-    delete[] this->ig2ixyz_k_;
-    this->ig2ixyz_k_ = new int [this->npwk_max * this->nks];
+    if (this->device != "gpu")
+    {
+        //only GPU need to get ig2ixyz_k
+        return;
+    }
+    int * ig2ixyz_k_cpu = new int [this->npwk_max * this->nks];
     ModuleBase::Memory::record("PW_B_K::ig2ixyz", sizeof(int) * this->npwk_max * this->nks);
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
     for(int ik = 0; ik < this->nks; ++ik)
@@ -348,15 +352,12 @@ void PW_Basis_K::get_ig2ixyz_k()
             int ixy = this->is2fftixy[is];
             int iy = ixy % this->ny;
             int ix = ixy / this->ny;
-            ig2ixyz_k_[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
+            ig2ixyz_k_cpu[igl + ik * npwk_max] = iz + iy * nz + ix * ny * nz;
         }
     }
-#if defined(__CUDA) || defined(__ROCM)
-    if (this->device == "gpu") {
-        resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
-        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, this->ig2ixyz_k_, this->npwk_max * this->nks);
-    }
-#endif
+    resmem_int_op()(gpu_ctx, ig2ixyz_k, this->npwk_max * this->nks);
+    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->ig2ixyz_k, ig2ixyz_k_cpu, this->npwk_max * this->nks);
+    delete[] ig2ixyz_k_cpu;
 }
 
 std::vector<int> PW_Basis_K::get_ig2ix(const int ik) const

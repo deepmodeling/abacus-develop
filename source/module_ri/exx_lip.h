@@ -38,8 +38,7 @@ public:
     Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
             const ModuleSymmetry::Symmetry& symm,
             K_Vectors* kv_ptr_in,
-            //   wavefunc* wf_ptr_in,
-            psi::PSIInit<T, Device>* wf_ptr_in,
+            psi::Psi<T, Device>* psi_local_in,
             psi::Psi<T, Device>* kspw_psi_ptr_in,
             const ModulePW::PW_Basis_K* wfc_basis_in,
             const ModulePW::PW_Basis* rho_basis_in,
@@ -79,7 +78,7 @@ private:
         K_Vectors* kv_ptr = nullptr;
         // wavefunc* wf_ptr;
         psi::Psi<T, Device>* kspw_psi_ptr = nullptr;  ///< PW  wavefunction
-        psi::PSIInit<T, Device>* wf_ptr = nullptr;
+        psi::Psi<T, Device>* psi_local = nullptr;     ///< NAOs in PW
         ModuleBase::matrix wf_wg;
 
         /// @brief LCAO wavefunction, the eigenvectors from lapack diagonalization

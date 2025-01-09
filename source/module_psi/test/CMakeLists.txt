@@ -17,6 +17,9 @@ AddTest(
         ../../module_cell/parallel_kpoints.cpp
         ../../module_cell/test/support/mock_unitcell.cpp
         ../../module_io/orb_io.cpp
+        ../../module_io/write_pao.cpp
+        ../../module_io/read_wfc_pw.cpp
+        ../../module_io/binstream.cpp
 )
 endif()
 
