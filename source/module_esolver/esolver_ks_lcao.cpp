@@ -1052,7 +1052,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld, [](LCAO_Deepks*) {});
         LCAO_Deepks_Interface<TK, TR> LDI(ld_shared_ptr);
 
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
         LDI.out_deepks_labels(this->pelec->f_en.etot,
                               this->pelec->klist->get_nks(),
                               ucell.nat,
@@ -1066,8 +1065,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                               *(this->psi),
                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                               p_ham_deepks);
-
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
     }
 #endif
 
