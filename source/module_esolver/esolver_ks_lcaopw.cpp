@@ -57,6 +57,7 @@ namespace ModuleESolver
     template <typename T>
     ESolver_KS_LIP<T>::~ESolver_KS_LIP()
     {
+        delete this->psi_local;
         // delete Hamilt
         this->deallocate_hamilt();
     }
@@ -79,11 +80,22 @@ namespace ModuleESolver
             this->p_hamilt = nullptr;
         }
     }
+    template <typename T>
+    void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
+    {
+        ESolver_KS_PW<T>::before_scf(ucell, istep);
+        this->p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(UnitCell& ucell, const Input_para& inp)
     {
         ESolver_KS_PW<T>::before_all_runners(ucell, inp);
+        delete this->psi_local;
+        this->psi_local = new psi::Psi<T>(this->psi->get_nk(),
+                                                             this->p_psi_init->psi_initer->nbands_start(),
+                                                             this->psi->get_nbasis(),
+                                                             this->psi->get_ngk_pointer());
 #ifdef __EXX
         if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
             || PARAM.inp.calculation == "cell-relax"
@@ -94,14 +106,14 @@ namespace ModuleESolver
                 this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
                                                                            ucell.symm,
                                                                            &this->kv,
-                                                                           this->p_wf_init,
+                                                                           this->psi_local,
                                                                            this->kspw_psi,
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
                                                                            &ucell,
                                                                            this->pelec));
-                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_wf_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
+                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_psi_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
             }
 }
 #endif
@@ -136,18 +148,8 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-        // It is not a good choice to overload another solve function here, this will spoil the concept of
-        // multiple inheritance and polymorphism. But for now, we just do it in this way.
-        // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
-        std::weak_ptr<psi::Psi<T>> psig = this->p_wf_init->get_psig();
-
-        if (psig.expired())
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density_single", "psig lifetime is expired");
-        }
-
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0], skip_charge,ucell.tpiba,ucell.nat);
+        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
 #ifdef __EXX

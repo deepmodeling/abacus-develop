@@ -118,7 +118,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     }
 
     delete this->psi;
-    delete this->p_wf_init;
+    delete this->p_psi_init;
 }
 
 template <typename T, typename Device>
@@ -189,26 +189,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &(this->pelec->f_en.vtxc));
     }
 
-    //! 7) prepare some parameters for electronic wave functions initilization
-    this->p_wf_init = new psi::PSIInit<T, Device>(PARAM.inp.init_wfc,
-                                                  PARAM.inp.ks_solver,
-                                                  PARAM.inp.basis_type,
-                                                  PARAM.inp.psi_initializer,
-                                                  this->pw_wfc);
-    this->p_wf_init->prepare_init(&(this->sf),
-                                  &ucell,
-                                  1,
-#ifdef __MPI
-                                  &GlobalC::Pkpoints,
-                                  GlobalV::MY_RANK,
-#endif
-                                  &this->ppcell);
-
-    if (this->psi != nullptr)
-    {
-        delete this->psi;
-        this->psi = nullptr;
-    }
 
     //! initalize local pseudopotential
     this->locpp.init_vloc(ucell, this->pw_rhod);
@@ -219,17 +199,19 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     this->ppcell.init_vnl(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "NON-LOCAL POTENTIAL");
 
-    //! Allocate psi
-    this->p_wf_init->allocate_psi(this->psi,
-                                  this->kv.get_nkstot(),
-                                  this->kv.get_nks(),
-                                  this->kv.ngk.data(),
-                                  this->pw_wfc->npwk_max,
-                                  &this->sf,
-                                  &this->ppcell,
-                                  ucell);
-                                  
-    assert(this->psi != nullptr);
+    //! Allocate and initialize psi
+    this->p_psi_init = new psi::PSIInit<T, Device>(PARAM.inp.init_wfc,
+                                                   PARAM.inp.ks_solver,
+                                                   PARAM.inp.basis_type,
+                                                   GlobalV::MY_RANK,
+                                                   ucell,
+                                                   this->sf,
+                                                   GlobalC::Pkpoints,
+                                                   this->ppcell,
+                                                   *this->pw_wfc);
+    allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk.data(), PARAM.inp.nbands, this->pw_wfc->npwk_max);
+    this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
+
     this->kspw_psi = PARAM.inp.device == "gpu" || PARAM.inp.precision == "single"
                          ? new psi::Psi<T, Device>(this->psi[0])
                          : reinterpret_cast<psi::Psi<T, Device>*>(this->psi);
@@ -267,7 +249,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
         this->pw_wfc->collect_local_pw(PARAM.inp.erf_ecut, PARAM.inp.erf_height, PARAM.inp.erf_sigma);
 
-        this->p_wf_init->make_table(this->kv.get_nks(), &this->sf, &this->ppcell, ucell);
+        this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
     if (ucell.ionic_position_updated)
     {
@@ -407,29 +389,11 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, nullptr, this->kv.get_nks());
     }
-    // after init_rho (in pelec->init_scf), we have rho now.
-    // before hamilt2density, we update Hk and initialize psi
 
-    // before_scf function will be called everytime before scf. However, once
-    // atomic coordinates changed, structure factor will change, therefore all
-    // atomwise properties will change. So we need to reinitialize psi every
-    // time before scf. But for random wavefunction, we dont, because random
-    // wavefunction is not related to atomic coordinates. What the old strategy
-    // does is only to initialize for once...
-    if (((PARAM.inp.init_wfc == "random") && (istep == 0)) || (PARAM.inp.init_wfc != "random"))
+    if (!this->already_initpsi)
     {
-        this->p_wf_init->initialize_psi(this->psi,
-                                        this->kspw_psi,
-                                        this->p_hamilt,
-                                        this->ppcell,
-                                        ucell,
-                                        GlobalV::ofs_running,
-                                        this->already_initpsi);
-
-        if (this->already_initpsi == false)
-        {
-            this->already_initpsi = true;
-        }
+        this->p_psi_init->initialize_psi(this->psi, this->kspw_psi, this->p_hamilt, GlobalV::ofs_running);
+        this->already_initpsi = true;
     }
 
     ModuleBase::timer::tick("ESolver_KS_PW", "before_scf");

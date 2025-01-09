@@ -507,18 +507,6 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
-        Input_Item item("psi_initializer");
-        item.annotation = "whether to use psi_initializer";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                para.input.psi_initializer = true;
-            }
-        };
-        read_sync_bool(input.psi_initializer);
-        this->add_item(item);
-    }
-    {
         Input_Item item("pw_seed");
         item.annotation = "random seed for initializing wave functions";
         read_sync_int(input.pw_seed);

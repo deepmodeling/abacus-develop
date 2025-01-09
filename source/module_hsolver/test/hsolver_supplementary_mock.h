@@ -1,6 +1,5 @@
 #pragma once
 #include "module_elecstate/elecstate_pw.h"
-#include "module_psi/wavefunc.h"
 
 namespace elecstate
 {
@@ -151,17 +150,5 @@ K_Vectors::K_Vectors()
 {
 }
 K_Vectors::~K_Vectors()
-{
-}
-wavefunc::wavefunc()
-{
-}
-wavefunc::~wavefunc()
-{
-}
-WF_atomic::WF_atomic()
-{
-}
-WF_atomic::~WF_atomic()
 {
 }

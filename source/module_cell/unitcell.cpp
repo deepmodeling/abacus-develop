@@ -533,8 +533,7 @@ void UnitCell::cal_nwfc(std::ofstream& log) {
     // Use localized basis
     //=====================
     if ((PARAM.inp.basis_type == "lcao") || (PARAM.inp.basis_type == "lcao_in_pw")
-        || ((PARAM.inp.basis_type == "pw") && (PARAM.inp.psi_initializer)
-            && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
+        || ((PARAM.inp.basis_type == "pw") && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
             && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
     {
         ModuleBase::GlobalFunc::AUTO_SET("NBANDS", PARAM.inp.nbands);

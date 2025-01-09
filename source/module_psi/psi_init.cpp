@@ -1,12 +1,14 @@
 #include "psi_init.h"
 
 #include "module_base/macros.h"
+#include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi_initializer_atomic.h"
 #include "module_psi/psi_initializer_atomic_random.h"
+#include "module_psi/psi_initializer_file.h"
 #include "module_psi/psi_initializer_nao.h"
 #include "module_psi/psi_initializer_nao_random.h"
 #include "module_psi/psi_initializer_random.h"
@@ -17,297 +19,189 @@ template <typename T, typename Device>
 PSIInit<T, Device>::PSIInit(const std::string& init_wfc_in,
                             const std::string& ks_solver_in,
                             const std::string& basis_type_in,
-                            const bool& use_psiinitializer_in,
-                            ModulePW::PW_Basis_K* pw_wfc_in)
+                            const int& rank_in,
+                            const UnitCell& ucell_in,
+                            const Structure_Factor& sf_in,
+                            const Parallel_Kpoints& parakpts_in,
+                            const pseudopot_cell_vnl& nlpp_in,
+                            const ModulePW::PW_Basis_K& pw_wfc_in)
+    : ucell(ucell_in), sf(sf_in), nlpp(nlpp_in), parakpts(parakpts_in), pw_wfc(pw_wfc_in), rank(rank_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
     this->basis_type = basis_type_in;
-    this->use_psiinitializer = use_psiinitializer_in;
-    this->pw_wfc = pw_wfc_in;
 }
 
 template <typename T, typename Device>
-void PSIInit<T, Device>::prepare_init(Structure_Factor* p_sf,
-                                      UnitCell* p_ucell,
-                                      const int& random_seed,
-#ifdef __MPI
-                                      Parallel_Kpoints* p_parak,
-                                      const int& rank,
-#endif
-                                      pseudopot_cell_vnl* p_ppcell)
+void PSIInit<T, Device>::prepare_init(const int& random_seed)
 {
-    if (!this->use_psiinitializer)
-    {
-        return;
-    }
+
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("PSIInit", "prepare_init");
-    if ((this->init_wfc.substr(0, 6) == "atomic") && (p_ucell->natomwfc == 0))
+    this->psi_initer.reset();
+    if (this->init_wfc == "random")
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
-    else if (this->init_wfc == "atomic")
+    else if (this->init_wfc == "file")
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_file<T>());
     }
-    else if (this->init_wfc == "random")
+    else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_random<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
-    else if (this->init_wfc == "nao")
+    else if (this->init_wfc == "atomic"
+             || (this->init_wfc == "atomic+random" && this->ucell.natomwfc != PARAM.inp.nbands))
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic<T>());
     }
     else if (this->init_wfc == "atomic+random")
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_atomic_random<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic_random<T>());
+    }
+    else if (this->init_wfc == "nao")
+    {
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_nao<T>());
     }
     else if (this->init_wfc == "nao+random")
     {
-        this->psi_init = std::unique_ptr<psi_initializer<T, Device>>(new psi_initializer_nao_random<T, Device>());
+        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_nao_random<T>());
     }
     else
     {
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
-    //! function polymorphism is moved from constructor to function initialize.
-    //! Two slightly different implementation are for MPI and serial case, respectively.
-#ifdef __MPI
-    this->psi_init->initialize(p_sf, pw_wfc, p_ucell, p_parak, random_seed, p_ppcell, rank);
-#else
-    this->psi_init->initialize(p_sf, pw_wfc, p_ucell, random_seed, p_ppcell);
-#endif
+    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &parakpts, random_seed, &nlpp, rank);
+    this->psi_initer->tabulate();
 
-    // always new->initialize->tabulate->allocate->proj_ao_onkG
-    this->psi_init->tabulate();
     ModuleBase::timer::tick("PSIInit", "prepare_init");
-}
-
-template <typename T, typename Device>
-void PSIInit<T, Device>::allocate_psi(Psi<std::complex<double>>*& psi,
-                                      const int nkstot,
-                                      const int nks,
-                                      const int* ngk,
-                                      const int npwx,
-                                      Structure_Factor* p_sf,
-                                      pseudopot_cell_vnl* p_ppcell,
-                                      const UnitCell& ucell)
-{
-    // allocate memory for std::complex<double> datatype psi
-    // New psi initializer in ABACUS, Developer's note:
-    // Because the calling relationship between PSIInit and derived class is
-    // complicated, up to upcoming of ABACUS 3.4, we only implement this new psi
-    // initialization method for ksdft_pw, which means the routinely used dft theory.
-    // For other theories like stochastic DFT, we still use the old method.
-
-    // LCAOINPW also temporarily uses PSIInit workflow, but in principle, it
-    // should have its own ESolver. ESolver class is for controlling workflow for each
-    // theory-basis combination, in the future it is also possible to seperate/decouple
-    // the basis (representation) with operator (hamiltonian) and solver (diagonalization).
-    // This feature requires feasible Linear Algebra library in-built in ABACUS, which
-    // is not ready yet.
-    if (this->use_psiinitializer) // new method
-    {
-        // psi_initializer drag initialization of pw wavefunction out of HSolver, make psi
-        // initialization decoupled with HSolver (diagonalization) procedure.
-        // However, due to EXX is hard to maintain, we still use the old method for EXX.
-        // LCAOINPW in version >= 3.5.0 uses this new method.
-        psi = this->psi_init->allocate();
-    }
-    else // old method
-    {
-        // old method explicitly requires variables such as total number of kpoints, number
-        // of bands, number of G-vectors, and so on. Comparatively in new method, these
-        // variables are imported in function called initialize.
-        psi = this->wf_old.allocate(nkstot, nks, ngk, npwx);
-
-        // however, init_at_1 does not actually initialize the psi, instead, it is a
-        // function to calculate a interpolate table saving overlap intergral or say
-        // Spherical Bessel Transform of atomic orbitals.
-        this->wf_old.init_at_1(ucell,p_sf, &p_ppcell->tab_at);
-        // similarly, wfcinit not really initialize any wavefunction, instead, it initialize
-        // the mapping from ixy, the 1d flattened index of point on fft grid (x, y) plane,
-        // to the index of "stick", composed of grid points.
-        this->wf_old.wfcinit(psi, pw_wfc);
-    }
-}
-
-template <typename T, typename Device>
-void PSIInit<T, Device>::make_table(const int nks, 
-                                    Structure_Factor* p_sf, 
-                                    pseudopot_cell_vnl* p_ppcell,
-                                    const UnitCell& ucell)
-{
-    if (this->use_psiinitializer)
-    {
-    }    // do not need to do anything because the interpolate table is unchanged
-    else // old initialization method, used in EXX calculation
-    {
-        this->wf_old.init_after_vc(nks); // reallocate wanf2, the planewave expansion of lcao
-        this->wf_old.init_at_1(ucell,p_sf, &p_ppcell->tab_at);    // re-calculate tab_at, the overlap matrix between atomic pswfc and jlq
-    }
 }
 
 template <typename T, typename Device>
 void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         psi::Psi<T, Device>* kspw_psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
-                                        const pseudopot_cell_vnl& nlpp,
-                                        const UnitCell& ucell,
-                                        std::ofstream& ofs_running,
-                                        const bool is_already_initpsi)
+                                        std::ofstream& ofs_running)
 {
+    if (kspw_psi->get_nbands() == 0 || GlobalV::MY_STOGROUP != 0)
+    {
+        return;
+    }
+    if (this->basis_type == "lcao_in_pw")
+    {
+        return;
+    }
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
 
-    if (PARAM.inp.psi_initializer)
+    const int nbands_start = this->psi_initer->nbands_start();
+    const int nbands = psi->get_nbands();
+    const int nbasis = psi->get_nbasis();
+    const bool another_psi_space = (nbands_start != nbands || PARAM.inp.precision == "single");
+
+    Psi<T>* psi_cpu = reinterpret_cast<psi::Psi<T>*>(psi);
+    Psi<T, Device>* psi_device = kspw_psi;
+
+    if (another_psi_space)
     {
-        // if psig is not allocated before, allocate it
-        if (!this->psi_init->psig_use_count())
+        psi_cpu = new Psi<T>(1, nbands_start, nbasis, nullptr);
+        psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
+                                               : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
+    }
+
+    // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
+    // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
+    for (int ik = 0; ik < this->pw_wfc.nks; ik++)
+    {
+        //! Fix the wavefunction to initialize at given kpoint
+        psi->fix_k(ik);
+        kspw_psi->fix_k(ik);
+
+        //! Update Hamiltonian from other kpoint to the given one
+        p_hamilt->updateHk(ik);
+
+        //! initialize psi_cpu
+        this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
+        if (psi_device->get_pointer() != psi_cpu->get_pointer())
         {
-            this->psi_init->allocate(/*psig_only=*/true);
+            castmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
         }
 
-        // loop over kpoints, make it possible to only allocate memory for psig at the only one kpt
-        // like (1, nbands, npwx), in which npwx is the maximal npw of all kpoints
-        for (int ik = 0; ik < this->pw_wfc->nks; ik++)
+        std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
+
+        if (this->ks_solver == "cg")
         {
-            //! Fix the wavefunction to initialize at given kpoint
-            psi->fix_k(ik);
-
-            //! Update Hamiltonian from other kpoint to the given one
-            p_hamilt->updateHk(ik);
-
-            //! Project atomic orbitals on |k+G> planewave basis, where k is wavevector of kpoint
-            //! and G is wavevector of the peroiodic part of the Bloch function
-            this->psi_init->proj_ao_onkG(ik);
-
-            //! psi_initializer manages memory of psig with shared pointer,
-            //! its access to use is shared here via weak pointer
-            //! therefore once the psi_initializer is destructed, psig will be destructed, too
-            //! this way, we can avoid memory leak and undefined behavior
-            std::weak_ptr<psi::Psi<T, Device>> psig = this->psi_init->share_psig();
-
-            if (psig.expired())
+            if (another_psi_space)
             {
-                ModuleBase::WARNING_QUIT("PSIInit::initialize_psi", "psig lifetime is expired");
-            }
-
-            //! to use psig, we need to lock it to get a shared pointer version,
-            //! then switch kpoint of psig to the given one
-            auto psig_ = psig.lock();
-            // CHANGE LOG: if not lcaoinpw, the psig will only be used in psi-initialization
-            // so we can only allocate memory for one kpoint with the maximal number of pw
-            // over all kpoints, then the memory space will be always enough. Then for each
-            // kpoint, the psig is calculated in an overwrite manner.
-            const int ik_psig = (psig_->get_nk() == 1) ? 0 : ik;
-            psig_->fix_k(ik_psig);
-
-            std::vector<typename GetTypeReal<T>::type> etatom(psig_->get_nbands(), 0.0);
-
-            // then adjust dimension from psig to psi
-            // either by matrix-multiplication or by copying-discarding
-            if (this->psi_init->method() != "random")
-            {
-                // lcaoinpw and pw share the same esolver. In the future, we will have different esolver
-                if (((this->ks_solver == "cg") || (this->ks_solver == "lapack")) && (this->basis_type == "pw"))
-                {
-                    // the following function is only run serially, to be improved
-                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
-                                                                             psig_->get_pointer(),
-                                                                             psig_->get_nbands(),
-                                                                             psig_->get_nbasis(),
-                                                                             *(kspw_psi),
-                                                                             etatom.data());
-                    continue;
-                }
-                else if ((this->ks_solver == "lapack") && (this->basis_type == "lcao_in_pw"))
-                {
-                    if (ik == 0)
-                    {
-                        ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
-                    }
-                    continue;
-                }
-                // else the case is davidson
+                // for diagH_subspace_init, psi_cpu->get_pointer() and kspw_psi->get_pointer() should be different
+                hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
+                                                                         psi_device->get_pointer(),
+                                                                         nbands_start,
+                                                                         nbasis,
+                                                                         *(kspw_psi),
+                                                                         etatom.data());
             }
             else
             {
-                if (this->ks_solver == "cg")
-                {
-                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt, *(psig_), *(kspw_psi), etatom.data());
-                    continue;
-                }
-                // else the case is davidson
+                // for diagH_subspace_init, psi_cpu->get_pointer() and kspw_psi->get_pointer() can be the same
+                hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
+                                                                    *psi_device,
+                                                                    *kspw_psi,
+                                                                    etatom.data(),
+                                                                    nbands_start);
             }
-
-            // for the Davidson method, we just copy the wavefunction (partially)
-            for (int iband = 0; iband < kspw_psi->get_nbands(); iband++)
-            {
-                for (int ibasis = 0; ibasis < kspw_psi->get_nbasis(); ibasis++)
-                {
-                    (*(kspw_psi))(iband, ibasis) = (*psig_)(iband, ibasis);
-                }
-            }
-        } // end k-point loop
-
-        if (this->basis_type != "lcao_in_pw")
-        {
-            this->psi_init->deallocate_psig();
         }
-    }
-    else
-    {
-        //! note: is_already_initpsi will be false in init_after_vc when vc changes.
-        if (PARAM.inp.basis_type == "pw" && is_already_initpsi == false)
+        else // dav, bpcg
         {
-            for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
+            if (another_psi_space)
             {
-                //! Update Hamiltonian from other kpoint to the given one
-                p_hamilt->updateHk(ik);
-
-                if (PARAM.inp.esolver_type == "sdft")
-                {
-                    if (kspw_psi->get_nbands() > 0 && GlobalV::MY_STOGROUP == 0)
-                    {
-                        //! Fix the wavefunction to initialize at given kpoint
-                        kspw_psi->fix_k(ik);
-
-                        /// for psi init guess!!!!
-                        hamilt::diago_PAO_in_pw_k2(this->ctx,
-                                                   ik,
-                                                   *(kspw_psi),
-                                                   this->pw_wfc,
-                                                   &this->wf_old,
-                                                   nlpp.tab_at,
-                                                   nlpp.lmaxkb,
-                                                   ucell,
-                                                   p_hamilt);
-                    }
-                }
-                else
-                {
-                    //! Fix the wavefunction to initialize at given kpoint
-                    kspw_psi->fix_k(ik);
-
-                    /// for psi init guess!!!!
-                    hamilt::diago_PAO_in_pw_k2(this->ctx,
-                                               ik,
-                                               *(kspw_psi),
-                                               this->pw_wfc,
-                                               &this->wf_old,
-                                               nlpp.tab_at,
-                                               nlpp.lmaxkb,
-                                               ucell,
-                                               p_hamilt);
-                }
+                syncmem_complex_op()(ctx, ctx, kspw_psi->get_pointer(), psi_device->get_pointer(), nbands * nbasis);
             }
+        }
+    } // end k-point loop
+
+    if (another_psi_space)
+    {
+        delete psi_cpu;
+        if(PARAM.inp.device == "gpu")
+        {
+            delete psi_device;
         }
     }
 
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
+}
+
+template <typename T, typename Device>
+void PSIInit<T, Device>::initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running)
+{
+    ofs_running << " START WAVEFUNCTION: LCAO_IN_PW, psi initialization skipped " << std::endl;
+    assert(this->psi_initer->method() == "nao");
+    for (int ik = 0; ik < this->pw_wfc.nks; ik++)
+    {
+        psi_local->fix_k(ik);
+        this->psi_initer->init_psig(psi_local->get_pointer(), ik);
+    }
+}
+
+void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const int* ngk, const int& nbands, const int& npwx)
+{
+    assert(npwx > 0);
+    assert(nks > 0);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "npwx", npwx);
+
+    delete psi;
+    int nks2 = nks;
+    if (PARAM.inp.calculation == "nscf" && PARAM.inp.mem_saver == 1)
+    {
+        nks2 = 1;
+    }
+    psi = new psi::Psi<std::complex<double>>(nks2, nbands, npwx * PARAM.globalv.npol, ngk);
+    const size_t memory_cost = sizeof(std::complex<double>) * nks2 * nbands * (PARAM.globalv.npol * npwx);
+    std::cout << " MEMORY FOR PSI (MB)  : " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
+    ModuleBase::Memory::record("Psi_PW", memory_cost);
 }
 
 template class PSIInit<std::complex<float>, base_device::DEVICE_CPU>;

@@ -5,7 +5,6 @@
 #include "module_hamilt_general/hamilt.h"
 #include "module_base/macros.h"
 #include "module_basis/module_pw/pw_basis_k.h"
-#include "module_psi/wavefunc.h"
 
 namespace hsolver
 {
