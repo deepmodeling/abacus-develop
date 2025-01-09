@@ -33,6 +33,7 @@ class BigGridInfo
         int get_nmz() const { return nmz_; };
         int get_nmxyz() const { return nmxyz_; };
         const std::vector<Vec3d>& get_meshgrid_coords() const { return meshgrid_coords_; };
+        const Vec3d& get_meshgrid_coord(int index_1d) const { return meshgrid_coords_[index_1d]; };
         std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return meshgrid_info_; };
 
         // get the 3D index of a meshgrid in the big grid from the 1D index
@@ -45,18 +46,6 @@ class BigGridInfo
         int meshgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
             return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
-        };
-        
-        // get the cartesian coordinate of a meshgrid in the big grid from the 3D index
-        Vec3d get_meshgrid_coord(Vec3i index_3d) const
-        {
-            return index_3d * meshgrid_info_->get_latvec0();
-        };
-
-        // get the cartesian coordinate of a meshgrid in the big grid from the 1D index
-        Vec3d get_meshgrid_coord(int index_1d) const
-        {
-            return get_meshgrid_coord(meshgrid_idx_1Dto3D(index_1d));
         };
 
     private:

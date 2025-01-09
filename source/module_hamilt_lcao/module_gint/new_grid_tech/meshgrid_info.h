@@ -44,7 +44,7 @@ class MeshGridInfo
         const Matrix3 &get_latvec0() const { return meshgrid_latvec0_; };
         const Matrix3 &get_GT() const { return meshgrid_GT_; };
         const double get_volume() const { return meshgrid_volume_; };
-
+        const Vec3d get_cartesian_coord(Vec3i index_3d) const { return index_3d * meshgrid_latvec0_; };
     private:
         // basis vectors of meshgrid
         Vec3d meshgrid_vec1_;
