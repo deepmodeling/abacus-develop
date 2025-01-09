@@ -53,7 +53,7 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
     else if (this->init_wfc == "atomic"
-             || (this->init_wfc == "atomic+random" && this->ucell.natomwfc != PARAM.inp.nbands))
+             || (this->init_wfc == "atomic+random" && this->ucell.natomwfc < PARAM.inp.nbands))
     {
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_atomic<T>());
     }
