@@ -3,14 +3,6 @@
 #include "module_base/parallel_common.h"
 #include "module_base/parallel_global.h"
 
-Parallel_Kpoints::Parallel_Kpoints()
-{
-}
-
-Parallel_Kpoints::~Parallel_Kpoints()
-{
-}
-
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
                              const int& kpar_in,

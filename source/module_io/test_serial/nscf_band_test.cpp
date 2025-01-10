@@ -3,15 +3,6 @@
 #include "module_io/nscf_band.h"
 #include "module_cell/parallel_kpoints.h"
 #include "module_cell/klist.h"
-
-Parallel_Kpoints::Parallel_Kpoints()
-{
-}
-
-Parallel_Kpoints::~Parallel_Kpoints()
-{
-}
-
 K_Vectors::K_Vectors()
 {
 }
@@ -59,13 +50,11 @@ protected:
         kv->kl_segids.resize(nks);
         kv->kl_segids[0] = 0;
         kv->kl_segids[1] = 0;
-        Pkpoints = new Parallel_Kpoints;
     }
 
     void TearDown() override {
         // Clean up test data
         delete kv;
-        delete Pkpoints;
         std::remove(out_band_dir.c_str());
     }
 

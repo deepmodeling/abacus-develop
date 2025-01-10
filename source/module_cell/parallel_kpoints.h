@@ -9,8 +9,8 @@
 class Parallel_Kpoints
 {
   public:
-    Parallel_Kpoints();
-    ~Parallel_Kpoints();
+    Parallel_Kpoints(){};
+    ~Parallel_Kpoints(){};
 
     void kinfo(int& nkstot_in,
                const int& kpar_in,
@@ -46,8 +46,8 @@ class Parallel_Kpoints
     // int* nproc_pool = nullptr;    it is not used
 
     // inforamation about kpoints, dim: KPAR
-    std::vector<int> nks_pool;    // number of k-points in each pool
-    std::vector<int> startk_pool; // the first k-point in each pool
+    std::vector<int> nks_pool;    // number of k-points in each pool, here use k-points without spin
+    std::vector<int> startk_pool; // the first k-point in each pool, here use k-points without spin
 
     // information about which pool each k-point belongs to,
     std::vector<int> whichpool; // whichpool[k] : the pool which k belongs to, dim: nkstot_np
