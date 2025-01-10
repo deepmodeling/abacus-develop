@@ -325,7 +325,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
 
     for (int ik = 0; ik < nks; ++ik)
     {
-        const int iktot = K_Vectors::get_ik_global(ik, nkstot);
+        const int iktot = kv.ik2iktot[ik];
         const int npw = wfcpw.npwk[ik];
         int* ig2ixyz = new int[npw];
 

@@ -11,12 +11,6 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_elecstate/module_charge/charge.h"
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
 /***************************************************************
  *  mock functions

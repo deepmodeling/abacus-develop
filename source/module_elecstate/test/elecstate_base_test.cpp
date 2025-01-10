@@ -41,12 +41,6 @@ Magnetism::~Magnetism(){}
 InfoNonlocal::InfoNonlocal(){}
 InfoNonlocal::~InfoNonlocal(){}
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
 ModulePW::PW_Basis::PW_Basis()
 {

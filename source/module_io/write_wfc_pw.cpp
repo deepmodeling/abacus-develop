@@ -66,13 +66,11 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
                 int ikstot = 0;  // ikstot : the index within all k-points
                 const int ng = kv.ngk[ik];
                 const int ng_max = wfcpw->npwk_max;
+                ikstot = kv.ik2iktot[ik];
 #ifdef __MPI
                 MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
-
-                ikstot = K_Vectors::get_ik_global(ik, nkstot);
 #else
-        ikngtot = kv.ngk[ik];
-        ikstot = ik;
+                ikngtot = kv.ngk[ik];
 #endif
                 const int ikngtot_npol = ikngtot * PARAM.globalv.npol;
 #ifdef __MPI
