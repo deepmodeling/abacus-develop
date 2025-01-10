@@ -1,6 +1,7 @@
 #include <cmath>
 #include <map>
 #include "module_parameter/parameter.h"
+#include "module_base/timer.h"
 #include "gint_info.h"
 #include "gint_type.h"
 
@@ -56,6 +57,7 @@ std::shared_ptr<HContainer<T>> GintInfo::get_hr(int npol) const
 
 void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital* Phi)
 {
+    ModuleBase::timer::tick("GintInfo", "init_atoms");
     int iat = 0;
     const Matrix3& biggrid_GT = unitcell_info_->get_biggrid_info()->get_GT();
     const double g1 = sqrt(biggrid_GT.e11 * biggrid_GT.e11
@@ -143,6 +145,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             iat++;
         }
     }
+    ModuleBase::timer::tick("GintInfo", "init_atoms");
 }
 
 void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
