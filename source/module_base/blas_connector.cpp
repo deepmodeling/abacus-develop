@@ -655,6 +655,7 @@ void BlasConnector::copy(const long n, const std::complex<double> *a, const int 
 	}
 }
 
+
 template <typename T>
 void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
 	using Real = typename GetTypeReal<T>::type;
