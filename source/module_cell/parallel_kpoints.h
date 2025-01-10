@@ -28,9 +28,9 @@ class Parallel_Kpoints
                          const ModuleBase::realArray& a,
                          const ModuleBase::realArray& b,
                          const int& ik);
-    void pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik);
+    void pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik) const;
     template <class T, class V>
-    void pool_collection_aux(T* value, const V& w, const int& dim, const int& ik);
+    void pool_collection_aux(T* value, const V& w, const int& dim, const int& ik) const;
 #ifdef __MPI
     /**
      * @brief gather kpoints from all processors

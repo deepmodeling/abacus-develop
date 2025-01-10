@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/matrix3.h"
 #include "module_cell/unitcell.h"
-
+#include "parallel_kpoints.h"
 #include <vector>
 
 class K_Vectors
@@ -30,6 +30,9 @@ public:
     ~K_Vectors();
     K_Vectors& operator=(const K_Vectors&) = default;
     K_Vectors& operator=(K_Vectors&& rhs) = default;
+
+    Parallel_Kpoints para_k; ///< parallel for kpoints
+
 
     /**
      * @brief Set up the k-points for the system.

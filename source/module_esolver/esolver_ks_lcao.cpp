@@ -416,7 +416,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
     // qianrui modify 2020-10-18
     if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md" || PARAM.inp.calculation == "relax")
     {
-        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
+        ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
     }
 
     const int nspin0 = (PARAM.inp.nspin == 2) ? 2 : 1;
@@ -434,8 +434,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,
-                                this->kv,
-                                &(GlobalC::Pkpoints));
+                                this->kv);
         }
     } // out_band
 
@@ -454,7 +453,6 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                               PARAM.inp.dos_scale,
                               PARAM.inp.dos_sigma,
                               *(this->pelec->klist),
-                              GlobalC::Pkpoints,
                               ucell,
                               this->pelec->eferm,
                               PARAM.inp.nbands,

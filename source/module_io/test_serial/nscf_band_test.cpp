@@ -77,17 +77,16 @@ protected:
     double fermie;
     ModuleBase::matrix ekb;
     K_Vectors* kv;
-    Parallel_Kpoints* Pkpoints;
 };
 
 TEST_F(BandTest, nscf_band)
 {
-    Pkpoints->nks_pool.resize(1);
-    Pkpoints->nks_pool[0] = nks;
-    Pkpoints->nkstot_np = nks;
-    Pkpoints->nks_np = nks;
+    kv->para_k.nks_pool.resize(1);
+    kv->para_k.nks_pool[0] = nks;
+    kv->para_k.nkstot_np = nks;
+    kv->para_k.nks_np = nks;
     // Call the function to be tested
-    ModuleIO::nscf_band(is, out_band_dir, nband, fermie, 8, ekb, *kv, Pkpoints);
+    ModuleIO::nscf_band(is, out_band_dir, nband, fermie, 8, ekb, *kv);
 
     // Check the output file
     std::ifstream ifs(out_band_dir);

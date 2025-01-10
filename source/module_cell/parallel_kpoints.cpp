@@ -227,7 +227,7 @@ void Parallel_Kpoints::pool_collection(double* value_re,
     return;
 }
 
-void Parallel_Kpoints::pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik)
+void Parallel_Kpoints::pool_collection(std::complex<double>* value, const ModuleBase::ComplexArray& w, const int& ik) const
 {
     const int dim2 = w.getBound2();
     const int dim3 = w.getBound3();
@@ -237,7 +237,7 @@ void Parallel_Kpoints::pool_collection(std::complex<double>* value, const Module
 }
 
 template <class T, class V>
-void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim, const int& ik)
+void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim, const int& ik) const
 {
 #ifdef __MPI
     const int ik_now = ik - this->startk_pool[this->my_pool];

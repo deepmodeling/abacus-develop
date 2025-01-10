@@ -209,7 +209,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                    GlobalV::MY_RANK,
                                                    ucell,
                                                    this->sf,
-                                                   GlobalC::Pkpoints,
+                                                   this->kv.para_k,
                                                    this->ppcell,
                                                    *this->pw_wfc);
     allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk.data(), PARAM.inp.nbands, this->pw_wfc->npwk_max);
@@ -844,7 +844,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     }
 
     //! 2) Print occupation numbers into istate.info
-    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv, &(GlobalC::Pkpoints));
+    ModuleIO::write_istate_info(this->pelec->ekb, this->pelec->wg, this->kv);
 
     //! 3) Compute density of states (DOS)
     if (PARAM.inp.out_dos)
@@ -883,8 +883,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
                                 0.0,
                                 PARAM.inp.out_band[1],
                                 this->pelec->ekb,
-                                this->kv,
-                                &(GlobalC::Pkpoints));
+                                this->kv);
         }
     }
 
