@@ -81,6 +81,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                const TwoCenterBundle& two_center_bundle,
                                const LCAO_Orbitals& orb,
                                elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+                               ,
+                               LCAO_Deepks* ld_in
+#endif
 #ifdef __EXX
                                ,
                                const int istep,
@@ -209,7 +213,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     two_center_bundle.overlap_orb_alpha.get(),
                                                                     &orb,
                                                                     this->kv->get_nks(),
-                                                                    DM_in);
+                                                                    DM_in,
+                                                                    ld_in);
             this->getOperator()->add(deepks);
         }
 #endif
@@ -262,7 +267,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                      orb.cutoffs(),
                                                                      &grid_d,
                                                                      PARAM.inp.nspin);
-
             }
         }
 
@@ -333,7 +337,8 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     two_center_bundle.overlap_orb_alpha.get(),
                                                                     &orb,
                                                                     this->kv->get_nks(),
-                                                                    DM_in);
+                                                                    DM_in,
+                                                                    ld_in);
             this->getOperator()->add(deepks);
         }
 #endif

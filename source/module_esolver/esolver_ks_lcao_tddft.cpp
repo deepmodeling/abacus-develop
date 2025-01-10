@@ -17,19 +17,18 @@
 #include "module_elecstate/module_dm/cal_edm_tddft.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/occupy.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 
 //-----HSolver ElecState Hamilt--------
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
-#include "module_elecstate/cal_ux.h"
 
 //-----force& stress-------------------
 #include "module_hamilt_lcao/hamilt_lcaodft/FORCE_STRESS.h"
@@ -290,7 +289,12 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
         {
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
-            ModuleIO::write_dipole(ucell,pelec->charge->rho_save[is], pelec->charge->rhopw, is, istep, ss_dipole.str());
+            ModuleIO::write_dipole(ucell,
+                                   pelec->charge->rho_save[is],
+                                   pelec->charge->rhopw,
+                                   is,
+                                   istep,
+                                   ss_dipole.str());
         }
     }
     if (TD_Velocity::out_current == true)

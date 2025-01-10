@@ -1,10 +1,10 @@
-#include <cmath>
-
 #include "elecstate.h"
 #include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
 #include "module_parameter/parameter.h"
+
+#include <cmath>
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -103,10 +103,9 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-    const bool v_ofk_flag =(get_xc_func_type() == 3 
-                            || get_xc_func_type() == 5);
+    const bool v_ofk_flag = (get_xc_func_type() == 3 || get_xc_func_type() == 5);
 #ifdef USE_PAW
-    if(PARAM.inp.use_paw)
+    if (PARAM.inp.use_paw)
     {
         ModuleBase::matrix v_xc;
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
@@ -115,19 +114,19 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
 
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
-            deband_aux -= this->charge->rho[0][ir] * v_xc(0,ir);
+            deband_aux -= this->charge->rho[0][ir] * v_xc(0, ir);
         }
         if (PARAM.inp.nspin == 2)
         {
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
-                deband_aux -= this->charge->rho[1][ir] * v_xc(1,ir);
+                deband_aux -= this->charge->rho[1][ir] * v_xc(1, ir);
             }
         }
     }
 #endif
 
-    if(!PARAM.inp.use_paw)
+    if (!PARAM.inp.use_paw)
     {
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
@@ -137,16 +136,16 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
         {
             v_ofk = this->pot->get_effective_vofk(0);
             // cause in the get_effective_vofk, the func will return nullptr
-            if(v_ofk==nullptr && this->charge->rhopw->nrxx>0)
+            if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
             {
-                ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband","v_ofk is nullptr");
+                ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
             }
             for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
             {
                 deband_aux -= this->charge->kin_r[0][ir] * v_ofk[ir];
             }
         }
-        
+
         if (PARAM.inp.nspin == 2)
         {
             v_eff = this->pot->get_effective_v(1);
@@ -157,9 +156,9 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
             if (v_ofk_flag)
             {
                 v_ofk = this->pot->get_effective_vofk(1);
-                if(v_ofk==nullptr && this->charge->rhopw->nrxx>0)
+                if (v_ofk == nullptr && this->charge->rhopw->nrxx > 0)
                 {
-                    ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband","v_ofk is nullptr");
+                    ModuleBase::WARNING_QUIT("ElecState::cal_delta_eband", "v_ofk is nullptr");
                 }
                 for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
                 {
@@ -219,7 +218,7 @@ double ElecState::cal_delta_escf() const
         if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
         {
             // cause in the get_effective_vofk, the func will return nullptr
-            assert(v_ofk!=nullptr);
+            assert(v_ofk != nullptr);
             descf -= (this->charge->kin_r[0][ir] - this->charge->kin_r_save[0][ir]) * v_ofk[ir];
         }
     }
@@ -278,7 +277,7 @@ void ElecState::cal_converged()
 /**
  * @brief calculate energies
  *
- * @param type: 1 means Harris-Foulkes functinoal; 
+ * @param type: 1 means Harris-Foulkes functinoal;
  * @param type: 2 means Kohn-Sham functional;
  */
 void ElecState::cal_energies(const int type)
@@ -292,7 +291,7 @@ void ElecState::cal_energies(const int type)
     //! energy from gate-field
     this->f_en.gatefield = get_etot_gatefield();
 
-    //! energy from implicit solvation model 
+    //! energy from implicit solvation model
     if (PARAM.inp.imp_sol)
     {
         this->f_en.esol_el = get_solvent_model_Ael();
@@ -305,7 +304,7 @@ void ElecState::cal_energies(const int type)
         this->f_en.escon = get_spin_constrain_energy();
     }
 
-     // energy from DFT+U
+    // energy from DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         this->f_en.edftu = get_dftu_energy();
@@ -313,19 +312,11 @@ void ElecState::cal_energies(const int type)
 
     this->f_en.e_local_pp = get_local_pp_energy();
 
-#ifdef __DEEPKS
-    // energy from deepks
-    if (PARAM.inp.deepks_scf)
-    {
-        this->f_en.edeepks_scf = get_deepks_E_delta() - get_deepks_E_delta_band();
-    }
-#endif
-
     if (type == 1) // Harris-Foulkes functional
     {
         this->f_en.calculate_harris();
     }
-    else if (type == 2)// Kohn-Sham functional
+    else if (type == 2) // Kohn-Sham functional
     {
         this->f_en.calculate_etot();
     }
