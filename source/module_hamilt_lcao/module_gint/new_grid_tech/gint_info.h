@@ -27,8 +27,6 @@ class GintInfo
         int nbx_local, int nby_local, int nbz_local,
         const Numerical_Orbital* Phi,
         const UnitCell& ucell, Grid_Driver& gd);
-    
-    ~GintInfo();
 
     // getter functions
     std::vector<std::shared_ptr<BigGrid>> get_biggrids() const { return biggrids_; };
@@ -62,8 +60,11 @@ class GintInfo
     // the big grids on this processor
     std::vector<std::shared_ptr<BigGrid>> biggrids_;
 
-    // the total atoms in the unitcell(include extended unitcell)
-    std::vector<GintAtom *> atoms_;
+    // the total atoms in the unitcell(include extended unitcell) on this processor
+    // atoms[iat][Vec3i] is the atom with index iat in the unitcell with index Vec3i
+    // Note: Since GintAtom does not implement a default constructor,
+    // the map should not be accessed using [], but rather using the at function
+    std::vector<std::map<Vec3i, GintAtom>> atoms_;
 
     // if the iat-th(global index) atom is in this processor, return true
     std::vector<bool> is_atom_in_proc_;

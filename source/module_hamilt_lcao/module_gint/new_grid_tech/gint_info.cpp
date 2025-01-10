@@ -41,14 +41,6 @@ GintInfo::GintInfo(
     init_ijr_info_(ucell, gd);
 }
 
-GintInfo::~GintInfo()
-{
-    for (auto& atom: atoms_)
-    {
-        delete atom;
-    }
-}
-
 template <typename T>
 std::shared_ptr<HContainer<T>> GintInfo::get_hr(int npol) const
 {
@@ -76,7 +68,8 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
         + biggrid_GT.e23 * biggrid_GT.e23
         + biggrid_GT.e33 * biggrid_GT.e33);
 
-    is_atom_in_proc_ = std::vector<bool>(ucell_->nat, false);
+    is_atom_in_proc_.resize(ucell_->nat, false);
+    atoms_.resize(ucell_->nat);
 
 // TODO: USE OPENMP TO PARALLELIZE THIS LOOP
     for(int i = 0; i < ntype; i++)
@@ -106,8 +99,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
                                          delta.z * unitcell_info_->get_biggrid_info()->get_vec3();
 
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
-            // a map to store the atom in different unitcells
-            std::map<Vec3i, GintAtom*> gint_atom_map;
+            auto& r_to_atom = atoms_[iat];
 
             for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid_x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid_x; bgrid_x++)
             {
@@ -128,21 +120,21 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 
                         // The index of the unitcell containing the biggrid relative to the unitcell containing the atom.
                         const Vec3i ucell_idx_relative = ucell_idx_bgrid - ucell_idx_atom;
-                        auto it = gint_atom_map.find(ucell_idx_relative);
+                        auto it = r_to_atom.find(ucell_idx_relative);
                         // if the gint_atom is not in the map,
-                        // it means this is the first time we find this atom may affect some biggrids.
-                        if(it == gint_atom_map.end())
+                        // it means this is the first time we find this atom may affect some biggrids,
+                        // add it to the r_to_atom map
+                        if(it == r_to_atom.end())
                         {
                             Vec3i ext_atom_bgrid_idx(atom_bgrid_idx.x - ucell_idx_bgrid.x * unitcell_info_->get_nbx(),
                                                      atom_bgrid_idx.y - ucell_idx_bgrid.y * unitcell_info_->get_nby(),
                                                      atom_bgrid_idx.z - ucell_idx_bgrid.z * unitcell_info_->get_nbz());
-                            GintAtom* gint_atom = new GintAtom(&atom, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb);
-                            atoms_.push_back(gint_atom);
-                            gint_atom_map[ucell_idx_relative] = gint_atom;
+                            r_to_atom.insert(std::make_pair(ucell_idx_relative, 
+                                GintAtom(&atom, j, iat, ext_atom_bgrid_idx, ucell_idx_relative, tau_in_biggrid, orb)));
                         }
-                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(gint_atom_map[ucell_idx_relative]))
+                        if(biggrids_[bgrid_local_idx]->is_atom_on_bgrid(&r_to_atom.at(ucell_idx_relative)))
                         {
-                            biggrids_[bgrid_local_idx]->add_atom(gint_atom_map[ucell_idx_relative]);
+                            biggrids_[bgrid_local_idx]->add_atom(&r_to_atom.at(ucell_idx_relative));
                             is_atom_in_proc_[iat] = true;
                         }
                     }
