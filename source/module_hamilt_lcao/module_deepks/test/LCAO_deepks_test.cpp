@@ -36,11 +36,22 @@ void test_deepks::check_phialpha()
     }
     GlobalC::ld.init(ORB, ucell.nat, ucell.ntype, kv.nkstot, ParaO, na);
 
-    GlobalC::ld.allocate_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    DeePKS_domain::allocate_phialpha(PARAM.input.cal_force,
+                                     ucell,
+                                     ORB,
+                                     Test_Deepks::GridD,
+                                     &ParaO,
+                                     GlobalC::ld.phialpha);
 
-    GlobalC::ld.build_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, overlap_orb_alpha_);
+    DeePKS_domain::build_phialpha(PARAM.input.cal_force,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  &ParaO,
+                                  overlap_orb_alpha_,
+                                  GlobalC::ld.phialpha);
 
-    GlobalC::ld.check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD);
+    DeePKS_domain::check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, &ParaO, GlobalC::ld.phialpha);
 
     this->compare_with_ref("phialpha.dat", "phialpha_ref.dat");
     this->compare_with_ref("dphialpha_x.dat", "dphialpha_x_ref.dat");
@@ -145,16 +156,38 @@ void test_deepks::check_pdm()
         this->read_dm();
         this->set_dm_new();
         this->set_p_elec_DM();
-        GlobalC::ld.cal_projected_DM(p_elec_DM, ucell, ORB, Test_Deepks::GridD);
+        DeePKS_domain::cal_pdm(GlobalC::ld.init_pdm,
+                               GlobalC::ld.inlmax,
+                               GlobalC::ld.lmaxd,
+                               GlobalC::ld.inl_l,
+                               GlobalC::ld.inl_index,
+                               p_elec_DM,
+                               GlobalC::ld.phialpha,
+                               ucell,
+                               ORB,
+                               Test_Deepks::GridD,
+                               ParaO,
+                               GlobalC::ld.pdm);
     }
     else
     {
         this->read_dm_k(kv.nkstot);
         this->set_dm_k_new();
         this->set_p_elec_DM_k();
-        GlobalC::ld.cal_projected_DM(p_elec_DM_k, ucell, ORB, Test_Deepks::GridD);
+        DeePKS_domain::cal_pdm(GlobalC::ld.init_pdm,
+                               GlobalC::ld.inlmax,
+                               GlobalC::ld.lmaxd,
+                               GlobalC::ld.inl_l,
+                               GlobalC::ld.inl_index,
+                               p_elec_DM_k,
+                               GlobalC::ld.phialpha,
+                               ucell,
+                               ORB,
+                               Test_Deepks::GridD,
+                               ParaO,
+                               GlobalC::ld.pdm);
     }
-    GlobalC::ld.check_projected_dm();
+    DeePKS_domain::check_pdm(GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm);
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
 
@@ -283,7 +316,7 @@ void test_deepks::check_descriptor(std::vector<torch::Tensor>& descriptor)
 void test_deepks::check_gvx(torch::Tensor& gdmx)
 {
     std::vector<torch::Tensor> gevdm;
-    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm, gevdm);
     torch::Tensor gvx;
     DeePKS_domain::cal_gvx(ucell.nat,
                            GlobalC::ld.inlmax,
@@ -321,7 +354,7 @@ void test_deepks::check_gvx(torch::Tensor& gdmx)
 void test_deepks::check_gvepsl(torch::Tensor& gdmepsl)
 {
     std::vector<torch::Tensor> gevdm;
-    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.pdm, gevdm);
     torch::Tensor gvepsl;
     DeePKS_domain::cal_gvepsl(ucell.nat,
                               GlobalC::ld.inlmax,
@@ -346,7 +379,7 @@ void test_deepks::check_gvepsl(torch::Tensor& gdmepsl)
 
 void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
 {
-    GlobalC::ld.load_model("model.ptg");
+    DeePKS_domain::load_model("model.ptg", GlobalC::ld.model_deepks);
     if (PARAM.sys.gamma_only_local)
     {
         GlobalC::ld.allocate_V_delta(ucell.nat, 1); // 1 for gamma-only
@@ -355,14 +388,24 @@ void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
     {
         GlobalC::ld.allocate_V_delta(ucell.nat, kv.nkstot);
     }
-    GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+    DeePKS_domain::cal_gedm(ucell.nat,
+                            GlobalC::ld.lmaxd,
+                            GlobalC::ld.nmaxd,
+                            GlobalC::ld.inlmax,
+                            GlobalC::ld.des_per_atom,
+                            GlobalC::ld.inl_l,
+                            descriptor,
+                            GlobalC::ld.pdm,
+                            GlobalC::ld.model_deepks,
+                            GlobalC::ld.gedm,
+                            GlobalC::ld.E_delta);
 
     std::ofstream ofs("E_delta.dat");
     ofs << std::setprecision(10) << GlobalC::ld.E_delta << std::endl;
     ofs.close();
     this->compare_with_ref("E_delta.dat", "E_delta_ref.dat");
 
-    GlobalC::ld.check_gedm();
+    DeePKS_domain::check_gedm(GlobalC::ld.inlmax, GlobalC::ld.inl_l, GlobalC::ld.gedm);
     this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 
@@ -412,12 +455,12 @@ void test_deepks::check_e_deltabands()
     if (PARAM.sys.gamma_only_local)
     {
         this->cal_H_V_delta();
-        GlobalC::ld.cal_e_delta_band(dm_new, 1);
+        GlobalC::ld.dpks_cal_e_delta_band(dm_new, 1);
     }
     else
     {
         this->cal_H_V_delta_k();
-        GlobalC::ld.cal_e_delta_band(dm_k_new, kv.nkstot);
+        GlobalC::ld.dpks_cal_e_delta_band(dm_k_new, kv.nkstot);
     }
 
     std::ofstream ofs("E_delta_bands.dat");

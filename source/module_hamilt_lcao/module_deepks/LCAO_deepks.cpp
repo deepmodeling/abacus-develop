@@ -189,7 +189,6 @@ void LCAO_Deepks::init_index(const int ntype,
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
-    nks_V_delta = nks;
 
     // initialize the H matrix H_V_delta
     if (PARAM.globalv.gamma_only_local)
@@ -232,7 +231,16 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 template <typename TK>
 void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks)
 {
-    this->cal_e_delta_band(dm, nks);
+    std::vector<std::vector<TK>> h_delta;
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        h_delta = this->H_V_delta;
+    }
+    else
+    {
+        h_delta = this->H_V_delta_k;
+    }
+    DeePKS_domain::cal_e_delta_band(dm, h_delta, nks, this->pv, this->e_delta_band);
 }
 
 template void LCAO_Deepks::dpks_cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm, const int nks);

@@ -112,7 +112,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
                     hamilt::AtomPair<double> dm_pair(ibt1, ibt2, dRx, dRy, dRz, &pv);
 
-                    dm_pair.allocate(nullptr, 1);
+                    dm_pair.allocate(nullptr, true);
 
                     if constexpr (std::is_same<TK, double>::value) // for gamma-only
                     {
@@ -318,7 +318,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 // prints forces and stress from DeePKS (LCAO)
 void DeePKS_domain::check_f_delta(const int nat, ModuleBase::matrix& f_delta, ModuleBase::matrix& svnl_dalpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "check_F_delta");
+    ModuleBase::TITLE("DeePKS_domain", "check_F_delta");
 
     std::ofstream ofs("F_delta.dat");
     ofs << std::setprecision(10);

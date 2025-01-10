@@ -7,6 +7,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/global_variable.h"
 #include "module_cell/unitcell.h"
+#include "module_cell/read_stru.h"
 #include<vector>
 #include<valarray>
 
@@ -43,6 +44,12 @@ protected:
 	void SetUp()
     {
     	ucell->lmaxmax = 2;
+        ucell->ntype   = 2;
+        ucell->atom_mass.resize(ucell->ntype);
+        ucell->atom_label.resize(ucell->ntype);
+        ucell->pseudo_fn.resize(ucell->ntype);
+        ucell->pseudo_type.resize(ucell->ntype);
+        ucell->orbital_fn.resize(ucell->ntype);
     }
 };
 
@@ -56,11 +63,11 @@ if(GlobalV::MY_RANK==0)
 	std::ifstream ifa(fn.c_str());
 	std::ofstream ofs_running;
 	ofs_running.open("read_atom_species.tmp");
-	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
 	PARAM.input.test_pseudo_cell = 2;
-	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
+	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
@@ -84,13 +91,13 @@ if(GlobalV::MY_RANK==0)
 	std::ofstream ofs_warning;
 	ofs_running.open("read_atom_species.tmp");
 	ofs_warning.open("read_atom_species.warn");
-	ucell->ntype = 2;
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
 	PARAM.input.test_pseudo_cell = 2;
 	PARAM.input.basis_type = "pw";
 	//call read_atom_species
-	EXPECT_NO_THROW(ucell->read_atom_species(ifa,ofs_running));
+	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
@@ -115,7 +122,6 @@ TEST_F(UcellTest,SetupCell)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 1;
-	ucell->ntype = 2;
 	ucell->setup_cell(fn,ofs_running);
 	ofs_running.close();
 	remove("setup_cell.tmp");

@@ -8,21 +8,24 @@
 
 #ifdef __DEEPKS
 
-#include "LCAO_deepks.h"
+#include "deepks_phialpha.h"
+
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
 #include "module_parameter/parameter.h"
 
-void LCAO_Deepks::allocate_phialpha(const bool& cal_deri,
-                                    const UnitCell& ucell,
-                                    const LCAO_Orbitals& orb,
-                                    const Grid_Driver& GridD)
+void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
+                                      const UnitCell& ucell,
+                                      const LCAO_Orbitals& orb,
+                                      const Grid_Driver& GridD,
+                                      const Parallel_Orbitals* pv,
+                                      std::vector<hamilt::HContainer<double>*>& phialpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "allocate_phialpha");
+    ModuleBase::TITLE("DeePKS_domain", "allocate_phialpha");
 
-    this->phialpha.resize(cal_deri ? 4 : 1);
+    phialpha.resize(cal_deri ? 4 : 1);
 
-    this->phialpha[0] = new hamilt::HContainer<double>(pv); // phialpha is always real
+    phialpha[0] = new hamilt::HContainer<double>(pv); // phialpha is always real
     // Do not use fix_gamma, since it may find wrong matrix for gamma-only case in DeePKS
 
     // cutoff for alpha is same for all types of atoms
@@ -63,31 +66,33 @@ void LCAO_Deepks::allocate_phialpha(const bool& cal_deri,
                 hamilt::AtomPair<double> pair(iat, ibt, R_index, pv);
                 // Notice: in AtomPair, the usage is set_size(ncol, nrow)
                 pair.set_size(nw_alpha, atom1->nw * PARAM.globalv.npol);
-                this->phialpha[0]->insert_pair(pair);
+                phialpha[0]->insert_pair(pair);
             }
         }
     }
 
-    this->phialpha[0]->allocate(nullptr, true);
+    phialpha[0]->allocate(nullptr, true);
     // whether to calculate the derivative of phialpha
     if (cal_deri)
     {
         for (int i = 1; i < 4; ++i)
         {
-            this->phialpha[i] = new hamilt::HContainer<double>(*this->phialpha[0], nullptr); // copy constructor
+            phialpha[i] = new hamilt::HContainer<double>(*phialpha[0], nullptr); // copy constructor
         }
     }
     return;
 }
 
-void LCAO_Deepks::build_phialpha(const bool& cal_deri,
-                                 const UnitCell& ucell,
-                                 const LCAO_Orbitals& orb,
-                                 const Grid_Driver& GridD,
-                                 const TwoCenterIntegrator& overlap_orb_alpha)
+void DeePKS_domain::build_phialpha(const bool& cal_deri,
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD,
+                                   const Parallel_Orbitals* pv,
+                                   const TwoCenterIntegrator& overlap_orb_alpha,
+                                   std::vector<hamilt::HContainer<double>*>& phialpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "build_phialpha");
-    ModuleBase::timer::tick("LCAO_Deepks", "build_phialpha");
+    ModuleBase::TITLE("DeePKS_domain", "build_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
 
     // cutoff for alpha is same for all types of atoms
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
@@ -126,13 +131,13 @@ void LCAO_Deepks::build_phialpha(const bool& cal_deri,
                     continue;
                 }
 
-                double* data_pointer = this->phialpha[0]->data(iat, ibt, R);
+                double* data_pointer = phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3);
                 if (cal_deri)
                 {
                     for (int i = 0; i < 3; ++i)
                     {
-                        grad_pointer[i] = this->phialpha[i + 1]->data(iat, ibt, R);
+                        grad_pointer[i] = phialpha[i + 1]->data(iat, ibt, R);
                     }
                 }
 
@@ -192,17 +197,19 @@ void LCAO_Deepks::build_phialpha(const bool& cal_deri,
         }
     }
 
-    ModuleBase::timer::tick("LCAO_Deepks", "build_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "build_phialpha");
     return;
 }
 
-void LCAO_Deepks::check_phialpha(const bool& cal_deri,
-                                 const UnitCell& ucell,
-                                 const LCAO_Orbitals& orb,
-                                 const Grid_Driver& GridD)
+void DeePKS_domain::check_phialpha(const bool& cal_deri,
+                                   const UnitCell& ucell,
+                                   const LCAO_Orbitals& orb,
+                                   const Grid_Driver& GridD,
+                                   const Parallel_Orbitals* pv,
+                                   std::vector<hamilt::HContainer<double>*>& phialpha)
 {
-    ModuleBase::TITLE("LCAO_Deepks", "check_phialpha");
-    ModuleBase::timer::tick("LCAO_Deepks", "check_phialpha");
+    ModuleBase::TITLE("DeePKS_domain", "check_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     // same for all types of atoms
@@ -280,13 +287,13 @@ void LCAO_Deepks::check_phialpha(const bool& cal_deri,
                     ofs_z << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                 }
 
-                const double* data_pointer = this->phialpha[0]->data(iat, ibt, R);
+                const double* data_pointer = phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3, nullptr);
                 if (cal_deri)
                 {
-                    grad_pointer[0] = this->phialpha[1]->data(iat, ibt, R);
-                    grad_pointer[1] = this->phialpha[2]->data(iat, ibt, R);
-                    grad_pointer[2] = this->phialpha[3]->data(iat, ibt, R);
+                    grad_pointer[0] = phialpha[1]->data(iat, ibt, R);
+                    grad_pointer[1] = phialpha[2]->data(iat, ibt, R);
+                    grad_pointer[2] = phialpha[3]->data(iat, ibt, R);
                 }
 
                 for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
@@ -334,7 +341,7 @@ void LCAO_Deepks::check_phialpha(const bool& cal_deri,
         }         // end I0
     }             // end T0
 
-    ModuleBase::timer::tick("LCAO_Deepks", "check_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
     return;
 }
 

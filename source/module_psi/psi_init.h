@@ -82,8 +82,7 @@ class PSIInit
 
     //-------------------------OP--------------------------------------------
     using syncmem_complex_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
-    using castmem_h2d_op
-        = base_device::memory::cast_memory_op<T, T, Device, base_device::DEVICE_CPU>;
+    using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
 };
 
 ///@brief allocate the wavefunction

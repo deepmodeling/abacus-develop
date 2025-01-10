@@ -341,7 +341,7 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
     }
 
     orbital_precalc = torch::cat(orbital_precalc_vector, -1);
-    ModuleBase::timer::tick("LCAO_Deepks", "calc_orbital_precalc");
+    ModuleBase::timer::tick("DeePKS_domain", "calc_orbital_precalc");
     return;
 }
 

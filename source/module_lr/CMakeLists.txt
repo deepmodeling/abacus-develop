@@ -1,14 +1,14 @@
 if(ENABLE_LCAO)
   add_subdirectory(utils)
-  add_subdirectory(AX)
+  add_subdirectory(ao_to_mo_transformer)
   add_subdirectory(dm_trans)
   add_subdirectory(ri_benchmark)
 
   list(APPEND objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
-    AX/AX_parallel.cpp
-    AX/AX_serial.cpp
+    ao_to_mo_transformer/ao_to_mo_parallel.cpp
+    ao_to_mo_transformer/ao_to_mo_serial.cpp
     dm_trans/dm_trans_parallel.cpp
     dm_trans/dm_trans_serial.cpp
     dm_trans/dmr_complex.cpp

@@ -153,7 +153,8 @@ class DiagoBPCGPrepare
                 zero_,
                 hpsi_out, ld_psi);
         };
-        bpcg.init_iter(nband, npw);
+        const int ndim = psi_local.get_current_ngk();
+        bpcg.init_iter(nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
