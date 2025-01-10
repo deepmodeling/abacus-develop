@@ -92,7 +92,10 @@ void gint_fvl_gpu(const hamilt::HContainer<double>* dm,
                          dm->get_nnr() * sizeof(double),
                          cudaMemcpyHostToDevice));
 
-#pragma omp parallel num_threads(num_streams)
+#ifdef _OPENMP
+const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
+#endif
+#pragma omp parallel num_threads(max_thread_num)
 {
 #ifdef _OPENMP
     const int tid = omp_get_thread_num();

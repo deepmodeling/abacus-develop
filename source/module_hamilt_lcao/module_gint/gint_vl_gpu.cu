@@ -74,7 +74,10 @@ void gint_vl_gpu(hamilt::HContainer<double>* hRGint,
     Cuda_Mem_Wrapper<double*> gemm_B(max_atompair_per_z, num_streams, true);
     Cuda_Mem_Wrapper<double*> gemm_C(max_atompair_per_z, num_streams, true);
 
-#pragma omp parallel num_threads(num_streams)
+#ifdef _OPENMP
+const int max_thread_num = std::min(omp_get_max_threads(), num_streams);
+#endif
+#pragma omp parallel num_threads(max_thread_num)
 {
 #ifdef _OPENMP
     const int tid = omp_get_thread_num();
