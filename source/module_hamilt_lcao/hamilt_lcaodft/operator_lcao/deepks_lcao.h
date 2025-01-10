@@ -38,8 +38,12 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  const TwoCenterIntegrator* intor_orb_alpha,
                                  const LCAO_Orbitals* ptr_orb,
                                  const int& nks_in,
-                                 elecstate::DensityMatrix<TK, double>* DM_in,
-                                 LCAO_Deepks* ld_in);
+                                 elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+                                 ,
+                                 LCAO_Deepks* ld_in
+#endif
+                                 );
     ~DeePKS();
 
     /**

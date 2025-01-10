@@ -193,8 +193,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             this->kv,
             two_center_bundle_,
             orb_,
-            DM,
+            DM
 #ifdef __DEEPKS
+            ,
             &this->ld
 #endif
 #ifdef __EXX

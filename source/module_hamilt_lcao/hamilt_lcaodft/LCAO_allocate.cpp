@@ -6,6 +6,7 @@
 
 namespace LCAO_domain
 {
+#ifdef __DEEPKS
 // It seems it is only related to DeePKS, so maybe we should move it to DeeKS_domain
 void DeePKS_init(const UnitCell& ucell,
                  Parallel_Orbitals& pv,
@@ -14,7 +15,6 @@ void DeePKS_init(const UnitCell& ucell,
                  LCAO_Deepks& ld)
 {
     ModuleBase::TITLE("LCAO_domain", "DeePKS_init");
-#ifdef __DEEPKS
     // preparation for DeePKS
     if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
     {
@@ -33,8 +33,7 @@ void DeePKS_init(const UnitCell& ucell,
             ld.allocate_V_delta(ucell.nat, nks);
         }
     }
-#endif
     return;
 }
-
+#endif
 } // namespace LCAO_domain

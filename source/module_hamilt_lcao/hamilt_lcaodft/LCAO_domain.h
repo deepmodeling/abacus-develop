@@ -174,11 +174,13 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
+#ifdef __DEEPKS
 void DeePKS_init(const UnitCell& ucell,
                  Parallel_Orbitals& pv,
                  const int& nks,
                  const LCAO_Orbitals& orb,
                  LCAO_Deepks& ld);
+#endif
 
 template <typename T>
 void set_mat2d(const int& global_ir, const int& global_ic, const T& v, const Parallel_Orbitals& pv, T* mat);
