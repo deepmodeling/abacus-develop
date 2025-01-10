@@ -46,8 +46,9 @@ void lapackEigen(int &npw, std::vector<std::complex<double>> &hm, double *e, boo
     char tmp_c1 = 'V', tmp_c2 = 'U';
     zheev_(&tmp_c1, &tmp_c2, &npw, hm.data(), &npw, e, work2, &lwork, rwork, &info);
     end = clock();
-    if (outtime)
+    if (outtime) {
         std::cout << "Lapack Run time: " << (double)(end - start) / CLOCKS_PER_SEC << " S" << std::endl;
+}
     delete[] rwork;
     delete[] work2;
 }
@@ -78,7 +79,8 @@ class DiagoBPCGPrepare
         // calculate eigenvalues by LAPACK;
         double *e_lapack = new double[npw];
         auto ev = DIAGOTEST::hmatrix;
-        if(mypnum == 0)  lapackEigen(npw, ev, e_lapack, false);
+        if(mypnum == 0) {  lapackEigen(npw, ev, e_lapack, false);
+}
         // initial guess of psi by perturbing lapack psi
         ModuleBase::ComplexMatrix psiguess(nband, npw);
         std::default_random_engine p(1);
@@ -151,7 +153,8 @@ class DiagoBPCGPrepare
                 zero_,
                 hpsi_out, ld_psi);
         };
-        bpcg.init_iter(nband, npw);
+        const int ndim = psi_local.get_current_ngk();
+        bpcg.init_iter(nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
@@ -248,7 +251,14 @@ TEST(DiagoBPCGTest, readH)
     // read Hamilt matrix from file data-H
     std::vector<std::complex<double>> hm;
     std::ifstream ifs;
-    ifs.open("H-KPoints-Si64.dat");
+    std::string filename = "H-KPoints-Si64.dat";
+    ifs.open(filename);
+    // open file and check status
+    if (!ifs.is_open())
+    {
+        std::cout << "Error opening file " << filename << std::endl;
+        exit(1);
+    }
     DIAGOTEST::readh(ifs, hm);
     ifs.close();
     int dim = DIAGOTEST::npw;
@@ -280,7 +290,8 @@ int main(int argc, char **argv)
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners &listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (myrank != 0) delete listeners.Release(listeners.default_result_printer());
+    if (myrank != 0) { delete listeners.Release(listeners.default_result_printer());
+}
 
     int result = RUN_ALL_TESTS();
     if (myrank == 0 && result != 0)

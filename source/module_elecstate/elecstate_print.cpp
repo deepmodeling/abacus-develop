@@ -341,6 +341,8 @@ void ElecState::print_etot(const Magnetism& magnet,
         energies_Ry.push_back(this->f_en.demet);
         titles.push_back("E_descf");
         energies_Ry.push_back(this->f_en.descf);
+        titles.push_back("E_LocalPP");
+        energies_Ry.push_back(this->f_en.e_local_pp);
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {

@@ -8,6 +8,8 @@ list(APPEND depend_files
   ../../module_cell/update_cell.cpp
   ../../module_cell/bcast_cell.cpp
   ../../module_cell/atom_spec.cpp
+  ../../module_cell/read_stru.cpp
+  ../../module_cell/read_atom_species.cpp
   ../../module_cell/atom_pseudo.cpp
   ../../module_cell/read_atoms.cpp
   ../../module_cell/pseudo.cpp

@@ -53,7 +53,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     const int dmax = psi.get_nbasis();
 
     T* temp = nullptr;
-    bool in_place = false;
+    bool in_place = false; ///< if temp and evc share the same memory
     if (psi.get_pointer() != evc.get_pointer() && psi.get_nbands() == evc.get_nbands())
     { // use memory of evc as temp
         temp = evc.get_pointer();
@@ -62,7 +62,6 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     else
     {
         resmem_complex_op()(ctx, temp, nstart * dmax, "DiagSub::temp");
-        setmem_complex_op()(ctx, temp, 0, nstart * dmax);
     }
 
     { // code block to calculate hcc and scc
@@ -118,6 +117,9 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
     // after generation of H and S matrix, diag them
     DiagoIterAssist::diagH_LAPACK(nstart, n_band, hcc, scc, nstart, en, vcc);
 
+
+    const int ld_temp = in_place ? dmax : dmin;
+
     { // code block to calculate evc
         gemm_op<T, Device>()(ctx,
                              'N',
@@ -132,12 +134,12 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
                              nstart,
                              &zero,
                              temp,
-                             dmin);
+                             ld_temp);
     }
 
     if (!in_place)
     {
-        matrixSetToAnother<T, Device>()(ctx, n_band, temp, dmin, evc.get_pointer(), dmax);
+        matrixSetToAnother<T, Device>()(ctx, n_band, temp, ld_temp, evc.get_pointer(), dmax);
         delmem_complex_op()(ctx, temp);
     }
     delmem_complex_op()(ctx, hcc);
@@ -306,8 +308,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace_init(hamilt::Hamilt<T, Device>* 
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw"
-              || (PARAM.inp.basis_type == "pw" && PARAM.inp.psi_initializer))
+    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "pw")
              && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
                  || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
     {

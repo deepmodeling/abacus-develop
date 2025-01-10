@@ -6,6 +6,7 @@
 #include "module_base/complexmatrix.h"
 #include "module_base/matrix.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
+
 #include <memory>
 
 template <typename TK, typename TR>
@@ -26,11 +27,9 @@ class LCAO_Deepks_Interface
     /// @param[in] orb
     /// @param[in] GridD
     /// @param[in] ParaV
-    /// @param[in] psi
     /// @param[in] psid
-    /// @param[in] dm_gamma
-    /// @param[in] dm_k
-    // for Gamma-only
+    /// @param[in] dm
+    /// @param[in] p_ham
     void out_deepks_labels(const double& etot,
                            const int& nks,
                            const int& nat,

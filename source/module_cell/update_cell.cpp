@@ -274,9 +274,11 @@ void remake_cell(Lattice& lat)
                       - cos13 * cos13 - cos23 * cos23;
         term = sqrt(term) / sin12;
         latvec.e33 = celldm3 * term;
-    } else {
+    } 
+    else 
+    {
         std::cout << "latname is : " << latName << std::endl;
-        ModuleBase::WARNING_QUIT("UnitCell::read_atom_species",
+        ModuleBase::WARNING_QUIT("UnitCell::remake_cell",
                                  "latname not supported!");
     }
 }
@@ -332,7 +334,7 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) {
     }
 
 #ifdef __MPI
-    ucell.bcast_unitcell();
+    bcast_unitcell(ucell);
 #endif
 
     log << std::endl;

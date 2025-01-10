@@ -12,8 +12,8 @@
 #include <iomanip>
 #include <iostream>
 #include <regex.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -31,7 +31,7 @@ void tmp_convert();
  * @brief Pass the data members from the INPUT instance(defined in
  * module_io/input.cpp) to GlobalV and GlobalC.
  */
-void Convert(void);
+void Convert();
 
 /**
  * @brief To parse input parameters as expressions into vectors
@@ -47,7 +47,7 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
-    std::string pattern("([0-9]+\\*[0-9.]+|[0-9,.]+)");
+    std::string pattern("([-+]?[0-9]+\\*[-+]?[0-9.]+|[-+]?[0-9,.]+)");
     std::vector<std::string> str;
     std::stringstream ss(fn);
     std::string section;
@@ -103,6 +103,7 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         {
             size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
+            assert(num>=0);
             T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
             // std::vector<double> ocp_temp(num, occ);
             // const std::vector<double>::iterator dest = vec.begin() + count;

@@ -52,8 +52,9 @@ class DiagoBPCG
      *
      * @param nband The number of bands.
      * @param nbasis The number of basis functions. Leading dimension of psi.
+     * @param ndim The number of valid dimension of psi.
      */
-    void init_iter(const int nband, const int nbasis);
+    void init_iter(const int nband, const int nbasis, const int ndim);
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
@@ -77,6 +78,8 @@ class DiagoBPCG
     int n_band = 0;
     /// the number of cols of the input psi
     int n_basis = 0;
+    /// valid dimension of psi
+    int n_dim = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
 
@@ -106,6 +109,13 @@ class DiagoBPCG
 
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
+
+    // These are for hsolver gemm_op use
+    /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
+    Device * ctx = {};
+    // Pointer to objects of 1 and 0 for gemm 
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
 
     /**
      * @brief Update the precondition array.
@@ -332,6 +342,7 @@ class DiagoBPCG
 
     using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
     using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
+    using gemm_op = hsolver::gemm_op<T, Device>;
 
 };
 

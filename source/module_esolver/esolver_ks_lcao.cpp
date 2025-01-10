@@ -225,9 +225,16 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     if (PARAM.inp.deepks_scf)
     {
         // load the DeePKS model from deep neural network
-        GlobalC::ld.load_model(PARAM.inp.deepks_model);
+        DeePKS_domain::load_model(PARAM.inp.deepks_model, GlobalC::ld.model_deepks);
         // read pdm from file for NSCF or SCF-restart, do it only once in whole calculation
-        GlobalC::ld.read_projected_DM((PARAM.inp.init_chg == "file"), PARAM.inp.deepks_equiv, *orb_.Alpha);
+        DeePKS_domain::read_pdm((PARAM.inp.init_chg == "file"),
+                                PARAM.inp.deepks_equiv,
+                                GlobalC::ld.init_pdm,
+                                GlobalC::ld.inlmax,
+                                GlobalC::ld.lmaxd,
+                                GlobalC::ld.inl_l,
+                                *orb_.Alpha,
+                                GlobalC::ld.pdm);
     }
 #endif
 
@@ -928,9 +935,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
-        elecstate::lcao_cal_tau<TK>(&(this->GG), 
-                                    &(this->GK),
-                                    this->pelec->charge);
+        elecstate::lcao_cal_tau<TK>(&(this->GG), &(this->GK), this->pelec->charge);
     }
 
     //! 2) call after_scf() of ESolver_KS
@@ -1047,7 +1052,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
         std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&GlobalC::ld, [](LCAO_Deepks*) {});
         LCAO_Deepks_Interface<TK, TR> LDI(ld_shared_ptr);
 
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
         LDI.out_deepks_labels(this->pelec->f_en.etot,
                               this->pelec->klist->get_nks(),
                               ucell.nat,
@@ -1061,8 +1065,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
                               *(this->psi),
                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
                               p_ham_deepks);
-
-        ModuleBase::timer::tick("ESolver_KS_LCAO", "out_deepks_labels");
     }
 #endif
 

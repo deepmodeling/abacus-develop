@@ -159,6 +159,11 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     this->before_opt(istep, ucell);
     this->iter_ = 0;
 
+#ifdef __MLKEDF
+    // for ML KEDF test
+    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(pelec->charge->rho, this->pw_rho);
+#endif
+
     while (true)
     {
         // once we get a new rho and phi, update potential
@@ -494,6 +499,44 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
         this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
     }
 
+    for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+    {
+        this->pelec->charge->rho_save[0][ir] = this->pelec->charge->rho[0][ir];
+    }
+
+#ifdef __MLKEDF
+    // Check the positivity of Pauli energy
+    if (this->of_kinetic_ == "ml")
+    {
+        this->tf_->get_energy(this->pelec->charge->rho);
+        std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+        if (this->ml_->ml_energy >= this->tf_->tf_energy)
+        {
+            std::cout << "WARNING: ML >= TF" << std::endl;
+        }
+    }
+
+    // Generate data if needed
+    if (PARAM.inp.of_ml_gene_data)
+    {
+        this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
+        this->kinetic_potential(pelec->charge->rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+        
+        const double* vr_eff = this->pelec->pot->get_effective_v(0);
+        for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
+        {
+            this->pdEdphi_[0][ir] = vr_eff[ir];
+        }
+        this->pelec->eferm.get_ef(0) = this->cal_mu(this->pphi_[0], this->pdEdphi_[0], this->nelec_[0]);
+
+        // === temporary ===
+        // assert(GlobalV::of_kinetic == "wt" || GlobalV::of_kinetic == "ml");
+        // =================
+        std::cout << "Generating Training data..." << std::endl;
+        std::cout << "mu = " << this->pelec->eferm.get_efval(0) << std::endl;
+        this->ml_->generateTrainData(pelec->charge->rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
+    }
+#endif
     // 2) call after_scf() of ESolver_FP
     ESolver_FP::after_scf(ucell, istep);
 
@@ -532,7 +575,7 @@ double ESolver_OF::cal_energy()
     }
     Parallel_Reduce::reduce_all(pseudopot_energy);
     this->pelec->f_en.ekinetic = kinetic_energy;
-    this->pelec->f_en.eion_elec = pseudopot_energy;
+    this->pelec->f_en.e_local_pp = pseudopot_energy;
     this->pelec->f_en.etot += kinetic_energy + pseudopot_energy;
     return this->pelec->f_en.etot;
 }

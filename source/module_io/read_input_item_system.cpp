@@ -478,6 +478,12 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("diag_subspace");
+        item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
+        read_sync_int(input.diag_subspace);
+        this->add_item(item);
+    }
+    {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
@@ -498,18 +504,6 @@ void ReadInput::item_system()
             }
         };
         read_sync_string(input.init_wfc);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("psi_initializer");
-        item.annotation = "whether to use psi_initializer";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                para.input.psi_initializer = true;
-            }
-        };
-        read_sync_bool(input.psi_initializer);
         this->add_item(item);
     }
     {
@@ -781,12 +775,28 @@ void ReadInput::item_system()
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
         };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"cpu", "gpu"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "device");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("precision");
         item.annotation = "the computing precision for ABACUS";
         read_sync_string(input.precision);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"single", "double"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "precision");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
         this->add_item(item);
     }
 }

@@ -67,7 +67,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 #ifdef __MPI
     this->pw_rho->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
 #endif
-    if (this->classname == "ESolver_OF")
+	if (this->classname == "ESolver_OF" || PARAM.inp.of_ml_gene_data == 1)
     {
         this->pw_rho->setfullpw(inp.of_full_pw, inp.of_full_pw_dim);
     }

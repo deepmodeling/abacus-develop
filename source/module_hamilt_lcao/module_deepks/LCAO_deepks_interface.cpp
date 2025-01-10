@@ -34,13 +34,40 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     // define TH for different types
     using TH = std::conditional_t<std::is_same<TK, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
+    // These variables are frequently used in the following code
+    const int inlmax = ld->inlmax;
+    const int lmaxd = ld->lmaxd;
+    const int des_per_atom = ld->des_per_atom;
+    const int* inl_l = ld->inl_l;
+    const ModuleBase::IntArray* inl_index = ld->inl_index;
+    const std::vector<hamilt::HContainer<double>*> phialpha = ld->phialpha;
+    std::vector<torch::Tensor> pdm = ld->pdm;
+
     const int my_rank = GlobalV::MY_RANK;
     const int nspin = PARAM.inp.nspin;
+
+    // Used for deepks_bandgap == 1 and deepks_v_delta > 0
+    std::vector<std::vector<TK>>* h_delta = nullptr;
+    if constexpr (std::is_same<TK, double>::value)
+    {
+        h_delta = &ld->H_V_delta;
+    }
+    else
+    {
+        h_delta = &ld->H_V_delta_k;
+    }
 
     // calculating deepks correction to bandgap and save the results
     if (PARAM.inp.deepks_out_labels)
     {
-        // mohan updated 2024-07-25
+        // Used for deepks_scf == 1
+        std::vector<torch::Tensor> gevdm;
+        if (PARAM.inp.deepks_scf)
+        {
+            DeePKS_domain::cal_gevdm(nat, inlmax, inl_l, pdm, gevdm);
+        }
+
+        // Energy Part
         const std::string file_etot = PARAM.globalv.global_out_dir + "deepks_etot.npy";
         const std::string file_ebase = PARAM.globalv.global_out_dir + "deepks_ebase.npy";
 
@@ -57,16 +84,55 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             LCAO_deepks_io::save_npy_e(etot, file_ebase, my_rank);
         }
 
-        std::vector<std::vector<TK>>* h_delta = nullptr;
-        if constexpr (std::is_same<TK, double>::value)
+        // Force Part
+        if (PARAM.inp.cal_force)
         {
-            h_delta = &ld->H_V_delta;
-        }
-        else
-        {
-            h_delta = &ld->H_V_delta_k;
+            if (PARAM.inp.deepks_scf
+                && !PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
+            {
+                std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
+                torch::Tensor gdmx;
+                DeePKS_domain::cal_gdmx<
+                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dm_vec, ucell, orb, *ParaV, GridD, gdmx);
+
+                torch::Tensor gvx;
+                DeePKS_domain::cal_gvx(ucell.nat, inlmax, des_per_atom, inl_l, gevdm, gdmx, gvx);
+                const std::string file_gradvx = PARAM.globalv.global_out_dir + "deepks_gradvx.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, my_rank);
+
+                if (PARAM.inp.deepks_out_unittest)
+                {
+                    DeePKS_domain::check_gdmx(gdmx);
+                    DeePKS_domain::check_gvx(gvx);
+                }
+            }
         }
 
+        // Stress Part
+        if (PARAM.inp.cal_stress)
+        {
+            if (PARAM.inp.deepks_scf
+                && !PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
+            {
+                std::vector<std::vector<TK>> dm_vec = dm->get_DMK_vector();
+                torch::Tensor gdmepsl;
+                DeePKS_domain::cal_gdmepsl<
+                    TK>(lmaxd, inlmax, nks, kvec_d, phialpha, inl_index, dm_vec, ucell, orb, *ParaV, GridD, gdmepsl);
+
+                torch::Tensor gvepsl;
+                DeePKS_domain::cal_gvepsl(ucell.nat, inlmax, des_per_atom, inl_l, gevdm, gdmepsl, gvepsl);
+                const std::string file_gvepsl = PARAM.globalv.global_out_dir + "deepks_gvepsl.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, my_rank);
+
+                if (PARAM.inp.deepks_out_unittest)
+                {
+                    DeePKS_domain::check_gdmepsl(gdmepsl);
+                    DeePKS_domain::check_gvepsl(gvepsl);
+                }
+            }
+        }
+
+        // Bandgap Part
         if (PARAM.inp.deepks_bandgap)
         {
             const int nocc = (PARAM.inp.nelec + 1) / 2;
@@ -115,18 +181,16 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 // calculate and save orbital_precalc: [nks,NAt,NDscrpt]
                 torch::Tensor orbital_precalc;
-                std::vector<torch::Tensor> gevdm;
-                ld->cal_gevdm(nat, gevdm);
                 DeePKS_domain::cal_orbital_precalc<TK, TH>(dm_bandgap,
-                                                           ld->lmaxd,
-                                                           ld->inlmax,
+                                                           lmaxd,
+                                                           inlmax,
                                                            nat,
                                                            nks,
-                                                           ld->inl_l,
+                                                           inl_l,
                                                            kvec_d,
-                                                           ld->phialpha,
+                                                           phialpha,
                                                            gevdm,
-                                                           ld->inl_index,
+                                                           inl_index,
                                                            ucell,
                                                            orb,
                                                            *ParaV,
@@ -135,12 +199,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 DeePKS_domain::cal_o_delta<TK, TH>(dm_bandgap, *h_delta, o_delta, *ParaV, nks);
 
                 // save obase and orbital_precalc
-                LCAO_deepks_io::save_npy_orbital_precalc(nat,
-                                                         nks,
-                                                         ld->des_per_atom,
-                                                         orbital_precalc,
-                                                         PARAM.globalv.global_out_dir,
-                                                         my_rank);
+                const std::string file_orbpre = PARAM.globalv.global_out_dir + "deepks_orbpre.npy";
+                LCAO_deepks_io::save_tensor2npy<double>(file_orbpre, orbital_precalc, my_rank);
+
                 const std::string file_obase = PARAM.globalv.global_out_dir + "deepks_obase.npy";
                 std::vector<double> o_base(nks);
                 for (int iks = 0; iks < nks; ++iks)
@@ -156,7 +217,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }                                                                // end deepks_scf == 0
         }                                                                    // end bandgap label
 
-        // save H(R) matrix
+        // H(R) matrix part, not realized now
         if (true) // should be modified later!
         {
             const std::string file_hr = PARAM.globalv.global_out_dir + "deepks_hr.npy";
@@ -165,6 +226,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             // How to save H(R)?
         }
 
+        // H(k) matrix part
         if (PARAM.inp.deepks_v_delta)
         {
             std::vector<TH> h_tot(nks);
@@ -209,70 +271,38 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
                 if (PARAM.inp.deepks_v_delta == 1) // v_delta_precalc storage method 1
                 {
-                    std::vector<torch::Tensor> gevdm;
-                    ld->cal_gevdm(nat, gevdm);
-
                     torch::Tensor v_delta_precalc;
                     DeePKS_domain::cal_v_delta_precalc<TK>(nlocal,
-                                                           ld->lmaxd,
-                                                           ld->inlmax,
+                                                           lmaxd,
+                                                           inlmax,
                                                            nat,
                                                            nks,
-                                                           ld->inl_l,
+                                                           inl_l,
                                                            kvec_d,
-                                                           ld->phialpha,
+                                                           phialpha,
                                                            gevdm,
-                                                           ld->inl_index,
+                                                           inl_index,
                                                            ucell,
                                                            orb,
                                                            *ParaV,
                                                            GridD,
                                                            v_delta_precalc);
 
-                    LCAO_deepks_io::save_npy_v_delta_precalc<TK>(nat,
-                                                                 nks,
-                                                                 nlocal,
-                                                                 ld->des_per_atom,
-                                                                 v_delta_precalc,
-                                                                 PARAM.globalv.global_out_dir,
-                                                                 my_rank);
+                    const std::string file_vdpre = PARAM.globalv.global_out_dir + "deepks_vdpre.npy";
+                    LCAO_deepks_io::save_tensor2npy<TK>(file_vdpre, v_delta_precalc, my_rank);
                 }
                 else if (PARAM.inp.deepks_v_delta == 2) // v_delta_precalc storage method 2
                 {
                     torch::Tensor phialpha_out;
-                    DeePKS_domain::prepare_phialpha<TK>(nlocal,
-                                                        ld->lmaxd,
-                                                        ld->inlmax,
-                                                        nat,
-                                                        nks,
-                                                        kvec_d,
-                                                        ld->phialpha,
-                                                        ucell,
-                                                        orb,
-                                                        *ParaV,
-                                                        GridD,
-                                                        phialpha_out);
-
-                    LCAO_deepks_io::save_npy_phialpha<TK>(nat,
-                                                          nks,
-                                                          nlocal,
-                                                          ld->inlmax,
-                                                          ld->lmaxd,
-                                                          phialpha_out,
-                                                          PARAM.globalv.global_out_dir,
-                                                          my_rank);
-                    std::vector<torch::Tensor> gevdm;
-                    ld->cal_gevdm(nat, gevdm);
+                    DeePKS_domain::prepare_phialpha<
+                        TK>(nlocal, lmaxd, inlmax, nat, nks, kvec_d, phialpha, ucell, orb, *ParaV, GridD, phialpha_out);
+                    const std::string file_phialpha = PARAM.globalv.global_out_dir + "deepks_phialpha.npy";
+                    LCAO_deepks_io::save_tensor2npy<TK>(file_phialpha, phialpha_out, my_rank);
 
                     torch::Tensor gevdm_out;
-                    DeePKS_domain::prepare_gevdm(nat, ld->lmaxd, ld->inlmax, orb, gevdm, gevdm_out);
-
-                    LCAO_deepks_io::save_npy_gevdm(nat,
-                                                   ld->inlmax,
-                                                   ld->lmaxd,
-                                                   gevdm_out,
-                                                   PARAM.globalv.global_out_dir,
-                                                   my_rank);
+                    DeePKS_domain::prepare_gevdm(nat, lmaxd, inlmax, orb, gevdm, gevdm_out);
+                    const std::string file_gevdm = PARAM.globalv.global_out_dir + "deepks_gevdm.npy";
+                    LCAO_deepks_io::save_tensor2npy<double>(file_gevdm, gevdm_out, my_rank);
                 }
             }
             else // deepks_scf == 0
@@ -292,31 +322,23 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
         if (!PARAM.inp.deepks_scf)
         {
-            ld->cal_projected_DM<TK>(dm, ucell, orb, GridD);
+            DeePKS_domain::cal_pdm<
+                TK>(ld->init_pdm, inlmax, lmaxd, inl_l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
         }
 
-        ld->check_projected_dm(); // print out the projected dm for NSCF calculaiton
+        DeePKS_domain::check_pdm(inlmax, inl_l, pdm); // print out the projected dm for NSCF calculaiton
 
         std::vector<torch::Tensor> descriptor;
-        DeePKS_domain::cal_descriptor(nat,
-                                      ld->inlmax,
-                                      ld->inl_l,
-                                      ld->pdm,
-                                      descriptor,
-                                      ld->des_per_atom); // final descriptor
-        DeePKS_domain::check_descriptor(ld->inlmax,
-                                        ld->des_per_atom,
-                                        ld->inl_l,
-                                        ucell,
-                                        PARAM.globalv.global_out_dir,
-                                        descriptor);
+        DeePKS_domain::cal_descriptor(nat, inlmax, inl_l, pdm, descriptor,
+                                      des_per_atom); // final descriptor
+        DeePKS_domain::check_descriptor(inlmax, des_per_atom, inl_l, ucell, PARAM.globalv.global_out_dir, descriptor);
 
         if (PARAM.inp.deepks_out_labels)
         {
             LCAO_deepks_io::save_npy_d(nat,
-                                       ld->des_per_atom,
-                                       ld->inlmax,
-                                       ld->inl_l,
+                                       des_per_atom,
+                                       inlmax,
+                                       inl_l,
                                        PARAM.inp.deepks_equiv,
                                        descriptor,
                                        PARAM.globalv.global_out_dir,
@@ -327,12 +349,25 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     /// print out deepks information to the screen
     if (PARAM.inp.deepks_scf)
     {
-        ld->cal_e_delta_band(dm->get_DMK_vector(), nks);
+        DeePKS_domain::cal_e_delta_band(dm->get_DMK_vector(), *h_delta, nks, ParaV, ld->e_delta_band);
         std::cout << "E_delta_band = " << std::setprecision(8) << ld->e_delta_band << " Ry"
                   << " = " << std::setprecision(8) << ld->e_delta_band * ModuleBase::Ry_to_eV << " eV" << std::endl;
         std::cout << "E_delta_NN = " << std::setprecision(8) << ld->E_delta << " Ry"
                   << " = " << std::setprecision(8) << ld->E_delta * ModuleBase::Ry_to_eV << " eV" << std::endl;
+        if (PARAM.inp.deepks_out_unittest)
+        {
+            LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
+
+            DeePKS_domain::check_gedm(inlmax, inl_l, ld->gedm);
+
+            std::ofstream ofs("E_delta_bands.dat");
+            ofs << std::setprecision(10) << ld->e_delta_band;
+
+            std::ofstream ofs1("E_delta.dat");
+            ofs1 << std::setprecision(10) << ld->E_delta;
+        }
     }
+    ModuleBase::timer::tick("LCAO_Deepks_Interface", "out_deepks_labels");
 }
 
 template class LCAO_Deepks_Interface<double, double>;
