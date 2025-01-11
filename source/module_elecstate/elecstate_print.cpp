@@ -177,17 +177,20 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     std::stringstream ss;
     if(PARAM.inp.out_alllog)
     {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
     }
     else
     {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
     }
     std::string filename = ss.str();
     std::vector<int> ngk_tot = this->klist->ngk;
 
 #ifdef __MPI
-    Parallel_Common::bcast_string(filename);
+    if(!PARAM.inp.out_alllog)
+    {
+        Parallel_Common::bcast_string(filename);
+    }
     MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
 
@@ -214,7 +217,8 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 #ifdef __MPI
             MPI_Barrier(MPI_COMM_WORLD);
 #endif
-            if (GlobalV::MY_POOL == ip && GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_STOGROUP == 0)
+            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_STOGROUP == 0);
+            if (GlobalV::MY_POOL == ip && ip_flag)
             {
                 const int start_ik = nks_np * is;
                 const int end_ik = nks_np * (is + 1);
@@ -223,7 +227,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                     std::ofstream ofs_eig(filename.c_str(), std::ios::app);
                     ofs_eig << std::setprecision(5);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
-                    ofs_eig << " " << this->klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nks_np
+                    ofs_eig << " " << this->klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
                             << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y
                             << " " << this->klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
 
@@ -239,6 +243,9 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                 }
             }
         }
+#ifdef __MPI
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
         ofs.seekp(0, std::ios::end);
     }
     return;
