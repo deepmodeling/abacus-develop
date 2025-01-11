@@ -17,7 +17,6 @@
 #include "module_elecstate/module_dm/cal_edm_tddft.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/occupy.h"
-#include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need divide_HS_in_frag
 #include "module_hamilt_lcao/module_tddft/evolve_elec.h"
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"

@@ -12,15 +12,14 @@ void ModuleIO::nscf_band(
     const double &fermie,
     const int &precision,
     const ModuleBase::matrix& ekb,
-    const K_Vectors& kv,
-    const Parallel_Kpoints* Pkpoints)
+    const K_Vectors& kv)
 {
     ModuleBase::TITLE("ModuleIO","nscf_band");
     ModuleBase::timer::tick("ModuleIO", "nscf_band");
     // number of k points without spin; nspin = 1,2, nkstot = nkstot_np * nspin; 
     //                                  nspin = 4, nkstot = nkstot_np
-    const int nkstot_np = Pkpoints->nkstot_np;
-    const int nks_np = Pkpoints->nks_np;
+    const int nkstot_np = kv.para_k.nkstot_np;
+    const int nks_np = kv.para_k.nks_np;
 
 #ifdef __MPI
     if(GlobalV::MY_RANK==0)
@@ -33,7 +32,7 @@ void ModuleIO::nscf_band(
     klength.resize(nkstot_np);
     klength[0] = 0.0;
     std::vector<ModuleBase::Vector3<double>> kvec_c_global;
-    Pkpoints->gatherkvec(kv.kvec_c, kvec_c_global);
+    kv.para_k.gatherkvec(kv.kvec_c, kvec_c_global);
     for(int ik=0; ik<nkstot_np; ik++)
     {
         if (ik>0)
@@ -43,10 +42,10 @@ void ModuleIO::nscf_band(
             klength[ik] += (kv.kl_segids[ik] == kv.kl_segids[ik-1]) ? delta.norm() : 0.0;
         }
         /* first find if present kpoint in present pool */
-        if ( GlobalV::MY_POOL == Pkpoints->whichpool[ik] )
+        if ( GlobalV::MY_POOL == kv.para_k.whichpool[ik] )
         {
             /* then get the local kpoint index, which starts definitly from 0 */
-            const int ik_now = ik - Pkpoints->startk_pool[GlobalV::MY_POOL];
+            const int ik_now = ik - kv.para_k.startk_pool[GlobalV::MY_POOL];
             /* if present kpoint corresponds the spin of the present one */
             assert( kv.isk[ik_now+is*nks_np] == is );
             if ( GlobalV::RANK_IN_POOL == 0)

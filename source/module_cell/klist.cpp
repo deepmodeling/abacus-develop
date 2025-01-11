@@ -148,12 +148,12 @@ void K_Vectors::set(const UnitCell& ucell,
     // It's very important in parallel case,
     // firstly do the mpi_k() and then
     // do set_kup_and_kdw()
-    GlobalC::Pkpoints.kinfo(nkstot,
-                            GlobalV::KPAR,
-                            GlobalV::MY_POOL,
-                            GlobalV::RANK_IN_POOL,
-                            GlobalV::NPROC,
-                            nspin_in); // assign k points to several process pools
+    this->para_k.kinfo(nkstot,
+                       GlobalV::KPAR,
+                       GlobalV::MY_POOL,
+                       GlobalV::RANK_IN_POOL,
+                       GlobalV::NPROC,
+                       nspin_in); // assign k points to several process pools
 #ifdef __MPI
     // distribute K point data to the corresponding process
     this->mpi_k(); // 2008-4-29
@@ -1163,7 +1163,7 @@ void K_Vectors::mpi_k()
 
     Parallel_Common::bcast_double(koffset, 3);
 
-    this->nks = GlobalC::Pkpoints.nks_pool[GlobalV::MY_POOL];
+    this->nks = this->para_k.nks_pool[GlobalV::MY_POOL];
 
     GlobalV::ofs_running << std::endl;
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "k-point number in this process", nks);
@@ -1217,7 +1217,7 @@ void K_Vectors::mpi_k()
     for (int i = 0; i < nks; i++)
     {
         // 3 is because each k point has three value:kx, ky, kz
-        k_index = i + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+        k_index = i + this->para_k.startk_pool[GlobalV::MY_POOL];
         kvec_c[i].x = kvec_c_aux[k_index * 3];
         kvec_c[i].y = kvec_c_aux[k_index * 3 + 1];
         kvec_c[i].z = kvec_c_aux[k_index * 3 + 2];

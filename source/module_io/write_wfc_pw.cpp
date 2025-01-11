@@ -69,9 +69,6 @@ void ModuleIO::write_wfc_pw(const std::string& fn,
 #ifdef __MPI
                 MPI_Allreduce(&kv.ngk[ik], &ikngtot, 1, MPI_INT, MPI_SUM, POOL_WORLD);
 
-                // ikstot=GlobalC::Pkpoints.startk_pool[ip]+ik;
-                // In the future, Pkpoints should be moved into Klist
-                // To avoid GlobalC, we use get_ik_global instead
                 ikstot = K_Vectors::get_ik_global(ik, nkstot);
 #else
         ikngtot = kv.ngk[ik];

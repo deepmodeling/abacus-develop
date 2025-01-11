@@ -14,7 +14,6 @@ namespace ModuleIO
     /// @param[in] dos_scale
     /// @param[in] dos_sigma
     /// @param[in] kv
-    /// @param[in] Pkpoints
     /// @param[in] ucell
     /// @param[in] eferm
     /// @param[in] nbands
@@ -28,7 +27,6 @@ namespace ModuleIO
 				const double& dos_scale,
 				const double& dos_sigma,
 				const K_Vectors& kv,
-				const Parallel_Kpoints& Pkpoints,
 				const UnitCell& ucell,
 				const elecstate::efermi& eferm,
 				int nbands,
@@ -45,7 +43,7 @@ namespace ModuleIO
         {
             std::stringstream ss3;
             ss3 << PARAM.globalv.global_out_dir << "Fermi_Surface_" << i << ".bxsf";
-            nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, Pkpoints, ucell, ekb);
+            nscf_fermi_surface(ss3.str(), nbands, eferm.ef, kv, ucell, ekb);
         }
     }
 
@@ -69,7 +67,6 @@ template void out_dos_nao(
         const double& dos_scale,
         const double& dos_sigma,
         const K_Vectors& kv,
-        const Parallel_Kpoints& Pkpoints,
         const UnitCell& ucell,
         const elecstate::efermi& eferm,
         int nbands,
@@ -84,7 +81,6 @@ template void out_dos_nao(
         const double& dos_scale,
         const double& dos_sigma,
         const K_Vectors& kv,
-        const Parallel_Kpoints& Pkpoints,
         const UnitCell& ucell,
         const elecstate::efermi& eferm,
         int nbands,

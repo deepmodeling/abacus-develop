@@ -29,18 +29,15 @@ class IstateInfoTest : public ::testing::Test
 {
   protected:
     K_Vectors* kv = nullptr;
-    Parallel_Kpoints* Pkpoints = nullptr;
     ModuleBase::matrix ekb;
     ModuleBase::matrix wg;
     void SetUp()
     {
         kv = new K_Vectors;
-        Pkpoints = new Parallel_Kpoints;
     }
     void TearDown()
     {
         delete kv;
-        delete Pkpoints;
     }
 };
 
@@ -64,12 +61,11 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
                                 GlobalV::MY_POOL);
     kv->set_nkstot(100);
     int nkstot = kv->get_nkstot();
-    Pkpoints
-        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
+    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
     // std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
     //	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-    kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
+    kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
     // std::cout<<"nks "<<kv->get_nks()<<std::endl;
     ekb.create(kv->get_nks(), PARAM.input.nbands);
     wg.create(kv->get_nks(), PARAM.input.nbands);
@@ -82,7 +78,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
         kd.set(0.01 * i, 0.01 * i, 0.01 * i);
         ++i;
     }
-    ModuleIO::write_istate_info(ekb, wg, *kv, Pkpoints);
+    ModuleIO::write_istate_info(ekb, wg, *kv);
     std::ifstream ifs;
     ifs.open("istate.info");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -115,12 +111,11 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
                                 GlobalV::MY_POOL);
     kv->set_nkstot(100);
     int nkstot = kv->get_nkstot();
-    Pkpoints
-        ->kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
+    kv->para_k.kinfo(nkstot, GlobalV::KPAR, GlobalV::MY_POOL, GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, PARAM.input.nspin);
     // std::cout<<"my_rank "<<GlobalV::MY_RANK<<" pool rank/size: "
     //	<<GlobalV::RANK_IN_POOL<<"/"<<GlobalV::NPROC_IN_POOL<<std::endl;
     // std::cout<<"MY_POOL "<<GlobalV::MY_POOL<<std::endl;
-    kv->set_nks(Pkpoints->nks_pool[GlobalV::MY_POOL]);
+    kv->set_nks(kv->para_k.nks_pool[GlobalV::MY_POOL]);
     // std::cout<<"nks "<<kv->get_nks()<<std::endl;
     ekb.create(kv->get_nks(), PARAM.input.nbands);
     wg.create(kv->get_nks(), PARAM.input.nbands);
@@ -133,7 +128,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
         kd.set(0.01 * i, 0.01 * i, 0.01 * i);
         ++i;
     }
-    ModuleIO::write_istate_info(ekb, wg, *kv, Pkpoints);
+    ModuleIO::write_istate_info(ekb, wg, *kv);
     std::ifstream ifs;
     ifs.open("istate.info");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

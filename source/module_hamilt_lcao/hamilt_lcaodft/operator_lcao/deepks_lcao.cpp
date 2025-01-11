@@ -2,12 +2,10 @@
 
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
-#include "module_parameter/parameter.h"
-#ifdef __DEEPKS
-#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#endif
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -24,13 +22,19 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      const TwoCenterIntegrator* intor_orb_alpha,
                                      const LCAO_Orbitals* ptr_orb,
                                      const int& nks_in,
-                                     elecstate::DensityMatrix<TK, double>* DM_in)
+                                     elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+                                     ,
+                                     LCAO_Deepks* ld_in
+#endif
+                                     )
     : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), DM(DM_in), ucell(ucell_in), intor_orb_alpha_(intor_orb_alpha),
       ptr_orb_(ptr_orb), nks(nks_in)
 {
     this->cal_type = calculation_type::lcao_deepks;
     this->gd = GridD_in;
 #ifdef __DEEPKS
+    this->ld = ld_in;
     this->initialize_HR(GridD_in);
 #endif
 }
@@ -154,43 +158,45 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 #ifdef __DEEPKS
     ModuleBase::TITLE("DeePKS", "contributeHR");
     // if DM changed, HR of DeePKS need to refresh.
-    // the judgement is based on the status of HR in GlobalC::ld
+    // the judgement is based on the status of HR in ld
     // this operator should be informed that DM has changed and HR need to recalculate.
-    if (GlobalC::ld.get_hr_cal())
+    if (this->ld->get_hr_cal())
     {
         ModuleBase::timer::tick("DeePKS", "contributeHR");
 
-        DeePKS_domain::cal_pdm<TK>(GlobalC::ld.init_pdm,
-                                   GlobalC::ld.inlmax,
-                                   GlobalC::ld.lmaxd,
-                                   GlobalC::ld.inl_l,
-                                   GlobalC::ld.inl_index,
+        const int inlmax = ptr_orb_->Alpha[0].getTotal_nchi() * this->ucell->nat;
+
+        DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
+                                   inlmax,
+                                   this->ld->lmaxd,
+                                   this->ld->inl_l,
+                                   this->ld->inl_index,
                                    this->DM,
-                                   GlobalC::ld.phialpha,
+                                   this->ld->phialpha,
                                    *this->ucell,
                                    *ptr_orb_,
                                    *(this->gd),
                                    *(this->hR->get_paraV()),
-                                   GlobalC::ld.pdm);
+                                   this->ld->pdm);
 
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
-                                      GlobalC::ld.inlmax,
-                                      GlobalC::ld.inl_l,
-                                      GlobalC::ld.pdm,
+                                      inlmax,
+                                      this->ld->inl_l,
+                                      this->ld->pdm,
                                       descriptor,
-                                      GlobalC::ld.des_per_atom);
+                                      this->ld->des_per_atom);
         DeePKS_domain::cal_gedm(this->ucell->nat,
-                                GlobalC::ld.lmaxd,
-                                GlobalC::ld.nmaxd,
-                                GlobalC::ld.inlmax,
-                                GlobalC::ld.des_per_atom,
-                                GlobalC::ld.inl_l,
+                                this->ld->lmaxd,
+                                this->ld->nmaxd,
+                                inlmax,
+                                this->ld->des_per_atom,
+                                this->ld->inl_l,
                                 descriptor,
-                                GlobalC::ld.pdm,
-                                GlobalC::ld.model_deepks,
-                                GlobalC::ld.gedm,
-                                GlobalC::ld.E_delta);
+                                this->ld->pdm,
+                                this->ld->model_deepks,
+                                this->ld->gedm,
+                                this->ld->E_delta);
 
         // // recalculate the H_V_delta
         // if (this->H_V_delta == nullptr)
@@ -200,7 +206,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         this->H_V_delta->set_zero();
         this->calculate_HR();
 
-        GlobalC::ld.set_hr_cal(false);
+        this->ld->set_hr_cal(false);
 
         ModuleBase::timer::tick("DeePKS", "contributeHR");
     }
@@ -297,8 +303,8 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
             {
                 for (int N0 = 0; N0 < ptr_orb_->Alpha[0].getNchi(L0); ++N0)
                 {
-                    const int inl = GlobalC::ld.get_inl(T0, I0, L0, N0);
-                    const double* pgedm = GlobalC::ld.get_gedms(inl);
+                    const int inl = this->ld->inl_index[T0](I0, L0, N0);
+                    const double* pgedm = this->ld->gedm[inl];
                     const int nm = 2 * L0 + 1;
 
                     for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -316,9 +322,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         }
         else
         {
-            const double* pgedm = GlobalC::ld.get_gedms(iat0);
+            const double* pgedm = this->ld->gedm[iat0];
             int nproj = 0;
-            for (int il = 0; il < GlobalC::ld.get_lmaxd() + 1; il++)
+            for (int il = 0; il < this->ld->lmaxd + 1; il++)
             {
                 nproj += (2 * il + 1) * ptr_orb_->Alpha[0].getNchi(il);
             }
@@ -466,15 +472,15 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
 }
 
 template <typename TK>
-inline void get_h_delta_k(int ik, TK*& h_delta_k)
+inline void get_h_delta_k(int ik, TK*& h_delta_k, LCAO_Deepks* ld_in)
 {
     if constexpr (std::is_same<TK, double>::value)
     {
-        h_delta_k = GlobalC::ld.H_V_delta[ik].data();
+        h_delta_k = ld_in->H_V_delta[ik].data();
     }
     else
     {
-        h_delta_k = GlobalC::ld.H_V_delta_k[ik].data();
+        h_delta_k = ld_in->H_V_delta_k[ik].data();
     }
     return;
 }
@@ -487,7 +493,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::timer::tick("DeePKS", "contributeHk");
 
     TK* h_delta_k = nullptr;
-    get_h_delta_k<TK>(ik, h_delta_k);
+    get_h_delta_k<TK>(ik, h_delta_k, this->ld);
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 

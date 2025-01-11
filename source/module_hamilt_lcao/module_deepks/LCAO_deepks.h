@@ -64,43 +64,18 @@ class LCAO_Deepks
     /// Correction term to Hamiltonian, for multi-k
     std::vector<std::vector<std::complex<double>>> H_V_delta_k;
 
-    // functions for hr status: 1. get value; 2. set value;
-    int get_hr_cal()
-    {
-        return this->hr_cal;
-    }
-    void set_hr_cal(bool cal)
-    {
-        this->hr_cal = cal;
-    }
-
-    // temporary add two getters for inl_index and gedm
-    int get_inl(const int& T0, const int& I0, const int& L0, const int& N0)
-    {
-        return inl_index[T0](I0, L0, N0);
-    }
-    const double* get_gedms(const int& inl)
-    {
-        return gedm[inl];
-    }
-
-    int get_lmaxd()
-    {
-        return lmaxd;
-    }
     //-------------------
     // private variables
     //-------------------
     //  private:
-  public:                              // change to public to reconstuct the code, 2024-07-22 by mohan
-    int lmaxd = 0;                     // max l of descirptors
-    int nmaxd = 0;                     //#. descriptors per l
-    int inlmax = 0;                    // tot. number {i,n,l} - atom, n, l
-    int n_descriptor;                  // natoms * des_per_atom, size of descriptor(projector) basis set
-    int des_per_atom;                  // \sum_L{Nchi(L)*(2L+1)}
-    int* inl_l;                        // inl_l[inl_index] = l of descriptor with inl_index
-    ModuleBase::IntArray* alpha_index; // seems not used in the code
-    ModuleBase::IntArray* inl_index;   // caoyu add 2021-05-07
+  public:                            // change to public to reconstuct the code, 2024-07-22 by mohan
+    int lmaxd = 0;                   // max l of descirptors
+    int nmaxd = 0;                   //#. descriptors per l
+    int inlmax = 0;                  // tot. number {i,n,l} - atom, n, l
+    int n_descriptor;                // natoms * des_per_atom, size of descriptor(projector) basis set
+    int des_per_atom;                // \sum_L{Nchi(L)*(2L+1)}
+    int* inl_l;                      // inl_l[inl_index] = l of descriptor with inl_index
+    ModuleBase::IntArray* inl_index; // caoyu add 2021-05-07
 
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
 
@@ -120,14 +95,15 @@ class LCAO_Deepks
     /// dE/dD, autograd from loaded model(E: Ry)
     double** gedm; //[tot_Inl][(2l+1)*(2l+1)]
 
-    // HR status,
-    // true : HR should be calculated
-    // false : HR has been calculated
-    bool hr_cal = true;
-
-    //-------------------
-    // subroutines, grouped according to the file they are in:
-    //-------------------
+    // functions for hr status: 1. get value; 2. set value;
+    int get_hr_cal()
+    {
+        return this->hr_cal;
+    }
+    void set_hr_cal(bool cal)
+    {
+        this->hr_cal = cal;
+    }
 
     //-------------------
     // LCAO_deepks.cpp
@@ -164,16 +140,16 @@ class LCAO_Deepks
     void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
 
   private:
+    // flag of HR status,
+    // true : HR should be calculated
+    // false : HR has been calculated
+    bool hr_cal = true;
+
     // arrange index of descriptor in all atoms
     void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
 
     const Parallel_Orbitals* pv;
 };
-
-namespace GlobalC
-{
-extern LCAO_Deepks ld;
-}
 
 #endif
 #endif

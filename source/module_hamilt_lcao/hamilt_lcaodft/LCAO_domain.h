@@ -8,6 +8,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_HS_arrays.hpp"
 #include "module_hamilt_lcao/hamilt_lcaodft/force_stress_arrays.h"
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
@@ -16,14 +17,14 @@ namespace LCAO_domain
 {
 
 void init_basis_lcao(Parallel_Orbitals& pv,
-        const double &onsite_radius,
-        const double &lcao_ecut,
-        const double &lcao_dk,
-        const double &lcao_dr,
-        const double &lcao_rmax,
-		UnitCell& ucell,
-        TwoCenterBundle& two_center_bundle,
-        LCAO_Orbitals& orb);
+                     const double& onsite_radius,
+                     const double& lcao_ecut,
+                     const double& lcao_dk,
+                     const double& lcao_dr,
+                     const double& lcao_rmax,
+                     UnitCell& ucell,
+                     TwoCenterBundle& two_center_bundle,
+                     LCAO_Orbitals& orb);
 
 void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                            ForceStressArrays& fsr, // mohan 2024-06-16
@@ -173,14 +174,16 @@ void build_ST_new(ForceStressArrays& fsr,
  */
 void zeros_HSR(const char& mtype, LCAO_HS_Arrays& HS_arrays);
 
-void divide_HS_in_frag(const bool isGamma, const UnitCell& ucell, Parallel_Orbitals& pv, const int& nks, const LCAO_Orbitals& orb);
+#ifdef __DEEPKS
+void DeePKS_init(const UnitCell& ucell,
+                 Parallel_Orbitals& pv,
+                 const int& nks,
+                 const LCAO_Orbitals& orb,
+                 LCAO_Deepks& ld);
+#endif
 
 template <typename T>
-void set_mat2d(const int& global_ir,
-                const int& global_ic,
-                const T& v,
-                const Parallel_Orbitals& pv,
-                T* mat);
+void set_mat2d(const int& global_ir, const int& global_ic, const T& v, const Parallel_Orbitals& pv, T* mat);
 
 } // namespace LCAO_domain
 

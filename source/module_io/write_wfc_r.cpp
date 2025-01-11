@@ -42,9 +42,9 @@ void write_psi_r_1(const UnitCell& ucell,
     {
         wfc_g.fix_k(ik);
         const int ik_out = (PARAM.inp.nspin != 2)
-                               ? ik + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL]
+                               ? ik + kv.para_k.startk_pool[GlobalV::MY_POOL]
                                : ik - kv.get_nks() / 2 * kv.isk[ik] + kv.get_nkstot() / 2 * kv.isk[ik]
-                                     + GlobalC::Pkpoints.startk_pool[GlobalV::MY_POOL];
+                                     + kv.para_k.startk_pool[GlobalV::MY_POOL];
         for (int ib = 0; ib < wfc_g.get_nbands(); ++ib)
         {
             const std::vector<std::complex<double>> wfc_r = cal_wfc_r(wfcpw, wfc_g, ik, ib);

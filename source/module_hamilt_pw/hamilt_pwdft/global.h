@@ -264,7 +264,6 @@ namespace GlobalC
 #include "module_cell/unitcell.h"
 namespace GlobalC
 {
-extern Parallel_Kpoints Pkpoints;
 extern Restart restart; // Peize Lin add 2020.04.04
 } // namespace GlobalC
 

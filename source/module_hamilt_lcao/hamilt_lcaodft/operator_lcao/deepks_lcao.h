@@ -4,8 +4,8 @@
 #include "module_basis/module_nao/two_center_integrator.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/module_dm/density_matrix.h"
-#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "operator_lcao.h"
 
 namespace hamilt
@@ -38,7 +38,12 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  const TwoCenterIntegrator* intor_orb_alpha,
                                  const LCAO_Orbitals* ptr_orb,
                                  const int& nks_in,
-                                 elecstate::DensityMatrix<TK, double>* DM_in);
+                                 elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+                                 ,
+                                 LCAO_Deepks* ld_in
+#endif
+                                 );
     ~DeePKS();
 
     /**
