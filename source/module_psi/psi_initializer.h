@@ -14,7 +14,7 @@
 #endif
 #include "module_base/macros.h"
 #include "module_base/parallel_global.h"
-#include "module_cell/parallel_kpoints.h"
+#include "module_cell/klist.h"
 
 #include <type_traits>
 /*

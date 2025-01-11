@@ -13,7 +13,7 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-int K_Vectors::cal_ik_global()
+void K_Vectors::cal_ik_global()
 {
     const int my_pool = this->para_k.my_pool;
     this->ik2iktot.resize(this->nks);
@@ -23,7 +23,7 @@ int K_Vectors::cal_ik_global()
         for (int ik = 0; ik < this->nks / 2; ++ik)
         {
             this->ik2iktot[ik] = this->para_k.startk_pool[my_pool] + ik;
-            this->ik2iktot[ik + this->nks / 2] = this->nsktot / 2 + this->para_k.startk_pool[my_pool] + ik;
+            this->ik2iktot[ik + this->nks / 2] = this->nkstot / 2 + this->para_k.startk_pool[my_pool] + ik;
         }
     }
     else

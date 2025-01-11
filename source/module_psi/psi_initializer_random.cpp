@@ -11,7 +11,7 @@ template <typename T>
 void psi_initializer_random<T>::initialize(const Structure_Factor* sf,
                                            const ModulePW::PW_Basis_K* pw_wfc,
                                            const UnitCell* p_ucell,
-                                           const K_Vectors* p_kv_in
+                                           const K_Vectors* p_kv_in,
                                            const int& random_seed,
                                            const pseudopot_cell_vnl* p_pspot_nl,
                                            const int& rank)

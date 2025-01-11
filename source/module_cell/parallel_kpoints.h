@@ -68,14 +68,13 @@ class Parallel_Kpoints
         return *std::max_element(nks_pool.begin(), nks_pool.end());
     }
 
-  private:
-
+  public:
     int kpar = 0;         // number of pools
     int my_pool = 0;      // the pool index of the present processor
     int rank_in_pool = 0; // the rank in the present pool
     int nproc = 1;        // number of processors
     int nspin = 1;        // number of spins
-
+  private:
     std::vector<int> startpro_pool; // the first processor in each pool
 #ifdef __MPI
     void get_nks_pool(const int& nkstot);

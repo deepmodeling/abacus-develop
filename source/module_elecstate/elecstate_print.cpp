@@ -2,6 +2,7 @@
 #include "elecstate_getters.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
@@ -173,8 +174,16 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     {
         ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
     }
-
-    std::string filename = ofs.rdbuf()->get_filename();
+    std::stringstream ss;
+    if(PARAM.inp.out_alllog)
+    {
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
+    }
+    else
+    {
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
+    }
+    std::string filename = ss.str();
     std::vector<int> ngk_tot = this->klist->ngk;
 
 #ifdef __MPI
@@ -187,7 +196,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
     const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
     const int nks_np = nks / nk_fac;
-    const int nkstot_np + 1 = nkstot / nk_fac;
+    const int nkstot_np = nkstot / nk_fac;
     ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
     for (int is = 0; is < nk_fac; ++is)
     {

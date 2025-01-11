@@ -24,7 +24,7 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
     ModuleBase::timer::tick("psi_initializer_file", "init_psig");
     const int npol = PARAM.globalv.npol;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
-    const int nkstot = this->p_kv->nkstot;
+    const int nkstot = this->p_kv->get_nkstot();
     ModuleBase::ComplexMatrix wfcatom(this->nbands_start_, nbasis);
     std::stringstream filename;
     int ik_tot = this->p_kv->ik2iktot[ik];

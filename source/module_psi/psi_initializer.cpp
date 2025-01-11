@@ -44,7 +44,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
 #ifdef __MPI
-        srand(unsigned(this->random_seed_ + this->p_parakpts_->startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(this->random_seed_ + this->p_kv->ik2iktot[ik]));
 #else
         srand(unsigned(this->random_seed_ + ik));
 #endif
