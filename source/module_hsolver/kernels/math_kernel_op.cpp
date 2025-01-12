@@ -24,6 +24,7 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
@@ -71,6 +72,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             T grad_1 = {0.0, 0.0};
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
