@@ -115,7 +115,7 @@ void DiagoBPCG<T, Device>::orth_cholesky(
                 hsub_out.data<T>(),
                 this->n_band);     //ldc
 
-    // Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
+    Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
     
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
@@ -186,7 +186,7 @@ void DiagoBPCG<T, Device>::orth_projection(
                 hsub_in.data<T>(),
                 this->n_band);     //ldc
 
-    // Parallel_Reduce::reduce_pool(hsub_in.data<T>(), this->n_band * this->n_band);
+    Parallel_Reduce::reduce_pool(hsub_in.data<T>(), this->n_band * this->n_band);
     
     // set_matrix_op()('L', hsub_in->data<T>(), this->n_band);
     option = ct::EinsumOption(
@@ -209,6 +209,7 @@ void DiagoBPCG<T, Device>::orth_projection(
                 grad_out.data<T>(),
                 this->n_basis);   //ldc
 
+    // * This type of non inner produce like operation does not need reduce!
     // Parallel_Reduce::reduce_pool(grad_out.data<T>(), this->n_basis * this->n_band);
     
     return;
@@ -242,6 +243,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
                 workspace_in.data<T>(),
                 this->n_basis);     //ldc
     
+    // * This type of non inner produce like operation does not need reduce!
     // Parallel_Reduce::reduce_pool(workspace_in.data<T>(), this->n_basis * this->n_band);
 
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
@@ -289,7 +291,7 @@ void DiagoBPCG<T, Device>::diag_hsub(
                 hsub_out.data<T>(),
                 this->n_band);      //ldc
 
-    // Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
+    Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
 
     ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 
