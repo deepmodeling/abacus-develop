@@ -67,17 +67,17 @@ namespace LR
         for (size_t isk = 0;isk < nks;++isk)
         {
             c.fix_k(isk);
-            const int x_start = isk * nocc * nvirt;
+            const int x_start = isk * nmo1 * nmo2;
             for (size_t mu = 0;mu < naos;++mu)
             {
                 for (size_t nu = 0;nu < naos;++nu)
                 {
                     // loop for ks states
-                    for (size_t p = 0;p < nocc;++p)
+                    for (size_t p = 0;p < nmo1;++p)
                     {
-                        for (size_t q = 0; q < nvirt;++q)
+                        for (size_t q = 0; q < nmo2;++q)
                             dm_trans[isk].data<std::complex<double>>()[nu * naos + mu] +=
-                            std::conj(c(p, mu)) * X_istate[x_start + p * nvirt + q] * c(nocc + q, nu) * factor;
+                            std::conj(c(imo1 + p, mu)) * X_istate[x_start + p * nmo2 + q] * c(imo2 + q, nu) * factor;
                     }
                 }
             }
