@@ -10,7 +10,7 @@ namespace LR
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        const bool renorm_k,
+        const double factor,
         const MO_TYPE type)
     {
         // cxc_out_test(X_istate, c);
@@ -37,7 +37,7 @@ namespace LR
                     for (size_t p = 0;p < nmo1;++p)
                     {
                         for (size_t q = 0; q < nmo2;++q)
-                            dm_trans[isk].data<double>()[mu * naos + nu] += c(imo1 + p, mu) * X_istate[x_start + p * nmo2 + q] * c(imo2 + q, nu);
+                            dm_trans[isk].data<double>()[mu * naos + nu] += c(imo1 + p, mu) * X_istate[x_start + p * nmo2 + q] * c(imo2 + q, nu) * factor;
                     }
                 }
             }
@@ -50,7 +50,7 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        const bool renorm_k,
+        const std::complex<double> factor,
         const MO_TYPE type)
     {
         // cxc_out_test(X_istate, c);
@@ -77,7 +77,7 @@ namespace LR
                     {
                         for (size_t q = 0; q < nvirt;++q)
                             dm_trans[isk].data<std::complex<double>>()[nu * naos + mu] +=
-                            std::conj(c(p, mu)) * X_istate[x_start + p * nvirt + q] * c(nocc + q, nu) / static_cast<double>(nks);
+                            std::conj(c(p, mu)) * X_istate[x_start + p * nvirt + q] * c(nocc + q, nu) * factor;
                     }
                 }
             }
@@ -91,7 +91,7 @@ namespace LR
         const psi::Psi<double>& c,
         const int& nocc,
         const int& nvirt,
-        const bool renorm_k,
+        const double factor,
         const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
@@ -116,7 +116,7 @@ namespace LR
                 c.get_pointer(imo1), &naos, X_istate + x_start, &nmo2,
                 &beta, Xc.data<double>(), &naos);
             // 2. C_virt*[X*C_occ^T]
-            dgemm_(&transa, &transb, &naos, &naos, &nmo2, &alpha,
+            dgemm_(&transa, &transb, &naos, &naos, &nmo2, &factor,
                 c.get_pointer(imo2), &naos, Xc.data<double>(), &naos, &beta,
                 dm_trans[isk].data<double>(), &naos);
         }
@@ -129,7 +129,7 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        const bool renorm_k,
+        const std::complex<double> factor,
         const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_blas");
@@ -147,7 +147,7 @@ namespace LR
 
             char transa = 'N';
             char transb = 'C';
-            std::complex<double> alpha(1.0, 0.0);
+            const std::complex<double> alpha(1.0, 0.0);
             const std::complex<double> beta(0.0, 0.0);
 
             // ============== C_virt * X * C_occ^\dagger=============
@@ -171,8 +171,7 @@ namespace LR
                 &beta, Xc.data<std::complex<double>>(), &nmo2);
             // 2. [X*C_occ^\dagger]^TC_virt^T
             transa = transb = 'T';
-            alpha.real(renorm_k ? 1.0 / static_cast<double>(nks) : 1.0);
-            zgemm_(&transa, &transb, &naos, &naos, &nmo2, &alpha,
+            zgemm_(&transa, &transb, &naos, &naos, &nmo2, &factor,
                 Xc.data<std::complex<double>>(), &nmo2, c.get_pointer(imo2), &naos, &beta,
                 dm_trans[isk].data<std::complex<double>>(), &naos);
         }

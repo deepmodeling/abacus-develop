@@ -147,7 +147,7 @@ TEST_F(DMTransTest, DoubleParallel)
             X.fix_b(istate);
             X_full.fix_b(istate);
 
-            std::vector<container::Tensor> dm_pblas_loc = LR::cal_dm_trans_pblas(X.get_pointer(), px, c, pc, s.naos, s.nocc, s.nvirt, pmat);
+            std::vector<container::Tensor> dm_pblas_loc = LR::cal_dm_trans_pblas(X.get_pointer(), px, c, pc, s.naos, s.nocc, s.nvirt, pmat, (double)1.0 / (double)s.nks);
 
             // gather dm and output
             std::vector<container::Tensor> dm_gather(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
@@ -165,7 +165,7 @@ TEST_F(DMTransTest, DoubleParallel)
             }
             if (my_rank == 0)
             {
-                const std::vector<container::Tensor>& dm_full = LR::cal_dm_trans_blas(X_full.get_pointer(), c_full, s.nocc, s.nvirt);
+                const std::vector<container::Tensor>& dm_full = LR::cal_dm_trans_blas(X_full.get_pointer(), c_full, s.nocc, s.nvirt, (double)1.0 / (double)s.nks);
                 for (int isk = 0;isk < s.nks;++isk) check_eq(dm_full[isk].data<double>(), dm_gather[isk].data<double>(), s.naos * s.naos);
             }
         }
@@ -209,7 +209,7 @@ TEST_F(DMTransTest, ComplexParallel)
             X.fix_b(istate);
             X_full.fix_b(istate);
 
-            std::vector<container::Tensor> dm_pblas_loc = LR::cal_dm_trans_pblas(X.get_pointer(), px, c, pc, s.naos, s.nocc, s.nvirt, pmat);
+            std::vector<container::Tensor> dm_pblas_loc = LR::cal_dm_trans_pblas(X.get_pointer(), px, c, pc, s.naos, s.nocc, s.nvirt, pmat, std::complex<double>(1.0, 0.0) / (double)s.nks);
 
             // gather dm and output
             std::vector<container::Tensor> dm_gather(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
@@ -227,7 +227,7 @@ TEST_F(DMTransTest, ComplexParallel)
             }
             if (my_rank == 0)
             {
-                std::vector<container::Tensor> dm_full = LR::cal_dm_trans_blas(X_full.get_pointer(), c_full, s.nocc, s.nvirt);
+                std::vector<container::Tensor> dm_full = LR::cal_dm_trans_blas(X_full.get_pointer(), c_full, s.nocc, s.nvirt, std::complex<double>(1.0, 0.0) / (double)s.nks);
                 for (int isk = 0;isk < s.nks;++isk) check_eq(dm_full[isk].data<std::complex<double>>(), dm_gather[isk].data<std::complex<double>>(), s.naos * s.naos);
             }
         }

@@ -18,7 +18,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
     const int nocc,
     const int nvirt,
     const Parallel_2D& pmat,
-    const bool renorm_k,
+    const double factor,
     const MO_TYPE type)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
@@ -60,7 +60,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const double* const X_istate,
 
         // 2. C_virt*[X*C_occ^T]
         pdgemm_(&transa, &transb, &naos, &naos, &nmo2,
-            &alpha, c.get_pointer(), &i1, &imo2, pc.desc,
+            &factor, c.get_pointer(), &i1, &imo2, pc.desc,
             Xc.data<double>(), &i1, &i1, pXc.desc,
             &beta, dm_trans[isk].data<double>(), &i1, &i1, pmat.desc);
     }
@@ -75,7 +75,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
     const int nocc,
     const int nvirt,
     const Parallel_2D& pmat,
-    const bool renorm_k,
+    const std::complex<double> factor,
     const MO_TYPE type)
 {
     ModuleBase::TITLE("hamilt_lrtd", "cal_dm_trans_pblas");
@@ -128,7 +128,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
                              DEV::CpuDevice,
                              {pXc.get_col_size(), pXc.get_row_size()}); // row is "inside"(memory contiguity) for pblas
         Xc.zero();
-        std::complex<double> alpha(1.0, 0.0);
+        const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
         pzgemm_(&transa, &transb, &nmo2, &naos, &nmo1, &alpha,
             X_istate + x_start, &i1, &i1, px.desc,
@@ -136,10 +136,9 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
             &beta, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc);
 
         // 2. [X*C_occ^\dagger]^TC_virt^T
-        alpha.real(renorm_k ? 1.0 / static_cast<double>(nks) : 1.0);
         transa = transb = 'T';
         pzgemm_(&transa, &transb, &naos, &naos, &nmo2,
-            &alpha, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc,
+            &factor, Xc.data<std::complex<double>>(), &i1, &i1, pXc.desc,
             c.get_pointer(), &i1, &imo2, pc.desc,
             &beta, dm_trans[isk].data<std::complex<double>>(), &i1, &i1, pmat.desc);
     }

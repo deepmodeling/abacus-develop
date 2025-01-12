@@ -27,7 +27,7 @@ namespace LR
         const int nocc,
         const int nvirt,
         const Parallel_2D& pmat,
-        const bool renorm_k = true,
+        const T factor = (T)1.0,
         const MO_TYPE type = MO_TYPE::VO);
 #endif
 
@@ -37,7 +37,7 @@ namespace LR
         const T* const X_istate,
         const psi::Psi<T>& c,
         const int& nocc, const int& nvirt,
-        const bool renorm_k = true,
+        const T factor = (T)1.0,
         const MO_TYPE type = MO_TYPE::VO);
 
     // for test
@@ -47,6 +47,6 @@ namespace LR
         const T* const X_istate,
         const psi::Psi<T>& c,
         const int& nocc, const int& nvirt,
-        const bool renorm_k = true,
+        const T factor = (T)1.0,
         const MO_TYPE type = MO_TYPE::VO);
 }
