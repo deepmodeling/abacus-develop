@@ -42,8 +42,8 @@ void Gint_rho::cal_rho_()
             for (int is = 0; is < nspin_; is++)
             {
                 ModuleBase::zeros(phi_DMR.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                phi_op.phi_mul_dm(phi.get_ptr_2D(), *DMRGint_vec_[is], true, phi_DMR.get_ptr_2D());
-                phi_op.phi_dot_phi_dm(phi.get_ptr_2D(), phi_DMR.get_ptr_2D(), rho_[is]);
+                phi_op.phi_mul_dm(phi.get_ptr_1D(), *DMRGint_vec_[is], true, phi_DMR.get_ptr_1D());
+                phi_op.phi_dot_phi_dm(phi.get_ptr_1D(), phi_DMR.get_ptr_1D(), rho_[is]);
             }
         }
     }

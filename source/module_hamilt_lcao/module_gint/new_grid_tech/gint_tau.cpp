@@ -48,12 +48,12 @@ void Gint_tau::cal_tau_()
                 ModuleBase::zeros(dphi_x_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
                 ModuleBase::zeros(dphi_y_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
                 ModuleBase::zeros(dphi_z_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                phi_op.phi_mul_dm(dphi_x.get_ptr_2D(), *DMRGint_vec_[is], true, dphi_x_DM.get_ptr_2D());
-                phi_op.phi_mul_dm(dphi_y.get_ptr_2D(), *DMRGint_vec_[is], true, dphi_y_DM.get_ptr_2D());
-                phi_op.phi_mul_dm(dphi_z.get_ptr_2D(), *DMRGint_vec_[is], true, dphi_z_DM.get_ptr_2D());
-                phi_op.phi_dot_phi_dm(dphi_x.get_ptr_2D(), dphi_x_DM.get_ptr_2D(), kin_[is]);
-                phi_op.phi_dot_phi_dm(dphi_y.get_ptr_2D(), dphi_y_DM.get_ptr_2D(), kin_[is]);
-                phi_op.phi_dot_phi_dm(dphi_z.get_ptr_2D(), dphi_z_DM.get_ptr_2D(), kin_[is]);
+                phi_op.phi_mul_dm(dphi_x.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_x_DM.get_ptr_1D());
+                phi_op.phi_mul_dm(dphi_y.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_y_DM.get_ptr_1D());
+                phi_op.phi_mul_dm(dphi_z.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_z_DM.get_ptr_1D());
+                phi_op.phi_dot_phi_dm(dphi_x.get_ptr_1D(), dphi_x_DM.get_ptr_1D(), kin_[is]);
+                phi_op.phi_dot_phi_dm(dphi_y.get_ptr_1D(), dphi_y_DM.get_ptr_1D(), kin_[is]);
+                phi_op.phi_dot_phi_dm(dphi_z.get_ptr_1D(), dphi_z_DM.get_ptr_1D(), kin_[is]);
             }
         }
     }

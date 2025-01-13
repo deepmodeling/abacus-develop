@@ -77,9 +77,9 @@ void PhiOperator::set_ddphi(
 }
 
 void PhiOperator::phi_mul_dm(
-    const double* const* phi, 
+    const double* phi, 
     const HContainer<double>& DM, 
-    const bool is_symm, double** phi_dm) const
+    const bool is_symm, double*phi_dm) const
 {
     // parameters for lapack subroutines
     constexpr char side = 'L';
@@ -98,7 +98,7 @@ void PhiOperator::phi_mul_dm(
         {
             const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
             dsymm_(&side, &uplo, &atoms_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atoms_phi_len_[i],
-                &phi[0][atoms_startidx_[i]], &cols_, &beta, &phi_dm[0][atoms_startidx_[i]], &cols_);
+                &phi[0 * cols_ + atoms_startidx_[i]], &cols_, &beta, &phi_dm[0 * cols_ + atoms_startidx_[i]], &cols_);
         }
 
         const int start = is_symm ? i + 1 : 0;
@@ -127,26 +127,28 @@ void PhiOperator::phi_mul_dm(
             }
 
             dgemm_(&trans, &trans, &atoms_phi_len_[j], &len, &atoms_phi_len_[i], &alpha1, dm_mat->get_pointer(), &atoms_phi_len_[j],
-                &phi[start_idx][atoms_startidx_[i]], &cols_, &beta, &phi_dm[start_idx][atoms_startidx_[j]], &cols_);
+                &phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, &phi_dm[start_idx * cols_ + atoms_startidx_[j]], &cols_);
         }
     }
 }
 
-void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* const* phi, double** result) const
+void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* phi, double* result) const
 {
+    int idx = 0;
     for(int i = 0; i < biggrid_->get_meshgrid_num(); i++)
     {
         double vldr3_mgrid = vl[meshgrids_local_idx_[i]] * dr3;
         for(int j = 0; j < cols_; j++)
         {
-            result[i][j] = phi[i][j] * vldr3_mgrid;
+            result[idx] = phi[idx] * vldr3_mgrid;
+            idx++;
         }
     }
 }
 
 void PhiOperator::phi_mul_phi_vldr3(
-    const double* const* phi,
-    const double* const* phi_vldr3,
+    const double* phi,
+    const double* phi_vldr3,
     HContainer<double>* hr) const
 {
     const char transa='N', transb='T';
@@ -187,29 +189,29 @@ void PhiOperator::phi_mul_phi_vldr3(
                 continue;
             }
 
-            dgemm_(&transa, &transb, &atoms_phi_len_[j], &atoms_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx][atoms_startidx_[j]],
-                &cols_,&phi[start_idx][atoms_startidx_[i]], &cols_, &beta, result->get_pointer(), &atoms_phi_len_[j]);
+            dgemm_(&transa, &transb, &atoms_phi_len_[j], &atoms_phi_len_[i], &len, &alpha, &phi_vldr3[start_idx * cols_ + atoms_startidx_[j]],
+                &cols_,&phi[start_idx * cols_ + atoms_startidx_[i]], &cols_, &beta, result->get_pointer(), &atoms_phi_len_[j]);
         }
     }
 }
 
 void PhiOperator::phi_dot_phi_dm(
-    const double* const* phi,
-    const double* const* phi_dm,
+    const double* phi,
+    const double* phi_dm,
     double* rho) const
 {
     const int inc = 1;
     for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
     {
-        rho[meshgrids_local_idx_[i]] += ddot_(&cols_, phi[i], &inc, phi_dm[i], &inc);
+        rho[meshgrids_local_idx_[i]] += ddot_(&cols_, &phi[i * cols_], &inc, &phi_dm[i * cols_], &inc);
     }
 }
 
 void PhiOperator::phi_dot_dphi(
-    const double* const* phi,
-    const double* const* dphi_x,
-    const double* const* dphi_y,
-    const double* const* dphi_z,
+    const double* phi,
+    const double* dphi_x,
+    const double* dphi_y,
+    const double* dphi_z,
     ModuleBase::matrix *fvl) const
 {
     for(int i = 0; i < biggrid_->get_atom_num(); ++i)
@@ -222,10 +224,11 @@ void PhiOperator::phi_dot_dphi(
         {
             for(int k = 0; k < phi_len; ++k)
             {
-                const double phi_val = phi[j][start_idx + k];
-                rx += phi_val * dphi_x[j][start_idx + k];
-                ry += phi_val * dphi_y[j][start_idx + k];
-                rz += phi_val * dphi_z[j][start_idx + k];
+                int idx = j * cols_ + start_idx + k;
+                const double phi_val = phi[idx];
+                rx += phi_val * dphi_x[idx];
+                ry += phi_val * dphi_y[idx];
+                rz += phi_val * dphi_z[idx];
             }
         }
         fvl[0](iat, 0) += rx * 2;
@@ -235,10 +238,10 @@ void PhiOperator::phi_dot_dphi(
 }
 
 void PhiOperator::phi_dot_dphi_r(
-    const double* const *phi,
-    const double* const *dphi_x,
-    const double* const *dphi_y,
-    const double* const *dphi_z,
+    const double* phi,
+    const double* dphi_x,
+    const double* dphi_y,
+    const double* dphi_z,
     ModuleBase::matrix *svl) const
 {
     double sxx = 0, sxy = 0, sxz = 0, syy = 0, syz = 0, szz = 0;
@@ -249,15 +252,15 @@ void PhiOperator::phi_dot_dphi_r(
             const int start_idx = atoms_startidx_[j];
             for(int k = 0; k < atoms_phi_len_[j]; ++k)
             {
-                const int col_idx = start_idx + k;
-                const double phi_val = phi[i][col_idx];
+                const int idx = i * cols_ + start_idx + k;
                 const Vec3d& r3 = atoms_relative_coords_[j][i];
-                sxx += phi_val * dphi_x[i][col_idx] * r3[0];
-                sxy += phi_val * dphi_x[i][col_idx] * r3[1];
-                sxz += phi_val * dphi_x[i][col_idx] * r3[2];
-                syy += phi_val * dphi_y[i][col_idx] * r3[1];
-                syz += phi_val * dphi_y[i][col_idx] * r3[2];
-                szz += phi_val * dphi_z[i][col_idx] * r3[2];
+                const double phi_val = phi[idx];
+                sxx += phi_val * dphi_x[idx] * r3[0];
+                sxy += phi_val * dphi_x[idx] * r3[1];
+                sxz += phi_val * dphi_x[idx] * r3[2];
+                syy += phi_val * dphi_y[idx] * r3[1];
+                syz += phi_val * dphi_y[idx] * r3[2];
+                szz += phi_val * dphi_z[idx] * r3[2];
             }
         }
     }

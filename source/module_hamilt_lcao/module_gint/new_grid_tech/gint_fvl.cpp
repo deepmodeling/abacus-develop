@@ -59,15 +59,15 @@ void Gint_fvl::cal_fvl_svl_()
             {
                 ModuleBase::zeros(phi_vldr3.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
                 ModuleBase::zeros(phi_vldr3_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_2D(), phi_vldr3.get_ptr_2D());
-                phi_op.phi_mul_dm(phi_vldr3.get_ptr_2D(), *DMRGint_vec_[is], false, phi_vldr3_DM.get_ptr_2D());
+                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
+                phi_op.phi_mul_dm(phi_vldr3.get_ptr_1D(), *DMRGint_vec_[is], false, phi_vldr3_DM.get_ptr_1D());
                 if(isforce_)
                 {
-                    phi_op.phi_dot_dphi(phi_vldr3_DM.get_ptr_2D(), dphi_x.get_ptr_2D(), dphi_y.get_ptr_2D(), dphi_z.get_ptr_2D(), fvl_thread);
+                    phi_op.phi_dot_dphi(phi_vldr3_DM.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D(), fvl_thread);
                 }
                 if(isstress_)
                 {
-                    phi_op.phi_dot_dphi_r(phi_vldr3_DM.get_ptr_2D(), dphi_x.get_ptr_2D(), dphi_y.get_ptr_2D(), dphi_z.get_ptr_2D(), svl_thread);
+                    phi_op.phi_dot_dphi_r(phi_vldr3_DM.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D(), svl_thread);
                 }
             }
         }

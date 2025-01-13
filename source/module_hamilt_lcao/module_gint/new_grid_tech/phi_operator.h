@@ -45,38 +45,38 @@ class PhiOperator
         double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const;
 
     void phi_mul_dm(
-        const double* const* phi, 
+        const double* phi, 
         const HContainer<double>& DM, 
-        const bool is_symm, double** phi_dm) const;
+        const bool is_symm, double* phi_dm) const;
 
     void phi_mul_vldr3(
         const double* vl,
         const double dr3,
-        const double* const* phi,
-        double** result) const;
+        const double* phi,
+        double* result) const;
     
     void phi_mul_phi_vldr3(
-        const double* const* phi,
-        const double* const* phi_vldr3,
+        const double* phi,
+        const double* phi_vldr3,
         HContainer<double>* hr) const;
     
     void phi_dot_phi_dm(
-        const double* const* phi,
-        const double* const* phi_dm,
+        const double* phi,
+        const double* phi_dm,
         double* rho) const;
 
     void phi_dot_dphi(
-        const double* const* phi,
-        const double* const* dphi_x,
-        const double* const* dphi_y,
-        const double* const* dphi_z,
+        const double* phi,
+        const double* dphi_x,
+        const double* dphi_y,
+        const double* dphi_z,
         ModuleBase::matrix *fvl) const;
     
     void phi_dot_dphi_r(
-        const double* const* phi,
-        const double* const* dphi_x,
-        const double* const* dphi_y,
-        const double* const* dphi_z,
+        const double* phi,
+        const double* dphi_x,
+        const double* dphi_y,
+        const double* dphi_z,
         ModuleBase::matrix *svl) const;
 
     private:

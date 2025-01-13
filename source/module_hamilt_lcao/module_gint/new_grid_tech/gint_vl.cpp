@@ -44,8 +44,8 @@ void Gint_vl::cal_hRGint_()
             ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
             ModuleBase::Array_Pool<double> phi_vldr3(phi_op.get_rows(), phi_op.get_cols());
             phi_op.set_phi(phi.get_ptr_1D());
-            phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.get_ptr_2D(), phi_vldr3.get_ptr_2D());
-            phi_op.phi_mul_phi_vldr3(phi.get_ptr_2D(), phi_vldr3.get_ptr_2D(), &hRGint_local);
+            phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
+            phi_op.phi_mul_phi_vldr3(phi.get_ptr_1D(), phi_vldr3.get_ptr_1D(), &hRGint_local);
         }
 #pragma omp critical
         {
