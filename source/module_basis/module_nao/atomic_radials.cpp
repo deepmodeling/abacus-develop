@@ -221,51 +221,55 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
         is_read[i] = false;
     }
 
-    int l = 0;
-    int izeta = 0;
-    for (int i = 0; i != nchi_; ++i)
+    for (int l = 0; l <= lmax_; ++l)
     {
-        if (rank == 0)
+        for (int izeta = 0; izeta < nzeta_[l]; ++izeta)
         {
-            /*
-             * read the orbital information, including
-             *
-             * 1. angular momentum
-             * 2. zeta number
-             * 3. values on the grid
-             *                                                                              */
-            // ifs >> tmp >> tmp >> tmp; // skip "Type" "L" "N"
-            ifs >> tmp >> tmp >> tmp;
-#ifdef __DEBUG
-            assert(tmp == "N");
-#endif
-
-            ifs >> tmp >> l >> izeta;
-#ifdef __DEBUG
-            assert(l >= 0 && l <= lmax_);
-            assert(izeta >= 0 && izeta < nzeta_[l]);
-#endif
-
-            for (int ir = 0; ir != ngrid; ++ir)
+            if (rank == 0)
             {
-                ifs >> rvalue[ir];
+                /*
+                 * read the orbital information, including
+                 *
+                 * 1. angular momentum
+                 * 2. zeta number
+                 * 3. values on the grid
+                 *                                                                              */
+                while (ifs.good())
+                {
+                    while (ifs >> tmp)
+                    {
+                        if (tmp == "N")
+                        {
+                            break;
+                        }
+                    }
+                    int read_l, read_izeta;
+                    ifs >> tmp >> read_l >> read_izeta;
+                    if (l == read_l && izeta == read_izeta)
+                    {
+                        break;
+                    }
+                }
+
+                for (int ir = 0; ir != ngrid; ++ir)
+                {
+                    ifs >> rvalue[ir];
+                }
             }
-        }
 
 #ifdef __MPI
-        Parallel_Common::bcast_int(l);
-        Parallel_Common::bcast_int(izeta);
-        Parallel_Common::bcast_double(rvalue, ngrid);
+            Parallel_Common::bcast_double(rvalue, ngrid);
 #endif
 #ifdef __DEBUG
-        assert(index(l, izeta) >= 0 && index(l, izeta) < nchi_);
-        assert(!is_read[index(l, izeta)]);
+            assert(index(l, izeta) >= 0 && index(l, izeta) < nchi_);
+            assert(!is_read[index(l, izeta)]);
 #endif
-        is_read[index(l, izeta)] = true;
+            is_read[index(l, izeta)] = true;
 
-        // skip the initialization of sbt_ in this stage
-        chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_, false);
-        chi_[index(l, izeta)].normalize();
+            // skip the initialization of sbt_ in this stage
+            chi_[index(l, izeta)].build(l, true, ngrid, rgrid, rvalue, 0, izeta, symbol_, itype_, false);
+            chi_[index(l, izeta)].normalize();
+        }
     }
 
     delete[] is_read;
