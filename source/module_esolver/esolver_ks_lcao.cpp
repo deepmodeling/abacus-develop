@@ -34,7 +34,6 @@
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
-#include "module_elecstate/elecstate_lcao_cal_tau.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
@@ -933,7 +932,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
-        elecstate::lcao_cal_tau<TK>(&(this->GG), &(this->GK), this->pelec->charge);
+        assert(this->psi != nullptr);
+        this->pelec->cal_tau(*(this->psi));
     }
 
     //! 2) call after_scf() of ESolver_KS

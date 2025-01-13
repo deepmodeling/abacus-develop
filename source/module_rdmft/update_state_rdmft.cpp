@@ -8,7 +8,7 @@
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_elecstate/elecstate_lcao_cal_tau.h"
+
 
 namespace rdmft
 {
@@ -118,7 +118,7 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
             // }
             // Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau);
             // GG->cal_gint(&inout1);
-            elecstate::lcao_cal_tau_gamma(GG, charge);
+            this->pelec->cal_tau(wfc);
         }
 
         charge->renormalize_rho();
@@ -148,7 +148,7 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
             // }
             // Gint_inout inout1(charge->kin_r, Gint_Tools::job_type::tau);
             // GK->cal_gint(&inout1);
-            elecstate::lcao_cal_tau_k(GK, charge);
+            this->pelec->cal_tau(wfc);
         }
 
         charge->renormalize_rho();
