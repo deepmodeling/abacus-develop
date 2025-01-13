@@ -671,7 +671,7 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
 	}
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
-		vector_mul_vector_complex_wrapper(d, dim, result, vector1, vector2);
+		vector_mul_vector_gpu(dim, result, vector1, vector2);
 #endif
 	}
 }
@@ -691,7 +691,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	}
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
-		vector_div_vector_complex_wrapper(d, dim, result, vector1, vector2);
+		vector_mul_vector_gpu(dim, result, vector1, vector2);
 #endif
 	}
 }
