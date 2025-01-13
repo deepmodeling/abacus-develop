@@ -331,43 +331,43 @@ void trtri( const char &uplo, const char &diag, const int &n, std::complex<doubl
 }
 
 static inline
-void getrf(const int &m, const int &n, float* A, const int &lda, int* ipiv, int &info)
+void getrf(const int m, const int n, float* A, const int lda, int* ipiv, int &info)
 {
     sgetrf_(&m, &n, A, &lda, ipiv, &info);
 }
 static inline
-void getrf(const int &m, const int &n, double* A, const int &lda, int* ipiv, int &info)
+void getrf(const int m, const int n, double* A, const int lda, int* ipiv, int &info)
 {
     dgetrf_(&m, &n, A, &lda, ipiv, &info);
 }
 static inline
-void getrf(const int &m, const int &n, std::complex<float>* A, const int &lda, int* ipiv, int &info)
+void getrf(const int m, const int n, std::complex<float>* A, const int lda, int* ipiv, int &info)
 {
     cgetrf_(&m, &n, A, &lda, ipiv, &info);
 }
 static inline
-void getrf(const int &m, const int &n, std::complex<double>* A, const int &lda, int* ipiv, int &info)
+void getrf(const int m, const int n, std::complex<double>* A, const int lda, int* ipiv, int &info)
 {
     zgetrf_(&m, &n, A, &lda, ipiv, &info);
 }
 
 static inline
-void getri(const int& n, float* A, const int& lda, const int* ipiv, float* work, const int& lwork, int& info)
+void getri(const int n, float* A, const int lda, const int* ipiv, float* work, const int lwork, int& info)
 {
     sgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
 }
 static inline
-void getri(const int& n, double* A, const int& lda, const int* ipiv, double* work, const int& lwork, int& info)
+void getri(const int n, double* A, const int lda, const int* ipiv, double* work, const int lwork, int& info)
 {
     dgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
 }
 static inline
-void getri(const int& n, std::complex<float>* A, const int& lda, const int* ipiv, std::complex<float>* work, const int& lwork, int& info)
+void getri(const int n, std::complex<float>* A, const int lda, const int* ipiv, std::complex<float>* work, const int lwork, int& info)
 {
     cgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
 }
 static inline
-void getri(const int& n, std::complex<double>* A, const int& lda, const int* ipiv, std::complex<double>* work, const int& lwork, int& info)
+void getri(const int n, std::complex<double>* A, const int lda, const int* ipiv, std::complex<double>* work, const int lwork, int& info)
 {
     zgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
 }

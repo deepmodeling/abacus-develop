@@ -39,10 +39,11 @@ void Evolve_elec::solve_psi(const int& istep,
     ModuleBase::TITLE("Evolve_elec", "solve_psi");
     ModuleBase::timer::tick("Evolve_elec", "solve_psi");
 
-    const int print_matrix = 0;
-    // const bool use_tensor = true;
-    const bool use_tensor = false;
+    const int print_matrix = 1;
+    const bool use_tensor = true;
+    // const bool use_tensor = false;
     const bool use_lapack = true;
+    // const bool use_lapack = false;
 
     for (int ik = 0; ik < nks; ik++)
     {
