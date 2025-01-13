@@ -1,4 +1,3 @@
-#include "module_base/array_pool.h"
 #include "module_base/global_function.h"
 #include "gint_rho.h"
 #include "gint_common.h"
@@ -28,6 +27,8 @@ void Gint_rho::cal_rho_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
+        std::vector<double> phi;
+        std::vector<double> phi_DMR;
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -36,13 +37,14 @@ void Gint_rho::cal_rho_()
                 continue;
             }
             phi_op.set_bgrid(biggrid);
-            ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> phi_DMR(phi_op.get_rows(), phi_op.get_cols());
-            phi_op.set_phi(phi.get_ptr_1D());
+            const int phi_len = phi_op.get_rows() * phi_op.get_cols();
+            phi.resize(phi_len);
+            phi_DMR.resize(phi_len);
+            phi_op.set_phi(phi.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(phi.get_ptr_1D(), *DMRGint_vec_[is], true, phi_DMR.get_ptr_1D());
-                phi_op.phi_dot_phi_dm(phi.get_ptr_1D(), phi_DMR.get_ptr_1D(), rho_[is]);
+                phi_op.phi_mul_dm(phi.data(), *DMRGint_vec_[is], true, phi_DMR.data());
+                phi_op.phi_dot_phi_dm(phi.data(), phi_DMR.data(), rho_[is]);
             }
         }
     }

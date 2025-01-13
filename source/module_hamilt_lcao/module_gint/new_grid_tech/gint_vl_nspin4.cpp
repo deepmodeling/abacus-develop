@@ -1,4 +1,3 @@
-#include "module_base/array_pool.h"
 #include "module_base/global_function.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_base/blas_connector.h"
@@ -33,6 +32,8 @@ void Gint_vl_nspin4::cal_hRGint_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
+        std::vector<double> phi;
+        std::vector<double> phi_vldr3;
         std::vector<HContainer<double>> hRGint_part_thread(nspin_, *hRGint_part_[0]);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
@@ -42,13 +43,14 @@ void Gint_vl_nspin4::cal_hRGint_()
                 continue;
             }
             phi_op.set_bgrid(biggrid);
-            ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> phi_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            phi_op.set_phi(phi.get_ptr_1D());
+            const int phi_len = phi_op.get_rows() * phi_op.get_cols();
+            phi.resize(phi_len);
+            phi_vldr3.resize(phi_len);
+            phi_op.set_phi(phi.data());
             for(int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
-                phi_op.phi_mul_phi_vldr3(phi.get_ptr_1D(), phi_vldr3.get_ptr_1D(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
+                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hRGint_part_thread[is]);
             }
         }
 #pragma omp critical

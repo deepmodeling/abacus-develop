@@ -21,6 +21,9 @@ GintInfo::GintInfo(
     unitcell_info_ = std::make_shared<UnitCellInfo>(ucell_->a1 * ucell_->lat0, ucell_->a2 * ucell_->lat0, ucell_->a3 * ucell_->lat0,
                                                     nbx, nby, nbz, nmx, nmy, nmz);
 
+    biggrid_info_ = unitcell_info_->get_biggrid_info();
+    meshgrid_info_ = biggrid_info_->get_meshgrid_info();
+
     // initialize the divide information
     divide_info_ = std::make_shared<DivideInfo>(startidx_bx, startidx_by, startidx_bz,
                                                 nbx_local, nby_local, nbz_local, unitcell_info_, false);

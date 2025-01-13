@@ -1,4 +1,3 @@
-#include "module_base/array_pool.h"
 #include "module_base/global_function.h"
 #include "gint_fvl.h"
 #include "gint_common.h"
@@ -28,6 +27,12 @@ void Gint_fvl::cal_fvl_svl_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
+        std::vector<double> phi;
+        std::vector<double> phi_vldr3;
+        std::vector<double> phi_vldr3_DM;
+        std::vector<double> dphi_x;
+        std::vector<double> dphi_y;
+        std::vector<double> dphi_z;
         ModuleBase::matrix* fvl_thread = nullptr;
         ModuleBase::matrix* svl_thread = nullptr;
         if(isforce_)
@@ -48,24 +53,25 @@ void Gint_fvl::cal_fvl_svl_()
                 continue;
             }
             phi_op.set_bgrid(biggrid);
-            ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> phi_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> phi_vldr3_DM(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_x(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_y(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_z(phi_op.get_rows(), phi_op.get_cols());
-            phi_op.set_phi_dphi(phi.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D());
+            const int phi_len = phi_op.get_rows() * phi_op.get_cols();
+            phi.resize(phi_len);
+            phi_vldr3.resize(phi_len);
+            phi_vldr3_DM.resize(phi_len);
+            dphi_x.resize(phi_len);
+            dphi_y.resize(phi_len);
+            dphi_z.resize(phi_len);
+            phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
-                phi_op.phi_mul_dm(phi_vldr3.get_ptr_1D(), *DMRGint_vec_[is], false, phi_vldr3_DM.get_ptr_1D());
+                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
+                phi_op.phi_mul_dm(phi_vldr3.data(), *DMRGint_vec_[is], false, phi_vldr3_DM.data());
                 if(isforce_)
                 {
-                    phi_op.phi_dot_dphi(phi_vldr3_DM.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D(), fvl_thread);
+                    phi_op.phi_dot_dphi(phi_vldr3_DM.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);
                 }
                 if(isstress_)
                 {
-                    phi_op.phi_dot_dphi_r(phi_vldr3_DM.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D(), svl_thread);
+                    phi_op.phi_dot_dphi_r(phi_vldr3_DM.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), svl_thread);
                 }
             }
         }

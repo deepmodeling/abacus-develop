@@ -31,7 +31,7 @@ class GintInfo
     // getter functions
     std::vector<std::shared_ptr<BigGrid>> get_biggrids() const { return biggrids_; };
     double get_local_mgrid_num() const { return localcell_info_->get_mgrid_num(); };
-    double get_mgrid_volume() const { return unitcell_info_->get_meshgrid_info()->get_volume(); };
+    double get_mgrid_volume() const { return meshgrid_info_->get_volume(); };
 
     //=========================================
     // functions about hcontainer
@@ -50,6 +50,12 @@ class GintInfo
 
     // the unitcell information
     std::shared_ptr<const UnitCellInfo> unitcell_info_;
+
+    // the biggrid information
+    std::shared_ptr<const BigGridInfo> biggrid_info_;
+
+    // the meshgrid information
+    std::shared_ptr<const MeshGridInfo> meshgrid_info_;
 
     // the divide information
     std::shared_ptr<const DivideInfo> divide_info_;

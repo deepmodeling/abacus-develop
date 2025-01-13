@@ -162,7 +162,7 @@ void GintAtom::set_ddphi(
         //         // End of code addition section.
 
         //         std::vector<std::vector<double>> hrly;
-        //         ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.get_ptr_1D());
+        //         ModuleBase::Ylm::grad_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], rly, grly.data());
         //         ModuleBase::Ylm::hes_rl_sph_harm(ucell.atoms[it].nwl, dr[0], dr[1], dr[2], hrly);
         //         const double position = distance / delta_r;
 

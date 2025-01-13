@@ -1,4 +1,3 @@
-#include "module_base/array_pool.h"
 #include "module_base/global_function.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_base/blas_connector.h"
@@ -34,6 +33,14 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
 #pragma omp parallel
     {
         PhiOperator phi_op;
+        std::vector<double> phi;
+        std::vector<double> phi_vldr3;
+        std::vector<double> dphi_x;
+        std::vector<double> dphi_y;
+        std::vector<double> dphi_z;
+        std::vector<double> dphi_x_vldr3;
+        std::vector<double> dphi_y_vldr3;
+        std::vector<double> dphi_z_vldr3;
         std::vector<HContainer<double>> hRGint_part_thread(nspin_, *hRGint_part_[0]);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
@@ -43,25 +50,26 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
                 continue;
             }
             phi_op.set_bgrid(biggrid);
-            ModuleBase::Array_Pool<double> phi(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_x(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_y(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_z(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> phi_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_x_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_y_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            ModuleBase::Array_Pool<double> dphi_z_vldr3(phi_op.get_rows(), phi_op.get_cols());
-            phi_op.set_phi_dphi(phi.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D());
+            const int phi_len = phi_op.get_rows() * phi_op.get_cols();
+            phi.resize(phi_len);
+            phi_vldr3.resize(phi_len);
+            dphi_x.resize(phi_len);
+            dphi_y.resize(phi_len);
+            dphi_z.resize(phi_len);
+            dphi_x_vldr3.resize(phi_len);
+            dphi_y_vldr3.resize(phi_len);
+            dphi_z_vldr3.resize(phi_len);
+            phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
             for(int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
-                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.get_ptr_1D(), dphi_x_vldr3.get_ptr_1D());
-                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.get_ptr_1D(), dphi_y_vldr3.get_ptr_1D());
-                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.get_ptr_1D(), dphi_z_vldr3.get_ptr_1D());
-                phi_op.phi_mul_phi_vldr3(phi.get_ptr_1D(), phi_vldr3.get_ptr_1D(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_x.get_ptr_1D(), dphi_x_vldr3.get_ptr_1D(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_y.get_ptr_1D(), dphi_y_vldr3.get_ptr_1D(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_z.get_ptr_1D(), dphi_z_vldr3.get_ptr_1D(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
+                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.data(), dphi_x_vldr3.data());
+                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.data(), dphi_y_vldr3.data());
+                phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.data(), dphi_z_vldr3.data());
+                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hRGint_part_thread[is]);
             }
         }
 #pragma omp critical

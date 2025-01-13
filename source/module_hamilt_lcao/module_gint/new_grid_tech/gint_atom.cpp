@@ -112,6 +112,7 @@ void GintAtom::set_phi_dphi(
     }
     
     std::vector<double> rly(std::pow(atom_->nwl + 1, 2));
+    // TODO: replace array_pool with std::vector
     ModuleBase::Array_Pool<double> grly(std::pow(atom_->nwl + 1, 2), 3);
     
     for(int im = 0; im < num_mgrids; im++)
