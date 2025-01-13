@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 #include <module_hamilt_lcao/module_hcontainer/hcontainer.h>
 #include "biggrid.h"
 
@@ -79,12 +80,16 @@ class PhiOperator
         ModuleBase::matrix *svl) const;
 
     private:
+    void init_atom_pair_start_end_idx_();
 
-    // get the index of the first meshgrid that both atom a and atom b affect
-    int atom_pair_startidx_(int a, int b) const;
-
-    // get the index of the last meshgrid that both atom a and atom b affect
-    int atom_pair_endidx_(int a, int b) const;
+    // get the index of the first and the last meshgrid that both atom a and atom b affect
+    // Note that atom_pair_start_end_idx_ only stores the cases where a <= b, so this function is needed to retrieve the value
+    const std::pair<int, int>& get_atom_pair_start_end_idx_(int a, int b) const
+    {
+        int x = std::min(a, b);
+        int y = std::abs(a - b);
+        return atom_pair_start_end_idx_[(2 * biggrid_->get_atom_num() - x + 1) * x / 2 + y];
+    };
 
     // the row number of the phi matrix
     // rows_ = biggrid_->get_meshgrid_num()
@@ -116,6 +121,9 @@ class PhiOperator
     // atoms_phi_len_[i] = biggrid_->get_atom(i)->get_nw()
     // TODO: remove it
     std::vector<int> atoms_phi_len_;
+
+    // This data structure is used to store the index of the first and last meshgrid affected by each atom pair
+    std::vector<std::pair<int, int>> atom_pair_start_end_idx_; 
 };
 
 }
