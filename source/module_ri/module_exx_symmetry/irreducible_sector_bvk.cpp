@@ -40,13 +40,15 @@ namespace ModuleSymmetry
         ModuleBase::TITLE("Irreducible_Sector", "gen_symmetry_BvK");
         auto set_matrix3 = [](const ModuleBase::Vector3<double>& a1, const ModuleBase::Vector3<double>& a2, const ModuleBase::Vector3<double>& a3)
             -> ModuleBase::Matrix3 {return ModuleBase::Matrix3(a1.x, a1.y, a1.z, a2.x, a2.y, a2.z, a3.x, a3.y, a3.z);};
-
+        auto set_bvk_same_as_ucell = [&symm, this]()->void
+            {
+                this->bvk_nsym_ = symm.nrotk;
+                this->isymbvk_to_isym_.resize(symm.nrotk);
+                for (int isym = 0;isym < symm.nrotk;++isym) { this->isymbvk_to_isym_[isym] = isym; }
+            };
         if (bvk_period[0] == bvk_period[1] && bvk_period[0] == bvk_period[2])
         {   //the BvK supercell has the same symmetry as the original cell
-            this->bvk_nsym_ = symm.nrotk;
-            this->isymbvk_to_isym_.resize(symm.nrotk);
-            for (int isym = 0;isym < symm.nrotk;++isym) { this->isymbvk_to_isym_[isym] = isym;
-}
+            set_bvk_same_as_ucell();
             return;
         }
 
@@ -129,23 +131,30 @@ namespace ModuleSymmetry
         bvk_op.resize(bvk_nop);
         int bvk_npg, bvk_nsg, bvk_pgnum, bvk_sgnum;
         std::string bvk_pgname, bvk_sgname;
-        this->bvk_gmatrix_.resize(48);
-        this->bvk_gtrans_.resize(48);
+        std::vector<ModuleBase::Matrix3> bvk_gmatrix(48);
+        std::vector<ModuleBase::Vector3<double>> bvk_gtrans(48);
         symm.getgroup(bvk_npg, bvk_nsg, GlobalV::ofs_running, bvk_nop,
-            bvk_op.data(), this->bvk_gmatrix_.data(), this->bvk_gtrans_.data(),
+            bvk_op.data(), bvk_gmatrix.data(), bvk_gtrans.data(),
             bvk_dpos.data(), bvk_rot_dpos.data(), order_index.data(),
             bvk_itmin_type, bvk_itmin_start, bvk_istart.data(), bvk_na.data());
-        this->bvk_gmatrix_.resize(bvk_nsg);
-        this->bvk_gtrans_.resize(bvk_nsg);
+        bvk_gmatrix.resize(bvk_nsg);
+        bvk_gtrans.resize(bvk_nsg);
         this->bvk_nsym_ = bvk_nsg;
-        symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
+        // bvk suppercell cannot have higher symmetry than the original cell
+        if (this->bvk_nsym_ > symm.nrotk)
+        {
+            std::cout << "reset bvk symmetry to the same as the original cell" << std::endl;
+            set_bvk_same_as_ucell();
+            return;
+        }
+        symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, bvk_gmatrix.data(), GlobalV::ofs_running);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP OF BvK SCELL", bvk_pgname);
-        symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, this->bvk_gmatrix_.data(), GlobalV::ofs_running);
+        symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, bvk_gmatrix.data(), GlobalV::ofs_running);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_sgname);
-        symm.gmatrix_convert_int(this->bvk_gmatrix_.data(), this->bvk_gmatrix_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
-        symm.gtrans_convert(this->bvk_gtrans_.data(), this->bvk_gtrans_.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
+        symm.gmatrix_convert_int(bvk_gmatrix.data(), bvk_gmatrix.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
+        symm.gtrans_convert(bvk_gtrans.data(), bvk_gtrans.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
         // get map from bvk-op to original op
-        this->isymbvk_to_isym_ = get_isymbvk_to_isym_map(this->bvk_gmatrix_, symm);
+        this->isymbvk_to_isym_ = get_isymbvk_to_isym_map(bvk_gmatrix, symm);
         return;
     }
 
