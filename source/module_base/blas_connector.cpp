@@ -13,6 +13,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 #include "module_base/tool_quit.h"
+#include "module_base/kernels/cuda/math_op.cu"
 
 #include "cublas_v2.h"
 
@@ -668,6 +669,11 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
             result[i] = vector1[i] * vector2[i];
         }
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		vector_mul_vector_complex_wrapper(d, dim, result, vector1, vector2);
+#endif
+	}
 }
 
 
@@ -682,5 +688,10 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
         {
             result[i] = vector1[i] / vector2[i];
         }
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		vector_div_vector_complex_wrapper(d, dim, result, vector1, vector2);
+#endif
 	}
 }

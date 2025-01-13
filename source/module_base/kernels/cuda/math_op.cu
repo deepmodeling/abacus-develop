@@ -154,4 +154,69 @@ void cal_ylm_real_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
 template struct cal_ylm_real_op<float, base_device::DEVICE_GPU>;
 template struct cal_ylm_real_op<double, base_device::DEVICE_GPU>;
 
+
+// The next are kernels for new blas_connector
+
+
+template <typename T>
+__global__ void vector_mul_vector_kernel(
+    const int size,
+    T* result,
+    const T* vector1,
+    const typename GetTypeReal<T>::type* vector2)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < size)
+    {
+        result[i] = vector1[i] * vector2[i];
+    }
+}
+
+template <typename T>
+__global__ void vector_div_vector_kernel(
+    const int size,
+    T* result,
+    const T* vector1,
+    const typename GetTypeReal<T>::type* vector2)
+{
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i < size)
+    {
+        result[i] = vector1[i] / vector2[i];
+    }
+}
+
+template <typename FPTYPE>
+inline void vector_div_constant_complex_wrapper(const base_device::DEVICE_GPU* d,
+                                                const int dim,
+                                                std::complex<FPTYPE>* result,
+                                                const std::complex<FPTYPE>* vector,
+                                                const FPTYPE constant)
+{
+    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
+    const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
+
+    int thread = thread_per_block;
+    int block = (dim + thread - 1) / thread;
+    vector_div_constant_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector_tmp, constant);
+
+    cudaCheckOnDebug();
+}
+
+template <typename FPTYPE>
+inline void vector_mul_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
+                                              const int& dim,
+                                              std::complex<FPTYPE>* result,
+                                              const std::complex<FPTYPE>* vector1,
+                                              const FPTYPE* vector2)
+{
+    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
+    const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
+    int thread = thread_per_block;
+    int block = (dim + thread - 1) / thread;
+    vector_mul_vector_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector1_tmp, vector2);
+
+    cudaCheckOnDebug();
+}
+
 }  // namespace ModuleBase
