@@ -3,6 +3,10 @@
 #include "module_base/macros.h"
 
 #include <base/macros/macros.h>
+#include <cuda_runtime.h>
+#include <thrust/complex.h>
+#include <thrust/execution_policy.h>
+#include <thrust/inner_product.h>
 
 namespace ModuleBase {
 
@@ -197,7 +201,7 @@ inline void vector_div_constant_complex_wrapper(const base_device::DEVICE_GPU* d
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector);
 
-    int thread = thread_per_block;
+    int thread = THREADS_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_div_constant_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector_tmp, constant);
 
@@ -213,7 +217,7 @@ inline void vector_mul_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
 {
     thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
     const thrust::complex<FPTYPE>* vector1_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vector1);
-    int thread = thread_per_block;
+    int thread = THREADS_PER_BLOCK;
     int block = (dim + thread - 1) / thread;
     vector_mul_vector_kernel<thrust::complex<FPTYPE>> <<<block, thread >>> (dim, result_tmp, vector1_tmp, vector2);
 
