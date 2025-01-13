@@ -9,13 +9,10 @@
 #ifdef __CUDA
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
-#include <thrust/complex.h>
-#include <thrust/execution_policy.h>
-#include <thrust/inner_product.h>
-#include "module_base/tool_quit.h"
-#include "module_base/kernels/cuda/math_op.cu"
-
 #include "cublas_v2.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/module_device/memory_op.h"
+
 
 namespace BlasUtils{
 
@@ -671,7 +668,7 @@ void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vec
 	}
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
-		vector_mul_vector_gpu(dim, result, vector1, vector2);
+		hsolver::vector_mul_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
 #endif
 	}
 }
@@ -691,7 +688,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	}
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
-		vector_mul_vector_gpu(dim, result, vector1, vector2);
+		hsolver::vector_div_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
 #endif
 	}
 }
