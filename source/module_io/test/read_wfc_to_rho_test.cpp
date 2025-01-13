@@ -69,9 +69,9 @@ void Symmetry_rho::begin(const int& spin_now,
     return;
 }
 
-void cal_ik2iktot(std::vector<int>&ik2iktot, const int& nks, const int& nkstot)
+void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot)
 {
-    for(int ik = 0; ik < nks; ++ik)
+    for (int ik = 0; ik < nks; ++ik)
     {
         int nkp = nkstot / PARAM.inp.kpar;
         int rem = nkstot % PARAM.inp.kpar;
