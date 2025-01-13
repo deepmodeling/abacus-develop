@@ -238,9 +238,9 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     }
     // std::cout.precision(16);
     // std::cout<<chg.rho[0][0]<<std::endl;
-    if (GlobalV::NPROC == 1)
+    if (GlobalV::NPROC == 1) {
         EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-    else if (GlobalV::NPROC == 4)
+    } else if (GlobalV::NPROC == 4)
     {
         const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
         EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);
