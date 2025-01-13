@@ -1,5 +1,6 @@
 #include "phi_operator.h"
 #include "module_base/blas_connector.h"
+#include "module_base/global_function.h"
 #include "module_base/matrix.h"
 
 namespace ModuleGint
@@ -79,8 +80,9 @@ void PhiOperator::set_ddphi(
 void PhiOperator::phi_mul_dm(
     const double* phi, 
     const HContainer<double>& DM, 
-    const bool is_symm, double*phi_dm) const
+    const bool is_symm, double* phi_dm) const
 {
+    ModuleBase::GlobalFunc::ZEROS(phi_dm, rows_ * cols_);
     // parameters for lapack subroutines
     constexpr char side = 'L';
     constexpr char uplo = 'U';
@@ -134,6 +136,7 @@ void PhiOperator::phi_mul_dm(
 
 void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* phi, double* result) const
 {
+    ModuleBase::GlobalFunc::ZEROS(result, rows_ * cols_);
     int idx = 0;
     for(int i = 0; i < biggrid_->get_meshgrid_num(); i++)
     {

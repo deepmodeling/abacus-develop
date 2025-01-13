@@ -45,9 +45,6 @@ void Gint_tau::cal_tau_()
             phi_op.set_phi_dphi(nullptr, dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D());
             for (int is = 0; is < nspin_; is++)
             {
-                ModuleBase::zeros(dphi_x_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                ModuleBase::zeros(dphi_y_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                ModuleBase::zeros(dphi_z_DM.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
                 phi_op.phi_mul_dm(dphi_x.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_x_DM.get_ptr_1D());
                 phi_op.phi_mul_dm(dphi_y.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_y_DM.get_ptr_1D());
                 phi_op.phi_mul_dm(dphi_z.get_ptr_1D(), *DMRGint_vec_[is], true, dphi_z_DM.get_ptr_1D());

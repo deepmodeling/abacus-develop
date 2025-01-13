@@ -54,10 +54,6 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
             phi_op.set_phi_dphi(phi.get_ptr_1D(), dphi_x.get_ptr_1D(), dphi_y.get_ptr_1D(), dphi_z.get_ptr_1D());
             for(int is = 0; is < nspin_; is++)
             {
-                ModuleBase::zeros(phi_vldr3.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                ModuleBase::zeros(dphi_x_vldr3.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                ModuleBase::zeros(dphi_y_vldr3.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
-                ModuleBase::zeros(dphi_z_vldr3.get_ptr_1D(), phi_op.get_rows()*phi_op.get_cols());
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.get_ptr_1D(), phi_vldr3.get_ptr_1D());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.get_ptr_1D(), dphi_x_vldr3.get_ptr_1D());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.get_ptr_1D(), dphi_y_vldr3.get_ptr_1D());
