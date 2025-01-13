@@ -349,7 +349,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         std::vector<torch::Tensor> descriptor;
         // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
         DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
-        DeePKS_domain::cal_gedm(ucell.nat,
+        DeePKS_domain::cal_edelta_gedm(ucell.nat,
                                 ld.lmaxd,
                                 ld.nmaxd,
                                 ld.inlmax,
