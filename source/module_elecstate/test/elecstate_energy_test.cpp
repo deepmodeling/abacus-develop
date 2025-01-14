@@ -54,12 +54,6 @@ double ElecState::get_local_pp_energy()
 } // namespace elecstate
 
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
 
 /***************************************************************

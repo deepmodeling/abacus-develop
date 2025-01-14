@@ -209,7 +209,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                    GlobalV::MY_RANK,
                                                    ucell,
                                                    this->sf,
-                                                   this->kv.para_k,
+                                                   this->kv,
                                                    this->ppcell,
                                                    *this->pw_wfc);
     allocate_psi(this->psi, this->kv.get_nks(), this->kv.ngk.data(), PARAM.inp.nbands, this->pw_wfc->npwk_max);

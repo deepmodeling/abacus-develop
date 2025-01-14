@@ -340,6 +340,9 @@ class DiagoBPCG
     using resmem_complex_op = ct::kernels::resize_memory<T, ct_Device>;
     using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
 
+    // note: these operators use template parameter base_device::Device_*
+    // defined in module_base/module_device/types.h
+    // different from ct_Device!
     using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
     using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
     using gemm_op = hsolver::gemm_op<T, Device>;

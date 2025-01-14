@@ -3,13 +3,6 @@
 #include "module_io/nscf_band.h"
 #include "module_cell/parallel_kpoints.h"
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-
-K_Vectors::~K_Vectors()
-{
-}
 
 
 /************************************************

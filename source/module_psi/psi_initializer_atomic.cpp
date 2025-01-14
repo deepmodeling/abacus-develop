@@ -50,7 +50,7 @@ template <typename T>
 void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
                                            const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
                                            const UnitCell* p_ucell,            //< unit cell
-                                           const Parallel_Kpoints* p_parakpts, //< parallel kpoints
+                                           const K_Vectors* p_kv_in,
                                            const int& random_seed,       //< random seed
                                            const pseudopot_cell_vnl* p_pspot_nl,
                                            const int& rank)
@@ -62,12 +62,7 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
                                  "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
     }
     // import
-    this->sf_ = sf;
-    this->pw_wfc_ = pw_wfc;
-    this->p_ucell_ = p_ucell;
-    this->p_parakpts_ = p_parakpts;
-    this->p_pspot_nl_ = p_pspot_nl;
-    this->random_seed_ = random_seed;
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
     this->nbands_start_ = std::max(this->p_ucell_->natomwfc, PARAM.inp.nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
     // allocate

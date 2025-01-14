@@ -14,7 +14,7 @@
 #endif
 #include "module_base/macros.h"
 #include "module_base/parallel_global.h"
-#include "module_cell/parallel_kpoints.h"
+#include "module_cell/klist.h"
 
 #include <type_traits>
 /*
@@ -61,11 +61,10 @@ class psi_initializer
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const Parallel_Kpoints* = nullptr,   //< parallel kpoints
+                            const K_Vectors* = nullptr,          //< parallel kpoints
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0)
-        = 0; //< MPI rank
+                            const int& = 0);                     //< rank
 
     /// @brief CENTRAL FUNCTION: calculate the interpolate table if needed
     virtual void tabulate()
@@ -129,7 +128,7 @@ class psi_initializer
     const Structure_Factor* sf_ = nullptr;           ///< Structure_Factor
     const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;   ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
     const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
-    const Parallel_Kpoints* p_parakpts_ = nullptr;   ///< Parallel_Kpoints
+    const K_Vectors* p_kv = nullptr;                 ///< Parallel_Kpoints
     const pseudopot_cell_vnl* p_pspot_nl_ = nullptr; ///< pseudopot_cell_vnl
     int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random
     std::vector<int> ixy2is_;                        ///< used by stick_to_pool function

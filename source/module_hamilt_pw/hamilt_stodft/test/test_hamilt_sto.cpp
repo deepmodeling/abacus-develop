@@ -4,8 +4,6 @@
 #include "gtest/gtest.h"
 #include <vector>
 
-K_Vectors::K_Vectors(){}
-K_Vectors::~K_Vectors(){}
 elecstate::Potential::~Potential(){}
 void elecstate::Potential::cal_v_eff(Charge const*, UnitCell const*, ModuleBase::matrix&){}
 void elecstate::Potential::cal_fixed_v(double*){}

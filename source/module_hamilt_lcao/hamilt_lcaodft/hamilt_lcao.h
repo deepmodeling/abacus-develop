@@ -13,6 +13,11 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
+
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif

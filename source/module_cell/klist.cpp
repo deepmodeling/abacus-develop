@@ -13,34 +13,33 @@
 #include "module_cell/module_paw/paw_cell.h"
 #endif
 
-K_Vectors::K_Vectors()
+void K_Vectors::cal_ik_global()
 {
-
-    nspin = 0; // default spin.
-    kc_done = false;
-    kd_done = false;
-    nkstot_full = 0;
-    nks = 0;
-    nkstot = 0;
-    k_nkstot = 0; // LiuXh add 20180619
-}
-
-K_Vectors::~K_Vectors()
-{
-}
-
-int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
-{
-    int nkp = nkstot / PARAM.inp.kpar;
-    int rem = nkstot % PARAM.inp.kpar;
-    if (GlobalV::MY_POOL < rem)
+    const int my_pool = this->para_k.my_pool;
+    this->ik2iktot.resize(this->nks);
+#ifdef __MPI
+    if(this->nspin == 2)
     {
-        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
+        for (int ik = 0; ik < this->nks / 2; ++ik)
+        {
+            this->ik2iktot[ik] = this->para_k.startk_pool[my_pool] + ik;
+            this->ik2iktot[ik + this->nks / 2] = this->nkstot / 2 + this->para_k.startk_pool[my_pool] + ik;
+        }
     }
     else
     {
-        return GlobalV::MY_POOL * nkp + rem + ik;
+        for (int ik = 0; ik < this->nks; ++ik)
+        {
+            this->ik2iktot[ik] = this->para_k.startk_pool[my_pool] + ik;
+        }
     }
+#else
+    for (int ik = 0; ik < this->nks; ++ik)
+    {
+        this->ik2iktot[ik] = ik;
+    }
+#endif
+
 }
 
 void K_Vectors::set(const UnitCell& ucell,
@@ -161,6 +160,9 @@ void K_Vectors::set(const UnitCell& ucell,
 
     // set the k vectors for the up and down spin
     this->set_kup_and_kdw();
+
+    // get ik2iktot
+    this->cal_ik_global();
 
     this->print_klists(ofs);
 

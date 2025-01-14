@@ -24,6 +24,7 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
             Real theta = 0.0, cos_theta = 0.0, sin_theta = 0.0;
             auto A = reinterpret_cast<const Real*>(grad_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
@@ -34,6 +35,9 @@ struct line_minimize_with_block_op<T, base_device::DEVICE_CPU>
                 epsilo_1 += std::real(grad_out[item] * std::conj(hpsi_out[item]));
                 epsilo_2 += std::real(grad_out[item] * std::conj(hgrad_out[item]));
             }
+            Parallel_Reduce::reduce_pool(epsilo_0);
+            Parallel_Reduce::reduce_pool(epsilo_1);
+            Parallel_Reduce::reduce_pool(epsilo_2);
             theta = 0.5 * std::abs(std::atan(2 * epsilo_1 / (epsilo_0 - epsilo_2)));
             cos_theta = std::cos(theta);
             sin_theta = std::sin(theta);
@@ -71,6 +75,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
             T grad_1 = {0.0, 0.0};
             auto A = reinterpret_cast<const Real*>(psi_out + band_idx * n_basis_max);
             Real norm = BlasConnector::dot(2 * n_basis, A, 1, A, 1);
+            Parallel_Reduce::reduce_pool(norm);
             norm = 1.0 / sqrt(norm);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
@@ -79,6 +84,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 hpsi_out[item] *= norm;
                 epsilo += std::real(hpsi_out[item] * std::conj(psi_out[item]));
             }
+            Parallel_Reduce::reduce_pool(epsilo);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;
@@ -87,6 +93,8 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
                 err += grad_2;
                 beta += grad_2 / prec_in[basis_idx]; /// Mark here as we should div the prec?
             }
+            Parallel_Reduce::reduce_pool(err);
+            Parallel_Reduce::reduce_pool(beta);
             for (int basis_idx = 0; basis_idx < n_basis; basis_idx++)
             {
                 auto item = band_idx * n_basis_max + basis_idx;

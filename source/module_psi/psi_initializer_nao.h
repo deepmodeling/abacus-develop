@@ -21,16 +21,16 @@ class psi_initializer_nao : public psi_initializer<T>
     };
     ~psi_initializer_nao(){};
 
-    virtual void init_psig(T* psig,  const int& ik) override;
+    virtual void init_psig(T* psig, const int& ik) override;
 
     /// @brief initialize the psi_initializer with external data and methods
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const Parallel_Kpoints*,             //< parallel kpoints
-                            const int& = 1,                //< random seed
+                            const K_Vectors*,                    //< kpoints
+                            const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;      //< MPI rank
+                            const int& = 0) override;            //< MPI rank
 
     void read_external_orbs(const std::string* orbital_files, const int& rank);
     virtual void tabulate() override;

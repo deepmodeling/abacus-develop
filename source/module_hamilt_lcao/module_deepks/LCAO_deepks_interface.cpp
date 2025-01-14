@@ -39,6 +39,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     // These variables are frequently used in the following code
     const int inlmax = orb.Alpha[0].getTotal_nchi() * nat;
     const int lmaxd = orb.get_lmax_d();
+    const int nmaxd = ld->nmaxd;
 
     const int des_per_atom = ld->des_per_atom;
     const int* inl_l = ld->inl_l;
@@ -49,10 +50,55 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     bool init_pdm = ld->init_pdm;
     double E_delta = ld->E_delta;
     double e_delta_band = ld->e_delta_band;
-    double** gedm = ld->gedm;
 
     const int my_rank = GlobalV::MY_RANK;
     const int nspin = PARAM.inp.nspin;
+
+    // Note : update PDM and all other quantities with the current dm
+    // DeePKS PDM and descriptor
+    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
+    {
+        // this part is for integrated test of deepks
+        // so it is printed no matter even if deepks_out_labels is not used
+        DeePKS_domain::cal_pdm<TK>
+                (init_pdm, inlmax, lmaxd, inl_l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
+
+        DeePKS_domain::check_pdm(inlmax, inl_l, pdm); // print out the projected dm for NSCF calculaiton
+
+        std::vector<torch::Tensor> descriptor;
+        DeePKS_domain::cal_descriptor(nat, inlmax, inl_l, pdm, descriptor,
+                                      des_per_atom); // final descriptor
+        DeePKS_domain::check_descriptor(inlmax, des_per_atom, inl_l, ucell, PARAM.globalv.global_out_dir, descriptor);
+
+        if (PARAM.inp.deepks_out_labels)
+        {
+            LCAO_deepks_io::save_npy_d(nat,
+                                       des_per_atom,
+                                       inlmax,
+                                       inl_l,
+                                       PARAM.inp.deepks_equiv,
+                                       descriptor,
+                                       PARAM.globalv.global_out_dir,
+                                       GlobalV::MY_RANK); // libnpy needed
+        }
+
+        if (PARAM.inp.deepks_scf)
+        {
+            // update E_delta and gedm
+            // new gedm is also useful in cal_f_delta, so it should be ld->gedm
+            DeePKS_domain::cal_edelta_gedm(nat,
+                        lmaxd,
+                        nmaxd,
+                        inlmax,
+                        des_per_atom,
+                        inl_l,
+                        descriptor,
+                        pdm,
+                        ld->model_deepks,
+                        ld->gedm,
+                        E_delta);
+        }
+    }
 
     // Used for deepks_bandgap == 1 and deepks_v_delta > 0
     std::vector<std::vector<TK>>* h_delta = nullptr;
@@ -65,7 +111,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         h_delta = &ld->H_V_delta_k;
     }
 
-    // calculating deepks correction to bandgap and save the results
+    // calculating deepks correction and save the results
     if (PARAM.inp.deepks_out_labels)
     {
         // Used for deepks_scf == 1
@@ -317,38 +363,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
 
     } // end deepks_out_labels
 
-    // DeePKS PDM and descriptor
-    if (PARAM.inp.deepks_out_labels || PARAM.inp.deepks_scf)
-    {
-        // this part is for integrated test of deepks
-        // so it is printed no matter even if deepks_out_labels is not used
-        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        if (!PARAM.inp.deepks_scf)
-        {
-            DeePKS_domain::cal_pdm<
-                TK>(init_pdm, inlmax, lmaxd, inl_l, inl_index, dm, phialpha, ucell, orb, GridD, *ParaV, pdm);
-        }
-
-        DeePKS_domain::check_pdm(inlmax, inl_l, pdm); // print out the projected dm for NSCF calculaiton
-
-        std::vector<torch::Tensor> descriptor;
-        DeePKS_domain::cal_descriptor(nat, inlmax, inl_l, pdm, descriptor,
-                                      des_per_atom); // final descriptor
-        DeePKS_domain::check_descriptor(inlmax, des_per_atom, inl_l, ucell, PARAM.globalv.global_out_dir, descriptor);
-
-        if (PARAM.inp.deepks_out_labels)
-        {
-            LCAO_deepks_io::save_npy_d(nat,
-                                       des_per_atom,
-                                       inlmax,
-                                       inl_l,
-                                       PARAM.inp.deepks_equiv,
-                                       descriptor,
-                                       PARAM.globalv.global_out_dir,
-                                       GlobalV::MY_RANK); // libnpy needed
-        }
-    }
-
     /// print out deepks information to the screen
     if (PARAM.inp.deepks_scf)
     {
@@ -361,7 +375,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         {
             LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, ParaV->nrow, dm->get_DMK_vector());
 
-            DeePKS_domain::check_gedm(inlmax, inl_l, gedm);
+            DeePKS_domain::check_gedm(inlmax, inl_l, ld->gedm);
 
             std::ofstream ofs("E_delta_bands.dat");
             ofs << std::setprecision(10) << e_delta_band;
