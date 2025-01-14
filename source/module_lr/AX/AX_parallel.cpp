@@ -71,7 +71,7 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         const Parallel_2D& pX,
-        std::complex<double>* AX_istate,
+        std::complex<double>* const AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_plas");

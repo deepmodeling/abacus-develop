@@ -40,7 +40,7 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        std::complex<double>* AX_istate)
+        std::complex<double>* const AX_istate)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_forloop");
         const int nks = V_istate.size();
@@ -107,7 +107,7 @@ namespace LR
         const psi::Psi<std::complex<double>>& c,
         const int& nocc,
         const int& nvirt,
-        std::complex<double>* AX_istate,
+        std::complex<double>* const AX_istate,
         const bool add_on)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_blas");
