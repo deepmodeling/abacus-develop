@@ -372,7 +372,7 @@ void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
     {
         ld.allocate_V_delta(ucell.nat, kv.nkstot);
     }
-    DeePKS_domain::cal_gedm(ucell.nat,
+    DeePKS_domain::cal_edelta_gedm(ucell.nat,
                             this->ld.lmaxd,
                             this->ld.nmaxd,
                             this->ld.inlmax,

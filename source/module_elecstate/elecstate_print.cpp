@@ -2,6 +2,7 @@
 #include "elecstate_getters.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
+#include "module_base/parallel_common.h"
 #include "module_elecstate/potentials/H_Hartree_pw.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
@@ -152,7 +153,9 @@ void print_scf_iterinfo(const std::string& ks_solver,
 void ElecState::print_eigenvalue(std::ofstream& ofs)
 {
     bool wrong = false;
-    for (int ik = 0; ik < this->klist->get_nks(); ++ik)
+    const int nks = this->klist->get_nks();
+    const int nkstot = this->klist->get_nkstot();
+    for (int ik = 0; ik < nks; ++ik)
     {
         for (int ib = 0; ib < this->ekb.nc; ++ib)
         {
@@ -164,76 +167,87 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
             }
         }
     }
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, &wrong, 1, MPI_C_BOOL, MPI_LOR, MPI_COMM_WORLD);
+#endif
     if (wrong)
     {
         ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
     }
-
-    if (GlobalV::MY_RANK != 0)
+    std::stringstream ss;
+    if(PARAM.inp.out_alllog)
     {
-        return;
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
     }
+    else
+    {
+        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
+    }
+    std::string filename = ss.str();
+    std::vector<int> ngk_tot = this->klist->ngk;
+
+#ifdef __MPI
+    if(!PARAM.inp.out_alllog)
+    {
+        Parallel_Common::bcast_string(filename);
+    }
+    MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
+#endif
 
     ModuleBase::TITLE("ESolver_KS_PW", "print_eigenvalue");
 
     ofs << "\n STATE ENERGY(eV) AND OCCUPATIONS ";
-    for (int ik = 0; ik < this->klist->get_nks(); ik++)
+    const int nk_fac = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nks_np = nks / nk_fac;
+    const int nkstot_np = nkstot / nk_fac;
+    ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
+    for (int is = 0; is < nk_fac; ++is)
     {
-        ofs << std::setprecision(5);
-        ofs << std::setiosflags(std::ios::showpoint);
-        if (ik == 0)
+        if (is == 0 && nk_fac == 2)
         {
-            ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
-            if (PARAM.inp.nspin == 2)
-            {
-                ofs << "SPIN UP : " << std::endl;
-            }
+            ofs << "SPIN UP : " << std::endl;
         }
-        else if (ik == this->klist->get_nks() / 2)
+        else if (is == 1 && nk_fac == 2)
         {
-            if (PARAM.inp.nspin == 2)
-            {
-                ofs << "SPIN DOWN : " << std::endl;
-            }
+            ofs << "SPIN DOWN : " << std::endl;
         }
 
-        if (PARAM.inp.nspin == 2)
+        for (int ip = 0; ip < GlobalV::KPAR; ++ip)
         {
-            if (this->klist->isk[ik] == 0)
+#ifdef __MPI
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
+            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_STOGROUP == 0);
+            if (GlobalV::MY_POOL == ip && ip_flag)
             {
-                ofs << " " << ik + 1 << "/" << this->klist->get_nks() / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
+                const int start_ik = nks_np * is;
+                const int end_ik = nks_np * (is + 1);
+                for (int ik = start_ik; ik < end_ik; ++ik)
+                {
+                    std::ofstream ofs_eig(filename.c_str(), std::ios::app);
+                    ofs_eig << std::setprecision(5);
+                    ofs_eig << std::setiosflags(std::ios::showpoint);
+                    ofs_eig << " " << this->klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
+                            << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y
+                            << " " << this->klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
 
-                ofs << std::setprecision(6);
+                    ofs_eig << std::setprecision(6);
+                    ofs_eig << std::setiosflags(std::ios::showpoint);
+                    for (int ib = 0; ib < this->ekb.nc; ib++)
+                    {
+                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << std::setw(15) << this->wg(ik, ib) << std::endl;
+                    }
+                    ofs_eig << std::endl;
+                    ofs_eig.close();
+                }
             }
-            if (this->klist->isk[ik] == 1)
-            {
-                ofs << " " << ik + 1 - this->klist->get_nks() / 2 << "/" << this->klist->get_nks() / 2
-                    << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                    << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-                ofs << std::setprecision(6);
-            }
-        } // Pengfei Li  added  14-9-9
-        else
-        {
-            ofs << " " << ik + 1 << "/" << this->klist->get_nks()
-                << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y << " "
-                << this->klist->kvec_c[ik].z << " (" << this->klist->ngk[ik] << " pws)" << std::endl;
-
-            ofs << std::setprecision(6);
         }
-
-        ofs << std::setprecision(6);
-        ofs << std::setiosflags(std::ios::showpoint);
-        for (int ib = 0; ib < this->ekb.nc; ib++)
-        {
-            ofs << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV << std::setw(15)
-                << this->wg(ik, ib) << std::endl;
-        }
-        ofs << std::endl;
-    } // end ik
+#ifdef __MPI
+            MPI_Barrier(MPI_COMM_WORLD);
+#endif
+        ofs.seekp(0, std::ios::end);
+    }
     return;
 }
 

@@ -346,20 +346,21 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     if (PARAM.inp.deepks_scf)
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
-        std::vector<torch::Tensor> descriptor;
-        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
-        DeePKS_domain::cal_gedm(ucell.nat,
-                                ld.lmaxd,
-                                ld.nmaxd,
-                                ld.inlmax,
-                                ld.des_per_atom,
-                                ld.inl_l,
-                                descriptor,
-                                ld.pdm,
-                                ld.model_deepks,
-                                ld.gedm,
-                                ld.E_delta);
+
+        // These calculations have been done in LCAO_Deepks_Interface in after_scf
+        // std::vector<torch::Tensor> descriptor;
+        // DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
+        // DeePKS_domain::cal_edelta_gedm(ucell.nat,
+        //                         ld.lmaxd,
+        //                         ld.nmaxd,
+        //                         ld.inlmax,
+        //                         ld.des_per_atom,
+        //                         ld.inl_l,
+        //                         descriptor,
+        //                         ld.pdm,
+        //                         ld.model_deepks,
+        //                         ld.gedm,
+        //                         ld.E_delta);
 
         DeePKS_domain::cal_f_delta<std::complex<double>>(dm_k,
                                                          ucell,

@@ -11,7 +11,7 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         double* mat_mo,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
@@ -49,7 +49,7 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         std::complex<double>* const mat_mo,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_forloop_serial");
         const int nks = mat_ao.size();
@@ -88,7 +88,7 @@ namespace LR
         const int& nvirt,
         double* mat_mo,
         const bool add_on,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
         const int nks = mat_ao.size();
@@ -129,7 +129,7 @@ namespace LR
         const int& nvirt,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_blas");
         const int nks = mat_ao.size();

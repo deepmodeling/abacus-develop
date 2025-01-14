@@ -115,6 +115,8 @@ void DiagoBPCG<T, Device>::orth_cholesky(
                 hsub_out.data<T>(),
                 this->n_band);     //ldc
 
+    Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
+    
     // set hsub matrix to lower format;
     ct::kernels::set_matrix<T, ct_Device>()(
         'L', hsub_out.data<T>(), this->n_band);
@@ -167,7 +169,6 @@ void DiagoBPCG<T, Device>::orth_projection(
         /*conj_x=*/false, /*conj_y=*/true, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&hsub_in);
     // hsub_in = ct::op::einsum("ij,kj->ik", grad_out, psi_in, option);
 
-    // this->orth_projection(this->psi, this->hsub, this->grad);
     // gemm: hsub_in(n_band x n_band) = psi_in^T(n_band x n_basis) * grad_out(n_basis x n_band)
     gemm_op()(this->ctx,
                 'C',
@@ -184,6 +185,8 @@ void DiagoBPCG<T, Device>::orth_projection(
                 hsub_in.data<T>(),
                 this->n_band);     //ldc
 
+    Parallel_Reduce::reduce_pool(hsub_in.data<T>(), this->n_band * this->n_band);
+    
     // set_matrix_op()('L', hsub_in->data<T>(), this->n_band);
     option = ct::EinsumOption(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/-1.0, /*beta=*/1.0, /*Tensor out=*/&grad_out);
@@ -205,6 +208,8 @@ void DiagoBPCG<T, Device>::orth_projection(
                 grad_out.data<T>(),
                 this->n_basis);   //ldc
 
+    // * This type of non inner product like operation does not need reduce!
+    
     return;
 }
 
@@ -216,25 +221,25 @@ void DiagoBPCG<T, Device>::rotate_wf(
 {
     ct::EinsumOption option(
         /*conj_x=*/false, /*conj_y=*/false, /*alpha=*/1.0, /*beta=*/0.0, /*Tensor out=*/&workspace_in);
-    workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
+    // workspace_in = ct::op::einsum("ij,jk->ik", hsub_in, psi_out, option);
 
-    // this->rotate_wf(hsub_out, psi_out, workspace_in);
-    // this->orth_cholesky(this->work, this->psi, this->hpsi, this->hsub);
     // gemm: workspace_in(n_basis x n_band) = psi_out(n_basis x n_band) * hsub_in(n_band x n_band)
-    // gemm_op()(this->ctx,
-    //             'N',
-    //             'N',
-    //             this->n_basis,        //m
-    //             this->n_band,       //n
-    //             this->n_band,       //k
-    //             this->one,          //1.0
-    //             psi_out.data<T>(),
-    //             this->n_basis,      //lda
-    //             hsub_in.data<T>(),
-    //             this->n_band,       //ldb
-    //             this->zero,         //0.0
-    //             workspace_in.data<T>(),
-    //             this->n_basis);     //ldc
+    gemm_op()(this->ctx,
+                'N',
+                'N',
+                this->n_basis,        //m
+                this->n_band,       //n
+                this->n_band,       //k
+                this->one,          //1.0
+                psi_out.data<T>(),
+                this->n_basis,      //lda
+                hsub_in.data<T>(),
+                this->n_band,       //ldb
+                this->zero,         //0.0
+                workspace_in.data<T>(),
+                this->n_basis);     //ldc
+    
+    // * This type of non inner product like operation does not need reduce!
 
     syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
 
@@ -280,6 +285,8 @@ void DiagoBPCG<T, Device>::diag_hsub(
                 this->zero,         //0.0
                 hsub_out.data<T>(),
                 this->n_band);      //ldc
+
+    Parallel_Reduce::reduce_pool(hsub_out.data<T>(), this->n_band * this->n_band);
 
     ct::kernels::lapack_dnevd<T, ct_Device>()('V', 'U', hsub_out.data<T>(), this->n_band, eigenvalue_out.data<Real>());
 

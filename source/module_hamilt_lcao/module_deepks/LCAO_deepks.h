@@ -80,7 +80,7 @@ class LCAO_Deepks
     bool init_pdm = false; // for DeePKS NSCF calculation, set init_pdm to skip the calculation of pdm in SCF iteration
 
     // deep neural network module that provides corrected Hamiltonian term and
-    // related derivatives. Used in cal_gedm.
+    // related derivatives. Used in cal_edelta_gedm.
     torch::jit::script::Module model_deepks;
 
     // saves <phi(0)|alpha(R)> and its derivatives

@@ -19,6 +19,7 @@ namespace ModuleIO
  */
 void read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
                      ModuleSymmetry::Symmetry& symm,
+                     const int* ik2iktot,
                      const int nkstot,
                      const std::vector<int>& isk,
                      Charge& chg);

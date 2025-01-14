@@ -27,9 +27,9 @@ class psi_initializer_random : public psi_initializer<T>
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const Parallel_Kpoints*,             //< parallel kpoints
-                            const int& = 1,                //< random seed
+                            const K_Vectors*,                    //< kpoints
+                            const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;      //< MPI rank
+                            const int& = 0) override;            //< MPI rank
 };
 #endif

@@ -55,7 +55,7 @@ TEST_F(ReadWfcPwTest, ReadWfcPw)
     PARAM.input.nbands = 8;
     const int nbasis = wfcpw->npwk[0];
     ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
-    ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom);
+    ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom);
 
     if (GlobalV::NPROC_IN_POOL == 1)
     {
@@ -126,7 +126,7 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
     // dat file
     std::string filename = "notfound.dat";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.dat"));
 
@@ -134,14 +134,14 @@ TEST_F(ReadWfcPwTest, NotFoundFile)
     // txt file
     filename = "notfound.txt";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("Can't open file notfound.txt"));
 
     // other file
     filename = "notfound";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("Unknown file type und"));
     }
@@ -166,7 +166,7 @@ TEST_F(ReadWfcPwTest, InconsistentBands)
         const int nbasis = wfcpw->npwk[0];
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("nbands_in = 8"));
         EXPECT_THAT(output, testing::HasSubstr("nbands = 4"));
@@ -198,7 +198,7 @@ TEST_F(ReadWfcPwTest, InconsistentKvec)
         const int nbasis = wfcpw->npwk[0];
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("kvec_in[0] = 0 0 0"));
         EXPECT_THAT(output, testing::HasSubstr("kvec[0] = -1 1 -1"));
@@ -226,7 +226,7 @@ TEST_F(ReadWfcPwTest, InconsistentLat0)
         const int nbasis = wfcpw->npwk[0];
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("lat0_in = 5.3233"));
         EXPECT_THAT(output, testing::HasSubstr("lat0 = 5"));
@@ -254,7 +254,7 @@ TEST_F(ReadWfcPwTest, InconsistentG)
         const int nbasis = wfcpw->npwk[0];
         ModuleBase::ComplexMatrix wfcatom(PARAM.input.nbands, nbasis);
         testing::internal::CaptureStdout();
-        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
+        EXPECT_EXIT(ModuleIO::read_wfc_pw(filename, wfcpw, 0, 0, nkstot, wfcatom), ::testing::ExitedWithCode(1), "");
         std::string output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("G_in[0] = -1 -1 1\nG_in[1] = 1 1 1\nG_in[2] = -1 1 -1\n"));
         EXPECT_THAT(

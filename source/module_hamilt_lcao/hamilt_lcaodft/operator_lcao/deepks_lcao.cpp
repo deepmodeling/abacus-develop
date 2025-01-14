@@ -186,7 +186,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       this->ld->pdm,
                                       descriptor,
                                       this->ld->des_per_atom);
-        DeePKS_domain::cal_gedm(this->ucell->nat,
+        DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
                                 this->ld->lmaxd,
                                 this->ld->nmaxd,
                                 inlmax,
