@@ -2,11 +2,11 @@
 
 namespace ModuleGint
 {
+std::shared_ptr<const LocalCellInfo> BigGrid::localcell_info_ = nullptr;
+std::shared_ptr<const UnitCellInfo> BigGrid::unitcell_info_ = nullptr;
+std::shared_ptr<const BigGridInfo> BigGrid::biggrid_info_ = nullptr;
 
-BigGrid::BigGrid(int idx, std::shared_ptr<const LocalCellInfo> localcell_info)
-    : idx_(idx), localcell_info_(localcell_info),
-      unitcell_info_(localcell_info->get_unitcell_info()),
-      biggrid_info_(localcell_info_->get_biggrid_info()) {}
+BigGrid::BigGrid(int idx): idx_(idx){}
 
 void BigGrid::add_atom(const GintAtom* atom)
 {

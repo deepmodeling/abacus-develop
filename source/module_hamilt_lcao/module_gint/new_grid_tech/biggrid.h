@@ -80,13 +80,13 @@ class BigGrid
         const int idx_;
 
         // local cell info
-        std::shared_ptr<const LocalCellInfo> localcell_info_;
+        static std::shared_ptr<const LocalCellInfo> localcell_info_;
 
         // unitcell info
-        std::shared_ptr<const UnitCellInfo> unitcell_info_;
+        static std::shared_ptr<const UnitCellInfo> unitcell_info_;
 
         // the big grid info
-        std::shared_ptr<const BigGridInfo> biggrid_info_;
+        static std::shared_ptr<const BigGridInfo> biggrid_info_;
 };
 
 } // namespace ModuleGint

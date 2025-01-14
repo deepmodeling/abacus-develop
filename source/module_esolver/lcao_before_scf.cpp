@@ -132,7 +132,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         orb_.Phi,
         ucell,
         this->gd);
-    ModuleGint::Gint::set_gint_info(gint_info);
+    ModuleGint::Gint::init_gint_info(gint_info);
         
     psi_u.clear();
     psi_u.shrink_to_fit();

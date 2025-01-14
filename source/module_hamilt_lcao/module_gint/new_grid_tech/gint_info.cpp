@@ -38,7 +38,7 @@ GintInfo::GintInfo(
 
     for (int i = 0; i < localcell_info_->get_bgrids_num(); i++)
     {
-        biggrids_.push_back(std::make_shared<BigGrid>(i, localcell_info_));
+        biggrids_.push_back(std::make_shared<BigGrid>(i));
     }
 
     // initialize the atoms
