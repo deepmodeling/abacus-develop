@@ -200,7 +200,9 @@ void IState_Charge::begin(Gint_k& gk,
         mode = 3;
     }
 
-    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
+    // for nspin = 4 case, fermi_band is the number of electrons because of each band has 1 electron
+    if(PARAM.inp.nspin == 4) fermi_band = nelec;
     std::cout << " number of electrons = " << nelec << std::endl;
     std::cout << " number of occupied bands = " << fermi_band << std::endl;
 
@@ -216,7 +218,7 @@ void IState_Charge::begin(Gint_k& gk,
             elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
 
 #ifdef __MPI
-            this->idmatrix(ib, nspin, nelec, nlocal, wg, DM, kv, if_separate_k);
+            this->idmatrix(ib, nspin_dm, nelec, nlocal, wg, DM, kv, if_separate_k);
 #else
             ModuleBase::WARNING_QUIT("IState_Charge::begin", "The `pchg` calculation is only available for MPI now!");
 #endif
@@ -224,7 +226,7 @@ void IState_Charge::begin(Gint_k& gk,
             if (if_separate_k)
             {
                 // For multi-k, loop over all real k-points
-                for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
+                for (int ik = 0; ik < kv.get_nks() / nspin_dm; ++ik)
                 {
                     for (int is = 0; is < nspin; ++is)
                     {
@@ -506,16 +508,8 @@ void IState_Charge::idmatrix(const int& ib,
     ModuleBase::TITLE("IState_Charge", "idmatrix");
     assert(wg.nr == kv.get_nks());
 
-    const int fermi_band = static_cast<int>((nelec + 1) / 2 + 1.0e-8);
-
     // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
-    double wg_sum_k = 0;
-    double wg_sum_k_homo = 0;
-    for (int ik = 0; ik < kv.get_nks() / nspin; ++ik)
-    {
-        wg_sum_k += wg(ik, ib);
-        wg_sum_k_homo += wg(ik, fermi_band - 1);
-    }
+    double wg_sum_k = 1.0;
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
@@ -530,11 +524,11 @@ void IState_Charge::idmatrix(const int& ib,
             double wg_value;
             if (if_separate_k)
             {
-                wg_value = (ib < fermi_band) ? wg_sum_k : wg_sum_k_homo;
+                wg_value = wg_sum_k;
             }
             else
             {
-                wg_value = (ib < fermi_band) ? wg(ik, ib) : wg(ik, fermi_band - 1);
+                wg_value = wg(ik, 0);
             }
             wg_local[ib_local] = wg_value;
         }
