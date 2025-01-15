@@ -1,4 +1,5 @@
 #include "../blas_connector.h"
+#include "../module_device/memory_op.h"
 #include "gtest/gtest.h"
 
 #include <algorithm>
@@ -84,8 +85,7 @@ TEST(blas_connector, Scal) {
     };
     for (int i = 0; i < size; i++)
         answer[i] = result[i] * scale;
-    BlasConnector bs;
-    bs.scal(size,scale,result,incx);
+    BlasConnector::scal(size,scale,result,incx);
     // incx is the spacing between elements if result
     for (int i = 0; i < size; i++) {
         EXPECT_DOUBLE_EQ(answer[i].real(), result[i].real());
@@ -313,6 +313,84 @@ TEST(blas_connector, zgemv_) {
     }
 }
 
+TEST(blas_connector, Gemv) {
+    typedef std::complex<double> T;
+    const char transa_m = 'N';
+    const char transa_n = 'T';
+    const char transa_h = 'C';
+    const int size_m = 3;
+    const int size_n = 4;
+    const T alpha_const = {2, 3};
+    const T beta_const = {3, 4};
+    const int lda = 5;
+    const int incx = 1;
+    const int incy = 1;
+    std::array<T, size_m> x_const_m, x_const_c, result_m, answer_m, c_dot_m{};
+    std::array<T, size_n> x_const_n, result_n, result_c, answer_n, answer_c,
+        c_dot_n{}, c_dot_c{};
+    std::generate(x_const_n.begin(), x_const_n.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::generate(result_n.begin(), result_n.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::generate(x_const_m.begin(), x_const_m.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::generate(result_m.begin(), result_m.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::array<T, size_n * lda> a_const;
+    std::generate(a_const.begin(), a_const.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    for (int i = 0; i < size_m; i++) {
+        for (int j = 0; j < size_n; j++) {
+            c_dot_m[i] += a_const[i + j * lda] * x_const_n[j];
+        }
+        answer_m[i] = alpha_const * c_dot_m[i] + beta_const * result_m[i];
+    }
+    BlasConnector::gemv(transa_m, size_m, size_n, alpha_const, a_const.data(), lda,
+           x_const_n.data(), incx, beta_const, result_m.data(), incy);
+
+    for (int j = 0; j < size_n; j++) {
+        for (int i = 0; i < size_m; i++) {
+            c_dot_n[j] += a_const[i + j * lda] * x_const_m[i];
+        }
+        answer_n[j] = alpha_const * c_dot_n[j] + beta_const * result_n[j];
+    }
+    BlasConnector::gemv(transa_n, size_m, size_n, alpha_const, a_const.data(), lda,
+           x_const_n.data(), incx, beta_const, result_m.data(), incy);
+
+    for (int j = 0; j < size_n; j++) {
+        for (int i = 0; i < size_m; i++) {
+            c_dot_c[j] += conj(a_const[i + j * lda]) * x_const_c[i];
+        }
+        answer_c[j] = alpha_const * c_dot_c[j] + beta_const * result_c[j];
+    }
+    BlasConnector::gemv(transa_h, size_m, size_n, alpha_const, a_const.data(), lda,
+           x_const_n.data(), incx, beta_const, result_m.data(), incy);
+
+    for (int i = 0; i < size_m; i++) {
+        EXPECT_DOUBLE_EQ(answer_m[i].real(), result_m[i].real());
+        EXPECT_DOUBLE_EQ(answer_m[i].imag(), result_m[i].imag());
+    }
+    for (int j = 0; j < size_n; j++) {
+        EXPECT_DOUBLE_EQ(answer_n[j].real(), result_n[j].real());
+        EXPECT_DOUBLE_EQ(answer_n[j].imag(), result_n[j].imag());
+    }
+    for (int j = 0; j < size_n; j++) {
+        EXPECT_DOUBLE_EQ(answer_c[j].real(), result_c[j].real());
+        EXPECT_DOUBLE_EQ(answer_c[j].imag(), result_c[j].imag());
+    }
+}
+
+
 TEST(blas_connector, dgemm_) {
     typedef double T;
     const char transa_m = 'N';
@@ -394,6 +472,56 @@ TEST(blas_connector, zgemm_) {
     zgemm_(&transa_m, &transb_m, &size_m, &size_n, &size_k, &alpha_const,
            a_const.data(), &lda, b_const.data(), &ldb, &beta_const,
            result.data(), &ldc);
+
+    for (int i = 0; i < size_m; i++)
+        for (int j = 0; j < size_n; j++) {
+            EXPECT_DOUBLE_EQ(answer[i + j * ldc].real(),
+                             result[i + j * ldc].real());
+            EXPECT_DOUBLE_EQ(answer[i + j * ldc].imag(),
+                             result[i + j * ldc].imag());
+        }
+}
+
+TEST(blas_connector, Gemm) {
+    typedef std::complex<double> T;
+    const char transa_m = 'N';
+    const char transb_m = 'N';
+    const int size_m = 3;
+    const int size_n = 4;
+    const int size_k = 5;
+    const T alpha_const = {2, 3};
+    const T beta_const = {3, 4};
+    const int lda = 6;
+    const int ldb = 5;
+    const int ldc = 4;
+    std::array<T, size_k * lda> a_const;
+    std::array<T, size_n * ldb> b_const;
+    std::array<T, size_n * ldc> c_dot{}, answer, result;
+    std::generate(a_const.begin(), a_const.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::generate(b_const.begin(), b_const.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    std::generate(result.begin(), result.end(), []() {
+        return T{static_cast<double>(std::rand() / double(RAND_MAX)),
+                 static_cast<double>(std::rand() / double(RAND_MAX))};
+    });
+    for (int i = 0; i < size_m; i++) {
+        for (int j = 0; j < size_n; j++) {
+            for (int k = 0; k < size_k; k++) {
+                c_dot[i + j * ldc] +=
+                    a_const[i + k * lda] * b_const[k + j * ldb];
+            }
+            answer[i + j * ldc] = alpha_const * c_dot[i + j * ldc] +
+                                  beta_const * result[i + j * ldc];
+        }
+    }
+    BlasConnector::gemm(transa_m, transb_m, size_m, size_n, size_k, alpha_const,
+           a_const.data(), lda, b_const.data(), ldb, beta_const,
+           result.data(), ldc);
 
     for (int i = 0; i < size_m; i++)
         for (int j = 0; j < size_n; j++) {
