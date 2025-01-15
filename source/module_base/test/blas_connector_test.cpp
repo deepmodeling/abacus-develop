@@ -365,7 +365,7 @@ TEST(blas_connector, Gemv) {
         answer_n[j] = alpha_const * c_dot_n[j] + beta_const * result_n[j];
     }
     BlasConnector::gemv(transa_n, size_m, size_n, alpha_const, a_const.data(), lda,
-           x_const_n.data(), incx, beta_const, result_m.data(), incy);
+           x_const_m.data(), incx, beta_const, result_n.data(), incy);
 
     for (int j = 0; j < size_n; j++) {
         for (int i = 0; i < size_m; i++) {
@@ -374,7 +374,7 @@ TEST(blas_connector, Gemv) {
         answer_c[j] = alpha_const * c_dot_c[j] + beta_const * result_c[j];
     }
     BlasConnector::gemv(transa_h, size_m, size_n, alpha_const, a_const.data(), lda,
-           x_const_n.data(), incx, beta_const, result_m.data(), incy);
+           x_const_c.data(), incx, beta_const, result_c.data(), incy);
 
     for (int i = 0; i < size_m; i++) {
         EXPECT_DOUBLE_EQ(answer_m[i].real(), result_m[i].real());
@@ -519,7 +519,7 @@ TEST(blas_connector, Gemm) {
                                   beta_const * result[i + j * ldc];
         }
     }
-    BlasConnector::gemm(transa_m, transb_m, size_m, size_n, size_k, alpha_const,
+    BlasConnector::gemm_cm(transa_m, transb_m, size_m, size_n, size_k, alpha_const,
            a_const.data(), lda, b_const.data(), ldb, beta_const,
            result.data(), ldc);
 
