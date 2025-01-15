@@ -327,6 +327,15 @@ public:
 	void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 };
 
+#ifdef __CUDA
+
+namespace BlasUtils{
+	void createGpuBlasHandle();
+	void destoryBLAShandle();
+}
+
+#endif
+
 // If GATHER_INFO is defined, the original function is replaced with a "i" suffix,
 // preventing changes on the original code.
 // The real function call is at gather_math_lib_info.cpp
