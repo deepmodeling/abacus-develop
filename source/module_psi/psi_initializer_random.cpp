@@ -11,16 +11,12 @@ template <typename T>
 void psi_initializer_random<T>::initialize(const Structure_Factor* sf,
                                            const ModulePW::PW_Basis_K* pw_wfc,
                                            const UnitCell* p_ucell,
-                                           const Parallel_Kpoints* p_parakpts,
+                                           const K_Vectors* p_kv_in,
                                            const int& random_seed,
                                            const pseudopot_cell_vnl* p_pspot_nl,
                                            const int& rank)
 {
-    this->pw_wfc_ = pw_wfc;
-    this->p_ucell_ = p_ucell;
-    this->p_parakpts_ = p_parakpts;
-    this->random_seed_ = random_seed;
-    this->p_pspot_nl_ = p_pspot_nl;
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());

@@ -50,6 +50,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
+#ifdef __DEEPKS
+                                          LCAO_Deepks& ld,
+#endif
 #ifdef __EXX
                                           Exx_LRI<double>& exx_lri_double,
                                           Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -180,6 +183,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __DEEPKS
                         fvnl_dalpha,
                         svnl_dalpha,
+                        ld,
 #endif
                         gint_gamma,
                         gint_k,
@@ -500,16 +504,16 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
-            LCAO_deepks_io::save_npy_f(fcs, file_ftot, GlobalV::MY_RANK); // Ry/Bohr, F_tot
+            LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Ry/Bohr, F_tot
 
             const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha, file_fbase, GlobalV::MY_RANK); // Ry/Bohr, F_base
+                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs - fvnl_dalpha, GlobalV::MY_RANK); // Ry/Bohr, F_base
             }
             else
             {
-                LCAO_deepks_io::save_npy_f(fcs, file_fbase, GlobalV::MY_RANK); // no scf, F_base=F_tot
+                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
             }
         }
 #endif
@@ -682,23 +686,24 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
-            LCAO_deepks_io::save_npy_s(scs,
-                                       file_stot,
-                                       ucell.omega,
-                                       GlobalV::MY_RANK); // change to energy unit Ry when printing, S_tot, w/ model
+            LCAO_deepks_io::save_matrix2npy(file_stot,
+                                            scs,
+                                            GlobalV::MY_RANK,
+                                            ucell.omega,
+                                            'U'); // change to energy unit Ry when printing, S_tot;
 
             const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
-                                           file_sbase,
-                                           ucell.omega,
-                                           GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
+                LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                scs - svnl_dalpha,
+                                                GlobalV::MY_RANK,
+                                                ucell.omega,
+                                                'U'); // change to energy unit Ry when printing, S_base;
             }
             else
             {
-                LCAO_deepks_io::save_npy_s(scs, file_sbase, ucell.omega,
-                                           GlobalV::MY_RANK); // sbase = stot
+                LCAO_deepks_io::save_matrix2npy(file_sbase, scs, GlobalV::MY_RANK, ucell.omega, 'U'); // sbase = stot
             }
         }
 #endif
@@ -832,6 +837,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #if __DEEPKS
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
+                                              LCAO_Deepks& ld,
 #endif
                                               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                               Gint_k& gint_k,         // mohan add 2024-04-01
@@ -859,6 +865,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #if __DEEPKS
                fvnl_dalpha,
                svnl_dalpha,
+               ld,
 #endif
                gint_gamma,
                two_center_bundle,
@@ -887,6 +894,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #if __DEEPKS
                                                             ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
+                                                            LCAO_Deepks& ld,
 #endif
                                                             Gint_Gamma& gint_gamma,
                                                             Gint_k& gint_k,
@@ -913,6 +921,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #if __DEEPKS
                fvnl_dalpha,
                svnl_dalpha,
+               ld,
 #endif
                gint_k,
                two_center_bundle,

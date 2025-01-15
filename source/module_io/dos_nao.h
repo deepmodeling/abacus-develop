@@ -18,7 +18,6 @@ namespace ModuleIO
 				const double& dos_scale,
 				const double& dos_sigma,
 				const K_Vectors& kv,
-				const Parallel_Kpoints& Pkpoints,
 				const UnitCell& ucell,
 				const elecstate::efermi& eferm,
 				int nbands,

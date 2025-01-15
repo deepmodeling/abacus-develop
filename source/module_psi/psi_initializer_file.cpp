@@ -8,16 +8,12 @@ template <typename T>
 void psi_initializer_file<T>::initialize(const Structure_Factor* sf,
                                          const ModulePW::PW_Basis_K* pw_wfc,
                                          const UnitCell* p_ucell,
-                                         const Parallel_Kpoints* p_parakpts,
+                                         const K_Vectors* p_kv_in,
                                          const int& random_seed,
                                          const pseudopot_cell_vnl* p_pspot_nl,
                                          const int& rank)
 {
-    this->pw_wfc_ = pw_wfc;
-    this->p_ucell_ = p_ucell;
-    this->p_parakpts_ = p_parakpts;
-    this->random_seed_ = random_seed;
-    this->p_pspot_nl_ = p_pspot_nl;
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
     this->nbands_start_ = PARAM.inp.nbands;
     this->nbands_complem_ = 0;
 }
@@ -28,13 +24,12 @@ void psi_initializer_file<T>::init_psig(T* psig, const int& ik)
     ModuleBase::timer::tick("psi_initializer_file", "init_psig");
     const int npol = PARAM.globalv.npol;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
-    const int pre_nk = PARAM.inp.nspin == 2 ? 2 : 1;
-    const int nkstot = this->p_parakpts_->nkstot_np * pre_nk;
+    const int nkstot = this->p_kv->get_nkstot();
     ModuleBase::ComplexMatrix wfcatom(this->nbands_start_, nbasis);
     std::stringstream filename;
-    int ik_tot = K_Vectors::get_ik_global(ik, nkstot);
+    int ik_tot = this->p_kv->ik2iktot[ik];
     filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ik_tot + 1 << ".dat";
-    ModuleIO::read_wfc_pw(filename.str(), this->pw_wfc_, ik, nkstot, wfcatom);
+    ModuleIO::read_wfc_pw(filename.str(), this->pw_wfc_, ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
     for (int ib = 0; ib < this->nbands_start_; ib++)

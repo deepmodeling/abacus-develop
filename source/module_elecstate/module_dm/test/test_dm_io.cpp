@@ -33,15 +33,6 @@ Magnetism::~Magnetism()
 }
 
 #include "module_cell/klist.h"
-
-K_Vectors::K_Vectors()
-{
-}
-
-K_Vectors::~K_Vectors()
-{
-}
-
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 // mock find_atom() function
 void Grid_Driver::Find_atom(const UnitCell& ucell,

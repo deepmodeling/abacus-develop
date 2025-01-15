@@ -483,6 +483,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
     {
         const int nband = psi.get_nbands();
         const int nbasis = psi.get_nbasis();
+        const int ndim = psi.get_current_ngk();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
@@ -499,7 +500,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             ModuleBase::timer::tick("DavSubspace", "hpsi_func");
         };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
-        bpcg.init_iter(nband, nbasis);
+        bpcg.init_iter(nband, nbasis, ndim);
         bpcg.diag(hpsi_func, psi.get_pointer(), eigenvalue, this->ethr_band);
     }
     else if (this->method == "dav_subspace")

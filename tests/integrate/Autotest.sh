@@ -250,7 +250,7 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-        if [ "$case" = "282_NO_RPA" -o "$dir" = "102_PW_BPCG" ]; then
+        if [ "$case" = "282_NO_RPA" ]; then
             mpirun -np 1 $abacus > log.txt
         else
             mpirun -np $np $abacus > log.txt

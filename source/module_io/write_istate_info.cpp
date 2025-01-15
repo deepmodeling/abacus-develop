@@ -5,7 +5,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/timer.h"
 
-void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv,const Parallel_Kpoints* Pkpoints)
+void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase::matrix &wg, const K_Vectors& kv)
 {
 	ModuleBase::TITLE("ModuleIO","write_istate_info");
 	ModuleBase::timer::tick("ModuleIO", "write_istate_info");
@@ -33,7 +33,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                 for (int ik = 0; ik < kv.get_nks(); ik++)
                 {
 #ifdef __MPI
-                    int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
+                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
 #else
                     int ik_global = ik + 1;
 #endif
@@ -57,7 +57,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                 for (int ik = 0; ik < kv.get_nks() / 2; ik++)
                 {
 #ifdef __MPI
-                    int ik_global = Pkpoints->startk_pool[ip] + ik + 1;
+                    int ik_global = kv.para_k.startk_pool[ip] + ik + 1;
 #else
                     int ik_global = ik + 1;
 #endif

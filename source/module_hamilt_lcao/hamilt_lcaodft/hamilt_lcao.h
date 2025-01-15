@@ -13,6 +13,11 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 
 #include <vector>
+
+#ifdef __DEEPKS
+#include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
+#endif
+
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
@@ -40,6 +45,10 @@ class HamiltLCAO : public Hamilt<TK>
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
                elecstate::DensityMatrix<TK, double>* DM_in
+#ifdef __DEEPKS
+               ,
+               LCAO_Deepks* ld_in
+#endif
 #ifdef __EXX
                ,
                const int istep,

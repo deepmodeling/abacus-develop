@@ -3,6 +3,7 @@
 #ifdef __DEEPKS
 
 #include "LCAO_deepks_io.h"
+#include "module_base/tool_quit.h"
 #include "npy.hpp"
 
 #include <mpi.h>
@@ -149,65 +150,6 @@ void LCAO_deepks_io::save_npy_e(const double& e, const std::string& e_file, cons
     return;
 }
 
-// saves force in numpy format
-void LCAO_deepks_io::save_npy_f(const ModuleBase::matrix& f, const std::string& f_file, const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_f");
-
-    if (rank != 0)
-    {
-        return;
-    }
-
-    // save force in unit: Rydberg/Bohr
-    const long unsigned fshape[] = {static_cast<unsigned long>(f.nr), static_cast<unsigned long>(f.nc)};
-    npy::SaveArrayAsNumpy(f_file, false, 2, fshape, f.c);
-    return;
-}
-
-// saves stress in numpy format
-void LCAO_deepks_io::save_npy_s(const ModuleBase::matrix& stress,
-                                const std::string& s_file,
-                                const double& omega,
-                                const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_s");
-    if (rank != 0)
-    {
-        return;
-    }
-
-    const long unsigned sshape[] = {6};
-    std::vector<double> npy_s;
-
-    for (int ipol = 0; ipol < 3; ++ipol)
-    {
-        for (int jpol = ipol; jpol < 3; jpol++)
-        {
-            npy_s.push_back(stress(ipol, jpol) * omega);
-        }
-    }
-    npy::SaveArrayAsNumpy(s_file, false, 1, sshape, npy_s);
-    return;
-}
-
-void LCAO_deepks_io::save_npy_o(const std::vector<double>& bandgap,
-                                const std::string& o_file,
-                                const int nks,
-                                const int rank)
-{
-    ModuleBase::TITLE("LCAO_deepks_io", "save_npy_o");
-    if (rank != 0)
-    {
-        return;
-    }
-
-    // save o_base
-    const long unsigned oshape[] = {static_cast<unsigned long>(nks), 1};
-    npy::SaveArrayAsNumpy(o_file, false, 2, oshape, bandgap);
-    return;
-}
-
 template <typename TK, typename TH>
 void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
                                 const std::string& h_file,
@@ -243,7 +185,8 @@ void LCAO_deepks_io::save_npy_h(const std::vector<TH>& hamilt,
 void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
                                      const ModuleBase::matrix& matrix,
                                      const int rank,
-                                     const double& scale)
+                                     const double& scale,
+                                     const char mode)
 {
     ModuleBase::TITLE("LCAO_deepks_io", "save_matrix2npy");
 
@@ -251,16 +194,67 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
     {
         return;
     }
+    const int nr = matrix.nr;
+    const int nc = matrix.nc;
+    int size = 0;
+    std::vector<long unsigned> shape;
 
-    const unsigned long shape[] = {static_cast<unsigned long>(matrix.nr), static_cast<unsigned long>(matrix.nc)};
-
-    std::vector<double> scaled_data(matrix.nr * matrix.nc);
-    for (int i = 0; i < matrix.nr * matrix.nc; ++i)
+    if (mode == 'U' || mode == 'L') // upper or lower triangular
     {
-        scaled_data[i] = matrix.c[i] * scale;
+        assert(nr == nc);
+        size = nr * (nr + 1) / 2;
+        shape.resize(1);
+        shape[0] = size;
+    }
+    else if (mode == 'N') // normal
+    {
+        size = nr * nc;
+        shape.resize(2);
+        shape[0] = nr;
+        shape[1] = nc;
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("save_matrix2npy", "Invalid mode! Support only 'U', 'L', 'N'.");
     }
 
-    npy::SaveArrayAsNumpy(file_name, false, 2, shape, scaled_data.data());
+    std::vector<double> scaled_data(size);
+    if (mode == 'U') // upper triangular
+    {
+        int index = 0;
+        for (int i = 0; i < nr; ++i)
+        {
+            for (int j = i; j < nc; ++j)
+            {
+                scaled_data[index] = matrix(i, j) * scale;
+                index++;
+            }
+        }
+    }
+    else if (mode == 'L') // lower triangular
+    {
+        int index = 0;
+        for (int i = 0; i < nr; ++i)
+        {
+            for (int j = 0; j <= i; ++j)
+            {
+                scaled_data[index] = matrix(i, j) * scale;
+                index++;
+            }
+        }
+    }
+    else // normal
+    {
+        for (int i = 0; i < nr; ++i)
+        {
+            for (int j = 0; j < nc; ++j)
+            {
+                scaled_data[i * nc + j] = matrix(i, j) * scale;
+            }
+        }
+    }
+
+    npy::SaveArrayAsNumpy(file_name, false, shape.size(), shape.data(), scaled_data);
     return;
 }
 

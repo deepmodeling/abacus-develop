@@ -55,12 +55,6 @@ int XC_Functional::get_func_type()
 {
     return 0;
 }
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 Symmetry_rho::Symmetry_rho()
 {
 }
@@ -75,17 +69,20 @@ void Symmetry_rho::begin(const int& spin_now,
     return;
 }
 
-int K_Vectors::get_ik_global(const int& ik, const int& nkstot)
+void cal_ik2iktot(std::vector<int>& ik2iktot, const int& nks, const int& nkstot)
 {
-    int nkp = nkstot / PARAM.inp.kpar;
-    int rem = nkstot % PARAM.inp.kpar;
-    if (GlobalV::MY_POOL < rem)
+    for (int ik = 0; ik < nks; ++ik)
     {
-        return GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
-    }
-    else
-    {
-        return GlobalV::MY_POOL * nkp + rem + ik;
+        int nkp = nkstot / PARAM.inp.kpar;
+        int rem = nkstot % PARAM.inp.kpar;
+        if (GlobalV::MY_POOL < rem)
+        {
+            ik2iktot[ik] = GlobalV::MY_POOL * nkp + GlobalV::MY_POOL + ik;
+        }
+        else
+        {
+            ik2iktot[ik] = GlobalV::MY_POOL * nkp + rem + ik;
+        }
     }
 }
 
@@ -140,6 +137,8 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     const double shift = my_pool * 0.1;
     kv->kvec_d = {ModuleBase::Vector3<double>(shift, shift, shift),
                   ModuleBase::Vector3<double>(0.5 + shift, 0.5 + shift, 0.5 + shift)};
+    kv->ik2iktot.resize(nks);
+    cal_ik2iktot(kv->ik2iktot, nks, nkstot);
 
     // Init the pw basis
 #ifdef __MPI
@@ -230,7 +229,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     ModuleIO::write_wfc_pw("WAVEFUNC", *psi, *kv, wfcpw);
 
     // Read the wave functions to charge density
-    ModuleIO::read_wfc_to_rho(wfcpw, symm, nkstot, kv->isk, chg);
+    ModuleIO::read_wfc_to_rho(wfcpw, symm, kv->ik2iktot.data(), nkstot, kv->isk, chg);
 
     // compare the charge density
     for (int ir = 0; ir < rhopw->nrxx; ++ir)
@@ -239,9 +238,9 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     }
     // std::cout.precision(16);
     // std::cout<<chg.rho[0][0]<<std::endl;
-    if (GlobalV::NPROC == 1)
+    if (GlobalV::NPROC == 1) {
         EXPECT_NEAR(chg.rho[0][0], 8617.076357957576, 1e-8);
-    else if (GlobalV::NPROC == 4)
+    } else if (GlobalV::NPROC == 4)
     {
         const std::vector<double> ref = {8207.849135313403, 35.34776105132742, 8207.849135313403, 35.34776105132742};
         EXPECT_NEAR(chg.rho[0][0], ref[GlobalV::MY_RANK], 1e-8);

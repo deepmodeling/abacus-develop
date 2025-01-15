@@ -5,12 +5,6 @@
 #include "module_elecstate/module_dm/density_matrix.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 /************************************************
  *  unit test of DensityMatrix constructor
  ***********************************************/

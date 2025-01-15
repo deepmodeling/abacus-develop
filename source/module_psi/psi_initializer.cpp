@@ -13,6 +13,23 @@
 #endif
 
 template <typename T>
+void psi_initializer<T>::initialize(const Structure_Factor* sf,
+                                    const ModulePW::PW_Basis_K* pw_wfc,
+                                    const UnitCell* p_ucell,
+                                    const K_Vectors* p_kv_in,
+                                    const int& random_seed,
+                                    const pseudopot_cell_vnl* p_pspot_nl,
+                                    const int& rank)
+{
+    this->sf_ = sf;
+    this->pw_wfc_ = pw_wfc;
+    this->p_ucell_ = p_ucell;
+    this->p_kv = p_kv_in;
+    this->random_seed_ = random_seed;
+    this->p_pspot_nl_ = p_pspot_nl;
+}
+
+template <typename T>
 void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
 {
     ModuleBase::timer::tick("psi_initializer", "random_t");
@@ -27,7 +44,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
 #ifdef __MPI
-        srand(unsigned(this->random_seed_ + this->p_parakpts_->startk_pool[GlobalV::MY_POOL] + ik));
+        srand(unsigned(this->random_seed_ + this->p_kv->ik2iktot[ik]));
 #else
         srand(unsigned(this->random_seed_ + ik));
 #endif

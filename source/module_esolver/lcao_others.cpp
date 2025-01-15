@@ -200,6 +200,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
+#ifdef __DEEPKS
+            ,
+            &this->ld
+#endif
 #ifdef __EXX
             ,
             istep,
@@ -217,7 +221,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
-        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, GlobalC::ld.phialpha);
+        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
         // build and save <phi(0)|alpha(R)> at beginning
         DeePKS_domain::build_phialpha(PARAM.inp.cal_force,
                                       ucell,
@@ -225,11 +229,11 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                                       this->gd,
                                       pv,
                                       *(two_center_bundle_.overlap_orb_alpha),
-                                      GlobalC::ld.phialpha);
+                                      this->ld.phialpha);
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, GlobalC::ld.phialpha);
+            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
         }
     }
 #endif

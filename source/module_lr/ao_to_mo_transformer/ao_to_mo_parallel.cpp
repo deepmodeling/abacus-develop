@@ -21,7 +21,7 @@ namespace LR
         const Parallel_2D& pmat_mo,
         double* mat_mo,
         const bool add_on,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
@@ -79,7 +79,7 @@ namespace LR
         const Parallel_2D& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        MO_TYPE type)
+        const MO_TYPE type)
     {
         ModuleBase::TITLE("hamilt_lrtd", "cal_AX_plas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
