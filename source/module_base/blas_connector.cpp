@@ -1,4 +1,5 @@
 #include "blas_connector.h"
+#include "macros.h"
 
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
@@ -8,12 +9,10 @@
 #ifdef __CUDA
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
-#include <thrust/complex.h>
-#include <thrust/execution_policy.h>
-#include <thrust/inner_product.h>
-#include "module_base/tool_quit.h"
-
 #include "cublas_v2.h"
+#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/module_device/memory_op.h"
+
 
 namespace BlasUtils{
 
@@ -651,5 +650,117 @@ void BlasConnector::copy(const long n, const std::complex<double> *a, const int 
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
+	}
+}
+
+
+template <typename T>
+void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * vector2[i];
+        }
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		hsolver::vector_mul_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
+#endif
+	}
+}
+
+
+template <typename T>
+void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+		for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] / vector2[i];
+        }
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		hsolver::vector_div_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, float *result, const float *vector1, const float constant1, const float *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(float))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		hsolver::constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, double *result, const double *vector1, const double constant1, const double *vector2, const double constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		hsolver::constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, std::complex<float> *result, const std::complex<float> *vector1, const float constant1, const std::complex<float> *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<float>))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		hsolver::constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
 	}
 }
