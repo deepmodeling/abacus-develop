@@ -33,7 +33,7 @@ class UnitCellInfo
         int get_nmz() const { return nmz_; };
         int get_nmxyz() const { return nmxyz_; };
         std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return biggrid_info_; };
-        std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return biggrid_info_->get_meshgrid_info(); };
+        std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return meshgrid_info_; };
 
         //====================================================================
         // functions related to the big grid
@@ -118,7 +118,7 @@ class UnitCellInfo
         // get the cartesian coordinate of a meshgrid in the unit cell from the 3D index
         Vec3d get_meshgrid_coord(Vec3i index_3d) const
         {
-            return index_3d * biggrid_info_->get_meshgrid_info()->get_latvec0();
+            return meshgrid_info_->get_cartesian_coord(index_3d);
         };
 
         // get the cartesian coordinate of a meshgrid in the unit cell from the 1D index
@@ -151,6 +151,8 @@ class UnitCellInfo
 
         // basic attributes of the big grid
         std::shared_ptr<const BigGridInfo> biggrid_info_;
+
+        std::shared_ptr<const MeshGridInfo> meshgrid_info_;
 
         //====================================================================
         // member variables related to meshgrid

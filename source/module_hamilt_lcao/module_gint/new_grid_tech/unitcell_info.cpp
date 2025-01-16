@@ -22,6 +22,8 @@ UnitCellInfo::UnitCellInfo(
             unitcell_vec2_ / static_cast<double>(nby),
             unitcell_vec3_ / static_cast<double>(nbz),
             nmx/nbx, nmy/nby, nmz/nbz);
+        
+        meshgrid_info_ = biggrid_info_->get_meshgrid_info();
     }
     
 }

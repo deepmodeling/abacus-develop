@@ -37,14 +37,9 @@ class MeshGridInfo
                 meshgrid_volume_ = std::abs(meshgrid_latvec0_.Det());
             };
         
-        // getter functions
-        const Vec3d &get_vec1() const { return meshgrid_vec1_; };
-        const Vec3d &get_vec2() const { return meshgrid_vec2_; };
-        const Vec3d &get_vec3() const { return meshgrid_vec3_; };
-        const Matrix3 &get_latvec0() const { return meshgrid_latvec0_; };
-        const Matrix3 &get_GT() const { return meshgrid_GT_; };
         const double get_volume() const { return meshgrid_volume_; };
         const Vec3d get_cartesian_coord(Vec3i index_3d) const { return index_3d * meshgrid_latvec0_; };
+
     private:
         // basis vectors of meshgrid
         Vec3d meshgrid_vec1_;
