@@ -324,6 +324,7 @@ Tensor Tensor::operator[](const int& index) const {
 // Overloaded operator<< for the Tensor class.
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     std::ios::fmtflags flag(os.flags());
+    std::streamsize precision = os.precision(); // save the current precision
     const int64_t num_elements = tensor.NumElements();
     const DataType data_type = tensor.data_type();
     const DeviceType device_type = tensor.device_type();
@@ -398,6 +399,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
 #endif
     // restore the os settings
     os.flags(flag);
+    os.precision(precision); // restore the precision
     return os;
 }
 
