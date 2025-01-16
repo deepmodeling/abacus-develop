@@ -46,4 +46,21 @@ BigGridInfo::BigGridInfo(
         }
     }
 
+    Vec3i BigGridInfo::max_ext_bgrid_num(double r) const
+    {
+        const double g1 = sqrt(biggrid_GT_.e11 * biggrid_GT_.e11
+            + biggrid_GT_.e21 * biggrid_GT_.e21
+            + biggrid_GT_.e31 * biggrid_GT_.e31);
+        const double g2 = sqrt(biggrid_GT_.e12 * biggrid_GT_.e12
+            + biggrid_GT_.e22 * biggrid_GT_.e22
+            + biggrid_GT_.e32 * biggrid_GT_.e32);
+        const double g3 = sqrt(biggrid_GT_.e13 * biggrid_GT_.e13
+            + biggrid_GT_.e23 * biggrid_GT_.e23
+            + biggrid_GT_.e33 * biggrid_GT_.e33);
+        int ext_x = static_cast<int>(r * g1) + 1;
+        int ext_y = static_cast<int>(r * g2) + 1;
+        int ext_z = static_cast<int>(r * g3) + 1;
+        return Vec3i(ext_x, ext_y, ext_z);
+    }
+
 } // namespace ModuleGint

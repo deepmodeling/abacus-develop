@@ -21,9 +21,6 @@ class UnitCellInfo
             int nmx, int nmy, int nmz);
         
         // getter functions
-        const Vec3d &get_vec1() const { return unitcell_vec1_; };
-        const Vec3d &get_vec2() const { return unitcell_vec2_; };
-        const Vec3d &get_vec3() const { return unitcell_vec3_; };
         int get_nbx() const { return nbx_; };
         int get_nby() const { return nby_; };
         int get_nbz() const { return nbz_; };
@@ -54,7 +51,7 @@ class UnitCellInfo
         // get the cartesian coordinate of a big grid in the unit cell from the 3D index
         Vec3d get_biggrid_coord(Vec3i index_3d) const
         {
-            return index_3d * biggrid_info_->get_latvec0();
+            return biggrid_info_->get_cartesian_coord(index_3d);
         };
 
         // get the cartesian coordinate of a big grid in the unit cell from the 1D index
@@ -66,11 +63,11 @@ class UnitCellInfo
         // get the 3D index of a big grid in the unit cell from the cartesian coordinate
         Vec3i get_biggrid_idx_3d(const Vec3d coord) const
         {   
-            Vec3d biggrid_idx_double = coord * biggrid_info_->get_GT();
+            Vec3d direct_coord = biggrid_info_->get_direct_coord(coord);
             return Vec3i(
-                static_cast<int>(floor(biggrid_idx_double.x)),
-                static_cast<int>(floor(biggrid_idx_double.y)),
-                static_cast<int>(floor(biggrid_idx_double.z)));
+                static_cast<int>(floor(direct_coord.x)),
+                static_cast<int>(floor(direct_coord.y)),
+                static_cast<int>(floor(direct_coord.z)));
         };
 
         // Get the relative Cartesian coordinates of big grid A relative to big grid B

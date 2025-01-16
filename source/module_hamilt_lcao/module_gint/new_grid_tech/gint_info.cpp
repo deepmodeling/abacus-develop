@@ -62,17 +62,6 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 {
     ModuleBase::timer::tick("GintInfo", "init_atoms");
     int iat = 0;
-    const Matrix3& biggrid_GT = unitcell_info_->get_biggrid_info()->get_GT();
-    const double g1 = sqrt(biggrid_GT.e11 * biggrid_GT.e11
-        + biggrid_GT.e21 * biggrid_GT.e21
-        + biggrid_GT.e31 * biggrid_GT.e31);
-    const double g2 = sqrt(biggrid_GT.e12 * biggrid_GT.e12
-        + biggrid_GT.e22 * biggrid_GT.e22
-        + biggrid_GT.e32 * biggrid_GT.e32);
-    const double g3 = sqrt(biggrid_GT.e13 * biggrid_GT.e13
-        + biggrid_GT.e23 * biggrid_GT.e23
-        + biggrid_GT.e33 * biggrid_GT.e33);
-
     is_atom_in_proc_.resize(ucell_->nat, false);
     atoms_.resize(ucell_->nat);
 
@@ -83,9 +72,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
         const auto *orb = &Phi[i];
 
         // rcut extends to the maximum big grids in x, y, z directions
-        int ext_bgrid_x = static_cast<int>(atom.Rcut * g1) + 1;
-        int ext_bgrid_y = static_cast<int>(atom.Rcut * g2) + 1;
-        int ext_bgrid_z = static_cast<int>(atom.Rcut * g3) + 1;
+        Vec3i ext_bgrid = biggrid_info_->max_ext_bgrid_num(atom.Rcut);
 
         for(int j = 0; j < atom.na; j++)
         {
@@ -99,18 +86,16 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
             const Vec3d delta(fraction.x - atom_bgrid_idx.x,
                               fraction.y - atom_bgrid_idx.y,
                               fraction.z - atom_bgrid_idx.z);
-            const Vec3d tau_in_biggrid = delta.x * unitcell_info_->get_biggrid_info()->get_vec1() +
-                                         delta.y * unitcell_info_->get_biggrid_info()->get_vec2() +
-                                         delta.z * unitcell_info_->get_biggrid_info()->get_vec3();
+            const Vec3d tau_in_biggrid = biggrid_info_->get_cartesian_coord(delta);
 
             const Vec3i ucell_idx_atom = unitcell_info_->get_unitcell_idx(atom_bgrid_idx);
             auto& r_to_atom = atoms_[iat];
 
-            for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid_x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid_x; bgrid_x++)
+            for(int bgrid_x = atom_bgrid_idx.x - ext_bgrid.x; bgrid_x <= atom_bgrid_idx.x + ext_bgrid.x; bgrid_x++)
             {
-                for(int bgrid_y = atom_bgrid_idx.y - ext_bgrid_y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid_y; bgrid_y++)
+                for(int bgrid_y = atom_bgrid_idx.y - ext_bgrid.y; bgrid_y <= atom_bgrid_idx.y + ext_bgrid.y; bgrid_y++)
                 {
-                    for(int bgrid_z = atom_bgrid_idx.z - ext_bgrid_z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid_z; bgrid_z++)
+                    for(int bgrid_z = atom_bgrid_idx.z - ext_bgrid.z; bgrid_z <= atom_bgrid_idx.z + ext_bgrid.z; bgrid_z++)
                     {
                         // get the extended biggrid idx of the affected biggrid
                         const Vec3i ext_bgrid_idx(bgrid_x, bgrid_y, bgrid_z);

@@ -22,18 +22,23 @@ class BigGridInfo
             Vec3d biggrid_vec3,
             int nmx, int nmy, int nmz);
         
-        // getter functions
-        const Vec3d &get_vec1() const { return biggrid_vec1_; };
-        const Vec3d &get_vec2() const { return biggrid_vec2_; };
-        const Vec3d &get_vec3() const { return biggrid_vec3_; };
-        const Matrix3 &get_latvec0() const { return biggrid_latvec0_; };
-        const Matrix3 &get_GT() const { return biggrid_GT_; };
+        Vec3d get_cartesian_coord(const Vec3d& index_3d) const { return index_3d * biggrid_latvec0_; };
+        Vec3d get_cartesian_coord(const Vec3i& index_3d) const { return index_3d * biggrid_latvec0_; };
+        const Vec3d get_direct_coord(const Vec3d& cart_coord) const { return cart_coord * biggrid_GT_; };
+
+        // Return the maximum number of big grids that can fit inside a sphere of radius r,
+        // along the three lattice vector directions.
+        Vec3i max_ext_bgrid_num(double r) const;
+
+        // get number of meshgrids along three lattice directions
         int get_nmx() const { return nmx_; };
         int get_nmy() const { return nmy_; };
         int get_nmz() const { return nmz_; };
         int get_nmxyz() const { return nmxyz_; };
+
         const std::vector<Vec3d>& get_meshgrid_coords() const { return meshgrid_coords_; };
         const Vec3d& get_meshgrid_coord(int index_1d) const { return meshgrid_coords_[index_1d]; };
+
         std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return meshgrid_info_; };
 
         // get the 3D index of a meshgrid in the big grid from the 1D index
