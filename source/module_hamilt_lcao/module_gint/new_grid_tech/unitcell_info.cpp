@@ -23,7 +23,7 @@ UnitCellInfo::UnitCellInfo(
             unitcell_vec3_ / static_cast<double>(nbz),
             nmx/nbx, nmy/nby, nmz/nbz);
         
-        meshgrid_info_ = biggrid_info_->get_meshgrid_info();
+        meshgrid_info_ = biggrid_info_->get_mgrid_info();
     }
     
 }

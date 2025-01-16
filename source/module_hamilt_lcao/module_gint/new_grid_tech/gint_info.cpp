@@ -22,7 +22,7 @@ GintInfo::GintInfo(
                                                     nbx, nby, nbz, nmx, nmy, nmz);
 
     biggrid_info_ = unitcell_info_->get_biggrid_info();
-    meshgrid_info_ = biggrid_info_->get_meshgrid_info();
+    meshgrid_info_ = biggrid_info_->get_mgrid_info();
 
     // initialize the divide information
     divide_info_ = std::make_shared<DivideInfo>(startidx_bx, startidx_by, startidx_bz,

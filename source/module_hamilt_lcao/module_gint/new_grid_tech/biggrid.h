@@ -26,7 +26,7 @@ class BigGrid
         const GintAtom* get_atom(int i) const { return atoms_[i]; };
 
         // get the number of meshgrids in the big grid
-        int get_meshgrid_num() const { return biggrid_info_->get_nmxyz(); };
+        int get_meshgrid_num() const { return biggrid_info_->get_mgrids_num(); };
 
         // get the number of atoms that can affect the big grid
         int get_atom_num() const { return atoms_.size(); };

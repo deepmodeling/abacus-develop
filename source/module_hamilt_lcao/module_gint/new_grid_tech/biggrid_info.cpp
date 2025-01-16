@@ -42,7 +42,7 @@ BigGridInfo::BigGridInfo(
         for(int index_1d = 0; index_1d < nmxyz_; index_1d++)
         {
             meshgrid_coords_[index_1d] = 
-                meshgrid_info_->get_cartesian_coord(meshgrid_idx_1Dto3D(index_1d));
+                meshgrid_info_->get_cartesian_coord(mgrid_idx_1Dto3D(index_1d));
         }
     }
 
