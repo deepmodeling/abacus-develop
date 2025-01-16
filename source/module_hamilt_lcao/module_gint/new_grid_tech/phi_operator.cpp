@@ -9,7 +9,7 @@ namespace ModuleGint
 void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 {
     biggrid_ = biggrid;
-    rows_ = biggrid_->get_meshgrid_num();
+    rows_ = biggrid_->get_mgrids_num();
     cols_ = biggrid_->get_mgrid_phi_len();
 
     biggrid_->set_atoms_startidx(atoms_startidx_);
@@ -17,7 +17,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
     biggrid_->set_mgrids_local_idx(meshgrids_local_idx_);
 
     // init is_atom_on_mgrid_ and atoms_relative_coords_
-    int atoms_num = biggrid_->get_atom_num();
+    int atoms_num = biggrid_->get_atoms_num();
     atoms_relative_coords_.resize(atoms_num);
     is_atom_on_mgrid_.resize(atoms_num);
     for(int i = 0; i < atoms_num; ++i)
@@ -36,7 +36,7 @@ void PhiOperator::set_bgrid(std::shared_ptr<const BigGrid> biggrid)
 
 void PhiOperator::set_phi(double* phi) const
 {
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
         atom->set_phi(atoms_relative_coords_[i], cols_, phi);
@@ -46,7 +46,7 @@ void PhiOperator::set_phi(double* phi) const
 
 void PhiOperator::set_phi_dphi(double* phi, double* dphi_x, double* dphi_y, double* dphi_z) const
 {
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
         atom->set_phi_dphi(atoms_relative_coords_[i], cols_, phi, dphi_x, dphi_y, dphi_z);
@@ -64,7 +64,7 @@ void PhiOperator::set_ddphi(
     double* ddphi_xx, double* ddphi_xy, double* ddphi_xz,
     double* ddphi_yy, double* ddphi_yz, double* ddphi_zz) const
 {
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom = biggrid_->get_atom(i);
         atom->set_ddphi(atoms_relative_coords_[i], cols_, ddphi_xx, ddphi_xy, ddphi_xz, ddphi_yy, ddphi_yz, ddphi_zz);
@@ -91,7 +91,7 @@ void PhiOperator::phi_mul_dm(
     const double beta = 1.0;
     const double alpha1 = is_symm ? 2.0 : 1.0;
 
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
         const auto r_i = atom_i->get_R();
@@ -105,7 +105,7 @@ void PhiOperator::phi_mul_dm(
 
         const int start = is_symm ? i + 1 : 0;
 
-        for(int j = start; j < biggrid_->get_atom_num(); ++j)
+        for(int j = start; j < biggrid_->get_atoms_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atom(j);
             const auto r_j = atom_j->get_R();
@@ -138,7 +138,7 @@ void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double
 {
     ModuleBase::GlobalFunc::ZEROS(result, rows_ * cols_);
     int idx = 0;
-    for(int i = 0; i < biggrid_->get_meshgrid_num(); i++)
+    for(int i = 0; i < biggrid_->get_mgrids_num(); i++)
     {
         double vldr3_mgrid = vl[meshgrids_local_idx_[i]] * dr3;
         for(int j = 0; j < cols_; j++)
@@ -157,13 +157,13 @@ void PhiOperator::phi_mul_phi_vldr3(
     const char transa='N', transb='T';
     const double alpha=1, beta=1;
 
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const auto atom_i = biggrid_->get_atom(i);
         const auto& r_i = atom_i->get_R();
         const int iat_i = atom_i->get_iat();
 
-        for(int j = 0; j < biggrid_->get_atom_num(); ++j)
+        for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const auto atom_j = biggrid_->get_atom(j);
             const auto& r_j = atom_j->get_R();
@@ -204,7 +204,7 @@ void PhiOperator::phi_dot_phi_dm(
     double* rho) const
 {
     const int inc = 1;
-    for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
+    for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
     {
         rho[meshgrids_local_idx_[i]] += ddot_(&cols_, &phi[i * cols_], &inc, &phi_dm[i * cols_], &inc);
     }
@@ -217,13 +217,13 @@ void PhiOperator::phi_dot_dphi(
     const double* dphi_z,
     ModuleBase::matrix *fvl) const
 {
-    for(int i = 0; i < biggrid_->get_atom_num(); ++i)
+    for(int i = 0; i < biggrid_->get_atoms_num(); ++i)
     {
         const int iat = biggrid_->get_atom(i)->get_iat();
         const int start_idx = atoms_startidx_[i];
         const int phi_len = atoms_phi_len_[i];
         double rx = 0, ry = 0, rz = 0;
-        for(int j = 0; j < biggrid_->get_meshgrid_num(); ++j)
+        for(int j = 0; j < biggrid_->get_mgrids_num(); ++j)
         {
             for(int k = 0; k < phi_len; ++k)
             {
@@ -248,9 +248,9 @@ void PhiOperator::phi_dot_dphi_r(
     ModuleBase::matrix *svl) const
 {
     double sxx = 0, sxy = 0, sxz = 0, syy = 0, syz = 0, szz = 0;
-    for(int i = 0; i < biggrid_->get_meshgrid_num(); ++i)
+    for(int i = 0; i < biggrid_->get_mgrids_num(); ++i)
     {
-        for(int j = 0; j < biggrid_->get_atom_num(); ++j)
+        for(int j = 0; j < biggrid_->get_atoms_num(); ++j)
         {
             const int start_idx = atoms_startidx_[j];
             for(int k = 0; k < atoms_phi_len_[j]; ++k)
@@ -281,9 +281,9 @@ void PhiOperator::phi_dot_dphi_r(
 //===============================
 void PhiOperator::init_atom_pair_start_end_idx_()
 {
-    int atoms_num = biggrid_->get_atom_num();
+    int atoms_num = biggrid_->get_atoms_num();
     atom_pair_start_end_idx_.resize(atoms_num * (atoms_num + 1) / 2);
-    int mgrids_num = biggrid_->get_meshgrid_num();
+    int mgrids_num = biggrid_->get_mgrids_num();
     int atom_pair_idx = 0;
     for(int i = 0; i < atoms_num; ++i)
     {

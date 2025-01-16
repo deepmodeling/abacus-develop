@@ -15,21 +15,25 @@ class BigGrid
 {
     public:
         // constructor
-        BigGrid(int idx, std::shared_ptr<const LocalCellInfo> localcell_info);
+        BigGrid(int idx);
+
+        static void init_localcell_info(std::shared_ptr<const LocalCellInfo> localcell_info) { localcell_info_ = localcell_info; };
+        static void init_unitcell_info(std::shared_ptr<const UnitCellInfo> unitcell_info) { unitcell_info_ = unitcell_info; };
+        static void init_bgrid_info(std::shared_ptr<const BigGridInfo> biggrid_info) { biggrid_info_ = biggrid_info; };
 
         // getter functions
         int get_idx() const { return idx_; };
         std::shared_ptr<const LocalCellInfo> get_localcell_info() const { return localcell_info_; };
         std::shared_ptr<const UnitCellInfo> get_unitcell_info() const {return unitcell_info_; };
-        std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return biggrid_info_; };
+        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
         const std::vector<const GintAtom*>& get_atoms() const { return atoms_; };
         const GintAtom* get_atom(int i) const { return atoms_[i]; };
 
         // get the number of meshgrids in the big grid
-        int get_meshgrid_num() const { return biggrid_info_->get_mgrids_num(); };
+        int get_mgrids_num() const { return biggrid_info_->get_mgrids_num(); };
 
         // get the number of atoms that can affect the big grid
-        int get_atom_num() const { return atoms_.size(); };
+        int get_atoms_num() const { return atoms_.size(); };
 
         // add an atom to the big grid
         void add_atom(const GintAtom* atom);

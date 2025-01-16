@@ -21,7 +21,7 @@ GintInfo::GintInfo(
     unitcell_info_ = std::make_shared<UnitCellInfo>(ucell_->a1 * ucell_->lat0, ucell_->a2 * ucell_->lat0, ucell_->a3 * ucell_->lat0,
                                                     nbx, nby, nbz, nmx, nmy, nmz);
 
-    biggrid_info_ = unitcell_info_->get_biggrid_info();
+    biggrid_info_ = unitcell_info_->get_bgrid_info();
     meshgrid_info_ = biggrid_info_->get_mgrid_info();
 
     // initialize the divide information
@@ -32,7 +32,11 @@ GintInfo::GintInfo(
     localcell_info_ = divide_info_->get_localcell_info();
 
     // initialize the biggrids
-    for (int i = 0; i < localcell_info_->get_biggrid_num(); i++)
+    BigGrid::init_localcell_info(localcell_info_);
+    BigGrid::init_unitcell_info(unitcell_info_);
+    BigGrid::init_bgrid_info(biggrid_info_);
+
+    for (int i = 0; i < localcell_info_->get_bgrids_num(); i++)
     {
         biggrids_.push_back(std::make_shared<BigGrid>(i, localcell_info_));
     }

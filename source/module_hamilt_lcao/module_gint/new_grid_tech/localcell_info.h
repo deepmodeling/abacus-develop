@@ -23,20 +23,20 @@ class LocalCellInfo
         const int get_nbx() const { return nbx_; };
         const int get_nby() const { return nby_; };
         const int get_nbz() const { return nbz_; };
-        const int get_biggrid_num() const { return nbxyz_; };
-        const int get_mgrid_num() const { return nmxyz_; };
+        const int get_bgrids_num() const { return nbxyz_; };
+        const int get_mgrids_num() const { return nmxyz_; };
         std::shared_ptr<const UnitCellInfo> get_unitcell_info() const { return unitcell_info_; };
-        std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return unitcell_info_->get_biggrid_info(); };
+        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return unitcell_info_->get_bgrid_info(); };
 
         //====================================================================
         // functions related to the big grid
         //====================================================================
 
         // transform the 3D index of a big grid in the local cell to the 3D index in the local cell
-        int biggrid_idx_3Dto1D(const Vec3i index_3d) const;
+        int bgrid_idx_3Dto1D(const Vec3i index_3d) const;
 
         // transform the 1D index of a big grid in the local cell to the 1D index in the local cell
-        Vec3i biggrid_idx_1Dto3D(const int index_1d) const;
+        Vec3i bgrid_idx_1Dto3D(const int index_1d) const;
 
         // transform the 3D index of a big grid in the local cell to the 3D index in the unit cell
         Vec3i get_bgrid_global_idx_3D(const Vec3i index_3d) const;
@@ -69,10 +69,10 @@ class LocalCellInfo
         //====================================================================
 
         // transform the 3D index of a meshgrid in the local cell to the 3D index in the local cell
-        int meshgrid_idx_3Dto1D(const Vec3i index_3d) const;
+        int mgrid_idx_3Dto1D(const Vec3i index_3d) const;
 
         // transform the 1D index of a meshgrid in the local cell to the 1D index in the local cell
-        Vec3i meshgrid_idx_1Dto3D(const int index_1d) const;
+        Vec3i mgrid_idx_1Dto3D(const int index_1d) const;
 
         // transform the 3D index of a meshgrid in the local cell to the 3D index in the unit cell
         Vec3i get_mgrid_global_idx_3D(const Vec3i index_3d) const;

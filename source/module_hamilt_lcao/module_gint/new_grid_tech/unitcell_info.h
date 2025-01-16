@@ -24,44 +24,44 @@ class UnitCellInfo
         int get_nbx() const { return nbx_; };
         int get_nby() const { return nby_; };
         int get_nbz() const { return nbz_; };
-        int get_nbxyz() const { return nbxyz_; };
+        int get_bgrids_num() const { return nbxyz_; };
         int get_nmx() const { return nmx_; };
         int get_nmy() const { return nmy_; };
         int get_nmz() const { return nmz_; };
-        int get_nmxyz() const { return nmxyz_; };
-        std::shared_ptr<const BigGridInfo> get_biggrid_info() const { return biggrid_info_; };
-        std::shared_ptr<const MeshGridInfo> get_meshgrid_info() const { return meshgrid_info_; };
+        int get_mgrids_num() const { return nmxyz_; };
+        std::shared_ptr<const BigGridInfo> get_bgrid_info() const { return biggrid_info_; };
+        std::shared_ptr<const MeshGridInfo> get_mgrid_info() const { return meshgrid_info_; };
 
         //====================================================================
         // functions related to the big grid
         //====================================================================
 
         // transform the 1D index of a big grid in the unit cell to the 3D index
-        Vec3i biggrid_idx_1Dto3D(const int index_1d) const
+        Vec3i bgrid_idx_1Dto3D(const int index_1d) const
         {
             return index1Dto3D(index_1d, nbx_, nby_, nbz_);
         };
 
         // transform the 3D index of a biggrid in the unit cell to the 1D index
-        int biggrid_idx_3Dto1D(const Vec3i index_3d) const
+        int bgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
             return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
         };
 
         // get the cartesian coordinate of a big grid in the unit cell from the 3D index
-        Vec3d get_biggrid_coord(Vec3i index_3d) const
+        Vec3d get_bgrid_coord(Vec3i index_3d) const
         {
             return biggrid_info_->get_cartesian_coord(index_3d);
         };
 
         // get the cartesian coordinate of a big grid in the unit cell from the 1D index
-        Vec3d get_biggrid_coord(int index_1d) const
+        Vec3d get_bgrid_coord(int index_1d) const
         {
-            return get_biggrid_coord(biggrid_idx_1Dto3D(index_1d));
+            return get_bgrid_coord(bgrid_idx_1Dto3D(index_1d));
         };
 
         // get the 3D index of a big grid in the unit cell from the cartesian coordinate
-        Vec3i get_biggrid_idx_3d(const Vec3d coord) const
+        Vec3i get_bgrid_idx_3d(const Vec3d coord) const
         {   
             Vec3d direct_coord = biggrid_info_->get_direct_coord(coord);
             return Vec3i(
@@ -76,7 +76,7 @@ class UnitCellInfo
         // through two 3D indices and then subtracting them
         Vec3d get_relative_coord(Vec3i index_3d_a, Vec3i index_3d_b) const
         {
-            return get_biggrid_coord(index_3d_a - index_3d_b);
+            return get_bgrid_coord(index_3d_a - index_3d_b);
         };
 
         // get the extended unitcell index of a big grid
@@ -101,27 +101,27 @@ class UnitCellInfo
         //====================================================================
 
         // transform the 1D index of a meshgrid in the unit cell to the 3D index
-        Vec3i meshgrid_idx_1Dto3D(const int index_1d) const
+        Vec3i mgrid_idx_1Dto3D(const int index_1d) const
         {
             return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
         }
 
         // transform the 3D index of a meshgrid in the unit cell to the 1D index
-        int meshgrid_idx_3Dto1D(const Vec3i index_3d) const
+        int mgrid_idx_3Dto1D(const Vec3i index_3d) const
         {
             return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
         }
 
         // get the cartesian coordinate of a meshgrid in the unit cell from the 3D index
-        Vec3d get_meshgrid_coord(Vec3i index_3d) const
+        Vec3d get_mgrid_coord(Vec3i index_3d) const
         {
             return meshgrid_info_->get_cartesian_coord(index_3d);
         };
 
         // get the cartesian coordinate of a meshgrid in the unit cell from the 1D index
-        Vec3d get_meshgrid_coord(int index_1d) const
+        Vec3d get_mgrid_coord(int index_1d) const
         {
-            return get_meshgrid_coord(meshgrid_idx_1Dto3D(index_1d));
+            return get_mgrid_coord(mgrid_idx_1Dto3D(index_1d));
         }
         
     private:

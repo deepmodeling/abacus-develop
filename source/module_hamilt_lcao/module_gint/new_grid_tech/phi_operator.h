@@ -88,11 +88,11 @@ class PhiOperator
     {
         int x = std::min(a, b);
         int y = std::abs(a - b);
-        return atom_pair_start_end_idx_[(2 * biggrid_->get_atom_num() - x + 1) * x / 2 + y];
+        return atom_pair_start_end_idx_[(2 * biggrid_->get_atoms_num() - x + 1) * x / 2 + y];
     };
 
     // the row number of the phi matrix
-    // rows_ = biggrid_->get_meshgrid_num()
+    // rows_ = biggrid_->get_mgrids_num()
     int rows_;
     
     // the column number of the phi matrix

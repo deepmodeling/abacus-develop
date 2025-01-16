@@ -8,7 +8,7 @@ namespace ModuleGint
         std::shared_ptr<const UnitCellInfo> unitcell_info)
         : startidx_bx_(startidx_bx), startidx_by_(startidx_by), startidx_bz_(startidx_bz),
           nbx_(nbx), nby_(nby), nbz_(nbz), nbxyz_(nbx*nby*nbz),
-          unitcell_info_(unitcell_info), biggrid_info_(unitcell_info->get_biggrid_info())
+          unitcell_info_(unitcell_info), biggrid_info_(unitcell_info->get_bgrid_info())
     {
         startidx_mx_ = startidx_bx_ * biggrid_info_->get_nmx();
         startidx_my_ = startidx_by_ * biggrid_info_->get_nmy();
@@ -23,12 +23,12 @@ namespace ModuleGint
     // functions related to the big grid
     //====================================================================
 
-    int LocalCellInfo::biggrid_idx_3Dto1D(const Vec3i index_3d) const
+    int LocalCellInfo::bgrid_idx_3Dto1D(const Vec3i index_3d) const
     {
         return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nbx_, nby_, nbz_);
     }
 
-    Vec3i LocalCellInfo::biggrid_idx_1Dto3D(const int index_1d) const
+    Vec3i LocalCellInfo::bgrid_idx_1Dto3D(const int index_1d) const
     {
         return index1Dto3D(index_1d, nbx_, nby_, nbz_);
     }
@@ -43,13 +43,13 @@ namespace ModuleGint
 
     Vec3i LocalCellInfo::get_bgrid_global_idx_3D(const int index_1d) const
     {
-        return get_bgrid_global_idx_3D(biggrid_idx_1Dto3D(index_1d));
+        return get_bgrid_global_idx_3D(bgrid_idx_1Dto3D(index_1d));
     }
 
     int LocalCellInfo::get_bgrid_global_idx_1D(const int index_1d) const
     {
-        Vec3i ucell_idx_3d = get_bgrid_global_idx_3D(biggrid_idx_1Dto3D(index_1d));
-        return unitcell_info_->biggrid_idx_3Dto1D(ucell_idx_3d);
+        Vec3i ucell_idx_3d = get_bgrid_global_idx_3D(bgrid_idx_1Dto3D(index_1d));
+        return unitcell_info_->bgrid_idx_3Dto1D(ucell_idx_3d);
     }
 
 
@@ -66,19 +66,19 @@ namespace ModuleGint
 
     int LocalCellInfo::get_bgrid_local_idx_1D(const Vec3i index_3d) const
     {
-        return biggrid_idx_3Dto1D(get_bgrid_local_idx_3D(index_3d));
+        return bgrid_idx_3Dto1D(get_bgrid_local_idx_3D(index_3d));
     }
 
     int LocalCellInfo::get_bgrid_local_idx_1D(const int index_1d) const
     {
-        Vec3i idx_3d = unitcell_info_->biggrid_idx_1Dto3D(index_1d);
-        return biggrid_idx_3Dto1D(get_bgrid_local_idx_3D(idx_3d));
+        Vec3i idx_3d = unitcell_info_->bgrid_idx_1Dto3D(index_1d);
+        return bgrid_idx_3Dto1D(get_bgrid_local_idx_3D(idx_3d));
     }
 
     Vec3d LocalCellInfo::get_bgrid_global_coord_3D(const int index_1d) const
     {
         Vec3i ucell_idx_3d = get_bgrid_global_idx_3D(index_1d);
-        return unitcell_info_->get_biggrid_coord(ucell_idx_3d);
+        return unitcell_info_->get_bgrid_coord(ucell_idx_3d);
     }
 
     bool LocalCellInfo::is_bgrid_in_lcell(const Vec3i index_3d) const
@@ -92,12 +92,12 @@ namespace ModuleGint
     // functions related to the meshgrid
     //====================================================================
 
-    int LocalCellInfo::meshgrid_idx_3Dto1D(const Vec3i index_3d) const
+    int LocalCellInfo::mgrid_idx_3Dto1D(const Vec3i index_3d) const
     {
         return index3Dto1D(index_3d.x, index_3d.y, index_3d.z, nmx_, nmy_, nmz_);
     }
 
-    Vec3i LocalCellInfo::meshgrid_idx_1Dto3D(const int index_1d) const
+    Vec3i LocalCellInfo::mgrid_idx_1Dto3D(const int index_1d) const
     {
         return index1Dto3D(index_1d, nmx_, nmy_, nmz_);
     }
@@ -112,8 +112,8 @@ namespace ModuleGint
 
     int LocalCellInfo::get_mgrid_global_idx_1D(const int index_1d) const
     {
-        Vec3i ucell_idx_3d = get_mgrid_global_idx_3D(meshgrid_idx_1Dto3D(index_1d));
-        return unitcell_info_->meshgrid_idx_3Dto1D(ucell_idx_3d);
+        Vec3i ucell_idx_3d = get_mgrid_global_idx_3D(mgrid_idx_1Dto3D(index_1d));
+        return unitcell_info_->mgrid_idx_3Dto1D(ucell_idx_3d);
     }
 
 }

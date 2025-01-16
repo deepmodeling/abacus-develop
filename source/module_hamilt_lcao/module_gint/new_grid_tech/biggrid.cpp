@@ -54,7 +54,7 @@ void BigGrid::set_mgrids_coord(std::vector<Vec3d>& coord) const
 
 void BigGrid::set_mgrids_local_idx(std::vector<int>& mgrids_idx) const
 {
-    auto index_3d = localcell_info_->biggrid_idx_1Dto3D(idx_);
+    auto index_3d = localcell_info_->bgrid_idx_1Dto3D(idx_);
     Vec3i startidx(
         index_3d.x * biggrid_info_->get_nmx(),
         index_3d.y * biggrid_info_->get_nmy(),
@@ -67,7 +67,7 @@ void BigGrid::set_mgrids_local_idx(std::vector<int>& mgrids_idx) const
             for(int iz = 0; iz < biggrid_info_->get_nmz(); ++iz)
             {
                 Vec3i idx_3d(startidx.x + ix, startidx.y + iy, startidx.z + iz);
-                mgrids_idx.push_back(localcell_info_->meshgrid_idx_3Dto1D(idx_3d));
+                mgrids_idx.push_back(localcell_info_->mgrid_idx_3Dto1D(idx_3d));
             }
         }
     }
@@ -92,7 +92,7 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
 
 void BigGrid::set_atom_relative_coords(const GintAtom* atom, std::vector<Vec3d>& atom_coord) const
 {
-    return set_atom_relative_coords(atom->get_biggrid_idx(), atom->get_tau_in_biggrid(), atom_coord);
+    return set_atom_relative_coords(atom->get_bgrid_idx(), atom->get_tau_in_bgrid(), atom_coord);
 }
 
 bool BigGrid::is_atom_on_bgrid(const GintAtom* atom) const

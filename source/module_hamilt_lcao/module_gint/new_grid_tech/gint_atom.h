@@ -27,10 +27,10 @@ class GintAtom
         const Atom* get_atom() const { return atom_; };
         const int get_ia() const { return ia_; };
         const int get_iat() const { return iat_; };
-        const Vec3i& get_biggrid_idx() const { return biggrid_idx_; };
+        const Vec3i& get_bgrid_idx() const { return biggrid_idx_; };
         const Vec3i& get_unitcell_idx() const { return unitcell_idx_; };
         const Vec3i& get_R() const { return unitcell_idx_; };
-        const Vec3d& get_tau_in_biggrid() const { return tau_in_biggrid_; };
+        const Vec3d& get_tau_in_bgrid() const { return tau_in_biggrid_; };
         const Numerical_Orbital* get_orb() const { return orb_; };
 
         const int get_nw() const { return atom_->nw; };
