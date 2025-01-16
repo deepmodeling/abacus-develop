@@ -4231,6 +4231,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`.
 - **Description**: The method to solve the Casida equation $AX=\Omega X$ in LR-TDDFT under Tamm-Dancoff approximation (TDA), where $A_{ai,bj}=(\epsilon_a-\epsilon_i)\delta_{ij}\delta_{ab}+(ai|f_{Hxc}|bj)+\alpha_{EX}(ab|ij)$ is the particle-hole excitation matrix and $X$ is the transition amplitude.
   - `dav`/`dav_subspace`/ `cg`: Construct $AX$ and diagonalize the Hamiltonian matrix iteratively with Davidson/Non-ortho-Davidson/CG algorithm.
   - `lapack`: Construct the full $A$ matrix and directly diagonalize with LAPACK.
+  - `scalapack`: Construct the full $A$ matrix and directly diagonalize with ScaLAPACK (needs MPI).
   - `spectrum`: Calculate absorption spectrum only without solving Casida equation. The `OUT.${suffix}/` directory should contain the
   files for LR-TDDFT eigenstates and eigenvalues, i.e. `Excitation_Energy.dat` and `Excitation_Amplitude_${processor_rank}.dat`
    output by setting `out_wfc_lr` to true.

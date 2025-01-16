@@ -198,7 +198,7 @@ TEST(LR_Util, DiagScaLapackDouble)
     check_double_eq(eig_para.data(), eig.data(), dim);
     std::vector<double> eigvec_serial_local(pmat.get_local_size());
     LR_Util::set_local_from_global(pmat, mat.data(), eigvec_serial_local.data());
-    check_double_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
+    check_norm_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
 }
 
 TEST(LR_Util, DiagScaLapackComplex)
@@ -210,7 +210,7 @@ TEST(LR_Util, DiagScaLapackComplex)
     LR_Util::matsym(mat.data(), dim);
     Parallel_2D pmat;
     LR_Util::setup_2d_division(pmat, 1, dim, dim);
-    std::vector<std::complex<double>> mat_local(pmat.get_local_size(), 0.0);
+    std::vector<std::complex<double>> mat_local(pmat.get_local_size());
     LR_Util::set_local_from_global(pmat, mat.data(), mat_local.data());
 
     // serial

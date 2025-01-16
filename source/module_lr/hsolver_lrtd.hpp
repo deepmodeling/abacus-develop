@@ -8,11 +8,11 @@
 #include "module_lr/utils/lr_util.h"
 #include "module_lr/utils/lr_util_print.h"
 #include "module_base/module_container/ATen/core/tensor_map.h"
-
+#include <chrono>
 namespace LR
 {
     template<typename T> using Real = typename GetTypeReal<T>::type;
-
+    using iclock = std::chrono::high_resolution_clock;
     namespace HSolver
     {
         template<typename T>
@@ -54,6 +54,9 @@ namespace LR
                 std::vector<T> Amat_full = hm.matrix();
                 const int gdim = std::sqrt(Amat_full.size());
                 eigenvalue.resize(gdim);
+
+                iclock::time_point start_time = iclock::now();
+
                 if (hermitian) { LR_Util::diag_lapack(gdim, Amat_full.data(), eigenvalue.data()); }
                 else
                 {
@@ -64,7 +67,39 @@ namespace LR
                 }
                 // copy eigenvectors
                 hm.global2local(psi, Amat_full.data(), nband);
+
+                iclock::time_point end_time = iclock::now();
+                std::chrono::duration<double> elapsed_time
+                    = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+                std::cout << " Time elapsed diagonalizing A matrix: " << elapsed_time.count() << std::endl;
+
             }
+#ifdef __MPI
+            else if (method == "scalapack")
+            {
+                std::vector<T> Amat_full = hm.matrix();
+                const int gdim = std::sqrt(Amat_full.size());
+                eigenvalue.resize(gdim);
+                Parallel_2D para_cvk;
+                LR_Util::setup_2d_division(para_cvk, 1, gdim, gdim);
+                std::vector<T> Amat_local(para_cvk.get_local_size());
+                LR_Util::set_local_from_global(para_cvk, Amat_full.data(), Amat_local.data());
+                std::vector<T> eigvec_local_paracvk(para_cvk.get_local_size());
+
+                iclock::time_point start_time = iclock::now();
+
+                LR_Util::diag_scalapack(gdim, Amat_local.data(), eigenvalue.data(), eigvec_local_paracvk.data(), para_cvk.desc);
+                // copy eigenvectors
+                LR_Util::gather_2d_to_full(para_cvk, eigvec_local_paracvk.data(), Amat_full.data(), false, gdim, gdim);
+                hm.global2local(psi, Amat_full.data(), nband);
+
+                iclock::time_point end_time = iclock::now();
+                std::chrono::duration<double> elapsed_time
+                    = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+                std::cout << " Time elapsed diagonalizing A matrix: " << elapsed_time.count() << std::endl;
+
+            }
+#endif
             else
             {
                 // 3. set maxiter and funcs
@@ -156,6 +191,9 @@ namespace LR
                     cg.diag(hpsi_func, spsi_func, psi_tensor, eigen_tensor, ethr_band, precon_tensor);
                 }
                 else { throw std::runtime_error("HSolverLR::solve: method not implemented"); }
+                // output iters
+                std::cout << "Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
+                    << " ; where current threshold is: " << hsolver::DiagoIterAssist<T>::PW_DIAG_THR << " . " << std::endl;
             }
 
             // 5. copy eigenvalues
@@ -180,10 +218,6 @@ namespace LR
             //     }
             //     std::cout << "state " << ist << ", norm2=" << norm2 << std::endl;
             // }
-
-            // output iters
-            std::cout << "Average iterative diagonalization steps: " << hsolver::DiagoIterAssist<T>::avg_iter
-                << " ; where current threshold is: " << hsolver::DiagoIterAssist<T>::PW_DIAG_THR << " . " << std::endl;
         }
     }
 }
