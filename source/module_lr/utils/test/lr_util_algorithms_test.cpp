@@ -3,6 +3,27 @@
 #include "../lr_util.h"
 #include "../lr_util_print.h"
 
+inline void check_double_eq(double* data1, double* data2, int size)
+{
+    for (int i = 0;i < size;++i)
+        EXPECT_NEAR(data1[i], data2[i], 1e-10);
+};
+inline void check_double_eq(std::complex<double>* data1, std::complex<double>* data2, int size)
+{
+    for (int i = 0;i < size;++i)
+    {
+        EXPECT_NEAR(data1[i].real(), data2[i].real(), 1e-10);
+        EXPECT_NEAR(data1[i].imag(), data2[i].imag(), 1e-10);
+    }
+};
+inline void check_norm_eq(std::complex<double>* data1, std::complex<double>* data2, int size)
+{
+    for (int i = 0;i < size;++i)
+    {
+        EXPECT_NEAR(std::norm(data1[i]), std::norm(data2[i]), 1e-10);
+    }
+}
+
 TEST(LR_Util, PsiWrapper)
 {
     int nk = 2;
@@ -150,6 +171,62 @@ TEST(LR_Util, RWValue)
     EXPECT_EQ(LR_Util::read_value(ifs2, vec2.data(), 2 * 3, 4 * 5), 120);
     ifs2.close();
     for (int i = 0;i < vec2.size();++i) { EXPECT_EQ(vec2[i], vec[i]); };
+}
+
+TEST(LR_Util, DiagScaLapackDouble)
+{
+    // setup the matrix
+    const int dim = 14;
+    std::vector<double> mat(dim * dim);
+    set_rand(mat.data(), dim * dim);
+    LR_Util::matsym(mat.data(), dim);
+    Parallel_2D pmat;
+    LR_Util::setup_2d_division(pmat, 1, dim, dim);
+    std::vector<double> mat_local(pmat.get_local_size(), 0.0);
+    LR_Util::set_local_from_global(pmat, mat.data(), mat_local.data());
+
+    // serial
+    std::vector<double> eig(dim);
+    LR_Util::diag_lapack(dim, mat.data(), eig.data());
+
+    // parallel
+    std::vector<double> eig_para(dim);
+    std::vector<double> eigvec_para(pmat.get_local_size());
+    LR_Util::diag_scalapack(dim, mat_local.data(), eig_para.data(), eigvec_para.data(), pmat.desc);
+
+    // compare
+    check_double_eq(eig_para.data(), eig.data(), dim);
+    std::vector<double> eigvec_serial_local(pmat.get_local_size());
+    LR_Util::set_local_from_global(pmat, mat.data(), eigvec_serial_local.data());
+    check_double_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
+}
+
+TEST(LR_Util, DiagScaLapackComplex)
+{
+    // setup the matrix
+    const int dim = 15;
+    std::vector<std::complex<double>> mat(dim * dim);
+    set_rand(mat.data(), dim * dim);
+    LR_Util::matsym(mat.data(), dim);
+    Parallel_2D pmat;
+    LR_Util::setup_2d_division(pmat, 1, dim, dim);
+    std::vector<std::complex<double>> mat_local(pmat.get_local_size(), 0.0);
+    LR_Util::set_local_from_global(pmat, mat.data(), mat_local.data());
+
+    // serial
+    std::vector<double> eig(dim);
+    LR_Util::diag_lapack(dim, mat.data(), eig.data());
+
+    // parallel
+    std::vector<double> eig_para(dim);
+    std::vector<std::complex<double>> eigvec_para(pmat.get_local_size());
+    LR_Util::diag_scalapack(dim, mat_local.data(), eig_para.data(), eigvec_para.data(), pmat.desc);
+
+    // compare
+    check_double_eq(eig_para.data(), eig.data(), dim);
+    std::vector<std::complex<double>> eigvec_serial_local(pmat.get_local_size());
+    LR_Util::set_local_from_global(pmat, mat.data(), eigvec_serial_local.data());
+    check_norm_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
 }
 
 int main(int argc, char** argv)

@@ -180,6 +180,52 @@ namespace LR_Util
         if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
     }
 
+#ifdef __MPI
+    void diag_scalapack(const int& n, double* mat, double* eigval, double* eigvec, const int(&desc)[9])
+    {
+        ModuleBase::TITLE("LR_Util", "diag_scalapack<double>");
+        char jobz = 'V', uplo = 'U';
+        const int minus_one = -1;
+        const int i1 = 1;
+        int info = 0;
+        double lwork_tmp = 0.0;
+        pdsyev_(&jobz, &uplo, &n,
+            mat, &i1, &i1, desc,
+            eigval, eigvec, &i1, &i1, desc,
+            &lwork_tmp, &minus_one, &info);		// get the optimal size of work into lwork
+        const int lwork = lwork_tmp;
+        std::vector<double> work(lwork);
+        pdsyev_(&jobz, &uplo, &n,
+            mat, &i1, &i1, desc,
+            eigval, eigvec, &i1, &i1, desc,
+            work.data(), &lwork, &info);
+        if (info) { std::cout << "ERROR: Scalapack solver, info=" << info << std::endl; }
+    }
+    void diag_scalapack(const int& n, std::complex<double>* mat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9])
+    {
+        ModuleBase::TITLE("LR_Util", "diag_lapack<complex<double>>");
+        char jobz = 'V', uplo = 'U';
+        const int minus_one = -1;
+        const int i1 = 1;
+        int info = 0;
+        std::complex<double>lwork_tmp(0., 0.);
+        double lrwork_tmp = 0.0;
+        pzheev_(&jobz, &uplo, &n,
+            mat, &i1, &i1, desc,
+            eigval, eigvec, &i1, &i1, desc,
+            &lwork_tmp, &minus_one, &lrwork_tmp, &minus_one, &info);   // get the optimal workspace size
+        const int lwork = lwork_tmp.real();
+        const int lrwork = lrwork_tmp;
+        std::vector<std::complex<double>> work(lwork);
+        std::vector<double>rwork(lrwork);
+        pzheev_(&jobz, &uplo, &n,
+            mat, &i1, &i1, desc,
+            eigval, eigvec, &i1, &i1, desc,
+            work.data(), &lwork, rwork.data(), &lrwork, &info);
+        if (info) { std::cout << "ERROR: Scalapack solver, info=" << info << std::endl; }
+    }
+#endif
+
     std::string tolower(const std::string& str)
     {
         std::string str_lower = str;

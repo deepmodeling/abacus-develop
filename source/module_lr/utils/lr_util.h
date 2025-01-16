@@ -94,6 +94,8 @@ namespace LR_Util
     /// the defination of row and col is consistent with setup_2d_division
     template <typename T>
     void gather_2d_to_full(const Parallel_2D& pv, const T* submat, T* fullmat, bool col_first, int global_nrow, int global_ncol);
+    template <typename T>
+    void set_local_from_global(const Parallel_2D& pv, const T* global, T* local);
 #endif
 
     ///=================diago-lapack====================
@@ -103,7 +105,10 @@ namespace LR_Util
     /// @brief  diagonalize a general matrix
     void diag_lapack_nh(const int& n, double* mat, std::complex<double>* eig);
     void diag_lapack_nh(const int& n, std::complex<double>* mat, std::complex<double>* eig);
-
+#ifdef __MPI
+    void diag_scalapack(const int& n, double* mat, double* eigval, double* eigvec, const int(&desc)[9]);
+    void diag_scalapack(const int& n, std::complex<double>* mat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9]);
+#endif
     ///=================string option====================
     std::string tolower(const std::string& str);
     std::string toupper(const std::string& str);

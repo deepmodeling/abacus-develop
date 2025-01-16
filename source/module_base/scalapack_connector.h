@@ -99,6 +99,15 @@ extern "C"
 		const float* abstol, int* m, int* nz, float* w, const float*orfac, std::complex<float>* Z, const int* iz, const int* jz, const int*descz,
 		std::complex<float>* work, int* lwork, float* rwork, int* lrwork, int*iwork, int*liwork, int* ifail, int*iclustr, float*gap, int* info);
 
+    void pdsyev_(const char* jobz, const char* uplo, const int* n,
+        double* a, const int* ia, const int* ja, const int* desca,
+        double* w, double* z, const int* iz, const int* jz, const int* descz,
+        double* work, const int* lwork, int* info);
+
+    void pzheev_(const char* jobz, const char* uplo, const int* n,
+        std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+        double* w, std::complex<double>* z, const int* iz, const int* jz, const int* descz,
+        std::complex<double>* work, const int* lwork, double* rwork, const int* lrwork, int* info);
 
 	void pzgetri_(
 		const int *n, 

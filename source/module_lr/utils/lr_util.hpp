@@ -174,6 +174,18 @@ namespace LR_Util
         //reduce to root
         MPI_Allreduce(MPI_IN_PLACE, fullmat, global_nrow * global_ncol, get_mpi_datatype(), MPI_SUM, pv.comm());
     };
+
+    template <typename T>
+    void set_local_from_global(const Parallel_2D& pv, const T* global, T* local)
+    {
+        for (int c = 0;c < pv.get_col_size();++c)
+        {
+            for (int r = 0;r < pv.get_row_size();++r)
+            {
+                local[c * pv.get_row_size() + r] = global[pv.local2global_col(c) * pv.get_global_row_size() + pv.local2global_row(r)];
+            }
+        }
+    }
 #endif
 
 }
