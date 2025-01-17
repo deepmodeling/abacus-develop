@@ -6,8 +6,8 @@
 namespace unitcell
 {
     bool check_tau(const Atom* atoms,
-                   const int ntype,
-                   const int lat0);
+                   const int& ntype,
+                   const double& lat0);
                    
     bool read_atom_species(std::ifstream& ifa,
                           std::ofstream& ofs_running,
