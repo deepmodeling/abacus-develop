@@ -222,19 +222,15 @@ void norm_psi(const Parallel_Orbitals* pv,
 void norm_psi_tensor(const Parallel_Orbitals* pv,
                      const int nband,
                      const int nlocal,
-                     const container::Tensor& Stmp,
-                     container::Tensor& psi_k,
+                     const ct::Tensor& Stmp,
+                     ct::Tensor& psi_k,
                      const int print_matrix)
 {
     // Create Tensor objects for temporary data
-    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({pv->nloc_wfc}));
+    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc_wfc}));
     tmp1.zero();
 
-    container::Tensor Cij(container::DataType::DT_COMPLEX_DOUBLE,
-                          container::DeviceType::CpuDevice,
-                          container::TensorShape({pv->nloc}));
+    ct::Tensor Cij(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc}));
     Cij.zero();
 
     // Perform matrix multiplication: tmp1 = Stmp * psi_k
@@ -428,56 +424,66 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
     }
 }
 
+template <typename Device>
 void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                             const int nband,
                             const int nlocal,
-                            const container::Tensor& Stmp,
-                            container::Tensor& psi_k,
+                            const ct::Tensor& Stmp,
+                            ct::Tensor& psi_k,
                             const int print_matrix)
 {
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+
     // Create Tensor objects for temporary data
-    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
+    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE,
+                    ct_device_type,
+                    ct::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    container::Tensor Cij(container::DataType::DT_COMPLEX_DOUBLE,
-                          container::DeviceType::CpuDevice,
-                          container::TensorShape({pv->nloc})); // Cij shape: nlocal * nlocal
+    ct::Tensor Cij(ct::DataType::DT_COMPLEX_DOUBLE,
+                   ct_device_type,
+                   ct::TensorShape({pv->nloc})); // Cij shape: nlocal * nlocal
     Cij.zero();
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
 
     // Perform matrix multiplication: tmp1 = Stmp * psi_k
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
-                                                                                 'N',
-                                                                                 nlocal,
-                                                                                 nband,
-                                                                                 nlocal,
-                                                                                 &alpha,
-                                                                                 Stmp.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of Stmp
-                                                                                 psi_k.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of psi_k
-                                                                                 &beta,
-                                                                                 tmp1.data<std::complex<double>>(),
-                                                                                 nlocal); // Leading dimension of tmp1
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                              'N',
+                                                              nlocal,
+                                                              nband,
+                                                              nlocal,
+                                                              &alpha,
+                                                              Stmp.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of Stmp
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of psi_k
+                                                              &beta,
+                                                              tmp1.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of tmp1
 
     // Perform matrix multiplication: Cij = psi_k^dagger * tmp1
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('C',
-                                                                                 'N',
-                                                                                 nband,
-                                                                                 nband,
-                                                                                 nlocal,
-                                                                                 &alpha,
-                                                                                 psi_k.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of psi_k
-                                                                                 tmp1.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of tmp1
-                                                                                 &beta,
-                                                                                 Cij.data<std::complex<double>>(),
-                                                                                 nlocal); // Leading dimension of Cij
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('C',
+                                                              'N',
+                                                              nband,
+                                                              nband,
+                                                              nlocal,
+                                                              &alpha,
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of psi_k
+                                                              tmp1.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of tmp1
+                                                              &beta,
+                                                              Cij.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of Cij
 
     if (print_matrix)
     {
@@ -505,18 +511,47 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     }
 
     // Normalize Cij: set diagonal elements to 1/sqrt(Cij[i][i]), off-diagonal elements to 0
-    for (int i = 0; i < nband; ++i)
+    if (ct_device_type == ct::DeviceType::GpuDevice)
     {
-        for (int j = 0; j < nband; ++j)
+        // Step 1: Copy Cij from GPU to CPU
+        ct::Tensor Cij_cpu = Cij.to_device<ct::DEVICE_CPU>();
+
+        // Step 2: Perform normalization on CPU
+        for (int i = 0; i < nband; ++i)
         {
-            if (i == j)
+            for (int j = 0; j < nband; ++j)
             {
-                Cij.data<std::complex<double>>()[i * nlocal + j]
-                    = {1.0 / sqrt(Cij.data<std::complex<double>>()[i * nlocal + j].real()), 0.0};
+                if (i == j)
+                {
+                    Cij_cpu.data<std::complex<double>>()[i * nlocal + j]
+                        = {1.0 / sqrt(Cij_cpu.data<std::complex<double>>()[i * nlocal + j].real()), 0.0};
+                }
+                else
+                {
+                    Cij_cpu.data<std::complex<double>>()[i * nlocal + j] = {0.0, 0.0};
+                }
             }
-            else
+        }
+
+        // Step 3: Copy normalized Cij back to GPU
+        Cij = Cij_cpu.to_device<ct_Device>();
+    }
+    else
+    {
+        // CPU implementation
+        for (int i = 0; i < nband; ++i)
+        {
+            for (int j = 0; j < nband; ++j)
             {
-                Cij.data<std::complex<double>>()[i * nlocal + j] = {0.0, 0.0};
+                if (i == j)
+                {
+                    Cij.data<std::complex<double>>()[i * nlocal + j]
+                        = {1.0 / sqrt(Cij.data<std::complex<double>>()[i * nlocal + j].real()), 0.0};
+                }
+                else
+                {
+                    Cij.data<std::complex<double>>()[i * nlocal + j] = {0.0, 0.0};
+                }
             }
         }
     }
@@ -526,19 +561,19 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     tmp1 = psi_k; // operator= overload for Tensor class
 
     // Perform matrix multiplication: psi_k = tmp1 * Cij
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
-                                                                                 'N',
-                                                                                 nlocal,
-                                                                                 nband,
-                                                                                 nband,
-                                                                                 &alpha,
-                                                                                 tmp1.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of tmp1
-                                                                                 Cij.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of Cij
-                                                                                 &beta,
-                                                                                 psi_k.data<std::complex<double>>(),
-                                                                                 nlocal); // Leading dimension of psi_k
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                              'N',
+                                                              nlocal,
+                                                              nband,
+                                                              nband,
+                                                              &alpha,
+                                                              tmp1.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of tmp1
+                                                              Cij.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of Cij
+                                                              &beta,
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of psi_k
 
     if (print_matrix)
     {
@@ -600,5 +635,20 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     }
 }
 
+// Explicit instantiation of template functions
+template void norm_psi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
+                                                              const int nband,
+                                                              const int nlocal,
+                                                              const ct::Tensor& Stmp,
+                                                              ct::Tensor& psi_k,
+                                                              const int print_matrix);
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void norm_psi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
+                                                              const int nband,
+                                                              const int nlocal,
+                                                              const ct::Tensor& Stmp,
+                                                              ct::Tensor& psi_k,
+                                                              const int print_matrix);
+#endif // __CUDA
 #endif
 } // namespace module_tddft

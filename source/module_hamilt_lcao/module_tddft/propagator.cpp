@@ -3,6 +3,8 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/module_container/ATen/kernels/blas.h"
 #include "module_base/module_container/ATen/kernels/lapack.h"
+#include "module_base/module_container/ATen/kernels/memory.h" // memory operations (Tensor)
+#include "module_base/module_device/memory_op.h"              // memory operations
 #include "module_base/scalapack_connector.h"
 #include "module_parameter/parameter.h"
 
@@ -48,16 +50,17 @@ void Propagator::compute_propagator(const int nlocal,
         break;
 
     default:
-        std::cout << "method of propagator is wrong" << std::endl;
+        ModuleBase::WARNING_QUIT("Propagator::compute_propagator", "Method of RT-TDDFT propagator is wrong!");
         break;
     }
 }
 
+template <typename Device>
 void Propagator::compute_propagator_tensor(const int nlocal,
-                                           const container::Tensor& Stmp,
-                                           const container::Tensor& Htmp,
-                                           const container::Tensor& H_laststep,
-                                           container::Tensor& U_operator,
+                                           const ct::Tensor& Stmp,
+                                           const ct::Tensor& Htmp,
+                                           const ct::Tensor& H_laststep,
+                                           ct::Tensor& U_operator,
                                            const int print_matrix,
                                            const bool use_lapack) const
 {
@@ -71,12 +74,13 @@ void Propagator::compute_propagator_tensor(const int nlocal,
         }
         else
         {
-            compute_propagator_cn2_tensor_lapack(nlocal, Stmp, Htmp, U_operator, print_matrix);
+            compute_propagator_cn2_tensor_lapack<Device>(nlocal, Stmp, Htmp, U_operator, print_matrix);
         }
         break;
 
     default:
-        std::cout << "method of propagator is wrong" << std::endl;
+        ModuleBase::WARNING_QUIT("Propagator::compute_propagator_tensor",
+                                 "The Tensor-based RT-TDDFT propagator currently supports Crank–Nicolson method only!");
         break;
     }
 }
@@ -311,15 +315,15 @@ void Propagator::compute_propagator_cn2(const int nlocal,
 }
 
 void Propagator::compute_propagator_cn2_tensor(const int nlocal,
-                                               const container::Tensor& Stmp,
-                                               const container::Tensor& Htmp,
-                                               container::Tensor& U_operator,
+                                               const ct::Tensor& Stmp,
+                                               const ct::Tensor& Htmp,
+                                               ct::Tensor& U_operator,
                                                const int print_matrix) const
 {
     // (1) copy Htmp to Numerator & Denominator
-    container::Tensor Numerator(container::DataType::DT_COMPLEX_DOUBLE,
-                                container::DeviceType::CpuDevice,
-                                container::TensorShape({this->ParaV->nloc}));
+    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE,
+                         ct::DeviceType::CpuDevice,
+                         ct::TensorShape({this->ParaV->nloc}));
     Numerator.zero();
     BlasConnector::copy(this->ParaV->nloc,
                         Htmp.data<std::complex<double>>(),
@@ -327,9 +331,9 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
                         Numerator.data<std::complex<double>>(),
                         1);
 
-    container::Tensor Denominator(container::DataType::DT_COMPLEX_DOUBLE,
-                                  container::DeviceType::CpuDevice,
-                                  container::TensorShape({this->ParaV->nloc}));
+    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE,
+                           ct::DeviceType::CpuDevice,
+                           ct::TensorShape({this->ParaV->nloc}));
     Denominator.zero();
     BlasConnector::copy(this->ParaV->nloc,
                         Htmp.data<std::complex<double>>(),
@@ -421,9 +425,9 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
-    container::Tensor ipiv(container::DataType::DT_INT,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({this->ParaV->nrow + this->ParaV->nb}));
+    ct::Tensor ipiv(ct::DataType::DT_INT,
+                    ct::DeviceType::CpuDevice,
+                    ct::TensorShape({this->ParaV->nrow + this->ParaV->nb}));
     ipiv.zero();
     int info = 0;
     // (3.1) compute ipiv
@@ -455,10 +459,8 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
 
     int lwork = -1;
     int liwotk = -1;
-    container::Tensor work(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({1}));
-    container::Tensor iwork(container::DataType::DT_INT, container::DeviceType::CpuDevice, container::TensorShape({1}));
+    ct::Tensor work(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({1}));
+    ct::Tensor iwork(ct::DataType::DT_INT, ct::DeviceType::CpuDevice, ct::TensorShape({1}));
     // (3.2) compute work
     ScalapackConnector::getri(nlocal,
                               Denominator.data<std::complex<double>>(),
@@ -472,9 +474,9 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
                               &liwotk,
                               &info);
     lwork = work.data<std::complex<double>>()[0].real();
-    work.resize(container::TensorShape({lwork}));
+    work.resize(ct::TensorShape({lwork}));
     liwotk = iwork.data<int>()[0];
-    iwork.resize(container::TensorShape({liwotk}));
+    iwork.resize(ct::TensorShape({liwotk}));
     // (3.3) compute inverse matrix of Denominator
     ScalapackConnector::getri(nlocal,
                               Denominator.data<std::complex<double>>(),
@@ -562,32 +564,116 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
     }
 }
 
+//------------------------ Utility function ------------------------//
+// Auxiliary function: process non-complex types, return value 1.0
+template <typename T>
+inline T init_value(typename std::enable_if<!std::is_same<T, std::complex<float>>::value
+                                            && !std::is_same<T, std::complex<double>>::value>::type* = nullptr)
+{
+    return T(1.0);
+}
+
+// Auxiliary function: process complex types, return value 1.0 + 0.0i
+template <typename T>
+inline T init_value(typename std::enable_if<std::is_same<T, std::complex<float>>::value
+                                            || std::is_same<T, std::complex<double>>::value>::type* = nullptr)
+{
+    return T(1.0, 0.0);
+}
+
+// Create an identity matrix of size n×n
+template <typename T>
+ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::DeviceType::CpuDevice)
+{
+    // Choose the data type of the Tensor
+    ct::DataType data_type;
+    if (std::is_same<T, float>::value)
+    {
+        data_type = ct::DataType::DT_FLOAT;
+    }
+    else if (std::is_same<T, double>::value)
+    {
+        data_type = ct::DataType::DT_DOUBLE;
+    }
+    else if (std::is_same<T, std::complex<float>>::value)
+    {
+        data_type = ct::DataType::DT_COMPLEX;
+    }
+    else if (std::is_same<T, std::complex<double>>::value)
+    {
+        data_type = ct::DataType::DT_COMPLEX_DOUBLE;
+    }
+    else
+    {
+        static_assert(std::is_same<T, float>::value || std::is_same<T, double>::value
+                          || std::is_same<T, std::complex<float>>::value
+                          || std::is_same<T, std::complex<double>>::value,
+                      "Unsupported data type!");
+    }
+
+    ct::Tensor tensor(data_type, device, ct::TensorShape({n, n}));
+    tensor.zero();
+
+    // Set the diagonal elements to 1
+    if (device == ct::DeviceType::CpuDevice)
+    {
+        // For CPU, we can directly access the data
+        T* data_ptr = tensor.data<T>();
+        for (int i = 0; i < n; ++i)
+        {
+            data_ptr[i * n + i] = init_value<T>();
+        }
+    }
+    else if (device == ct::DeviceType::GpuDevice)
+    {
+        // For GPU, we need to use a kernel to set the diagonal elements
+        T* data_ptr = tensor.data<T>();
+        for (int i = 0; i < n; ++i)
+        {
+            T value = init_value<T>();
+            ct::kernels::set_memory<T, ct::DEVICE_GPU>()(data_ptr + i * n + i, value, 1);
+        }
+    }
+
+    return tensor;
+}
+//------------------------ Utility function ------------------------//
+
+template <typename Device>
 void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
-                                                      const container::Tensor& Stmp,
-                                                      const container::Tensor& Htmp,
-                                                      container::Tensor& U_operator,
+                                                      const ct::Tensor& Stmp,
+                                                      const ct::Tensor& Htmp,
+                                                      ct::Tensor& U_operator,
                                                       const int print_matrix) const
 {
-    // (1) copy Htmp to Numerator & Denominator
-    container::Tensor Numerator(container::DataType::DT_COMPLEX_DOUBLE,
-                                container::DeviceType::CpuDevice,
-                                container::TensorShape({this->ParaV->nloc}));
-    Numerator.zero();
-    BlasConnector::copy(this->ParaV->nloc,
-                        Htmp.data<std::complex<double>>(),
-                        1,
-                        Numerator.data<std::complex<double>>(),
-                        1);
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_GPU* gpu_ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
 
-    container::Tensor Denominator(container::DataType::DT_COMPLEX_DOUBLE,
-                                  container::DeviceType::CpuDevice,
-                                  container::TensorShape({this->ParaV->nloc}));
+    // (1) copy Htmp to Numerator & Denominator
+    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({this->ParaV->nloc}));
+    Numerator.zero();
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        ctx,
+        ctx,
+        Numerator.data<std::complex<double>>(),
+        Htmp.data<std::complex<double>>(),
+        this->ParaV->nloc);
+
+    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({this->ParaV->nloc}));
     Denominator.zero();
-    BlasConnector::copy(this->ParaV->nloc,
-                        Htmp.data<std::complex<double>>(),
-                        1,
-                        Denominator.data<std::complex<double>>(),
-                        1);
+    base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
+        ctx,
+        ctx,
+        Denominator.data<std::complex<double>>(),
+        Htmp.data<std::complex<double>>(),
+        this->ParaV->nloc);
 
     if (print_matrix)
     {
@@ -622,36 +708,34 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
     // (2) compute Numerator & Denominator by GEADD
     // Numerator = Stmp - i*para * Htmp;     beta1 = - para = -0.25 * this->dt
     // Denominator = Stmp + i*para * Htmp;   beta2 = para = 0.25 * this->dt
-    std::complex<double> alpha = {1.0, 0.0};
+    std::complex<double> one = {1.0, 0.0};
     std::complex<double> beta1 = {0.0, -0.25 * this->dt};
     std::complex<double> beta2 = {0.0, 0.25 * this->dt};
 
     // Numerator = -i*para * Htmp
-    container::kernels::blas_scal<std::complex<double>, container::DEVICE_CPU>()(nlocal * nlocal,
-                                                                                 &beta1,
-                                                                                 Numerator.data<std::complex<double>>(),
-                                                                                 1);
+    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &beta1,
+                                                              Numerator.data<std::complex<double>>(),
+                                                              1);
     // Numerator = Stmp + (-i*para * Htmp)
-    container::kernels::blas_axpy<std::complex<double>, container::DEVICE_CPU>()(nlocal * nlocal,
-                                                                                 &alpha,
-                                                                                 Stmp.data<std::complex<double>>(),
-                                                                                 1,
-                                                                                 Numerator.data<std::complex<double>>(),
-                                                                                 1);
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one,
+                                                              Stmp.data<std::complex<double>>(),
+                                                              1,
+                                                              Numerator.data<std::complex<double>>(),
+                                                              1);
     // Denominator = i*para * Htmp
-    container::kernels::blas_scal<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal * nlocal,
-        &beta2,
-        Denominator.data<std::complex<double>>(),
-        1);
+    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &beta2,
+                                                              Denominator.data<std::complex<double>>(),
+                                                              1);
     // Denominator = Stmp + (i*para * Htmp)
-    container::kernels::blas_axpy<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal * nlocal,
-        &alpha,
-        Stmp.data<std::complex<double>>(),
-        1,
-        Denominator.data<std::complex<double>>(),
-        1);
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one,
+                                                              Stmp.data<std::complex<double>>(),
+                                                              1,
+                                                              Denominator.data<std::complex<double>>(),
+                                                              1);
 
     if (print_matrix)
     {
@@ -673,19 +757,14 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     // (3) Next, invert Denominator
-    container::Tensor ipiv(container::DataType::DT_INT,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({nlocal}));
+    ct::Tensor ipiv(ct::DataType::DT_INT, ct_device_type, ct::TensorShape({nlocal}));
     ipiv.zero();
-    int info = 0;
     // (3.1) compute ipiv
-    container::kernels::lapack_getrf<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal,
-        nlocal,
-        Denominator.data<std::complex<double>>(),
-        nlocal,
-        ipiv.data<int>(),
-        info);
+    ct::kernels::lapack_getrf<std::complex<double>, ct_Device>()(nlocal,
+                                                                 nlocal,
+                                                                 Denominator.data<std::complex<double>>(),
+                                                                 nlocal,
+                                                                 ipiv.data<int>());
 
     // Print ipiv
     if (print_matrix)
@@ -704,53 +783,35 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         GlobalV::ofs_running << std::endl;
     }
 
-    // (3.2) compute work size for getri
-    int lwork = -1;
-    std::complex<double> work_query;
-    container::kernels::lapack_getri<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal,
-        Denominator.data<std::complex<double>>(),
-        nlocal,
-        ipiv.data<int>(),
-        &work_query,
-        lwork,
-        info);
-
-    lwork = static_cast<int>(work_query.real());
-    container::Tensor work(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({lwork}));
-
-    // (3.3) compute inverse matrix of Denominator
-    container::kernels::lapack_getri<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal,
-        Denominator.data<std::complex<double>>(),
-        nlocal,
-        ipiv.data<int>(),
-        work.data<std::complex<double>>(),
-        lwork,
-        info);
-    assert(0 == info);
+    // (3.2) compute inverse matrix of Denominator
+    ct::Tensor Denominator_inv = create_identity_matrix<std::complex<double>>(nlocal, ct_device_type);
+    ct::kernels::lapack_getrs<std::complex<double>, ct_Device>()('N',
+                                                                 nlocal,
+                                                                 nlocal,
+                                                                 Denominator.data<std::complex<double>>(),
+                                                                 nlocal,
+                                                                 ipiv.data<int>(),
+                                                                 Denominator_inv.data<std::complex<double>>(),
+                                                                 nlocal);
 
     //->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    // (4) U_operator = Denominator * Numerator;
-    std::complex<double> alpha_gemm = {1.0, 0.0};
-    std::complex<double> beta_gemm = {0.0, 0.0};
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()(
-        'N',
-        'N',
-        nlocal,
-        nlocal,
-        nlocal,
-        &alpha_gemm,
-        Denominator.data<std::complex<double>>(),
-        nlocal,
-        Numerator.data<std::complex<double>>(),
-        nlocal,
-        &beta_gemm,
-        U_operator.data<std::complex<double>>(),
-        nlocal);
+    // (4) U_operator = Denominator_inv * Numerator;
+    std::complex<double> one_gemm = {1.0, 0.0};
+    std::complex<double> zero_gemm = {0.0, 0.0};
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                              'N',
+                                                              nlocal,
+                                                              nlocal,
+                                                              nlocal,
+                                                              &one_gemm,
+                                                              Denominator_inv.data<std::complex<double>>(),
+                                                              nlocal,
+                                                              Numerator.data<std::complex<double>>(),
+                                                              nlocal,
+                                                              &zero_gemm,
+                                                              U_operator.data<std::complex<double>>(),
+                                                              nlocal);
 
     if (print_matrix)
     {
@@ -759,9 +820,9 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                GlobalV::ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
+                GlobalV::ofs_running << Denominator_inv.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
                                      << "+"
-                                     << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
+                                     << Denominator_inv.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
                                      << "i ";
             }
             GlobalV::ofs_running << std::endl;
@@ -1159,5 +1220,32 @@ void Propagator::compute_propagator_etrs(const int nlocal,
                              this->ParaV->desc);
 }
 
-#endif
+// Explicit instantiation of template functions
+template void Propagator::compute_propagator_tensor<base_device::DEVICE_CPU>(const int nlocal,
+                                                                             const ct::Tensor& Stmp,
+                                                                             const ct::Tensor& Htmp,
+                                                                             const ct::Tensor& H_laststep,
+                                                                             ct::Tensor& U_operator,
+                                                                             const int print_matrix,
+                                                                             const bool use_lapack) const;
+template void Propagator::compute_propagator_cn2_tensor_lapack<base_device::DEVICE_CPU>(const int nlocal,
+                                                                                        const ct::Tensor& Stmp,
+                                                                                        const ct::Tensor& Htmp,
+                                                                                        ct::Tensor& U_operator,
+                                                                                        const int print_matrix) const;
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void Propagator::compute_propagator_tensor<base_device::DEVICE_GPU>(const int nlocal,
+                                                                             const ct::Tensor& Stmp,
+                                                                             const ct::Tensor& Htmp,
+                                                                             const ct::Tensor& H_laststep,
+                                                                             ct::Tensor& U_operator,
+                                                                             const int print_matrix,
+                                                                             const bool use_lapack) const;
+template void Propagator::compute_propagator_cn2_tensor_lapack<base_device::DEVICE_GPU>(const int nlocal,
+                                                                                        const ct::Tensor& Stmp,
+                                                                                        const ct::Tensor& Htmp,
+                                                                                        ct::Tensor& U_operator,
+                                                                                        const int print_matrix) const;
+#endif // __CUDA
+#endif // __MPI
 } // namespace module_tddft

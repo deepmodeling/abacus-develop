@@ -89,12 +89,11 @@ void upsi(const Parallel_Orbitals* pv,
 void upsi_tensor(const Parallel_Orbitals* pv,
                  const int nband,
                  const int nlocal,
-                 const container::Tensor& U_operator,
-                 const container::Tensor& psi_k_laststep,
-                 container::Tensor& psi_k,
+                 const ct::Tensor& U_operator,
+                 const ct::Tensor& psi_k_laststep,
+                 ct::Tensor& psi_k,
                  const int print_matrix)
 {
-
     ScalapackConnector::gemm('N',
                              'N',
                              nlocal,
@@ -163,32 +162,41 @@ void upsi_tensor(const Parallel_Orbitals* pv,
     }
 }
 
+template <typename Device>
 void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         const int nband,
                         const int nlocal,
-                        const container::Tensor& U_operator,
-                        const container::Tensor& psi_k_laststep,
-                        container::Tensor& psi_k,
+                        const ct::Tensor& U_operator,
+                        const ct::Tensor& psi_k_laststep,
+                        ct::Tensor& psi_k,
                         const int print_matrix)
 {
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+
     // Perform the matrix multiplication: psi_k = U_operator * psi_k_laststep
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
 
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()(
-        'N',
-        'N',
-        nlocal,
-        nband,
-        nlocal,
-        &alpha,
-        U_operator.data<std::complex<double>>(),
-        nlocal,
-        psi_k_laststep.data<std::complex<double>>(),
-        nlocal,
-        &beta,
-        psi_k.data<std::complex<double>>(),
-        nlocal);
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                              'N',
+                                                              nlocal,
+                                                              nband,
+                                                              nlocal,
+                                                              &alpha,
+                                                              U_operator.data<std::complex<double>>(),
+                                                              nlocal,
+                                                              psi_k_laststep.data<std::complex<double>>(),
+                                                              nlocal,
+                                                              &beta,
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal);
 
     if (print_matrix)
     {
@@ -238,5 +246,22 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
     }
 }
 
-#endif
+// Explicit instantiation of template functions
+template void upsi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
+                                                          const int nband,
+                                                          const int nlocal,
+                                                          const ct::Tensor& U_operator,
+                                                          const ct::Tensor& psi_k_laststep,
+                                                          ct::Tensor& psi_k,
+                                                          const int print_matrix);
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void upsi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
+                                                          const int nband,
+                                                          const int nlocal,
+                                                          const ct::Tensor& U_operator,
+                                                          const ct::Tensor& psi_k_laststep,
+                                                          ct::Tensor& psi_k,
+                                                          const int print_matrix);
+#endif // __CUDA
+#endif // __MPI
 } // namespace module_tddft

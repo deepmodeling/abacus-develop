@@ -275,22 +275,12 @@ void Input_Conv::Convert()
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    module_tddft::Evolve_elec::td_force_dt = PARAM.inp.td_force_dt;
-    module_tddft::Evolve_elec::td_vext = PARAM.inp.td_vext;
-    if (module_tddft::Evolve_elec::td_vext)
-    {
-        parse_expression(PARAM.inp.td_vext_dire, module_tddft::Evolve_elec::td_vext_dire_case);
-    }
-    module_tddft::Evolve_elec::out_dipole = PARAM.inp.out_dipole;
-    module_tddft::Evolve_elec::out_efield = PARAM.inp.out_efield;
-    module_tddft::Evolve_elec::td_print_eij = PARAM.inp.td_print_eij;
-    module_tddft::Evolve_elec::td_edm = PARAM.inp.td_edm;
     TD_Velocity::out_current = PARAM.inp.out_current;
     TD_Velocity::out_current_k = PARAM.inp.out_current_k;
     TD_Velocity::out_vecpot = PARAM.inp.out_vecpot;
     TD_Velocity::init_vecpot_file = PARAM.inp.init_vecpot_file;
     read_td_efield();
-#endif
+#endif // __LCAO
 
    
 

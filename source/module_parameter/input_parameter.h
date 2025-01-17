@@ -280,9 +280,10 @@ struct Input_para
     double bessel_descriptor_sigma = 0.1;           ///< spherical bessel smearing_sigma
 
     // ==============   #Parameters (9.rt-tddft) ===========================
-    double td_force_dt = 0.02;      ///<"fs"
-    bool td_vext = false;           ///< add extern potential or not
-    std::string td_vext_dire = "1"; ///< vext direction
+    double td_force_dt = 0.02;           ///<"fs"
+    bool td_vext = false;                ///< add extern potential or not
+    // std::string td_vext_dire = "1";   ///< vext direction
+    std::vector<int> td_vext_dire = {1}; ///< vector of vext direction
 
     bool init_vecpot_file = false; ///< initialize the vector potential, though file or integral
     double td_print_eij = -1.0;    ///< threshold to output Eij elements

@@ -6,7 +6,7 @@
 #ifndef MIDDLE_HAMILT_H
 #define MIDDLE_HAMILT_H
 
-#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
+#include "module_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
@@ -37,19 +37,20 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
 void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          const int nband,
                          const int nlocal,
-                         container::Tensor& Htmp,
-                         container::Tensor& Stmp,
-                         const container::Tensor& H_laststep,
-                         const container::Tensor& S_laststep,
+                         ct::Tensor& Htmp,
+                         ct::Tensor& Stmp,
+                         const ct::Tensor& H_laststep,
+                         const ct::Tensor& S_laststep,
                          const int print_matrix);
 
+template <typename Device>
 void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 const int nband,
                                 const int nlocal,
-                                container::Tensor& Htmp,
-                                container::Tensor& Stmp,
-                                const container::Tensor& H_laststep,
-                                const container::Tensor& S_laststep,
+                                ct::Tensor& Htmp,
+                                ct::Tensor& Stmp,
+                                const ct::Tensor& H_laststep,
+                                const ct::Tensor& S_laststep,
                                 const int print_matrix);
 
 #endif

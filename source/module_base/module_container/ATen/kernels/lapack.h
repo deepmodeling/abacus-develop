@@ -73,8 +73,7 @@ struct lapack_getrf {
         const int& n,
         T* Mat,
         const int& lda,
-        int* ipiv,
-        int& info);
+        int* ipiv);
 };
 
 
@@ -86,10 +85,21 @@ struct lapack_getri {
         const int& lda,
         const int* ipiv,
         T* work,
-        const int& lwork,
-        int& info);
+        const int& lwork);
 };
 
+template <typename T, typename Device>
+struct lapack_getrs {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb);
+};
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles

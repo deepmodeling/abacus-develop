@@ -38,13 +38,15 @@
 namespace ModuleESolver
 {
 
-ESolver_KS_LCAO_TDDFT::ESolver_KS_LCAO_TDDFT()
+template <typename Device>
+ESolver_KS_LCAO_TDDFT<Device>::ESolver_KS_LCAO_TDDFT()
 {
     classname = "ESolver_KS_LCAO_TDDFT";
     basisname = "LCAO";
 }
 
-ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
+template <typename Device>
+ESolver_KS_LCAO_TDDFT<Device>::~ESolver_KS_LCAO_TDDFT()
 {
     delete psi_laststep;
     if (Hk_laststep != nullptr)
@@ -65,7 +67,8 @@ ESolver_KS_LCAO_TDDFT::~ESolver_KS_LCAO_TDDFT()
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::before_all_runners(UnitCell& ucell, const Input_para& inp)
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     // 1) run before_all_runners in ESolver_KS_LCAO
     ESolver_KS_LCAO<std::complex<double>, double>::before_all_runners(ucell, inp);
@@ -74,44 +77,48 @@ void ESolver_KS_LCAO_TDDFT::before_all_runners(UnitCell& ucell, const Input_para
     // this->pelec = dynamic_cast<elecstate::ElecStateLCAO_TDDFT*>(this->pelec);
 }
 
-void ESolver_KS_LCAO_TDDFT::hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr)
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
+                                                          const int istep,
+                                                          const int iter,
+                                                          const double ethr)
 {
     if (PARAM.inp.init_wfc == "file")
     {
         if (istep >= 1)
         {
-            module_tddft::Evolve_elec::solve_psi(istep,
-                                                 PARAM.inp.nbands,
-                                                 PARAM.globalv.nlocal,
-                                                 this->p_hamilt,
-                                                 this->pv,
-                                                 this->psi,
-                                                 this->psi_laststep,
-                                                 this->Hk_laststep,
-                                                 this->Sk_laststep,
-                                                 this->pelec->ekb,
-                                                 td_htype,
-                                                 PARAM.inp.propagator,
-                                                 kv.get_nks());
+            module_tddft::Evolve_elec<Device>::solve_psi(istep,
+                                                         PARAM.inp.nbands,
+                                                         PARAM.globalv.nlocal,
+                                                         this->p_hamilt,
+                                                         this->pv,
+                                                         this->psi,
+                                                         this->psi_laststep,
+                                                         this->Hk_laststep,
+                                                         this->Sk_laststep,
+                                                         this->pelec->ekb,
+                                                         td_htype,
+                                                         PARAM.inp.propagator,
+                                                         kv.get_nks());
             this->weight_dm_rho();
         }
         this->weight_dm_rho();
     }
     else if (istep >= 2)
     {
-        module_tddft::Evolve_elec::solve_psi(istep,
-                                             PARAM.inp.nbands,
-                                             PARAM.globalv.nlocal,
-                                             this->p_hamilt,
-                                             this->pv,
-                                             this->psi,
-                                             this->psi_laststep,
-                                             this->Hk_laststep,
-                                             this->Sk_laststep,
-                                             this->pelec->ekb,
-                                             td_htype,
-                                             PARAM.inp.propagator,
-                                             kv.get_nks());
+        module_tddft::Evolve_elec<Device>::solve_psi(istep,
+                                                     PARAM.inp.nbands,
+                                                     PARAM.globalv.nlocal,
+                                                     this->p_hamilt,
+                                                     this->pv,
+                                                     this->psi,
+                                                     this->psi_laststep,
+                                                     this->Hk_laststep,
+                                                     this->Sk_laststep,
+                                                     this->pelec->ekb,
+                                                     td_htype,
+                                                     PARAM.inp.propagator,
+                                                     kv.get_nks());
         this->weight_dm_rho();
     }
     else
@@ -141,7 +148,8 @@ void ESolver_KS_LCAO_TDDFT::hamilt2density_single(UnitCell& ucell, const int ist
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 }
 
-void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& iter)
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
 {
     // print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -170,7 +178,8 @@ void ESolver_KS_LCAO_TDDFT::iter_finish(UnitCell& ucell, const int istep, int& i
     ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter);
 }
 
-void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const int iter)
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep, const int iter)
 {
     // Calculate new potential according to new Charge Density
     if (!this->conv_esolver)
@@ -246,7 +255,7 @@ void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const i
         }
 
         // calculate energy density matrix for tddft
-        if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 2) && module_tddft::Evolve_elec::td_edm == 0)
+        if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 2) && PARAM.inp.td_edm == 0)
         {
             elecstate::cal_edm_tddft(this->pv, this->pelec, this->kv, this->p_hamilt);
         }
@@ -278,14 +287,15 @@ void ESolver_KS_LCAO_TDDFT::update_pot(UnitCell& ucell, const int istep, const i
     }
 }
 
-void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
 
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        if (module_tddft::Evolve_elec::out_dipole == 1)
+        if (PARAM.inp.out_dipole == 1)
         {
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
@@ -318,7 +328,8 @@ void ESolver_KS_LCAO_TDDFT::after_scf(UnitCell& ucell, const int istep)
     ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
 }
 
-void ESolver_KS_LCAO_TDDFT::weight_dm_rho()
+template <typename Device>
+void ESolver_KS_LCAO_TDDFT<Device>::weight_dm_rho()
 {
     if (PARAM.inp.ocp == 1)
     {
@@ -334,5 +345,10 @@ void ESolver_KS_LCAO_TDDFT::weight_dm_rho()
 
     this->pelec->psiToRho(this->psi[0]);
 }
+
+template class ESolver_KS_LCAO_TDDFT<base_device::DEVICE_CPU>;
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template class ESolver_KS_LCAO_TDDFT<base_device::DEVICE_GPU>;
+#endif
 
 } // namespace ModuleESolver

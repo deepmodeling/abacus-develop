@@ -131,9 +131,9 @@ struct lapack_getrf<T, DEVICE_CPU> {
         const int& n,
         T* Mat,
         const int& lda,
-        int* ipiv,
-        int& info)
+        int* ipiv)
     {
+        int info = 0;
         lapackConnector::getrf(m, n, Mat, lda, ipiv, info);
         if (info != 0) {
             throw std::runtime_error("getrf failed with info = " + std::to_string(info));
@@ -149,12 +149,32 @@ struct lapack_getri<T, DEVICE_CPU> {
         const int& lda,
         const int* ipiv,
         T* work,
-        const int& lwork,
-        int& info)
+        const int& lwork)
     {
+        int info = 0;
         lapackConnector::getri(n, Mat, lda, ipiv, work, lwork, info);
         if (info != 0) {
             throw std::runtime_error("getri failed with info = " + std::to_string(info));
+        }
+    }
+};
+
+template <typename T>
+struct lapack_getrs<T, DEVICE_CPU> {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb)
+    {
+        int info = 0;
+        lapackConnector::getrs(trans, n, nrhs, A, lda, ipiv, B, ldb, info);
+        if (info != 0) {
+            throw std::runtime_error("getrs failed with info = " + std::to_string(info));
         }
     }
 };
@@ -193,6 +213,11 @@ template struct lapack_getri<float, DEVICE_CPU>;
 template struct lapack_getri<double, DEVICE_CPU>;
 template struct lapack_getri<std::complex<float>, DEVICE_CPU>;
 template struct lapack_getri<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_getrs<float, DEVICE_CPU>;
+template struct lapack_getrs<double, DEVICE_CPU>;
+template struct lapack_getrs<std::complex<float>, DEVICE_CPU>;
+template struct lapack_getrs<std::complex<double>, DEVICE_CPU>;
 
 } // namespace kernels
 } // namespace container

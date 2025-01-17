@@ -7,7 +7,7 @@
 #define PROPAGATOR_H
 
 #include "module_base/constants.h"
-#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
+#include "module_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
@@ -43,14 +43,15 @@ class Propagator
                             std::complex<double>* U_operator,
                             const int print_matrix) const;
 
+    template <typename Device>
     void compute_propagator_tensor(const int nlocal,
-                                   const container::Tensor& Stmp,
-                                   const container::Tensor& Htmp,
-                                   const container::Tensor& H_laststep,
-                                   container::Tensor& U_operator,
+                                   const ct::Tensor& Stmp,
+                                   const ct::Tensor& Htmp,
+                                   const ct::Tensor& H_laststep,
+                                   ct::Tensor& U_operator,
                                    const int print_matrix,
                                    const bool use_lapack) const;
-#endif
+#endif // __MPI
 
   private:
     int ptype; // type of propagator
@@ -75,15 +76,16 @@ class Propagator
                                 const int print_matrix) const;
 
     void compute_propagator_cn2_tensor(const int nlocal,
-                                       const container::Tensor& Stmp,
-                                       const container::Tensor& Htmp,
-                                       container::Tensor& U_operator,
+                                       const ct::Tensor& Stmp,
+                                       const ct::Tensor& Htmp,
+                                       ct::Tensor& U_operator,
                                        const int print_matrix) const;
 
+    template <typename Device>
     void compute_propagator_cn2_tensor_lapack(const int nlocal,
-                                              const container::Tensor& Stmp,
-                                              const container::Tensor& Htmp,
-                                              container::Tensor& U_operator,
+                                              const ct::Tensor& Stmp,
+                                              const ct::Tensor& Htmp,
+                                              ct::Tensor& U_operator,
                                               const int print_matrix) const;
 
     /**
@@ -119,7 +121,7 @@ class Propagator
                                  const std::complex<double>* H_laststep,
                                  std::complex<double>* U_operator,
                                  const int print_matrix) const;
-#endif
+#endif // __MPI
 };
 } // namespace module_tddft
 

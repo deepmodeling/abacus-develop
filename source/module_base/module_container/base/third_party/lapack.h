@@ -114,6 +114,11 @@ void sgetri_(const int* n, float* A, const int* lda, const int* ipiv, float* wor
 void dgetri_(const int* n, double* A, const int* lda, const int* ipiv, double* work, const int* lwork, int* info);
 void cgetri_(const int* n, std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* work, const int* lwork, int* info);
 void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
+
+void sgetrs_(const char* trans, const int* n, const int* nrhs, const float* A, const int* lda, const int* ipiv, float* B, const int* ldb, int* info);
+void dgetrs_(const char* trans, const int* n, const int* nrhs, const double* A, const int* lda, const int* ipiv, double* B, const int* ldb, int* info);
+void cgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* B, const int* ldb, int* info);
+void zgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* B, const int* ldb, int* info);
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.
@@ -370,6 +375,27 @@ static inline
 void getri(const int n, std::complex<double>* A, const int lda, const int* ipiv, std::complex<double>* work, const int lwork, int& info)
 {
     zgetri_(&n, A, &lda, ipiv, work, &lwork, &info);
+}
+
+static inline
+void getrs(const char& trans, const int n, const int nrhs, float* A, const int lda, const int* ipiv, float* B, const int ldb, int& info)
+{
+    sgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
+}
+static inline
+void getrs(const char& trans, const int n, const int nrhs, double* A, const int lda, const int* ipiv, double* B, const int ldb, int& info)
+{
+    dgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
+}
+static inline
+void getrs(const char& trans, const int n, const int nrhs, std::complex<float>* A, const int lda, const int* ipiv, std::complex<float>* B, const int ldb, int& info)
+{
+    cgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
+}
+static inline
+void getrs(const char& trans, const int n, const int nrhs, std::complex<double>* A, const int lda, const int* ipiv, std::complex<double>* B, const int ldb, int& info)
+{
+    zgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
 }
 
 } // namespace lapackConnector

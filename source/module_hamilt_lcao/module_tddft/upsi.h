@@ -7,7 +7,7 @@
 #ifndef UPSI_H
 #define UPSI_H
 
-#include "module_base/module_container/ATen/core/tensor.h" // container::Tensor
+#include "module_base/module_container/ATen/core/tensor.h" // ct::Tensor
 #include "module_basis/module_ao/parallel_orbitals.h"
 
 #include <complex>
@@ -37,17 +37,18 @@ void upsi(const Parallel_Orbitals* pv,
 void upsi_tensor(const Parallel_Orbitals* pv,
                  const int nband,
                  const int nlocal,
-                 const container::Tensor& U_operator,
-                 const container::Tensor& psi_k_laststep,
-                 container::Tensor& psi_k,
+                 const ct::Tensor& U_operator,
+                 const ct::Tensor& psi_k_laststep,
+                 ct::Tensor& psi_k,
                  const int print_matrix);
 
+template <typename Device>
 void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         const int nband,
                         const int nlocal,
-                        const container::Tensor& U_operator,
-                        const container::Tensor& psi_k_laststep,
-                        container::Tensor& psi_k,
+                        const ct::Tensor& U_operator,
+                        const ct::Tensor& psi_k_laststep,
+                        ct::Tensor& psi_k,
                         const int print_matrix);
 
 #endif

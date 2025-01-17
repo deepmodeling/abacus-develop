@@ -74,7 +74,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_Eij);
 
-    if (Evolve_elec::td_print_eij > 0.0)
+    if (PARAM.inp.td_print_eij > 0.0)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
@@ -87,10 +87,14 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 double aa = 0.0, bb = 0.0;
                 aa = Eij[i * pv->ncol + j].real();
                 bb = Eij[i * pv->ncol + j].imag();
-                if (std::abs(aa) < Evolve_elec::td_print_eij)
+                if (std::abs(aa) < PARAM.inp.td_print_eij)
+                {
                     aa = 0.0;
-                if (std::abs(bb) < Evolve_elec::td_print_eij)
+                }
+                if (std::abs(bb) < PARAM.inp.td_print_eij)
+                {
                     bb = 0.0;
+                }
                 if (aa > 0.0 || bb > 0.0)
                 {
                     GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
@@ -120,12 +124,16 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 {
                     int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
                     if (igcol >= nband)
+                    {
                         continue;
+                    }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
                         if (igrow >= nband)
+                        {
                             continue;
+                        }
                         if (igcol == igrow)
                         {
                             Eii[igcol] = Eij[j * naroc[0] + i].real();
@@ -145,19 +153,15 @@ void compute_ekb(const Parallel_Orbitals* pv,
 void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const int nband,
                         const int nlocal,
-                        const container::Tensor& Htmp,
-                        const container::Tensor& psi_k,
-                        container::Tensor& ekb)
+                        const ct::Tensor& Htmp,
+                        const ct::Tensor& psi_k,
+                        ct::Tensor& ekb)
 {
     // Create Tensor objects for temporary data
-    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({pv->nloc_wfc}));
+    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc_wfc}));
     tmp1.zero();
 
-    container::Tensor Eij(container::DataType::DT_COMPLEX_DOUBLE,
-                          container::DeviceType::CpuDevice,
-                          container::TensorShape({pv->nloc}));
+    ct::Tensor Eij(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc}));
     Eij.zero();
 
     // Perform matrix multiplication: tmp1 = Htmp * psi_k
@@ -202,7 +206,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_Eij);
 
-    if (Evolve_elec::td_print_eij >= 0.0)
+    if (PARAM.inp.td_print_eij >= 0.0)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
@@ -215,10 +219,14 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                 double aa = 0.0, bb = 0.0;
                 aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
-                if (std::abs(aa) < Evolve_elec::td_print_eij)
+                if (std::abs(aa) < PARAM.inp.td_print_eij)
+                {
                     aa = 0.0;
-                if (std::abs(bb) < Evolve_elec::td_print_eij)
+                }
+                if (std::abs(bb) < PARAM.inp.td_print_eij)
+                {
                     bb = 0.0;
+                }
                 if (aa > 0.0 || bb > 0.0)
                 {
                     GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
@@ -235,9 +243,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     int naroc[2];
 
     // Create a Tensor for Eii
-    container::Tensor Eii(container::DataType::DT_DOUBLE,
-                          container::DeviceType::CpuDevice,
-                          container::TensorShape({nband}));
+    ct::Tensor Eii(ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({nband}));
     Eii.zero();
 
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
@@ -252,12 +258,16 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                 {
                     int igcol = globalIndex(j, pv->nb, pv->dim1, ipcol);
                     if (igcol >= nband)
+                    {
                         continue;
+                    }
                     for (int i = 0; i < naroc[0]; ++i)
                     {
                         int igrow = globalIndex(i, pv->nb, pv->dim0, iprow);
                         if (igrow >= nband)
+                        {
                             continue;
+                        }
                         if (igcol == igrow)
                         {
                             Eii.data<double>()[igcol] = Eij.data<std::complex<double>>()[j * naroc[0] + i].real();
@@ -272,22 +282,32 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     info = MPI_Allreduce(Eii.data<double>(), ekb.data<double>(), nband, MPI_DOUBLE, MPI_SUM, pv->comm());
 }
 
+template <typename Device>
 void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const int nband,
                                const int nlocal,
-                               const container::Tensor& Htmp,
-                               const container::Tensor& psi_k,
-                               container::Tensor& ekb)
+                               const ct::Tensor& Htmp,
+                               const ct::Tensor& psi_k,
+                               ct::Tensor& ekb)
 {
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+
     // Create Tensor objects for temporary data
-    container::Tensor tmp1(container::DataType::DT_COMPLEX_DOUBLE,
-                           container::DeviceType::CpuDevice,
-                           container::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
+    ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE,
+                    ct_device_type,
+                    ct::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    container::Tensor Eij(container::DataType::DT_COMPLEX_DOUBLE,
-                          container::DeviceType::CpuDevice,
-                          container::TensorShape({pv->nloc})); // Eij shape: nlocal * nlocal
+    ct::Tensor Eij(ct::DataType::DT_COMPLEX_DOUBLE,
+                   ct_device_type,
+                   ct::TensorShape({pv->nloc})); // Eij shape: nlocal * nlocal
     // Why not use nband * nband ?????
     Eij.zero();
 
@@ -295,36 +315,36 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     std::complex<double> beta = {0.0, 0.0};
 
     // Perform matrix multiplication: tmp1 = Htmp * psi_k
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('N',
-                                                                                 'N',
-                                                                                 nlocal,
-                                                                                 nband,
-                                                                                 nlocal,
-                                                                                 &alpha,
-                                                                                 Htmp.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of Htmp
-                                                                                 psi_k.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of psi_k
-                                                                                 &beta,
-                                                                                 tmp1.data<std::complex<double>>(),
-                                                                                 nlocal); // Leading dimension of tmp1
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('N',
+                                                              'N',
+                                                              nlocal,
+                                                              nband,
+                                                              nlocal,
+                                                              &alpha,
+                                                              Htmp.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of Htmp
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of psi_k
+                                                              &beta,
+                                                              tmp1.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of tmp1
 
     // Perform matrix multiplication: Eij = psi_k^dagger * tmp1
-    container::kernels::blas_gemm<std::complex<double>, container::DEVICE_CPU>()('C',
-                                                                                 'N',
-                                                                                 nband,
-                                                                                 nband,
-                                                                                 nlocal,
-                                                                                 &alpha,
-                                                                                 psi_k.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of psi_k
-                                                                                 tmp1.data<std::complex<double>>(),
-                                                                                 nlocal, // Leading dimension of tmp1
-                                                                                 &beta,
-                                                                                 Eij.data<std::complex<double>>(),
-                                                                                 nlocal); // Leading dimension of Eij
+    ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('C',
+                                                              'N',
+                                                              nband,
+                                                              nband,
+                                                              nlocal,
+                                                              &alpha,
+                                                              psi_k.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of psi_k
+                                                              tmp1.data<std::complex<double>>(),
+                                                              nlocal, // Leading dimension of tmp1
+                                                              &beta,
+                                                              Eij.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of Eij
 
-    if (Evolve_elec::td_print_eij >= 0.0)
+    if (PARAM.inp.td_print_eij >= 0.0)
     {
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
@@ -337,10 +357,14 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                 double aa = 0.0, bb = 0.0;
                 aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
-                if (std::abs(aa) < Evolve_elec::td_print_eij)
+                if (std::abs(aa) < PARAM.inp.td_print_eij)
+                {
                     aa = 0.0;
-                if (std::abs(bb) < Evolve_elec::td_print_eij)
+                }
+                if (std::abs(bb) < PARAM.inp.td_print_eij)
+                {
                     bb = 0.0;
+                }
                 if (aa > 0.0 || bb > 0.0)
                 {
                     GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
@@ -354,12 +378,45 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     }
 
     // Extract diagonal elements of Eij into ekb
-    for (int i = 0; i < nband; ++i)
+    if (ct_device_type == ct::DeviceType::GpuDevice)
     {
-        ekb.data<double>()[i] = Eij.data<std::complex<double>>()[i * nlocal + i].real();
+        // GPU implementation
+        for (int i = 0; i < nband; ++i)
+        {
+            base_device::memory::synchronize_memory_op<double, Device, Device>()(
+                ctx,
+                ctx,
+                ekb.data<double>() + i,
+                reinterpret_cast<const double*>(Eij.data<std::complex<double>>() + i * nlocal + i),
+                1);
+        }
+    }
+    else
+    {
+        // CPU implementation
+        for (int i = 0; i < nband; ++i)
+        {
+            ekb.data<double>()[i] = Eij.data<std::complex<double>>()[i * nlocal + i].real();
+        }
     }
 }
 
-#endif
+// Explicit instantiation of template functions
+template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
+                                                                 const int nband,
+                                                                 const int nlocal,
+                                                                 const ct::Tensor& Htmp,
+                                                                 const ct::Tensor& psi_k,
+                                                                 ct::Tensor& ekb);
+
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
+                                                                 const int nband,
+                                                                 const int nlocal,
+                                                                 const ct::Tensor& Htmp,
+                                                                 const ct::Tensor& psi_k,
+                                                                 ct::Tensor& ekb);
+#endif // __CUDA
+#endif // __MPI
 
 } // namespace module_tddft

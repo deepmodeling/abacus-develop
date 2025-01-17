@@ -8,6 +8,7 @@
 namespace ModuleESolver
 {
 
+template <typename Device = base_device::DEVICE_CPU>
 class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, double>
 {
   public:

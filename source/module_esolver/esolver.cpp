@@ -213,7 +213,13 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lcao_tddft")
     {
-        return new ESolver_KS_LCAO_TDDFT();
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+        if (PARAM.inp.device == "gpu")
+        {
+            return new ESolver_KS_LCAO_TDDFT<base_device::DEVICE_GPU>();
+        }
+#endif
+        return new ESolver_KS_LCAO_TDDFT<base_device::DEVICE_CPU>();
     }
     else if (esolver_type == "lr_lcao")
     {

@@ -295,7 +295,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.soc_lambda, 1.0);
     EXPECT_DOUBLE_EQ(param.inp.td_force_dt, 0.02);
     EXPECT_EQ(param.inp.td_vext, 0);
-    EXPECT_EQ(param.inp.td_vext_dire, "1");
     EXPECT_EQ(param.inp.propagator, 0);
     EXPECT_EQ(param.inp.td_stype, 0);
     EXPECT_EQ(param.inp.td_ttype, "0");

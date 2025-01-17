@@ -3,6 +3,8 @@
 #include "bandenergy.h"
 #include "middle_hamilt.h"
 #include "module_base/lapack_connector.h"
+#include "module_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
+#include "module_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
 #include "module_base/scalapack_connector.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
@@ -108,20 +110,39 @@ void evolve_psi(const int nband,
     return;
 }
 
+template <typename Device>
 void evolve_psi_tensor(const int nband,
                        const int nlocal,
                        const Parallel_Orbitals* pv,
                        hamilt::Hamilt<std::complex<double>>* p_hamilt,
-                       container::Tensor& psi_k,
-                       container::Tensor& psi_k_laststep,
-                       container::Tensor& H_laststep,
-                       container::Tensor& S_laststep,
-                       container::Tensor& ekb,
+                       ct::Tensor& psi_k,
+                       ct::Tensor& psi_k_laststep,
+                       ct::Tensor& H_laststep,
+                       ct::Tensor& S_laststep,
+                       ct::Tensor& ekb,
                        int htype,
                        int propagator,
                        const int print_matrix,
                        const bool use_lapack)
 {
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+    // Memory operations
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+    // Initialize cuBLAS & cuSOLVER handle
+    ct::kernels::createGpuSolverHandle();
+    ct::kernels::createGpuBlasHandle();
+#endif // __CUDA
+
     GlobalV::ofs_running << " evolve_psi_tensor::start " << std::endl;
 
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
@@ -133,24 +154,30 @@ void evolve_psi_tensor(const int nband,
     hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
+    // Create Tensor objects for temporary data and sync from host to device
+    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
+    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
+    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
+    syncmem_complex_h2d_op()(ctx, cpu_ctx, Stmp.data<std::complex<double>>(), s_mat.p, pv->nloc);
+    syncmem_complex_h2d_op()(ctx, cpu_ctx, Htmp.data<std::complex<double>>(), h_mat.p, pv->nloc);
+    syncmem_complex_h2d_op()(ctx, cpu_ctx, Hold.data<std::complex<double>>(), h_mat.p, pv->nloc);
+
     // Convert s_mat.p, h_mat.p to Tensor using TensorMap
-    container::TensorMap s_mat_tensor(s_mat.p,
-                                      container::DataType::DT_COMPLEX_DOUBLE,
-                                      container::DeviceType::CpuDevice,
-                                      container::TensorShape({pv->nloc}));
-    container::TensorMap h_mat_tensor(h_mat.p,
-                                      container::DataType::DT_COMPLEX_DOUBLE,
-                                      container::DeviceType::CpuDevice,
-                                      container::TensorShape({pv->nloc}));
+    // ct::TensorMap s_mat_tensor(s_mat.p,
+    //                            ct::DataType::DT_COMPLEX_DOUBLE,
+    //                            ct::DeviceType::CpuDevice,
+    //                            ct::TensorShape({pv->nloc}));
+    // ct::TensorMap h_mat_tensor(h_mat.p,
+    //                            ct::DataType::DT_COMPLEX_DOUBLE,
+    //                            ct::DeviceType::CpuDevice,
+    //                            ct::TensorShape({pv->nloc}));
 
     // Use Tensor's copy constructor to create Stmp, Htmp, and Hold
-    container::Tensor Stmp(s_mat_tensor);
-    container::Tensor Htmp(h_mat_tensor);
-    container::Tensor Hold(h_mat_tensor);
+    // ct::Tensor Stmp(s_mat_tensor);
+    // ct::Tensor Htmp(h_mat_tensor);
+    // ct::Tensor Hold(h_mat_tensor);
 
-    container::Tensor U_operator(container::DataType::DT_COMPLEX_DOUBLE,
-                                 container::DeviceType::CpuDevice,
-                                 container::TensorShape({pv->nloc}));
+    ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
     U_operator.zero();
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -166,7 +193,7 @@ void evolve_psi_tensor(const int nband,
         }
         else
         {
-            half_Hmatrix_tensor_lapack(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+            half_Hmatrix_tensor_lapack<Device>(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
         }
     }
 
@@ -176,7 +203,7 @@ void evolve_psi_tensor(const int nband,
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
     Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator_tensor(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix, use_lapack);
+    prop.compute_propagator_tensor<Device>(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix, use_lapack);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -190,7 +217,7 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        upsi_tensor_lapack(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+        upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -204,7 +231,7 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        norm_psi_tensor_lapack(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+        norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, print_matrix);
     }
 
     // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -219,17 +246,54 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        compute_ekb_tensor_lapack(pv, nband, nlocal, Hold, psi_k, ekb);
+        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb);
     }
 
-#endif
+#endif // __MPI
 
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
     GlobalV::ofs_running << " evolve_psi_tensor::end " << std::endl;
 
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+    // Destroy cuBLAS & cuSOLVER handle
+    ct::kernels::destroyGpuSolverHandle();
+    ct::kernels::destroyGpuBlasHandle();
+#endif // __CUDA
+
     return;
 }
+
+// Explicit instantiation of template functions
+template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
+                                                         const int nlocal,
+                                                         const Parallel_Orbitals* pv,
+                                                         hamilt::Hamilt<std::complex<double>>* p_hamilt,
+                                                         ct::Tensor& psi_k,
+                                                         ct::Tensor& psi_k_laststep,
+                                                         ct::Tensor& H_laststep,
+                                                         ct::Tensor& S_laststep,
+                                                         ct::Tensor& ekb,
+                                                         int htype,
+                                                         int propagator,
+                                                         const int print_matrix,
+                                                         const bool use_lapack);
+
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
+                                                         const int nlocal,
+                                                         const Parallel_Orbitals* pv,
+                                                         hamilt::Hamilt<std::complex<double>>* p_hamilt,
+                                                         ct::Tensor& psi_k,
+                                                         ct::Tensor& psi_k_laststep,
+                                                         ct::Tensor& H_laststep,
+                                                         ct::Tensor& S_laststep,
+                                                         ct::Tensor& ekb,
+                                                         int htype,
+                                                         int propagator,
+                                                         const int print_matrix,
+                                                         const bool use_lapack);
+#endif // __CUDA
 
 } // namespace module_tddft

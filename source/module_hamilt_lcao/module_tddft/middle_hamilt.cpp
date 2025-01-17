@@ -2,6 +2,7 @@
 
 #include "module_base/lapack_connector.h"
 #include "module_base/module_container/ATen/kernels/blas.h"
+#include "module_base/module_device/memory_op.h" // memory operations
 #include "module_base/scalapack_connector.h"
 
 #include <complex>
@@ -72,10 +73,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
 void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          const int nband,
                          const int nlocal,
-                         container::Tensor& Htmp,
-                         container::Tensor& Stmp,
-                         const container::Tensor& H_laststep,
-                         const container::Tensor& S_laststep,
+                         ct::Tensor& Htmp,
+                         ct::Tensor& Stmp,
+                         const ct::Tensor& H_laststep,
+                         const ct::Tensor& S_laststep,
                          const int print_matrix)
 {
     if (print_matrix)
@@ -157,15 +158,25 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
     }
 }
 
+template <typename Device>
 void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 const int nband,
                                 const int nlocal,
-                                container::Tensor& Htmp,
-                                container::Tensor& Stmp,
-                                const container::Tensor& H_laststep,
-                                const container::Tensor& S_laststep,
+                                ct::Tensor& Htmp,
+                                ct::Tensor& Stmp,
+                                const ct::Tensor& H_laststep,
+                                const ct::Tensor& S_laststep,
                                 const int print_matrix)
 {
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    Device* ctx = {};
+    base_device::DEVICE_CPU* cpu_ctx = {};
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+
     if (print_matrix)
     {
         GlobalV::ofs_running << std::setprecision(10);
@@ -195,38 +206,35 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
         GlobalV::ofs_running << std::endl;
     }
 
-    std::complex<double> alpha = {0.5, 0.0};
-    std::complex<double> beta = {0.5, 0.0};
+    std::complex<double> one_half = {0.5, 0.0};
 
-    // Perform the operation Htmp = alpha * H_laststep + beta * Htmp
-    // Scale Htmp by beta
-    container::kernels::blas_scal<std::complex<double>, container::DEVICE_CPU>()(nlocal * nlocal,
-                                                                                 &beta,
-                                                                                 Htmp.data<std::complex<double>>(),
-                                                                                 1);
-    // Htmp = alpha * H_laststep + Htmp
-    container::kernels::blas_axpy<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal * nlocal,
-        &alpha,
-        H_laststep.data<std::complex<double>>(),
-        1,
-        Htmp.data<std::complex<double>>(),
-        1);
+    // Perform the operation Htmp = one_half * H_laststep + one_half * Htmp
+    // Scale Htmp by one_half
+    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one_half,
+                                                              Htmp.data<std::complex<double>>(),
+                                                              1);
+    // Htmp = one_half * H_laststep + Htmp
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one_half,
+                                                              H_laststep.data<std::complex<double>>(),
+                                                              1,
+                                                              Htmp.data<std::complex<double>>(),
+                                                              1);
 
-    // Perform the operation Stmp = alpha * S_laststep + beta * Stmp
-    // Scale Stmp by beta
-    container::kernels::blas_scal<std::complex<double>, container::DEVICE_CPU>()(nlocal * nlocal,
-                                                                                 &beta,
-                                                                                 Stmp.data<std::complex<double>>(),
-                                                                                 1);
-    // Stmp = alpha * S_laststep + Stmp
-    container::kernels::blas_axpy<std::complex<double>, container::DEVICE_CPU>()(
-        nlocal * nlocal,
-        &alpha,
-        S_laststep.data<std::complex<double>>(),
-        1,
-        Stmp.data<std::complex<double>>(),
-        1);
+    // Perform the operation Stmp = one_half * S_laststep + one_half * Stmp
+    // Scale Stmp by one_half
+    ct::kernels::blas_scal<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one_half,
+                                                              Stmp.data<std::complex<double>>(),
+                                                              1);
+    // Stmp = one_half * S_laststep + Stmp
+    ct::kernels::blas_axpy<std::complex<double>, ct_Device>()(nlocal * nlocal,
+                                                              &one_half,
+                                                              S_laststep.data<std::complex<double>>(),
+                                                              1,
+                                                              Stmp.data<std::complex<double>>(),
+                                                              1);
 
     if (print_matrix)
     {
@@ -245,5 +253,24 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
     }
 }
 
-#endif
+// Explicit instantiation of template functions
+template void half_Hmatrix_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbitals* pv,
+                                                                  const int nband,
+                                                                  const int nlocal,
+                                                                  ct::Tensor& Htmp,
+                                                                  ct::Tensor& Stmp,
+                                                                  const ct::Tensor& H_laststep,
+                                                                  const ct::Tensor& S_laststep,
+                                                                  const int print_matrix);
+#if ((defined __CUDA) /* || (defined __ROCM) */)
+template void half_Hmatrix_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
+                                                                  const int nband,
+                                                                  const int nlocal,
+                                                                  ct::Tensor& Htmp,
+                                                                  ct::Tensor& Stmp,
+                                                                  const ct::Tensor& H_laststep,
+                                                                  const ct::Tensor& S_laststep,
+                                                                  const int print_matrix);
+#endif // __CUDA
+#endif // __MPI
 } // namespace module_tddft

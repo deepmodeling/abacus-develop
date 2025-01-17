@@ -3,8 +3,10 @@
 
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_base/module_container/ATen/core/tensor.h"     // container::Tensor
+#include "module_base/module_container/ATen/core/tensor.h"     // ct::Tensor
 #include "module_base/module_container/ATen/core/tensor_map.h" // TensorMap
+#include "module_base/module_device/device.h"                  // base_device
+#include "module_base/module_device/memory_op.h"               // memory operations
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_esolver/esolver_ks_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
@@ -20,7 +22,7 @@
 //------------------------ Debugging utility function ------------------------//
 
 // Print the shape of a Tensor
-inline void print_tensor_shape(const container::Tensor& tensor, const std::string& name)
+inline void print_tensor_shape(const ct::Tensor& tensor, const std::string& name)
 {
     std::cout << "Shape of " << name << ": [";
     for (int i = 0; i < tensor.shape().ndim(); ++i)
@@ -64,7 +66,7 @@ inline void print_tensor_data_recursive(const T* data,
 
 // Generic print function
 template <typename T>
-inline void print_tensor_data(const container::Tensor& tensor, const std::string& name)
+inline void print_tensor_data(const ct::Tensor& tensor, const std::string& name)
 {
     const std::vector<int64_t>& shape = tensor.shape().dims();
     const std::vector<int64_t>& strides = tensor.shape().strides();
@@ -75,7 +77,7 @@ inline void print_tensor_data(const container::Tensor& tensor, const std::string
 
 // Specialization for std::complex<double>
 template <>
-inline void print_tensor_data<std::complex<double>>(const container::Tensor& tensor, const std::string& name)
+inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, const std::string& name)
 {
     const std::vector<int64_t>& shape = tensor.shape().dims();
     const std::vector<int64_t>& strides = tensor.shape().strides();
@@ -88,26 +90,19 @@ inline void print_tensor_data<std::complex<double>>(const container::Tensor& ten
 
 namespace module_tddft
 {
+template <typename Device = base_device::DEVICE_CPU>
 class Evolve_elec
 {
 
     friend class ELEC_scf;
     friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
-    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT;
+
+    // Template parameter is needed for the friend class declaration
+    friend class ModuleESolver::ESolver_KS_LCAO_TDDFT<Device>;
 
   public:
     Evolve_elec();
     ~Evolve_elec();
-
-    static double td_force_dt;
-    static bool td_vext;
-    static std::vector<int> td_vext_dire_case;
-    // Output dipole, efield, current or not
-    static bool out_dipole;
-    static bool out_efield;
-
-    static double td_print_eij; // the threshold to output Eij elements
-    static int td_edm;          // 0: new edm method   1: old edm method
 
   private:
     static void solve_psi(const int& istep,
@@ -123,6 +118,23 @@ class Evolve_elec
                           int htype,
                           int propagator,
                           const int& nks);
+
+    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
+    /// it controls the ops to use the corresponding device to calculate results
+    static Device* ctx;
+    static base_device::DEVICE_CPU* cpu_ctx;
+    // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
+    static ct::DeviceType ct_device_type;
+    // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
+    using ct_Device = typename ct::PsiToContainer<Device>::type;
+
+    // Memory operations
+    using syncmem_double_h2d_op = base_device::memory::synchronize_memory_op<double, Device, base_device::DEVICE_CPU>;
+    using syncmem_double_d2h_op = base_device::memory::synchronize_memory_op<double, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op
+        = base_device::memory::synchronize_memory_op<std::complex<double>, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op
+        = base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>;
 };
 } // namespace module_tddft
 #endif
