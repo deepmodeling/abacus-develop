@@ -19,7 +19,6 @@
  */
 
 #define doublethreshold 1e-8
-double module_tddft::Evolve_elec::td_print_eij = -1;
 
 TEST(BandEnergyTest, testBandEnergy)
 {
