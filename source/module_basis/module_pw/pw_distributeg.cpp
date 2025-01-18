@@ -101,8 +101,10 @@ void PW_Basis::count_pw_st(
             // so that its index in st_length and st_bottom is 9 * 10 + 2 = 92.
             int x = ix;
             int y = iy;
-            if (x < 0) x += this->nx;
-            if (y < 0) y += this->ny;
+            if (x < 0) { x += this->nx;
+}
+            if (y < 0) { y += this->ny;
+}
             int index = x * this->fftny + y;
 
             int length = 0; // number of planewave on stick (x, y).
@@ -114,13 +116,18 @@ void PW_Basis::count_pw_st(
                 double modulus = f * (this->GGT * f);
                 if (modulus <= this->ggecut || this->full_pw)
                 {
-                    if (length == 0) st_bottom2D[index] = iz; // length == 0 means this point is the bottom of stick (x, y).
+                    if (length == 0) { st_bottom2D[index] = iz; // length == 0 means this point is the bottom of stick (x, y).
+}
                     ++this->npwtot;
                     ++length;
-                    if(iy < this->riy) this->riy = iy;
-                    if(iy > this->liy) this->liy = iy;
-                    if(ix < this->rix) this->rix = ix;
-                    if(ix > this->lix) this->lix = ix;
+                    if(iy < this->riy) { this->riy = iy;
+}
+                    if(iy > this->liy) { this->liy = iy;
+}
+                    if(ix < this->rix) { this->rix = ix;
+}
+                    if(ix > this->lix) { this->lix = ix;
+}
                 }
             }
             if (length > 0)
@@ -157,7 +164,7 @@ void PW_Basis::get_ig2isz_is2fftixy(
         delete[] this->is2fftixy; this->is2fftixy = nullptr; // map is (index of sticks) to ixy (iy + ix * fftny).
 #if defined(__CUDA) || defined(__ROCM)
         if (this->device == "gpu") {
-            delmem_int_op()(gpu_ctx, this->d_is2fftixy);
+            delmem_int_op()(this->d_is2fftixy);
             d_is2fftixy = nullptr;
         }
 #endif
@@ -182,20 +189,23 @@ void PW_Basis::get_ig2isz_is2fftixy(
             for (int iz = zstart; iz < zstart + st_length2D[ixy]; ++iz)
             {
                 int z = iz;
-                if (z < 0) z += this->nz;
+                if (z < 0) { z += this->nz;
+}
                 this->ig2isz[pw_filled] = st_move * this->nz + z;
                 pw_filled++;
             }
             this->is2fftixy[st_move] = ixy;
             st_move++;
-            if(xprime && ixy/fftny == 0) ng_xeq0 = pw_filled;
+            if(xprime && ixy/fftny == 0) { ng_xeq0 = pw_filled;
+}
         }
-        if (st_move == this->nst && pw_filled == this->npw) break;
+        if (st_move == this->nst && pw_filled == this->npw) { break;
+}
     }
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
-        resmem_int_op()(gpu_ctx, d_is2fftixy, this->nst);
-        syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, this->d_is2fftixy, this->is2fftixy, this->nst);
+        resmem_int_op()(d_is2fftixy, this->nst);
+        syncmem_int_h2d_op()(this->d_is2fftixy, this->is2fftixy, this->nst);
     }
 #endif
     return;

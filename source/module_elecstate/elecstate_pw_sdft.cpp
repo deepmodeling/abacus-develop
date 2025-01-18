@@ -16,7 +16,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
     const int nspin = PARAM.inp.nspin;
     for (int is = 0; is < nspin; is++)
     {
-        setmem_var_op()(this->ctx, this->rho[is], 0, this->charge->nrxx);
+        setmem_var_op()(this->rho[is], 0, this->charge->nrxx);
     }
 
     if (GlobalV::MY_STOGROUP == 0)
@@ -28,7 +28,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         }
         if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single") {
         for (int ii = 0; ii < nspin; ii++) {
-            castmem_var_d2h_op()(cpu_ctx, this->ctx, this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
+            castmem_var_d2h_op()(this->charge->rho[ii], this->rho[ii], this->charge->nrxx);
         }
         }
         this->parallelK();

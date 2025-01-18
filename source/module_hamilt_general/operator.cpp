@@ -59,7 +59,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     if (this->in_place)
     {
         // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
-        syncmem_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
+        syncmem_op()(hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
         delete this->hpsi;
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
                                              1, 

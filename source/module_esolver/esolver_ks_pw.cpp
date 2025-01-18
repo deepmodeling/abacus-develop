@@ -646,9 +646,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
     // 4) Transfer data from GPU to CPU
     if (this->device == base_device::GpuDevice)
     {
-        castmem_2d_d2h_op()(this->psi[0].get_device(),
-                            this->kspw_psi[0].get_device(),
-                            this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
+        castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
     }

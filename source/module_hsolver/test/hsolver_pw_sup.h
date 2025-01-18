@@ -139,15 +139,13 @@ DiagoDavid<T, Device>::DiagoDavid(const Real* precondition_in,
 
 template <typename T, typename Device>
 DiagoDavid<T, Device>::~DiagoDavid() {
-    delmem_complex_op()(this->ctx, this->hpsi);
-    delmem_complex_op()(this->ctx, this->spsi);
-    delmem_complex_op()(this->ctx, this->hcc);
-    delmem_complex_op()(this->ctx, this->scc);
-    delmem_complex_op()(this->ctx, this->vcc);
-    delmem_complex_op()(this->ctx, this->lagrange_matrix);
-    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(
-        this->cpu_ctx,
-        this->eigenvalue);
+    delmem_complex_op()(this->hpsi);
+    delmem_complex_op()(this->spsi);
+    delmem_complex_op()(this->hcc);
+    delmem_complex_op()(this->scc);
+    delmem_complex_op()(this->vcc);
+    delmem_complex_op()(this->lagrange_matrix);
+    base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>()(this->eigenvalue);
 }
 
 template <typename T, typename Device>

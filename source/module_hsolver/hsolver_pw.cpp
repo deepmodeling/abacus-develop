@@ -329,8 +329,6 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
     // copy eigenvalues to ekb in ElecState
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
-        cpu_ctx,
-        cpu_ctx,
         // pes->ekb.c,
         out_eigenvalues,
         eigenvalues.data(),
@@ -450,8 +448,6 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             else
             {
                 base_device::memory::synchronize_memory_op<T, Device, Device>()(
-                    this->ctx,
-                    this->ctx,
                     spsi_out.data<T>(),
                     psi_in.data<T>(),
                     static_cast<size_t>((ndim == 1 ? 1 : psi_in.shape().dim_size(0))
