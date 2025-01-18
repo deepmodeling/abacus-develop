@@ -21,7 +21,6 @@
 #ifdef __EXX
 #include "module_ri/Exx_LRI.h"
 #endif
-#include <memory>
 namespace hamilt
 {
 

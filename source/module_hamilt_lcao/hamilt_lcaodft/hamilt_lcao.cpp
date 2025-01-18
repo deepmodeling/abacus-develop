@@ -40,7 +40,6 @@
 #include "operator_lcao/td_nonlocal_lcao.h"
 #include "operator_lcao/veff_lcao.h"
 
-#include <memory>
 namespace hamilt
 {
 

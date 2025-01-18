@@ -61,26 +61,3 @@ inline int ceil_div(const int a, const int b)
 {
     return a / b + (a % b != 0 && (a ^ b) > 0); 
 };
-
-// for debug
-#include <iostream>
-#include <fstream>
-#include <string>
-
-template <typename T>
-void writeArrayToFile(T* array, int n, const std::string& filename) {
-    std::ofstream outFile(filename);
-
-    if (!outFile.is_open()) {
-        std::cerr << "can't open file: " << filename << std::endl;
-        return;
-    }
-
-    for (int i = 0; i < n; ++i) {
-        outFile <<array[i] << std::endl;
-    }
-
-    outFile.close();
-
-    std::cout << "successfully write data to: " << filename << std::endl;
-}

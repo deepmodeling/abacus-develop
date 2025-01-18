@@ -23,9 +23,3 @@ time.json
 __pycache__
 abacus.json
 *.npy
-r0*/*
-tests/*
-TD*/*
-cmake/*
-*.nsys-rep
-*.sh
