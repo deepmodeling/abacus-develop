@@ -60,24 +60,24 @@ TEST_F(TestModuleHamiltMeta, meta_pw_op_gpu)
     std::vector<std::complex<double>> res(expected_out.size(), std::complex<double> {0, 0});
     double * d_gcar = nullptr, * d_kvec_c = nullptr;
     std::complex<double>* d_in = nullptr, * d_res = nullptr;
-    resmem_var_op()(gpu_ctx, d_gcar, gcar.size());
-    resmem_var_op()(gpu_ctx, d_kvec_c, kvec_c.size());
-    resmem_complex_op()(gpu_ctx, d_in, in.size());
-    resmem_complex_op()(gpu_ctx, d_res, res.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_gcar, gcar.data(), gcar.size());
-    syncmem_var_h2d_op()(gpu_ctx, cpu_ctx, d_kvec_c, kvec_c.data(), kvec_c.size());
-    syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_in, in.data(), in.size());
-    syncmem_complex_h2d_op()(gpu_ctx, cpu_ctx, d_res, res.data(), res.size());
+    resmem_var_op()(d_gcar, gcar.size());
+    resmem_var_op()(d_kvec_c, kvec_c.size());
+    resmem_complex_op()(d_in, in.size());
+    resmem_complex_op()(d_res, res.size());
+    syncmem_var_h2d_op()(d_gcar, gcar.data(), gcar.size());
+    syncmem_var_h2d_op()(d_kvec_c, kvec_c.data(), kvec_c.size());
+    syncmem_complex_h2d_op()(d_in, in.data(), in.size());
+    syncmem_complex_h2d_op()(d_res, res.data(), res.size());
 
     meta_gpu_op()(gpu_ctx, ik, pol, npw, npwx, tpiba, d_gcar, d_kvec_c, d_in, d_res);
 
-    syncmem_complex_d2h_op()(cpu_ctx, gpu_ctx, res.data(), d_res, res.size());
+    syncmem_complex_d2h_op()(res.data(), d_res, res.size());
     for (int ii = 0; ii < res.size(); ii++) {
         EXPECT_LT(fabs(res[ii] - expected_out[ii]), 6e-5);
     }
-    delmem_var_op()(gpu_ctx, d_gcar);
-    delmem_var_op()(gpu_ctx, d_kvec_c);
-    delmem_complex_op()(gpu_ctx, d_in);
-    delmem_complex_op()(gpu_ctx, d_res);
+    delmem_var_op()(d_gcar);
+    delmem_var_op()(d_kvec_c);
+    delmem_complex_op()(d_in);
+    delmem_complex_op()(d_res);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

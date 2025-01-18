@@ -167,8 +167,8 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
 
     // allocate memory for the stress
     FPTYPE* stress_device = nullptr;
-    resmem_var_op()(this->ctx, stress_device, 9);
-    setmem_var_op()(this->ctx, stress_device, 0, 9);
+    resmem_var_op()(stress_device, 9);
+    setmem_var_op()(stress_device, 0, 9);
     std::vector<FPTYPE> sigmanlc(9, 0.0);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
@@ -201,8 +201,8 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     }
 
     // transfer stress from device to host
-    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, sigmanlc.data(), stress_device, 9);
-    delmem_var_op()(this->ctx, stress_device);
+    syncmem_var_d2h_op()(sigmanlc.data(), stress_device, 9);
+    delmem_var_op()(stress_device);
     // sum up forcenl from all processors
     for (int l = 0; l < 3; l++)
     {

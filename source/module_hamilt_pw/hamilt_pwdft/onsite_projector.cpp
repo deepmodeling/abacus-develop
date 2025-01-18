@@ -173,7 +173,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
             this->tot_nproj = itiaiprojm2irow_.size();
             this->npwx_ = this->pw_basis_->npwk_max;
             this->size_vproj = this->tot_nproj * this->npwx_;
-            resmem_complex_op()(this->ctx, this->tab_atomic_, this->size_vproj, "OnsiteP::tab_atomic_");
+            resmem_complex_op()(this->tab_atomic_, this->size_vproj, "OnsiteP::tab_atomic_");
         }
 
         delete this->fs_tools; // it is okay to delete nullptr
@@ -191,12 +191,12 @@ projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
 {
     //delete[] becp;
     delete fs_tools;
-    delmem_complex_op()(this->ctx, this->tab_atomic_);
+    delmem_complex_op()(this->tab_atomic_);
     if(this->device == base_device::GpuDevice)
     {
-        delmem_complex_h_op()(this->cpu_ctx, this->h_becp);
+        delmem_complex_h_op()(this->h_becp);
     }
-    delmem_complex_op()(this->ctx, this->becp);
+    delmem_complex_op()(this->becp);
 
 }
 
@@ -390,10 +390,10 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     if(this->becp == nullptr || this->size_becp < npm*this->tot_nproj)
     {
         this->size_becp = npm*this->tot_nproj;
-        resmem_complex_op()(this->ctx, this->becp, this->size_becp);
+        resmem_complex_op()(this->becp, this->size_becp);
         if(this->device == base_device::GpuDevice )
         {
-            resmem_complex_h_op()(this->cpu_ctx, this->h_becp, this->size_becp);
+            resmem_complex_h_op()(this->h_becp, this->size_becp);
         }
         else
         {
@@ -403,7 +403,7 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi); // in cal_becp, npm should be the one not multiplied by npol
     if(this->device == base_device::GpuDevice)
     {
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, this->becp, this->size_becp);
+        syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
     ModuleBase::timer::tick("OnsiteProj", "overlap");
 }

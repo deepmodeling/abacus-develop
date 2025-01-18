@@ -244,22 +244,20 @@ const UnitCell& ucell_in
     double *aux_d = nullptr;
 	double *drhocg_d = nullptr;
     if (this->device == base_device::GpuDevice) {
-        resmem_var_op()(this->ctx, r_d, msh);
-        resmem_var_op()(this->ctx, rhoc_d, msh);
-        resmem_var_op()(this->ctx, rab_d, msh);
+        resmem_var_op()(r_d, msh);
+        resmem_var_op()(rhoc_d, msh);
+        resmem_var_op()(rab_d, msh);
 
-        resmem_var_op()(this->ctx, aux_d, msh);
-        resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg+1);
-        resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+        resmem_var_op()(aux_d, msh);
+        resmem_var_op()(gx_arr_d, rho_basis->ngg+1);
+        resmem_var_op()(drhocg_d, rho_basis->ngg);
 
-        syncmem_var_h2d_op()(this->ctx,
-                             this->cpu_ctx,
-                             gx_arr_d,
+        syncmem_var_h2d_op()(gx_arr_d,
                              gx_arr.data(),
                              rho_basis->ngg+1);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, msh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, msh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, aux.data(), msh);
+        syncmem_var_h2d_op()(r_d, r, msh);
+        syncmem_var_h2d_op()(rab_d, rab, msh);
+        syncmem_var_h2d_op()(rhoc_d, aux.data(), msh);
     }
 
 
@@ -267,7 +265,7 @@ const UnitCell& ucell_in
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
 			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
-		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+		syncmem_var_d2h_op()(dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(

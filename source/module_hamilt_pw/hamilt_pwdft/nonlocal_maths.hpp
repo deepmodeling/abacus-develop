@@ -164,7 +164,7 @@ void Nonlocal_maths<FPTYPE, Device>::cal_ylm(int lmax, int npw, const FPTYPE* q,
         // calculate
         ModuleBase::YlmReal::Ylm_Real(cpu_ctx, ntot_ylm, npw, q, ylm_cpu.data());
         // send from cpu to gpu
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, ylm, ylm_cpu.data(), ylm_cpu.size());
+        syncmem_var_h2d_op()(ylm, ylm_cpu.data(), ylm_cpu.size());
     }
     else
     {
@@ -193,7 +193,7 @@ void Nonlocal_maths<FPTYPE, Device>::cal_ylm_deri(int lmax, int npw, const FPTYP
             Nonlocal_maths<FPTYPE, Device>::dylmr2(ntot_ylm, npw, q, &dylmdq_cpu[ipol * ntot_ylm * npw], ipol);
         }
         // send from cpu to gpu
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, out, dylmdq_cpu.data(), dylmdq_cpu.size());
+        syncmem_var_h2d_op()(out, dylmdq_cpu.data(), dylmdq_cpu.size());
     }
     else
     {
