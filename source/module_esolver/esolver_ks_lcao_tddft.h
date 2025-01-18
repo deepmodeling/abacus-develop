@@ -36,7 +36,12 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, doubl
     //! Overlap matrix of last time step
     std::complex<double>** Sk_laststep = nullptr;
 
-    int td_htype = 1;
+    const int td_htype = 1;
+
+    // const bool use_tensor = true;
+    const bool use_tensor = false;
+    const bool use_lapack = true;
+    // const bool use_lapack = false;
 
   private:
     void weight_dm_rho();

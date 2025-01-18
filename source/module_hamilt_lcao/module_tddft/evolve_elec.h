@@ -108,6 +108,7 @@ class Evolve_elec
     static void solve_psi(const int& istep,
                           const int nband,
                           const int nlocal,
+                          const int& nks,
                           hamilt::Hamilt<std::complex<double>>* phm,
                           Parallel_Orbitals& para_orb,
                           psi::Psi<std::complex<double>>* psi,
@@ -115,9 +116,10 @@ class Evolve_elec
                           std::complex<double>** Hk_laststep,
                           std::complex<double>** Sk_laststep,
                           ModuleBase::matrix& ekb,
-                          int htype,
-                          int propagator,
-                          const int& nks);
+                          const int htype,
+                          const int propagator,
+                          const bool use_tensor,
+                          const bool use_lapack);
 
     /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
     /// it controls the ops to use the corresponding device to calculate results

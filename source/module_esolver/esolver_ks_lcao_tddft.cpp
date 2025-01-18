@@ -90,6 +90,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
             module_tddft::Evolve_elec<Device>::solve_psi(istep,
                                                          PARAM.inp.nbands,
                                                          PARAM.globalv.nlocal,
+                                                         kv.get_nks(),
                                                          this->p_hamilt,
                                                          this->pv,
                                                          this->psi,
@@ -99,7 +100,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
                                                          this->pelec->ekb,
                                                          td_htype,
                                                          PARAM.inp.propagator,
-                                                         kv.get_nks());
+                                                         use_tensor,
+                                                         use_lapack);
             this->weight_dm_rho();
         }
         this->weight_dm_rho();
@@ -109,6 +111,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
         module_tddft::Evolve_elec<Device>::solve_psi(istep,
                                                      PARAM.inp.nbands,
                                                      PARAM.globalv.nlocal,
+                                                     kv.get_nks(),
                                                      this->p_hamilt,
                                                      this->pv,
                                                      this->psi,
@@ -118,7 +121,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
                                                      this->pelec->ekb,
                                                      td_htype,
                                                      PARAM.inp.propagator,
-                                                     kv.get_nks());
+                                                     use_tensor,
+                                                     use_lapack);
         this->weight_dm_rho();
     }
     else
