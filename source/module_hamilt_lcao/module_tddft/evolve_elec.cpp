@@ -94,6 +94,9 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                 // std::cout << "psi->get_nbands() = " << psi->get_nbands() << std::endl;
                 // std::cout << "nlocal = " << nlocal << std::endl;
                 // std::cout << "psi->get_nbasis() = " << psi->get_nbasis() << std::endl;
+                // std::cout << "para_orb.nloc = " << para_orb.nloc << std::endl;
+                // std::cout << "para_orb.nrow = " << para_orb.nrow << std::endl;
+                // std::cout << "para_orb.ncol = " << para_orb.ncol << std::endl;
                 // std::cout << "ekb.nr = " << ekb.nr << std::endl;
                 // std::cout << "ekb.nc = " << ekb.nc << std::endl;
 

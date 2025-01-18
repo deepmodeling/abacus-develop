@@ -45,6 +45,6 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb);
-#endif
+#endif // __MPI
 } // namespace module_tddft
 #endif

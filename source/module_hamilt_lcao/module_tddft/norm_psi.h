@@ -47,7 +47,7 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                             ct::Tensor& psi_k,
                             const int print_matrix);
 
-#endif
+#endif // __MPI
 } // namespace module_tddft
 
 #endif

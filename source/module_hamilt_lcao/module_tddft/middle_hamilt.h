@@ -53,7 +53,7 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 const ct::Tensor& S_laststep,
                                 const int print_matrix);
 
-#endif
+#endif // __MPI
 } // namespace module_tddft
 
 #endif

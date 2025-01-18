@@ -162,21 +162,6 @@ void evolve_psi_tensor(const int nband,
     syncmem_complex_h2d_op()(ctx, cpu_ctx, Htmp.data<std::complex<double>>(), h_mat.p, pv->nloc);
     syncmem_complex_h2d_op()(ctx, cpu_ctx, Hold.data<std::complex<double>>(), h_mat.p, pv->nloc);
 
-    // Convert s_mat.p, h_mat.p to Tensor using TensorMap
-    // ct::TensorMap s_mat_tensor(s_mat.p,
-    //                            ct::DataType::DT_COMPLEX_DOUBLE,
-    //                            ct::DeviceType::CpuDevice,
-    //                            ct::TensorShape({pv->nloc}));
-    // ct::TensorMap h_mat_tensor(h_mat.p,
-    //                            ct::DataType::DT_COMPLEX_DOUBLE,
-    //                            ct::DeviceType::CpuDevice,
-    //                            ct::TensorShape({pv->nloc}));
-
-    // Use Tensor's copy constructor to create Stmp, Htmp, and Hold
-    // ct::Tensor Stmp(s_mat_tensor);
-    // ct::Tensor Htmp(h_mat_tensor);
-    // ct::Tensor Hold(h_mat_tensor);
-
     ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
     U_operator.zero();
 
@@ -210,7 +195,6 @@ void evolve_psi_tensor(const int nband,
     /// @brief apply U_operator to the wave function of the previous step for new wave function
     /// @input U_operator, psi_k_laststep, print_matrix
     /// @output psi_k
-    // Use TensorMap to map psi_k_laststep and psi_k to Tensor
     if (!use_lapack)
     {
         upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
@@ -239,7 +223,6 @@ void evolve_psi_tensor(const int nband,
     /// @brief compute ekb
     /// @input Htmp, psi_k
     /// @output ekb
-    // Create a Tensor for ekb using TensorMap
     if (!use_lapack)
     {
         compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb);
