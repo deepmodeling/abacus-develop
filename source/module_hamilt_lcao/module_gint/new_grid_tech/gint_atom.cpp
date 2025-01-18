@@ -125,6 +125,10 @@ void GintAtom::set_phi_dphi(
         {
             // if the distance is larger than the cutoff radius,
             // the wave function values are all zeros
+            if(phi != nullptr)
+            {
+                ModuleBase::GlobalFunc::ZEROS(phi + im * stride, atom_->nw);
+            }
             ModuleBase::GlobalFunc::ZEROS(dphi_x + im * stride, atom_->nw);
             ModuleBase::GlobalFunc::ZEROS(dphi_y + im * stride, atom_->nw);
             ModuleBase::GlobalFunc::ZEROS(dphi_z + im * stride, atom_->nw);

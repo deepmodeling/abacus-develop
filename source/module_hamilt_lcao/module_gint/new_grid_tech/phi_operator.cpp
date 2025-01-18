@@ -136,7 +136,6 @@ void PhiOperator::phi_mul_dm(
 
 void PhiOperator::phi_mul_vldr3(const double* vl, const double dr3, const double* phi, double* result) const
 {
-    ModuleBase::GlobalFunc::ZEROS(result, rows_ * cols_);
     int idx = 0;
     for(int i = 0; i < biggrid_->get_mgrids_num(); i++)
     {
