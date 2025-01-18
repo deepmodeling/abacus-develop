@@ -116,6 +116,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                              d2psi_u,
                              PARAM.inp.nstream);
 
+#ifdef __NEW_GINT
     auto gint_info = std::make_shared<ModuleGint::GintInfo>(
         this->pw_big->nbx,
         this->pw_big->nby,
@@ -133,7 +134,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         ucell,
         this->gd);
     ModuleGint::Gint::init_gint_info(gint_info);
-        
+#endif
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
