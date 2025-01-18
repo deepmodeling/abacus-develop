@@ -22,8 +22,8 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
     ModuleBase::timer::tick("Stress_Func", "stress_onsite");
 
     FPTYPE* stress_device = nullptr;
-    resmem_var_op()(this->ctx, stress_device, 9);
-    setmem_var_op()(this->ctx, stress_device, 0, 9);
+    resmem_var_op()(stress_device, 9);
+    setmem_var_op()(stress_device, 0, 9);
     std::vector<FPTYPE> sigma_onsite(9, 0.0);
 
     auto* onsite_p = projectors::OnsiteProjector<FPTYPE, Device>::get_instance();
@@ -68,8 +68,8 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(ModuleBase::matrix& sigma,
         }
     }
     // transfer stress from device to host
-    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, sigma_onsite.data(), stress_device, 9);
-    delmem_var_op()(this->ctx, stress_device);
+    syncmem_var_d2h_op()(sigma_onsite.data(), stress_device, 9);
+    delmem_var_op()(stress_device);
     // sum up forcenl from all processors
     for (int l = 0; l < 3; l++)
     {

@@ -134,17 +134,17 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
 
 	if(this->device == base_device::GpuDevice ) {
-		resmem_var_op()(this->ctx, gv_x_d, rho_basis->npw);
-        resmem_var_op()(this->ctx, gv_y_d, rho_basis->npw);
-        resmem_var_op()(this->ctx, gv_z_d, rho_basis->npw);
-        resmem_var_op()(this->ctx, rhocgigg_vec_d, rho_basis->npw);
-        resmem_complex_op()(this->ctx, psiv_d, rho_basis->nmaxgr);
-        resmem_var_op()(this->ctx, force_d, 3);
+		resmem_var_op()(gv_x_d, rho_basis->npw);
+        resmem_var_op()(gv_y_d, rho_basis->npw);
+        resmem_var_op()(gv_z_d, rho_basis->npw);
+        resmem_var_op()(rhocgigg_vec_d, rho_basis->npw);
+        resmem_complex_op()(psiv_d, rho_basis->nmaxgr);
+        resmem_var_op()(force_d, 3);
 
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gv_x_d, gv_x.data(), rho_basis->npw);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gv_y_d, gv_y.data(), rho_basis->npw);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gv_z_d, gv_z.data(), rho_basis->npw);
-        syncmem_complex_h2d_op()(this->ctx, this->cpu_ctx, psiv_d, psiv, rho_basis->nmaxgr);
+		syncmem_var_h2d_op()(gv_x_d, gv_x.data(), rho_basis->npw);
+        syncmem_var_h2d_op()(gv_y_d, gv_y.data(), rho_basis->npw);
+        syncmem_var_h2d_op()(gv_z_d, gv_z.data(), rho_basis->npw);
+        syncmem_complex_h2d_op()(psiv_d, psiv, rho_basis->nmaxgr);
 	}
 
 
@@ -178,7 +178,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
             }
 
             if(this->device == base_device::GpuDevice ) {
-                syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhocgigg_vec_d, rhocgigg_vec.data(), rho_basis->npw);
+                syncmem_var_h2d_op()(rhocgigg_vec_d, rhocgigg_vec.data(), rho_basis->npw);
             }
             for (int ia = 0; ia < ucell_in.atoms[it].na; ++ia)
             {
@@ -188,12 +188,12 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                 double force[3] = {0, 0, 0};
 
                 if(this->device == base_device::GpuDevice ) {
-                    syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, force_d, force, 3);
+                    syncmem_var_h2d_op()(force_d, force, 3);
                     hamilt::cal_force_npw_op<FPTYPE, Device>()(
                         psiv_d, gv_x_d, gv_y_d, gv_z_d, rhocgigg_vec_d, force_d, pos.x, pos.y, pos.z, 
                         rho_basis->npw, ucell_in.omega, ucell_in.tpiba
                     );      
-                    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, force, force_d, 3);	          
+                    syncmem_var_d2h_op()(force, force_d, 3);	          
                 
                 } else {
                     hamilt::cal_force_npw_op<FPTYPE, Device>()(
@@ -213,12 +213,12 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     if (this->device == base_device::GpuDevice)
     {
-        delmem_var_op()(this->ctx, gv_x_d);
-        delmem_var_op()(this->ctx, gv_y_d);
-        delmem_var_op()(this->ctx, gv_z_d);
-        delmem_var_op()(this->ctx, force_d);
-        delmem_var_op()(this->ctx, rhocgigg_vec_d);
-        delmem_complex_op()(this->ctx, psiv_d);
+        delmem_var_op()(gv_x_d);
+        delmem_var_op()(gv_y_d);
+        delmem_var_op()(gv_z_d);
+        delmem_var_op()(force_d);
+        delmem_var_op()(rhocgigg_vec_d);
+        delmem_complex_op()(psiv_d);
     }
     delete[] rhocg;
 
@@ -308,24 +308,24 @@ void Forces<FPTYPE, Device>::deriv_drhoc
     double *aux_d = nullptr;
     double *drhocg_d = nullptr;
 	if(this->device == base_device::GpuDevice ) {
-		resmem_var_op()(this->ctx, r_d, mesh);
-		resmem_var_op()(this->ctx, rhoc_d, mesh);
-		resmem_var_op()(this->ctx, rab_d, mesh);
+		resmem_var_op()(r_d, mesh);
+		resmem_var_op()(rhoc_d, mesh);
+		resmem_var_op()(rab_d, mesh);
 
-		resmem_var_op()(this->ctx, aux_d, mesh);
-		resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg);
-		resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+		resmem_var_op()(aux_d, mesh);
+		resmem_var_op()(gx_arr_d, rho_basis->ngg);
+		resmem_var_op()(drhocg_d, rho_basis->ngg);
 
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, gx_arr_d, gx_arr.data(), rho_basis->ngg);
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, mesh);
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, mesh);
-		syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, rhoc, mesh);
+		syncmem_var_h2d_op()(gx_arr_d, gx_arr.data(), rho_basis->ngg);
+		syncmem_var_h2d_op()(r_d, r, mesh);
+		syncmem_var_h2d_op()(rab_d, rab, mesh);
+		syncmem_var_h2d_op()(rhoc_d, rhoc, mesh);
 	}
 
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
 			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,type);
-		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+		syncmem_var_d2h_op()(drhocg+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 
 
@@ -334,11 +334,11 @@ void Forces<FPTYPE, Device>::deriv_drhoc
 			r,rhoc,gx_arr.data()+igl0,rab,drhocg+igl0,mesh,igl0,rho_basis->ngg-igl0,ucell_in.omega,type);
     }
 
-    delmem_var_op()(this->ctx, r_d);
-    delmem_var_op()(this->ctx, rhoc_d);
-    delmem_var_op()(this->ctx, rab_d);
-    delmem_var_op()(this->ctx, gx_arr_d);
-    delmem_var_op()(this->ctx, drhocg_d);
+    delmem_var_op()(r_d);
+    delmem_var_op()(rhoc_d);
+    delmem_var_op()(rab_d);
+    delmem_var_op()(gx_arr_d);
+    delmem_var_op()(drhocg_d);
     return;
 }
 

@@ -105,14 +105,14 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         zconstant_a = std::complex<double>{(double)rand()+(double)rand()/(RAND_MAX+1.0),(double)rand()+(double)rand()/(RAND_MAX+1.0)};
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
-        resize_memory_op()(gpu_ctx, test_zvector_a_gpu, dim_vector);
-        resize_memory_op()(gpu_ctx, test_zvector_b_gpu, dim_vector);
-        synchronize_memory_op()(gpu_ctx, cpu_ctx, test_zvector_a_gpu, test_zvector_a, dim_vector);
-        synchronize_memory_op()(gpu_ctx, cpu_ctx, test_zvector_b_gpu, test_zvector_b, dim_vector);
+        resize_memory_op()(test_zvector_a_gpu, dim_vector);
+        resize_memory_op()(test_zvector_b_gpu, dim_vector);
+        synchronize_memory_op()(test_zvector_a_gpu, test_zvector_a, dim_vector);
+        synchronize_memory_op()(test_zvector_b_gpu, test_zvector_b, dim_vector);
 
-        resize_memory_op()(gpu_ctx, result_zvector_gpu, dim_vector);
-        resize_memory_op_double()(gpu_ctx, test_dvector_a_gpu, dim_vector);
-        synchronize_memory_op_double()(gpu_ctx, cpu_ctx, test_dvector_a_gpu, test_dvector_a, dim_vector);
+        resize_memory_op()(result_zvector_gpu, dim_vector);
+        resize_memory_op_double()(test_dvector_a_gpu, dim_vector);
+        synchronize_memory_op_double()(test_dvector_a_gpu, test_dvector_a, dim_vector);
 
         hsolver::createGpuBlasHandle();
 

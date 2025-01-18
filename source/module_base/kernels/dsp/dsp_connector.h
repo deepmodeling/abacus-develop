@@ -75,7 +75,7 @@ void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv
 
 	auto* swap = new T[notconv * nbase_x];
     auto* target = new T[notconv * nbase_x];
-    syncmem_complex_op()(cpu_ctx, cpu_ctx, swap, hcc + nbase * nbase_x, notconv * nbase_x);
+    syncmem_complex_op()(swap, hcc + nbase * nbase_x, notconv * nbase_x);
     if (base_device::get_current_precision(swap) == "single")
     {
         MPI_Reduce(swap,
@@ -97,8 +97,8 @@ void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv
                     diag_comm);
     }
 
-    syncmem_complex_op()(cpu_ctx, cpu_ctx, hcc + nbase * nbase_x, target, notconv * nbase_x);
-    syncmem_complex_op()(cpu_ctx, cpu_ctx, swap, scc + nbase * nbase_x, notconv * nbase_x);
+    syncmem_complex_op()(hcc + nbase * nbase_x, target, notconv * nbase_x);
+    syncmem_complex_op()(swap, scc + nbase * nbase_x, notconv * nbase_x);
 
     if (base_device::get_current_precision(swap) == "single")
     {
@@ -121,7 +121,7 @@ void dsp_dav_subspace_reduce(T* hcc, T* scc, int nbase, int nbase_x, int notconv
                     diag_comm);
     }
 
-    syncmem_complex_op()(cpu_ctx, cpu_ctx, scc + nbase * nbase_x, target, notconv * nbase_x);
+    syncmem_complex_op()(scc + nbase * nbase_x, target, notconv * nbase_x);
     delete[] swap;
     delete[] target;
 }

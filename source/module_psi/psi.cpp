@@ -40,7 +40,7 @@ Psi<T, Device>::~Psi()
 {
     if (this->allocate_inside)
     {
-        delete_memory_op()(this->ctx, this->psi);
+        delete_memory_op()(this->psi);
     }
 }
 
@@ -58,7 +58,7 @@ Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const i
 
     this->ngk = ngk_in; // modify later
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
+    resize_memory_op()(this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
     this->nk = nk_in;
     this->nbands = nbd_in;
@@ -96,7 +96,7 @@ Psi<T, Device>::Psi(const int nk_in,
 
     this->ngk = ngk_in.data(); // modify later
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
+    resize_memory_op()(this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
     this->nk = nk_in;
     this->nbands = nbd_in;
@@ -166,7 +166,7 @@ Psi<T, Device>::Psi(const int nk_in,
 
     this->ngk = nullptr;
     assert(nk_in > 0 && nbd_in >= 0 && nbs_in > 0);
-    resize_memory_op()(this->ctx, this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
+    resize_memory_op()(this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
 
     this->nk = nk_in;
     this->nbands = nbd_in;
@@ -201,9 +201,7 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
 
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->ctx,
-                                                                    psi_in.get_device(),
-                                                                    this->psi,
+    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
                                                                     psi_in.get_pointer() - psi_in.get_psi_bias(),
                                                                     psi_in.size());
     this->psi_bias = psi_in.get_psi_bias();
@@ -238,25 +236,19 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     {
         auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU
-        base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(psi_in.get_device(),
-                                                                             psi_in.get_device(),
-                                                                             arr,
+        base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(arr,
                                                                              psi_in.get_pointer()
                                                                                  - psi_in.get_psi_bias(),
                                                                              psi_in.size());
         // synchronize the memory from CPU to GPU
-        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->ctx,
-                                                                           psi_in.get_device(),
-                                                                           this->psi,
+        base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi,
                                                                            arr,
                                                                            psi_in.size());
         free(arr);
     }
     else
     {
-        base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->ctx,
-                                                                          psi_in.get_device(),
-                                                                          this->psi,
+        base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->psi,
                                                                           psi_in.get_pointer() - psi_in.get_psi_bias(),
                                                                           psi_in.size());
     }
@@ -269,7 +261,7 @@ template <typename T, typename Device>
 void Psi<T, Device>::set_all_psi(const T* another_pointer, const std::size_t size_in)
 {
     assert(size_in == this->size());
-    synchronize_memory_op()(this->ctx, this->ctx, this->psi, another_pointer, this->size());
+    synchronize_memory_op()(this->psi, another_pointer, this->size());
 }
 
 template <typename T, typename Device>
@@ -278,7 +270,7 @@ void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nba
     assert(nks_in > 0 && nbands_in >= 0 && nbasis_in > 0);
 
     // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->ctx, this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
+    resize_memory_op()(this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
 
     // this->zero_out();
 
@@ -496,7 +488,7 @@ template <typename T, typename Device>
 void Psi<T, Device>::zero_out()
 {
     // this->psi.assign(this->psi.size(), T(0));
-    set_memory_op()(this->ctx, this->psi, 0, this->size());
+    set_memory_op()(this->psi, 0, this->size());
 }
 
 template <typename T, typename Device>

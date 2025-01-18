@@ -139,7 +139,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
         if (psi_device->get_pointer() != psi_cpu->get_pointer())
         {
-            syncmem_h2d_op()(ctx, cpu_ctx, psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+            syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
         }
 
         std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
@@ -170,7 +170,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         {
             if (psi_device->get_pointer() != kspw_psi->get_pointer())
             {
-                syncmem_complex_op()(ctx, ctx, kspw_psi->get_pointer(), psi_device->get_pointer(), nbands * nbasis);
+                syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands * nbasis);
             }
         }
     } // end k-point loop
