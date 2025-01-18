@@ -1,6 +1,6 @@
 #pragma once
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_info.h"
+#include "module_hamilt_lcao/module_gint/new_gint/gint_info.h"
 
 namespace ModuleGint
 {

@@ -5,8 +5,8 @@
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
 #include "module_hamilt_lcao/module_gint/gint_k.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_info.h"
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint.h"
+#include "module_hamilt_lcao/module_gint/new_gint/gint_info.h"
+#include "module_hamilt_lcao/module_gint/new_gint/gint.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif

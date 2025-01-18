@@ -31,26 +31,26 @@ list(APPEND objects
 
 if(NEW_GINT)
   list(APPEND objects
-      new_grid_tech/biggrid_info.cpp
-      new_grid_tech/biggrid.cpp
-      new_grid_tech/divide_info.cpp
-      new_grid_tech/gint_atom.cpp
-      new_grid_tech/gint_info.cpp
-      new_grid_tech/gint.cpp
-      new_grid_tech/gint_vl.cpp
-      new_grid_tech/gint_vl_metagga.cpp
-      new_grid_tech/gint_vl_nspin4.cpp
-      new_grid_tech/gint_vl_metagga_nspin4.cpp
-      new_grid_tech/gint_rho.cpp
-      new_grid_tech/gint_tau.cpp
-      new_grid_tech/gint_fvl.cpp
-      new_grid_tech/gint_fvl_meta.cpp
-      new_grid_tech/localcell_info.cpp
-      new_grid_tech/phi_operator.cpp
-      new_grid_tech/set_ddphi.cpp
-      new_grid_tech/unitcell_info.cpp
-      new_grid_tech/gint_common.cpp
-      new_grid_tech/gint_interface.cpp
+      new_gint/biggrid_info.cpp
+      new_gint/biggrid.cpp
+      new_gint/divide_info.cpp
+      new_gint/gint_atom.cpp
+      new_gint/gint_info.cpp
+      new_gint/gint.cpp
+      new_gint/gint_vl.cpp
+      new_gint/gint_vl_metagga.cpp
+      new_gint/gint_vl_nspin4.cpp
+      new_gint/gint_vl_metagga_nspin4.cpp
+      new_gint/gint_rho.cpp
+      new_gint/gint_tau.cpp
+      new_gint/gint_fvl.cpp
+      new_gint/gint_fvl_meta.cpp
+      new_gint/localcell_info.cpp
+      new_gint/phi_operator.cpp
+      new_gint/set_ddphi.cpp
+      new_gint/unitcell_info.cpp
+      new_gint/gint_common.cpp
+      new_gint/gint_interface.cpp
       )
 endif()
 

@@ -10,7 +10,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
 
-#include "module_hamilt_lcao/module_gint/new_grid_tech/gint_helper.h"
+#include "module_hamilt_lcao/module_gint/new_gint/gint_helper.h"
 
 Grid_Technique::Grid_Technique() {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
@@ -382,7 +382,6 @@ void Grid_Technique::init_atoms_on_grid2(const int* index2normal,
     std::vector<double> coords3(bxyz * 3, 0.0);
     for(int iat = 0; iat < ucell.nat; iat++)
     {
-        // printf("tau_in_bigcell[%d] = %f %f %f\n", iat, this->tau_in_bigcell[iat][0], this->tau_in_bigcell[iat][1], this->tau_in_bigcell[iat][2]);
         const int it = ucell.iat2it[iat];
         const double rcut_square = this->rcuts[it] * this->rcuts[it];
         // zero bigcell of meshball indicate ?
