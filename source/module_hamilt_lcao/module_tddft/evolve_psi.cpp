@@ -6,6 +6,7 @@
 #include "module_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle
 #include "module_base/module_container/ATen/kernels/lapack.h" // cuSOLVER handle
 #include "module_base/scalapack_connector.h"
+#include "module_esolver/esolver_ks_lcao_tddft.h" // use gatherMatrix
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
@@ -125,10 +126,6 @@ void evolve_psi_tensor(const int nband,
                        const int print_matrix,
                        const bool use_lapack)
 {
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -155,15 +152,42 @@ void evolve_psi_tensor(const int nband,
     p_hamilt->matrix(h_mat, s_mat);
 
     // Create Tensor objects for temporary data and sync from host to device
-    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
-    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
-    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
-    syncmem_complex_h2d_op()(ctx, cpu_ctx, Stmp.data<std::complex<double>>(), s_mat.p, pv->nloc);
-    syncmem_complex_h2d_op()(ctx, cpu_ctx, Htmp.data<std::complex<double>>(), h_mat.p, pv->nloc);
-    syncmem_complex_h2d_op()(ctx, cpu_ctx, Hold.data<std::complex<double>>(), h_mat.p, pv->nloc);
+    const int len_HS = use_lapack ? nlocal * nlocal : pv->nloc;
+    ct::Tensor Stmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+    ct::Tensor Htmp(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
+    ct::Tensor Hold(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
 
-    ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({pv->nloc}));
+    if (use_lapack)
+    {
+        // Need to gather H and S matrix to root process here
+        int myid, num_procs;
+        MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+        MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+        ModuleESolver::Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
+
+        // Collect H matrix
+        ModuleESolver::gatherMatrix(myid, 0, h_mat, h_mat_g);
+        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
+        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat_g.p.get(), len_HS);
+
+        // Collect S matrix
+        ModuleESolver::gatherMatrix(myid, 0, s_mat, s_mat_g);
+        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat_g.p.get(), len_HS);
+    }
+    else
+    {
+        // Original code
+        syncmem_complex_h2d_op()(Stmp.data<std::complex<double>>(), s_mat.p, len_HS);
+        syncmem_complex_h2d_op()(Htmp.data<std::complex<double>>(), h_mat.p, len_HS);
+        syncmem_complex_h2d_op()(Hold.data<std::complex<double>>(), h_mat.p, len_HS);
+    }
+
+    ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
     U_operator.zero();
+
+    int myid, root_proc = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -178,7 +202,10 @@ void evolve_psi_tensor(const int nband,
         }
         else
         {
-            half_Hmatrix_tensor_lapack<Device>(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+            if (myid == root_proc)
+            {
+                half_Hmatrix_tensor_lapack<Device>(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+            }
         }
     }
 
@@ -201,7 +228,10 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+        if (myid == root_proc)
+        {
+            upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+        }
     }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -215,7 +245,10 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+        if (myid == root_proc)
+        {
+            norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+        }
     }
 
     // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -229,7 +262,10 @@ void evolve_psi_tensor(const int nband,
     }
     else
     {
-        compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb);
+        if (myid == root_proc)
+        {
+            compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb);
+        }
     }
 
 #endif // __MPI

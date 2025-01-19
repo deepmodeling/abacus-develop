@@ -171,10 +171,6 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         ct::Tensor& psi_k,
                         const int print_matrix)
 {
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -200,15 +196,18 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
+        ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
+        ct::Tensor psi_k_laststep_cpu = psi_k_laststep.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " psi_k:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < nband; i++)
         {
-            for (int j = 0; j < pv->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
                 double aa, bb;
-                aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                aa = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].real();
+                bb = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -223,13 +222,13 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " psi_k_laststep:" << std::endl;
-        for (int i = 0; i < pv->ncol_bands; i++)
+        for (int i = 0; i < nband; i++)
         {
-            for (int j = 0; j < pv->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
                 double aa, bb;
-                aa = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                aa = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].real();
+                bb = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;

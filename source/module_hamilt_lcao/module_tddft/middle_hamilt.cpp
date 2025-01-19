@@ -168,10 +168,6 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 const ct::Tensor& S_laststep,
                                 const int print_matrix)
 {
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -179,27 +175,30 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
+        ct::Tensor Htmp_cpu = Htmp.to_device<ct::DEVICE_CPU>();
+        ct::Tensor H_laststep_cpu = H_laststep.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << std::setprecision(10);
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " H(t+dt) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < pv->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Htmp.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                                     << Htmp.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                GlobalV::ofs_running << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " H(t):" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < pv->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << H_laststep.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                                     << H_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                GlobalV::ofs_running << H_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << H_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -238,14 +237,16 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
+        ct::Tensor Htmp_cpu = Htmp.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " H (t+dt/2) :" << std::endl;
-        for (int i = 0; i < pv->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < pv->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Htmp.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                                     << Htmp.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                GlobalV::ofs_running << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }

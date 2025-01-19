@@ -290,10 +290,6 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const ct::Tensor& psi_k,
                                ct::Tensor& ekb)
 {
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    Device* ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
@@ -302,12 +298,12 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     // Create Tensor objects for temporary data
     ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE,
                     ct_device_type,
-                    ct::TensorShape({pv->nloc_wfc})); // tmp1 shape: nlocal * nband
+                    ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
     ct::Tensor Eij(ct::DataType::DT_COMPLEX_DOUBLE,
                    ct_device_type,
-                   ct::TensorShape({pv->nloc})); // Eij shape: nlocal * nlocal
+                   ct::TensorShape({nlocal * nlocal})); // Eij shape: nlocal * nlocal
     // Why not use nband * nband ?????
     Eij.zero();
 
@@ -346,17 +342,19 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
 
     if (PARAM.inp.td_print_eij >= 0.0)
     {
+        ct::Tensor Eij_cpu = Eij.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
         GlobalV::ofs_running << " Eij:" << std::endl;
-        for (int i = 0; i < pv->nrow_bands; i++)
+        for (int i = 0; i < nband; i++)
         {
-            for (int j = 0; j < pv->ncol_bands; j++)
+            for (int j = 0; j < nband; j++)
             {
                 double aa = 0.0, bb = 0.0;
-                aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                aa = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].real();
+                bb = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
                 {
                     aa = 0.0;
@@ -384,8 +382,6 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         for (int i = 0; i < nband; ++i)
         {
             base_device::memory::synchronize_memory_op<double, Device, Device>()(
-                ctx,
-                ctx,
                 ekb.data<double>() + i,
                 reinterpret_cast<const double*>(Eij.data<std::complex<double>>() + i * nlocal + i),
                 1);

@@ -7,6 +7,7 @@
 #include "module_base/module_container/ATen/core/tensor_map.h" // TensorMap
 #include "module_base/module_device/device.h"                  // base_device
 #include "module_base/module_device/memory_op.h"               // memory operations
+#include "module_base/scalapack_connector.h"                   // Cpxgemr2d
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_esolver/esolver_ks_lcao_tddft.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
@@ -90,6 +91,49 @@ inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, co
 
 namespace module_tddft
 {
+
+template <typename T>
+void gatherPsi(const int myid,
+               const int root_proc,
+               T* psi_l,
+               const Parallel_Orbitals& para_orb,
+               ModuleESolver::Matrix_g<T>& psi_g)
+{
+    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
+    int ctxt = desc_psi[1];                  // BLACS context
+    int nrows = desc_psi[2];                 // Global matrix row number
+    int ncols = desc_psi[3];                 // Global matrix column number
+
+    if (myid == root_proc)
+    {
+        psi_g.p.reset(new T[nrows * ncols]); // No need to delete[] since it is a shared_ptr
+    }
+    else
+    {
+        psi_g.p.reset(new T[nrows * ncols]); // Placeholder for non-root processes
+    }
+
+    // Set the descriptor of the global psi
+    psi_g.desc.reset(new int[9]{1, ctxt, nrows, ncols, nrows, ncols, 0, 0, nrows});
+    psi_g.row = nrows;
+    psi_g.col = ncols;
+
+    // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
+    Cpxgemr2d(nrows, ncols, psi_l, 1, 1, const_cast<int*>(desc_psi), psi_g.p.get(), 1, 1, psi_g.desc.get(), ctxt);
+}
+
+template <typename T>
+void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const ModuleESolver::Matrix_g<T>& psi_g)
+{
+    const int* desc_psi = para_orb.desc_wfc; // Obtain the descriptor from Parallel_Orbitals
+    int ctxt = desc_psi[1];                  // BLACS context
+    int nrows = desc_psi[2];                 // Global matrix row number
+    int ncols = desc_psi[3];                 // Global matrix column number
+
+    // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
+    Cpxgemr2d(nrows, ncols, psi_g.p.get(), 1, 1, psi_g.desc.get(), psi_l, 1, 1, const_cast<int*>(desc_psi), ctxt);
+}
+
 template <typename Device = base_device::DEVICE_CPU>
 class Evolve_elec
 {
@@ -121,10 +165,6 @@ class Evolve_elec
                           const bool use_tensor,
                           const bool use_lapack);
 
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    static Device* ctx;
-    static base_device::DEVICE_CPU* cpu_ctx;
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     static ct::DeviceType ct_device_type;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU

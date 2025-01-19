@@ -74,7 +74,12 @@ void Propagator::compute_propagator_tensor(const int nlocal,
         }
         else
         {
-            compute_propagator_cn2_tensor_lapack<Device>(nlocal, Stmp, Htmp, U_operator, print_matrix);
+            int myid, root_proc = 0;
+            MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+            if (myid == root_proc)
+            {
+                compute_propagator_cn2_tensor_lapack<Device>(nlocal, Stmp, Htmp, U_operator, print_matrix);
+            }
         }
         break;
 
@@ -646,58 +651,51 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
                                                       ct::Tensor& U_operator,
                                                       const int print_matrix) const
 {
-    /// ctx is nothing but the devices used in op (Device* ctx = nullptr;),
-    /// it controls the ops to use the corresponding device to calculate results
-    Device* ctx = {};
-    base_device::DEVICE_GPU* gpu_ctx = {};
-    base_device::DEVICE_CPU* cpu_ctx = {};
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
     // ct_Device = ct::DEVICE_CPU or ct::DEVICE_GPU
     using ct_Device = typename ct::PsiToContainer<Device>::type;
 
     // (1) copy Htmp to Numerator & Denominator
-    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({this->ParaV->nloc}));
+    ct::Tensor Numerator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
     Numerator.zero();
     base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        ctx,
-        ctx,
         Numerator.data<std::complex<double>>(),
         Htmp.data<std::complex<double>>(),
-        this->ParaV->nloc);
+        nlocal * nlocal);
 
-    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({this->ParaV->nloc}));
+    ct::Tensor Denominator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({nlocal * nlocal}));
     Denominator.zero();
     base_device::memory::synchronize_memory_op<std::complex<double>, Device, Device>()(
-        ctx,
-        ctx,
         Denominator.data<std::complex<double>>(),
         Htmp.data<std::complex<double>>(),
-        this->ParaV->nloc);
+        nlocal * nlocal);
 
     if (print_matrix)
     {
+        ct::Tensor Stmp_cpu = Stmp.to_device<ct::DEVICE_CPU>();
+        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " S matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                                     << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                GlobalV::ofs_running << Stmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Stmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " H matrix :" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                                     << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
-                                     << "i ";
+                GlobalV::ofs_running << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -739,16 +737,16 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
 
     if (print_matrix)
     {
+        ct::Tensor Denominator_cpu = Denominator.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << " beta=" << beta1 << std::endl;
         GlobalV::ofs_running << " fenmu:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
-                                     << "+"
-                                     << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
-                                     << "i ";
+                GlobalV::ofs_running << Denominator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Denominator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
@@ -769,6 +767,8 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
     // Print ipiv
     if (print_matrix)
     {
+        ct::Tensor ipiv_cpu = ipiv.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
         GlobalV::ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
         GlobalV::ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
@@ -778,7 +778,7 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         GlobalV::ofs_running << " ipiv:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
-            GlobalV::ofs_running << ipiv.data<int>()[i] << " ";
+            GlobalV::ofs_running << ipiv_cpu.data<int>()[i] << " ";
         }
         GlobalV::ofs_running << std::endl;
     }
@@ -815,39 +815,40 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
 
     if (print_matrix)
     {
+        ct::Tensor Denominator_inv_cpu = Denominator_inv.to_device<ct::DEVICE_CPU>();
+        ct::Tensor Numerator_cpu = Numerator.to_device<ct::DEVICE_CPU>();
+        ct::Tensor U_operator_cpu = U_operator.to_device<ct::DEVICE_CPU>();
+
         GlobalV::ofs_running << " fenmu^-1:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Denominator_inv.data<std::complex<double>>()[i * this->ParaV->ncol + j].real()
-                                     << "+"
-                                     << Denominator_inv.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
-                                     << "i ";
+                GlobalV::ofs_running << Denominator_inv_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Denominator_inv_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " fenzi:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                                     << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag()
-                                     << "i ";
+                GlobalV::ofs_running << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                                     << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
             GlobalV::ofs_running << std::endl;
         }
         GlobalV::ofs_running << std::endl;
         GlobalV::ofs_running << " U operator:" << std::endl;
-        for (int i = 0; i < this->ParaV->nrow; i++)
+        for (int i = 0; i < nlocal; i++)
         {
-            for (int j = 0; j < this->ParaV->ncol; j++)
+            for (int j = 0; j < nlocal; j++)
             {
                 double aa, bb;
-                aa = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real();
-                bb = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag();
+                aa = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].real();
+                bb = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;

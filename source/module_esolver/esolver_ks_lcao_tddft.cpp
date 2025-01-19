@@ -43,6 +43,14 @@ ESolver_KS_LCAO_TDDFT<Device>::ESolver_KS_LCAO_TDDFT()
 {
     classname = "ESolver_KS_LCAO_TDDFT";
     basisname = "LCAO";
+
+    // If the device is GPU, we must open use_tensor and use_lapack
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        use_tensor = true;
+        use_lapack = true;
+    }
 }
 
 template <typename Device>
@@ -217,13 +225,16 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
 
         if (td_htype == 1)
         {
+            const int len_HS = use_tensor && use_lapack ? nlocal * nlocal : nloc;
+
             if (this->Hk_laststep == nullptr)
             {
                 this->Hk_laststep = new std::complex<double>*[kv.get_nks()];
                 for (int ik = 0; ik < kv.get_nks(); ++ik)
                 {
-                    this->Hk_laststep[ik] = new std::complex<double>[nloc];
-                    ModuleBase::GlobalFunc::ZEROS(Hk_laststep[ik], nloc);
+                    // Allocate memory for Hk_laststep, if (use_tensor && use_lapack), should be global
+                    this->Hk_laststep[ik] = new std::complex<double>[len_HS];
+                    ModuleBase::GlobalFunc::ZEROS(Hk_laststep[ik], len_HS);
                 }
             }
             if (this->Sk_laststep == nullptr)
@@ -231,8 +242,9 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
                 this->Sk_laststep = new std::complex<double>*[kv.get_nks()];
                 for (int ik = 0; ik < kv.get_nks(); ++ik)
                 {
-                    this->Sk_laststep[ik] = new std::complex<double>[nloc];
-                    ModuleBase::GlobalFunc::ZEROS(Sk_laststep[ik], nloc);
+                    // Allocate memory for Sk_laststep, if (use_tensor && use_lapack), should be global
+                    this->Sk_laststep[ik] = new std::complex<double>[len_HS];
+                    ModuleBase::GlobalFunc::ZEROS(Sk_laststep[ik], len_HS);
                 }
             }
         }
@@ -253,8 +265,31 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
                 this->p_hamilt->updateHk(ik);
                 hamilt::MatrixBlock<complex<double>> h_mat, s_mat;
                 this->p_hamilt->matrix(h_mat, s_mat);
-                BlasConnector::copy(nloc, h_mat.p, 1, Hk_laststep[ik], 1);
-                BlasConnector::copy(nloc, s_mat.p, 1, Sk_laststep[ik], 1);
+
+                if (use_tensor && use_lapack)
+                {
+                    // Gather H and S matrices to root process
+#ifdef __MPI
+                    int myid, num_procs;
+                    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+                    MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+
+                    Matrix_g<std::complex<double>> h_mat_g, s_mat_g; // Global matrix structure
+
+                    // Collect H matrix
+                    gatherMatrix(myid, 0, h_mat, h_mat_g);
+                    BlasConnector::copy(nlocal * nlocal, h_mat_g.p.get(), 1, Hk_laststep[ik], 1);
+
+                    // Collect S matrix
+                    gatherMatrix(myid, 0, s_mat, s_mat_g);
+                    BlasConnector::copy(nlocal * nlocal, s_mat_g.p.get(), 1, Sk_laststep[ik], 1);
+#endif
+                }
+                else
+                {
+                    BlasConnector::copy(nloc, h_mat.p, 1, Hk_laststep[ik], 1);
+                    BlasConnector::copy(nloc, s_mat.p, 1, Sk_laststep[ik], 1);
+                }
             }
         }
 
