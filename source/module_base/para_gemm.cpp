@@ -75,8 +75,6 @@ template <typename T, typename Device>
 void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C_global)
 {
     const Device* ctx = {};
-    char transC = 'C';
-    char transN = 'N';
 #ifdef __MPI
     if (col_nproc > 1)
     {
@@ -122,8 +120,8 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
             if (col_rank == ip)
             {
                 ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 transC,
-                                                 transN,
+                                                 'C',
+                                                 'N',
                                                  ncolA,
                                                  ncolB,
                                                  nrow,
@@ -145,8 +143,8 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
                 Parallel_Common::recv_dev<T, Device>(Atmp_device, size, ip, 0, col_world, &status, A_tmp.data());
                 MPI_Wait(&requests[ip], &status);
                 ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 transC,
-                                                 transN,
+                                                 'C',
+                                                 'N',
                                                  m,
                                                  ncolB,
                                                  nrow,
@@ -195,8 +193,8 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
     {
         T real_beta = row_rank == 0 ? beta : 0;
         ModuleBase::gemm_op<T, Device>()(ctx,
-                                         transC,
-                                         transN,
+                                         'C',
+                                         'N',
                                          ncolA,
                                          ncolB,
                                          nrow,
