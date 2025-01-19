@@ -5,7 +5,7 @@
 #include "spin_constrain.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
 #include "module_base/parallel_reduce.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -84,7 +84,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
     {
 #if ((defined __CUDA) || (defined __ROCM))
         base_device::DEVICE_GPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
+        ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
             ctx,
             transa,
             transb,
@@ -108,7 +108,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
     else if (PARAM.inp.device == "cpu")
     {
         base_device::DEVICE_CPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
+        ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
             ctx,
             transa,
             transb,

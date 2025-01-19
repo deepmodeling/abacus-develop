@@ -14,7 +14,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 
 //-------------------------------------------------------------------
@@ -241,7 +241,7 @@ class Stress_Func
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
   private:
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 

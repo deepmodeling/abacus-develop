@@ -8,7 +8,7 @@
 
 #include "module_base/projgen.h"
 #include "module_base/blas_connector.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #include "module_base/parallel_common.h"

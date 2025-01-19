@@ -2,7 +2,7 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #include <algorithm>
 #include <complex>
@@ -145,7 +145,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
 
     // run
     hsolver::createGpuBlasHandle();
-    hsolver::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+    ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                                  2,
                                                                                  3,
                                                                                  device_transpose,

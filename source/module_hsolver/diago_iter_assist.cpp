@@ -9,7 +9,7 @@
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 namespace hsolver
 {

@@ -1,5 +1,5 @@
 #include "module_base/module_device/memory_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_ModuleBase/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "module_base/tool_quit.h"
 
@@ -20,7 +20,7 @@ struct GetTypeReal<thrust::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
 
-namespace hsolver {
+namespace ModuleBase {
 
 template <typename T>
 struct GetTypeThrust {
@@ -968,4 +968,4 @@ template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 #endif
-}  // namespace hsolver
+}  // namespace ModuleBase

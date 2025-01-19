@@ -5,7 +5,7 @@
 #include "module_base/module_device/device.h"
 
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
