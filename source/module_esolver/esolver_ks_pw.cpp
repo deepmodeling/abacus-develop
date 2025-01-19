@@ -73,7 +73,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #if ((defined __CUDA) || (defined __ROCM))
     if (this->device == base_device::GpuDevice)
     {
-        hsolver::createGpuBlasHandle();
+        ModuleBase::createGpuBlasHandle();
         hsolver::createGpuSolverHandle();
         container::kernels::createGpuBlasHandle();
         container::kernels::createGpuSolverHandle();
@@ -101,7 +101,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     if (this->device == base_device::GpuDevice)
     {
 #if defined(__CUDA) || defined(__ROCM)
-        hsolver::destoryBLAShandle();
+        ModuleBase::destoryBLAShandle();
         hsolver::destroyGpuSolverHandle();
         container::kernels::destroyGpuBlasHandle();
         container::kernels::destroyGpuSolverHandle();

@@ -416,11 +416,11 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
             Real* e_temp_gpu = nullptr;
             resmem_var_op()(e_temp_gpu, nbase);
             syncmem_var_h2d_op()(e_temp_gpu, e_temp_cpu.data(), nbase);
-            vector_mul_vector_op<T, Device>()(this->ctx,
-                                                   nbase,
-                                                   vc_ev_vector + m * nbase,
-                                                   vc_ev_vector + m * nbase,
-                                                   e_temp_gpu);
+            ModuleBase::vector_mul_vector_op<T, Device>()(this->ctx,
+                                                          nbase,
+                                                          vc_ev_vector + m * nbase,
+                                                          vc_ev_vector + m * nbase,
+                                                          e_temp_gpu);
             delmem_var_op()(e_temp_gpu);
 #endif
         }
@@ -468,11 +468,11 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                                   dim,
-                                                   basis + dim*(nbase + m),
-                                                   basis + dim*(nbase + m),
-                                                   this->d_precondition);
+            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
+                                                          dim,
+                                                          basis + dim * (nbase + m),
+                                                          basis + dim * (nbase + m),
+                                                          this->d_precondition);
 #endif
         }
         else

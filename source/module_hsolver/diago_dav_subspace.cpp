@@ -354,11 +354,11 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
             syncmem_var_h2d_op()(this->d_precondition, pre.data(), this->dim);
-            vector_div_vector_op<T, Device>()(this->ctx,
-                                              this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              psi_iter + (nbase + m) * this->dim,
-                                              this->d_precondition);
+            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
+                                                          this->dim,
+                                                          psi_iter + (nbase + m) * this->dim,
+                                                          psi_iter + (nbase + m) * this->dim,
+                                                          this->d_precondition);
         }
         else
 #endif

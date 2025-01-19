@@ -375,9 +375,9 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     resize_memory_op()(psi_R_dev, psi_R.size());
     synchronize_memory_op()(psi_L_dev, psi_L.data(), psi_L.size());
     synchronize_memory_op()(psi_R_dev, psi_R.data(), psi_R.size());
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
     EXPECT_LT(fabs(result - expected_result), 1e-12);
     delete_memory_op()(psi_L_dev);
     delete_memory_op()(psi_R_dev);
@@ -537,9 +537,9 @@ TEST_F(TestModuleHsolverMathKernel, axpy_op_gpu)
     synchronize_memory_op()(Y_axpy_dev, Y_axpy.data(), Y_axpy.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     axpy_op_gpu()(gpu_ctx, dim, &alpha_axpy, X_axpy_dev, 1, Y_axpy_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
 
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(Y_axpy.data(), Y_axpy_dev, Y_axpy.size());
@@ -566,9 +566,9 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_gpu)
     synchronize_memory_op()(X_scal_dev, X_scal.data(), X_scal.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     scal_op_gpu()(gpu_ctx, dim, &alpha_scal, X_scal_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
 
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(X_scal.data(), X_scal_dev, X_scal.size());
@@ -599,9 +599,9 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     synchronize_memory_op()(Y_gemv_dev, Y_gemv.data(), Y_gemv.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     gemv_op_gpu()(gpu_ctx, 'C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(Y_gemv.data(), Y_gemv_dev, Y_gemv.size());
 

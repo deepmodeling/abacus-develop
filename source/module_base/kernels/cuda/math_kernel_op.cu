@@ -1,5 +1,5 @@
 #include "module_base/module_device/memory_op.h"
-#include "module_ModuleBase/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "module_base/tool_quit.h"
 
@@ -815,6 +815,27 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
                                                           const int& incx)
 {
     cublasErrcheck(cublasZscal(cublas_handle, N, (double2*)alpha, (double2*)X, incx));
+}
+
+template <>
+void gemm_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+                                                         const char& transa,
+                                                         const char& transb,
+                                                         const int& m,
+                                                         const int& n,
+                                                         const int& k,
+                                                         const float* alpha,
+                                                         const float* a,
+                                                         const int& lda,
+                                                         const float* b,
+                                                         const int& ldb,
+                                                         const float* beta,
+                                                         float* c,
+                                                         const int& ldc)
+{
+    cublasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
+    cublasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
+    cublasErrcheck(cublasSgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
 }
 
 template <>

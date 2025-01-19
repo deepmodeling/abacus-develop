@@ -189,9 +189,11 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
         }
     }
     else
-#endif
     {
         T real_beta = row_rank == 0 ? beta : 0;
+#else
+        T real_beta = beta;
+#endif
         ModuleBase::gemm_op<T, Device>()(ctx,
                                          'C',
                                          'N',
@@ -206,8 +208,10 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
                                          &real_beta,
                                          C_global,
                                          LDC_global);
+#ifdef __MPI
         Parallel_Common::reduce_dev<T, Device>(C_global, size_C_global, row_world);
     }
+#endif
 }
 
 template class PGemmCN<double, base_device::DEVICE_CPU>;

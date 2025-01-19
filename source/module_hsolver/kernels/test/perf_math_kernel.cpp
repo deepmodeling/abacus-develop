@@ -114,7 +114,7 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         resize_memory_op_double()(test_dvector_a_gpu, dim_vector);
         synchronize_memory_op_double()(test_dvector_a_gpu, test_dvector_a, dim_vector);
 
-        hsolver::createGpuBlasHandle();
+        ModuleBase::createGpuBlasHandle();
 
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -125,7 +125,7 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         delete[] result_zvector;
         delete[] test_dvector_a;
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-        hsolver::destoryBLAShandle();
+        ModuleBase::destoryBLAShandle();
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
     }
 
