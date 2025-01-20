@@ -106,7 +106,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 
     if (not_equal)
     {
-        psi_cpu = new Psi<T>(1, nbands_start, nbasis, nullptr);
+        psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
         psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
                                                : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
     }
@@ -119,7 +119,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         }
         else
         {
-            psi_cpu = new Psi<T>(1, nbands_start, nbasis, nullptr);
+            psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
             psi_device = kspw_psi;  
         }
     }
@@ -203,7 +203,7 @@ void PSIInit<T, Device>::initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream&
     }
 }
 
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const int* ngk, const int& nbands, const int& npwx)
+void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx)
 {
     assert(npwx > 0);
     assert(nks > 0);
@@ -215,7 +215,7 @@ void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const int* ng
     {
         nks2 = 1;
     }
-    psi = new psi::Psi<std::complex<double>>(nks2, nbands, npwx * PARAM.globalv.npol, ngk);
+    psi = new psi::Psi<std::complex<double>>(nks2, nbands, npwx * PARAM.globalv.npol, ngk, true);
     const size_t memory_cost = sizeof(std::complex<double>) * nks2 * nbands * (PARAM.globalv.npol * npwx);
     std::cout << " MEMORY FOR PSI (MB)  : " << static_cast<double>(memory_cost) / 1024.0 / 1024.0 << std::endl;
     ModuleBase::Memory::record("Psi_PW", memory_cost);

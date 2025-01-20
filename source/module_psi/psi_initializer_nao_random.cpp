@@ -21,7 +21,7 @@ void psi_initializer_nao_random<T>::init_psig(T* psig, const int& ik)
     psi_initializer_nao<T>::init_psig(psig, ik);
     const int npol = PARAM.globalv.npol;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
-    psi::Psi<T> psi_random(1, this->nbands_start_, nbasis, nullptr);
+    psi::Psi<T> psi_random(1, this->nbands_start_, nbasis, nbasis, true);
     psi_random.fix_k(0);
     this->random_t(psi_random.get_pointer(), 0, this->nbands_start_, ik, 0);
     for (int iband = 0; iband < this->nbands_start_; iband++)

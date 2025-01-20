@@ -35,7 +35,7 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
 {
     this->nks = p_kv->get_nks();
-    this->ngk = p_kv->ngk.data();
+    this->ngk = p_kv->ngk;
     this->npwx = npwx_in;
     nchip = new int[nks];
 
@@ -111,7 +111,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 
     this->nchip_max = tmpnchip;
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<T>(nks, this->nchip_max, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<T>(nks, this->nchip_max, npwx, this->ngk, true);
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(T));
 
     for (int ik = 0; ik < nks; ++ik)
@@ -123,7 +123,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {
@@ -207,7 +207,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         delete[] npwip;
     }
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, this->nchip_max, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, this->nchip_max, npwx, this->ngk, true);
     this->chi0_cpu->zero_out();
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(std::complex<double>));
     for (int ik = 0; ik < nks; ++ik)
@@ -252,7 +252,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {
@@ -266,7 +266,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     const int npwx = this->npwx;
     const int nks = this->nks;
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, npwx, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, npwx, npwx, this->ngk, true);
     this->chi0_cpu->zero_out();
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(std::complex<double>));
     for (int ik = 0; ik < nks; ++ik)
@@ -284,7 +284,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {

@@ -8,12 +8,12 @@ class TestPsi : public ::testing::Test
       const int ink = 2;
     const int inbands = 4;
     const int inbasis = 10;
-    int ngk[4] = {10, 10, 10, 10};
+    std::vector<int> ngk = {10, 10, 10, 10};
 
-    const psi::Psi<std::complex<double>>* psi_object31 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, &ngk[0]);
-    const psi::Psi<double>* psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, &ngk[0]);
-    const psi::Psi<std::complex<float>>* psi_object33 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, &ngk[0]);
-    const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, &ngk[0]);
+    const psi::Psi<std::complex<double>>* psi_object31 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<double>* psi_object32 = new psi::Psi<double>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<std::complex<float>>* psi_object33 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, true);
+    const psi::Psi<float>* psi_object34 = new psi::Psi<float>(ink, inbands, inbasis, ngk, true);
 };
 
 TEST_F(TestPsi, get_val)
@@ -98,7 +98,7 @@ TEST_F(TestPsi, get_pointer_op_zero_complex_double)
     EXPECT_EQ(psi_object31->get_psi_bias(), 0);
 
     std::vector<int> temp(ink, inbasis);
-    psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, temp.data(), true);
+    psi::Psi<std::complex<double>>* psi_temp = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, temp, true);
     psi_temp->fix_k(0);
     EXPECT_EQ(psi_object31->get_current_nbas(), inbasis);
     delete psi_temp;
@@ -241,10 +241,10 @@ TEST_F(TestPsi, range)
 
 TEST_F(TestPsi, band_first)
 {
-    const psi::Psi<std::complex<double>>* psi_band_c64 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, &ngk[0], false);
-    const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, &ngk[0], false);
-    const psi::Psi<std::complex<float>>* psi_band_c32 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, &ngk[0], false);
-    const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, &ngk[0], false);
+    const psi::Psi<std::complex<double>>* psi_band_c64 = new psi::Psi<std::complex<double>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<double>* psi_band_64 = new psi::Psi<double>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<std::complex<float>>* psi_band_c32 = new psi::Psi<std::complex<float>>(ink, inbands, inbasis, ngk, false);
+    const psi::Psi<float>* psi_band_32 = new psi::Psi<float>(ink, inbands, inbasis, ngk, false);
 
     // set values: cover 4 different cases
     for (int ib = 0;ib < inbands;++ib)

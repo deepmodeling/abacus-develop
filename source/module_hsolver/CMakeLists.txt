@@ -36,7 +36,6 @@ if(ENABLE_LCAO)
 
   if(USE_CUDA)
       list(APPEND objects
-          ./kernels/math_kernel_op.cpp
           ./kernels/dngvd_op.cpp
           ./kernels/cuda/diag_cusolver.cu
           diago_cusolver.cpp

@@ -10,7 +10,7 @@
 #include "diago_iter_assist.h"
 #include "module_base/blas_connector.h"
 #include "module_base/global_function.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 namespace hsolver {
 

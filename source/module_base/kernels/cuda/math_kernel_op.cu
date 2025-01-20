@@ -1,5 +1,5 @@
 #include "module_base/module_device/memory_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "module_base/tool_quit.h"
 
@@ -9,7 +9,7 @@
 #include <thrust/execution_policy.h>
 #include <thrust/inner_product.h>
 
-namespace hsolver
+namespace ModuleBase
 {
 const int warp_size = 32;
 // const unsigned int full_mask = 0xffffffff;
@@ -24,7 +24,7 @@ template <>
 struct GetTypeReal<thrust::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
-namespace hsolver {
+namespace ModuleBase {
 template <typename T>
 struct GetTypeThrust {
     using type = T;
@@ -818,6 +818,27 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
+void gemm_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+                                                         const char& transa,
+                                                         const char& transb,
+                                                         const int& m,
+                                                         const int& n,
+                                                         const int& k,
+                                                         const float* alpha,
+                                                         const float* a,
+                                                         const int& lda,
+                                                         const float* b,
+                                                         const int& ldb,
+                                                         const float* beta,
+                                                         float* c,
+                                                         const int& ldc)
+{
+    cublasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
+    cublasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
+    cublasErrcheck(cublasSgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
+}
+
+template <>
 void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                           const char& transa,
                                                           const char& transb,
@@ -1060,4 +1081,4 @@ template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 #endif
-}  // namespace hsolver
+}  // namespace ModuleBase

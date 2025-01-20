@@ -4,7 +4,7 @@
 #include <functional>
 
 #include <module_base/macros.h>
-#include <module_hsolver/kernels/math_kernel_op.h>
+#include <module_base/kernels/math_kernel_op.h>
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_types.h>
@@ -126,7 +126,7 @@ class DiagoCG final
 
     bool test_exit_cond(const int& ntry, const int& notconv) const;
 
-    using dot_real_op = hsolver::dot_real_op<T, Device>;
+    using dot_real_op = ModuleBase::dot_real_op<T, Device>;
     const T * one_ = nullptr, * zero_ = nullptr, * neg_one_ = nullptr;
 };
 

@@ -7,7 +7,7 @@
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_elecstate/kernels/elecstate_op.h"
 
 template <typename T, typename Device>
@@ -78,7 +78,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         char transN = 'N';
 
         // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
-        hsolver::gemm_op<T, Device>()(ctx,
+        ModuleBase::gemm_op<T, Device>()(ctx,
                                       transC,
                                       transN,
                                       PARAM.inp.nbands,
@@ -95,7 +95,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         Parallel_Reduce::reduce_pool(sum, PARAM.inp.nbands * nchipk);
 
         // psi -= psi * sum
-        hsolver::gemm_op<T, Device>()(ctx,
+        ModuleBase::gemm_op<T, Device>()(ctx,
                                       transN,
                                       transN,
                                       npw,
@@ -406,7 +406,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         const int N = norder;
         const Real kweight = this->pkv->wk[ik];
         
-        hsolver::gemm_op<Real, Device>()(this->ctx, trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
+        ModuleBase::gemm_op<Real, Device>()(this->ctx, trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");

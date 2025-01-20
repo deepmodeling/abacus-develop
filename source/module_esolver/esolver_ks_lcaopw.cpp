@@ -28,7 +28,7 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_lcaopw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -93,9 +93,10 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::before_all_runners(ucell, inp);
         delete this->psi_local;
         this->psi_local = new psi::Psi<T>(this->psi->get_nk(),
-                                                             this->p_psi_init->psi_initer->nbands_start(),
-                                                             this->psi->get_nbasis(),
-                                                             this->psi->get_ngk_pointer());
+                                          this->p_psi_init->psi_initer->nbands_start(),
+                                          this->psi->get_nbasis(),
+                                          this->kv.ngk,
+                                          true);
 #ifdef __EXX
         if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
             || PARAM.inp.calculation == "cell-relax"

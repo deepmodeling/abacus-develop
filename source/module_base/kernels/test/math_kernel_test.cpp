@@ -1,7 +1,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
 #include "module_base/module_device/memory_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #include <complex>
 #include <gtest/gtest.h>
@@ -51,8 +51,8 @@ class TestModuleHsolverMathKernel : public ::testing::Test
     {
     }
 
-    using zdot_real_cpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using zdot_real_gpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using zdot_real_cpu_op = ModuleBase::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using zdot_real_gpu_op = ModuleBase::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 
     using resize_memory_op = base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using delete_memory_op = base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -72,23 +72,23 @@ class TestModuleHsolverMathKernel : public ::testing::Test
 
     // haozhihan add
     // cpu operator
-    using vector_div_constant_op_cpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using vector_mul_vector_op_cpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using vector_div_vector_op_cpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_div_constant_op_cpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using constantvector_addORsub_constantVector_op_cpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using axpy_op_cpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using scal_op_cpu = hsolver::scal_op<double, base_device::DEVICE_CPU>;
-    using gemv_op_cpu = hsolver::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
+        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using axpy_op_cpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
+    using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
     // gpu operator
-    using vector_div_constant_op_gpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using vector_mul_vector_op_gpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using vector_div_vector_op_gpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_div_constant_op_gpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using constantvector_addORsub_constantVector_op_gpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using axpy_op_gpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using scal_op_gpu = hsolver::scal_op<double, base_device::DEVICE_GPU>;
-    using gemv_op_gpu = hsolver::gemv_op<std::complex<double>, base_device::DEVICE_GPU>;
+        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using axpy_op_gpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using scal_op_gpu = ModuleBase::scal_op<double, base_device::DEVICE_GPU>;
+    using gemv_op_gpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_GPU>;
 
     // haozhihan add
     std::vector<std::complex<double>> L = {{-0.65412617, -0.74208893},
@@ -375,9 +375,9 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     resize_memory_op()(psi_R_dev, psi_R.size());
     synchronize_memory_op()(psi_L_dev, psi_L.data(), psi_L.size());
     synchronize_memory_op()(psi_R_dev, psi_R.data(), psi_R.size());
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
     EXPECT_LT(fabs(result - expected_result), 1e-12);
     delete_memory_op()(psi_L_dev);
     delete_memory_op()(psi_R_dev);
@@ -537,9 +537,9 @@ TEST_F(TestModuleHsolverMathKernel, axpy_op_gpu)
     synchronize_memory_op()(Y_axpy_dev, Y_axpy.data(), Y_axpy.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     axpy_op_gpu()(gpu_ctx, dim, &alpha_axpy, X_axpy_dev, 1, Y_axpy_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
 
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(Y_axpy.data(), Y_axpy_dev, Y_axpy.size());
@@ -566,9 +566,9 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_gpu)
     synchronize_memory_op()(X_scal_dev, X_scal.data(), X_scal.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     scal_op_gpu()(gpu_ctx, dim, &alpha_scal, X_scal_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
 
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(X_scal.data(), X_scal_dev, X_scal.size());
@@ -599,9 +599,9 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     synchronize_memory_op()(Y_gemv_dev, Y_gemv.data(), Y_gemv.size());
 
     // run
-    hsolver::createGpuBlasHandle();
+    ModuleBase::createGpuBlasHandle();
     gemv_op_gpu()(gpu_ctx, 'C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(Y_gemv.data(), Y_gemv_dev, Y_gemv.size());
 
@@ -668,7 +668,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                                                         B.size());
 
     // run
-    hsolver::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                                  n,
                                                                                  device_A,
                                                                                  LDA,
@@ -683,7 +683,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                           B_gpu2cpu.size());
 
     std::vector<std::complex<double>> B_cpu(8);
-    hsolver::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
+    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                                                  n,
                                                                                  A.data(),
                                                                                  LDA,

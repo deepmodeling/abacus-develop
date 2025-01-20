@@ -1,5 +1,5 @@
 #include "module_base/module_device/memory_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "module_base/tool_quit.h"
 
@@ -20,7 +20,7 @@ struct GetTypeReal<thrust::complex<double>> {
     using type = double; /**< The return type specialization for std::complex<double>. */
 };
 
-namespace hsolver {
+namespace ModuleBase {
 
 template <typename T>
 struct GetTypeThrust {
@@ -736,6 +736,27 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
+void gemm_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
+                                                         const char& transa,
+                                                         const char& transb,
+                                                         const int& m,
+                                                         const int& n,
+                                                         const int& k,
+                                                         const float* alpha,
+                                                         const float* a,
+                                                         const int& lda,
+                                                         const float* b,
+                                                         const int& ldb,
+                                                         const float* beta,
+                                                         float* c,
+                                                         const int& ldc)
+{
+    hipblasOperation_t cutransA = judge_trans_op(false, transa, "gemm_op");
+    hipblasOperation_t cutransB = judge_trans_op(false, transb, "gemm_op");
+    hipblasErrcheck(hipblasSgemm(cublas_handle, cutransA, cutransB, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc));
+}
+
+template <>
 void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
                                                           const char& transa,
                                                           const char& transb,
@@ -968,4 +989,4 @@ template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 #endif
-}  // namespace hsolver
+}  // namespace ModuleBase

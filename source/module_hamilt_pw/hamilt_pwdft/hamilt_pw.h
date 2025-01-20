@@ -6,7 +6,7 @@
 #include "module_elecstate/potentials/potential_new.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 namespace hamilt
 {
@@ -44,8 +44,8 @@ protected:
     T* qq_so = nullptr;
 
     Device* ctx = {};
-    using gemv_op = hsolver::gemv_op<T, Device>;
-    using gemm_op = hsolver::gemm_op<T, Device>;
+    using gemv_op = ModuleBase::gemv_op<T, Device>;
+    using gemm_op = ModuleBase::gemm_op<T, Device>;
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;

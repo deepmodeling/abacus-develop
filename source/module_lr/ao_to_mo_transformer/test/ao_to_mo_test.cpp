@@ -64,18 +64,18 @@ TEST_F(AO2MOTest, DoubleSerial)
 {
     for (auto s : this->sizes)
     {
-        psi::Psi<double> vo_for(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<double> vo_blas(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<double> oo_for(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<double> oo_blas(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<double> vv_for(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
-        psi::Psi<double> vv_blas(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<double> vo_for(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<double> vo_blas(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<double> oo_for(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<double> oo_blas(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<double> vv_for(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
+        psi::Psi<double> vv_blas(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
         int size_v = s.naos * s.naos;
         for (int istate = 0;istate < nstate;++istate)
         {
             std::vector<int> temp(s.nks, s.naos);
-            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
+            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(&c(0, 0, 0), size_c);
             for (auto& v : V) { set_rand(v.data<double>(), size_v); }
@@ -96,18 +96,18 @@ TEST_F(AO2MOTest, ComplexSerial)
 {
     for (auto s : this->sizes)
     {
-        psi::Psi<std::complex<double>> vo_for(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<std::complex<double>> vo_blas(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<std::complex<double>> oo_for(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<std::complex<double>> oo_blas(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<std::complex<double>> vv_for(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
-        psi::Psi<std::complex<double>> vv_blas(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<std::complex<double>> vo_for(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<std::complex<double>> vo_blas(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<std::complex<double>> oo_for(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<std::complex<double>> oo_blas(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<std::complex<double>> vv_for(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
+        psi::Psi<std::complex<double>> vv_blas(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
         int size_v = s.naos * s.naos;
         for (int istate = 0;istate < nstate;++istate)
         {
             std::vector<int> temp(s.nks, s.naos);
-            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
+            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             std::vector<container::Tensor> V(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             set_rand(&c(0, 0, 0), size_c);
             for (auto& v : V) { set_rand(v.data<std::complex<double>>(), size_v); }
@@ -137,7 +137,7 @@ TEST_F(AO2MOTest, DoubleParallel)
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
 
         std::vector<int> ngk_temp(s.nks, pc.get_row_size());
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp.data(), true);
+        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp, true);
         Parallel_2D pvo, poo, pvv;
         LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
         LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
@@ -148,12 +148,12 @@ TEST_F(AO2MOTest, DoubleParallel)
         EXPECT_GE(s.nvirt, pvo.dim0);
         EXPECT_GE(s.nocc, pvo.dim1);
         EXPECT_GE(s.naos, pc.dim0);
-        psi::Psi<double> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), nullptr, false);
-        psi::Psi<double> vo_gather(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<double> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), nullptr, false);
-        psi::Psi<double> oo_gather(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<double> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), nullptr, false);
-        psi::Psi<double> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<double> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
+        psi::Psi<double> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<double> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), poo.get_local_size(), false);
+        psi::Psi<double> oo_gather(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<double> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), pvv.get_local_size(), false);
+        psi::Psi<double> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         for (int istate = 0;istate < nstate;++istate)
         {
             for (int isk = 0;isk < s.nks;++isk)
@@ -174,7 +174,7 @@ TEST_F(AO2MOTest, DoubleParallel)
             // compare to global AX
             std::vector<container::Tensor> V_full(s.nks, container::Tensor(DAT::DT_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             std::vector<int> ngk_temp_1(s.nks, s.naos);
-            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_1.data(), true);
+            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_1, true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 LR_Util::gather_2d_to_full(pV, V.at(isk).data<double>(), V_full.at(isk).data<double>(), false, s.naos, s.naos);
@@ -182,13 +182,13 @@ TEST_F(AO2MOTest, DoubleParallel)
             }
             if (my_rank == 0)
             {
-                psi::Psi<double> vo_full_istate(s.nks, 1, s.nocc * s.nvirt, nullptr, false);
+                psi::Psi<double> vo_full_istate(s.nks, 1, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nvirt, &vo_full_istate(0, 0, 0), false);
                 check_eq(&vo_full_istate(0, 0, 0), &vo_gather(istate, 0, 0), s.nks * s.nocc * s.nvirt);
-                psi::Psi<double> oo_full_istate(s.nks, 1, s.nocc * s.nocc, nullptr, false);
+                psi::Psi<double> oo_full_istate(s.nks, 1, s.nocc * s.nocc, s.nocc * s.nocc, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nvirt, &oo_full_istate(0, 0, 0), false, LR::MO_TYPE::OO);
                 check_eq(&oo_full_istate(0, 0, 0), &oo_gather(istate, 0, 0), s.nks * s.nocc * s.nocc);
-                psi::Psi<double> vv_full_istate(s.nks, 1, s.nvirt * s.nvirt, nullptr, false);
+                psi::Psi<double> vv_full_istate(s.nks, 1, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nvirt, &vv_full_istate(0, 0, 0), false, LR::MO_TYPE::VV);
                 check_eq(&vv_full_istate(0, 0, 0), &vv_gather(istate, 0, 0), s.nks * s.nvirt * s.nvirt);
             }
@@ -208,18 +208,18 @@ TEST_F(AO2MOTest, ComplexParallel)
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, pV.blacs_ctxt);
 
         std::vector<int> ngk_temp_1(s.nks, pc.get_row_size());
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp_1.data(), true);
+        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), ngk_temp_1, true);
         Parallel_2D pvo, poo, pvv;
         LR_Util::setup_2d_division(pvo, s.nb, s.nvirt, s.nocc, pV.blacs_ctxt);
         LR_Util::setup_2d_division(poo, s.nb, s.nocc, s.nocc, pV.blacs_ctxt);
         LR_Util::setup_2d_division(pvv, s.nb, s.nvirt, s.nvirt, pV.blacs_ctxt);
 
-        psi::Psi<std::complex<double>> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), nullptr, false);
-        psi::Psi<std::complex<double>> vo_gather(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
-        psi::Psi<std::complex<double>> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), nullptr, false);
-        psi::Psi<std::complex<double>> oo_gather(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
-        psi::Psi<std::complex<double>> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), nullptr, false);
-        psi::Psi<std::complex<double>> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<std::complex<double>> vo_pblas_loc(s.nks, nstate, pvo.get_local_size(), pvo.get_local_size(), false);
+        psi::Psi<std::complex<double>> vo_gather(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
+        psi::Psi<std::complex<double>> oo_pblas_loc(s.nks, nstate, poo.get_local_size(), poo.get_local_size(), false);
+        psi::Psi<std::complex<double>> oo_gather(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
+        psi::Psi<std::complex<double>> vv_pblas_loc(s.nks, nstate, pvv.get_local_size(), pvv.get_local_size(), false);
+        psi::Psi<std::complex<double>> vv_gather(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         for (int istate = 0;istate < nstate;++istate)
         {
             for (int isk = 0;isk < s.nks;++isk)
@@ -241,7 +241,7 @@ TEST_F(AO2MOTest, ComplexParallel)
             // compare to global AX
             std::vector<container::Tensor> V_full(s.nks, container::Tensor(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { s.naos, s.naos }));
             std::vector<int> ngk_temp_2(s.nks, s.naos);
-            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2.data(), true);
+            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2, true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 LR_Util::gather_2d_to_full(pV, V.at(isk).data<std::complex<double>>(), V_full.at(isk).data<std::complex<double>>(), false, s.naos, s.naos);
@@ -249,13 +249,13 @@ TEST_F(AO2MOTest, ComplexParallel)
             }
             if (my_rank == 0)
             {
-                psi::Psi<std::complex<double>>  vo_full_istate(s.nks, 1, s.nocc * s.nvirt, nullptr, false);
+                psi::Psi<std::complex<double>>  vo_full_istate(s.nks, 1, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nvirt, &vo_full_istate(0, 0, 0), false);
                 check_eq(&vo_full_istate(0, 0, 0), &vo_gather(istate, 0, 0), s.nks * s.nocc * s.nvirt);
-                psi::Psi<std::complex<double>>  oo_full_istate(s.nks, 1, s.nocc * s.nocc, nullptr, false);
+                psi::Psi<std::complex<double>>  oo_full_istate(s.nks, 1, s.nocc * s.nocc, s.nocc * s.nvirt, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nocc, &oo_full_istate(0, 0, 0), false, LR::MO_TYPE::OO);
                 check_eq(&oo_full_istate(0, 0, 0), &oo_gather(istate, 0, 0), s.nks * s.nocc * s.nocc);
-                psi::Psi<std::complex<double>>  vv_full_istate(s.nks, 1, s.nvirt * s.nvirt, nullptr, false);
+                psi::Psi<std::complex<double>>  vv_full_istate(s.nks, 1, s.nvirt * s.nvirt, s.nocc * s.nvirt, false);
                 LR::ao_to_mo_blas(V_full, c_full, s.nocc, s.nvirt, &vv_full_istate(0, 0, 0), false, LR::MO_TYPE::VV);
                 check_eq(&vv_full_istate(0, 0, 0), &vv_gather(istate, 0, 0), s.nks * s.nvirt * s.nvirt);
             }

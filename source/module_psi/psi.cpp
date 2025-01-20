@@ -32,7 +32,6 @@ Range::Range(const bool k_first_in, const size_t index_1_in, const size_t range_
 template <typename T, typename Device>
 Psi<T, Device>::Psi()
 {
-    this->npol = PARAM.globalv.npol;
 }
 
 template <typename T, typename Device>
@@ -44,41 +43,7 @@ Psi<T, Device>::~Psi()
     }
 }
 
-// Constructor 1-1:
-template <typename T, typename Device>
-Psi<T, Device>::Psi(const int nk_in, const int nbd_in, const int nbs_in, const int* ngk_in, const bool k_first_in)
-{
-    assert(nk_in > 0);
-    assert(nbd_in >= 0); // 187_PW_SDFT_ALL_GPU && 187_PW_MD_SDFT_ALL_GPU
-    assert(nbs_in > 0);
-
-    this->k_first = k_first_in;
-    this->npol = PARAM.globalv.npol;
-    this->allocate_inside = true;
-
-    this->ngk = ngk_in; // modify later
-    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->psi, nk_in * static_cast<std::size_t>(nbd_in) * nbs_in, "no_record");
-
-    this->nk = nk_in;
-    this->nbands = nbd_in;
-    this->nbasis = nbs_in;
-    
-    this->current_b = 0;
-    this->current_k = 0;
-    this->current_nbasis = nbs_in;
-    this->psi_current = this->psi;
-    this->psi_bias = 0;
-
-    // Currently only GPU's implementation is supported for device recording!
-    base_device::information::print_device_info<Device>(this->ctx, GlobalV::ofs_device);
-    base_device::information::record_device_memory<Device>(this->ctx,
-                                                           GlobalV::ofs_device,
-                                                           "Psi->resize()",
-                                                           sizeof(T) * nk_in * nbd_in * nbs_in);
-}
-
-// Constructor 1-2:
+// Constructor 1:
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const int nk_in,
                     const int nbd_in,
@@ -87,11 +52,10 @@ Psi<T, Device>::Psi(const int nk_in,
                     const bool k_first_in)
 {
     assert(nk_in > 0);
-    assert(nbd_in > 0);
+    assert(nbd_in >= 0);
     assert(nbs_in > 0);
 
     this->k_first = k_first_in;
-    this->npol = PARAM.globalv.npol;
     this->allocate_inside = true;
 
     this->ngk = ngk_in.data(); // modify later
@@ -129,7 +93,6 @@ Psi<T, Device>::Psi(T* psi_pointer,
     // assert(nk_in == 1); // NOTE because lr/utils/lr_uril.hpp func & get_psi_spin func
 
     this->k_first = k_first_in;
-    this->npol = PARAM.globalv.npol;
     this->allocate_inside = false;
 
     this->ngk = nullptr;
@@ -158,10 +121,9 @@ Psi<T, Device>::Psi(const int nk_in,
                     const bool k_first_in)
 {
     // Currently this function only supports nk_in == 1 when called within diagH_subspace_init.
-    assert(nk_in == 1);
+    // assert(nk_in == 1);
 
     this->k_first = k_first_in;
-    this->npol = PARAM.globalv.npol;
     this->allocate_inside = true;
 
     this->ngk = nullptr;
@@ -190,8 +152,8 @@ Psi<T, Device>::Psi(const int nk_in,
 template <typename T, typename Device>
 Psi<T, Device>::Psi(const Psi& psi_in)
 {
+
     this->ngk = psi_in.ngk;
-    this->npol = psi_in.npol;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
     this->nbasis = psi_in.get_nbasis();
@@ -215,8 +177,8 @@ template <typename T, typename Device>
 template <typename T_in, typename Device_in>
 Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
 {
+
     this->ngk = psi_in.get_ngk_pointer();
-    this->npol = psi_in.npol;
     this->nk = psi_in.get_nk();
     this->nbands = psi_in.get_nbands();
     this->nbasis = psi_in.get_nbasis();
@@ -323,13 +285,26 @@ const int& Psi<T, Device>::get_psi_bias() const
 template <typename T, typename Device>
 const int& Psi<T, Device>::get_current_ngk() const
 {
-    if (this->npol == 1)
+    if (this->get_npol() == 1)
     {
         return this->current_nbasis;
     }
     else
     {
         return this->nbasis;
+    }
+}
+
+template <typename T, typename Device>
+const int Psi<T, Device>::get_npol() const 
+{ 
+    if (PARAM.inp.nspin == 4)
+    {
+        return 2;
+    }
+    else
+    {
+        return 1;
     }
 }
 
@@ -511,13 +486,13 @@ std::tuple<const T*, int> Psi<T, Device>::to_range(const Range& range) const
     else if (i1 < 0) // [r1, r2] is the range of index1 with length m
     {
         const T* p = &this->psi[r1 * (k_first ? this->nbands : this->nk) * this->nbasis];
-        int m = (r2 - r1 + 1) * this->npol;
+        int m = (r2 - r1 + 1) * this->get_npol();
         return std::tuple<const T*, int>(p, m);
     }
     else // [r1, r2] is the range of index2 with length m
     {
         const T* p = &this->psi[(i1 * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
-        int m = (r2 - r1 + 1) * this->npol;
+        int m = (r2 - r1 + 1) * this->get_npol();
         return std::tuple<const T*, int>(p, m);
     }
 }

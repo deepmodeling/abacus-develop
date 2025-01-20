@@ -144,7 +144,7 @@ class DiagoBPCGPrepare
 
             base_device::DEVICE_CPU *ctx = {};
             // hpsi_out(dim * nvec) = h_mat(dim * dim) * psi_in(dim * nvec)
-            hsolver::gemm_op<T, base_device::DEVICE_CPU>()(
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(
                 ctx, 'N', 'N',
                 dim, nvec, dim,
                 one_,

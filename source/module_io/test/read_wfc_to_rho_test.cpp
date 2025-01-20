@@ -181,7 +181,7 @@ TEST_F(ReadWfcRhoTest, ReadWfcRho)
     }
 
     // Init Psi
-    psi = new psi::Psi<std::complex<double>>(nks, nbands, wfcpw->npwk_max, wfcpw->npwk);
+    psi = new psi::Psi<std::complex<double>>(nks, nbands, wfcpw->npwk_max, kv->ngk, true);
     std::complex<double>* ptr = psi->get_pointer();
     for (int i = 0; i < nks * nbands * wfcpw->npwk_max; i++)
     {

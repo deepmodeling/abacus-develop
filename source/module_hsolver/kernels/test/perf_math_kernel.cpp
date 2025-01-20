@@ -1,7 +1,7 @@
 #include "module_base/blas_connector.h"
 #include "module_base/constants.h"
 #include "module_base/module_device/memory_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #include <complex>
 #include <benchmark/benchmark.h>
@@ -114,7 +114,7 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         resize_memory_op_double()(test_dvector_a_gpu, dim_vector);
         synchronize_memory_op_double()(test_dvector_a_gpu, test_dvector_a, dim_vector);
 
-        hsolver::createGpuBlasHandle();
+        ModuleBase::createGpuBlasHandle();
 
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
@@ -125,36 +125,36 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
         delete[] result_zvector;
         delete[] test_dvector_a;
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
-        hsolver::destoryBLAShandle();
+        ModuleBase::destoryBLAShandle();
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
     }
 
 
     // OPs need benchmark
     // CPU operator
-    using zdot_real_cpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using zdot_real_cpu_op = ModuleBase::dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
     
-    using vector_div_constant_op_cpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using vector_mul_vector_op_cpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using vector_div_vector_op_cpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_div_constant_op_cpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_mul_vector_op_cpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using vector_div_vector_op_cpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
     using constantvector_addORsub_constantVector_op_cpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using axpy_op_cpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
-    using scal_op_cpu = hsolver::scal_op<double, base_device::DEVICE_CPU>;
-    using gemv_op_cpu = hsolver::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
+        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using axpy_op_cpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_CPU>;
+    using scal_op_cpu = ModuleBase::scal_op<double, base_device::DEVICE_CPU>;
+    using gemv_op_cpu = ModuleBase::gemv_op<std::complex<double>, base_device::DEVICE_CPU>;
 
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
     // GPU operator
-    using zdot_real_gpu_op = hsolver::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using zdot_real_gpu_op = ModuleBase::dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 
-    using vector_div_constant_op_gpu = hsolver::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using vector_mul_vector_op_gpu = hsolver::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using vector_div_vector_op_gpu = hsolver::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_div_constant_op_gpu = ModuleBase::vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_mul_vector_op_gpu = ModuleBase::vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using vector_div_vector_op_gpu = ModuleBase::vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
     using constantvector_addORsub_constantVector_op_gpu
-        = hsolver::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using axpy_op_gpu = hsolver::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
-    using scal_op_gpu = hsolver::scal_op<double, base_device::DEVICE_GPU>;
+        = ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using axpy_op_gpu = ModuleBase::axpy_op<std::complex<double>, base_device::DEVICE_GPU>;
+    using scal_op_gpu = ModuleBase::scal_op<double, base_device::DEVICE_GPU>;
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 };

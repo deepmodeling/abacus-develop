@@ -5,7 +5,7 @@
 #include "spin_constrain.h"
 #include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
 #include "module_base/parallel_reduce.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -84,7 +84,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
     {
 #if ((defined __CUDA) || (defined __ROCM))
         base_device::DEVICE_GPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
+        ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
             ctx,
             transa,
             transb,
@@ -108,7 +108,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
     else if (PARAM.inp.device == "cpu")
     {
         base_device::DEVICE_CPU* ctx = {};
-        hsolver::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
+        ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
             ctx,
             transa,
             transb,
@@ -199,7 +199,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(this->p_hamilt);
                 auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
                 nbands = psi_t->get_nbands();
-                npol = psi_t->npol;
+                npol = psi_t->get_npol();
                 nkb = onsite_p->get_tot_nproj();
                 nk = psi_t->get_nk();
                 nh_iat = &onsite_p->get_nh(0);
@@ -252,7 +252,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
                 hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
                 auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
                 nbands = psi_t->get_nbands();
-                npol = psi_t->npol;
+                npol = psi_t->get_npol();
                 nkb = onsite_p->get_tot_nproj();
                 nk = psi_t->get_nk();
                 nh_iat = &onsite_p->get_nh(0);
@@ -382,7 +382,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_CPU>*>(this->p_hamilt);
             auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_CPU>::get_instance();
             nbands = psi_t->get_nbands();
-            npol = psi_t->npol;
+            npol = psi_t->get_npol();
             nkb = onsite_p->get_tot_nproj();
             nk = psi_t->get_nk();
             nh_iat = &onsite_p->get_nh(0);
@@ -454,7 +454,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
             hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>, base_device::DEVICE_GPU>*>(this->p_hamilt);
             auto* onsite_p = projectors::OnsiteProjector<double, base_device::DEVICE_GPU>::get_instance();
             nbands = psi_t->get_nbands();
-            npol = psi_t->npol;
+            npol = psi_t->get_npol();
             nkb = onsite_p->get_tot_nproj();
             nk = psi_t->get_nk();
             nh_iat = &onsite_p->get_nh(0);
