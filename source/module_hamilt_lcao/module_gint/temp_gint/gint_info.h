@@ -7,7 +7,7 @@
 #include "module_cell/atom_spec.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "gint_type.h"
-#include "biggrid.h"
+#include "big_grid.h"
 #include "gint_atom.h"
 #include "unitcell_info.h"
 #include "localcell_info.h"

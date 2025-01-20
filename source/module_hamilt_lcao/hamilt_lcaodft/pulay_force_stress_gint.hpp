@@ -3,7 +3,7 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/stress_tools.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
-#include "module_hamilt_lcao/module_gint/new_gint/gint_interface.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 namespace PulayForceStress
 {
     template<typename TK, typename TR>

@@ -4,7 +4,7 @@
 #include <vector>
 #include <utility>
 #include <module_hamilt_lcao/module_hcontainer/hcontainer.h>
-#include "biggrid.h"
+#include "big_grid.h"
 
 namespace ModuleGint
 {

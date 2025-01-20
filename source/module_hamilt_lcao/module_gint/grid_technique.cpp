@@ -10,7 +10,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hsolver/kernels/cuda/helper_cuda.h"
 
-#include "module_hamilt_lcao/module_gint/new_gint/gint_helper.h"
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_helper.h"
 
 Grid_Technique::Grid_Technique() {
 #if ((defined __CUDA) /* || (defined __ROCM) */)

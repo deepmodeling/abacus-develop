@@ -31,26 +31,26 @@ list(APPEND objects
 
 if(NEW_GINT)
   list(APPEND objects
-      new_gint/biggrid_info.cpp
-      new_gint/biggrid.cpp
-      new_gint/divide_info.cpp
-      new_gint/gint_atom.cpp
-      new_gint/gint_info.cpp
-      new_gint/gint.cpp
-      new_gint/gint_vl.cpp
-      new_gint/gint_vl_metagga.cpp
-      new_gint/gint_vl_nspin4.cpp
-      new_gint/gint_vl_metagga_nspin4.cpp
-      new_gint/gint_rho.cpp
-      new_gint/gint_tau.cpp
-      new_gint/gint_fvl.cpp
-      new_gint/gint_fvl_meta.cpp
-      new_gint/localcell_info.cpp
-      new_gint/phi_operator.cpp
-      new_gint/set_ddphi.cpp
-      new_gint/unitcell_info.cpp
-      new_gint/gint_common.cpp
-      new_gint/gint_interface.cpp
+      temp_gint/biggrid_info.cpp
+      temp_gint/big_grid.cpp
+      temp_gint/divide_info.cpp
+      temp_gint/gint_atom.cpp
+      temp_gint/gint_info.cpp
+      temp_gint/gint.cpp
+      temp_gint/gint_vl.cpp
+      temp_gint/gint_vl_metagga.cpp
+      temp_gint/gint_vl_nspin4.cpp
+      temp_gint/gint_vl_metagga_nspin4.cpp
+      temp_gint/gint_rho.cpp
+      temp_gint/gint_tau.cpp
+      temp_gint/gint_fvl.cpp
+      temp_gint/gint_fvl_meta.cpp
+      temp_gint/localcell_info.cpp
+      temp_gint/phi_operator.cpp
+      temp_gint/set_ddphi.cpp
+      temp_gint/unitcell_info.cpp
+      temp_gint/gint_common.cpp
+      temp_gint/gint_interface.cpp
       )
 endif()
 
