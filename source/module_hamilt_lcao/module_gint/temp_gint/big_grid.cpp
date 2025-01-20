@@ -92,7 +92,7 @@ void BigGrid::set_atom_relative_coords(const Vec3i bgrid_idx, const Vec3d tau_in
 
 void BigGrid::set_atom_relative_coords(const GintAtom* atom, std::vector<Vec3d>& atom_coord) const
 {
-    return set_atom_relative_coords(atom->get_bgrid_idx(), atom->get_tau_in_bgrid(), atom_coord);
+    set_atom_relative_coords(atom->get_bgrid_idx(), atom->get_tau_in_bgrid(), atom_coord);
 }
 
 bool BigGrid::is_atom_on_bgrid(const GintAtom* atom) const
