@@ -86,7 +86,7 @@ class PSIInit
 };
 
 ///@brief allocate the wavefunction
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const int* ngk, const int& nbands, const int& npwx);
+void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx);
 
 } // namespace psi
 #endif

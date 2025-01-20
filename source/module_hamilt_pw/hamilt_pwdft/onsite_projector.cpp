@@ -8,7 +8,7 @@
 
 #include "module_base/projgen.h"
 #include "module_base/blas_connector.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #include "module_base/parallel_common.h"
@@ -165,7 +165,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         RadialProjection::RadialProjector::_build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
         RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
         //rp_._build_sbt_tab(rgrid, projs, lproj, nq, dq);
-        rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.npol, tab, nhtol);
+        rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
         // For being compatible with present cal_force and cal_stress framework  
         // uncomment the following code block if you want to use the Onsite_Proj_tools
         if(this->tab_atomic_ == nullptr)
@@ -541,7 +541,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         }
         // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
         this->overlap_proj_psi(
-                        nbands * psi_in->npol,
+                        nbands * psi_in->get_npol(),
                         psi_in->get_pointer());
         const std::complex<double>* becp_p = this->get_h_becp();
         // becp(nbands*npol , nkb)

@@ -82,7 +82,7 @@ inline void cal_dm(const Parallel_Orbitals* ParaV, const ModuleBase::matrix& wg,
         //dm.fix_k(ik);
         dm[ik].create(ParaV->ncol, ParaV->nrow);
         // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi::Psi<std::complex<double>> wg_wfc(1, wfc.get_nbands(), wfc.get_nbasis(), nullptr);
+        psi::Psi<std::complex<double>> wg_wfc(1, wfc.get_nbands(), wfc.get_nbasis(), wfc.get_nbasis(), true);
         const std::complex<double>* pwfc = wfc.get_pointer();
         std::complex<double>* pwg_wfc = wg_wfc.get_pointer();
 #ifdef _OPENMP

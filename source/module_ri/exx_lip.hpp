@@ -112,7 +112,7 @@ Exx_Lip<T, Device>::Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
   #endif
     this->k_pack->wf_wg.create(this->k_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
 
-    this->k_pack->hvec_array = new psi::Psi<T, Device>(this->k_pack->kv_ptr->get_nks(), PARAM.inp.nbands, PARAM.globalv.nlocal, kv_ptr_in->ngk.data(), true);
+    this->k_pack->hvec_array = new psi::Psi<T, Device>(this->k_pack->kv_ptr->get_nks(), PARAM.inp.nbands, PARAM.globalv.nlocal, kv_ptr_in->ngk, true);
     // this->k_pack->hvec_array = new ModuleBase::ComplexMatrix[this->k_pack->kv_ptr->get_nks()];
     // for( int ik=0; ik<this->k_pack->kv_ptr->get_nks(); ++ik)
     // {

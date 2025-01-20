@@ -7,7 +7,7 @@
 #include "module_base/module_device/types.h"
 #include "module_base/module_device/memory_op.h"
 
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
 #include <module_base/macros.h>
 
@@ -343,9 +343,9 @@ class DiagoBPCG
     // note: these operators use template parameter base_device::Device_*
     // defined in module_base/module_device/types.h
     // different from ct_Device!
-    using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
-    using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
-    using gemm_op = hsolver::gemm_op<T, Device>;
+    using calc_grad_with_block_op = ModuleBase::calc_grad_with_block_op<T, Device>;
+    using line_minimize_with_block_op = ModuleBase::line_minimize_with_block_op<T, Device>;
+    using gemm_op = ModuleBase::gemm_op<T, Device>;
 
 };
 

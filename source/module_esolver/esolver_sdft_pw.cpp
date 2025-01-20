@@ -78,13 +78,20 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input
     // 4) allocate spaces for \sqrt(f(H))|chi> and |\tilde{chi}>
     size_t size = stowf.chi0->size();
     this->stowf.shchi
-        = new psi::Psi<T, Device>(this->kv.get_nks(), this->stowf.nchip_max, this->pw_wfc->npwk_max, this->kv.ngk.data());
+        = new psi::Psi<T, Device>(this->kv.get_nks(), 
+                                  this->stowf.nchip_max, 
+                                  this->pw_wfc->npwk_max, 
+                                  this->kv.ngk,
+                                  true);
     ModuleBase::Memory::record("SDFT::shchi", size * sizeof(T));
 
     if (PARAM.inp.nbands > 0)
     {
         this->stowf.chiortho
-            = new psi::Psi<T, Device>(this->kv.get_nks(), this->stowf.nchip_max, this->pw_wfc->npwk_max, this->kv.ngk.data());
+            = new psi::Psi<T, Device>(this->kv.get_nks(), 
+                                      this->stowf.nchip_max, 
+                                      this->pw_wfc->npwk_max, 
+                                      this->kv.ngk, true);
         ModuleBase::Memory::record("SDFT::chiortho", size * sizeof(T));
     }
 

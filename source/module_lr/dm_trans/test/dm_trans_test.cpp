@@ -61,18 +61,18 @@ TEST_F(DMTransTest, DoubleSerial)
 {
     for (auto s : this->sizes)
     {
-        psi::Psi<double> X_vo(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
+        psi::Psi<double> X_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * s.nocc * s.nvirt);
-        psi::Psi<double> X_oo(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
+        psi::Psi<double> X_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
         set_rand(X_oo.get_pointer(), nstate * s.nks * s.nocc * s.nocc);
-        psi::Psi<double> X_vv(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<double> X_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * s.nvirt * s.nvirt);
         for (int istate = 0;istate < nstate;++istate)
         {
             const int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
 
             std::vector<int> temp(s.nks, s.naos);
-            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
+            psi::Psi<double> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             set_rand(c.get_pointer(), size_c);
             auto test = [&](psi::Psi<double>& X, const LR::MO_TYPE type)
                 {
@@ -92,18 +92,18 @@ TEST_F(DMTransTest, ComplexSerial)
 {
     for (auto s : this->sizes)
     {
-        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);
+        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * s.nocc * s.nvirt);
-        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, s.nocc * s.nocc, nullptr, false);
+        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);
         set_rand(X_oo.get_pointer(), nstate * s.nks * s.nocc * s.nocc);
-        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);
+        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * s.nvirt * s.nvirt);
         for (int istate = 0;istate < nstate;++istate)
         {
             const int size_c = s.nks * (s.nocc + s.nvirt) * s.naos;
 
             std::vector<int> temp(s.nks, s.naos);
-            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
+            psi::Psi<std::complex<double>> c(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             set_rand(c.get_pointer(), size_c);
             auto test = [&](psi::Psi<std::complex<double>>& X, const LR::MO_TYPE type)
                 {
@@ -132,18 +132,18 @@ TEST_F(DMTransTest, DoubleParallel)
         LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.blacs_ctxt);
         LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.blacs_ctxt);
 
-        psi::Psi<double> X_vo(s.nks, nstate, px_vo.get_local_size(), nullptr, false);
+        psi::Psi<double> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
-        psi::Psi<double> X_oo(s.nks, nstate, px_oo.get_local_size(), nullptr, false);
+        psi::Psi<double> X_oo(s.nks, nstate, px_oo.get_local_size(), px_oo.get_local_size(), false);
         set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.get_local_size());
-        psi::Psi<double> X_vv(s.nks, nstate, px_vv.get_local_size(), nullptr, false);
+        psi::Psi<double> X_vv(s.nks, nstate, px_vv.get_local_size(), px_vv.get_local_size(), false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
 
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.blacs_ctxt);
 
         std::vector<int> temp_2(s.nks, pc.get_row_size());
-        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp_2.data(), true);
+        psi::Psi<double> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp_2, true);
         Parallel_2D pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.blacs_ctxt);
 
@@ -153,9 +153,9 @@ TEST_F(DMTransTest, DoubleParallel)
         EXPECT_GE(s.nocc, px_vo.dim1);
         EXPECT_GE(s.naos, pc.dim0);
 
-        psi::Psi<double> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);        // allocate X_full
-        psi::Psi<double> X_full_oo(s.nks, nstate, s.nocc * s.nocc, nullptr, false);        // allocate X_full
-        psi::Psi<double> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);        // allocate X_full
+        psi::Psi<double> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
+        psi::Psi<double> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nocc, false);        // allocate X_full
+        psi::Psi<double> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nvirt * s.nvirt, false);        // allocate X_full
 
         auto gather = [&](const psi::Psi<double>& X, psi::Psi<double>& X_full, const Parallel_2D& px, const int dim1, const int dim2)
             {
@@ -182,7 +182,7 @@ TEST_F(DMTransTest, DoubleParallel)
 
             // gather C
             std::vector<int> temp(s.nks, s.naos);
-            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, temp.data(), true);
+            psi::Psi<double> c_full(s.nks, s.nocc + s.nvirt, s.naos, temp, true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);
@@ -223,24 +223,24 @@ TEST_F(DMTransTest, ComplexParallel)
         LR_Util::setup_2d_division(px_oo, s.nb, s.nocc, s.nocc, px_vo.blacs_ctxt);
         LR_Util::setup_2d_division(px_vv, s.nb, s.nvirt, s.nvirt, px_vo.blacs_ctxt);
 
-        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, px_vo.get_local_size(), nullptr, false);
+        psi::Psi<std::complex<double>> X_vo(s.nks, nstate, px_vo.get_local_size(), px_vo.get_local_size(), false);
         set_rand(X_vo.get_pointer(), nstate * s.nks * px_vo.get_local_size());
-        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, px_oo.get_local_size(), nullptr, false);
+        psi::Psi<std::complex<double>> X_oo(s.nks, nstate, px_oo.get_local_size(), px_oo.get_local_size(), false);
         set_rand(X_oo.get_pointer(), nstate * s.nks * px_oo.get_local_size());
-        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, px_vv.get_local_size(), nullptr, false);
+        psi::Psi<std::complex<double>> X_vv(s.nks, nstate, px_vv.get_local_size(), px_vv.get_local_size(), false);
         set_rand(X_vv.get_pointer(), nstate * s.nks * px_vv.get_local_size());
 
         Parallel_2D pc;
         LR_Util::setup_2d_division(pc, s.nb, s.naos, s.nocc + s.nvirt, px_vo.blacs_ctxt);
 
         std::vector<int> temp(s.nks, pc.get_row_size());
-        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp.data(), true);
+        psi::Psi<std::complex<double>> c(s.nks, pc.get_col_size(), pc.get_row_size(), temp, true);
         Parallel_2D pmat;
         LR_Util::setup_2d_division(pmat, s.nb, s.naos, s.naos, px_vo.blacs_ctxt);
 
-        psi::Psi<std::complex<double>> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, nullptr, false);        // allocate X_full
-        psi::Psi<std::complex<double>> X_full_oo(s.nks, nstate, s.nocc * s.nocc, nullptr, false);        // allocate X_full
-        psi::Psi<std::complex<double>> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, nullptr, false);        // allocate X_full
+        psi::Psi<std::complex<double>> X_full_vo(s.nks, nstate, s.nocc * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
+        psi::Psi<std::complex<double>> X_full_oo(s.nks, nstate, s.nocc * s.nocc, s.nocc * s.nvirt, false);        // allocate X_full
+        psi::Psi<std::complex<double>> X_full_vv(s.nks, nstate, s.nvirt * s.nvirt, s.nocc * s.nvirt, false);        // allocate X_full
 
         auto gather = [&](const psi::Psi<std::complex<double>>& X, psi::Psi<std::complex<double>>& X_full, const Parallel_2D& px, const int dim1, const int dim2)
             {
@@ -266,7 +266,7 @@ TEST_F(DMTransTest, ComplexParallel)
             set_rand(c.get_pointer(), s.nks * pc.get_local_size()); // set c 
             // compare to global matrix
             std::vector<int> ngk_temp_2(s.nks, s.naos);
-            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2.data(), true);
+            psi::Psi<std::complex<double>> c_full(s.nks, s.nocc + s.nvirt, s.naos, ngk_temp_2, true);
             for (int isk = 0;isk < s.nks;++isk)
             {
                 c.fix_k(isk);

@@ -1,9 +1,9 @@
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #include <iomanip>
 #include <iostream>
 
-namespace hsolver
+namespace ModuleBase
 {
 
 template <typename T>

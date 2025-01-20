@@ -17,7 +17,7 @@
 #include "cublas_v2.h"
 #endif //__CUDA || __UT_USE_CUDA
 
-namespace hsolver {
+namespace ModuleBase {
 
 inline std::complex<double> set_real_tocomplex(const std::complex<double> &x) {
   return {x.real(), 0.0};
