@@ -46,6 +46,7 @@ void PGemmCN<T, Device>::set_dimension(
     this->nrow = nrow_in;
 #ifdef __MPI
     this->gatherC = gatherC_in;
+    requests.resize(col_nproc);
     colA_loc.resize(col_nproc);
     MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
     for (int ip = 0; ip < col_nproc; ip++)
@@ -58,7 +59,6 @@ void PGemmCN<T, Device>::set_dimension(
         colB_loc.resize(col_nproc);
         recv_counts.resize(col_nproc);
         displs.resize(col_nproc);
-        requests.resize(col_nproc);
         MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
         for (int ip = 0; ip < col_nproc; ip++)
         {

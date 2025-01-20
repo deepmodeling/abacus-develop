@@ -367,6 +367,47 @@ TYPED_TEST(PgemmTest, odd_case)
     this->compare_result(ncolA_global, ncolB_global, LDC_global);
 }
 
+TYPED_TEST(PgemmTest, odd_case_not_gather)
+{
+    const int ncolA_global = 17, ncolB_global = 7, nrow_global = 13;
+    const int LDA_global = 17, LDB_global = 18, LDC_global = 19;
+
+    this->decide_ngroup(2, 2);
+    this->prepare(ncolA_global, ncolB_global, nrow_global, LDA_global, LDB_global, LDC_global);
+    std::vector<int> colB_loc(this->nproc_col);
+    MPI_Allgather(&this->ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, this->col_world);
+    std::vector<int> displs(this->nproc_col);
+    displs[0] = 0;
+    for (int i = 1; i < this->nproc_col; i++)
+    {
+        displs[i] = (displs[i - 1] + colB_loc[i - 1]) * LDC_global;
+    }
+    int start = displs[this->rank_col];
+
+    this->pgemm.set_dimension(this->col_world,
+                              this->row_world,
+                              this->ncolA,
+                              this->LDA,
+                              this->ncolB,
+                              this->LDB,
+                              this->nrow,
+                              LDC_global,
+                              false);
+    this->pgemm.multiply(this->alpha, this->A_local.data(), this->B_local.data(), this->beta, this->C_global.data()+ start);
+
+    
+
+    for (int i = 0; i < this->ncolB; i++)
+    {
+        for (int j = 0; j < ncolA_global; j++)
+        {
+            EXPECT_NEAR(get_double(this->Cref_global[i * LDC_global + start + j]),
+                        get_double(this->C_global[i * LDC_global + start + j]),
+                        1e-10);
+        }
+    }
+}
+
 TYPED_TEST(PgemmTest, row_parallel)
 {
     const int ncolA_global = 17, ncolB_global = 7, nrow_global = 13;
