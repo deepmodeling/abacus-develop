@@ -6,7 +6,12 @@
 #include <mpi.h>
 #include <vector>
 
-void random_data(std::vector<double>& A_global, std::vector<double>& B_global, std::vector<double>& Cref_global, std::vector<double>& C_global, double& alpha, double& beta)
+void random_data(std::vector<double>& A_global,
+                 std::vector<double>& B_global,
+                 std::vector<double>& Cref_global,
+                 std::vector<double>& C_global,
+                 double& alpha,
+                 double& beta)
 {
     for (auto& val: A_global)
     {
@@ -25,7 +30,12 @@ void random_data(std::vector<double>& A_global, std::vector<double>& B_global, s
     alpha = std::rand() / (RAND_MAX + 1.0);
     beta = std::rand() / (RAND_MAX + 1.0);
 }
-void random_data(std::vector<std::complex<double>>& A_global, std::vector<std::complex<double>>& B_global, std::vector<std::complex<double>>& Cref_global, std::vector<std::complex<double>>& C_global, std::complex<double>& alpha, std::complex<double>& beta)
+void random_data(std::vector<std::complex<double>>& A_global,
+                 std::vector<std::complex<double>>& B_global,
+                 std::vector<std::complex<double>>& Cref_global,
+                 std::vector<std::complex<double>>& C_global,
+                 std::complex<double>& alpha,
+                 std::complex<double>& beta)
 {
     for (auto& val: A_global)
     {
@@ -46,18 +56,28 @@ void random_data(std::vector<std::complex<double>>& A_global, std::vector<std::c
 }
 double get_double(std::complex<double>& val)
 {
-    return  val.real() + val.imag();
+    return val.real() + val.imag();
 }
 double get_double(double& val)
 {
     return val;
 }
 
-void scatterv_data(const double* sendbuf, const int* sendcounts, const int* displs, double* recvbuf, const int recvcount, MPI_Comm comm)
+void scatterv_data(const double* sendbuf,
+                   const int* sendcounts,
+                   const int* displs,
+                   double* recvbuf,
+                   const int recvcount,
+                   MPI_Comm comm)
 {
     MPI_Scatterv(sendbuf, sendcounts, displs, MPI_DOUBLE, recvbuf, recvcount, MPI_DOUBLE, 0, comm);
 }
-void scatterv_data(const std::complex<double>* sendbuf, const int* sendcounts, const int* displs, std::complex<double>* recvbuf, const int recvcount, MPI_Comm comm)
+void scatterv_data(const std::complex<double>* sendbuf,
+                   const int* sendcounts,
+                   const int* displs,
+                   std::complex<double>* recvbuf,
+                   const int recvcount,
+                   MPI_Comm comm)
 {
     MPI_Scatterv(sendbuf, sendcounts, displs, MPI_DOUBLE_COMPLEX, recvbuf, recvcount, MPI_DOUBLE_COMPLEX, 0, comm);
 }
@@ -113,10 +133,10 @@ class PgemmTest : public ::testing::Test
         A_global = std::vector<T>(LDA_global * ncolA_global, 0.0);
         B_global = std::vector<T>(LDB_global * ncolB_global, 0.0);
         C_global = std::vector<T>(LDC_global * ncolB_global, 0.0);
+        Cref_global = std::vector<T>(LDC_global * ncolB_global, 0.0);
         if (rank == 0)
         {
 
-            Cref_global = std::vector<T>(LDC_global * ncolB_global, 0.0);
             this->randomize_initialization();
             const base_device::DEVICE_CPU* ctx = {};
             char transC = 'C';
@@ -142,6 +162,7 @@ class PgemmTest : public ::testing::Test
             MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(C_global.data(), C_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+            MPI_Bcast(Cref_global.data(), Cref_global.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(&alpha, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
             MPI_Bcast(&beta, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
         }
@@ -150,6 +171,7 @@ class PgemmTest : public ::testing::Test
             MPI_Bcast(A_global.data(), A_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
             MPI_Bcast(B_global.data(), B_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
             MPI_Bcast(C_global.data(), C_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
+            MPI_Bcast(Cref_global.data(), Cref_global.size(), MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
             MPI_Bcast(&alpha, 1, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
             MPI_Bcast(&beta, 1, MPI_DOUBLE_COMPLEX, 0, MPI_COMM_WORLD);
         }
@@ -216,7 +238,12 @@ class PgemmTest : public ::testing::Test
         {
             displs[i] = displs[i - 1] + sendcounts[i - 1];
         }
-        scatterv_data(A_global.data(), sendcounts.data(), displs.data(), A_semiglobal.data(), ncolA * LDA_global, col_world);
+        scatterv_data(A_global.data(),
+                      sendcounts.data(),
+                      displs.data(),
+                      A_semiglobal.data(),
+                      ncolA * LDA_global,
+                      col_world);
 
         for (int i = 0; i < nproc_col; i++)
         {
@@ -227,7 +254,12 @@ class PgemmTest : public ::testing::Test
         {
             displs[i] = displs[i - 1] + sendcounts[i - 1];
         }
-        scatterv_data(B_global.data(), sendcounts.data(), displs.data(), B_semiglobal.data(), ncolB * LDB_global, col_world);
+        scatterv_data(B_global.data(),
+                      sendcounts.data(),
+                      displs.data(),
+                      B_semiglobal.data(),
+                      ncolB * LDB_global,
+                      col_world);
 
         // Scatter A_semiglobal and B_semiglobal to A_local and B_local
         sendcounts.resize(nproc_row, 0);
@@ -264,14 +296,13 @@ class PgemmTest : public ::testing::Test
 
     void compare_result(const int& nrowC_global, const int& ncolC_global, const int& LDC_global)
     {
-        if (rank == 0)
+        for (int i = 0; i < ncolC_global; i++)
         {
-            for (int i = 0; i < ncolC_global; i++)
+            for (int j = 0; j < nrowC_global; j++)
             {
-                for (int j = 0; j < nrowC_global; j++)
-                {
-                    EXPECT_NEAR(get_double(Cref_global[i * LDC_global + j]), get_double(C_global[i * LDC_global + j]), 1e-10);
-                }
+                EXPECT_NEAR(get_double(Cref_global[i * LDC_global + j]),
+                            get_double(C_global[i * LDC_global + j]),
+                            1e-10);
             }
         }
     }

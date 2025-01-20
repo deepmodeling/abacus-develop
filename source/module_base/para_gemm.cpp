@@ -24,7 +24,8 @@ void PGemmCN<T, Device>::set_dimension(
     const int ncolB_in,
     const int LDB_in,
     const int nrow_in,
-    const int LDC_global_in)
+    const int LDC_in,
+    const bool gatherC_in)
 {
 #ifdef __MPI
     MPI_Comm_rank(comm_col, &col_rank);
@@ -32,47 +33,50 @@ void PGemmCN<T, Device>::set_dimension(
     if (comm_row != MPI_COMM_NULL)
     {
         MPI_Comm_rank(comm_row, &row_rank);
+        MPI_Comm_size(comm_row, &row_nproc);
     }
     col_world = comm_col;
     row_world = comm_row;
 #endif
     this->LDA = LDA_in;
     this->LDB = LDB_in;
-    this->LDC_global = LDC_global_in;
+    this->LDC = LDC_in;
     this->ncolA = ncolA_in;
     this->ncolB = ncolB_in;
     this->nrow = nrow_in;
 #ifdef __MPI
+    this->gatherC = gatherC_in;
     colA_loc.resize(col_nproc);
-    colB_loc.resize(col_nproc);
-    row_loc.resize(col_nproc);
-    recv_counts.resize(col_nproc);
-    displs.resize(col_nproc);
-    requests.resize(col_nproc);
     MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
-    MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
-    MPI_Allgather(&nrow, 1, MPI_INT, row_loc.data(), 1, MPI_INT, col_world);
     for (int ip = 0; ip < col_nproc; ip++)
     {
         max_colA = std::max(max_colA, colA_loc[ip]);
     }
 
-    for (int ip = 0; ip < col_nproc; ip++)
+    if (this->gatherC)
     {
-        recv_counts[ip] = LDC_global * colB_loc[ip];
+        colB_loc.resize(col_nproc);
+        recv_counts.resize(col_nproc);
+        displs.resize(col_nproc);
+        requests.resize(col_nproc);
+        MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
+        for (int ip = 0; ip < col_nproc; ip++)
+        {
+            recv_counts[ip] = LDC * colB_loc[ip];
+        }
+        displs[0] = 0;
+        for (int ip = 1; ip < col_nproc; ip++)
+        {
+            displs[ip] = displs[ip - 1] + recv_counts[ip - 1];
+        }
+        size_C_global = displs[col_nproc - 1] + recv_counts[col_nproc - 1];
     }
-    displs[0] = 0;
-    for (int ip = 1; ip < col_nproc; ip++)
-    {
-        displs[ip] = displs[ip - 1] + recv_counts[ip - 1];
-    }
-    size_C_global = displs[col_nproc - 1] + recv_counts[col_nproc - 1];
-    send_counts = ncolB * LDC_global;
+    size_C_local = ncolB * LDC;
 #endif
 }
 
 template <typename T, typename Device>
-void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C_global)
+void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C)
 {
     const Device* ctx = {};
 #ifdef __MPI
@@ -88,19 +92,22 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
             }
         }
 
-        std::vector<T> C_tmp(send_counts);
-        T* Ctmp_device = nullptr;
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+        T* C_local = C;
+        std::vector<T> C_tmp;
+        if (this->gatherC)
         {
-            resmem_dev_op()(Ctmp_device, send_counts);
+            C_tmp.resize(size_C_local);
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+            {
+                C_local = nullptr;
+                resmem_dev_op()(C_local, size_C_local);
+            }
+            else
+            {
+                C_local = C_tmp.data();
+            }
+            syncmem_dev_op()(C_local, C + displs[col_rank], size_C_local);
         }
-        else
-        {
-            Ctmp_device = C_tmp.data();
-        }
-
-        T* C_local = C_global + displs[col_rank];
-        syncmem_dev_op()(Ctmp_device, C_local, send_counts);
 
         T* Atmp_device = nullptr;
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
@@ -116,7 +123,7 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
         T real_beta = row_rank == 0 ? beta : 0;
         for (int ip = 0; ip < col_nproc; ip++)
         {
-            T* C_start = Ctmp_device + shift;
+            T* C_start = C_local + shift;
             if (col_rank == ip)
             {
                 ModuleBase::gemm_op<T, Device>()(ctx,
@@ -132,7 +139,7 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
                                                  LDB,
                                                  &real_beta,
                                                  C_start,
-                                                 LDC_global);
+                                                 LDC);
                 shift += ncolA;
             }
             else
@@ -155,61 +162,65 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
                                                  LDB,
                                                  &real_beta,
                                                  C_start,
-                                                 LDC_global);
+                                                 LDC);
                 shift += m;
             }
         }
 
-        T* Cglobal_cpu = nullptr;
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+        if (this->gatherC)
         {
-            delmem_dev_op()(Ctmp_device);
-            delmem_dev_op()(Atmp_device);
-            syncmem_dev_op()(C_tmp.data(), Ctmp_device, send_counts);
-            resmem_dev_op()(Cglobal_cpu, size_C_global);
+            T* Cglobal_cpu = nullptr;
+            T* Clocal_cpu = C_tmp.data();;
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+            {
+                delmem_dev_op()(Atmp_device);
+
+                syncmem_d2h_op()(Clocal_cpu, C_local, size_C_local);
+                delmem_dev_op()(C_local);
+                
+                resmem_dev_op()(Cglobal_cpu, size_C_global);
+            }
+            else
+            {
+                Cglobal_cpu = C;
+            }
+            if (this->row_nproc > 1)
+            {
+                Parallel_Common::reduce_data(Clocal_cpu, size_C_local, row_world);
+            }
+            Parallel_Common::gatherv_data(Clocal_cpu,
+                                          size_C_local,
+                                          Cglobal_cpu,
+                                          recv_counts.data(),
+                                          displs.data(),
+                                          col_world);
+
+            if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+            {
+                syncmem_h2d_op()(C, Cglobal_cpu, size_C_global);
+                delmem_dev_op()(Cglobal_cpu);
+            }
         }
         else
         {
-            Cglobal_cpu = C_global;
-        }
-        Parallel_Common::gatherv_data(C_tmp.data(),
-                                      send_counts,
-                                      Cglobal_cpu,
-                                      recv_counts.data(),
-                                      displs.data(),
-                                      col_world);
-        if (row_world != MPI_COMM_NULL)
-        {
-            Parallel_Common::reduce_data(Cglobal_cpu, size_C_global, row_world);
-        }
-        if (std::is_same<Device, base_device::DEVICE_GPU>::value)
-        {
-            syncmem_dev_op()(C_global, Cglobal_cpu, size_C_global);
-            delmem_dev_op()(Cglobal_cpu);
+            if (this->row_nproc > 1)
+            {
+                Parallel_Common::reduce_dev<T, Device>(C, size_C_local, row_world);
+            }
         }
     }
     else
     {
         T real_beta = row_rank == 0 ? beta : 0;
 #else
-        T real_beta = beta;
+    T real_beta = beta;
 #endif
-        ModuleBase::gemm_op<T, Device>()(ctx,
-                                         'C',
-                                         'N',
-                                         ncolA,
-                                         ncolB,
-                                         nrow,
-                                         &alpha,
-                                         A,
-                                         LDA,
-                                         B,
-                                         LDB,
-                                         &real_beta,
-                                         C_global,
-                                         LDC_global);
+        ModuleBase::gemm_op<T, Device>()(ctx, 'C', 'N', ncolA, ncolB, nrow, &alpha, A, LDA, B, LDB, &real_beta, C, LDC);
 #ifdef __MPI
-        Parallel_Common::reduce_dev<T, Device>(C_global, size_C_global, row_world);
+        if (this->row_nproc > 1)
+        {
+            Parallel_Common::reduce_dev<T, Device>(C, size_C_local, row_world);
+        }
     }
 #endif
 }
