@@ -769,12 +769,6 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
     {
         ct::Tensor ipiv_cpu = ipiv.to_device<ct::DEVICE_CPU>();
 
-        GlobalV::ofs_running << " this->ParaV->nloc = " << this->ParaV->nloc << std::endl;
-        GlobalV::ofs_running << " this->ParaV->nrow = " << this->ParaV->nrow << std::endl;
-        GlobalV::ofs_running << " this->ParaV->ncol = " << this->ParaV->ncol << std::endl;
-        GlobalV::ofs_running << " this->ParaV->nb = " << this->ParaV->nb << std::endl;
-        GlobalV::ofs_running << " this->ParaV->get_block_size() = " << this->ParaV->get_block_size() << std::endl;
-        GlobalV::ofs_running << " nlocal = " << nlocal << std::endl;
         GlobalV::ofs_running << " ipiv:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {

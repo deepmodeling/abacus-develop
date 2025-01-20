@@ -225,6 +225,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
 
         if (td_htype == 1)
         {
+            // Length of Hk_laststep and Sk_laststep, nlocal * nlocal for global, nloc for local
             const int len_HS = use_tensor && use_lapack ? nlocal * nlocal : nloc;
 
             if (this->Hk_laststep == nullptr)
