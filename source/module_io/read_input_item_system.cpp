@@ -233,6 +233,19 @@ void ReadInput::item_system()
         item.annotation = "devide all processors into kpar groups and k points "
                           "will be distributed among";
         read_sync_int(input.kpar);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.inp.device  == "gpu" && para.inp.basis_type == "pw")
+            {
+                para.input.kpar = base_device::information::get_device_kpar(para.inp.kpar, para.inp.bndpar);
+            }
+#ifdef __LCAO
+            else if (para.inp.basis_type == "lcao")
+            {
+                para.sys.kpar_lcao = para.inp.kpar;
+                para.input.kpar = 1;
+            }
+#endif
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
@@ -795,6 +808,17 @@ void ReadInput::item_system()
             {
                 const std::string warningstr = nofound_str(avail_list, "precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+
+            // cpu single precision is not supported while float_fftw lib is not available
+            if (para.inp.device == "cpu" && para.inp.precision == "single")
+            {
+#ifndef __ENABLE_FLOAT_FFTW
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+#endif
             }
         };
         this->add_item(item);

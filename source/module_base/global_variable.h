@@ -28,7 +28,6 @@ namespace GlobalV
 // NAME : DCOLOR( color of each group)
 // NAME : GRANK( index of grid world)
 // NAME : GSIZE( number of processors in each grid world)
-// NAME : KPAR_LCAO ( global number of pools for LCAO diagonalization only)
 //========================================================================
 extern int NPROC;
 extern int KPAR;
@@ -44,7 +43,6 @@ extern int DSIZE;
 extern int DCOLOR;
 extern int GRANK;
 extern int GSIZE;
-extern int KPAR_LCAO;
 
 //==========================================================
 // NAME : ofs_running( contain information during runnnig)

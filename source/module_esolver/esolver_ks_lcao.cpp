@@ -241,16 +241,16 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 12) if kpar is not divisible by nks, print a warning
-    if (GlobalV::KPAR_LCAO > 1)
+    if (PARAM.globalv.kpar_lcao > 1)
     {
-        if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
+        if (this->kv.get_nks() % PARAM.globalv.kpar_lcao != 0)
         {
             ModuleBase::WARNING("ESolver_KS_LCAO::before_all_runners", "nks is not divisible by kpar.");
             std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%"
                       << std::endl;
-            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar (" << GlobalV::KPAR_LCAO
+            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar (" << PARAM.globalv.kpar_lcao
                       << ")." << std::endl;
             std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
             std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;

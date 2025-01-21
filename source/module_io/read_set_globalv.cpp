@@ -127,5 +127,6 @@ void ReadInput::set_globalv_bcast()
     add_double_bcast(sys.dq);
     add_int_bcast(sys.nqx);
     add_int_bcast(sys.nqxq);
+    add_int_bcast(sys.kpar_lcao);
 }
 } // namespace ModuleIO

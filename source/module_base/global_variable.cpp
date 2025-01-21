@@ -18,7 +18,6 @@ namespace GlobalV
 
 int NPROC = 1; ///< global number of process
 int KPAR = 1;  ///< global number of pools
-int KPAR_LCAO = 1; ///< global number of pools for LCAO diagonalization only
 int MY_RANK = 0; ///< global index of process
 int MY_POOL = 0; ///< global index of pool (count in pool)
 int MY_STOGROUP = 0;

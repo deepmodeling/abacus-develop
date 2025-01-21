@@ -53,5 +53,6 @@ struct System_para
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
+    int kpar_lcao = 1;                      ///< global number of pools for LCAO diagonalization only
 };
 #endif
