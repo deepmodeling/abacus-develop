@@ -253,6 +253,7 @@ void ReadInput::item_system()
             }
         };
         this->add_item(item);
+        add_int_bcast(sys.kpar_lcao);
     }
     {
         Input_Item item("bndpar");
@@ -335,7 +336,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along x axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nx = intvalue;
-            para.sys.ncx = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
@@ -351,7 +351,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along y axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.ny = intvalue;
-            para.sys.ncy = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
@@ -367,7 +366,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along z axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nz = intvalue;
-            para.sys.ncz = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)

@@ -153,7 +153,7 @@ void Driver::reading()
                                 PARAM.inp.bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
                                 GlobalV::MY_STOGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,

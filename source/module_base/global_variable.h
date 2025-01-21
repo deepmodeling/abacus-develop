@@ -37,7 +37,7 @@ extern int MY_STOGROUP;
 extern int NPROC_IN_POOL;
 extern int NPROC_IN_STOGROUP;
 extern int RANK_IN_POOL;
-extern int RANK_IN_STOGROUP;
+extern int RANK_IN_BPGROUP;
 extern int DRANK;
 extern int DSIZE;
 extern int DCOLOR;

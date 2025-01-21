@@ -187,6 +187,7 @@ void ReadInput::item_output()
             }
         };
         sync_string(input.out_level);
+        add_bool_bcast(sys.out_md_control);
         this->add_item(item);
     }
     {

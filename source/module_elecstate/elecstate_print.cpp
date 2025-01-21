@@ -174,23 +174,11 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     {
         ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
     }
-    std::stringstream ss;
-    if(PARAM.inp.out_alllog)
-    {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
-    }
-    else
-    {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
-    }
-    std::string filename = ss.str();
+
+    std::string filename = PARAM.globalv.global_out_dir + PARAM.globalv.log_file;
     std::vector<int> ngk_tot = this->klist->ngk;
 
 #ifdef __MPI
-    if(!PARAM.inp.out_alllog)
-    {
-        Parallel_Common::bcast_string(filename);
-    }
     MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
 

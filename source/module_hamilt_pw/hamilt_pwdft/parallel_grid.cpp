@@ -293,7 +293,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	{
 		// case 1: the first part of rho in processor 0.
 		// and send zpeice to to other pools.
-		if(proc == 0 && GlobalV::RANK_IN_STOGROUP ==0)
+		if(proc == 0 && GlobalV::RANK_IN_BPGROUP ==0)
 		{
 			for(int ir=0; ir<ncxy; ir++)
 			{
@@ -333,7 +333,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 		//ofs_running << "\n Receive charge density iz=" << iz << endl;
 		// the processors in other pools always receive rho from
 		// processor 0. the tag is 'iz'
-		if(proc == GlobalV::RANK_IN_STOGROUP )
+		if(proc == GlobalV::RANK_IN_BPGROUP )
 		{
 			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, STO_WORLD,&ierror);
 			for(int ir=0; ir<ncxy; ir++)

@@ -398,6 +398,7 @@ void ReadInput::item_dftu()
             }
         };
         sync_double(input.uramping_eV);
+        add_double_bcast(sys.uramping);
         this->add_item(item);
     }
     {

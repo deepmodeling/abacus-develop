@@ -72,7 +72,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_STOGROUP * GlobalV::NPROC_IN_STOGROUP + GlobalV::RANK_IN_STOGROUP) * 10000);
+        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_STOGROUP * GlobalV::NPROC_IN_STOGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
     }
 
     this->allocate_chi0();
@@ -181,7 +181,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     }
     const int ngroup = PARAM.inp.bndpar;
     const int n_in_pool = GlobalV::NPROC_IN_POOL;
-    const int i_in_group = GlobalV::RANK_IN_STOGROUP;
+    const int i_in_group = GlobalV::RANK_IN_BPGROUP;
     const int i_in_pool = GlobalV::RANK_IN_POOL;
 
     int* totnpw = new int[nks];
