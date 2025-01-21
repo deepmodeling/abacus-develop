@@ -6,6 +6,9 @@ if(ENABLE_LCAO)
         middle_hamilt.cpp
         norm_psi.cpp
         propagator.cpp
+        propagator_cn2.cpp
+        propagator_taylor.cpp
+        propagator_etrs.cpp
         upsi.cpp
         td_velocity.cpp
         td_current.cpp

@@ -561,6 +561,9 @@ OBJS_LCAO=evolve_elec.o\
       middle_hamilt.o\
       norm_psi.o\
       propagator.o\
+      propagator_cn2.o\
+      propagator_taylor.o\
+      propagator_etrs.o\
       td_velocity.o\
       td_current.o\
       snap_psibeta_half_tddft.o\
