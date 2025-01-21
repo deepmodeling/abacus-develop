@@ -84,7 +84,8 @@ void compute_ekb(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa = 0.0, bb = 0.0;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Eij[i * pv->ncol + j].real();
                 bb = Eij[i * pv->ncol + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
@@ -216,7 +217,8 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa = 0.0, bb = 0.0;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
@@ -352,7 +354,8 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nband; j++)
             {
-                double aa = 0.0, bb = 0.0;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)

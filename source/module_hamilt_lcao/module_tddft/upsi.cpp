@@ -46,7 +46,8 @@ void upsi(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k[i * pv->ncol + j].real();
                 bb = psi_k[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -67,7 +68,8 @@ void upsi(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k_laststep[i * pv->ncol + j].real();
                 bb = psi_k_laststep[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -122,7 +124,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -143,7 +146,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -205,7 +209,8 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -226,7 +231,8 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)

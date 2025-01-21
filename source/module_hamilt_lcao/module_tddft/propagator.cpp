@@ -297,7 +297,8 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -551,7 +552,8 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real();
                 bb = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -840,7 +842,8 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -1155,7 +1158,8 @@ void Propagator::compute_propagator_taylor(const int nlocal,
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = U_operator[i * this->ParaV->ncol + j].real();
                 bb = U_operator[i * this->ParaV->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)

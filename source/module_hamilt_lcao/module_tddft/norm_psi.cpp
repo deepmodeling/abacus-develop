@@ -79,7 +79,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->nrow; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Cij[i * pv->ncol + j].real();
                 bb = Cij[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -175,7 +176,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k[i * pv->ncol + j].real();
                 bb = psi_k[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -196,7 +198,8 @@ void norm_psi(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = tmp1[i * pv->ncol + j].real();
                 bb = tmp1[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -282,7 +285,8 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->nrow; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Cij.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = Cij.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -383,7 +387,8 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -404,7 +409,8 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = tmp1.data<std::complex<double>>()[i * pv->ncol + j].real();
                 bb = tmp1.data<std::complex<double>>()[i * pv->ncol + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -491,7 +497,8 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -597,7 +604,8 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
@@ -618,7 +626,8 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
         {
             for (int j = 0; j < nlocal; j++)
             {
-                double aa, bb;
+                double aa = 0.0;
+                double bb = 0.0;
                 aa = tmp1_cpu.data<std::complex<double>>()[i * nlocal + j].real();
                 bb = tmp1_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
                 if (std::abs(aa) < 1e-8)
