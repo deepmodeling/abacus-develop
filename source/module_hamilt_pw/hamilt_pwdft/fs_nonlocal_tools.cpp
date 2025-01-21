@@ -295,7 +295,7 @@ void FS_Nonlocal_tools<FPTYPE, Device>::reduce_pool_becp(const int& npm)
 #ifdef __MPI
     if (GlobalV::NPROC_IN_POOL > 1)
     {
-        Parallel_Common::reduce_dev(this->ctx, this->becp, size_becp_act, POOL_WORLD);
+        Parallel_Common::reduce_dev<std::complex<FPTYPE>, Device>(this->becp, size_becp_act, POOL_WORLD);
     }
 #endif
 }

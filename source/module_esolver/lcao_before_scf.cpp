@@ -159,7 +159,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             ncol = PARAM.inp.nbands;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
     }
 
     // init wfc from file

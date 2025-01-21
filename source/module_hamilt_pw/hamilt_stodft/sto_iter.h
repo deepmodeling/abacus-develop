@@ -163,7 +163,7 @@ class Stochastic_Iter
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
     using castmem_d2z_op = base_device::memory::cast_memory_op<T, Real, Device, Device>;
     using castmem_var_d2h_op = base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, Device>;
-    using gemv_op = hsolver::gemv_op<T, Device>;
+    using gemv_op = ModuleBase::gemv_op<T, Device>;
 };
 
 #endif // Eelectrons_Iter

@@ -11,7 +11,7 @@
 #include "module_elecstate/elecstate.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "structure_factor.h"
 
@@ -129,7 +129,7 @@ class Forces
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
   private:
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;

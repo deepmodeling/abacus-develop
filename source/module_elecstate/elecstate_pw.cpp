@@ -271,7 +271,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 {
     const T one{1, 0};
     const T zero{0, 0};
-    const int npol = psi.npol;
+    const int npol = psi.get_npol();
     const int npwx = psi.get_nbasis() / npol;
     const int nbands = psi.get_nbands() * npol;
     const int nkb = this->ppcell->nkb;

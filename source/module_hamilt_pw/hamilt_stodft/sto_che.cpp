@@ -1,7 +1,7 @@
 #include "sto_che.h"
 #include "module_base/blas_connector.h"
 #include "module_base/module_device/device.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device>

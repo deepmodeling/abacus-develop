@@ -1,7 +1,7 @@
 #ifndef STO_CHE_H
 #define STO_CHE_H
 #include "module_base/math_chebyshev.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device = base_device::DEVICE_CPU>
@@ -51,7 +51,7 @@ REAL vTMv(const REAL* v, const REAL* M, const int n)
     const REAL zero = 0;
     REAL* y = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(y, n);
-    hsolver::gemv_op<REAL, Device>()(ctx, normal, n, n, &one, M, n, v, inc, &zero, y, inc);
+    ModuleBase::gemv_op<REAL, Device>()(ctx, normal, n, n, &one, M, n, v, inc, &zero, y, inc);
     REAL result = 0;
     REAL* dot_device = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(dot_device, 1);

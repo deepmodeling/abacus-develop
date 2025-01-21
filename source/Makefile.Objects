@@ -146,11 +146,13 @@ OBJS_BASE=abfs-vector3_order.o\
     math_bspline.o\
     math_chebyshev.o\
     math_op.o\
+    math_kernel_op.o\
     mathzone_add1.o\
     matrix.o\
     matrix3.o\
     memory.o\
     mymath.o\
+    para_gemm.o\
     realarray.o\
     sph_bessel_recursive-d1.o\
     sph_bessel_recursive-d2.o\
@@ -336,7 +338,6 @@ OBJS_HSOLVER=diago_cg.o\
     hsolver_lcaopw.o\
     hsolver_pw_sdft.o\
     diago_iter_assist.o\
-    math_kernel_op.o\
     dngvd_op.o\
     diag_const_nums.o\
     diag_hs_para.o\

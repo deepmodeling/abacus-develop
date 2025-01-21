@@ -214,7 +214,7 @@ class HPsi
     {
         Structure_Factor* sf;
         int* ngk = nullptr;
-        psi::Psi<T> psitmp(1, nband, npw, ngk);
+        psi::Psi<T> psitmp(1, nband, npw, npw, true);
         for(int i=0;i<nband;i++)
 	    {
 		    for(int j=0;j<npw;j++) { psitmp(0,i,j) = psimatrix[i * npw + j];

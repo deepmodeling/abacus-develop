@@ -37,6 +37,7 @@ add_library(
     mymath.cpp
     opt_CG.cpp
     opt_DCsrch.cpp
+    para_gemm.cpp
     realarray.cpp
     sph_bessel_recursive-d1.cpp
     sph_bessel_recursive-d2.cpp
