@@ -74,7 +74,8 @@ void Propagator::compute_propagator_tensor(const int nlocal,
         }
         else
         {
-            int myid, root_proc = 0;
+            int myid = 0;
+            int root_proc = 0;
             MPI_Comm_rank(MPI_COMM_WORLD, &myid);
             if (myid == root_proc)
             {

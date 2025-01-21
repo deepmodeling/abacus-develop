@@ -271,7 +271,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
                 {
                     // Gather H and S matrices to root process
 #ifdef __MPI
-                    int myid, num_procs;
+                    int myid = 0;
+                    int num_procs = 1;
                     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
                     MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 

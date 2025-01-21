@@ -114,7 +114,8 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                     // H_laststep and S_laststep are already gathered in esolver_ks_lcao_tddft.cpp
 #ifdef __MPI
                     // Access the rank of the calling process in the communicator
-                    int myid, root_proc = 0;
+                    int myid = 0;
+                    int root_proc = 0;
                     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
                     // Gather psi to the root process

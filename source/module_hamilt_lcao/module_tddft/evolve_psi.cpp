@@ -160,7 +160,8 @@ void evolve_psi_tensor(const int nband,
     if (use_lapack)
     {
         // Need to gather H and S matrix to root process here
-        int myid, num_procs;
+        int myid = 0;
+        int num_procs = 1;
         MPI_Comm_rank(MPI_COMM_WORLD, &myid);
         MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
 
@@ -186,7 +187,8 @@ void evolve_psi_tensor(const int nband,
     ct::Tensor U_operator(ct::DataType::DT_COMPLEX_DOUBLE, ct_device_type, ct::TensorShape({len_HS}));
     U_operator.zero();
 
-    int myid, root_proc = 0;
+    int myid = 0;
+    int root_proc = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
     // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
