@@ -4,6 +4,7 @@ list(APPEND objects
     diago_david.cpp
     diago_dav_subspace.cpp
     diago_bpcg.cpp
+    para_linear_transform.cpp
     hsolver_pw.cpp
     hsolver_lcaopw.cpp
     hsolver_pw_sdft.cpp
