@@ -17,6 +17,7 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                                            const std::complex<double>* Stmp,
                                            const std::complex<double>* Htmp,
                                            std::complex<double>* U_operator,
+                                           std::ofstream& ofs_running,
                                            const int print_matrix,
                                            const int tag) const
 {
@@ -41,30 +42,30 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " S matrix :" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " S matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                GlobalV::ofs_running << Stmp[i * this->ParaV->ncol + j].real() << "+"
-                                     << Stmp[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Stmp[i * this->ParaV->ncol + j].real() << "+" << Stmp[i * this->ParaV->ncol + j].imag()
+                            << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " H matrix :" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " H matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                GlobalV::ofs_running << Htmp[i * this->ParaV->ncol + j].real() << "+"
-                                     << Htmp[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Htmp[i * this->ParaV->ncol + j].real() << "+" << Htmp[i * this->ParaV->ncol + j].imag()
+                            << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 
     // set rank0
@@ -294,18 +295,18 @@ void Propagator::compute_propagator_taylor(const int nlocal,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << " A_matrix:" << std::endl;
+        ofs_running << " A_matrix:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                GlobalV::ofs_running << A_matrix[i * this->ParaV->ncol + j].real() << "+"
-                                     << A_matrix[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << A_matrix[i * this->ParaV->ncol + j].real() << "+"
+                            << A_matrix[i * this->ParaV->ncol + j].imag() << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " U operator:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " U operator:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
             for (int j = 0; j < this->ParaV->ncol; j++)
@@ -322,9 +323,9 @@ void Propagator::compute_propagator_taylor(const int nlocal,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
     }
     delete[] A_matrix;

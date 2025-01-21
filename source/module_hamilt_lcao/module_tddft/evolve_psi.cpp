@@ -29,13 +29,14 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int htype,
                 int propagator,
+                std::ofstream& ofs_running,
                 const int print_matrix)
 {
-    GlobalV::ofs_running << " evolve_psi::start " << std::endl;
+    ofs_running << " evolve_psi::start " << std::endl;
 
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
     time_t time_start = time(nullptr);
-    GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
+    ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -64,7 +65,7 @@ void evolve_psi(const int nband,
     /// @output Htmp
     if (htype == 1 && propagator != 2)
     {
-        half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+        half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -73,28 +74,28 @@ void evolve_psi(const int nband,
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
     Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix);
+    prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief apply U_operator to the wave function of the previous step for new wave function
     /// @input U_operator, psi_k_laststep, print_matrix
     /// @output psi_k
-    upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+    upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
     /// @input Stmp, psi_not_norm, psi_k, print_matrix
     /// @output psi_k
-    norm_psi(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+    norm_psi(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
 
     // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief compute ekb
     /// @input Htmp, psi_k
     /// @output ekb
-    compute_ekb(pv, nband, nlocal, Hold, psi_k, ekb);
+    compute_ekb(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
 
     delete[] Stmp;
     delete[] Htmp;
@@ -106,7 +107,7 @@ void evolve_psi(const int nband,
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
-    GlobalV::ofs_running << " evolve_psi::end " << std::endl;
+    ofs_running << " evolve_psi::end " << std::endl;
 
     return;
 }
@@ -123,6 +124,7 @@ void evolve_psi_tensor(const int nband,
                        ct::Tensor& ekb,
                        int htype,
                        int propagator,
+                       std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack)
 {
@@ -140,11 +142,11 @@ void evolve_psi_tensor(const int nband,
     ct::kernels::createGpuBlasHandle();
 #endif // __CUDA
 
-    GlobalV::ofs_running << " evolve_psi_tensor::start " << std::endl;
+    ofs_running << " evolve_psi_tensor::start " << std::endl;
 
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
     time_t time_start = time(nullptr);
-    GlobalV::ofs_running << " Start Time : " << ctime(&time_start);
+    ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
@@ -200,13 +202,21 @@ void evolve_psi_tensor(const int nband,
     {
         if (!use_lapack)
         {
-            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+            half_Hmatrix_tensor(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
         }
         else
         {
             if (myid == root_proc)
             {
-                half_Hmatrix_tensor_lapack<Device>(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, print_matrix);
+                half_Hmatrix_tensor_lapack<Device>(pv,
+                                                   nband,
+                                                   nlocal,
+                                                   Htmp,
+                                                   Stmp,
+                                                   H_laststep,
+                                                   S_laststep,
+                                                   ofs_running,
+                                                   print_matrix);
             }
         }
     }
@@ -217,7 +227,14 @@ void evolve_psi_tensor(const int nband,
     /// @input Stmp, Htmp, print_matrix
     /// @output U_operator
     Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator_tensor<Device>(nlocal, Stmp, Htmp, H_laststep, U_operator, print_matrix, use_lapack);
+    prop.compute_propagator_tensor<Device>(nlocal,
+                                           Stmp,
+                                           Htmp,
+                                           H_laststep,
+                                           U_operator,
+                                           ofs_running,
+                                           print_matrix,
+                                           use_lapack);
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -226,13 +243,13 @@ void evolve_psi_tensor(const int nband,
     /// @output psi_k
     if (!use_lapack)
     {
-        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+        upsi_tensor(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
     }
     else
     {
         if (myid == root_proc)
         {
-            upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+            upsi_tensor_lapack<Device>(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
         }
     }
 
@@ -243,13 +260,13 @@ void evolve_psi_tensor(const int nband,
     /// @output psi_k
     if (!use_lapack)
     {
-        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+        norm_psi_tensor(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
     }
     else
     {
         if (myid == root_proc)
         {
-            norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+            norm_psi_tensor_lapack<Device>(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
         }
     }
 
@@ -260,13 +277,13 @@ void evolve_psi_tensor(const int nband,
     /// @output ekb
     if (!use_lapack)
     {
-        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb);
+        compute_ekb_tensor(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
     }
     else
     {
         if (myid == root_proc)
         {
-            compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb);
+            compute_ekb_tensor_lapack<Device>(pv, nband, nlocal, Hold, psi_k, ekb, ofs_running);
         }
     }
 
@@ -275,7 +292,7 @@ void evolve_psi_tensor(const int nband,
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
-    GlobalV::ofs_running << " evolve_psi_tensor::end " << std::endl;
+    ofs_running << " evolve_psi_tensor::end " << std::endl;
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
     // Destroy cuBLAS & cuSOLVER handle
@@ -298,6 +315,7 @@ template void evolve_psi_tensor<base_device::DEVICE_CPU>(const int nband,
                                                          ct::Tensor& ekb,
                                                          int htype,
                                                          int propagator,
+                                                         std::ofstream& ofs_running,
                                                          const int print_matrix,
                                                          const bool use_lapack);
 
@@ -313,6 +331,7 @@ template void evolve_psi_tensor<base_device::DEVICE_GPU>(const int nband,
                                                          ct::Tensor& ekb,
                                                          int htype,
                                                          int propagator,
+                                                         std::ofstream& ofs_running,
                                                          const int print_matrix,
                                                          const bool use_lapack);
 #endif // __CUDA

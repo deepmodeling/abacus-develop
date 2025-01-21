@@ -45,7 +45,6 @@ void gatherMatrix(const int myid, const int root_proc, const hamilt::MatrixBlock
     // Call the Cpxgemr2d function in ScaLAPACK to collect the matrix data
     Cpxgemr2d(nrows, ncols, mat_l.p, 1, 1, const_cast<int*>(desca), mat_g.p.get(), 1, 1, mat_g.desc.get(), ctxt);
 }
-
 //------------------------ MPI gathering and distributing functions ------------------------//
 
 template <typename Device = base_device::DEVICE_CPU>

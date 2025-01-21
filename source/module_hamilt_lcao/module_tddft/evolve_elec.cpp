@@ -31,6 +31,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                     std::complex<double>** Hk_laststep,
                                     std::complex<double>** Sk_laststep,
                                     ModuleBase::matrix& ekb,
+                                    std::ofstream& ofs_running,
                                     const int htype,
                                     const int propagator,
                                     const bool use_tensor,
@@ -62,6 +63,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                        &(ekb(ik, 0)),
                        htype,
                        propagator,
+                       ofs_running,
                        print_matrix);
         }
         else if (htype == 1)
@@ -79,6 +81,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                            &(ekb(ik, 0)),
                            htype,
                            propagator,
+                           ofs_running,
                            print_matrix);
                 // std::cout << "Print ekb: " << std::endl;
                 // ekb.print(std::cout);
@@ -161,6 +164,7 @@ void Evolve_elec<Device>::solve_psi(const int& istep,
                                           ekb_tensor,
                                           htype,
                                           propagator,
+                                          ofs_running,
                                           print_matrix,
                                           use_lapack);
 

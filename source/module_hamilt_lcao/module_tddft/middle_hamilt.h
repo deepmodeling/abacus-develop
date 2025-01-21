@@ -32,6 +32,7 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
                   std::complex<double>* Stmp,
                   const std::complex<double>* H_laststep,
                   const std::complex<double>* S_laststep,
+                  std::ofstream& ofs_running,
                   const int print_matrix);
 
 void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
@@ -41,6 +42,7 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
                          ct::Tensor& Stmp,
                          const ct::Tensor& H_laststep,
                          const ct::Tensor& S_laststep,
+                         std::ofstream& ofs_running,
                          const int print_matrix);
 
 template <typename Device>
@@ -51,6 +53,7 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
                                 ct::Tensor& Stmp,
                                 const ct::Tensor& H_laststep,
                                 const ct::Tensor& S_laststep,
+                                std::ofstream& ofs_running,
                                 const int print_matrix);
 
 #endif // __MPI

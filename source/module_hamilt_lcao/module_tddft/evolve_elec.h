@@ -92,6 +92,7 @@ inline void print_tensor_data<std::complex<double>>(const ct::Tensor& tensor, co
 namespace module_tddft
 {
 #ifdef __MPI
+//------------------------ MPI gathering and distributing functions ------------------------//
 template <typename T>
 void gatherPsi(const int myid,
                const int root_proc,
@@ -133,13 +134,12 @@ void distributePsi(const Parallel_Orbitals& para_orb, T* psi_l, const ModuleESol
     // Call the Cpxgemr2d function in ScaLAPACK to distribute the matrix data
     Cpxgemr2d(nrows, ncols, psi_g.p.get(), 1, 1, psi_g.desc.get(), psi_l, 1, 1, const_cast<int*>(desc_psi), ctxt);
 }
+//------------------------ MPI gathering and distributing functions ------------------------//
 #endif // __MPI
 
 template <typename Device = base_device::DEVICE_CPU>
 class Evolve_elec
 {
-
-    friend class ELEC_scf;
     friend class ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>;
 
     // Template parameter is needed for the friend class declaration
@@ -161,6 +161,7 @@ class Evolve_elec
                           std::complex<double>** Hk_laststep,
                           std::complex<double>** Sk_laststep,
                           ModuleBase::matrix& ekb,
+                          std::ofstream& ofs_running,
                           const int htype,
                           const int propagator,
                           const bool use_tensor,

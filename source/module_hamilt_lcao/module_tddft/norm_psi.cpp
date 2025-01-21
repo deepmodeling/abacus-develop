@@ -24,6 +24,7 @@ void norm_psi(const Parallel_Orbitals* pv,
               const int nlocal,
               const std::complex<double>* Stmp,
               std::complex<double>* psi_k,
+              std::ofstream& ofs_running,
               const int print_matrix)
 {
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
@@ -74,7 +75,7 @@ void norm_psi(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << "original Cij :" << std::endl;
+        ofs_running << "original Cij :" << std::endl;
         for (int i = 0; i < pv->ncol; i++)
         {
             for (int j = 0; j < pv->nrow; j++)
@@ -91,11 +92,11 @@ void norm_psi(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 
     int naroc[2] = {0, 0}; // maximum number of row or column
@@ -160,18 +161,18 @@ void norm_psi(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << " Cij:" << std::endl;
+        ofs_running << " Cij:" << std::endl;
         for (int i = 0; i < pv->ncol; i++)
         {
             for (int j = 0; j < pv->nrow; j++)
             {
-                GlobalV::ofs_running << Cij[i * pv->ncol + j].real() << "+" << Cij[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Cij[i * pv->ncol + j].real() << "+" << Cij[i * pv->ncol + j].imag() << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -188,12 +189,12 @@ void norm_psi(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k before normalization:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k before normalization:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -210,12 +211,12 @@ void norm_psi(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 
     delete[] tmp1;
@@ -227,6 +228,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                      const int nlocal,
                      const ct::Tensor& Stmp,
                      ct::Tensor& psi_k,
+                     std::ofstream& ofs_running,
                      const int print_matrix)
 {
     // Create Tensor objects for temporary data
@@ -280,7 +282,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << "original Cij :" << std::endl;
+        ofs_running << "original Cij :" << std::endl;
         for (int i = 0; i < pv->ncol; i++)
         {
             for (int j = 0; j < pv->nrow; j++)
@@ -297,11 +299,11 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 
     int naroc[2] = {0, 0}; // maximum number of row or column
@@ -370,19 +372,19 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << " Cij:" << std::endl;
+        ofs_running << " Cij:" << std::endl;
         for (int i = 0; i < pv->ncol; i++)
         {
             for (int j = 0; j < pv->nrow; j++)
             {
-                GlobalV::ofs_running << Cij.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                                     << Cij.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Cij.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
+                            << Cij.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -399,12 +401,12 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k before normalization:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k before normalization:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -421,12 +423,12 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 }
 
@@ -436,6 +438,7 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                             const int nlocal,
                             const ct::Tensor& Stmp,
                             ct::Tensor& psi_k,
+                            std::ofstream& ofs_running,
                             const int print_matrix)
 {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
@@ -492,7 +495,7 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
     {
         ct::Tensor Cij_print_cpu = Cij.to_device<ct::DEVICE_CPU>();
 
-        GlobalV::ofs_running << "original Cij :" << std::endl;
+        ofs_running << "original Cij :" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
             for (int j = 0; j < nlocal; j++)
@@ -509,11 +512,11 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 
     // Normalize Cij: set diagonal elements to 1/sqrt(Cij[i][i]), off-diagonal elements to 0
@@ -587,19 +590,19 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
         ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
         ct::Tensor tmp1_cpu = tmp1.to_device<ct::DEVICE_CPU>();
 
-        GlobalV::ofs_running << " Cij:" << std::endl;
+        ofs_running << " Cij:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
             for (int j = 0; j < nlocal; j++)
             {
-                GlobalV::ofs_running << Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                                     << Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
+                            << Cij_print_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < nlocal; j++)
@@ -616,12 +619,12 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k before normalization:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k before normalization:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < nlocal; j++)
@@ -638,12 +641,12 @@ void norm_psi_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 }
 
@@ -653,6 +656,7 @@ template void norm_psi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orb
                                                               const int nlocal,
                                                               const ct::Tensor& Stmp,
                                                               ct::Tensor& psi_k,
+                                                              std::ofstream& ofs_running,
                                                               const int print_matrix);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void norm_psi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
@@ -660,7 +664,8 @@ template void norm_psi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orb
                                                               const int nlocal,
                                                               const ct::Tensor& Stmp,
                                                               ct::Tensor& psi_k,
+                                                              std::ofstream& ofs_running,
                                                               const int print_matrix);
 #endif // __CUDA
-#endif
+#endif // __MPI
 } // namespace module_tddft

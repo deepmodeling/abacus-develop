@@ -16,6 +16,7 @@ void upsi(const Parallel_Orbitals* pv,
           const std::complex<double>* U_operator,
           const std::complex<double>* psi_k_laststep,
           std::complex<double>* psi_k,
+          std::ofstream& ofs_running,
           const int print_matrix)
 {
     ScalapackConnector::gemm('N',
@@ -40,8 +41,8 @@ void upsi(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -58,12 +59,12 @@ void upsi(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k_laststep:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -80,11 +81,11 @@ void upsi(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 }
 
@@ -94,6 +95,7 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  const ct::Tensor& U_operator,
                  const ct::Tensor& psi_k_laststep,
                  ct::Tensor& psi_k,
+                 std::ofstream& ofs_running,
                  const int print_matrix)
 {
     ScalapackConnector::gemm('N',
@@ -118,8 +120,8 @@ void upsi_tensor(const Parallel_Orbitals* pv,
 
     if (print_matrix)
     {
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -136,12 +138,12 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k_laststep:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
             for (int j = 0; j < pv->ncol; j++)
@@ -158,11 +160,11 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 }
 
@@ -173,6 +175,7 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         const ct::Tensor& U_operator,
                         const ct::Tensor& psi_k_laststep,
                         ct::Tensor& psi_k,
+                        std::ofstream& ofs_running,
                         const int print_matrix)
 {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
@@ -203,8 +206,8 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         ct::Tensor psi_k_cpu = psi_k.to_device<ct::DEVICE_CPU>();
         ct::Tensor psi_k_laststep_cpu = psi_k_laststep.to_device<ct::DEVICE_CPU>();
 
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < nlocal; j++)
@@ -221,12 +224,12 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << " psi_k_laststep:" << std::endl;
+        ofs_running << std::endl;
+        ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < nlocal; j++)
@@ -243,11 +246,11 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                 {
                     bb = 0.0;
                 }
-                GlobalV::ofs_running << aa << "+" << bb << "i ";
+                ofs_running << aa << "+" << bb << "i ";
             }
-            GlobalV::ofs_running << std::endl;
+            ofs_running << std::endl;
         }
-        GlobalV::ofs_running << std::endl;
+        ofs_running << std::endl;
     }
 }
 
@@ -258,6 +261,7 @@ template void upsi_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_Orbital
                                                           const ct::Tensor& U_operator,
                                                           const ct::Tensor& psi_k_laststep,
                                                           ct::Tensor& psi_k,
+                                                          std::ofstream& ofs_running,
                                                           const int print_matrix);
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void upsi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
@@ -266,6 +270,7 @@ template void upsi_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbital
                                                           const ct::Tensor& U_operator,
                                                           const ct::Tensor& psi_k_laststep,
                                                           ct::Tensor& psi_k,
+                                                          std::ofstream& ofs_running,
                                                           const int print_matrix);
 #endif // __CUDA
 #endif // __MPI

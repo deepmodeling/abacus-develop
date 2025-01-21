@@ -86,7 +86,7 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_tddft::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb);
+    module_tddft::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);

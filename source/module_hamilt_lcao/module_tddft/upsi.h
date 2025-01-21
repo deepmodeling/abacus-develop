@@ -32,6 +32,7 @@ void upsi(const Parallel_Orbitals* pv,
           const std::complex<double>* U_operator,
           const std::complex<double>* psi_k_laststep,
           std::complex<double>* psi_k,
+          std::ofstream& ofs_running,
           const int print_matrix);
 
 void upsi_tensor(const Parallel_Orbitals* pv,
@@ -40,6 +41,7 @@ void upsi_tensor(const Parallel_Orbitals* pv,
                  const ct::Tensor& U_operator,
                  const ct::Tensor& psi_k_laststep,
                  ct::Tensor& psi_k,
+                 std::ofstream& ofs_running,
                  const int print_matrix);
 
 template <typename Device>
@@ -49,6 +51,7 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
                         const ct::Tensor& U_operator,
                         const ct::Tensor& psi_k_laststep,
                         ct::Tensor& psi_k,
+                        std::ofstream& ofs_running,
                         const int print_matrix);
 
 #endif // __MPI

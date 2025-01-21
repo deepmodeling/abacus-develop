@@ -25,7 +25,8 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  const int nlocal,
                  const std::complex<double>* Htmp,
                  const std::complex<double>* psi_k,
-                 double* ekb)
+                 double* ekb,
+                 std::ofstream& ofs_running)
 {
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
@@ -76,10 +77,10 @@ void compute_ekb(const Parallel_Orbitals* pv,
 
     if (PARAM.inp.td_print_eij > 0.0)
     {
-        GlobalV::ofs_running
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
-        GlobalV::ofs_running << " Eij:" << std::endl;
+        ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < pv->nrow_bands; i++)
         {
             for (int j = 0; j < pv->ncol_bands; j++)
@@ -98,12 +99,12 @@ void compute_ekb(const Parallel_Orbitals* pv,
                 }
                 if (aa > 0.0 || bb > 0.0)
                 {
-                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
                 }
             }
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running
+        ofs_running << std::endl;
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
     }
@@ -156,7 +157,8 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         const int nlocal,
                         const ct::Tensor& Htmp,
                         const ct::Tensor& psi_k,
-                        ct::Tensor& ekb)
+                        ct::Tensor& ekb,
+                        std::ofstream& ofs_running)
 {
     // Create Tensor objects for temporary data
     ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc_wfc}));
@@ -209,10 +211,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
 
     if (PARAM.inp.td_print_eij >= 0.0)
     {
-        GlobalV::ofs_running
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
-        GlobalV::ofs_running << " Eij:" << std::endl;
+        ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < pv->nrow_bands; i++)
         {
             for (int j = 0; j < pv->ncol_bands; j++)
@@ -231,12 +233,12 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                 }
                 if (aa > 0.0 || bb > 0.0)
                 {
-                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
                 }
             }
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running
+        ofs_running << std::endl;
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
     }
@@ -290,7 +292,8 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                const int nlocal,
                                const ct::Tensor& Htmp,
                                const ct::Tensor& psi_k,
-                               ct::Tensor& ekb)
+                               ct::Tensor& ekb,
+                               std::ofstream& ofs_running)
 {
     // ct_device_type = ct::DeviceType::CpuDevice or ct::DeviceType::GpuDevice
     ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
@@ -346,10 +349,10 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
     {
         ct::Tensor Eij_cpu = Eij.to_device<ct::DEVICE_CPU>();
 
-        GlobalV::ofs_running
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
-        GlobalV::ofs_running << " Eij:" << std::endl;
+        ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
             for (int j = 0; j < nband; j++)
@@ -368,12 +371,12 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                 }
                 if (aa > 0.0 || bb > 0.0)
                 {
-                    GlobalV::ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
+                    ofs_running << i << " " << j << " " << aa << "+" << bb << "i " << std::endl;
                 }
             }
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running
+        ofs_running << std::endl;
+        ofs_running
             << "------------------------------------------------------------------------------------------------"
             << std::endl;
     }
@@ -406,7 +409,8 @@ template void compute_ekb_tensor_lapack<base_device::DEVICE_CPU>(const Parallel_
                                                                  const int nlocal,
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,
-                                                                 ct::Tensor& ekb);
+                                                                 ct::Tensor& ekb,
+                                                                 std::ofstream& ofs_running);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
 template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_Orbitals* pv,
@@ -414,7 +418,8 @@ template void compute_ekb_tensor_lapack<base_device::DEVICE_GPU>(const Parallel_
                                                                  const int nlocal,
                                                                  const ct::Tensor& Htmp,
                                                                  const ct::Tensor& psi_k,
-                                                                 ct::Tensor& ekb);
+                                                                 ct::Tensor& ekb,
+                                                                 std::ofstream& ofs_running);
 #endif // __CUDA
 #endif // __MPI
 

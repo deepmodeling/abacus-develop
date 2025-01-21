@@ -14,7 +14,7 @@
 
 namespace module_tddft
 {
-//------------------------ Utility function ------------------------//
+//--------------------------------- Utility function ---------------------------------//
 #ifdef __MPI
 inline int globalIndex(int localindex, int nblk, int nprocs, int myproc)
 {
@@ -97,7 +97,7 @@ ct::Tensor create_identity_matrix(const int n, ct::DeviceType device = ct::Devic
 
     return tensor;
 }
-//------------------------ Utility function ------------------------//
+//--------------------------------- Utility function ---------------------------------//
 
 class Propagator
 {
@@ -126,6 +126,7 @@ class Propagator
                             const std::complex<double>* Htmp,
                             const std::complex<double>* H_laststep,
                             std::complex<double>* U_operator,
+                            std::ofstream& ofs_running,
                             const int print_matrix) const;
 
     template <typename Device>
@@ -134,6 +135,7 @@ class Propagator
                                    const ct::Tensor& Htmp,
                                    const ct::Tensor& H_laststep,
                                    ct::Tensor& U_operator,
+                                   std::ofstream& ofs_running,
                                    const int print_matrix,
                                    const bool use_lapack) const;
 #endif // __MPI
@@ -158,12 +160,14 @@ class Propagator
                                 const std::complex<double>* Stmp,
                                 const std::complex<double>* Htmp,
                                 std::complex<double>* U_operator,
+                                std::ofstream& ofs_running,
                                 const int print_matrix) const;
 
     void compute_propagator_cn2_tensor(const int nlocal,
                                        const ct::Tensor& Stmp,
                                        const ct::Tensor& Htmp,
                                        ct::Tensor& U_operator,
+                                       std::ofstream& ofs_running,
                                        const int print_matrix) const;
 
     template <typename Device>
@@ -171,6 +175,7 @@ class Propagator
                                               const ct::Tensor& Stmp,
                                               const ct::Tensor& Htmp,
                                               ct::Tensor& U_operator,
+                                              std::ofstream& ofs_running,
                                               const int print_matrix) const;
 
     /**
@@ -187,6 +192,7 @@ class Propagator
                                    const std::complex<double>* Stmp,
                                    const std::complex<double>* Htmp,
                                    std::complex<double>* U_operator,
+                                   std::ofstream& ofs_running,
                                    const int print_matrix,
                                    const int tag) const;
 
@@ -205,6 +211,7 @@ class Propagator
                                  const std::complex<double>* Htmp,
                                  const std::complex<double>* H_laststep,
                                  std::complex<double>* U_operator,
+                                 std::ofstream& ofs_running,
                                  const int print_matrix) const;
 #endif // __MPI
 };

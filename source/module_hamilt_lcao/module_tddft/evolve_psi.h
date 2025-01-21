@@ -24,6 +24,7 @@ void evolve_psi(const int nband,
                 double* ekb,
                 int htype,
                 int propagator,
+                std::ofstream& ofs_running,
                 const int print_matrix);
 
 template <typename Device>
@@ -38,6 +39,7 @@ void evolve_psi_tensor(const int nband,
                        ct::Tensor& ekb,
                        int htype,
                        int propagator,
+                       std::ofstream& ofs_running,
                        const int print_matrix,
                        const bool use_lapack);
 } // namespace module_tddft
