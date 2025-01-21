@@ -2,7 +2,7 @@ if(ENABLE_LCAO)
     list(APPEND objects
         evolve_elec.cpp
         evolve_psi.cpp
-        bandenergy.cpp
+        band_energy.cpp
         middle_hamilt.cpp
         norm_psi.cpp
         propagator.cpp

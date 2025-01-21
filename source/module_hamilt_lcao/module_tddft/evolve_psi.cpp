@@ -1,6 +1,6 @@
 #include "evolve_psi.h"
 
-#include "bandenergy.h"
+#include "band_energy.h"
 #include "middle_hamilt.h"
 #include "module_base/lapack_connector.h"
 #include "module_base/module_container/ATen/kernels/blas.h"   // cuBLAS handle

@@ -556,7 +556,7 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
 
 OBJS_LCAO=evolve_elec.o\
       evolve_psi.o\
-      bandenergy.o\
+      band_energy.o\
       middle_hamilt.o\
       norm_psi.o\
       propagator.o\

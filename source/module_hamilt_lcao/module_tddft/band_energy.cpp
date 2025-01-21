@@ -1,4 +1,4 @@
-#include "bandenergy.h"
+#include "band_energy.h"
 
 #include "evolve_elec.h"
 #include "module_base/lapack_connector.h"

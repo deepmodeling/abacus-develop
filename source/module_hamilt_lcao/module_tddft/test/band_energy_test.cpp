@@ -1,4 +1,4 @@
-#include "module_hamilt_lcao/module_tddft/bandenergy.h"
+#include "module_hamilt_lcao/module_tddft/band_energy.h"
 
 #include <gtest/gtest.h>
 #include <module_base/scalapack_connector.h>
@@ -9,7 +9,7 @@
 #include "tddft_test.h"
 
 /************************************************
- *  unit test of functions in bandenergy.h
+ *  unit test of functions in band_energy.h
  ***********************************************/
 
 /**
