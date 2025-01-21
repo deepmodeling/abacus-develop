@@ -20,6 +20,8 @@ void Propagator::compute_propagator_cn2(const int nlocal,
                                         std::ofstream& ofs_running,
                                         const int print_matrix) const
 {
+    assert(this->ParaV->nloc > 0);
+
     // (1) copy Htmp to Numerator & Denominator
     std::complex<double>* Numerator = new std::complex<double>[this->ParaV->nloc];
     ModuleBase::GlobalFunc::ZEROS(Numerator, this->ParaV->nloc);
@@ -35,10 +37,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " S matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Stmp[i * this->ParaV->ncol + j].real() << "+" << Stmp[i * this->ParaV->ncol + j].imag()
-                            << "i ";
+                ofs_running << Stmp[in + j].real() << "+" << Stmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -47,10 +49,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " H matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Numerator[i * this->ParaV->ncol + j].real() << "+"
-                            << Numerator[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -98,10 +100,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " fenmu:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Denominator[i * this->ParaV->ncol + j].real() << "+"
-                            << Denominator[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -197,10 +199,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " fenmu^-1:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Denominator[i * this->ParaV->ncol + j].real() << "+"
-                            << Denominator[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Denominator[in + j].real() << "+" << Denominator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -208,10 +210,10 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " fenzi:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Numerator[i * this->ParaV->ncol + j].real() << "+"
-                            << Numerator[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Numerator[in + j].real() << "+" << Numerator[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -219,12 +221,11 @@ void Propagator::compute_propagator_cn2(const int nlocal,
         ofs_running << " U operator:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = U_operator[i * this->ParaV->ncol + j].real();
-                bb = U_operator[i * this->ParaV->ncol + j].imag();
+                double aa = U_operator[in + j].real();
+                double bb = U_operator[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -278,10 +279,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " S matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                            << Stmp.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Stmp.data<std::complex<double>>()[in + j].real() << "+"
+                            << Stmp.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -290,10 +292,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " H matrix :" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                            << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Numerator.data<std::complex<double>>()[in + j].real() << "+"
+                            << Numerator.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -341,10 +344,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " fenmu:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                            << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Denominator.data<std::complex<double>>()[in + j].real() << "+"
+                            << Denominator.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -447,10 +451,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " fenmu^-1:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                            << Denominator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Denominator.data<std::complex<double>>()[in + j].real() << "+"
+                            << Denominator.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -458,10 +463,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " fenzi:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                ofs_running << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real() << "+"
-                            << Numerator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag() << "i ";
+                ofs_running << Numerator.data<std::complex<double>>()[in + j].real() << "+"
+                            << Numerator.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -469,12 +475,11 @@ void Propagator::compute_propagator_cn2_tensor(const int nlocal,
         ofs_running << " U operator:" << std::endl;
         for (int i = 0; i < this->ParaV->nrow; i++)
         {
+            const int in = i * this->ParaV->ncol;
             for (int j = 0; j < this->ParaV->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].real();
-                bb = U_operator.data<std::complex<double>>()[i * this->ParaV->ncol + j].imag();
+                double aa = U_operator.data<std::complex<double>>()[in + j].real();
+                double bb = U_operator.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -527,10 +532,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " S matrix :" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Stmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Stmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Stmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Stmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -539,10 +545,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " H matrix :" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -590,10 +597,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " fenmu:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Denominator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Denominator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Denominator_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Denominator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -663,10 +671,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " fenmu^-1:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Denominator_inv_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Denominator_inv_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Denominator_inv_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Denominator_inv_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -674,10 +683,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " fenzi:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Numerator_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Numerator_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Numerator_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -685,12 +695,11 @@ void Propagator::compute_propagator_cn2_tensor_lapack(const int nlocal,
         ofs_running << " U operator:" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].real();
-                bb = U_operator_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
+                double aa = U_operator_cpu.data<std::complex<double>>()[in + j].real();
+                double bb = U_operator_cpu.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;

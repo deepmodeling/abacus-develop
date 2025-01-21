@@ -29,9 +29,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << " H(t+dt) :" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << Htmp[i * pv->ncol + j].real() << "+" << Htmp[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -40,10 +41,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << " H(t):" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << H_laststep[i * pv->ncol + j].real() << "+" << H_laststep[i * pv->ncol + j].imag()
-                            << "i ";
+                ofs_running << H_laststep[in + j].real() << "+" << H_laststep[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -61,9 +62,10 @@ void half_Hmatrix(const Parallel_Orbitals* pv,
         ofs_running << " H (t+dt/2) :" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << Htmp[i * pv->ncol + j].real() << "+" << Htmp[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Htmp[in + j].real() << "+" << Htmp[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -88,10 +90,11 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
         ofs_running << " H(t+dt) :" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << Htmp.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                            << Htmp.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Htmp.data<std::complex<double>>()[in + j].real() << "+"
+                            << Htmp.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -100,10 +103,11 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
         ofs_running << " H(t):" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << H_laststep.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                            << H_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                ofs_running << H_laststep.data<std::complex<double>>()[in + j].real() << "+"
+                            << H_laststep.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -149,10 +153,11 @@ void half_Hmatrix_tensor(const Parallel_Orbitals* pv,
         ofs_running << " H (t+dt/2) :" << std::endl;
         for (int i = 0; i < pv->nrow; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                ofs_running << Htmp.data<std::complex<double>>()[i * pv->ncol + j].real() << "+"
-                            << Htmp.data<std::complex<double>>()[i * pv->ncol + j].imag() << "i ";
+                ofs_running << Htmp.data<std::complex<double>>()[in + j].real() << "+"
+                            << Htmp.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -186,10 +191,11 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " H(t+dt) :" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Htmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Htmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -198,10 +204,11 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " H(t):" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << H_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << H_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << H_laststep_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << H_laststep_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }
@@ -246,10 +253,11 @@ void half_Hmatrix_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " H (t+dt/2) :" << std::endl;
         for (int i = 0; i < nlocal; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                ofs_running << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].real() << "+"
-                            << Htmp_cpu.data<std::complex<double>>()[i * nlocal + j].imag() << "i ";
+                ofs_running << Htmp_cpu.data<std::complex<double>>()[in + j].real() << "+"
+                            << Htmp_cpu.data<std::complex<double>>()[in + j].imag() << "i ";
             }
             ofs_running << std::endl;
         }

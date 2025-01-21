@@ -28,12 +28,13 @@ void compute_ekb(const Parallel_Orbitals* pv,
                  double* ekb,
                  std::ofstream& ofs_running)
 {
+    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
 
     std::complex<double>* tmp1 = new std::complex<double>[pv->nloc_wfc];
     ModuleBase::GlobalFunc::ZEROS(tmp1, pv->nloc_wfc);
 
-    std::complex<double>* Eij = new std::complex<double>[pv->nloc];
-    ModuleBase::GlobalFunc::ZEROS(Eij, pv->nloc);
+    std::complex<double>* eij = new std::complex<double>[pv->nloc];
+    ModuleBase::GlobalFunc::ZEROS(eij, pv->nloc);
 
     ScalapackConnector::gemm('N',
                              'N',
@@ -70,7 +71,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_wfc,
                              0.0,
-                             Eij,
+                             eij,
                              1,
                              1,
                              pv->desc_Eij);
@@ -83,12 +84,11 @@ void compute_ekb(const Parallel_Orbitals* pv,
         ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < pv->nrow_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = Eij[i * pv->ncol + j].real();
-                bb = Eij[i * pv->ncol + j].imag();
+                double aa = eij[in + j].real();
+                double bb = eij[in + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
                 {
                     aa = 0.0;
@@ -112,8 +112,10 @@ void compute_ekb(const Parallel_Orbitals* pv,
     int info = 0;
     int naroc[2] = {0, 0};
 
-    double* Eii = new double[nband];
-    ModuleBase::GlobalFunc::ZEROS(Eii, nband);
+    assert(nband > 0);
+    double* eii = new double[nband];
+    ModuleBase::GlobalFunc::ZEROS(eii, nband);
+
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
     {
         for (int ipcol = 0; ipcol < pv->dim1; ++ipcol)
@@ -138,18 +140,18 @@ void compute_ekb(const Parallel_Orbitals* pv,
                         }
                         if (igcol == igrow)
                         {
-                            Eii[igcol] = Eij[j * naroc[0] + i].real();
+                            eii[igcol] = eij[j * naroc[0] + i].real();
                         }
                     }
                 }
             }
         } // loop ipcol
     } // loop iprow
-    info = MPI_Allreduce(Eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii, ekb, nband, MPI_DOUBLE, MPI_SUM, pv->comm());
 
     delete[] tmp1;
-    delete[] Eij;
-    delete[] Eii;
+    delete[] eij;
+    delete[] eii;
 }
 
 void compute_ekb_tensor(const Parallel_Orbitals* pv,
@@ -160,12 +162,14 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         ct::Tensor& ekb,
                         std::ofstream& ofs_running)
 {
+    assert(pv->nloc_wfc > 0 && pv->nloc > 0);
+
     // Create Tensor objects for temporary data
     ct::Tensor tmp1(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc_wfc}));
     tmp1.zero();
 
-    ct::Tensor Eij(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc}));
-    Eij.zero();
+    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({pv->nloc}));
+    eij.zero();
 
     // Perform matrix multiplication: tmp1 = Htmp * psi_k
     ScalapackConnector::gemm('N',
@@ -188,7 +192,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_wfc);
 
-    // Perform matrix multiplication: Eij = psi_k^dagger * tmp1
+    // Perform matrix multiplication: eij = psi_k^dagger * tmp1
     ScalapackConnector::gemm('C',
                              'N',
                              nband,
@@ -204,7 +208,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                              1,
                              pv->desc_wfc,
                              0.0,
-                             Eij.data<std::complex<double>>(),
+                             eij.data<std::complex<double>>(),
                              1,
                              1,
                              pv->desc_Eij);
@@ -217,12 +221,11 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
         ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < pv->nrow_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol_bands; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = Eij.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = Eij.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                double aa = eij.data<std::complex<double>>()[in + j].real();
+                double bb = eij.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
                 {
                     aa = 0.0;
@@ -246,9 +249,10 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     int info = 0;
     int naroc[2] = {0, 0};
 
-    // Create a Tensor for Eii
-    ct::Tensor Eii(ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({nband}));
-    Eii.zero();
+    // Create a Tensor for eii
+    assert(nband > 0);
+    ct::Tensor eii(ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({nband}));
+    eii.zero();
 
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
     {
@@ -274,7 +278,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
                         }
                         if (igcol == igrow)
                         {
-                            Eii.data<double>()[igcol] = Eij.data<std::complex<double>>()[j * naroc[0] + i].real();
+                            eii.data<double>()[igcol] = eij.data<std::complex<double>>()[j * naroc[0] + i].real();
                         }
                     }
                 }
@@ -283,7 +287,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     } // loop iprow
 
     // Perform MPI reduction to compute ekb
-    info = MPI_Allreduce(Eii.data<double>(), ekb.data<double>(), nband, MPI_DOUBLE, MPI_SUM, pv->comm());
+    info = MPI_Allreduce(eii.data<double>(), ekb.data<double>(), nband, MPI_DOUBLE, MPI_SUM, pv->comm());
 }
 
 template <typename Device>
@@ -306,11 +310,11 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                     ct::TensorShape({nlocal * nband})); // tmp1 shape: nlocal * nband
     tmp1.zero();
 
-    ct::Tensor Eij(ct::DataType::DT_COMPLEX_DOUBLE,
+    ct::Tensor eij(ct::DataType::DT_COMPLEX_DOUBLE,
                    ct_device_type,
-                   ct::TensorShape({nlocal * nlocal})); // Eij shape: nlocal * nlocal
+                   ct::TensorShape({nlocal * nlocal})); // eij shape: nlocal * nlocal
     // Why not use nband * nband ?????
-    Eij.zero();
+    eij.zero();
 
     std::complex<double> alpha = {1.0, 0.0};
     std::complex<double> beta = {0.0, 0.0};
@@ -330,7 +334,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal); // Leading dimension of tmp1
 
-    // Perform matrix multiplication: Eij = psi_k^dagger * tmp1
+    // Perform matrix multiplication: eij = psi_k^dagger * tmp1
     ct::kernels::blas_gemm<std::complex<double>, ct_Device>()('C',
                                                               'N',
                                                               nband,
@@ -342,12 +346,12 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
                                                               tmp1.data<std::complex<double>>(),
                                                               nlocal, // Leading dimension of tmp1
                                                               &beta,
-                                                              Eij.data<std::complex<double>>(),
-                                                              nlocal); // Leading dimension of Eij
+                                                              eij.data<std::complex<double>>(),
+                                                              nlocal); // Leading dimension of eij
 
     if (PARAM.inp.td_print_eij >= 0.0)
     {
-        ct::Tensor Eij_cpu = Eij.to_device<ct::DEVICE_CPU>();
+        ct::Tensor eij_cpu = eij.to_device<ct::DEVICE_CPU>();
 
         ofs_running
             << "------------------------------------------------------------------------------------------------"
@@ -355,12 +359,11 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " Eij:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nband; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].real();
-                bb = Eij_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
+                double aa = eij_cpu.data<std::complex<double>>()[in + j].real();
+                double bb = eij_cpu.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < PARAM.inp.td_print_eij)
                 {
                     aa = 0.0;
@@ -381,7 +384,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
             << std::endl;
     }
 
-    // Extract diagonal elements of Eij into ekb
+    // Extract diagonal elements of eij into ekb
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         // GPU implementation
@@ -389,7 +392,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         {
             base_device::memory::synchronize_memory_op<double, Device, Device>()(
                 ekb.data<double>() + i,
-                reinterpret_cast<const double*>(Eij.data<std::complex<double>>() + i * nlocal + i),
+                reinterpret_cast<const double*>(eij.data<std::complex<double>>() + i * nlocal + i),
                 1);
         }
     }
@@ -398,7 +401,7 @@ void compute_ekb_tensor_lapack(const Parallel_Orbitals* pv,
         // CPU implementation
         for (int i = 0; i < nband; ++i)
         {
-            ekb.data<double>()[i] = Eij.data<std::complex<double>>()[i * nlocal + i].real();
+            ekb.data<double>()[i] = eij.data<std::complex<double>>()[i * nlocal + i].real();
         }
     }
 }

@@ -45,12 +45,11 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k[i * pv->ncol + j].real();
-                bb = psi_k[i * pv->ncol + j].imag();
+                double aa = psi_k[in + j].real();
+                double bb = psi_k[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -67,12 +66,11 @@ void upsi(const Parallel_Orbitals* pv,
         ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k_laststep[i * pv->ncol + j].real();
-                bb = psi_k_laststep[i * pv->ncol + j].imag();
+                double aa = psi_k_laststep[in + j].real();
+                double bb = psi_k_laststep[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -124,12 +122,11 @@ void upsi_tensor(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = psi_k.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                double aa = psi_k.data<std::complex<double>>()[in + j].real();
+                double bb = psi_k.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -146,12 +143,11 @@ void upsi_tensor(const Parallel_Orbitals* pv,
         ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < pv->ncol_bands; i++)
         {
+            const int in = i * pv->ncol;
             for (int j = 0; j < pv->ncol; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].real();
-                bb = psi_k_laststep.data<std::complex<double>>()[i * pv->ncol + j].imag();
+                double aa = psi_k_laststep.data<std::complex<double>>()[in + j].real();
+                double bb = psi_k_laststep.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -210,12 +206,11 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " psi_k:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].real();
-                bb = psi_k_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
+                double aa = psi_k_cpu.data<std::complex<double>>()[in + j].real();
+                double bb = psi_k_cpu.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
@@ -232,12 +227,11 @@ void upsi_tensor_lapack(const Parallel_Orbitals* pv,
         ofs_running << " psi_k_laststep:" << std::endl;
         for (int i = 0; i < nband; i++)
         {
+            const int in = i * nlocal;
             for (int j = 0; j < nlocal; j++)
             {
-                double aa = 0.0;
-                double bb = 0.0;
-                aa = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].real();
-                bb = psi_k_laststep_cpu.data<std::complex<double>>()[i * nlocal + j].imag();
+                double aa = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].real();
+                double bb = psi_k_laststep_cpu.data<std::complex<double>>()[in + j].imag();
                 if (std::abs(aa) < 1e-8)
                 {
                     aa = 0.0;
