@@ -98,7 +98,7 @@ void norm_psi(const Parallel_Orbitals* pv,
         GlobalV::ofs_running << std::endl;
     }
 
-    int naroc[2]; // maximum number of row or column
+    int naroc[2] = {0, 0}; // maximum number of row or column
 
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
     {
@@ -304,7 +304,7 @@ void norm_psi_tensor(const Parallel_Orbitals* pv,
         GlobalV::ofs_running << std::endl;
     }
 
-    int naroc[2]; // maximum number of row or column
+    int naroc[2] = {0, 0}; // maximum number of row or column
 
     for (int iprow = 0; iprow < pv->dim0; ++iprow)
     {

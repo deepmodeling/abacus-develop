@@ -109,7 +109,7 @@ void compute_ekb(const Parallel_Orbitals* pv,
     }
 
     int info = 0;
-    int naroc[2];
+    int naroc[2] = {0, 0};
 
     double* Eii = new double[nband];
     ModuleBase::GlobalFunc::ZEROS(Eii, nband);
@@ -242,7 +242,7 @@ void compute_ekb_tensor(const Parallel_Orbitals* pv,
     }
 
     int info = 0;
-    int naroc[2];
+    int naroc[2] = {0, 0};
 
     // Create a Tensor for Eii
     ct::Tensor Eii(ct::DataType::DT_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({nband}));

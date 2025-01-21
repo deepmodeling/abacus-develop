@@ -916,8 +916,8 @@ void Propagator::compute_propagator_taylor(const int nlocal,
     }
 
     // set rank0
-    int info;
-    int naroc[2]; // maximum number of row or column
+    int info = 0;
+    int naroc[2] = {0, 0}; // maximum number of row or column
 
     for (int iprow = 0; iprow < this->ParaV->dim0; ++iprow)
     {
