@@ -70,7 +70,7 @@ class CalAtomsInfo
         elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
         // calculate the number of nbands_local
         para.sys.nbands_l = para.inp.nbands;
-        if (inp.ks_solver == "bpcg") // only bpcg support band parallel
+        if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel
         {
             para.sys.nbands_l = para.inp.nbands / para.inp.bndpar;
             if (GlobalV::RANK_IN_BPGROUP < para.inp.nbands % para.inp.bndpar)

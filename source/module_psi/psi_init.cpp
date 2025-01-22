@@ -40,7 +40,7 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("PSIInit", "prepare_init");
     this->psi_initer.reset();
-    if (this->init_wfc == "random" || (PARAM.ks_solver == "bpcg" && PARAM.inp.bndpar > 1))
+    if (this->init_wfc == "random" || (PARAM.inp.ks_solver == "bpcg" && PARAM.inp.bndpar > 1))
     { //temporary solution for band parallel bpcg
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }

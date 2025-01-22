@@ -72,7 +72,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_STOGROUP,
+                                      GlobalV::MY_BNDGROUP,
                                       GlobalV::NPROC_IN_POOL,
                                       GlobalV::RANK_IN_POOL,
                                       GlobalV::MY_POOL);
@@ -118,7 +118,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_STOGROUP,
+                                      GlobalV::MY_BNDGROUP,
                                       GlobalV::NPROC_IN_POOL,
                                       GlobalV::RANK_IN_POOL,
                                       GlobalV::MY_POOL);
@@ -173,7 +173,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_STOGROUP,
+                                      GlobalV::MY_BNDGROUP,
                                       GlobalV::NPROC_IN_POOL,
                                       GlobalV::RANK_IN_POOL,
                                       GlobalV::MY_POOL);

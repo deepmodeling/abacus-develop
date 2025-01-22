@@ -231,7 +231,7 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
@@ -288,7 +288,7 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);

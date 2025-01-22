@@ -234,12 +234,8 @@ void ReadInput::item_system()
                           "will be distributed among";
         read_sync_int(input.kpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.inp.device  == "gpu" && para.inp.basis_type == "pw")
-            {
-                para.input.kpar = base_device::information::get_device_kpar(para.inp.kpar, para.inp.bndpar);
-            }
 #ifdef __LCAO
-            else if (para.inp.basis_type == "lcao")
+            if (para.inp.basis_type == "lcao")
             {
                 para.sys.kpar_lcao = para.inp.kpar;
                 para.input.kpar = 1;

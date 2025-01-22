@@ -1,11 +1,67 @@
 #include "module_base/global_variable.h"
-#include "module_base/module_device/device.h"
 #include "module_base/tool_quit.h"
 #include "module_parameter/parameter.h"
 #include "read_input.h"
 #include "read_input_tool.h"
 namespace ModuleIO
 {
+/// @note Here para.inp has been synchronized of all ranks.
+///       All para.inp have the same value.
+void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
+{
+    /// caculate the gamma_only_pw and gamma_only_local
+    if (inp.gamma_only)
+    {
+        sys.gamma_only_local = true;
+    }
+    if (sys.gamma_only_local)
+    {
+        if (inp.esolver_type == "tddft")
+        {
+            GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
+            sys.gamma_only_local = false;
+        }
+    }
+    /// set deepks_setorb
+    if (inp.deepks_scf || inp.deepks_out_labels)
+    {
+        sys.deepks_setorb = true;
+    }
+    /// set the noncolin and lspinorb from nspin
+    switch (inp.nspin)
+    {
+    case 4:
+        if (inp.noncolin)
+        {
+            sys.domag = true;
+            sys.domag_z = false;
+        }
+        else
+        {
+            sys.domag = false;
+            sys.domag_z = true;
+        }
+        sys.npol = 2;
+        break;
+    case 2:
+    case 1:
+        sys.domag = false;
+        sys.domag_z = false;
+        sys.npol = 1;
+    default:
+        break;
+    }
+    sys.nqx = static_cast<int>((sqrt(inp.ecutwfc) / sys.dq + 4.0) * inp.cell_factor);
+    sys.nqxq = static_cast<int>((sqrt(inp.ecutrho) / sys.dq + 4.0) * inp.cell_factor);
+    /// set ncx,ncy,ncz
+    sys.ncx = inp.nx;
+    sys.ncy = inp.ny;
+    sys.ncz = inp.nz;
+#ifdef __MPI
+    Parallel_Common::bcast_bool(sys.double_grid);
+#endif
+}
+
 /// @note Here para.inp has been synchronized of all ranks. 
 ///       Only para.inp in rank 0 is right. 
 ///       So we need to broadcast the results to all ranks.
@@ -68,61 +124,6 @@ void ReadInput::set_global_dir(const Input_para& inp, System_para& sys)
     Parallel_Common::bcast_string(sys.global_stru_dir);
     Parallel_Common::bcast_string(sys.global_matrix_dir);
     Parallel_Common::bcast_string(sys.global_in_stru);
-#endif
-}
-
-/// @note Here para.inp has been synchronized of all ranks.
-///       All para.inp have the same value.
-void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
-{
-    /// caculate the gamma_only_pw and gamma_only_local
-    if (inp.gamma_only)
-    {
-        sys.gamma_only_local = true;
-    }
-    if (sys.gamma_only_local)
-    {
-        if (inp.esolver_type == "tddft")
-        {
-            GlobalV::ofs_running << " WARNING : gamma_only is not applicable for tddft" << std::endl;
-            sys.gamma_only_local = false;
-        }
-    }
-    /// set deepks_setorb
-    if (inp.deepks_scf || inp.deepks_out_labels)
-    {
-        sys.deepks_setorb = true;
-    }
-    /// set the noncolin and lspinorb from nspin
-    switch (inp.nspin)
-    {
-    case 4:
-        if (inp.noncolin)
-        {
-            sys.domag = true;
-            sys.domag_z = false;
-        }
-        else
-        {
-            sys.domag = false;
-            sys.domag_z = true;
-        }
-        sys.npol = 2;
-        break;
-    case 2:
-    case 1:
-        sys.domag = false;
-        sys.domag_z = false;
-        sys.npol = 1;
-    default:
-        break;
-    }
-    /// set ncx,ncy,ncz
-    sys.ncx = inp.nx;
-    sys.ncy = inp.ny;
-    sys.ncz = inp.nz;
-#ifdef __MPI
-    Parallel_Common::bcast_bool(sys.double_grid);
 #endif
 }
 } // namespace ModuleIO

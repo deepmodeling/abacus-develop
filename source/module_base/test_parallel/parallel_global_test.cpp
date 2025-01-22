@@ -55,7 +55,7 @@ class MPIContext
     int rank_in_pool;
 
     int nstogroup;
-    int my_stogroup;
+    int MY_BNDGROUP;
     int rank_in_stogroup;
     int nproc_in_stogroup;
 
@@ -173,7 +173,7 @@ TEST_F(ParaGlobal, InitPools)
                                 mpi.kpar,
                                 mpi.nproc_in_stogroup,
                                 mpi.rank_in_stogroup,
-                                mpi.my_stogroup,
+                                mpi.MY_BNDGROUP,
                                 mpi.nproc_in_pool,
                                 mpi.rank_in_pool,
                                 mpi.my_pool), ::testing::ExitedWithCode(1), "");

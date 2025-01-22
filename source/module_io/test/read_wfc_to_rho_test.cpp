@@ -286,7 +286,7 @@ int main(int argc, char** argv)
                                   GlobalV::KPAR,
                                   GlobalV::NPROC_IN_BNDGROUP,
                                   GlobalV::RANK_IN_BPGROUP,
-                                  GlobalV::MY_STOGROUP,
+                                  GlobalV::MY_BNDGROUP,
                                   GlobalV::NPROC_IN_POOL,
                                   GlobalV::RANK_IN_POOL,
                                   GlobalV::MY_POOL);
