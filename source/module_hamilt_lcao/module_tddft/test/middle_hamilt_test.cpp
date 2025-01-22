@@ -1,11 +1,12 @@
 #include "module_hamilt_lcao/module_tddft/middle_hamilt.h"
 
+#include "module_base/global_variable.h" // GlobalV::ofs_running
+#include "module_basis/module_ao/parallel_orbitals.h"
+#include "tddft_test.h"
+
 #include <gtest/gtest.h>
 #include <module_base/scalapack_connector.h>
 #include <mpi.h>
-
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "tddft_test.h"
 
 /************************************************
  *  unit test of functions in middle_hamilt.h
@@ -72,7 +73,7 @@ TEST(MiddleHamiltTest, testMiddleHamilt)
     }
 
     // Call the function
-    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, Hlaststep, Slaststep, print_matrix);
+    module_tddft::half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, Hlaststep, Slaststep, GlobalV::ofs_running, print_matrix);
 
     // Check the results
     EXPECT_NEAR(Htmp[0].real(), 1.0, doublethreshold);

@@ -1,4 +1,4 @@
-#include "module_hamilt_lcao/module_tddft/bandenergy.h"
+#include "module_hamilt_lcao/module_tddft/band_energy.h"
 
 #include <gtest/gtest.h>
 #include <module_base/scalapack_connector.h>
@@ -9,7 +9,7 @@
 #include "tddft_test.h"
 
 /************************************************
- *  unit test of functions in bandenergy.h
+ *  unit test of functions in band_energy.h
  ***********************************************/
 
 /**
@@ -19,7 +19,6 @@
  */
 
 #define doublethreshold 1e-8
-double module_tddft::Evolve_elec::td_print_eij = -1;
 
 TEST(BandEnergyTest, testBandEnergy)
 {
@@ -87,7 +86,7 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_tddft::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb);
+    module_tddft::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, GlobalV::ofs_running);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);
