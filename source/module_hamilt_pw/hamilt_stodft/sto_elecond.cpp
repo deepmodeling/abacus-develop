@@ -620,7 +620,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         }
         // Parallel for bands
         int allbands_ks = this->nbands_ks - cutib0;
-        parallel_distribution paraks(allbands_ks, PARAM.inp.bndpar, GlobalV::MY_STOGROUP);
+        parallel_distribution paraks(allbands_ks, PARAM.inp.bndpar, GlobalV::MY_BNDGROUP);
         int perbands_ks = paraks.num_per;
         int ib0_ks = paraks.start;
         ib0_ks += this->nbands_ks - allbands_ks;
@@ -653,7 +653,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         //-----------------------------------------------------------
         //               ks conductivity
         //-----------------------------------------------------------
-        if (GlobalV::MY_STOGROUP == 0 && allbands_ks > 0)
+        if (GlobalV::MY_BNDGROUP == 0 && allbands_ks > 0)
         {
             jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11.data(), ct12.data(), ct22.data());
         }

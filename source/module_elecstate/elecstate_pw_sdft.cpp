@@ -19,7 +19,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         setmem_var_op()(this->rho[is], 0, this->charge->nrxx);
     }
 
-    if (GlobalV::MY_STOGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0 || PARAM.inp.ks_solver == "bpcg")
     {
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {

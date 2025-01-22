@@ -205,7 +205,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 #ifdef __MPI
             MPI_Barrier(MPI_COMM_WORLD);
 #endif
-            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_STOGROUP == 0);
+            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0);
             if (GlobalV::MY_POOL == ip && ip_flag)
             {
                 const int start_ik = nks_np * is;

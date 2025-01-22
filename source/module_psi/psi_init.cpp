@@ -40,8 +40,8 @@ void PSIInit<T, Device>::prepare_init(const int& random_seed)
     // use new instead, but will cause asymmetric allocation and deallocation, in literal aspect
     ModuleBase::timer::tick("PSIInit", "prepare_init");
     this->psi_initer.reset();
-    if (this->init_wfc == "random")
-    {
+    if (this->init_wfc == "random" || (PARAM.ks_solver == "bpcg" && PARAM.inp.bndpar > 1))
+    { //temporary solution for band parallel bpcg
         this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_initializer_random<T>());
     }
     else if (this->init_wfc == "file")
@@ -86,7 +86,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
                                         std::ofstream& ofs_running)
 {
-    if (kspw_psi->get_nbands() == 0 || GlobalV::MY_STOGROUP != 0)
+    if (kspw_psi->get_nbands() == 0 || (GlobalV::MY_BNDGROUP != 0 && PARAM.inp.ks_solver != "bpcg"))
     {
         return;
     }

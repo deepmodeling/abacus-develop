@@ -46,7 +46,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     {
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
-        if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
+        if (nbands > 0 && GlobalV::MY_BNDGROUP == 0)
         {
             /// update psi pointer for each k point
             psi.fix_k(ik);
@@ -89,7 +89,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
-    if (GlobalV::MY_STOGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0)
     {
         pes_pw->calEBand();
     }

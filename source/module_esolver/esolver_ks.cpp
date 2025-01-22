@@ -361,7 +361,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
     // Maybe in the future, density and wavefunctions should use different
     // parallel algorithms, in which they do not occupy all processors, for
     // example wavefunctions uses 20 processors while density uses 10.
-    if (GlobalV::MY_STOGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0)
     {
         // double drho = this->estate.caldr2();
         // EState should be used after it is constructed.
@@ -550,7 +550,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
                                        this->pelec->charge->rho,
                                        this->pelec->nelec_spin.data());
 
-    if (GlobalV::MY_STOGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0)
     {
         // mixing will restart at this->p_chgmix->mixing_restart steps
         if (drho <= PARAM.inp.mixing_restart && PARAM.inp.mixing_restart > 0.0

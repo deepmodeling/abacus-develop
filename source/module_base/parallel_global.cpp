@@ -253,9 +253,9 @@ void Parallel_Global::init_pools(const int& NPROC,
                                  const int& MY_RANK,
                                  const int& BNDPAR,
                                  const int& KPAR,
-                                 int& NPROC_IN_STOGROUP,
+                                 int& NPROC_IN_BNDGROUP,
                                  int& RANK_IN_BPGROUP,
-                                 int& MY_STOGROUP,
+                                 int& MY_BNDGROUP,
                                  int& NPROC_IN_POOL,
                                  int& RANK_IN_POOL,
                                  int& MY_POOL)
@@ -268,9 +268,9 @@ void Parallel_Global::init_pools(const int& NPROC,
                                   MY_RANK,
                                   BNDPAR,
                                   KPAR,
-                                  NPROC_IN_STOGROUP,
+                                  NPROC_IN_BNDGROUP,
                                   RANK_IN_BPGROUP,
-                                  MY_STOGROUP,
+                                  MY_BNDGROUP,
                                   NPROC_IN_POOL,
                                   RANK_IN_POOL,
                                   MY_POOL);
@@ -316,16 +316,16 @@ void Parallel_Global::divide_pools(const int& NPROC,
                                    const int& MY_RANK,
                                    const int& BNDPAR,
                                    const int& KPAR,
-                                   int& NPROC_IN_STOGROUP,
+                                   int& NPROC_IN_BNDGROUP,
                                    int& RANK_IN_BPGROUP,
-                                   int& MY_STOGROUP,
+                                   int& MY_BNDGROUP,
                                    int& NPROC_IN_POOL,
                                    int& RANK_IN_POOL,
                                    int& MY_POOL)
 {
     // note: the order of k-point parallelization and band parallelization is important
     //       The order will not change the behavior of INTER_POOL or PARAPW_WORLD, and MY_POOL
-    //       and MY_STOGROUP will be the same as well.
+    //       and MY_BNDGROUP will be the same as well.
     if(BNDPAR > 1 && NPROC %(BNDPAR * KPAR) != 0)
     {
         std::cout << "Error: When BNDPAR = " << BNDPAR << " > 1, number of processes (" << NPROC << ") must be divisible by the number of groups ("
@@ -358,17 +358,17 @@ void Parallel_Global::divide_pools(const int& NPROC,
     
     if(BNDPAR > 1)
     {
-        NPROC_IN_STOGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
+        NPROC_IN_BNDGROUP = kpar_group.ngroups * bndpar_group.nprocs_in_group;
         RANK_IN_BPGROUP = kpar_group.my_group * bndpar_group.nprocs_in_group + bndpar_group.rank_in_group;
-        MY_STOGROUP = bndpar_group.my_group;
-        MPI_Comm_split(MPI_COMM_WORLD, MY_STOGROUP, RANK_IN_BPGROUP, &STO_WORLD);
+        MY_BNDGROUP = bndpar_group.my_group;
+        MPI_Comm_split(MPI_COMM_WORLD, MY_BNDGROUP, RANK_IN_BPGROUP, &STO_WORLD);
         MPI_Comm_dup(bndpar_group.inter_comm, &PARAPW_WORLD);
     }
     else
     {
-        NPROC_IN_STOGROUP = NPROC;
+        NPROC_IN_BNDGROUP = NPROC;
         RANK_IN_BPGROUP = MY_RANK;
-        MY_STOGROUP = 0;
+        MY_BNDGROUP = 0;
         MPI_Comm_dup(MPI_COMM_WORLD, &STO_WORLD);
         MPI_Comm_split(MPI_COMM_WORLD, MY_RANK, 0, &PARAPW_WORLD);
     }

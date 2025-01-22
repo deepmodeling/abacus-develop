@@ -284,7 +284,7 @@ int main(int argc, char** argv)
                                   GlobalV::MY_RANK,
                                   PARAM.inp.bndpar,
                                   GlobalV::KPAR,
-                                  GlobalV::NPROC_IN_STOGROUP,
+                                  GlobalV::NPROC_IN_BNDGROUP,
                                   GlobalV::RANK_IN_BPGROUP,
                                   GlobalV::MY_STOGROUP,
                                   GlobalV::NPROC_IN_POOL,

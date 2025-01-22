@@ -198,7 +198,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
     // set_diagethr need it
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
-    if (GlobalV::MY_STOGROUP == 0)
+    if (GlobalV::MY_BNDGROUP == 0)
     {
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)

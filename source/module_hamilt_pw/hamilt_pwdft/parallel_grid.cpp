@@ -84,7 +84,7 @@ void Parallel_Grid::init(
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
-	if(PARAM.inp.esolver_type == "sdft") {		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
+	if(PARAM.inp.esolver_type == "sdft") {		nprocgroup = GlobalV::NPROC_IN_BNDGROUP;
 	} else {											nprocgroup = GlobalV::NPROC;
 }
 

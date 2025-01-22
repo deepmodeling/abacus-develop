@@ -35,7 +35,7 @@ void ModuleIO::write_vdata_palgrid(
     // reduce
     std::vector<double> data_xyz_full(nxyz);    // data to be written
 #ifdef __MPI    // reduce to rank 0
-    if (my_pool == 0 && GlobalV::MY_STOGROUP == 0)
+    if (my_pool == 0 && GlobalV::MY_BNDGROUP == 0)
     {
         pgrid.reduce(data_xyz_full.data(), data);
     }

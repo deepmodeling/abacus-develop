@@ -129,7 +129,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
 
     // 3. check the number of atom types from STRU file
     // set the global directories
-    this->set_global_dir(param); 
+    this->set_global_dir(param.inp, param.sys); 
     if (this->check_ntype_flag && this->rank == 0)
     {
         check_ntype(param.globalv.global_in_stru, param.input.ntype);
@@ -143,7 +143,7 @@ void ReadInput::read_parameters(Parameter& param, const std::string& filename_in
     }
 
         // 5. set the globalv parameters, some parameters in different processes are different. e.g. rank
-    this->set_globalv(param);
+    this->set_globalv(param.inp, param.sys);
 
     if (this->check_mode)
     {
