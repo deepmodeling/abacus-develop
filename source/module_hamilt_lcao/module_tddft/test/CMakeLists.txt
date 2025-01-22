@@ -11,9 +11,9 @@ AddTest(
 )
 
 AddTest(
-  TARGET tddft_bandenergy_test
+  TARGET tddft_band_energy_test
   LIBS parameter ${math_libs} base device tddft_test_lib  
-  SOURCES bandenergy_test.cpp ../bandenergy.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp
+  SOURCES band_energy_test.cpp ../band_energy.cpp ../../../module_basis/module_ao/parallel_orbitals.cpp
 )
 
 AddTest(
@@ -31,6 +31,6 @@ AddTest(
 AddTest(
   TARGET tddft_propagator_test
   LIBS parameter ${math_libs} base device tddft_test_lib  
-  SOURCES propagator_test1.cpp propagator_test2.cpp propagator_test3.cpp ../propagator.cpp 
+  SOURCES propagator_test1.cpp propagator_test2.cpp propagator_test3.cpp ../propagator.cpp ../propagator_cn2.cpp ../propagator_taylor.cpp ../propagator_etrs.cpp
 )
 

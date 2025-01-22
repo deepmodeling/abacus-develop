@@ -1,11 +1,12 @@
 #include "module_hamilt_lcao/module_tddft/norm_psi.h"
 
+#include "module_base/global_variable.h" // GlobalV::ofs_running
+#include "module_basis/module_ao/parallel_orbitals.h"
+#include "tddft_test.h"
+
 #include <gtest/gtest.h>
 #include <module_base/scalapack_connector.h>
 #include <mpi.h>
-
-#include "module_basis/module_ao/parallel_orbitals.h"
-#include "tddft_test.h"
 
 /************************************************
  *  unit test of functions in norm_psi.h
@@ -89,7 +90,7 @@ TEST(NormPsiTest, testNormPsi)
     psi_k[11] = 1.0;
 
     // Call the function
-    module_tddft::norm_psi(pv, nband, nlocal, Stmp, psi_k, print_matrix);
+    module_tddft::norm_psi(pv, nband, nlocal, Stmp, psi_k, GlobalV::ofs_running, print_matrix);
 
     // Check the results
     EXPECT_NEAR(psi_k[0].real(), 0.577350269189626, doublethreshold);

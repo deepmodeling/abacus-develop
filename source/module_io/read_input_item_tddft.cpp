@@ -20,13 +20,28 @@ void ReadInput::item_rt_tddft()
         read_sync_bool(input.td_vext);
         this->add_item(item);
     }
+    // {
+    //     Input_Item item("td_vext_dire");
+    //     item.annotation = "extern potential direction";
+    //     item.read_value = [](const Input_Item& item, Parameter& para) {
+    //         para.input.td_vext_dire = longstring(item.str_values);
+    //     };
+    //     sync_string(input.td_vext_dire);
+    //     this->add_item(item);
+    // }
     {
         Input_Item item("td_vext_dire");
         item.annotation = "extern potential direction";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_vext_dire = longstring(item.str_values);
+            parse_expression(item.str_values, para.input.td_vext_dire);
         };
-        sync_string(input.td_vext_dire);
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            if (item.is_read())
+            {
+                item.final_value.str(longstring(item.str_values));
+            }
+        };
+        add_intvec_bcast(input.td_vext_dire, para.input.td_vext_dire.size(), 0);
         this->add_item(item);
     }
     {
