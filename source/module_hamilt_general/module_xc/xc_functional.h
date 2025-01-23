@@ -64,13 +64,22 @@ class XC_Functional
 //		func_type, which is as specified in get_func_type
 //		use_libxc, whether to use LIBXC. The rule is to NOT use it for functionals that we already have.
 
-	static int get_func_type();
+    static int get_func_type()
+    {
+        return func_type;
+    };
     static void set_xc_type(const std::string xc_func_in);
 
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
-    static double get_hybrid_alpha();
-    static bool get_has_kedf();
+    static double get_hybrid_alpha()
+    {
+        return hybrid_alpha;
+    };
+    static bool get_has_kedf()
+    {
+        return has_kedf;
+    };
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 

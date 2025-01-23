@@ -26,20 +26,6 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
     hybrid_alpha = alpha_in;
 }
 
-double XC_Functional::get_hybrid_alpha()
-{
-    return hybrid_alpha;
-}
-
-bool XC_Functional::get_has_kedf()
-{
-    return has_kedf;
-}
-
-int XC_Functional::get_func_type()
-{
-    return func_type;
-}
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 {
     /** In the special "two-level" calculation case,
