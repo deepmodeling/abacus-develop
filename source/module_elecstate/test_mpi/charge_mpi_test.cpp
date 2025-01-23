@@ -18,7 +18,7 @@ Charge::~Charge()
 namespace elecstate
 {
 int tmp_xc_func_type = 3;
-int get_xc_func_type()
+int XC_Functional::get_func_type()
 {
     return tmp_xc_func_type;
 }

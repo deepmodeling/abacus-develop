@@ -5,7 +5,7 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
+
 #include <string>
 Parameter PARMA;
 
@@ -13,7 +13,7 @@ Parameter PARMA;
 namespace elecstate
 {
 int tmp_xc_func_type = 1;
-int get_xc_func_type()
+int XC_Functional::get_func_type()
 {
     return tmp_xc_func_type;
 }

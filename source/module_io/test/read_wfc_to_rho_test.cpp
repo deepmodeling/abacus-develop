@@ -15,7 +15,6 @@
 #endif
 #include "module_cell/klist.h"
 #include "module_cell/unitcell.h"
-#include "module_elecstate/elecstate_getters.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
@@ -46,10 +45,6 @@ Magnetism::Magnetism()
 }
 Magnetism::~Magnetism()
 {
-}
-int elecstate::get_xc_func_type()
-{
-    return 0;
 }
 int XC_Functional::get_func_type()
 {

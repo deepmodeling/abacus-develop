@@ -1,6 +1,5 @@
 list(APPEND objects
     elecstate.cpp
-    elecstate_getters.cpp
     elecstate_energy_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp

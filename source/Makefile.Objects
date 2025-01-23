@@ -651,7 +651,6 @@ OBJS_SRCPW=H_Ewald_pw.o\
     vnl_op.o\
     global.o\
     magnetism.o\
-    elecstate_getters.o\
     occupy.o\
     structure_factor.o\
     structure_factor_k.o\

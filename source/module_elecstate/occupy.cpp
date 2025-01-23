@@ -1,10 +1,9 @@
 #include "occupy.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/mymath.h"
 #include "module_base/parallel_reduce.h"
-#include "module_elecstate/elecstate_getters.h"
+#include "module_parameter/parameter.h"
 
 Occupy::Occupy()
 {

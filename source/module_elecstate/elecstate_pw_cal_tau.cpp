@@ -1,5 +1,4 @@
 #include "elecstate_pw.h"
-#include "elecstate_getters.h"
 
 namespace elecstate {
 

@@ -1,5 +1,4 @@
 #include "elecstate.h"
-#include "elecstate_getters.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
@@ -461,7 +460,7 @@ void ElecState::print_etot(const Magnetism& magnet,
             break;
         }
         std::vector<double> drho = {scf_thr};
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        if (XC_Functional::get_has_kedf())
         {
             drho.push_back(scf_thr_kin);
         }

@@ -34,7 +34,7 @@ Magnetism::~Magnetism()
 namespace elecstate
 {
 int tmp_xc_func_type = 1;
-int get_xc_func_type()
+int XC_Functional::get_func_type()
 {
     return tmp_xc_func_type;
 }

@@ -70,6 +70,7 @@ class XC_Functional
     // For hybrid functional
     static void set_hybrid_alpha(const double alpha_in);
     static double get_hybrid_alpha();
+    static bool get_has_kedf();
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -77,10 +78,11 @@ class XC_Functional
 
 	static std::vector<int> func_id; // libxc id of functional
 	static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
-	static bool use_libxc;
+    static bool has_kedf; // whether the functional has kinetic energy density
+    static bool use_libxc;
 
-	//exx_hybrid_alpha for mixing exx in hybrid functional:
-	static double hybrid_alpha;
+    // exx_hybrid_alpha for mixing exx in hybrid functional:
+    static double hybrid_alpha;
 
 	// added by jghan, 2024-07-07
 	// as a scaling factor for different xc-functionals

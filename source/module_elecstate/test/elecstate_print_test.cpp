@@ -5,12 +5,11 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
+#include "module_cell/klist.h"
 #include "module_elecstate/elecstate.h"
-#include "module_elecstate/elecstate_getters.h"
+#include "module_elecstate/module_charge/charge.h"
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
-#include "module_elecstate/module_charge/charge.h"
-#include "module_cell/klist.h"
 
 /***************************************************************
  *  mock functions
@@ -41,7 +40,7 @@ Charge::Charge()
 Charge::~Charge()
 {
 }
-int elecstate::get_xc_func_type()
+int XC_Functional::get_func_type()
 {
     return 0;
 }

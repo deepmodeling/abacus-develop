@@ -1,7 +1,7 @@
 #include "magnetism.h"
-#include "elecstate_getters.h"
-#include "module_parameter/parameter.h"
+
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 
 Magnetism::Magnetism()
 {
