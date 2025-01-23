@@ -23,7 +23,7 @@ void ReadInput::set_globalv(Parameter& para)
         para.sys.global_matrix_dir = to_dir(para.sys.global_matrix_dir);
 
         /// get the global readin directory
-        para.sys.global_readin_dir = para.inp.read_file_dir + '/';
+        para.sys.global_readin_dir = para.inp.read_file_dir;
         para.sys.global_readin_dir = to_dir(para.sys.global_readin_dir);
 
         /// get the stru file for md restart case
