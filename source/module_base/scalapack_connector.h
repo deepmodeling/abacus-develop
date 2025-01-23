@@ -193,11 +193,16 @@ extern "C"
 	template <typename T>
 	typename std::enable_if<block2d_data_type<T>::value,void>::type Cpxgemr2d(int M, int N, T *A, int IA, int JA, int *DESCA, T *B, int IB, int JB, int *DESCB, int ICTXT)
 	{
-		if (std::is_same<T,double>::value) Cpdgemr2d(M, N, reinterpret_cast<double*>(A),IA, JA, DESCA,reinterpret_cast<double*>(B),IB,JB, DESCB,ICTXT);
-		if (std::is_same<T,std::complex<double>>::value) Cpzgemr2d(M, N, reinterpret_cast<std::complex<double>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<double>*>(B),IB,JB, DESCB,ICTXT);
-		if (std::is_same<T,float>::value) Cpsgemr2d(M, N, reinterpret_cast<float*>(A),IA, JA, DESCA,reinterpret_cast<float*>(B),IB,JB, DESCB,ICTXT);
-		if (std::is_same<T,std::complex<float>>::value) Cpcgemr2d(M, N, reinterpret_cast<std::complex<float>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<float>*>(B),IB,JB, DESCB,ICTXT);
-		if (std::is_same<T,int>::value) Cpigemr2d(M, N, reinterpret_cast<int*>(A),IA, JA, DESCA,reinterpret_cast<int*>(B),IB,JB, DESCB,ICTXT);
+		if (std::is_same<T,double>::value) { Cpdgemr2d(M, N, reinterpret_cast<double*>(A),IA, JA, DESCA,reinterpret_cast<double*>(B),IB,JB, DESCB,ICTXT);
+}
+		if (std::is_same<T,std::complex<double>>::value) { Cpzgemr2d(M, N, reinterpret_cast<std::complex<double>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<double>*>(B),IB,JB, DESCB,ICTXT);
+}
+		if (std::is_same<T,float>::value) { Cpsgemr2d(M, N, reinterpret_cast<float*>(A),IA, JA, DESCA,reinterpret_cast<float*>(B),IB,JB, DESCB,ICTXT);
+}
+		if (std::is_same<T,std::complex<float>>::value) { Cpcgemr2d(M, N, reinterpret_cast<std::complex<float>*>(A),IA, JA, DESCA,reinterpret_cast<std::complex<float>*>(B),IB,JB, DESCB,ICTXT);
+}
+		if (std::is_same<T,int>::value) { Cpigemr2d(M, N, reinterpret_cast<int*>(A),IA, JA, DESCA,reinterpret_cast<int*>(B),IB,JB, DESCB,ICTXT);
+}
 	};
 	
 
