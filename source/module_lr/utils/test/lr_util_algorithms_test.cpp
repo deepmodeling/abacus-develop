@@ -16,6 +16,13 @@ inline void check_double_eq(std::complex<double>* data1, std::complex<double>* d
         EXPECT_NEAR(data1[i].imag(), data2[i].imag(), 1e-10);
     }
 };
+inline void check_norm_eq(double* data1, double* data2, int size)
+{
+    for (int i = 0;i < size;++i)
+    {
+        EXPECT_NEAR(std::norm(data1[i]), std::norm(data2[i]), 1e-10);
+    }
+};
 inline void check_norm_eq(std::complex<double>* data1, std::complex<double>* data2, int size)
 {
     for (int i = 0;i < size;++i)
@@ -197,6 +204,40 @@ TEST(LR_Util, DiagScaLapackDouble)
     // compare
     check_double_eq(eig_para.data(), eig.data(), dim);
     std::vector<double> eigvec_serial_local(pmat.get_local_size());
+    LR_Util::set_local_from_global(pmat, mat.data(), eigvec_serial_local.data());
+    check_norm_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
+}
+
+
+TEST(LR_Util, DiagScaLapackGeneralComplex)
+{
+    // setup the matrix
+    const int dim = 15;
+    std::vector<std::complex<double>> mat(dim * dim);
+    set_rand(mat.data(), dim * dim);
+    LR_Util::matsym(mat.data(), dim);
+    Parallel_2D pmat;
+    LR_Util::setup_2d_division(pmat, 1, dim, dim);
+    std::vector<std::complex<double>> hmat_local(pmat.get_local_size());
+    LR_Util::set_local_from_global(pmat, mat.data(), hmat_local.data());
+    std::vector<std::complex<double>> smat_local(pmat.get_local_size(), 0.0);
+    for (int lj = 0;lj < pmat.get_col_size();++lj)
+        for (int li = 0;li < pmat.get_row_size();++li)
+            if (pmat.local2global_row(li) == pmat.local2global_col(lj))  // diagonal elements
+                smat_local[li * pmat.get_row_size() + lj] = std::complex<double>(1.0, 0.0);
+
+    // serial
+    std::vector<double> eig(dim);
+    LR_Util::diag_lapack(dim, mat.data(), eig.data());
+
+    // parallel
+    std::vector<double> eig_para(dim);
+    std::vector<std::complex<double>> eigvec_para(pmat.get_local_size());
+    LR_Util::diag_scalapack(dim, hmat_local.data(), smat_local.data(), eig_para.data(), eigvec_para.data(), pmat.desc);
+
+    // compare
+    check_double_eq(eig_para.data(), eig.data(), dim);
+    std::vector<std::complex<double>> eigvec_serial_local(pmat.get_local_size());
     LR_Util::set_local_from_global(pmat, mat.data(), eigvec_serial_local.data());
     check_norm_eq(eigvec_para.data(), eigvec_serial_local.data(), pmat.get_local_size());
 }

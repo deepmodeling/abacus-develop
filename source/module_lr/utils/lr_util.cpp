@@ -184,7 +184,7 @@ namespace LR_Util
     void diag_scalapack(const int& n, double* mat, double* eigval, double* eigvec, const int(&desc)[9])
     {
         ModuleBase::TITLE("LR_Util", "diag_scalapack<double>");
-        char jobz = 'V', uplo = 'U';
+        const char jobz = 'V', uplo = 'U';
         const int minus_one = -1;
         const int i1 = 1;
         int info = 0;
@@ -204,24 +204,106 @@ namespace LR_Util
     void diag_scalapack(const int& n, std::complex<double>* mat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9])
     {
         ModuleBase::TITLE("LR_Util", "diag_lapack<complex<double>>");
-        char jobz = 'V', uplo = 'U';
+        const char jobz = 'V', uplo = 'U';
         const int minus_one = -1;
         const int i1 = 1;
         int info = 0;
-        std::complex<double>lwork_tmp(0., 0.);
-        double lrwork_tmp = 0.0;
-        pzheev_(&jobz, &uplo, &n,
+        std::vector<std::complex<double>> work(1, 0.0);
+        std::vector<double>rwork(1, 0.0);
+        // pzheev_(&jobz, &uplo, &n,
+        //     mat, &i1, &i1, desc,
+        //     eigval, eigvec, &i1, &i1, desc,
+        //     work.data(), &minus_one, rwork.data(), &minus_one, &info);   // get the optimal workspace size
+        /// try pzheevd
+        // int liwork = 0;
+        // pzheevd_(&jobz, &uplo, &n,
+        //     mat, &i1, &i1, desc,
+        //     eigval, eigvec, &i1, &i1, desc,
+        //     &lwork_tmp, &minus_one, &lrwork_tmp, &minus_one, &liwork, &minus_one, &info);   // get the optimal workspace size
+
+        // try pzheevx
+        const char range = 'A';
+        const double zero = 0.0;
+        double abstol = 0.0;
+        int nz = n;
+        std::vector<int> iwork(1, 0);
+        std::vector<int> ifail(n, 0);
+        std::vector<int> iclustr(2 * GlobalV::DSIZE);
+        std::vector<double> gap(GlobalV::DSIZE);
+        pzheevx_(&jobz, &range, &uplo, &n,
             mat, &i1, &i1, desc,
-            eigval, eigvec, &i1, &i1, desc,
-            &lwork_tmp, &minus_one, &lrwork_tmp, &minus_one, &info);   // get the optimal workspace size
-        const int lwork = lwork_tmp.real();
-        const int lrwork = lrwork_tmp;
-        std::vector<std::complex<double>> work(lwork);
-        std::vector<double>rwork(lrwork);
-        pzheev_(&jobz, &uplo, &n,
+            &zero, &zero, &i1, &i1, &zero,
+            &nz, &nz, eigval, &zero,
+            eigvec, &i1, &i1, desc,
+            work.data(), &minus_one, rwork.data(), &minus_one, iwork.data(), &minus_one,
+            ifail.data(), iclustr.data(), gap.data(), &info);
+
+        const int lwork = work.at(0).real();
+        work.resize(lwork);
+        const int lrwork = rwork.at(0);
+        rwork.resize(lrwork);
+        const int liwork = iwork.at(0);
+        iwork.resize(liwork);
+        // std::cout << "pzheevx: query result: lwork=" << work.at(0) << ", lrwork=" << rwork.at(0) << ", liwork=" << iwork.at(0) << std::endl;
+
+        // pzheev_(&jobz, &uplo, &n,
+        //     mat, &i1, &i1, desc,
+        //     eigval, eigvec, &i1, &i1, desc,
+        //     work.data(), &lwork, rwork.data(), &lrwork, &info);
+        // std::vector<int> iwork(liwork);
+        // pzheevd_(&jobz, &uplo, &n,
+        //     mat, &i1, &i1, desc,
+        //     eigval, eigvec, &i1, &i1, desc,
+        //     work.data(), &lwork, rwork.data(), &lrwork, iwork.data(), &liwork, &info);
+        pzheevx_(&jobz, &range, &uplo, &n,
             mat, &i1, &i1, desc,
-            eigval, eigvec, &i1, &i1, desc,
-            work.data(), &lwork, rwork.data(), &lrwork, &info);
+            &zero, &zero, &i1, &i1, &zero,
+            &nz, &nz, eigval, &zero,
+            eigvec, &i1, &i1, desc,
+            work.data(), &lwork, rwork.data(), &lrwork, iwork.data(), &liwork,
+            ifail.data(), iclustr.data(), gap.data(), &info);
+        if (info) { std::cout << "ERROR: Scalapack solver, info=" << info << std::endl; }
+    }
+
+    void diag_scalapack(const int& n, std::complex<double>* hmat, std::complex<double>* const smat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9])
+    {
+        ModuleBase::TITLE("LR_Util", "diag_lapack<complex<double>>");
+        const char jobz = 'V', uplo = 'U', range = 'A';
+        int minus_one = -1;
+        const int i1 = 1;
+        const double zero = 0.0;
+        int info = 0;
+        double abstol = 0.0;
+        int nz = n;
+        std::vector<std::complex<double>> work(1, 0.0);
+        std::vector<double>rwork(1, 0.0);
+        std::vector<int> iwork(1, 0);
+        std::vector<int> ifail(n, 0);
+        std::vector<int> iclustr(2 * GlobalV::DSIZE);
+        std::vector<double> gap(GlobalV::DSIZE);
+        pzhegvx_(&i1, &jobz, &range, &uplo, &n,
+            hmat, &i1, &i1, desc, smat, &i1, &i1, desc,
+            &zero, &zero, &i1, &i1, &zero,
+            &nz, &nz, eigval, &zero,
+            eigvec, &i1, &i1, desc,
+            work.data(), &minus_one, rwork.data(), &minus_one, iwork.data(), &minus_one,
+            ifail.data(), iclustr.data(), gap.data(), &info);
+
+        int lwork = work.at(0).real();
+        work.resize(lwork);
+        int lrwork = rwork.at(0);
+        rwork.resize(lrwork);
+        int liwork = iwork.at(0);
+        iwork.resize(liwork);
+        // std::cout << "pzhegvx: query result: lwork=" << work.at(0) << ", lrwork=" << rwork.at(0) << ", liwork=" << iwork.at(0) << std::endl;
+        pzhegvx_(&i1, &jobz, &range, &uplo, &n,
+            hmat, &i1, &i1, desc,
+            smat, &i1, &i1, desc,
+            &zero, &zero, &i1, &i1, &zero,
+            &nz, &nz, eigval, &zero,
+            eigvec, &i1, &i1, desc,
+            work.data(), &lwork, rwork.data(), &lrwork, iwork.data(), &liwork,
+            ifail.data(), iclustr.data(), gap.data(), &info);
         if (info) { std::cout << "ERROR: Scalapack solver, info=" << info << std::endl; }
     }
 #endif

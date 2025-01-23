@@ -109,7 +109,20 @@ extern "C"
         double* w, std::complex<double>* z, const int* iz, const int* jz, const int* descz,
         std::complex<double>* work, const int* lwork, double* rwork, const int* lrwork, int* info);
 
-	void pzgetri_(
+    void pzheevd_(const char* jobz, const char* uplo, const int* n,
+        std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+        double* w, std::complex<double>* z, const int* iz, const int* jz, const int* descz,
+        std::complex<double>* work, const int* lwork, double* rwork, const int* lrwork, int* iwork, const int* liwork, int* info);
+
+    void pzheevx_(const char* jobz, const char* range, const char* uplo, const int* n,
+        std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+        const double* vl, const double* vu, const int* il, const int* iu, const double* abstol,
+        int* m, int* nz, double* w, const double* orfac,
+        std::complex<double>* z, const int* iz, const int* jz, const int* descz,
+        std::complex<double>* work, const int* lwork, double* rwork, const int* lrwork, int* iwork, const int* liwork,
+        int* ifail, int* iclustr, double* gap, int* info);
+
+    void pzgetri_(
 		const int *n, 
 		const std::complex<double> *A, const int *ia, const int *ja, const int *desca,
 		int *ipiv, const std::complex<double> *work, const int *lwork, const int *iwork, const int *liwork, const int *info);

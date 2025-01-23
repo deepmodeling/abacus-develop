@@ -108,6 +108,7 @@ namespace LR_Util
 #ifdef __MPI
     void diag_scalapack(const int& n, double* mat, double* eigval, double* eigvec, const int(&desc)[9]);
     void diag_scalapack(const int& n, std::complex<double>* mat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9]);
+    void diag_scalapack(const int& n, std::complex<double>* hmat, std::complex<double>* smat, double* eigval, std::complex<double>* eigvec, const int(&desc)[9]);
 #endif
     ///=================string option====================
     std::string tolower(const std::string& str);

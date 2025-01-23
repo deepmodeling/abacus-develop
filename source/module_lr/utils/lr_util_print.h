@@ -201,7 +201,7 @@ namespace LR_Util
                 const int& iat2 = tmp2.first.first;
                 const auto& R = tmp2.first.second;
                 auto& t = tmp2.second;
-                if (R != TC({ 0, 0, 0 })) {continue;}   // for test
+                // if (R != TC({ 0, 0, 0 })) {continue;}   // for test
                 std::cout << "iat1=" << iat1 << " iat2=" << iat2 << " R=(" << R[0] << " " << R[1] << " " << R[2] << ")\n";
                 if (t.shape.size() == 2)
                 {
