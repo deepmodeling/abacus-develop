@@ -76,9 +76,9 @@ class XC_Functional
     {
         return hybrid_alpha;
     };
-    static bool get_has_kedf()
+    static bool get_ked_flag()
     {
-        return has_kedf;
+        return ked_flag;
     };
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
@@ -87,7 +87,7 @@ class XC_Functional
 
 	static std::vector<int> func_id; // libxc id of functional
 	static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
-    static bool has_kedf; // whether the functional has kinetic energy density
+    static bool ked_flag; // whether the functional has kinetic energy density
     static bool use_libxc;
 
     // exx_hybrid_alpha for mixing exx in hybrid functional:

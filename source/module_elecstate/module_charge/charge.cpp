@@ -81,7 +81,7 @@ void Charge::destroy()
         delete[] _space_rhog_save;
         delete[] _space_kin_r;
         delete[] _space_kin_r_save;
-        if (XC_Functional::get_has_kedf() || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             delete[] kin_r;
             delete[] kin_r_save;
@@ -122,7 +122,7 @@ void Charge::allocate(const int& nspin_in)
     _space_rho_save = new double[nspin * nrxx];
     _space_rhog = new std::complex<double>[nspin * ngmc];
     _space_rhog_save = new std::complex<double>[nspin * ngmc];
-    if (XC_Functional::get_has_kedf() || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         _space_kin_r = new double[nspin * nrxx];
         _space_kin_r_save = new double[nspin * nrxx];
@@ -131,7 +131,7 @@ void Charge::allocate(const int& nspin_in)
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
     rhog_save = new std::complex<double>*[nspin];
-    if (XC_Functional::get_has_kedf() || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
@@ -152,7 +152,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
-        if (XC_Functional::get_has_kedf() || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
@@ -172,7 +172,7 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
     ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
     ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
-    if (XC_Functional::get_has_kedf() || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
@@ -702,7 +702,7 @@ void Charge::save_rho_before_sum_band()
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
-        if (XC_Functional::get_has_kedf())
+        if (XC_Functional::get_ked_flag())
         {
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
         }

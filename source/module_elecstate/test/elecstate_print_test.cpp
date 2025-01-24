@@ -42,7 +42,7 @@ Charge::~Charge()
 }
 
 int XC_Functional::func_type = 0;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 
 /***************************************************************
  *  unit test of functions in elecstate_print.cpp

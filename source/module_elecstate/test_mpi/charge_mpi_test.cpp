@@ -7,7 +7,7 @@
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 Charge::Charge()
 {
 }

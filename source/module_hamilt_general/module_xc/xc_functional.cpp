@@ -16,7 +16,7 @@ XC_Functional::~XC_Functional(){}
 
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
@@ -260,7 +260,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 
     if (func_type == 3 || func_type == 5)
     {
-        has_kedf = true;
+        ked_flag = true;
     }
 
     if (func_id[0] == XC_GGA_X_OPTX)

@@ -72,7 +72,7 @@ double Charge_Mixing::get_drho(Charge* chr, const double nelec)
 
 double Charge_Mixing::get_dkin(Charge* chr, const double nelec)
 {
-    if (!(XC_Functional::get_has_kedf()))
+    if (!(XC_Functional::get_ked_flag()))
     {
         return 0.0;
     };

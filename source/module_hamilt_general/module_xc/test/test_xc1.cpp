@@ -60,7 +60,7 @@ class XCTest_SCAN0 : public XCTest
 TEST_F(XCTest_SCAN0, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),5);
-    EXPECT_TRUE(XC_Functional::get_has_kedf());
+    EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_KSDT : public XCTest
@@ -103,7 +103,7 @@ class XCTest_R2SCAN : public XCTest
 TEST_F(XCTest_R2SCAN, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),3);
-    EXPECT_TRUE(XC_Functional::get_has_kedf());
+    EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_LB07 : public XCTest
@@ -132,7 +132,7 @@ class XCTest_BMK : public XCTest
 TEST_F(XCTest_BMK, set_xc_type)
 {
     EXPECT_EQ(XC_Functional::get_func_type(),5);
-    EXPECT_TRUE(XC_Functional::get_has_kedf());
+    EXPECT_TRUE(XC_Functional::get_ked_flag());
 }
 
 class XCTest_HF : public XCTest

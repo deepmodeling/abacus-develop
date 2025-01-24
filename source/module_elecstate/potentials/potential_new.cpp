@@ -123,7 +123,7 @@ void Potential::allocate()
         ModuleBase::Memory::record("Pot::vxc", sizeof(double) * PARAM.inp.nspin * nrxx);
     }
 
-    if (XC_Functional::get_has_kedf())
+    if (XC_Functional::get_ked_flag())
     {
         this->vofk_effective.create(PARAM.inp.nspin, nrxx);
         ModuleBase::Memory::record("Pot::vofk", sizeof(double) * PARAM.inp.nspin * nrxx);
@@ -320,7 +320,7 @@ void Potential::interpolate_vrs()
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
         }
 
-        if (XC_Functional::get_has_kedf())
+        if (XC_Functional::get_ked_flag())
         {
             ModuleBase::ComplexMatrix vrs_ofk(PARAM.inp.nspin, rho_basis_->npw);
             for (int is = 0; is < PARAM.inp.nspin; is++)

@@ -24,7 +24,7 @@ void Symmetry_rho::begin(const int& spin_now,
 // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
 // {
 // 	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
-// 	if(XC_Functional::get_has_kedf()) psymm(CHR.kin_r[spin_now],
+// 	if(XC_Functional::get_ked_flag()) psymm(CHR.kin_r[spin_now],
 // rho_basis,Pgrid,symm);
 // }
 // else	//space group, do rho_symm in reciprocal space
@@ -33,7 +33,7 @@ void Symmetry_rho::begin(const int& spin_now,
     psymmg(CHR.rhog[spin_now], rho_basis, symm); // need to modify
     rho_basis->recip2real(CHR.rhog[spin_now], CHR.rho[spin_now]);
 
-    if (XC_Functional::get_has_kedf() || CHR.cal_elf)
+    if (XC_Functional::get_ked_flag() || CHR.cal_elf)
     {
         // Use std::vector to manage kin_g instead of raw pointer
         std::vector<std::complex<double>> kin_g(CHR.ngmc);
@@ -63,7 +63,7 @@ void Symmetry_rho::begin(const int& spin_now,
     // if(symm.nrot==symm.nrotk) //pure point-group, do rho_symm in real space
     // {
     // 	psymm(CHR.rho[spin_now], rho_basis, Pgrid, symm);
-    // 	if(XC_Functional::get_has_kedf()) psymm(CHR.kin_r[spin_now],
+    // 	if(XC_Functional::get_ked_flag()) psymm(CHR.kin_r[spin_now],
     // rho_basis,Pgrid,symm);
     // }
     // else	//space group, do rho_symm in reciprocal space
@@ -72,7 +72,7 @@ void Symmetry_rho::begin(const int& spin_now,
         psymmg(rhog[spin_now], rho_basis, symm);
         rho_basis->recip2real(rhog[spin_now], rho[spin_now]);
 
-        if (XC_Functional::get_has_kedf())
+        if (XC_Functional::get_ked_flag())
         {
             // Use std::vector to manage kin_g instead of raw pointer
             std::vector<std::complex<double>> kin_g(ngmc);

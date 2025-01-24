@@ -30,7 +30,7 @@ Magnetism::~Magnetism()
 
 // mock functions for Charge
 int XC_Functional::func_type = 1;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
 double tmp_ucell_omega = 500.0;
@@ -114,7 +114,7 @@ TEST_F(ChargeTest, Allocate)
     // call Charge::allocate()
     PARAM.input.test_charge = 2;
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     charge->allocate(PARAM.input.nspin);
@@ -199,7 +199,7 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
@@ -210,7 +210,7 @@ TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
     XC_Functional::func_type = 1;
-    XC_Functional::has_kedf = false;
+    XC_Functional::ked_flag = false;
     PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);

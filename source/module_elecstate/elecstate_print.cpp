@@ -460,7 +460,7 @@ void ElecState::print_etot(const Magnetism& magnet,
             break;
         }
         std::vector<double> drho = {scf_thr};
-        if (XC_Functional::get_has_kedf())
+        if (XC_Functional::get_ked_flag())
         {
             drho.push_back(scf_thr_kin);
         }

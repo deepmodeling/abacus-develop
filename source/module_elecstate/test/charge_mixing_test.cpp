@@ -12,7 +12,7 @@
 #endif
 
 int XC_Functional::func_type = 1;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 
 // mock function
 Magnetism::~Magnetism()
@@ -226,7 +226,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
 #endif
     PARAM.input.nspin = 1;
     XC_Functional::func_type = 1;
-    XC_Functional::has_kedf = false;
+    XC_Functional::ked_flag = false;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
 
@@ -270,7 +270,7 @@ TEST_F(ChargeMixingTest, InitMixingTest)
                     ucell.omega,
                     ucell.tpiba);
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
@@ -822,7 +822,7 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     const int nspin = PARAM.input.nspin = 1;
     PARAM.sys.domag_z = false;
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
     PARAM.input.mixing_gg0 = 0.0;
@@ -961,7 +961,7 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     const int nspin = PARAM.input.nspin = 1;
     PARAM.sys.domag_z = false;
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
     PARAM.input.mixing_gg0 = 0.0;

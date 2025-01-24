@@ -46,7 +46,7 @@ Magnetism::~Magnetism()
 {
 }
 int XC_Functional::func_type = 0;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 
 Symmetry_rho::Symmetry_rho()
 {

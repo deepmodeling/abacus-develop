@@ -45,7 +45,7 @@ surchem::~surchem()
 {
 }
 int XC_Functional::func_type = 1;
-bool XC_Functional::has_kedf = false;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
 
@@ -194,7 +194,7 @@ TEST_F(PotentialNewTest, ConstructorNRXX0)
 TEST_F(PotentialNewTest, ConstructorXC3)
 {
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
@@ -461,7 +461,7 @@ TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
 {
     // construct potential
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
@@ -531,7 +531,7 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
     // construct potential
     rhopw->nrxx = 100;
     XC_Functional::func_type = 3;
-    XC_Functional::has_kedf = true;
+    XC_Functional::ked_flag = true;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
     ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
@@ -576,7 +576,7 @@ TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 {
      PARAM.sys.double_grid = true;
      XC_Functional::func_type = 3;
-     XC_Functional::has_kedf = true;
+     XC_Functional::ked_flag = true;
      // Init pw_basis
      rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
      rhopw->initparameters(false, 4);
@@ -642,7 +642,7 @@ TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 {
      PARAM.sys.double_grid = false;
      XC_Functional::func_type = 3;
-     XC_Functional::has_kedf = true;
+     XC_Functional::ked_flag = true;
      // Init pw_basis
      rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
      rhopw->initparameters(false, 4);
