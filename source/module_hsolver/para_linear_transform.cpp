@@ -1,126 +1,148 @@
 #include "para_linear_transform.h"
-#include <vector>
+
 #include <algorithm>
+#include <vector>
 namespace hsolver
 {
 template <typename T, typename Device>
-void para_linear_transform_op<T, Device>::operator()(T* A,
-                                                     const T alpha,
-                                                     const T beta,
-                                                     const T* U_global,
-                                                     const int& nrow,
-                                                     const int& LDA,
-                                                     const int& ncol_loc,
-                                                     const int& ncol_glo,
+void PLinearTransform<T, Device>::set_dimension(const int nrowA,
+                                                        const int ncolA,
+                                                        const int ncolB,
+                                                        const int LDA,
 #ifdef __MPI
-                                                     MPI_Comm col_world,
+                                                        MPI_Comm col_world,
 #endif
-                                                     const int rank_col,
-                                                     const int nproc_col
+                                                        const bool localU)
+{
+    this->nrowA = nrowA;
+    this->ncolA = ncolA;
+    this->ncolB = ncolB;
+    this->LDA = LDA;
+#ifdef __MPI
+    this->col_world = col_world;
+    MPI_Comm_rank(col_world, &rank_col);
+    MPI_Comm_size(col_world, &nproc_col);
+    if (nproc_col > 1)
+    {
+        this->localU = localU;
+        colA_loc.resize(nproc_col);
+        MPI_Allgather(&ncolA, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
+        start_colA.resize(nproc_col);
+        start_colA[0] = 0;
+        for (int ip = 1; ip < nproc_col; ++ip)
+        {
+            start_colA[ip] = start_colA[ip - 1] + colA_loc[ip - 1];
+        }
+        this->ncolA_glo = start_colA[nproc_col - 1] + colA_loc[nproc_col - 1];
+        this->max_colA = *std::max_element(colA_loc.begin(), colA_loc.end());
 
-)
+        std::vector<int> colB_loc(nproc_col);
+        MPI_Allgather(&ncolB, 1, MPI_INT, colB_loc.data(), 1, MPI_INT, col_world);
+        start_colB.resize(nproc_col);
+        start_colB[0] = 0;
+        for (int ip = 1; ip < nproc_col; ++ip)
+        {
+            start_colB[ip] = start_colB[ip - 1] + colB_loc[ip - 1];
+        }
+        this->max_colB = *std::max_element(colB_loc.begin(), colB_loc.end());
+    }
+#else
+    nproc_col = 1;
+    rank_col = 0;
+#endif
+}
+template <typename T, typename Device>
+void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
     const Device* ctx = {};
 #ifdef __MPI
     if (nproc_col > 1)
     {
-        std::vector<int> colA_loc(nproc_col);
-        MPI_Allgather(&ncol_loc, 1, MPI_INT, colA_loc.data(), 1, MPI_INT, col_world);
-        std::vector<int> start_col(nproc_col);
-        start_col[0] = 0;
-        for (int ip = 1; ip < nproc_col; ++ip)
-        {
-            start_col[ip] = start_col[ip - 1] + colA_loc[ip - 1];
-        }
-        int max_col = *std::max_element(colA_loc.begin(), colA_loc.end());
         std::vector<MPI_Request> requests(nproc_col);
-
-        std::vector<T> A_tmp(max_col * LDA);
+        std::vector<T> A_tmp(max_colA * LDA);
         T* A_tmp_device = A_tmp.data();
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             A_tmp_device = nullptr;
-            resmem_dev_op()(A_tmp_device, max_col * LDA);
+            resmem_dev_op()(A_tmp_device, max_colA * LDA);
         }
-        T* A_tmp2 = nullptr;
-        resmem_dev_op()(A_tmp2, ncol_loc * LDA);
-        syncmem_dev_op()(A_tmp2, A, ncol_loc * LDA);
-        T* A_sum = nullptr;
-        resmem_dev_op()(A_sum, ncol_loc * LDA);
-        setmem_dev_op()(A_sum, 0.0, ncol_loc * LDA);
+        T* B_tmp = nullptr;
+        resmem_dev_op()(B_tmp, ncolB * LDA);
+        syncmem_dev_op()(B_tmp, B, ncolB * LDA);
+        setmem_dev_op()(B, 0.0, ncolB * LDA);
+
+        T* U_tmp = nullptr;
+        resmem_dev_op()(U_tmp, max_colA * max_colB);
 
         // Send
         for (int ip = 0; ip < nproc_col; ++ip)
         {
             if (rank_col != ip)
             {
-                int size = LDA * ncol_loc;
+                int size = LDA * ncolA;
                 Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], A_tmp.data());
             }
         }
 
         // Receive
-        T* U_local = nullptr;
-        resmem_dev_op()(U_local, max_col * ncol_loc);
-        const int start = start_col[rank_col];
+        const int start = this->localU ? 0 : start_colB[rank_col];
         for (int ip = 0; ip < nproc_col; ++ip)
         {
             T real_beta = ip == 0 ? beta : 0;
-            const int start_row = start_col[ip];
-            const int ncol_ip = colA_loc[ip];
-            // get U_local
-            for (int i = 0; i < ncol_loc; ++i)
-            {
-                const T* U_glo_tmp = U_global + start_row + (i + start) * ncol_glo;
-                syncmem_dev_op()(U_local + i * ncol_ip, U_glo_tmp, ncol_ip);
-            }
+            const int ncolA_ip = colA_loc[ip];
+            // get U_tmp
+            
+                const int start_row = start_colA[ip];
+                for (int i = 0; i < ncolB; ++i)
+                {
+                    const T* U_part = U + start_row + (i + start) * ncolA_glo;
+                    syncmem_dev_op()(U_tmp + i * ncolA_ip, U_part, ncolA_ip);
+                }
 
             if (ip == rank_col)
             {
                 ModuleBase::gemm_op<T, Device>()(ctx,
                                                  'N',
                                                  'N',
-                                                 nrow,
-                                                 ncol_loc,
-                                                 ncol_ip,
+                                                 nrowA,
+                                                 ncolB,
+                                                 ncolA_ip,
                                                  &alpha,
                                                  A,
                                                  LDA,
-                                                 U_local,
-                                                 ncol_ip,
+                                                 U_tmp,
+                                                 ncolA_ip,
                                                  &real_beta,
-                                                 A_tmp2,
+                                                 B_tmp,
                                                  LDA);
             }
             else
             {
-                int size = LDA * ncol_ip;
+                int size = LDA * ncolA_ip;
                 MPI_Status status;
                 Parallel_Common::recv_dev<T, Device>(A_tmp_device, size, ip, 0, col_world, &status, A_tmp.data());
                 MPI_Wait(&requests[ip], &status);
                 ModuleBase::gemm_op<T, Device>()(ctx,
                                                  'N',
                                                  'N',
-                                                 nrow,
-                                                 ncol_loc,
-                                                 ncol_ip,
+                                                 nrowA,
+                                                 ncolB,
+                                                 ncolA_ip,
                                                  &alpha,
                                                  A_tmp_device,
                                                  LDA,
-                                                 U_local,
-                                                 ncol_ip,
+                                                 U_tmp,
+                                                 ncolA_ip,
                                                  &real_beta,
-                                                 A_tmp2,
+                                                 B_tmp,
                                                  LDA);
             }
             // sum all the results
             T one = 1.0;
-            ModuleBase::axpy_op<T, Device>()(ctx, ncol_loc * LDA, &one, A_tmp2, 1, A_sum, 1);
+            ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp, 1, B, 1);
         }
-        syncmem_dev_op()(A, A_sum, ncol_loc * LDA);
-        delmem_dev_op()(U_local);
-        delmem_dev_op()(A_tmp2);
-        delmem_dev_op()(A_sum);
+        delmem_dev_op()(U_tmp);
+        delmem_dev_op()(B_tmp);
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             delmem_dev_op()(A_tmp_device);
@@ -129,33 +151,29 @@ void para_linear_transform_op<T, Device>::operator()(T* A,
     else
 #endif
     {
-        T* A_tmp = nullptr;
-        resmem_dev_op()(A_tmp, LDA * ncol_glo);
-        syncmem_dev_op()(A_tmp, A, LDA * ncol_loc);
         ModuleBase::gemm_op<T, Device>()(ctx,
                                          'N',
                                          'N',
-                                         nrow,
-                                         ncol_glo,
-                                         ncol_glo,
+                                         nrowA,
+                                         ncolB,
+                                         ncolA,
                                          &alpha,
-                                         A_tmp,
-                                         LDA,
-                                         U_global,
-                                         ncol_glo,
-                                         &beta,
                                          A,
+                                         LDA,
+                                         U,
+                                         ncolA,
+                                         &beta,
+                                         B,
                                          LDA);
-        delmem_dev_op()(A_tmp);
     }
 };
 
-template struct para_linear_transform_op<double, base_device::DEVICE_CPU>;
-template struct para_linear_transform_op<std::complex<double>, base_device::DEVICE_CPU>;
-template struct para_linear_transform_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct PLinearTransform<double, base_device::DEVICE_CPU>;
+template struct PLinearTransform<std::complex<double>, base_device::DEVICE_CPU>;
+template struct PLinearTransform<std::complex<float>, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
-template struct para_linear_transform_op<double, base_device::DEVICE_GPU>;
-template struct para_linear_transform_op<std::complex<double>, base_device::DEVICE_GPU>;
-template struct para_linear_transform_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct PLinearTransform<double, base_device::DEVICE_GPU>;
+template struct PLinearTransform<std::complex<double>, base_device::DEVICE_GPU>;
+template struct PLinearTransform<std::complex<float>, base_device::DEVICE_GPU>;
 #endif
 } // namespace hsolver

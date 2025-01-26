@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 
 bool ModuleIO::calculate_dos(const int& is,
                              const std::string& fa,  // file address for DOS
@@ -102,7 +103,8 @@ bool ModuleIO::calculate_dos(const int& is,
             }
         }
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, count);
+        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, count);
 #endif
         count = count / static_cast<double>(nkstot);
         sum += count;

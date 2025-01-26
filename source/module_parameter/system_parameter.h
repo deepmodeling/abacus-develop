@@ -54,6 +54,8 @@ struct System_para
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
     int kpar_lcao = 1;                      ///< global number of pools for LCAO diagonalization only
-    int nbands_l = 0;                       ///< number of bands of each band parallel calculation
+    int nbands_l = 0;                       ///< number of bands of each band parallel calculation, same to nbands when bndpar=1
+    bool ks_run = false;                    ///< true if current process runs KS calculation
+    bool all_ks_run = true;                 ///< true if only all processes run KS calculation
 };
 #endif

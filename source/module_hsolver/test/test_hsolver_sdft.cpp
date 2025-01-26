@@ -339,10 +339,10 @@ int main(int argc, char** argv)
 
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &PARAPW_WORLD);
+    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &BP_WORLD);
     int result = RUN_ALL_TESTS();
 
-    MPI_Comm_free(&PARAPW_WORLD);
+    MPI_Comm_free(&BP_WORLD);
     MPI_Finalize();
 
     return result;

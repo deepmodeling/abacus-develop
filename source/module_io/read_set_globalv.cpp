@@ -60,6 +60,16 @@ void ReadInput::set_globalv(const Input_para& inp, System_para& sys)
 #ifdef __MPI
     Parallel_Common::bcast_bool(sys.double_grid);
 #endif
+    /// set ks_run
+    if (GlobalV::MY_BNDGROUP == 0 || inp.ks_solver == "bpcg")
+    {
+        sys.ks_run = true;
+    }
+    if (inp.ks_solver != "bpcg" && inp.bndpar > 1)
+    {
+        sys.all_ks_run = false;
+    }
+
 }
 
 /// @note Here para.inp has been synchronized of all ranks. 

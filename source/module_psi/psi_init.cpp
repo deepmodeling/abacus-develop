@@ -86,7 +86,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
                                         std::ofstream& ofs_running)
 {
-    if (kspw_psi->get_nbands() == 0 || (GlobalV::MY_BNDGROUP != 0 && PARAM.inp.ks_solver != "bpcg"))
+    if (kspw_psi->get_nbands() == 0 || (!PARAM.globalv.ks_run))
     {
         return;
     }

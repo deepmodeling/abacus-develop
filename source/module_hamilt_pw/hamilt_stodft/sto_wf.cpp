@@ -315,7 +315,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
     int* nrecv = new int[PARAM.inp.bndpar];
     const int nchiper = this->nchip[0];
 #ifdef __MPI
-    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, PARAPW_WORLD);
+    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, BP_WORLD);
 #endif
     int ichi_start = 0;
     for (int i = 0; i < GlobalV::MY_BNDGROUP; ++i)

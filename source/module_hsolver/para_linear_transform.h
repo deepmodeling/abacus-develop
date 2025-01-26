@@ -4,52 +4,73 @@
 #include "module_base/module_device/device.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_base/parallel_device.h"
+#include <vector>
 #ifdef __MPI
 #include "mpi.h"
 #endif
 namespace hsolver
 {
 
+/**
+ * @brief B =  alpha * A * U + beta * B
+ *        A and B are local matrice
+ *        U can be a local matrix or a global matrix
+ */
 template <typename T, typename Device>
-struct para_linear_transform_op
+class PLinearTransform
 {
+  public:
     using syncmem_dev_op = base_device::memory::synchronize_memory_op<T, Device, Device>;
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;
     using setmem_dev_op = base_device::memory::set_memory_op<T, Device>;
     using delmem_dev_op = base_device::memory::delete_memory_op<T, Device>;
+    int nproc_col = 1;
+    int rank_col = 0;
+    int nrowA = 0;
+    int ncolA = 0;
+    int ncolB = 0;
+    int LDA = 0;
+    bool localU = false;
+#ifdef __MPI
+    MPI_Comm col_world = MPI_COMM_NULL;
+    std::vector<int> colA_loc;
+    std::vector<int> start_colA;
+    std::vector<int> start_colB;
+    int max_colA = 0;
+    int ncolA_glo = 0;
+    int max_colB = 0;
+#endif
+
     /**
-     * @brief A_global =  alpha * A_global * U_global + beta * A_global
-     *        A is a local matrix with nrow rows and ncol_loc columns
-     *        U_global is a matrix with ncol_glo rows and ncol_glo columns
-     * @example rotate wave functions: A = A * U
-     *          orthogonalize wave functions: A = A - A * U
+     * @brief set the dimension of A, B, and U
+     *        A: LDA * nrow, U_global: ncolA_global * ncolB_global, U_local: ncolA_global * ncolB
+     *        B: LDA * ncolB
+     */
+    void set_dimension(const int nrowA,
+                       const int ncolA,
+                       const int ncolB,
+                       const int LDA,
+#ifdef __MPI
+                       MPI_Comm col_world,
+#endif
+                       const bool localU);
+
+    /**
+     * @brief B =  alpha * A * U + beta * B
+     *        A is a local matrix with nrow rows and ncolA_loc columns
+     *        B is a local matrix with nrow rows and ncolB_loc columns
+     *        U can be a local matrix or a global matrix
+     * @example rotate wave functions: B = A * U
+     *          orthogonalize wave functions: B = - A * U + B
      *
-     * @param A : input/output matrix
      * @param alpha : alpha
-     * @param beta : beta
+     * @param A : input matrix
      * @param U_global : input matrix
-     * @param nrow : number of rows of A
-     * @param LDA : leading dimension of A
-     * @param ncol_loc : number of columns of A
-     * @param ncol_glo : number of columns and rows of U_global
-     * @param col_world : column communicator world
-     * @param rank_col : rank of col_world
-     * @param nproc_col : number of processes in col_world
+     * @param beta : beta
+     * @param B : input/output matrix
      *
      */
-    void operator()(T* A,
-                    const T alpha,
-                    const T beta,
-                    const T* U_global,
-                    const int& nrow,
-                    const int& LDA,
-                    const int& ncol_loc,
-                    const int& ncol_glo,
-#ifdef __MPI
-                    MPI_Comm col_world,
-#endif
-                    const int rank_col,
-                    const int nproc_col);
+    void act(const T alpha, const T* A, const T* U_global, const T beta, T* B);
 };
 } // namespace hsolver
 #endif
