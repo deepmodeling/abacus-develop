@@ -1,18 +1,18 @@
 #include "potential_new.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_base/tool_title.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #ifdef USE_PAW
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_cell/module_paw/paw_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #endif
-#include "module_elecstate/elecstate_getters.h"
 
 #include <map>
 
@@ -123,7 +123,7 @@ void Potential::allocate()
         ModuleBase::Memory::record("Pot::vxc", sizeof(double) * PARAM.inp.nspin * nrxx);
     }
 
-    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         this->vofk_effective.create(PARAM.inp.nspin, nrxx);
         ModuleBase::Memory::record("Pot::vofk", sizeof(double) * PARAM.inp.nspin * nrxx);
@@ -320,7 +320,7 @@ void Potential::interpolate_vrs()
             rho_basis_smooth_->recip2real(&vrs(is, 0), &veff_smooth(is, 0));
         }
 
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             ModuleBase::ComplexMatrix vrs_ofk(PARAM.inp.nspin, rho_basis_->npw);
             for (int is = 0; is < PARAM.inp.nspin; is++)

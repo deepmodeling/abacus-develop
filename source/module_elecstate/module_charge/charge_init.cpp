@@ -117,7 +117,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
             }
         }
 
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             // If the charge density is not read in, then the kinetic energy density is not read in either
             if (!read_error)
@@ -188,7 +188,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
     }
 
     // wenfei 2021-7-29 : initial tau = 3/5 rho^2/3, Thomas-Fermi
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         if (PARAM.inp.init_chg == "atomic" || read_kin_error)
         {

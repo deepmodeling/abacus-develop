@@ -23,7 +23,7 @@ namespace PulayForceStress
         {
             const double* vr_eff1 = pot->get_effective_v(is);
             const double* vofk_eff1 = nullptr;
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            if (XC_Functional::get_ked_flag())
             {
                 vofk_eff1 = pot->get_effective_vofk(is);
                 Gint_inout inout(is, vr_eff1, vofk_eff1, isforce, isstress, &f, &s, Gint_Tools::job_type::force_meta);

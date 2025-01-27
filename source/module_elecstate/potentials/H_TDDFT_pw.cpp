@@ -12,6 +12,7 @@ namespace elecstate
 {
 
 int H_TDDFT_pw::istep = -1;
+bool H_TDDFT_pw::is_initialized = false;
 
 double H_TDDFT_pw::amp;
 double H_TDDFT_pw::bmod;
@@ -75,6 +76,21 @@ std::vector<int> H_TDDFT_pw::trigo_ncut;   // cut for integral
 int H_TDDFT_pw::heavi_count;
 std::vector<double> H_TDDFT_pw::heavi_t0;
 std::vector<double> H_TDDFT_pw::heavi_amp; // Ry/bohr
+
+void H_TDDFT_pw::current_step_info(const std::string& file_dir, int& istep)
+{
+    std::stringstream ssc;
+    ssc << file_dir << "Restart_md.dat";
+    std::ifstream file(ssc.str().c_str());
+
+    if (!file)
+    {
+        ModuleBase::WARNING_QUIT("H_TDDFT_pw::current_step_info", "No Restart_md.dat!");
+    }
+
+    file >> istep;
+    file.close();
+}
 
 void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 {

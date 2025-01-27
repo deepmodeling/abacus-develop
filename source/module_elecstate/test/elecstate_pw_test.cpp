@@ -3,20 +3,15 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
-#undef private
 #define protected public
 #include "module_elecstate/elecstate_pw.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
-#undef protected
+#include "module_parameter/parameter.h"
 // mock functions for testing
+int XC_Functional::func_type = 1;
 namespace elecstate
 {
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 void Potential::init_pot(int, Charge const*)
 {
 }
@@ -272,7 +267,7 @@ TEST_F(ElecStatePWTest, ConstructorSingle)
 
 TEST_F(ElecStatePWTest, InitRhoDataDouble)
 {
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
     chg->nrxx = 1000;
     elecstate_pw_d = new elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>(wfcpw,
                                                                                                chg,
@@ -291,7 +286,7 @@ TEST_F(ElecStatePWTest, InitRhoDataDouble)
 TEST_F(ElecStatePWTest, InitRhoDataSingle)
 {
     PARAM.input.precision = "single";
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
     chg->nspin = PARAM.input.nspin;
     chg->nrxx = 1000;
     elecstate_pw_s = new elecstate::ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>(wfcpw,

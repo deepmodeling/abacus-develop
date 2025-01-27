@@ -1,7 +1,7 @@
 #include "elecstate.h"
-#include "elecstate_getters.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 
 #include <cmath>
@@ -103,7 +103,7 @@ double ElecState::cal_delta_eband(const UnitCell& ucell) const
     const double* v_eff = this->pot->get_effective_v(0);
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
-    const bool v_ofk_flag = (get_xc_func_type() == 3 || get_xc_func_type() == 5);
+    const bool v_ofk_flag = (XC_Functional::get_ked_flag());
 #ifdef USE_PAW
     if (PARAM.inp.use_paw)
     {
@@ -208,14 +208,14 @@ double ElecState::cal_delta_escf() const
     const double* v_fixed = this->pot->get_fixed_v();
     const double* v_ofk = nullptr;
 
-    if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         v_ofk = this->pot->get_effective_vofk(0);
     }
     for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
     {
         descf -= (this->charge->rho[0][ir] - this->charge->rho_save[0][ir]) * (v_eff[ir] - v_fixed[ir]);
-        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             // cause in the get_effective_vofk, the func will return nullptr
             assert(v_ofk != nullptr);
@@ -226,14 +226,14 @@ double ElecState::cal_delta_escf() const
     if (PARAM.inp.nspin == 2)
     {
         v_eff = this->pot->get_effective_v(1);
-        if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             v_ofk = this->pot->get_effective_vofk(1);
         }
         for (int ir = 0; ir < this->charge->rhopw->nrxx; ir++)
         {
             descf -= (this->charge->rho[1][ir] - this->charge->rho_save[1][ir]) * (v_eff[ir] - v_fixed[ir]);
-            if (get_xc_func_type() == 3 || get_xc_func_type() == 5)
+            if (XC_Functional::get_ked_flag())
             {
                 descf -= (this->charge->kin_r[1][ir] - this->charge->kin_r_save[1][ir]) * v_ofk[ir];
             }

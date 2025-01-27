@@ -169,7 +169,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
                                               &(ucell),
                                               PARAM.inp.out_chg[1],
                                               1);
-                if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+                if (XC_Functional::get_ked_flag())
                 {
                     fn =PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_TAU.cube";
                     ModuleIO::write_vdata_palgrid(Pgrid,
@@ -310,7 +310,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter)
                                  GlobalV::RANK_IN_POOL,
                                  GlobalV::NPROC_IN_POOL);
 
-            if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+            if (XC_Functional::get_ked_flag())
             {
                 std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->pelec->charge->ngmc, {0.0, 0.0});
                 std::vector<std::complex<double>*> kin_g;
