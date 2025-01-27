@@ -668,7 +668,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
 
     delmem_complex_op()(porter);
 #ifdef __MPI
-    if(GlobalV::KPAR > 1)
+    if(GlobalV::KPAR * PARAM.inp.bndpar > 1)
     {
         for (int is = 0; is < nspin; ++is)
         {

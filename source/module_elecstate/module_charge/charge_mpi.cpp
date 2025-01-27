@@ -119,7 +119,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::KPAR <= 1) {
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) {
         return;
 }
     ModuleBase::timer::tick("Charge", "rho_mpi");
