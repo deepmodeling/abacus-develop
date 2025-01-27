@@ -58,7 +58,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
 {
     ModuleBase::TITLE("Stochastic_Iter", "orthog");
     ModuleBase::timer::tick("Stochastic_Iter", "orthog");
-    const int nbands_l = psi.get_nbands();
+    int nbands_l = psi.get_nbands();
     const int nbands = PARAM.inp.nbands;
     // orthogonal part
     if (nbands > 0)
@@ -74,24 +74,63 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         // orthogonal part
         T* sum = nullptr;
         resmem_complex_op()(sum, nbands * nchipk);
-        // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
-        ModuleBase::PGemmCN<T, Device> pmmcn;
+
+        if(PARAM.globalv.all_ks_run)
+        {
+            // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
+            ModuleBase::PGemmCN<T, Device> pmmcn;
 #ifdef __MPI
-        pmmcn.set_dimension(BP_WORLD, POOL_WORLD, nbands_l, npwx, nchipk, npwx, npw, nbands, 2);
+            pmmcn.set_dimension(BP_WORLD, POOL_WORLD, nbands_l, npwx, nchipk, npwx, npw, nbands, 2);
 #else
-        pmmcn.set_dimension(nbands_l, npwx, nchipk, npwx, npw, nbands, 2);
+            pmmcn.set_dimension(nbands_l, npwx, nchipk, npwx, npw, nbands, 2);
 #endif
-        pmmcn.multiply(1.0, &psi(ik, 0, 0), wfgout, 0.0, sum);
-        
-        // psi -= psi * sum
-        hsolver::PLinearTransform<T, Device> pltrans;
+            pmmcn.multiply(1.0, &psi(ik, 0, 0), wfgout, 0.0, sum);
+
+            // psi -= psi * sum
+            hsolver::PLinearTransform<T, Device> pltrans;
 #ifdef __MPI
-        pltrans.set_dimension(npw, nbands_l, nchipk, npwx, BP_WORLD, true);
+            pltrans.set_dimension(npw, nbands_l, nchipk, npwx, BP_WORLD, true);
 #else
-        pltrans.set_dimension(npw, nbands_l, nchipk, npwx, true);
+            pltrans.set_dimension(npw, nbands_l, nchipk, npwx, true);
 #endif
-        pltrans.act(-1.0, &psi(ik, 0, 0), sum, 1.0, wfgout);
-        
+            pltrans.act(-1.0, &psi(ik, 0, 0), sum, 1.0, wfgout);
+        }
+        else
+        {
+            // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
+            ModuleBase::gemm_op<T, Device>()(ctx,
+                                             'C',
+                                             'N',
+                                             nbands,
+                                             nchipk,
+                                             npw,
+                                             &ModuleBase::ONE,
+                                             &psi(ik, 0, 0),
+                                             npwx,
+                                             wfgout,
+                                             npwx,
+                                             &ModuleBase::ZERO,
+                                             sum,
+                                             nbands);
+            Parallel_Reduce::reduce_pool(sum, nbands * nchipk);
+
+            // psi -= psi * sum
+            ModuleBase::gemm_op<T, Device>()(ctx,
+                                             'N',
+                                             'N',
+                                             npw,
+                                             nchipk,
+                                             nbands,
+                                             &ModuleBase::NEG_ONE,
+                                             &psi(ik, 0, 0),
+                                             npwx,
+                                             sum,
+                                             nbands,
+                                             &ModuleBase::ONE,
+                                             wfgout,
+                                             npwx);
+        }
+
         delmem_complex_op()(sum);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "orthog");

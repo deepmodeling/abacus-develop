@@ -12,6 +12,7 @@
 #include "module_base/global_function.h"
 #include "module_base/kernels/math_kernel_op.h"
 #include "para_linear_transform.h"
+#include "module_parameter/parameter.h"
 
 namespace hsolver {
 
@@ -44,9 +45,9 @@ void DiagoBPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
 
     // All column major tensors
 
-    this->beta          = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
+    this->beta          = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
     this->eigen         = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
-    this->err_st        = std::move(ct::Tensor(r_type, device_type, {this->n_band}));
+    this->err_st        = std::move(ct::Tensor(r_type, device_type, {this->n_band_l}));
 
     this->hsub          = std::move(ct::Tensor(t_type, device_type, {this->n_band, this->n_band}));
 
@@ -175,7 +176,7 @@ void DiagoBPCG<T, Device>::rotate_wf(
 {
     // gemm: workspace_in(n_basis x n_band) = psi_out(n_basis x n_band) * hsub_in(n_band x n_band)
     this->plintrans.act(1.0, psi_out.data<T>(), hsub_in.data<T>(), 0.0, workspace_in.data<T>());
-    syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band * this->n_basis);
+    syncmem_complex_op()(psi_out.template data<T>(), workspace_in.template data<T>(), this->n_band_l * this->n_basis);
 
     return;
 }
@@ -187,7 +188,7 @@ void DiagoBPCG<T, Device>::calc_hpsi_with_block(
         ct::Tensor& hpsi_out)
 {
     // calculate all-band hpsi
-    hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band);
+    hpsi_func(psi_in, hpsi_out.data<T>(), this->n_basis, this->n_band_l);
 }
 
 template<typename T, typename Device>
@@ -256,7 +257,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 {
     const int current_scf_iter = hsolver::DiagoIterAssist<T, Device>::SCF_ITER;
     // Get the pointer of the input psi
-    this->psi = std::move(ct::TensorMap(psi_in /*psi_in.get_pointer()*/, t_type, device_type, {this->n_band, this->n_basis}));
+    this->psi = std::move(ct::TensorMap(psi_in /*psi_in.get_pointer()*/, t_type, device_type, {this->n_band_l, this->n_basis}));
 
     // Update the precondition array
     this->calc_prec();
@@ -264,9 +265,9 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     // Improving the initial guess of the wave function psi through a subspace diagonalization.
     this->calc_hsub_with_block(hpsi_func, psi_in, this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
-    setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band);
+    setmem_complex_op()(this->grad_old.template data<T>(), 0, this->n_basis * this->n_band_l);
 
-    setmem_var_op()(this->beta.template data<Real>(), std::numeric_limits<Real>::infinity(), this->n_band);
+    setmem_var_op()(this->beta.template data<Real>(), std::numeric_limits<Real>::infinity(), this->n_band_l);
 
     int ntry = 0;
     int max_iter = current_scf_iter > 1 ?
@@ -290,7 +291,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         this->orth_projection(this->psi, this->hsub, this->grad);
 
         // this->grad_old = this->grad;
-        syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band);
+        syncmem_complex_op()(this->grad_old.template data<T>(), this->grad.template data<T>(), n_basis * n_band_l);
 
         // Calculate H|grad> matrix
         this->calc_hpsi_with_block(hpsi_func, this->grad.template data<T>(), /*this->grad_wrapper[0],*/ this->hgrad);
@@ -311,7 +312,14 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     this->calc_hsub_with_block_exit(this->psi, this->hpsi, this->hsub, this->work, this->eigen);
 
-    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>(), this->n_band);
+    int start_nband = 0;
+#ifdef __MPI
+    if (PARAM.inp.bndpar > 1)
+    {
+        start_nband = this->plintrans.start_colB[GlobalV::MY_BNDGROUP];
+    }
+#endif
+    syncmem_var_d2h_op()(eigenvalue_in, this->eigen.template data<Real>() + start_nband, this->n_band_l);
 
     return;
 }

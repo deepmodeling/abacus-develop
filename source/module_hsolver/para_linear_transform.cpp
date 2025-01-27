@@ -6,13 +6,13 @@ namespace hsolver
 {
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::set_dimension(const int nrowA,
-                                                        const int ncolA,
-                                                        const int ncolB,
-                                                        const int LDA,
+                                                const int ncolA,
+                                                const int ncolB,
+                                                const int LDA,
 #ifdef __MPI
-                                                        MPI_Comm col_world,
+                                                MPI_Comm col_world,
 #endif
-                                                        const bool localU)
+                                                const bool localU)
 {
     this->nrowA = nrowA;
     this->ncolA = ncolA;
@@ -91,13 +91,13 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             T real_beta = ip == 0 ? beta : 0;
             const int ncolA_ip = colA_loc[ip];
             // get U_tmp
-            
-                const int start_row = start_colA[ip];
-                for (int i = 0; i < ncolB; ++i)
-                {
-                    const T* U_part = U + start_row + (i + start) * ncolA_glo;
-                    syncmem_dev_op()(U_tmp + i * ncolA_ip, U_part, ncolA_ip);
-                }
+
+            const int start_row = start_colA[ip];
+            for (int i = 0; i < ncolB; ++i)
+            {
+                const T* U_part = U + start_row + (i + start) * ncolA_glo;
+                syncmem_dev_op()(U_tmp + i * ncolA_ip, U_part, ncolA_ip);
+            }
 
             if (ip == rank_col)
             {

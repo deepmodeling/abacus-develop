@@ -73,10 +73,15 @@ class CalAtomsInfo
         if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel
         {
             para.sys.nbands_l = para.inp.nbands / para.inp.bndpar;
-            if (GlobalV::RANK_IN_BPGROUP < para.inp.nbands % para.inp.bndpar)
+            if (GlobalV::MY_BNDGROUP < para.inp.nbands % para.inp.bndpar)
             {
                 para.sys.nbands_l++;
             }
+        }
+        // temporary code
+        if (GlobalV::MY_BNDGROUP == 0 || para.inp.ks_solver == "bpcg")
+        {
+            para.sys.ks_run = true;
         }
         return;
     }
