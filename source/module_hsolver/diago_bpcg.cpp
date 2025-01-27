@@ -96,7 +96,7 @@ void DiagoBPCG<T, Device>::line_minimize(
     ct::Tensor& psi_out,
     ct::Tensor& hpsi_out)
 {
-    line_minimize_with_block_op()(grad_in.data<T>(), hgrad_in.data<T>(), psi_out.data<T>(), hpsi_out.data<T>(), this->n_basis, this->n_basis, this->n_band_l);
+    line_minimize_with_block_op()(grad_in.data<T>(), hgrad_in.data<T>(), psi_out.data<T>(), hpsi_out.data<T>(), this->n_dim, this->n_basis, this->n_band_l);
 }
 
 
@@ -142,7 +142,7 @@ void DiagoBPCG<T, Device>::calc_grad_with_block(
 			hpsi_in.data<T>(), 
 			grad_out.data<T>(), 
 			grad_old_out.data<T>(), 
-			this->n_basis, 
+			this->n_dim, 
 			this->n_basis, 
 			this->n_band_l);
 }
