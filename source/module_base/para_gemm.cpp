@@ -241,7 +241,8 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
     {
         T* Cglobal_cpu = nullptr;
         T* Clocal_cpu = C_tmp.data();
-        ;
+        std::vector<T> cpu_tmp;
+        
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             delmem_dev_op()(Atmp_device);
@@ -249,7 +250,8 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
             syncmem_d2h_op()(Clocal_cpu, C_local, size_C_local);
             delmem_dev_op()(C_local);
 
-            resmem_dev_op()(Cglobal_cpu, size_C_global);
+            cpu_tmp.resize(size_C_global);
+            Cglobal_cpu = cpu_tmp.data();
         }
         else
         {
@@ -269,7 +271,6 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             syncmem_h2d_op()(C, Cglobal_cpu, size_C_global);
-            delmem_dev_op()(Cglobal_cpu);
         }
     }
     else

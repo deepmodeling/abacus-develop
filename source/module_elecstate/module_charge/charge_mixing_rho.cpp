@@ -249,7 +249,7 @@ void Charge_Mixing::mix_rho_recip(Charge* chr)
     }
 
     // For kinetic energy density
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         std::vector<std::complex<double>> kin_g(PARAM.inp.nspin * rhodpw->npw);
         std::vector<std::complex<double>> kin_g_save(PARAM.inp.nspin * rhodpw->npw);
@@ -485,7 +485,7 @@ void Charge_Mixing::mix_rho_real(Charge* chr)
     }
     
     double *taur_out, *taur_in;
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         taur_in = chr->kin_r_save[0];
         taur_out = chr->kin_r[0];
@@ -521,7 +521,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
         }
     }
     std::vector<double> kin_r123;
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         kin_r123.resize(PARAM.inp.nspin * nrxx);
         for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -581,7 +581,7 @@ void Charge_Mixing::mix_rho(Charge* chr)
         }
     }
 
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {

@@ -77,7 +77,7 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
 
     // if you change the place of the following code,
     // rememeber to delete the #include
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if (XC_Functional::get_ked_flag())
     {
         Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
         this->GK->cal_gint(&inout);
@@ -96,12 +96,12 @@ void Veff<OperatorLCAO<TK, TR>>::contributeHR()
         for (int is = 1; is < 4; is++)
         {
             vr_eff1 = this->pot->get_effective_v(is);
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+            if (XC_Functional::get_ked_flag())
             {
                 vofk_eff1 = this->pot->get_effective_vofk(is);
             }
-            
-            if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+
+            if (XC_Functional::get_ked_flag())
             {
                 Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
                 this->GK->cal_gint(&inout);
@@ -141,7 +141,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR(void)
     // and diagonalize the H matrix (T+Vl+Vnl).
     //--------------------------------------------
 
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if (XC_Functional::get_ked_flag())
     {
         Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
         this->GG->cal_vlocal(&inout,  this->new_e_iteration);

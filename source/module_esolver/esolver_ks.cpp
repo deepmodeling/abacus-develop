@@ -666,7 +666,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     // get mtaGGA related parameters
     double dkin = 0.0; // for meta-GGA
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
     }

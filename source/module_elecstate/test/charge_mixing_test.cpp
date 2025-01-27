@@ -1,21 +1,18 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #define private public
-#include "module_parameter/parameter.h"
-#undef private
-#include "module_base/module_mixing/broyden_mixing.h"
-#define private public
-#include "module_parameter/parameter.h"
 #include "../module_charge/charge_mixing.h"
+#include "module_base/module_mixing/broyden_mixing.h"
 #include "module_basis/module_pw/pw_basis.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
-#undef private
+#include "module_parameter/parameter.h"
 
 #ifdef _OPENMP
 #include <omp.h>
 #endif
 
-int FUNC_TYPE = 1;
+int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 
 // mock function
 Magnetism::~Magnetism()
@@ -34,10 +31,6 @@ Charge::Charge()
 void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
-}
-int XC_Functional::get_func_type()
-{
-    return FUNC_TYPE;
 }
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
@@ -232,7 +225,8 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     omp_set_num_threads(1);
 #endif
     PARAM.input.nspin = 1;
-    FUNC_TYPE = 1;
+    XC_Functional::func_type = 1;
+    XC_Functional::ked_flag = false;
     Charge_Mixing CMtest;
     CMtest.set_rhopw(&pw_basis, &pw_basis);
 
@@ -275,7 +269,8 @@ TEST_F(ChargeMixingTest, InitMixingTest)
                     PARAM.input.mixing_dmr,
                     ucell.omega,
                     ucell.tpiba);
-    FUNC_TYPE = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     CMtest.init_mixing();
     EXPECT_EQ(CMtest.tau_mdata.length, pw_basis.nrxx);
 
@@ -826,7 +821,8 @@ TEST_F(ChargeMixingTest, MixRhoTest)
     charge.set_rhopw(&pw_basis);
     const int nspin = PARAM.input.nspin = 1;
     PARAM.sys.domag_z = false;
-    FUNC_TYPE = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
     PARAM.input.mixing_gg0 = 0.0;
@@ -964,7 +960,8 @@ TEST_F(ChargeMixingTest, MixDoubleGridRhoTest)
     charge.set_rhopw(&pw_dbasis);
     const int nspin = PARAM.input.nspin = 1;
     PARAM.sys.domag_z = false;
-    FUNC_TYPE = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     PARAM.input.mixing_beta = 0.7;
     PARAM.input.mixing_ndim = 1;
     PARAM.input.mixing_gg0 = 0.0;

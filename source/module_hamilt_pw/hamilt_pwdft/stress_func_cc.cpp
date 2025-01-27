@@ -51,8 +51,8 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 
 	//recalculate the exchange-correlation potential
 	ModuleBase::matrix vxc;
-	if(XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
-	{
+    if (XC_Functional::get_ked_flag())
+    {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell.omega, ucell.tpiba, chr);

@@ -1,12 +1,13 @@
-#include "module_base/matrix3.h"
-#include "module_base/parallel_global.h"
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
-#include "module_elecstate/module_charge/charge.h"
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+#define private public
+#include "module_base/matrix3.h"
+#include "module_base/parallel_global.h"
+#include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
+
+bool XC_Functional::ked_flag = false;
 Charge::Charge()
 {
 }
@@ -15,14 +16,6 @@ Charge::~Charge()
     delete[] rec;
     delete[] dis;
 }
-namespace elecstate
-{
-int tmp_xc_func_type = 3;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
-} // namespace elecstate
 
 auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
