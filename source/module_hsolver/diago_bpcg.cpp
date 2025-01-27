@@ -12,7 +12,6 @@
 #include "module_base/global_function.h"
 #include "module_base/kernels/math_kernel_op.h"
 #include "para_linear_transform.h"
-#include "module_parameter/parameter.h"
 
 namespace hsolver {
 
@@ -314,7 +313,7 @@ void DiagoBPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
     int start_nband = 0;
 #ifdef __MPI
-    if (PARAM.inp.bndpar > 1)
+    if (this->plintrans.nproc_col > 1)
     {
         start_nband = this->plintrans.start_colB[GlobalV::MY_BNDGROUP];
     }

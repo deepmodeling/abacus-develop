@@ -46,6 +46,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // preconditions
     GlobalV::KPAR = 1;
     PARAM.input.nbands = 4;
+    PARAM.sys.nbands_l = 4;
     PARAM.input.nspin = 1;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
@@ -96,6 +97,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // preconditions
     GlobalV::KPAR = 1;
     PARAM.input.nbands = 4;
+    PARAM.sys.nbands_l = 4;
     PARAM.input.nspin = 2;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
