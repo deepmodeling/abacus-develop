@@ -70,11 +70,16 @@ void DiagoBPCG<T, Device>::init_iter(const int nband, const int nband_l, const i
 template<typename T, typename Device>
 bool DiagoBPCG<T, Device>::test_error(const ct::Tensor& err_in, const std::vector<double>& ethr_band)
 {
-    const Real * _err_st = err_in.data<Real>();
+    Real* _err_st = err_in.data<Real>();
     bool not_conv = false;
+    std::vector<Real> tmp_cpu;
     if (err_in.device_type() == ct::DeviceType::GpuDevice) {
-        ct::Tensor h_err_in = err_in.to_device<ct::DEVICE_CPU>();
-        _err_st = h_err_in.data<Real>();
+        // ct::Tensor h_err_in = err_in.to_device<ct::DEVICE_CPU>();
+        // _err_st = h_err_in.data<Real>();
+        // qianrui change it, because it can not pass the valgrind test
+        tmp_cpu.resize(this->n_band_l);
+        _err_st = tmp_cpu.data();
+        syncmem_var_d2h_op()(_err_st, err_in.data<Real>(), this->n_band_l);
     }
     for (int ii = 0; ii < this->n_band_l; ii++) {
         if (_err_st[ii] > ethr_band[ii]) {
