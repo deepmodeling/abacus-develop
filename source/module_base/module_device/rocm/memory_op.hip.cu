@@ -39,21 +39,19 @@ __global__ void cast_memory(std::complex<FPTYPE_out>* out, const std::complex<FP
 }
 
 template <typename FPTYPE>
-void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
-                                                                   FPTYPE*& arr,
+void resize_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE*& arr,
                                                                    const size_t size,
                                                                    const char* record_in)
 {
     if (arr != nullptr)
     {
-        delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(dev, arr);
+        delete_memory_op<FPTYPE, base_device::DEVICE_GPU>()(arr);
     }
     hipErrcheck(hipMalloc((void**)&arr, sizeof(FPTYPE) * size));
 }
 
 template <typename FPTYPE>
-void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev,
-                                                                FPTYPE* arr,
+void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr,
                                                                 const int var,
                                                                 const size_t size)
 {
@@ -62,8 +60,6 @@ void set_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_devic
 
 template <typename FPTYPE>
 void synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_CPU* dev_out,
-    const base_device::DEVICE_GPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -73,8 +69,6 @@ void synchronize_memory_op<FPTYPE, base_device::DEVICE_CPU, base_device::DEVICE_
 
 template <typename FPTYPE>
 void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_CPU>::operator()(
-    const base_device::DEVICE_GPU* dev_out,
-    const base_device::DEVICE_CPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -84,8 +78,6 @@ void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_
 
 template <typename FPTYPE>
 void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* dev_out,
-    const base_device::DEVICE_GPU* dev_in,
     FPTYPE* arr_out,
     const FPTYPE* arr_in,
     const size_t size)
@@ -95,9 +87,7 @@ void synchronize_memory_op<FPTYPE, base_device::DEVICE_GPU, base_device::DEVICE_
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_GPU> {
-    void operator()(const base_device::DEVICE_GPU* dev_out,
-                    const base_device::DEVICE_GPU* dev_in,
-                    FPTYPE_out* arr_out,
+    void operator()(FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
 
@@ -110,9 +100,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_device::DEVICE_CPU> {
-    void operator()(const base_device::DEVICE_GPU* dev_out,
-                    const base_device::DEVICE_CPU* dev_in,
-                    FPTYPE_out* arr_out,
+    void operator()(FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
 
@@ -139,9 +127,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_GPU, base_devic
 
 template <typename FPTYPE_out, typename FPTYPE_in>
 struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_device::DEVICE_GPU> {
-    void operator()(const base_device::DEVICE_CPU* dev_out,
-                    const base_device::DEVICE_GPU* dev_in,
-                    FPTYPE_out* arr_out,
+    void operator()(FPTYPE_out* arr_out,
                     const FPTYPE_in* arr_in,
                     const size_t size) {
 
@@ -166,7 +152,7 @@ struct cast_memory_op<FPTYPE_out, FPTYPE_in, base_device::DEVICE_CPU, base_devic
 };
 
 template <typename FPTYPE>
-void delete_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* dev, FPTYPE* arr)
+void delete_memory_op<FPTYPE, base_device::DEVICE_GPU>::operator()(FPTYPE* arr)
 {
     hipErrcheck(hipFree(arr));
 }

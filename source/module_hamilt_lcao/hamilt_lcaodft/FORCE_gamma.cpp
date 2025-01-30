@@ -190,6 +190,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
+                                LCAO_Deepks& ld,
 #endif
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
@@ -247,20 +248,24 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                    false /*reset dm to gint*/);
 
 #ifdef __DEEPKS
-    const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
-    std::vector<torch::Tensor> descriptor;
     if (PARAM.inp.deepks_scf)
     {
-        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
+        const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
-        DeePKS_domain::cal_descriptor(ucell.nat,
-                                      GlobalC::ld.inlmax,
-                                      GlobalC::ld.inl_l,
-                                      GlobalC::ld.pdm,
-                                      descriptor,
-                                      GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+        // These calculations have been done in LCAO_Deepks_Interface in after_scf
+        // std::vector<torch::Tensor> descriptor;
+        // DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
+        // DeePKS_domain::cal_edelta_gedm(ucell.nat,
+        //                         ld.lmaxd,
+        //                         ld.nmaxd,
+        //                         ld.inlmax,
+        //                         ld.des_per_atom,
+        //                         ld.inl_l,
+        //                         descriptor,
+        //                         ld.pdm,
+        //                         ld.model_deepks,
+        //                         ld.gedm,
+        //                         ld.E_delta);
 
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,
@@ -268,12 +273,11 @@ void Force_LCAO<double>::ftable(const bool isforce,
                                            orb,
                                            gd,
                                            *this->ParaV,
-                                           GlobalC::ld.lmaxd,
                                            nks,
                                            kv->kvec_d,
-                                           GlobalC::ld.phialpha,
-                                           GlobalC::ld.gedm,
-                                           GlobalC::ld.inl_index,
+                                           ld.phialpha,
+                                           ld.gedm,
+                                           ld.inl_index,
                                            fvnl_dalpha,
                                            isstress,
                                            svnl_dalpha);
@@ -302,32 +306,8 @@ void Force_LCAO<double>::ftable(const bool isforce,
     }
 
 #ifdef __DEEPKS
-    // It seems these test should not all be here, should be moved in the future
-    // Also, these test are not in multi-k case now
     if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
     {
-        const int nks = 1; // 1 for gamma-only
-        LCAO_deepks_io::print_dm(nks, PARAM.globalv.nlocal, this->ParaV->nrow, dm_gamma);
-
-        GlobalC::ld.check_projected_dm();
-
-        DeePKS_domain::check_descriptor(GlobalC::ld.inlmax,
-                                        GlobalC::ld.des_per_atom,
-                                        GlobalC::ld.inl_l,
-                                        ucell,
-                                        PARAM.globalv.global_out_dir,
-                                        descriptor);
-
-        GlobalC::ld.check_gedm();
-
-        GlobalC::ld.cal_e_delta_band(dm_gamma, nks);
-
-        std::ofstream ofs("E_delta_bands.dat");
-        ofs << std::setprecision(10) << GlobalC::ld.e_delta_band;
-
-        std::ofstream ofs1("E_delta.dat");
-        ofs1 << std::setprecision(10) << GlobalC::ld.E_delta;
-
         DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
     }
 #endif

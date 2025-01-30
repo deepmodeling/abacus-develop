@@ -23,7 +23,7 @@ namespace DeePKS_domain
 //------------------------
 
 // This file contains one subroutine for calculating orbital_precalc,
-// which is defind as gvdm * dm_hl * overlap * overlap
+// which is defind as gevdm * dm_hl * overlap * overlap
 
 template <typename TK, typename TH>
 void cal_orbital_precalc(const std::vector<TH>& dm_hl,

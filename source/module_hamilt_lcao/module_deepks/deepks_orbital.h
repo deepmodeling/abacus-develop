@@ -26,7 +26,8 @@ namespace DeePKS_domain
 template <typename TK, typename TH>
 void cal_o_delta(const std::vector<TH>& dm_hl,
                  const std::vector<std::vector<TK>>& h_delta,
-                 std::vector<double>& o_delta,
+                 //  std::vector<double>& o_delta,
+                 ModuleBase::matrix& o_delta,
                  const Parallel_Orbitals& pv,
                  const int nks);
 } // namespace DeePKS_domain

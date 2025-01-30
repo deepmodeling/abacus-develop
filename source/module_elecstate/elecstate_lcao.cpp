@@ -63,7 +63,7 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         elecstate::lcao_cal_tau_k(gint_k, this->charge);
     }
@@ -98,7 +98,7 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
 
     this->gint_gamma->cal_gint(&inout);
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         elecstate::lcao_cal_tau_gamma(gint_gamma, this->charge);
     }
@@ -161,7 +161,7 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {

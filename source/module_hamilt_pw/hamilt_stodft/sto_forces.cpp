@@ -217,8 +217,8 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
 
    // allocate memory for the force
     FPTYPE* force = nullptr;
-    resmem_var_op()(this->ctx, force, ucell.nat * 3);
-    base_device::memory::set_memory_op<FPTYPE, Device>()(this->ctx, force, 0.0, ucell.nat * 3);
+    resmem_var_op()(force, ucell.nat * 3);
+    base_device::memory::set_memory_op<FPTYPE, Device>()(force, 0.0, ucell.nat * 3);
 
     hamilt::FS_Nonlocal_tools<FPTYPE, Device> nl_tools(&nlpp, &ucell, p_kv, wfc_basis, p_sf, wg, nullptr);
 
@@ -250,8 +250,8 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
         nl_tools.cal_force(ik, max_nbands, nstobands, false, force, nksbands);
     } // end ik
 
-    syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, forcenl.c, force, forcenl.nr * forcenl.nc);
-    delmem_var_op()(this->ctx, force);
+    syncmem_var_d2h_op()(forcenl.c, force, forcenl.nr * forcenl.nc);
+    delmem_var_op()(force);
     // sum up forcenl from all processors
     Parallel_Reduce::reduce_all(forcenl.c, forcenl.nr * forcenl.nc);
 

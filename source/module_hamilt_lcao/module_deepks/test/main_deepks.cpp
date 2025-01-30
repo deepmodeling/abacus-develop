@@ -36,13 +36,16 @@ int calculate()
 
     test.check_pdm();
 
-    torch::Tensor gdmx;
-    test.check_gdmx(gdmx);
-    test.check_gdmepsl();
-
     std::vector<torch::Tensor> descriptor;
     test.check_descriptor(descriptor);
+
+    torch::Tensor gdmx;
+    test.check_gdmx(gdmx);
     test.check_gvx(gdmx);
+
+    torch::Tensor gdmepsl;
+    test.check_gdmepsl(gdmepsl);
+    test.check_gvepsl(gdmepsl);
 
     test.check_edelta(descriptor);
     test.check_e_deltabands();

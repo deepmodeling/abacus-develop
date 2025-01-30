@@ -284,6 +284,7 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
 #ifdef __DEEPKS
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
+                                              LCAO_Deepks& ld,
 #endif
                                               TGint<std::complex<double>>::type& gint,
                                               const TwoCenterBundle& two_center_bundle,
@@ -346,29 +347,31 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
     {
         const std::vector<std::vector<std::complex<double>>>& dm_k = dm->get_DMK_vector();
 
-        // when deepks_scf is on, the init pdm should be same as the out pdm, so we should not recalculate the pdm
-        // GlobalC::ld.cal_projected_DM(dm, ucell, orb, gd);
-
-        std::vector<torch::Tensor> descriptor;
-        DeePKS_domain::cal_descriptor(ucell.nat,
-                                      GlobalC::ld.inlmax,
-                                      GlobalC::ld.inl_l,
-                                      GlobalC::ld.pdm,
-                                      descriptor,
-                                      GlobalC::ld.des_per_atom);
-        GlobalC::ld.cal_gedm(ucell.nat, descriptor);
+        // These calculations have been done in LCAO_Deepks_Interface in after_scf
+        // std::vector<torch::Tensor> descriptor;
+        // DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
+        // DeePKS_domain::cal_edelta_gedm(ucell.nat,
+        //                         ld.lmaxd,
+        //                         ld.nmaxd,
+        //                         ld.inlmax,
+        //                         ld.des_per_atom,
+        //                         ld.inl_l,
+        //                         descriptor,
+        //                         ld.pdm,
+        //                         ld.model_deepks,
+        //                         ld.gedm,
+        //                         ld.E_delta);
 
         DeePKS_domain::cal_f_delta<std::complex<double>>(dm_k,
                                                          ucell,
                                                          orb,
                                                          gd,
                                                          pv,
-                                                         GlobalC::ld.lmaxd,
                                                          kv->get_nks(),
                                                          kv->kvec_d,
-                                                         GlobalC::ld.phialpha,
-                                                         GlobalC::ld.gedm,
-                                                         GlobalC::ld.inl_index,
+                                                         ld.phialpha,
+                                                         ld.gedm,
+                                                         ld.inl_index,
                                                          fvnl_dalpha,
                                                          isstress,
                                                          svnl_dalpha);
@@ -398,6 +401,13 @@ void Force_LCAO<std::complex<double>>::ftable(const bool isforce,
         Parallel_Reduce::reduce_pool(svnl_dalpha.c, svnl_dalpha.nr * svnl_dalpha.nc);
 #endif
     }
+
+#ifdef __DEEPKS
+    if (PARAM.inp.deepks_scf && PARAM.inp.deepks_out_unittest)
+    {
+        DeePKS_domain::check_f_delta(ucell.nat, fvnl_dalpha, svnl_dalpha);
+    }
+#endif
 
     ModuleBase::timer::tick("Force_LCAO", "ftable");
     return;

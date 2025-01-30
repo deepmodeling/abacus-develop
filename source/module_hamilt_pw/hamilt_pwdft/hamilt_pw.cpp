@@ -246,7 +246,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         return;
     }
 
-    syncmem_op()(this->ctx, this->ctx, spsi, psi_in, static_cast<size_t>(nbands * nrow));
+    syncmem_op()(spsi, psi_in, static_cast<size_t>(nbands * nrow));
     if (PARAM.globalv.use_uspp)
     {
         T* becp = nullptr;
@@ -254,7 +254,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
         // psi updated, thus update <beta|psi>
         if (this->ppcell->nkb > 0)
         {
-            resmem_complex_op()(this->ctx, becp, nbands * this->ppcell->nkb, "Hamilt<PW>::becp");
+            resmem_complex_op()(becp, nbands * this->ppcell->nkb, "Hamilt<PW>::becp");
             char transa = 'C';
             char transb = 'N';
             if (nbands == 1)
@@ -294,8 +294,8 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
         }
 
-        resmem_complex_op()(this->ctx, ps, this->ppcell->nkb * nbands, "Hamilt<PW>::ps");
-        setmem_complex_op()(this->ctx, ps, 0, this->ppcell->nkb * nbands);
+        resmem_complex_op()(ps, this->ppcell->nkb * nbands, "Hamilt<PW>::ps");
+        setmem_complex_op()(ps, 0, this->ppcell->nkb * nbands);
 
         // spsi = psi + sum qq <beta|psi> |beta>
         if (PARAM.inp.noncolin)
@@ -316,7 +316,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                 {
                     const int nh = atoms->ncpp.nh;
                     T* qqc = nullptr;
-                    resmem_complex_op()(this->ctx, qqc, nh * nh, "Hamilt<PW>::qqc");
+                    resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
                     Real* qq_now = &qq_nt[it * this->ppcell->nhm * this->ppcell->nhm];
                     for (int i = 0; i < nh; i++)
                     {
@@ -344,7 +344,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                                   &ps[this->ppcell->indv_ijkb0[iat]],
                                   this->ppcell->nkb);
                     }
-                    delmem_complex_op()(ctx, qqc);
+                    delmem_complex_op()(qqc);
                 }
             }
 
@@ -382,8 +382,8 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                           nrow);
             }
         }
-        delmem_complex_op()(this->ctx, ps);
-        delmem_complex_op()(this->ctx, becp);
+        delmem_complex_op()(ps);
+        delmem_complex_op()(becp);
     }
 }
 

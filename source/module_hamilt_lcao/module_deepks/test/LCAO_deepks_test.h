@@ -21,11 +21,6 @@ namespace Test_Deepks
 extern Grid_Driver GridD;
 }
 
-namespace GlobalC
-{
-extern LCAO_Deepks ld;
-}
-
 class test_deepks
 {
 
@@ -43,7 +38,7 @@ class test_deepks
 
     Parallel_Orbitals ParaO;
     Test_Deepks::K_Vectors kv;
-    // LCAO_Deepks ld;
+    LCAO_Deepks ld;
 
     int failed_check = 0;
     int total_check = 0;
@@ -97,11 +92,13 @@ class test_deepks
     void read_dm_k(const int nks);
 
     void check_pdm();
-    void check_gdmx(torch::Tensor& gdmx);
-    void check_gdmepsl();
-
     void check_descriptor(std::vector<torch::Tensor>& descriptor);
+
+    void check_gdmx(torch::Tensor& gdmx);
+    void check_gdmepsl(torch::Tensor& gdmepsl);
+
     void check_gvx(torch::Tensor& gdmx);
+    void check_gvepsl(torch::Tensor& gdmepsl);
 
     void check_edelta(std::vector<torch::Tensor>& descriptor);
 

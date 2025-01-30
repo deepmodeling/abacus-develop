@@ -16,7 +16,6 @@
 #include "module_hamilt_lcao/module_tddft/td_velocity.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_psi/wavefunc.h"
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_io/berryphase.h"
 #include "module_io/restart.h"
@@ -31,17 +30,10 @@
 #undef private
 bool berryphase::berry_phase_flag = false;
 
-double module_tddft::Evolve_elec::td_force_dt;
-bool module_tddft::Evolve_elec::td_vext;
-std::vector<int> module_tddft::Evolve_elec::td_vext_dire_case;
-bool module_tddft::Evolve_elec::out_dipole;
-bool module_tddft::Evolve_elec::out_efield;
 bool TD_Velocity::out_current;
 bool TD_Velocity::out_current_k;
 bool TD_Velocity::out_vecpot;
 bool TD_Velocity::init_vecpot_file;
-double module_tddft::Evolve_elec::td_print_eij;
-int module_tddft::Evolve_elec::td_edm;
 double elecstate::Gatefield::zgate = 0.5;
 bool elecstate::Gatefield::relax = false;
 bool elecstate::Gatefield::block = false;
@@ -164,18 +156,6 @@ Structure_Factor::Structure_Factor()
 {
 }
 Structure_Factor::~Structure_Factor()
-{
-}
-WF_atomic::WF_atomic()
-{
-}
-WF_atomic::~WF_atomic()
-{
-}
-wavefunc::wavefunc()
-{
-}
-wavefunc::~wavefunc()
 {
 }
 UnitCell::UnitCell()

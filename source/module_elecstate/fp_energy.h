@@ -39,12 +39,13 @@ struct fenergy
     double esol_el = 0.0;  ///< the implicit solvation energy Ael
     double esol_cav = 0.0; ///< the implicit solvation energy Acav
 
-    double edftu = 0.0;       ///< DFT+U energy
-    double edeepks_scf = 0.0; /// DeePKS energy
+    double edftu = 0.0;         ///< DFT+U energy
+    double edeepks_scf = 0.0;   /// DeePKS energy difference
+    double edeepks_delta = 0.0; /// DeePKS energy
 
     double escon = 0.0; ///< spin constraint energy
 
-    double ekinetic = 0.0;  /// kinetic energy, used in OFDFT
+    double ekinetic = 0.0;   /// kinetic energy, used in OFDFT
     double e_local_pp = 0.0; /// ion-electron interaction energy contributed by local pp, used in OFDFT
 
     double calculate_etot();

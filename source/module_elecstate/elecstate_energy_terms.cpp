@@ -3,8 +3,8 @@
 #include "module_elecstate/potentials/efield.h"
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 
 namespace elecstate
 {
@@ -41,25 +41,15 @@ double ElecState::get_dftu_energy()
 
 double ElecState::get_local_pp_energy()
 {
-    double local_pseudopot_energy = 0.;                   // electron-ion interaction energy from local pseudopotential
+    double local_pseudopot_energy = 0.; // electron-ion interaction energy from local pseudopotential
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
-        local_pseudopot_energy += BlasConnector::dot(this->charge->rhopw->nrxx, this->pot->get_fixed_v(), 1, this->charge->rho[is], 1)
-                                * this->charge->rhopw->omega / this->charge->rhopw->nxyz;
+        local_pseudopot_energy
+            += BlasConnector::dot(this->charge->rhopw->nrxx, this->pot->get_fixed_v(), 1, this->charge->rho[is], 1)
+               * this->charge->rhopw->omega / this->charge->rhopw->nxyz;
     }
     Parallel_Reduce::reduce_all(local_pseudopot_energy);
     return local_pseudopot_energy;
 }
-
-#ifdef __DEEPKS
-double ElecState::get_deepks_E_delta()
-{
-    return GlobalC::ld.E_delta;
-}
-double ElecState::get_deepks_E_delta_band()
-{
-    return GlobalC::ld.e_delta_band;
-}
-#endif
 
 } // namespace elecstate

@@ -82,7 +82,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         sigmaxc(i, i) = -(pelec->f_en.etxc - pelec->f_en.vtxc) / ucell.omega;
     }
     this->stress_gga(ucell, sigmaxc, rho_basis, pelec->charge);
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
         this->stress_mgga(ucell,
                           sigmaxc,

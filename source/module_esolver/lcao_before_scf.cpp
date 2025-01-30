@@ -159,7 +159,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             ncol = PARAM.inp.nbands;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
     }
 
     // init wfc from file
@@ -194,6 +194,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
+#ifdef __DEEPKS
+            ,
+            &this->ld
+#endif
 #ifdef __EXX
             ,
             istep,
@@ -211,13 +215,19 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         const Parallel_Orbitals* pv = &this->pv;
         // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
-        GlobalC::ld.allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
+        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
         // build and save <phi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, *(two_center_bundle_.overlap_orb_alpha));
+        DeePKS_domain::build_phialpha(PARAM.inp.cal_force,
+                                      ucell,
+                                      orb_,
+                                      this->gd,
+                                      pv,
+                                      *(two_center_bundle_.overlap_orb_alpha),
+                                      this->ld.phialpha);
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
+            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
         }
     }
 #endif

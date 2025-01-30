@@ -59,11 +59,11 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     if (this->in_place)
     {
         // ModuleBase::GlobalFunc::COPYARRAY(this->hpsi->get_pointer(), hpsi_pointer, this->hpsi->size());
-        syncmem_op()(this->ctx, this->ctx, hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
+        syncmem_op()(hpsi_pointer, this->hpsi->get_pointer(), this->hpsi->size());
         delete this->hpsi;
         this->hpsi = new psi::Psi<T, Device>(hpsi_pointer, 
                                              1, 
-                                             nbands / psi_input->npol,
+                                             nbands / psi_input->get_npol(),
                                              psi_input->get_nbasis(),
                                              psi_input->get_nbasis(),
                                              true);
@@ -86,7 +86,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
         default:
             op->act(nbands,
                     psi_input->get_nbasis(),
-                    psi_input->npol,
+                    psi_input->get_npol(),
                     tmpsi_in,
                     this->hpsi->get_pointer(),
                     psi_input->get_current_nbas(),
@@ -105,7 +105,7 @@ typename Operator<T, Device>::hpsi_info Operator<T, Device>::hPsi(hpsi_info& inp
     }
     ModuleBase::timer::tick("Operator", "hPsi");
 
-    return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->npol), hpsi_pointer);
+    return hpsi_info(this->hpsi, psi::Range(1, 0, 0, nbands / psi_input->get_npol()), hpsi_pointer);
 }
 
 template <typename T, typename Device>

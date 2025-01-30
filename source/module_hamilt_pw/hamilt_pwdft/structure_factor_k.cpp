@@ -91,11 +91,11 @@ void Structure_Factor::get_sk(Device* ctx,
     }
     if (device == base_device::GpuDevice)
     {
-        resmem_int_op()(ctx, atom_na, ucell->ntype);
-        syncmem_int_op()(ctx, cpu_ctx, atom_na, h_atom_na, ucell->ntype);
+        resmem_int_op()(atom_na, ucell->ntype);
+        syncmem_int_op()(atom_na, h_atom_na, ucell->ntype);
 
-        resmem_var_op()(ctx, atom_tau, ucell->nat * 3);
-        syncmem_var_op()(ctx, cpu_ctx, atom_tau, h_atom_tau, ucell->nat * 3);
+        resmem_var_op()(atom_tau, ucell->nat * 3);
+        syncmem_var_op()(atom_tau, h_atom_tau, ucell->nat * 3);
 
         igl2isz = wfc_basis->d_igl2isz_k;
         is2fftixy = wfc_basis->d_is2fftixy;
@@ -135,8 +135,8 @@ void Structure_Factor::get_sk(Device* ctx,
                 sk);
     if (device == base_device::GpuDevice)
     {
-        delmem_int_op()(ctx, atom_na);
-        delmem_var_op()(ctx, atom_tau);
+        delmem_int_op()(atom_na);
+        delmem_var_op()(atom_tau);
     }
     delete[] h_atom_na;
     delete[] h_atom_tau;

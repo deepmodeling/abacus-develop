@@ -5,7 +5,6 @@
 #define private public
 #include "module_parameter/parameter.h"
 #undef private
-#include "module_elecstate/elecstate_getters.h"
 
 /************************************************
  *  unit test of magnetism.cpp

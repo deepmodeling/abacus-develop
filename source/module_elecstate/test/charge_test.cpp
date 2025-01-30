@@ -3,13 +3,11 @@
 
 #define private public
 #define protected public
-#include "module_parameter/parameter.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 #include "prepare_unitcell.h"
-#undef protected
-#undef private
-
 // mock functions for UnitCell
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
@@ -31,13 +29,10 @@ Magnetism::~Magnetism()
 }
 
 // mock functions for Charge
+int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 double tmp_ucell_omega = 500.0;
 double tmp_gridecut = 80.0;
 void Set_GlobalV_Default()
@@ -118,7 +113,8 @@ TEST_F(ChargeTest, Allocate)
     EXPECT_EQ(rhopw->npwtot, 3143);
     // call Charge::allocate()
     PARAM.input.test_charge = 2;
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     charge->set_rhopw(rhopw);
     EXPECT_FALSE(charge->allocate_rho);
     charge->allocate(PARAM.input.nspin);
@@ -202,7 +198,8 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
         }
     }
     EXPECT_EQ(PARAM.input.nelec, 8);
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     charge->set_omega(&ucell->omega);;
     charge->renormalize_rho();
     charge->save_rho_before_sum_band();
@@ -212,7 +209,8 @@ TEST_F(ChargeTest, SaveRhoBeforeSumBand)
 TEST_F(ChargeTest, InitFinalScf)
 {
     charge->set_rhopw(rhopw);
-    elecstate::tmp_xc_func_type = 1;
+    XC_Functional::func_type = 1;
+    XC_Functional::ked_flag = false;
     PARAM.input.test_charge = 2;
     charge->init_final_scf();
     EXPECT_TRUE(charge->allocate_rho_final_scf);

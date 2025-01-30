@@ -1,4 +1,5 @@
 #include "blas_connector.h"
+#include "macros.h"
 
 #ifdef __DSP
 #include "module_base/kernels/dsp/dsp_connector.h"
@@ -8,12 +9,10 @@
 #ifdef __CUDA
 #include <base/macros/macros.h>
 #include <cuda_runtime.h>
-#include <thrust/complex.h>
-#include <thrust/execution_policy.h>
-#include <thrust/inner_product.h>
-#include "module_base/tool_quit.h"
-
 #include "cublas_v2.h"
+#include "module_base/kernels/math_kernel_op.h"
+#include "module_base/module_device/memory_op.h"
+
 
 namespace BlasUtils{
 
@@ -48,6 +47,36 @@ namespace BlasUtils{
 			return CUBLAS_OP_C;
 		}
 		return CUBLAS_OP_N;
+	}
+
+	cublasSideMode_t judge_side(const char& trans)
+	{
+		if (trans == 'L')
+		{
+			return CUBLAS_SIDE_LEFT;
+		}
+		else if (trans == 'R')
+		{
+			return CUBLAS_SIDE_RIGHT;
+		}
+		return CUBLAS_SIDE_LEFT;
+	}
+
+	cublasFillMode_t judge_fill(const char& trans)
+	{
+		if (trans == 'F')
+		{
+			return CUBLAS_FILL_MODE_FULL;
+		}
+		else if (trans == 'U')
+		{
+			return CUBLAS_FILL_MODE_UPPER;
+		}
+		else if (trans == 'D')
+		{
+			return CUBLAS_FILL_MODE_LOWER;
+		}
+		return CUBLAS_FILL_MODE_FULL;
 	}
 
 } // namespace BlasUtils
@@ -398,6 +427,13 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasSsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, &alpha, a, lda, b, ldb, &beta, c, ldc));
+#endif
+	}
 }
 
 void BlasConnector::symm_cm(const char side, const char uplo, const int m, const int n,
@@ -408,6 +444,13 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		dsymm_(&side, &uplo, &m, &n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasDsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, &alpha, a, lda, b, ldb, &beta, c, ldc));
+#endif
 	}
 }
 
@@ -420,6 +463,13 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasCsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (float2*)&alpha, (float2*)a, lda, (float2*)b, ldb, (float2*)&beta, (float2*)c, ldc));
+#endif
+	}
 }
 
 void BlasConnector::symm_cm(const char side, const char uplo, const int m, const int n,
@@ -430,6 +480,13 @@ void BlasConnector::symm_cm(const char side, const char uplo, const int m, const
 		zsymm_(&side, &uplo, &m, &n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasZsymm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (double2*)&alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)&beta, (double2*)c, ldc));
+#endif
 	}
 }
 
@@ -442,6 +499,13 @@ void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasChemm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (float2*)&alpha, (float2*)a, lda, (float2*)b, ldb, (float2*)&beta, (float2*)c, ldc));
+#endif
+	}
 }
 
 void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
@@ -453,6 +517,13 @@ void BlasConnector::hemm_cm(char side, char uplo, int m, int n,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc);
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasSideMode_t sideMode = BlasUtils::judge_side(side);
+		cublasFillMode_t fillMode = BlasUtils::judge_fill(uplo);
+		cublasErrcheck(cublasZhemm(BlasUtils::cublas_handle, sideMode, fillMode, m, n, (double2*)&alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)&beta, (double2*)c, ldc));
+#endif
+	}
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
@@ -461,7 +532,13 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	sgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
-}
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
+		cublasErrcheck(cublasSgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha, A, lda, X, incx, &beta, Y, incy));
+#endif
+	}
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
@@ -470,7 +547,13 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	dgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
-}
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cublasOperation_t cutransA = BlasUtils::judge_trans(false, trans, "gemv_op");
+		cublasErrcheck(cublasDgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha, A, lda, X, incx, &beta, Y, incy));
+#endif
+	}
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
@@ -479,7 +562,15 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	cgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
-}
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cuFloatComplex alpha_cu = make_cuFloatComplex(alpha.real(), alpha.imag());
+    	cuFloatComplex beta_cu = make_cuFloatComplex(beta.real(), beta.imag());
+		cublasOperation_t cutransA = BlasUtils::judge_trans(true, trans, "gemv_op");
+		cublasErrcheck(cublasCgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha_cu, (cuFloatComplex*)A, lda, (cuFloatComplex*)X, incx, &beta_cu, (cuFloatComplex*)Y, incy));
+#endif
+	}
 }
 
 void BlasConnector::gemv(const char trans, const int m, const int n,
@@ -488,7 +579,15 @@ void BlasConnector::gemv(const char trans, const int m, const int n,
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
     	zgemv_(&trans, &m, &n, &alpha, A, &lda, X, &incx, &beta, Y, &incy);
-}
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		cuDoubleComplex alpha_cu = make_cuDoubleComplex(alpha.real(), alpha.imag());
+    	cuDoubleComplex beta_cu = make_cuDoubleComplex(beta.real(), beta.imag());
+		cublasOperation_t cutransA = BlasUtils::judge_trans(true, trans, "gemv_op");
+		cublasErrcheck(cublasZgemv(BlasUtils::cublas_handle, cutransA, m, n, &alpha_cu, (cuDoubleComplex*)A, lda, (cuDoubleComplex*)X, incx, &beta_cu, (cuDoubleComplex*)Y, incy));
+#endif
+	}
 }
 
 // out = ||x||_2
@@ -496,6 +595,13 @@ float BlasConnector::nrm2( const int n, const float *X, const int incX, base_dev
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return snrm2_( &n, X, &incX );
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		float result = 0.0;
+		cublasErrcheck(cublasSnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		return result;
+#endif
 	}
 	return snrm2_( &n, X, &incX );
 }
@@ -506,6 +612,13 @@ double BlasConnector::nrm2( const int n, const double *X, const int incX, base_d
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dnrm2_( &n, X, &incX );
 	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		double result = 0.0;
+		cublasErrcheck(cublasDnrm2(BlasUtils::cublas_handle, n, X, incX, &result));
+		return result;
+#endif
+	}
 	return dnrm2_( &n, X, &incX );
 }
 
@@ -514,6 +627,13 @@ double BlasConnector::nrm2( const int n, const std::complex<double> *X, const in
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		return dznrm2_( &n, X, &incX );
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		double result = 0.0;
+		cublasErrcheck(cublasDznrm2(BlasUtils::cublas_handle, n, (double2*)X, incX, &result));
+		return result;
+#endif
 	}
 	return dznrm2_( &n, X, &incX );
 }
@@ -530,5 +650,117 @@ void BlasConnector::copy(const long n, const std::complex<double> *a, const int 
 {
 	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
 		zcopy_(&n, a, &incx, b, &incy);
+	}
+}
+
+
+template <typename T>
+void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * vector2[i];
+        }
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::vector_mul_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
+#endif
+	}
+}
+
+
+template <typename T>
+void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type){
+	using Real = typename GetTypeReal<T>::type;
+	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096 / sizeof(Real))
+#endif
+		for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] / vector2[i];
+        }
+	}
+	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, float *result, const float *vector1, const float constant1, const float *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(float))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, double *result, const double *vector1, const double constant1, const double *vector2, const double constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(double))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, std::complex<float> *result, const std::complex<float> *vector1, const float constant1, const std::complex<float> *vector2, const float constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<float>))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
+	}
+}
+
+void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type)
+{
+	if (device_type == base_device::CpuDevice){
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 8192 / sizeof(std::complex<double>))
+#endif
+        for (int i = 0; i < dim; i++)
+        {
+            result[i] = vector1[i] * constant1 + vector2[i] * constant2;
+        }
+	}
+	else if (device_type == base_device::GpuDevice){
+#ifdef __CUDA
+		ModuleBase::constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, constant1, vector2, constant2);
+#endif
 	}
 }

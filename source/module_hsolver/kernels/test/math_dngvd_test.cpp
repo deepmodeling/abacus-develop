@@ -2,7 +2,7 @@
 #include "module_base/lapack_connector.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 
 #include <algorithm>
 #include <complex>
@@ -140,17 +140,17 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
         // {-0.351417,-1.73472}, {-8.32667,2.3744}, {4.16334,3.64292}
     };
     std::complex<double>* device_transpose = nullptr;
-    resize_memory_op_Z()(gpu_ctx, device_transpose, matrix_size);
-    synchronize_memory_op_C2G_Z()(gpu_ctx, cpu_ctx, device_transpose, transpose.data(), transpose.size());
+    resize_memory_op_Z()(device_transpose, matrix_size);
+    synchronize_memory_op_C2G_Z()(device_transpose, transpose.data(), transpose.size());
 
     // run
-    hsolver::createGpuBlasHandle();
-    hsolver::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+    ModuleBase::createGpuBlasHandle();
+    ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                                  2,
                                                                                  3,
                                                                                  device_transpose,
                                                                                  device_transpose);
-    hsolver::destoryBLAShandle();
+    ModuleBase::destoryBLAShandle();
 
     // copy transpose data from GPU to CPU
     std::vector<std::complex<double>> transpose_result = {
@@ -162,7 +162,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
         {0.0, 0.0},
         // {0.0,  0.0}, {0.0,  0.0}, {0.0,  0.0}
     };
-    synchronize_memory_op_G2C_Z()(cpu_ctx, gpu_ctx, transpose_result.data(), device_transpose, transpose.size());
+    synchronize_memory_op_G2C_Z()(transpose_result.data(), device_transpose, transpose.size());
 
     // std::vector<std::complex<double> > test_result = {
     //     {-0.351417,-1.73472}, {-0.351417,-1.73472}, {-0.351417,-1.73472},

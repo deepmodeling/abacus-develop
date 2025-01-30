@@ -3,7 +3,7 @@
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
 #include "module_base/timer.h"
-#include "module_elecstate/elecstate_getters.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
 #ifdef __MPI
 void Charge::init_chgmpi()
@@ -132,7 +132,7 @@ void Charge::rho_mpi()
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         reduce_diff_pools(this->rho[is]);
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             reduce_diff_pools(this->kin_r[is]);
         }

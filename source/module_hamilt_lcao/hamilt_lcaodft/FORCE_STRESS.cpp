@@ -50,6 +50,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
                                           surchem& solvent,
+#ifdef __DEEPKS
+                                          LCAO_Deepks& ld,
+#endif
 #ifdef __EXX
                                           Exx_LRI<double>& exx_lri_double,
                                           Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -180,6 +183,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 #ifdef __DEEPKS
                         fvnl_dalpha,
                         svnl_dalpha,
+                        ld,
 #endif
                         gint_gamma,
                         gint_k,
@@ -500,63 +504,16 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_ftot = PARAM.globalv.global_out_dir + "deepks_ftot.npy";
-            LCAO_deepks_io::save_npy_f(fcs, file_ftot, ucell.nat,
-                                       GlobalV::MY_RANK); // Ty/Bohr, F_tot
+            LCAO_deepks_io::save_matrix2npy(file_ftot, fcs, GlobalV::MY_RANK); // Ry/Bohr, F_tot
 
+            const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-                LCAO_deepks_io::save_npy_f(fcs - fvnl_dalpha,
-                                           file_fbase,
-                                           ucell.nat,
-                                           GlobalV::MY_RANK); // Ry/Bohr, F_base
-
-                if (!PARAM.inp.deepks_equiv) // training with force label not supported by equivariant version now
-                {
-                    torch::Tensor gdmx;
-                    if (PARAM.globalv.gamma_only_local)
-                    {
-                        const std::vector<std::vector<double>>& dm_gamma
-                            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-
-                        GlobalC::ld
-                            .cal_gdmx(dm_gamma, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmx);
-                    }
-                    else
-                    {
-                        const std::vector<std::vector<std::complex<double>>>& dm_k
-                            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)
-                                  ->get_DM()
-                                  ->get_DMK_vector();
-
-                        GlobalC::ld.cal_gdmx(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmx);
-                    }
-                    if (PARAM.inp.deepks_out_unittest)
-                    {
-                        GlobalC::ld.check_gdmx(ucell.nat, gdmx);
-                    }
-                    std::vector<torch::Tensor> gevdm;
-                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
-                    torch::Tensor gvx;
-                    GlobalC::ld.cal_gvx(ucell.nat, gevdm, gdmx, gvx);
-
-                    if (PARAM.inp.deepks_out_unittest)
-                    {
-                        GlobalC::ld.check_gvx(ucell.nat, gvx);
-                    }
-
-                    LCAO_deepks_io::save_npy_gvx(ucell.nat,
-                                                 GlobalC::ld.des_per_atom,
-                                                 gvx,
-                                                 PARAM.globalv.global_out_dir,
-                                                 GlobalV::MY_RANK);
-                }
+                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs - fvnl_dalpha, GlobalV::MY_RANK); // Ry/Bohr, F_base
             }
             else
             {
-                const std::string file_fbase = PARAM.globalv.global_out_dir + "deepks_fbase.npy";
-                LCAO_deepks_io::save_npy_f(fcs, file_fbase, ucell.nat,
-                                           GlobalV::MY_RANK); // no scf, F_base=F_tot
+                LCAO_deepks_io::save_matrix2npy(file_fbase, fcs, GlobalV::MY_RANK); // no scf, F_base=F_tot
             }
         }
 #endif
@@ -729,63 +686,24 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (PARAM.inp.deepks_out_labels) // not parallelized yet
         {
             const std::string file_stot = PARAM.globalv.global_out_dir + "deepks_stot.npy";
-            LCAO_deepks_io::save_npy_s(scs,
-                                       file_stot,
-                                       ucell.omega,
-                                       GlobalV::MY_RANK); // change to energy unit Ry when printing, S_tot, w/ model
+            LCAO_deepks_io::save_matrix2npy(file_stot,
+                                            scs,
+                                            GlobalV::MY_RANK,
+                                            ucell.omega,
+                                            'U'); // change to energy unit Ry when printing, S_tot;
 
-            // wenfei add 2021/11/2
+            const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
             if (PARAM.inp.deepks_scf)
             {
-                const std::string file_sbase = PARAM.globalv.global_out_dir + "deepks_sbase.npy";
-                LCAO_deepks_io::save_npy_s(scs - svnl_dalpha,
-                                           file_sbase,
-                                           ucell.omega,
-                                           GlobalV::MY_RANK); // change to energy unit Ry when printing, S_base;
-
-                if (!PARAM.inp.deepks_equiv) // training with stress label not supported by equivariant version now
-                {
-                    torch::Tensor gdmepsl;
-                    if (PARAM.globalv.gamma_only_local)
-                    {
-                        const std::vector<std::vector<double>>& dm_gamma
-                            = dynamic_cast<const elecstate::ElecStateLCAO<double>*>(pelec)->get_DM()->get_DMK_vector();
-
-                        GlobalC::ld.cal_gdmepsl(dm_gamma,
-                                                ucell,
-                                                orb,
-                                                gd,
-                                                kv.get_nks(),
-                                                kv.kvec_d,
-                                                GlobalC::ld.phialpha,
-                                                gdmepsl);
-                    }
-                    else
-                    {
-                        const std::vector<std::vector<std::complex<double>>>& dm_k
-                            = dynamic_cast<const elecstate::ElecStateLCAO<std::complex<double>>*>(pelec)
-                                  ->get_DM()
-                                  ->get_DMK_vector();
-
-                        GlobalC::ld
-                            .cal_gdmepsl(dm_k, ucell, orb, gd, kv.get_nks(), kv.kvec_d, GlobalC::ld.phialpha, gdmepsl);
-                    }
-                    if (PARAM.inp.deepks_out_unittest)
-                    {
-                        GlobalC::ld.check_gdmepsl(gdmepsl);
-                    }
-
-                    std::vector<torch::Tensor> gevdm;
-                    GlobalC::ld.cal_gevdm(ucell.nat, gevdm);
-                    torch::Tensor gvepsl;
-                    GlobalC::ld.cal_gvepsl(ucell.nat, gevdm, gdmepsl, gvepsl);
-
-                    LCAO_deepks_io::save_npy_gvepsl(ucell.nat,
-                                                    GlobalC::ld.des_per_atom,
-                                                    gvepsl,
-                                                    PARAM.globalv.global_out_dir,
-                                                    GlobalV::MY_RANK); //  unitless, grad_vepsl
-                }
+                LCAO_deepks_io::save_matrix2npy(file_sbase,
+                                                scs - svnl_dalpha,
+                                                GlobalV::MY_RANK,
+                                                ucell.omega,
+                                                'U'); // change to energy unit Ry when printing, S_base;
+            }
+            else
+            {
+                LCAO_deepks_io::save_matrix2npy(file_sbase, scs, GlobalV::MY_RANK, ucell.omega, 'U'); // sbase = stot
             }
         }
 #endif
@@ -919,6 +837,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #if __DEEPKS
                                               ModuleBase::matrix& fvnl_dalpha,
                                               ModuleBase::matrix& svnl_dalpha,
+                                              LCAO_Deepks& ld,
 #endif
                                               Gint_Gamma& gint_gamma, // mohan add 2024-04-01
                                               Gint_k& gint_k,         // mohan add 2024-04-01
@@ -946,6 +865,7 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 #if __DEEPKS
                fvnl_dalpha,
                svnl_dalpha,
+               ld,
 #endif
                gint_gamma,
                two_center_bundle,
@@ -974,6 +894,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #if __DEEPKS
                                                             ModuleBase::matrix& fvnl_dalpha,
                                                             ModuleBase::matrix& svnl_dalpha,
+                                                            LCAO_Deepks& ld,
 #endif
                                                             Gint_Gamma& gint_gamma,
                                                             Gint_k& gint_k,
@@ -1000,6 +921,7 @@ void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOn
 #if __DEEPKS
                fvnl_dalpha,
                svnl_dalpha,
+               ld,
 #endif
                gint_k,
                two_center_bundle,

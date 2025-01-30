@@ -23,16 +23,16 @@ Veff<OperatorPW<T, Device>>::Veff(const int* isk_in,
     this->veff_row = veff_row;
     this->veff_col = veff_col;
     this->wfcpw = wfcpw_in;
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
+    resmem_complex_op()(this->porter, this->wfcpw->nmaxgr, "Veff<PW>::porter");
+    resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr, "Veff<PW>::porter1");
 
 }
 
 template<typename T, typename Device>
 Veff<OperatorPW<T, Device>>::~Veff()
 {
-    delmem_complex_op()(this->ctx, this->porter);
-    delmem_complex_op()(this->ctx, this->porter1);
+    delmem_complex_op()(this->porter);
+    delmem_complex_op()(this->porter1);
 }
 
 template<typename T, typename Device>
@@ -48,7 +48,7 @@ void Veff<OperatorPW<T, Device>>::act(
     ModuleBase::timer::tick("Operator", "VeffPW");
     if(is_first_node)
     {
-        setmem_complex_op()(this->ctx, tmhpsi, 0, nbasis*nbands/npol);
+        setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
 
     int max_npw = nbasis / npol;
@@ -124,8 +124,8 @@ hamilt::Veff<OperatorPW<T, Device>>::Veff(const Veff<OperatorPW<T_in, Device_in>
     this->veff_col = veff->get_veff_col();
     this->veff_row = veff->get_veff_row();
     this->wfcpw = veff->get_wfcpw();
-    resmem_complex_op()(this->ctx, this->porter, this->wfcpw->nmaxgr);
-    resmem_complex_op()(this->ctx, this->porter1, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->porter, this->wfcpw->nmaxgr);
+    resmem_complex_op()(this->porter1, this->wfcpw->nmaxgr);
     this->veff = veff->get_veff();
     if (this->isk == nullptr || this->veff == nullptr || this->wfcpw == nullptr) {
         ModuleBase::WARNING_QUIT("VeffPW", "Constuctor of Operator::VeffPW is failed, please check your code!");

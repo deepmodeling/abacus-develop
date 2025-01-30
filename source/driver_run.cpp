@@ -40,10 +40,10 @@ void Driver::driver_run()
     // the life of ucell should begin here, mohan 2024-05-12
     UnitCell ucell;
     ucell.setup(PARAM.inp.latname,
-                    PARAM.inp.ntype,
-                    PARAM.inp.lmaxmax,
-                    PARAM.inp.init_vel,
-                    PARAM.inp.fixed_axes);
+                PARAM.inp.ntype,
+                PARAM.inp.lmaxmax,
+                PARAM.inp.init_vel,
+                PARAM.inp.fixed_axes);
 
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);

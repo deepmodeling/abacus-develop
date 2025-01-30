@@ -2,9 +2,9 @@
 #include <vector>
 
 #define private public
-#include "module_parameter/parameter.h"
 #include "module_elecstate/potentials/potential_new.h"
-#undef private
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
 // mock functions
 Structure_Factor::Structure_Factor()
 {
@@ -44,14 +44,10 @@ surchem::surchem()
 surchem::~surchem()
 {
 }
-
+int XC_Functional::func_type = 1;
+bool XC_Functional::ked_flag = false;
 namespace elecstate
 {
-int tmp_xc_func_type = 1;
-int get_xc_func_type()
-{
-    return tmp_xc_func_type;
-}
 
 PotBase* Potential::get_pot_type(const std::string& pot_type)
 {
@@ -197,7 +193,8 @@ TEST_F(PotentialNewTest, ConstructorNRXX0)
 
 TEST_F(PotentialNewTest, ConstructorXC3)
 {
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     EXPECT_TRUE(pot->fixed_mode);
@@ -463,7 +460,8 @@ TEST_F(PotentialNewTest, GetEffectiveVarrayNullptr)
 TEST_F(PotentialNewTest, GetEffectiveVofkmatrix)
 {
     // construct potential
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     rhopw->nrxx = 100;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
@@ -532,7 +530,8 @@ TEST_F(PotentialNewTest, GetVeffSmooth)
 {
     // construct potential
     rhopw->nrxx = 100;
-    elecstate::tmp_xc_func_type = 3;
+    XC_Functional::func_type = 3;
+    XC_Functional::ked_flag = true;
     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
     //
     ModuleBase::matrix veff_smooth_tmp = pot->get_veff_smooth();
@@ -576,28 +575,29 @@ TEST_F(PotentialNewTest, GetVofkSmooth)
 TEST_F(PotentialNewTest, InterpolateVrsDoubleGrids)
 {
      PARAM.sys.double_grid = true;
-    elecstate::tmp_xc_func_type = 3;
-    // Init pw_basis
-    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
-    rhopw->initparameters(false, 4);
-    rhopw->setuptransform();
-    rhopw->collect_local_pw();
+     XC_Functional::func_type = 3;
+     XC_Functional::ked_flag = true;
+     // Init pw_basis
+     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+     rhopw->initparameters(false, 4);
+     rhopw->setuptransform();
+     rhopw->collect_local_pw();
 
-    rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
-    rhodpw->initparameters(false, 6);
-    static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
-    rhodpw->collect_local_pw();
+     rhodpw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 6);
+     rhodpw->initparameters(false, 6);
+     static_cast<ModulePW::PW_Basis_Sup*>(rhodpw)->setuptransform(rhopw);
+     rhodpw->collect_local_pw();
 
-    pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+     pot = new elecstate::Potential(rhodpw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-    for (int ir = 0; ir < pot->v_effective.nr; ir++)
-    {
-        for (int ic = 0; ic < pot->v_effective.nc; ic++)
-        {
-            pot->v_effective(ir,ic) = ir+ic;
-            pot->vofk_effective(ir,ic) = ir+2*ic;
-        }
-    }
+     for (int ir = 0; ir < pot->v_effective.nr; ir++)
+     {
+         for (int ic = 0; ic < pot->v_effective.nc; ic++)
+         {
+             pot->v_effective(ir, ic) = ir + ic;
+             pot->vofk_effective(ir, ic) = ir + 2 * ic;
+         }
+     }
 
     pot->interpolate_vrs();
 
@@ -641,23 +641,24 @@ TEST_F(PotentialNewTest, InterpolateVrsWarningQuit)
 TEST_F(PotentialNewTest, InterpolateVrsSingleGrids)
 {
      PARAM.sys.double_grid = false;
-    elecstate::tmp_xc_func_type = 3;
-    // Init pw_basis
-    rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
-    rhopw->initparameters(false, 4);
-    rhopw->setuptransform();
-    rhopw->collect_local_pw();
+     XC_Functional::func_type = 3;
+     XC_Functional::ked_flag = true;
+     // Init pw_basis
+     rhopw->initgrids(4, ModuleBase::Matrix3(1, 0, 0, 0, 1, 0, 0, 0, 1), 4);
+     rhopw->initparameters(false, 4);
+     rhopw->setuptransform();
+     rhopw->collect_local_pw();
 
-    pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
+     pot = new elecstate::Potential(rhopw, rhopw, ucell, vloc, structure_factors, solvent, etxc, vtxc);
 
-    for (int ir = 0; ir < pot->v_effective.nr; ir++)
-    {
-        for (int ic = 0; ic < pot->v_effective.nc; ic++)
-        {
-            pot->v_effective(ir,ic) = ir+ic;
-            pot->vofk_effective(ir,ic) = ir+2*ic;
-        }
-    }
+     for (int ir = 0; ir < pot->v_effective.nr; ir++)
+     {
+         for (int ic = 0; ic < pot->v_effective.nc; ic++)
+         {
+             pot->v_effective(ir, ic) = ir + ic;
+             pot->vofk_effective(ir, ic) = ir + 2 * ic;
+         }
+     }
 
     pot->interpolate_vrs();
 

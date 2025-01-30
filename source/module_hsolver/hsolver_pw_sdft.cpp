@@ -60,7 +60,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 #ifdef __MPI
         if (nbands > 0 && PARAM.inp.bndpar > 1)
         {
-            Parallel_Common::bcast_dev(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD, &psi_cpu(ik, 0, 0));
+            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
         }
 #endif
