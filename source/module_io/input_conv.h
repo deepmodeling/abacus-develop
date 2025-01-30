@@ -47,10 +47,15 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
 {
     ModuleBase::TITLE("Input_Conv", "parse_expression");
     int count = 0;
-    std::string pattern("([-+]?[0-9]+\\*[-+]?[0-9.]+|[-+]?[0-9,.]+)");
+
+    // Update the regex pattern to handle scientific notation
+    std::string pattern("([-+]?[0-9]+\\*[-+]?[0-9.eE+-]+|[-+]?[0-9,.eE+-]+)");
+
     std::vector<std::string> str;
     std::stringstream ss(fn);
     std::string section;
+
+    // Split the input string into substrings by spaces
     while (ss >> section)
     {
         int index = 0;
@@ -64,24 +69,14 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         section.erase(0, index);
         str.push_back(section);
     }
-    // std::string::size_type pos1, pos2;
-    // std::string c = " ";
-    // pos2 = fn.find(c);
-    // pos1 = 0;
-    // while (std::string::npos != pos2)
-    // {
-    //     str.push_back(fn.substr(pos1, pos2 - pos1));
-    //     pos1 = pos2 + c.size();
-    //     pos2 = fn.find(c, pos1);
-    // }
-    // if (pos1 != fn.length())
-    // {
-    //     str.push_back(fn.substr(pos1));
-    // }
+
+    // Compile the regular expression
     regex_t reg;
     regcomp(&reg, pattern.c_str(), REG_EXTENDED);
     regmatch_t pmatch[1];
     const size_t nmatch = 1;
+
+    // Loop over each section and apply regex to extract numbers
     for (size_t i = 0; i < str.size(); ++i)
     {
         if (str[i] == "")
@@ -90,25 +85,28 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         }
         int status = regexec(&reg, str[i].c_str(), nmatch, pmatch, 0);
         std::string sub_str = "";
+
+        // Extract the matched substring
         for (size_t j = pmatch[0].rm_so; j != pmatch[0].rm_eo; ++j)
         {
             sub_str += str[i][j];
         }
+
+        // Check if the substring contains multiplication (e.g., "2*3.14")
         std::string sub_pattern("\\*");
         regex_t sub_reg;
         regcomp(&sub_reg, sub_pattern.c_str(), REG_EXTENDED);
         regmatch_t sub_pmatch[1];
         const size_t sub_nmatch = 1;
+
         if (regexec(&sub_reg, sub_str.c_str(), sub_nmatch, sub_pmatch, 0) == 0)
         {
             size_t pos = sub_str.find("*");
             int num = stoi(sub_str.substr(0, pos));
-            assert(num>=0);
+            assert(num >= 0);
             T occ = stof(sub_str.substr(pos + 1, sub_str.size()));
-            // std::vector<double> ocp_temp(num, occ);
-            // const std::vector<double>::iterator dest = vec.begin() + count;
-            // copy(ocp_temp.begin(), ocp_temp.end(), dest);
-            // count += num;
+            
+            // Add the value to the vector `num` times
             for (size_t k = 0; k != num; k++)
             {
                 vec.emplace_back(occ);
@@ -116,16 +114,17 @@ void parse_expression(const std::string& fn, std::vector<T>& vec)
         }
         else
         {
-            // vec[count] = stof(sub_str);
-            // count += 1;
+            // Handle scientific notation and convert to T
             std::stringstream convert;
             convert << sub_str;
             T occ;
             convert >> occ;
             vec.emplace_back(occ);
         }
+
         regfree(&sub_reg);
     }
+
     regfree(&reg);
 }
 
