@@ -60,10 +60,12 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
     {
         std::vector<MPI_Request> requests(nproc_col);
         std::vector<T> A_tmp(max_colA * LDA);
+        std::vector<T> isend_tmp;
         T* A_tmp_device = A_tmp.data();
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             A_tmp_device = nullptr;
+            isend_tmp.resize(max_colA * LDA);
             resmem_dev_op()(A_tmp_device, max_colA * LDA);
         }
         T* B_tmp = nullptr;
@@ -80,7 +82,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             if (rank_col != ip)
             {
                 int size = LDA * ncolA;
-                Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], A_tmp.data());
+                Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], isend_tmp.data());
             }
         }
 

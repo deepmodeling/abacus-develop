@@ -257,7 +257,7 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft")
+            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
             {
                 para.input.bndpar = 1;
             }

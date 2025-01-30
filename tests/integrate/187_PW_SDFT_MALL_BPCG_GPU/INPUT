@@ -13,7 +13,7 @@ pseudo_dir	../../PP_ORB
 kpar            1
 bndpar          2
 
-nbands			7
+nbands			11
 nbands_sto		all
 
 nche_sto		120

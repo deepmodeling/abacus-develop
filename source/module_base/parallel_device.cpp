@@ -18,6 +18,22 @@ void isend_data(const std::complex<float>* buf, int count, int dest, int tag, MP
 {
     MPI_Isend(buf, count, MPI_COMPLEX, dest, tag, comm, request);
 }
+void send_data(const double* buf, int count, int dest, int tag, MPI_Comm& comm)
+{
+    MPI_Send(buf, count, MPI_DOUBLE, dest, tag, comm);
+}
+void send_data(const std::complex<double>* buf, int count, int dest, int tag, MPI_Comm& comm)
+{
+    MPI_Send(buf, count, MPI_DOUBLE_COMPLEX, dest, tag, comm);
+}
+void send_data(const float* buf, int count, int dest, int tag, MPI_Comm& comm)
+{
+    MPI_Send(buf, count, MPI_FLOAT, dest, tag, comm);
+}
+void send_data(const std::complex<float>* buf, int count, int dest, int tag, MPI_Comm& comm)
+{
+    MPI_Send(buf, count, MPI_COMPLEX, dest, tag, comm);
+}
 void recv_data(double* buf, int count, int source, int tag, MPI_Comm& comm, MPI_Status* status)
 {
     MPI_Recv(buf, count, MPI_DOUBLE, source, tag, comm, status);

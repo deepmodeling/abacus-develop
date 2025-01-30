@@ -153,12 +153,17 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
     const Device* ctx = {};
 
     std::vector<T> B_tmp(max_colA * LDA);
+    std::vector<T> isend_tmp;
+    if (std::is_same<Device, base_device::DEVICE_GPU>::value)
+    {
+        isend_tmp.resize(max_colA * LDA);
+    }
     for (int ip = 0; ip < col_nproc; ip++)
     {
         if (col_rank != ip)
         {
             int size = ncolA * LDA;
-            Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], B_tmp.data());
+            Parallel_Common::isend_dev<T, Device>(A, size, ip, 0, col_world, &requests[ip], isend_tmp.data());
         }
     }
 
