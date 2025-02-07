@@ -72,7 +72,8 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                     atom_begin_row[i] = -1;
                     atom_begin_col[i] = pv->atom_begin_col[i];
                 }
-                hamilt::AtomPair<double> pair(iat, ibt, R_index.x, R_index.y, R_index.z, atom_begin_row, atom_begin_col, ucell.nat);
+                hamilt::AtomPair<double>
+                    pair(iat, ibt, R_index.x, R_index.y, R_index.z, atom_begin_row, atom_begin_col, ucell.nat);
                 // Notice: in AtomPair, the usage is set_size(ncol, nrow)
                 pair.set_size(nw_alpha, atom1->nw * PARAM.globalv.npol);
                 phialpha[0]->insert_pair(pair);

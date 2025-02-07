@@ -4,6 +4,8 @@
 
 #ifdef __DEEPKS
 #include "deepks_basic.h"
+
+#include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
@@ -126,14 +128,14 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
 }
 
 void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
-                                   const int lmaxd,
-                                   const int nmaxd,
-                                   const int inlmax,
-                                   const int des_per_atom,
-                                   const int* inl_l,
-                                   const std::vector<torch::Tensor>& descriptor,
-                                   double** gedm,
-                                   double& E_delta)
+                                          const int lmaxd,
+                                          const int nmaxd,
+                                          const int inlmax,
+                                          const int des_per_atom,
+                                          const int* inl_l,
+                                          const std::vector<torch::Tensor>& descriptor,
+                                          double** gedm,
+                                          double& E_delta)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
@@ -170,16 +172,16 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 // obtain from the machine learning model dE_delta/dDescriptor
 // E_delta is also calculated here
 void DeePKS_domain::cal_edelta_gedm(const int nat,
-                             const int lmaxd,
-                             const int nmaxd,
-                             const int inlmax,
-                             const int des_per_atom,
-                             const int* inl_l,
-                             const std::vector<torch::Tensor>& descriptor,
-                             const std::vector<torch::Tensor>& pdm,
-                             torch::jit::script::Module& model_deepks,
-                             double** gedm,
-                             double& E_delta)
+                                    const int lmaxd,
+                                    const int nmaxd,
+                                    const int inlmax,
+                                    const int des_per_atom,
+                                    const int* inl_l,
+                                    const std::vector<torch::Tensor>& descriptor,
+                                    const std::vector<torch::Tensor>& pdm,
+                                    torch::jit::script::Module& model_deepks,
+                                    double** gedm,
+                                    double& E_delta)
 {
     if (PARAM.inp.deepks_equiv)
     {
