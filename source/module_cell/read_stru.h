@@ -8,7 +8,11 @@ namespace unitcell
     bool check_tau(const Atom* atoms,
                    const int& ntype,
                    const double& lat0);
-                   
+    void check_dtau(Atom* atoms,
+                    const int& ntype,
+                    const double& lat0,
+                    ModuleBase::Matrix3& latvec);
+    
     bool read_atom_species(std::ifstream& ifa,
                           std::ofstream& ofs_running,
                           UnitCell& ucell); // read in the atom information for each type of atom

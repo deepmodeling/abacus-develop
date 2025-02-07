@@ -259,7 +259,7 @@ class UnitCell {
                          const bool& orb = false,
                          const bool& dpks_desc = false,
                          const int& iproc = 0) const;
-    void check_dtau();
+    // void check_dtau();
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
 

@@ -12,6 +12,7 @@
 #include "module_base/mathzone.h"
 #include "prepare_unitcell.h"
 #include "module_cell/update_cell.h"
+#include "module_cell/read_stru.h"
 #include <streambuf>
 #include <valarray>
 #include <vector>
@@ -738,7 +739,7 @@ TEST_F(UcellTest, CheckDTau)
     UcellTestPrepare utp = UcellTestLib["C1H2-CheckDTau"];
     PARAM.input.relax_new = utp.relax_new;
     ucell = utp.SetUcellInfo();
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     for (int it = 0; it < utp.natom.size(); ++it)
     {
         for (int ia = 0; ia < utp.natom[it]; ++ia)

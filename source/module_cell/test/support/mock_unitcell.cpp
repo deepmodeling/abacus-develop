@@ -44,7 +44,6 @@ void UnitCell::print_stru_file(const std::string& fn,
                                const bool& orb,
                                const bool& dpks_desc,
                                const int& iproc) const {}
-void UnitCell::check_dtau() {}
 void UnitCell::cal_nwfc(std::ofstream& log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream& log) {}

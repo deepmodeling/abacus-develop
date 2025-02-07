@@ -548,7 +548,7 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
     // mohan add 2010-06-30    
     //xiaohui modify 2015-03-15, cancel outputfile "STRU_READIN.xyz"
     //this->print_cell_xyz("STRU_READIN.xyz");
-    this->check_dtau();
+    unitcell::check_dtau(this->atoms,this->ntype, this->lat0, this->latvec);
 
     if (unitcell::check_tau(this->atoms, this->ntype, this->lat0))
     {
@@ -679,77 +679,6 @@ int UnitCell::find_type(const std::string &label)
     return -1;
 }
 */
-
-void UnitCell::check_dtau() {
-    for(int it=0; it<ntype; it++)
-    {
-        Atom* atom1 = &atoms[it];
-        for(int ia=0; ia<atoms[it].na; ia++)
-        {
-            double dx2 = (atom1->taud[ia].x+10000) - int(atom1->taud[ia].x+10000);
-            double dy2 = (atom1->taud[ia].y+10000) - int(atom1->taud[ia].y+10000);
-            double dz2 = (atom1->taud[ia].z+10000) - int(atom1->taud[ia].z+10000);
-
-            // mohan add 2011-04-07            
-            while(dx2 >= 1) 
-            {
-                GlobalV::ofs_warning << " dx2 is >=1 " << std::endl;
-                dx2 -= 1.0;
-            }
-            while(dy2 >= 1) 
-            {
-                GlobalV::ofs_warning << " dy2 is >=1 " << std::endl;
-                dy2 -= 1.0;
-            }
-            while(dz2 >= 1) 
-            {
-                GlobalV::ofs_warning << " dz2 is >=1 " << std::endl;
-                dz2 -= 1.0;
-            }
-            // mohan add 2011-04-07            
-            while(dx2<0) 
-            {
-                GlobalV::ofs_warning << " dx2 is <0 " << std::endl;
-                dx2 += 1.0;
-            }
-            while(dy2<0) 
-            {
-                GlobalV::ofs_warning << " dy2 is <0 " << std::endl;
-                dy2 += 1.0;
-            }
-            while(dz2<0) 
-            {
-                GlobalV::ofs_warning << " dz2 is <0 " << std::endl;
-                dz2 += 1.0;
-            }
-
-            atom1->taud[ia].x = dx2;
-            atom1->taud[ia].y = dy2;
-            atom1->taud[ia].z = dz2;
-
-            double cx2=0.0;
-            double cy2=0.0;
-            double cz2=0.0;
-
-            ModuleBase::Mathzone::Direct_to_Cartesian(
-            atom1->taud[ia].x, atom1->taud[ia].y, atom1->taud[ia].z,
-            latvec.e11, latvec.e12, latvec.e13,
-            latvec.e21, latvec.e22, latvec.e23,
-            latvec.e31, latvec.e32, latvec.e33,
-            cx2, cy2, cz2);
-
-            atom1->tau[ia].x = cx2;
-            atom1->tau[ia].y = cy2;
-            atom1->tau[ia].z = cz2;
-
-    //        std::cout << std::setw(15) << dx2 << std::setw(15) << dy2 << std::setw(15) << dz2 
-    //        << std::setw(15) << cx2 << std::setw(15) << cy2 << std::setw(15) << cz2
-    //        << std::endl;
-            
-        }
-    }
-    return;
-}
 
 void UnitCell::read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
 {
