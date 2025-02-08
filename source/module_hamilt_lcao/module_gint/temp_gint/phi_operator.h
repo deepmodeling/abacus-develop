@@ -46,7 +46,7 @@ class PhiOperator
 
     void phi_mul_dm(
         const double* phi, 
-        const HContainer<double>& DM, 
+        const HContainer<double>& dm, 
         const bool is_symm, double* phi_dm) const;
 
     void phi_mul_vldr3(

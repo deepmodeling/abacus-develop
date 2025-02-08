@@ -12,20 +12,20 @@ class Gint_tau : public Gint
 {
     public:
     Gint_tau(
-        const std::vector<HContainer<double>*>& DMR_vec,
+        const std::vector<HContainer<double>*>& dm_vec,
         const int nspin,
         double** tau)
-        : DMR_vec_(DMR_vec), nspin_(nspin), kin_(tau) {};
+        : dm_vec_(dm_vec), nspin_(nspin), kin_(tau) {};
     
     void cal_gint() override;
     
     private:
-    void init_DMRGint_();
+    void init_dm_gint_();
 
     void cal_tau_();
 
     // input
-    const std::vector<HContainer<double>*> DMR_vec_;
+    const std::vector<HContainer<double>*> dm_vec_;
     const int nspin_;
 
     // output
@@ -34,7 +34,7 @@ class Gint_tau : public Gint
     //========================
     // Intermediate variables
     //========================
-    std::vector<std::shared_ptr<HContainer<double>>> DMRGint_vec_;
+    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
 };
 
 } // namespace ModuleGint

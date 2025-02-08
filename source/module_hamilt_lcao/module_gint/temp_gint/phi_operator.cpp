@@ -79,7 +79,7 @@ void PhiOperator::set_ddphi(
 
 void PhiOperator::phi_mul_dm(
     const double* phi, 
-    const HContainer<double>& DM, 
+    const HContainer<double>& dm, 
     const bool is_symm, double* phi_dm) const
 {
     ModuleBase::GlobalFunc::ZEROS(phi_dm, rows_ * cols_);
@@ -98,7 +98,7 @@ void PhiOperator::phi_mul_dm(
 
         if(is_symm)
         {
-            const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
+            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_i->get_iat(), 0, 0, 0);
             dsymm_(&side, &uplo, &atoms_phi_len_[i], &rows_, &alpha, dm_mat->get_pointer(), &atoms_phi_len_[i],
                 &phi[0 * cols_ + atoms_startidx_[i]], &cols_, &beta, &phi_dm[0 * cols_ + atoms_startidx_[i]], &cols_);
         }
@@ -110,7 +110,7 @@ void PhiOperator::phi_mul_dm(
             const auto atom_j = biggrid_->get_atom(j);
             const auto r_j = atom_j->get_R();
             // FIXME may be r = r_j - r_i
-            const auto dm_mat = DM.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i-r_j);
+            const auto dm_mat = dm.find_matrix(atom_i->get_iat(), atom_j->get_iat(), r_i-r_j);
 
             // if dm_mat is nullptr, it means this atom pair does not affect any meshgrid in the unitcell
             if(dm_mat == nullptr)

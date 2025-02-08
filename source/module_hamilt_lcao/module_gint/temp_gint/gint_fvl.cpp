@@ -8,17 +8,17 @@ namespace ModuleGint
 
 void Gint_fvl::cal_gint()
 {
-    init_DMRGint_();
-    transfer_DM_to_DMGint(gint_info_, DMR_vec_, DMRGint_vec_);
+    init_dm_gint_();
+    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
     cal_fvl_svl_();
 }
 
-void Gint_fvl::init_DMRGint_()
+void Gint_fvl::init_dm_gint_()
 {
-    DMRGint_vec_.resize(nspin_);
+    dm_gint_vec_.resize(nspin_);
     for (int is = 0; is < nspin_; is++)
     {
-        DMRGint_vec_[is] = gint_info_->get_hr<double>();
+        dm_gint_vec_[is] = gint_info_->get_hr<double>();
     }
 }
 
@@ -29,7 +29,7 @@ void Gint_fvl::cal_fvl_svl_()
         PhiOperator phi_op;
         std::vector<double> phi;
         std::vector<double> phi_vldr3;
-        std::vector<double> phi_vldr3_DM;
+        std::vector<double> phi_vldr3_dm;
         std::vector<double> dphi_x;
         std::vector<double> dphi_y;
         std::vector<double> dphi_z;
@@ -56,7 +56,7 @@ void Gint_fvl::cal_fvl_svl_()
             const int phi_len = phi_op.get_rows() * phi_op.get_cols();
             phi.resize(phi_len);
             phi_vldr3.resize(phi_len);
-            phi_vldr3_DM.resize(phi_len);
+            phi_vldr3_dm.resize(phi_len);
             dphi_x.resize(phi_len);
             dphi_y.resize(phi_len);
             dphi_z.resize(phi_len);
@@ -64,14 +64,14 @@ void Gint_fvl::cal_fvl_svl_()
             for (int is = 0; is < nspin_; is++)
             {
                 phi_op.phi_mul_vldr3(vr_eff_[is], dr3_, phi.data(), phi_vldr3.data());
-                phi_op.phi_mul_dm(phi_vldr3.data(), *DMRGint_vec_[is], false, phi_vldr3_DM.data());
+                phi_op.phi_mul_dm(phi_vldr3.data(), *dm_gint_vec_[is], false, phi_vldr3_dm.data());
                 if(isforce_)
                 {
-                    phi_op.phi_dot_dphi(phi_vldr3_DM.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);
+                    phi_op.phi_dot_dphi(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), fvl_thread);
                 }
                 if(isstress_)
                 {
-                    phi_op.phi_dot_dphi_r(phi_vldr3_DM.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), svl_thread);
+                    phi_op.phi_dot_dphi_r(phi_vldr3_dm.data(), dphi_x.data(), dphi_y.data(), dphi_z.data(), svl_thread);
                 }
             }
         }

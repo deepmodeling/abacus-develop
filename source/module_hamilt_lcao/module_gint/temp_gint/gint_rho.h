@@ -13,20 +13,20 @@ class Gint_rho : public Gint
 {
     public:
     Gint_rho(
-        const std::vector<HContainer<double>*>& DMR_vec,
+        const std::vector<HContainer<double>*>& dm_vec,
         const int nspin,
         double **rho)
-        : DMR_vec_(DMR_vec), nspin_(nspin), rho_(rho) {};
+        : dm_vec_(dm_vec), nspin_(nspin), rho_(rho) {};
     
     void cal_gint() override;
 
     private:
-    void init_DMRGint_();
+    void init_dm_gint_();
 
     void cal_rho_();
 
     // input
-    const std::vector<HContainer<double>*> DMR_vec_;
+    const std::vector<HContainer<double>*> dm_vec_;
     const int nspin_;
 
     // output
@@ -35,7 +35,7 @@ class Gint_rho : public Gint
     //========================
     // Intermediate variables
     //========================
-    std::vector<std::shared_ptr<HContainer<double>>> DMRGint_vec_;
+    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
 };
 
 }

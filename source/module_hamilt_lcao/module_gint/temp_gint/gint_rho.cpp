@@ -8,17 +8,17 @@ namespace ModuleGint
 
 void Gint_rho::cal_gint()
 {
-    init_DMRGint_();
-    transfer_DM_to_DMGint(gint_info_, DMR_vec_, DMRGint_vec_);
+    init_dm_gint_();
+    transfer_dm_2d_to_gint(gint_info_, dm_vec_, dm_gint_vec_);
     cal_rho_();
 }
 
-void Gint_rho::init_DMRGint_()
+void Gint_rho::init_dm_gint_()
 {
-    DMRGint_vec_.resize(nspin_);
+    dm_gint_vec_.resize(nspin_);
     for (int is = 0; is < nspin_; is++)
     {
-        DMRGint_vec_[is] = gint_info_->get_hr<double>();
+        dm_gint_vec_[is] = gint_info_->get_hr<double>();
     }
 }
 
@@ -28,7 +28,7 @@ void Gint_rho::cal_rho_()
     {
         PhiOperator phi_op;
         std::vector<double> phi;
-        std::vector<double> phi_DMR;
+        std::vector<double> phi_dm;
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -39,12 +39,12 @@ void Gint_rho::cal_rho_()
             phi_op.set_bgrid(biggrid);
             const int phi_len = phi_op.get_rows() * phi_op.get_cols();
             phi.resize(phi_len);
-            phi_DMR.resize(phi_len);
+            phi_dm.resize(phi_len);
             phi_op.set_phi(phi.data());
             for (int is = 0; is < nspin_; is++)
             {
-                phi_op.phi_mul_dm(phi.data(), *DMRGint_vec_[is], true, phi_DMR.data());
-                phi_op.phi_dot_phi_dm(phi.data(), phi_DMR.data(), rho_[is]);
+                phi_op.phi_mul_dm(phi.data(), *dm_gint_vec_[is], true, phi_dm.data());
+                phi_op.phi_dot_phi_dm(phi.data(), phi_dm.data(), rho_[is]);
             }
         }
     }

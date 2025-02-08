@@ -16,26 +16,26 @@ class Gint_fvl : public Gint
     Gint_fvl(
         const int nspin,
         const std::vector<const double*>& vr_eff,
-        const std::vector<HContainer<double>*>& DMR_vec,
+        const std::vector<HContainer<double>*>& dm_vec,
         const bool isforce,
         const bool isstress,
         ModuleBase::matrix* fvl,
         ModuleBase::matrix* svl)
-        : nspin_(nspin), vr_eff_(vr_eff), DMR_vec_(DMR_vec),
+        : nspin_(nspin), vr_eff_(vr_eff), dm_vec_(dm_vec),
           isforce_(isforce), isstress_(isstress), fvl_(fvl), svl_(svl),
           dr3_(gint_info_->get_mgrid_volume()) {};
 
     void cal_gint() override;
 
     private:
-    void init_DMRGint_();
+    void init_dm_gint_();
 
     void cal_fvl_svl_();
 
     // input
     const int nspin_;
     std::vector<const double*> vr_eff_;
-    std::vector<HContainer<double>*> DMR_vec_;
+    std::vector<HContainer<double>*> dm_vec_;
     const bool isforce_;
     const bool isstress_;
 
@@ -44,7 +44,7 @@ class Gint_fvl : public Gint
     ModuleBase::matrix* svl_;
 
     // intermediate variables
-    std::vector<std::shared_ptr<HContainer<double>>> DMRGint_vec_;
+    std::vector<std::shared_ptr<HContainer<double>>> dm_gint_vec_;
 
     double dr3_;
 };

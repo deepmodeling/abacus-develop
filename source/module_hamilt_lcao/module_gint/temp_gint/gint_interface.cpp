@@ -55,23 +55,23 @@ void cal_gint_vl_metagga(
 }
 
 void cal_gint_rho(
-    const std::vector<HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
     double **rho)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_rho");
-    Gint_rho gint_rho(DMR_vec, nspin, rho);
+    Gint_rho gint_rho(dm_vec, nspin, rho);
     gint_rho.cal_gint();
     ModuleBase::timer::tick("Gint", "cal_gint_rho");
 }
 
 void cal_gint_tau(        
-    const std::vector<HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
     double** tau)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_tau");
-    Gint_tau gint_tau(DMR_vec, nspin, tau);
+    Gint_tau gint_tau(dm_vec, nspin, tau);
     gint_tau.cal_gint();
     ModuleBase::timer::tick("Gint", "cal_gint_tau");
 }
@@ -79,14 +79,14 @@ void cal_gint_tau(
 void cal_gint_fvl(
     const int nspin,
     const std::vector<const double*>& vr_eff,
-    const std::vector<HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& dm_vec,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_fvl");
-    Gint_fvl gint_fvl(nspin, vr_eff, DMR_vec, isforce, isstress, fvl, svl);
+    Gint_fvl gint_fvl(nspin, vr_eff, dm_vec, isforce, isstress, fvl, svl);
     gint_fvl.cal_gint();
     ModuleBase::timer::tick("Gint", "cal_gint_fvl");
 }
@@ -95,14 +95,14 @@ void cal_gint_fvl_meta(
     const int nspin,
     const std::vector<const double*>& vr_eff,
     const std::vector<const double*>& vofk,
-    const std::vector<HContainer<double>*>& DMR_vec,
+    const std::vector<HContainer<double>*>& dm_vec,
     const bool isforce,
     const bool isstress,
     ModuleBase::matrix* fvl,
     ModuleBase::matrix* svl)
 {
     ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
-    Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, DMR_vec, isforce, isstress, fvl, svl);
+    Gint_fvl_meta gint_fvl_meta(nspin, vr_eff, vofk, dm_vec, isforce, isstress, fvl, svl);
     gint_fvl_meta.cal_gint();
     ModuleBase::timer::tick("Gint", "cal_gint_fvl_meta");
 }

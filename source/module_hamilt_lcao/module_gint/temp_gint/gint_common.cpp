@@ -122,17 +122,17 @@ void transfer_hRGint_to_hR(std::shared_ptr<const HContainer<T>> hRGint, HContain
 #endif
 }
 
-// gint_info should not have been a parameter, but it was added to initialize DMRGint_full
+// gint_info should not have been a parameter, but it was added to initialize dm_gint_full
 // In the future, we might try to remove the gint_info parameter
-void transfer_DM_to_DMGint(
+void transfer_dm_2d_to_gint(
     std::shared_ptr<const GintInfo> gint_info,
-    std::vector<HContainer<double>*> DM,
-    std::vector<std::shared_ptr<HContainer<double>>> DMRGint)
+    std::vector<HContainer<double>*> dm,
+    std::vector<std::shared_ptr<HContainer<double>>> dm_gint)
 {
-    // To check whether input parameter DM2D has been initialized
+    // To check whether input parameter dm_2d has been initialized
 #ifdef __DEBUG
-    assert(PARAM.inp.nspin == DM.size()
-           && "The size of DM should be equal to the number of spins!");
+    assert(PARAM.inp.nspin == dm.size()
+           && "The size of dm should be equal to the number of spins!");
 #endif
 
     if (PARAM.inp.nspin != 4)
@@ -140,25 +140,25 @@ void transfer_DM_to_DMGint(
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
 #ifdef __MPI
-            hamilt::transferParallels2Serials(*DM[is], DMRGint[is].get());
+            hamilt::transferParallels2Serials(*dm[is], dm_gint[is].get());
 #else
-            DMRGint[is]->set_zero();
-            DMRGint[is]->add(*DM[is]);
+            dm_gint[is]->set_zero();
+            dm_gint[is]->add(*dm[is]);
 #endif
         }
     } else  // NSPIN=4 case
     {
 #ifdef __MPI
         const int npol = 2;
-        std::shared_ptr<HContainer<double>> DM_full = gint_info->get_hr<double>(npol);
-        hamilt::transferParallels2Serials(*DM[0], DM_full.get());
+        std::shared_ptr<HContainer<double>> dm_full = gint_info->get_hr<double>(npol);
+        hamilt::transferParallels2Serials(*dm[0], dm_full.get());
 #else
-        HContainer<double>* DM_full = DM[0];
+        HContainer<double>* dm_full = dm[0];
 #endif
         std::vector<double*> tmp_pointer(4, nullptr);
-        for (int iap = 0; iap < DM_full->size_atom_pairs(); iap++)
+        for (int iap = 0; iap < dm_full->size_atom_pairs(); iap++)
         {
-            auto& ap = DM_full->get_atom_pair(iap);
+            auto& ap = dm_full->get_atom_pair(iap);
             const int iat1 = ap.get_atom_i();
             const int iat2 = ap.get_atom_j();
             for (int ir = 0; ir < ap.get_R_size(); ir++)
@@ -167,7 +167,7 @@ void transfer_DM_to_DMGint(
                 for (int is = 0; is < 4; is++)
                 {
                     tmp_pointer[is] = 
-                        DMRGint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
+                        dm_gint[is]->find_matrix(iat1, iat2, r_index)->get_pointer();
                 }
                 double* data_full = ap.get_pointer(ir);
                 for (int irow = 0; irow < ap.get_row_size(); irow += 2)
