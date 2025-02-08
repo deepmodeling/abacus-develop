@@ -65,39 +65,23 @@ namespace unitcell
             Atom* atom1 = &atoms[it];
             for(int ia=0; ia<atoms[it].na; ia++)
             {
-                //fmod(x,1.0) set the result as [0,1),
-                //if x=2.3,fmod(2.3,1.0)=0.3,fmod(2.3,1.0)+1=1.3,
-                // fmod(fmod(2.3,1.0)+1,1.0)=0.3
-                //if x=-0.7,fmod(-0.7,1.0)=-0.7 or 0.3,fmod(-0.7,1.0)+1=1.3,
-                // fmod(fmod(-0.7,1.0)+1,1.0)=0.3
-                double dx2 = fmod(fmod(atom1->taud[ia].x,1.0)+1.0,1.0);
-                double dy2 = fmod(fmod(atom1->taud[ia].y,1.0)+1.0,1.0);
-                double dz2 = fmod(fmod(atom1->taud[ia].z,1.0)+1.0,1.0);
-
-                atom1->taud[ia].x = dx2;
-                atom1->taud[ia].y = dy2;
-                atom1->taud[ia].z = dz2;
+                // mohan add 2011-04-07            
+                // fmod(x,1.0) set the result between the [0,1.0),
+                // while the x may be the negtivate value,thus we add 10000.
+                atom1->taud[ia].x=fmod(atom1->taud[ia].x + 10000,1.0);
+                atom1->taud[ia].y=fmod(atom1->taud[ia].y + 10000,1.0);
+                atom1->taud[ia].z=fmod(atom1->taud[ia].z + 10000,1.0);
 
                 double cx2=0.0;
                 double cy2=0.0;
                 double cz2=0.0;
 
                 ModuleBase::Mathzone::Direct_to_Cartesian(
-                atom1->taud[ia].x, 
-                atom1->taud[ia].y, 
-                atom1->taud[ia].z,
-                latvec.e11, 
-                latvec.e12, 
-                latvec.e13,
-                latvec.e21, 
-                latvec.e22, 
-                latvec.e23,
-                latvec.e31, 
-                latvec.e32, 
-                latvec.e33,
-                cx2, 
-                cy2, 
-                cz2);
+                atom1->taud[ia].x, atom1->taud[ia].y, atom1->taud[ia].z,
+                latvec.e11, latvec.e12, latvec.e13,
+                latvec.e21, latvec.e22, latvec.e23,
+                latvec.e31, latvec.e32, latvec.e33,
+                cx2, cy2, cz2);
 
                 atom1->tau[ia].x = cx2;
                 atom1->tau[ia].y = cy2;
@@ -105,7 +89,6 @@ namespace unitcell
                 
             }
         }
-
+        return;
     }
-
 }
