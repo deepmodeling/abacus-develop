@@ -14,9 +14,9 @@ class UnitCellInfo
     public:
         // constructor
         UnitCellInfo(
-            Vec3d unitcell_vec1,
-            Vec3d unitcell_vec2,
-            Vec3d unitcell_vec3,
+            const Vec3d& unitcell_vec1,
+            const Vec3d& unitcell_vec2,
+            const Vec3d& unitcell_vec3,
             int nbx, int nby, int nbz,
             int nmx, int nmy, int nmz);
         
