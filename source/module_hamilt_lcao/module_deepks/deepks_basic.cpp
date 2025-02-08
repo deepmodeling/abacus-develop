@@ -67,6 +67,7 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     catch (const c10::Error& e)
     {
         std::cerr << "error loading the model" << std::endl;
+        ModuleBase::timer::tick("DeePKS_domain", "load_model");
         return;
     }
     ModuleBase::timer::tick("DeePKS_domain", "load_model");
