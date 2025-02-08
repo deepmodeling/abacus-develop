@@ -280,9 +280,17 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
+    // Check if using k-point continuity
+    use_k_continuity = (PARAM.init_wfc == "kcontinuity");
+    if (use_k_continuity) {
+        build_k_neighbors();
+    }
+
     /// Loop over k points for solve Hamiltonian to charge density
-    for (int ik = 0; ik < this->wfc_basis->nks; ++ik)
+    for (int i = 0; i < this->wfc_basis->nks; ++i)
     {
+        const int ik = use_k_continuity ? k_order[i] : i;
+        
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
@@ -292,6 +300,11 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
         /// update psi pointer for each k point
         psi.fix_k(ik);
+
+        // If using k-point continuity and not first k-point, propagate from parent
+        if (use_k_continuity && i > 0) {
+            propagate_psi(psi, k_parent[ik], ik);
+        }
 
         // template add precondition calculating here
         update_precondition(precondition, ik, this->wfc_basis->npwk[ik], Real(pes->pot->get_vl_of_0()));
@@ -663,6 +676,74 @@ void HSolverPW<T, Device>::output_iterInfo()
                              << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
         // reset avg_iter
         DiagoIterAssist<T, Device>::avg_iter = 0.0;
+    }
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::build_k_neighbors() {
+    const int nk = this->wfc_basis->nks;
+    kvecs_c.resize(nk);
+    k_order.reserve(nk);
+    
+    // Build k-point list
+    std::vector<std::pair<ModuleBase::Vector3<double>, int>> klist;
+    for (int ik = 0; ik < nk; ++ik) {
+        kvecs_c[ik] = this->pes->klist->kvec_c[ik];
+        klist.emplace_back(kvecs_c[ik], ik);
+    }
+    
+    // Sort k-points by distance from origin
+    std::sort(klist.begin(), klist.end(),
+        [](const auto& a, const auto& b) {
+            return a.first.norm() < b.first.norm();
+        });
+    
+    // Build parent-child relationships
+    k_order.push_back(klist[0].second);
+    
+    for (size_t i = 1; i < klist.size(); ++i) {
+        int ik = klist[i].second;
+        double min_dist = 1e10;
+        int parent = -1;
+        
+        for (int jk : k_order) {
+            double dist = (kvecs_c[ik] - kvecs_c[jk]).norm2();
+            if (dist < min_dist) {
+                min_dist = dist;
+                parent = jk;
+            }
+        }
+        
+        k_parent[ik] = parent;
+        k_order.push_back(ik);
+    }
+}
+
+template <typename T, typename Device>
+void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, const int to_ik) {
+    const int nbands = psi.get_nbands();
+    const int npwk = this->wfc_basis->npwk[to_ik];
+    
+    // Get k-point difference
+    ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
+    
+    // Allocate temporary arrays
+    std::vector<T> psi_real(this->wfc_basis->nrxx);
+    
+    // Process each band
+    for (int ib = 0; ib < nbands; ++ib) {
+        // IFFT to real space
+        this->wfc_basis->recip2real(psi.get_pointer(from_ik, ib), psi_real.data(), from_ik);
+        
+        // Apply phase factor
+        for (int ir = 0; ir < this->wfc_basis->nrxx; ++ir) {
+            ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
+            double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
+            psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
+        }
+        
+        // FFT back to reciprocal space
+        this->wfc_basis->real2recip(psi_real.data(), psi.get_pointer(to_ik, ib), to_ik);
     }
 }
 

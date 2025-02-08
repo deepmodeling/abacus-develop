@@ -6,6 +6,7 @@
 #include "module_base/macros.h"
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_psi/wavefunc.h"
+#include <unordered_map>
 
 namespace hsolver
 {
@@ -99,6 +100,15 @@ class HSolverPW
 
     void paw_func_after_kloop(psi::Psi<T, Device>& psi, elecstate::ElecState* pes,const double tpiba,const int nat);
 #endif
+
+    // K-point continuity related members
+    bool use_k_continuity = false;
+    std::vector<int> k_order;
+    std::unordered_map<int, int> k_parent;
+    std::vector<ModuleBase::Vector3<double>> kvecs_c;
+    
+    void build_k_neighbors();
+    void propagate_psi(psi::Psi<T>& psi, const int from_ik, const int to_ik);
 };
 
 } // namespace hsolver
