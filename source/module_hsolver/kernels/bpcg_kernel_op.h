@@ -59,6 +59,39 @@ struct calc_grad_with_block_op
                     const int& n_band);
 };
 
+template <typename T, typename Device>
+struct apply_eigenvalues_op
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& nbase, 
+                    const int& nbase_x, 
+                    const int& notconv, 
+                    T* result, 
+                    const T* vectors, 
+                    const Real* eigenvalues);
+};
+
+template <typename T, typename Device>
+struct precondition_op {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   const Real* precondition,
+                   const Real* eigenvalues);
+};
+
+template <typename T, typename Device>
+struct normalize_op {
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const int& dim,
+                   T* psi_iter,
+                   const int& nbase,
+                   const int& notconv,
+                   Real* psi_norm = nullptr);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename T>
@@ -76,6 +109,38 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
                   T *psi_out, T *hpsi_out, T *grad_out, T *grad_old_out,
                   const int &n_basis, const int &n_basis_max,
                   const int &n_band);
+};
+
+template <typename T>
+struct apply_eigenvalues_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int& nbase, 
+                  const int& nbase_x, 
+                  const int& notconv, 
+                  T* result, 
+                  const T* vectors, 
+                  const Real* eigenvalues);
+};
+
+template <typename T>
+struct precondition_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int& dim,
+                 T* psi_iter,
+                 const int& nbase,
+                 const int& notconv,
+                 const Real* precondition,
+                 const Real* eigenvalues);
+};
+
+template <typename T>
+struct normalize_op<T, base_device::DEVICE_GPU> {
+  using Real = typename GetTypeReal<T>::type;
+  void operator()(const int& dim,
+                 T* psi_iter,
+                 const int& nbase,
+                 const int& notconv,
+                 Real* psi_norm = nullptr);
 };
 
 #endif

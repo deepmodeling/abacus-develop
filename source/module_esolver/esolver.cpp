@@ -114,8 +114,10 @@ std::string determine_type()
     }
 
     GlobalV::ofs_running << "\n RUNNING WITH DEVICE  : " << device_info << " / "
-                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl;
-
+                         << base_device::information::get_device_info(PARAM.inp.device) << std::endl; 
+    /***auto end_time = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
+    std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
     return esolver_type;
 }
 
