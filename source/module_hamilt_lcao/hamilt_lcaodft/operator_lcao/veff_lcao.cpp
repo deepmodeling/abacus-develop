@@ -114,18 +114,21 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
 #ifndef __NEW_GINT
+    // if you change the place of the following code,
+    // rememeber to delete the #include
     if(XC_Functional::get_ked_flag())
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
-        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
+        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
+        this->GK->cal_gint(&inout);
     }
     else
     {
-        Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
-        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
+        // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
+        Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
+        this->GK->cal_gint(&inout);
     }
-    this->GG->transfer_pvpR(this->hR,this->ucell);
-    this->new_e_iteration = false;
+
+    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
 #else
     if(XC_Functional::get_ked_flag())
     {
@@ -146,9 +149,8 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     return;
 }
 
-// special case of gamma-only
 template<>
-void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR(void)
+void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
