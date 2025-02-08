@@ -11,24 +11,24 @@ namespace ModuleGint
 
 void Gint_vl_metagga_nspin4::cal_gint()
 {
-    init_hRGint_();
-    cal_hRGint_();
-    compose_hRGint(hRGint_part_, hRGint_full_);
-    transfer_hRGint_to_hR(toConstSharedPtr(hRGint_full_), hR_);
+    init_hr_gint_();
+    cal_hr_gint_();
+    compose_hr_gint(hr_gint_part_, hr_gint_full_);
+    transfer_hr_gint_to_hR(toConstSharedPtr(hr_gint_full_), hR_);
 }
 
-void Gint_vl_metagga_nspin4::init_hRGint_()
+void Gint_vl_metagga_nspin4::init_hr_gint_()
 {
-    hRGint_part_.resize(nspin_);
+    hr_gint_part_.resize(nspin_);
     for(int i = 0; i < nspin_; i++)
     {
-        hRGint_part_[i] = gint_info_->get_hr<double>();
+        hr_gint_part_[i] = gint_info_->get_hr<double>();
     }
     const int npol = 2;
-    hRGint_full_ = gint_info_->get_hr<std::complex<double>>(npol);
+    hr_gint_full_ = gint_info_->get_hr<std::complex<double>>(npol);
 }
 
-void Gint_vl_metagga_nspin4::cal_hRGint_()
+void Gint_vl_metagga_nspin4::cal_hr_gint_()
 {
 #pragma omp parallel
     {
@@ -41,7 +41,7 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
         std::vector<double> dphi_x_vldr3;
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
-        std::vector<HContainer<double>> hRGint_part_thread(nspin_, *hRGint_part_[0]);
+        std::vector<HContainer<double>> hr_gint_part_thread(nspin_, *hr_gint_part_[0]);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -66,10 +66,10 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_x.data(), dphi_x_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_y.data(), dphi_y_vldr3.data());
                 phi_op.phi_mul_vldr3(vofk_[is], dr3_, dphi_z.data(), dphi_z_vldr3.data());
-                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hRGint_part_thread[is]);
-                phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hRGint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hr_gint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hr_gint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hr_gint_part_thread[is]);
+                phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hr_gint_part_thread[is]);
             }
         }
 #pragma omp critical
@@ -77,8 +77,8 @@ void Gint_vl_metagga_nspin4::cal_hRGint_()
             for(int is = 0; is < nspin_; is++)
             {
                 {
-                    BlasConnector::axpy(hRGint_part_thread[is].get_nnr(), 1.0, hRGint_part_thread[is].get_wrapper(),
-                                        1, hRGint_part_[is]->get_wrapper(), 1);
+                    BlasConnector::axpy(hr_gint_part_thread[is].get_nnr(), 1.0, hr_gint_part_thread[is].get_wrapper(),
+                                        1, hr_gint_part_[is]->get_wrapper(), 1);
                 }
             }
         }

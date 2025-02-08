@@ -9,25 +9,25 @@ namespace ModuleGint
 
 void Gint_vl_metagga::cal_gint()
 {
-    init_hRGint_();
-    cal_hRGint_();
-    compose_hRGint(hRGint_);
-    transfer_hRGint_to_hR(toConstSharedPtr(hRGint_), hR_);
+    init_hr_gint_();
+    cal_hr_gint_();
+    compose_hr_gint(hr_gint_);
+    transfer_hr_gint_to_hR(toConstSharedPtr(hr_gint_), hR_);
 }
 
 //========================
 // Private functions
 //========================
 
-void Gint_vl_metagga::init_hRGint_()
+void Gint_vl_metagga::init_hr_gint_()
 {
-    hRGint_ = gint_info_->get_hr<double>();
+    hr_gint_ = gint_info_->get_hr<double>();
 }
 
-void Gint_vl_metagga::cal_hRGint_()
+void Gint_vl_metagga::cal_hr_gint_()
 {
 // be careful!!
-// each thread will have a copy of hRGint_, this may cause a lot of memory usage
+// each thread will have a copy of hr_gint_, this may cause a lot of memory usage
 #pragma omp parallel
     {
         PhiOperator phi_op;
@@ -39,7 +39,7 @@ void Gint_vl_metagga::cal_hRGint_()
         std::vector<double> dphi_x_vldr3;
         std::vector<double> dphi_y_vldr3;
         std::vector<double> dphi_z_vldr3;
-        HContainer<double> hRGint_local(*hRGint_);
+        HContainer<double> hr_gint_local(*hr_gint_);
 #pragma omp for schedule(dynamic)
         for(const auto& biggrid: gint_info_->get_biggrids())
         {
@@ -62,15 +62,15 @@ void Gint_vl_metagga::cal_hRGint_()
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_x.data(), dphi_x_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_y.data(), dphi_y_vldr3.data());
             phi_op.phi_mul_vldr3(vofk_, dr3_, dphi_z.data(), dphi_z_vldr3.data());
-            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hRGint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hRGint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hRGint_local);
-            phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hRGint_local);
+            phi_op.phi_mul_phi_vldr3(phi.data(), phi_vldr3.data(), &hr_gint_local);
+            phi_op.phi_mul_phi_vldr3(dphi_x.data(), dphi_x_vldr3.data(), &hr_gint_local);
+            phi_op.phi_mul_phi_vldr3(dphi_y.data(), dphi_y_vldr3.data(), &hr_gint_local);
+            phi_op.phi_mul_phi_vldr3(dphi_z.data(), dphi_z_vldr3.data(), &hr_gint_local);
         }
 #pragma omp critical
         {
-            BlasConnector::axpy(hRGint_local.get_nnr(), 1.0, hRGint_local.get_wrapper(),
-                                1, hRGint_->get_wrapper(), 1);
+            BlasConnector::axpy(hr_gint_local.get_nnr(), 1.0, hr_gint_local.get_wrapper(),
+                                1, hr_gint_->get_wrapper(), 1);
         }
     }
 }

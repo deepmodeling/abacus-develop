@@ -21,11 +21,11 @@ class Gint_vl_nspin4 : public Gint
 
     private:
 
-    void init_hRGint_();
+    void init_hr_gint_();
     
     // note that only the upper triangle matrix of hR is calculated
-    // that's why we need compose_hRGint() to fill the lower triangle matrix.
-    void cal_hRGint_();
+    // that's why we need compose_hr_gint() to fill the lower triangle matrix.
+    void cal_hr_gint_();
 
     // input
     std::vector<const double*> vr_eff_;
@@ -40,8 +40,8 @@ class Gint_vl_nspin4 : public Gint
 
     const int nspin_ = 4;
 
-    std::vector<std::shared_ptr<HContainer<double>>> hRGint_part_;
-    std::shared_ptr<HContainer<std::complex<double>>> hRGint_full_;
+    std::vector<std::shared_ptr<HContainer<double>>> hr_gint_part_;
+    std::shared_ptr<HContainer<std::complex<double>>> hr_gint_full_;
 
 };
 

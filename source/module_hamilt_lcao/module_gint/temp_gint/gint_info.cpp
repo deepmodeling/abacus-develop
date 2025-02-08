@@ -142,7 +142,7 @@ void GintInfo::init_atoms_(int ntype, const Atom* atoms, const Numerical_Orbital
 
 void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
 {
-    HContainer<double> hRGint_local(ucell.nat);
+    HContainer<double> hr_gint_local(ucell.nat);
     // prepare the row_index and col_index for construct AtomPairs, they are
     // same, name as orb_index
     std::vector<int> orb_index(ucell.nat + 1);
@@ -166,7 +166,7 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
                         const int iat2 = ucell.itia2iat(T2, I2);
                         const Atom* atom2 = &(ucell.atoms[T2]);
 
-                        // NOTE: hRGint wil save total number of atom pairs,
+                        // NOTE: hr_gint wil save total number of atom pairs,
                         // if only upper triangle is saved, the lower triangle will
                         // be lost in 2D-block parallelization. if the adjacent atom
                         // is in this processor.
@@ -186,7 +186,7 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
                             if (distance < rcut - 1.0e-15) {
                                 // calculate R index
                                 auto& R_index = gd.getBox(ad);
-                                // insert this atom-pair into this->hRGint
+                                // insert this atom-pair into this->hr_gint
                                 hamilt::AtomPair<double> tmp_atom_pair(
                                     iat1,
                                     iat2,
@@ -196,14 +196,14 @@ void GintInfo::init_ijr_info_(const UnitCell& ucell, Grid_Driver& gd)
                                     orb_index.data(),
                                     orb_index.data(),
                                     ucell.nat);
-                                hRGint_local.insert_pair(tmp_atom_pair);
+                                hr_gint_local.insert_pair(tmp_atom_pair);
                             }
                         }
                     }
                 }
             }
     }
-    this->ijr_info_ = hRGint_local.get_ijr_info();
+    this->ijr_info_ = hr_gint_local.get_ijr_info();
     return;
 }
 

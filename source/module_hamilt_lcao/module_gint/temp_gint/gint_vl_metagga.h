@@ -22,11 +22,11 @@ class Gint_vl_metagga : public Gint
 
     private:
 
-    void init_hRGint_();
+    void init_hr_gint_();
     
     // note that only the upper triangle matrix of hR is calculated
-    // that's why we need compose_hRGint() to fill the lower triangle matrix.
-    void cal_hRGint_();
+    // that's why we need compose_hr_gint() to fill the lower triangle matrix.
+    void cal_hr_gint_();
 
     // input
     const double* vr_eff_;
@@ -40,7 +40,7 @@ class Gint_vl_metagga : public Gint
     //========================
     double dr3_;
 
-    std::shared_ptr<HContainer<double>> hRGint_;
+    std::shared_ptr<HContainer<double>> hr_gint_;
 
 };
 

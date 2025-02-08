@@ -21,9 +21,9 @@ class Gint_vl_metagga_nspin4 : public Gint
     void cal_gint() override;
 
     private:
-    void init_hRGint_();
+    void init_hr_gint_();
 
-    void cal_hRGint_();
+    void cal_hr_gint_();
 
     // input
     std::vector<const double*> vr_eff_;
@@ -38,8 +38,8 @@ class Gint_vl_metagga_nspin4 : public Gint
 
     const int nspin_ = 4;
 
-    std::vector<std::shared_ptr<HContainer<double>>> hRGint_part_;
-    std::shared_ptr<HContainer<std::complex<double>>> hRGint_full_;
+    std::vector<std::shared_ptr<HContainer<double>>> hr_gint_part_;
+    std::shared_ptr<HContainer<std::complex<double>>> hr_gint_full_;
 };
 
 }
