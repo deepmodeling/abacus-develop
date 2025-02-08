@@ -144,7 +144,7 @@ void Charge_Mixing::init_mixing()
     }
     
     // initailize tau_mdata
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         if (PARAM.inp.scf_thr_type == 1)
         {
@@ -180,7 +180,7 @@ void Charge_Mixing::mix_reset()
     this->mixing->reset();
     this->rho_mdata.reset();
     // initailize tau_mdata
-    if ((XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5) && mixing_tau)
+    if ((XC_Functional::get_ked_flag()) && mixing_tau)
     {
         this->tau_mdata.reset();
     }

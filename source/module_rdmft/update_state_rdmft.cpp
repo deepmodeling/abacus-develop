@@ -110,7 +110,7 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
         Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GG->cal_gint(&inout);
 
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             // for (int is = 0; is < nspin; is++)
             // {
@@ -140,7 +140,7 @@ void RDMFT<TK, TR>::update_charge(UnitCell& ucell)
         Gint_inout inout(charge->rho, Gint_Tools::job_type::rho, nspin);
         GK->cal_gint(&inout);
 
-        if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             // for (int is = 0; is < nspin; is++)
             // {

@@ -233,6 +233,15 @@ void ReadInput::item_system()
         item.annotation = "devide all processors into kpar groups and k points "
                           "will be distributed among";
         read_sync_int(input.kpar);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+#ifdef __LCAO
+            if (para.inp.basis_type == "lcao")
+            {
+                para.sys.kpar_lcao = para.inp.kpar;
+                para.input.kpar = 1;
+            }
+#endif
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
@@ -240,6 +249,7 @@ void ReadInput::item_system()
             }
         };
         this->add_item(item);
+        add_int_bcast(sys.kpar_lcao);
     }
     {
         Input_Item item("bndpar");
@@ -247,7 +257,7 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft")
+            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
             {
                 para.input.bndpar = 1;
             }
@@ -322,7 +332,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along x axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nx = intvalue;
-            para.sys.ncx = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
@@ -338,7 +347,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along y axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.ny = intvalue;
-            para.sys.ncy = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
@@ -354,7 +362,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along z axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nz = intvalue;
-            para.sys.ncz = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
@@ -795,6 +802,17 @@ void ReadInput::item_system()
             {
                 const std::string warningstr = nofound_str(avail_list, "precision");
                 ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+
+            // cpu single precision is not supported while float_fftw lib is not available
+            if (para.inp.device == "cpu" && para.inp.precision == "single")
+            {
+#ifndef __ENABLE_FLOAT_FFTW
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+#endif
             }
         };
         this->add_item(item);

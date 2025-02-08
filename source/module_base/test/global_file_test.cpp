@@ -80,10 +80,10 @@ TEST_F(GlobalFile,mkdiratom)
 TEST_F(GlobalFile,openlog)
 {
         std::ofstream ofs;
-        ModuleBase::Global_File::open_log(ofs,"Si","md",true);
+        ModuleBase::Global_File::open_log(ofs,"Si.log","md",true);
         EXPECT_TRUE(ofs.is_open());
         ofs.close();
-        ModuleBase::Global_File::open_log(ofs,"Si","md",false);
+        ModuleBase::Global_File::open_log(ofs,"Si.log","md",false);
         EXPECT_TRUE(ofs.is_open());
         ofs.close();
         std::string sss = "Si.log"; 

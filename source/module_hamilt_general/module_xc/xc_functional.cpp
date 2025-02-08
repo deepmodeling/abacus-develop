@@ -16,6 +16,7 @@ XC_Functional::~XC_Functional(){}
 
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
+bool XC_Functional::ked_flag = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
@@ -25,15 +26,6 @@ void XC_Functional::set_hybrid_alpha(const double alpha_in)
     hybrid_alpha = alpha_in;
 }
 
-double XC_Functional::get_hybrid_alpha()
-{
-    return hybrid_alpha;
-}
-
-int XC_Functional::get_func_type()
-{
-    return func_type;
-}
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
 {
     /** In the special "two-level" calculation case,
@@ -266,10 +258,15 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
     }
 
-	if (func_id[0] == XC_GGA_X_OPTX)
-	{
-		std::cerr << "\n OPTX untested please test,";
-	}
+    if (func_type == 3 || func_type == 5)
+    {
+        ked_flag = true;
+    }
+
+    if (func_id[0] == XC_GGA_X_OPTX)
+    {
+        std::cerr << "\n OPTX untested please test,";
+    }
 
     if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
     {
@@ -279,10 +276,6 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
-    //if((func_type == 3 || func_type == 5) && PARAM.inp.cal_stress == 1 && PARAM.inp.nspin!=1)
-    //{
-    //    ModuleBase::WARNING_QUIT("set_xc_type","mgga stress not implemented for polarized case yet");
-    //}
 
 #ifndef __EXX
     if(func_type == 4 || func_type == 5)

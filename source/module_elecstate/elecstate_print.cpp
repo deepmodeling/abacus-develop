@@ -1,5 +1,4 @@
 #include "elecstate.h"
-#include "elecstate_getters.h"
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_common.h"
@@ -174,23 +173,11 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     {
         ModuleBase::WARNING_QUIT("print_eigenvalue", "Eigenvalues are too large!");
     }
-    std::stringstream ss;
-    if(PARAM.inp.out_alllog)
-    {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << "_" << GlobalV::MY_RANK + 1 << ".log";
-    }
-    else
-    {
-        ss << PARAM.globalv.global_out_dir << "running_" << PARAM.inp.calculation << ".log";
-    }
-    std::string filename = ss.str();
+
+    std::string filename = PARAM.globalv.global_out_dir + PARAM.globalv.log_file;
     std::vector<int> ngk_tot = this->klist->ngk;
 
 #ifdef __MPI
-    if(!PARAM.inp.out_alllog)
-    {
-        Parallel_Common::bcast_string(filename);
-    }
     MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
 #endif
 
@@ -217,7 +204,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 #ifdef __MPI
             MPI_Barrier(MPI_COMM_WORLD);
 #endif
-            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_STOGROUP == 0);
+            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0);
             if (GlobalV::MY_POOL == ip && ip_flag)
             {
                 const int start_ik = nks_np * is;
@@ -259,7 +246,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 {
     // check the band energy.
     bool wrong = false;
-    for (int ib = 0; ib < PARAM.inp.nbands; ++ib)
+    for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
     {
         if (std::abs(this->ekb(ik, ib)) > 1.0e10)
         {
@@ -281,7 +268,7 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
             GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
-            for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+            for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
                                      << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
@@ -461,7 +448,7 @@ void ElecState::print_etot(const Magnetism& magnet,
             break;
         }
         std::vector<double> drho = {scf_thr};
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5)
+        if (XC_Functional::get_ked_flag())
         {
             drho.push_back(scf_thr_kin);
         }

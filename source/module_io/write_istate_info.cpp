@@ -24,7 +24,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
         MPI_Barrier(MPI_COMM_WORLD);
         if (GlobalV::MY_POOL == ip)
         {
-            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_STOGROUP != 0 ) { continue;
+            if (GlobalV::RANK_IN_POOL != 0 || GlobalV::MY_BNDGROUP != 0 ) { continue;
 }
 #endif
             std::ofstream ofsi2(ss.str().c_str(), std::ios::app);
@@ -41,7 +41,7 @@ void ModuleIO::write_istate_info(const ModuleBase::matrix &ekb,const ModuleBase:
                           << std::setw(25) << "Kpoint = " << ik_global
                           << std::setw(25) << "(" << kv.kvec_d[ik].x << " " << kv.kvec_d[ik].y
                           << " " << kv.kvec_d[ik].z << ")" << std::endl;
-                    for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+                    for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
                     {
                         ofsi2.precision(16);
                         ofsi2 << std::setw(6) << ib + 1 << std::setw(25)

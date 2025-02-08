@@ -57,7 +57,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     ModuleBase::matrix v(PARAM.inp.nspin, rho_basis->nrxx);
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v

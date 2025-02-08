@@ -171,37 +171,9 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
 
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
-    {
-    }
 
-
-    if (PARAM.inp.device  == "gpu" && PARAM.inp.basis_type == "pw")
-    {
-        GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar, PARAM.inp.bndpar);
-    }
-#ifdef __LCAO
-    else if (PARAM.inp.basis_type == "lcao") {
-        /// GlobalV::KPAR_LCAO is used in LCAO diagonalization only
-        GlobalV::KPAR_LCAO = PARAM.inp.kpar;
-        /// all other parts of the code use GlobalV::KPAR = 1
-        GlobalV::KPAR = 1;
-    }
-#endif
-    else
-    {
-        GlobalV::KPAR = PARAM.inp.kpar;
-    }
-    if (PARAM.inp.device  == "cpu" and PARAM.inp.precision == "single")
-    {
-// cpu single precision is not supported while float_fftw lib is not available
-#ifndef __ENABLE_FLOAT_FFTW
-        ModuleBase::WARNING_QUIT(
-            "Input_Conv",
-            "Single precision with cpu is not supported while float_fftw lib is not available; \
-            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
-#endif // __ENABLE_FLOAT_FFTW
-    }
+    GlobalV::KPAR = PARAM.inp.kpar;
+    
 
 
 #ifdef __LCAO

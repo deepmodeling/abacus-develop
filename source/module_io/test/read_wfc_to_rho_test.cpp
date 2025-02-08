@@ -4,24 +4,22 @@
 #undef __LCAO
 
 #define private public
+#include "module_cell/klist.h"
+#include "module_cell/unitcell.h"
 #include "module_elecstate/module_charge/charge.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
+#include "module_io/read_wfc_to_rho.h"
+#include "module_io/write_wfc_pw.h"
 #include "module_parameter/parameter.h"
-#undef private
+#include "module_psi/psi.h"
 
 #ifdef __MPI
 #include "module_base/parallel_global.h"
 #include "module_basis/module_pw/test/test_tool.h"
 #include "mpi.h"
 #endif
-#include "module_cell/klist.h"
-#include "module_cell/unitcell.h"
-#include "module_elecstate/elecstate_getters.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_hamilt_general/module_xc/xc_functional.h"
-#include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
-#include "module_io/read_wfc_to_rho.h"
-#include "module_io/write_wfc_pw.h"
-#include "module_psi/psi.h"
 
 Parallel_Grid::Parallel_Grid()
 {
@@ -47,14 +45,9 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-int elecstate::get_xc_func_type()
-{
-    return 0;
-}
-int XC_Functional::get_func_type()
-{
-    return 0;
-}
+int XC_Functional::func_type = 0;
+bool XC_Functional::ked_flag = false;
+
 Symmetry_rho::Symmetry_rho()
 {
 }
@@ -284,9 +277,9 @@ int main(int argc, char** argv)
                                   GlobalV::MY_RANK,
                                   PARAM.inp.bndpar,
                                   GlobalV::KPAR,
-                                  GlobalV::NPROC_IN_STOGROUP,
-                                  GlobalV::RANK_IN_STOGROUP,
-                                  GlobalV::MY_STOGROUP,
+                                  GlobalV::NPROC_IN_BNDGROUP,
+                                  GlobalV::RANK_IN_BPGROUP,
+                                  GlobalV::MY_BNDGROUP,
                                   GlobalV::NPROC_IN_POOL,
                                   GlobalV::RANK_IN_POOL,
                                   GlobalV::MY_POOL);

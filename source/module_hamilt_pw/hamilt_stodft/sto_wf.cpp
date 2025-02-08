@@ -72,7 +72,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_STOGROUP * GlobalV::NPROC_IN_STOGROUP + GlobalV::RANK_IN_STOGROUP) * 10000);
+        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
     }
 
     this->allocate_chi0();
@@ -88,12 +88,12 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     // former processor calculate more bands
     if (firstrankmore)
     {
-        igroup = GlobalV::MY_STOGROUP;
+        igroup = GlobalV::MY_BNDGROUP;
     }
     // latter processor calculate more bands
     else
     {
-        igroup = PARAM.inp.bndpar - GlobalV::MY_STOGROUP - 1;
+        igroup = PARAM.inp.bndpar - GlobalV::MY_BNDGROUP - 1;
     }
     const int nchi = PARAM.inp.nbands_sto;
     const int npwx = this->npwx;
@@ -172,16 +172,16 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     // former processor calculate more bands
     if (firstrankmore)
     {
-        igroup = GlobalV::MY_STOGROUP;
+        igroup = GlobalV::MY_BNDGROUP;
     }
     // latter processor calculate more bands
     else
     {
-        igroup = PARAM.inp.bndpar - GlobalV::MY_STOGROUP - 1;
+        igroup = PARAM.inp.bndpar - GlobalV::MY_BNDGROUP - 1;
     }
     const int ngroup = PARAM.inp.bndpar;
     const int n_in_pool = GlobalV::NPROC_IN_POOL;
-    const int i_in_group = GlobalV::RANK_IN_STOGROUP;
+    const int i_in_group = GlobalV::RANK_IN_BPGROUP;
     const int i_in_pool = GlobalV::RANK_IN_POOL;
 
     int* totnpw = new int[nks];
@@ -315,10 +315,10 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
     int* nrecv = new int[PARAM.inp.bndpar];
     const int nchiper = this->nchip[0];
 #ifdef __MPI
-    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, PARAPW_WORLD);
+    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, BP_WORLD);
 #endif
     int ichi_start = 0;
-    for (int i = 0; i < GlobalV::MY_STOGROUP; ++i)
+    for (int i = 0; i < GlobalV::MY_BNDGROUP; ++i)
     {
         ichi_start += nrecv[i];
     }

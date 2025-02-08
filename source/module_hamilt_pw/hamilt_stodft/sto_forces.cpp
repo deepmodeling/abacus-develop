@@ -210,7 +210,7 @@ void Sto_Forces<FPTYPE, Device>::cal_sto_force_nl(
     const int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (!PARAM.globalv.ks_run)
     {
         nksbands = 0;
     }

@@ -111,7 +111,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_kin(ModuleBase::matrix& sigma,
     ModuleBase::timer::tick("Sto_Stress_PW", "stress_kin");
 
     int nksbands = psi.get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (!PARAM.globalv.ks_run)
     {
         nksbands = 0;
     }
@@ -160,7 +160,7 @@ void Sto_Stress_PW<FPTYPE, Device>::sto_stress_nl(ModuleBase::matrix& sigma,
     int* nchip = stowf.nchip;
     const int npwx = wfc_basis->npwk_max;
     int nksbands = psi_in.get_nbands();
-    if (GlobalV::MY_STOGROUP != 0)
+    if (!PARAM.globalv.ks_run)
     {
         nksbands = 0;
     }

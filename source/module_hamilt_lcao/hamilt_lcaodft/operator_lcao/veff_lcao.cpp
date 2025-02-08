@@ -69,7 +69,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
 #ifndef __NEW_GINT
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if(XC_Functional::get_ked_flag())
     {
         Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
         this->GG->cal_vlocal(&inout,  this->new_e_iteration);
@@ -82,7 +82,7 @@ void Veff<OperatorLCAO<double, double>>::contributeHR()
     this->GG->transfer_pvpR(this->hR,this->ucell);
     this->new_e_iteration = false;
 #else
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if(XC_Functional::get_ked_flag())
     {
         ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
     }
@@ -114,23 +114,20 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     double* vofk_eff1 = this->pot->get_effective_vofk(this->current_spin);
 
 #ifndef __NEW_GINT
-    // if you change the place of the following code,
-    // rememeber to delete the #include
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if(XC_Functional::get_ked_flag())
     {
-        Gint_inout inout(vr_eff1, vofk_eff1, 0, Gint_Tools::job_type::vlocal_meta);
-        this->GK->cal_gint(&inout);
+        Gint_inout inout(vr_eff1, vofk_eff1, Gint_Tools::job_type::vlocal_meta);
+        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
     }
     else
     {
-        // vlocal = Vh[rho] + Vxc[rho] + Vl(pseudo)
-        Gint_inout inout(vr_eff1, 0, Gint_Tools::job_type::vlocal);
-        this->GK->cal_gint(&inout);
+        Gint_inout inout(vr_eff1, Gint_Tools::job_type::vlocal);
+        this->GG->cal_vlocal(&inout,  this->new_e_iteration);
     }
-
-    this->GK->transfer_pvpR(this->hR,this->ucell,this->gd);
+    this->GG->transfer_pvpR(this->hR,this->ucell);
+    this->new_e_iteration = false;
 #else
-    if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+    if(XC_Functional::get_ked_flag())
     {
         ModuleGint::cal_gint_vl_metagga(vr_eff1, vofk_eff1, this->hR);
     }
@@ -149,8 +146,9 @@ void Veff<OperatorLCAO<std::complex<double>, double>>::contributeHR()
     return;
 }
 
+// special case of gamma-only
 template<>
-void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR()
+void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeHR(void)
 {
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::tick("Veff", "contributeHR");
@@ -161,12 +159,12 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     for (int is = 0; is < 4; is++)
     {
         vr_eff1 = this->pot->get_effective_v(is);
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+        if(XC_Functional::get_ked_flag())
         {
             vofk_eff1 = this->pot->get_effective_vofk(is);
         }
         
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+        if(XC_Functional::get_ked_flag())
         {
             Gint_inout inout(vr_eff1, vofk_eff1, is, Gint_Tools::job_type::vlocal_meta);
             this->GK->cal_gint(&inout);
@@ -184,7 +182,7 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     for (int is = 0; is < 4; is++)
     {
         vr_eff[is] = this->pot->get_effective_v(is);
-        if(XC_Functional::get_func_type()==3 || XC_Functional::get_func_type()==5)
+        if(XC_Functional::get_ked_flag())
         {
             vofk_eff[is] = this->pot->get_effective_vofk(is);
             if(is == 3)
