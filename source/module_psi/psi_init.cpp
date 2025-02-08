@@ -265,6 +265,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
         {
             for (int ik = 0; ik < this->pw_wfc->nks; ++ik)
             {
+                if(PARAM.inp.use_k_continuity && ik > 0) continue;
                 //! Update Hamiltonian from other kpoint to the given one
                 p_hamilt->updateHk(ik);
 

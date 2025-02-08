@@ -42,6 +42,48 @@ struct GetTypeThrust<std::complex<double>> {
 
 static cublasHandle_t cublas_handle = nullptr;
 
+// Forward declarations for abs2
+template<typename T>
+__device__ typename GetTypeReal<T>::type abs2(const T& x);
+
+// Specialization for real types (double)
+template<>
+__device__ double abs2(const double& x) {
+    return x * x;
+}
+
+// Specialization for real types (float)
+template<>
+__device__ float abs2(const float& x) {
+    return x * x;
+}
+
+// Specialization for complex float
+template<>
+__device__ float abs2(const thrust::complex<float>& x) {
+    return x.real() * x.real() + x.imag() * x.imag();
+}
+
+// Specialization for complex double
+template<>
+__device__ double abs2(const thrust::complex<double>& x) {
+    return x.real() * x.real() + x.imag() * x.imag();
+}
+
+// Specialization for std::complex<float> (for interface compatibility)
+template<>
+__device__ float abs2(const std::complex<float>& x) {
+    const thrust::complex<float>* tx = reinterpret_cast<const thrust::complex<float>*>(&x);
+    return tx->real() * tx->real() + tx->imag() * tx->imag();
+}
+
+// Specialization for std::complex<double> (for interface compatibility)
+template<>
+__device__ double abs2(const std::complex<double>& x) {
+    const thrust::complex<double>* tx = reinterpret_cast<const thrust::complex<double>*>(&x);
+    return tx->real() * tx->real() + tx->imag() * tx->imag();
+}
+
 static inline
 void xdot_wrapper(const int &n, const float * x, const int &incx, const float * y, const int &incy, float &result) {
     cublasErrcheck(cublasSdot(cublas_handle, n, x, incx, y, incy, &result));
@@ -1035,6 +1077,320 @@ void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator
     cudaCheckOnDebug();
 }
 
+// Kernel for applying eigenvalues to vectors
+
+template <typename T>
+__global__ void apply_eigenvalues_kernel(const typename GetTypeReal<T>::type* eigenvalues, const T* vectors, T* result, int nbase, int nbase_x, int notconv)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;  // Linear thread ID
+    const int total_elements = notconv * nbase;
+    
+    if (tid < total_elements)
+    {
+        const int m = tid / nbase;        // Row index (eigenvalue index)
+        const int idx = tid % nbase;      // Column index within the row
+        result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+    }
+}
+
+// Wrapper for applying eigenvalues to complex vectors
+template <typename FPTYPE>
+inline void apply_eigenvalues_complex_wrapper(const base_device::DEVICE_GPU* d,
+                                              const int& nbase,
+                                              const int& nbase_x,
+                                              const int& notconv,
+                                              const FPTYPE* eigenvalues,
+                                              const std::complex<FPTYPE>* vectors,
+                                              std::complex<FPTYPE>* result)
+{
+    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
+    const thrust::complex<FPTYPE>* vectors_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vectors);
+    const int total_elements = notconv * nbase;
+    const int threadsPerBlock = 256;
+    const int numBlocks = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    
+    apply_eigenvalues_kernel<thrust::complex<FPTYPE>><<<numBlocks, threadsPerBlock>>>(
+        eigenvalues, vectors_tmp, result_tmp, nbase, nbase_x, notconv);
+
+    cudaCheckOnDebug();
+}
+
+// Specialization for double
+template <>
+void apply_eigenvalues_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                       double *result, const double *vectors, const double *eigenvalues) {
+    const int total_elements = notconv * nbase;
+    const int threadsPerBlock = 256;
+    const int numBlocks = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    
+    apply_eigenvalues_kernel<double><<<numBlocks, threadsPerBlock>>>(
+        eigenvalues, vectors, result, nbase, nbase_x, notconv);
+    cudaCheckOnDebug();
+}
+
+// Specialization for std::complex<float>
+template <>
+void apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                      const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                      std::complex<float> *result, const std::complex<float> *vectors, const float *eigenvalues) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
+
+// Specialization for std::complex<double>
+template <>
+void apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                       std::complex<double> *result, const std::complex<double> *vectors, const double *eigenvalues) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
+
+template <typename T>
+__global__ void precondition_kernel(
+    const int dim,
+    const int notconv,
+    T* psi_iter,
+    const int nbase,
+    const typename GetTypeReal<T>::type* precondition,  // Real type
+    const typename GetTypeReal<T>::type* eigenvalues)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid < dim * notconv) {
+        const int i = tid % dim;    // Basis index
+        const int m = tid / dim;    // Band index
+        
+        using Real = typename GetTypeReal<T>::type;
+        Real x = abs(precondition[i] - eigenvalues[m]);
+        Real pre = 0.5 * (1.0 + x + sqrt(1.0 + (x - 1.0) * (x - 1.0)));
+        psi_iter[(nbase + m) * dim + i] /= pre;
+    }
+}
+
+// Specialization for double (for LCAO)
+template <>
+void precondition_op<double, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    double* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    const double* precondition,
+    const double* eigenvalues)
+{
+    const int total_elements = dim * notconv;
+    const int threadsPerBlock = thread_per_block;
+    const int numBlocks = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    
+    precondition_kernel<double><<<numBlocks, threadsPerBlock>>>(
+        dim, notconv, psi_iter, nbase, precondition, eigenvalues);
+
+    cudaCheckOnDebug();
+}
+
+// Specialization for complex<float>
+template <>
+void precondition_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    std::complex<float>* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    const float* precondition,  
+    const float* eigenvalues)
+{
+    const int total_elements = dim * notconv;
+    const int threadsPerBlock = thread_per_block;
+    const int numBlocks = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    
+    precondition_kernel<thrust::complex<float>><<<numBlocks, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<thrust::complex<float>*>(psi_iter),
+        nbase,
+        precondition,  // Already float
+        eigenvalues);
+
+    cudaCheckOnDebug();
+}
+
+// Specialization for complex<double>
+template <>
+void precondition_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    std::complex<double>* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    const double* precondition,  
+    const double* eigenvalues)
+{
+    const int total_elements = dim * notconv;
+    const int threadsPerBlock = thread_per_block;
+    const int numBlocks = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    
+    precondition_kernel<thrust::complex<double>><<<numBlocks, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<thrust::complex<double>*>(psi_iter),
+        nbase,
+        precondition,  // Already double
+        eigenvalues);
+
+    cudaCheckOnDebug();
+}
+
+// First kernel: calculate norms
+template <typename T>
+__global__ void calculate_norm_kernel(
+    const int dim,
+    const int notconv,
+    const T* psi_iter,
+    const int nbase,
+    typename GetTypeReal<T>::type* psi_norm)
+{
+    using Real = typename GetTypeReal<T>::type;
+    __shared__ Real shared_mem[256];
+
+    const int tid = threadIdx.x;
+    const int bid = blockIdx.x;
+    const int m = bid / ((dim + blockDim.x - 1) / blockDim.x);
+    const int num_blocks_per_band = (dim + blockDim.x - 1) / blockDim.x;
+    const int block_in_band = bid % num_blocks_per_band;
+
+    if (m >= notconv) return;
+
+    // Initialize shared memory
+    shared_mem[tid] = 0.0;
+
+    // Each thread processes one element
+    const int i = tid + block_in_band * blockDim.x;
+    if (i < dim) {
+        shared_mem[tid] = abs2(psi_iter[(nbase + m) * dim + i]);
+    }
+    __syncthreads();
+
+    // Parallel reduction in shared memory
+    for (int stride = blockDim.x/2; stride > 0; stride >>= 1) {
+        if (tid < stride) {
+            shared_mem[tid] += shared_mem[tid + stride];
+        }
+        __syncthreads();
+    }
+
+    // First thread of first block initializes norm to 0
+    // if (tid == 0 && block_in_band == 0) {
+    //     psi_norm[m] = 0.0;
+    // }
+    // __syncthreads();
+
+    // Write result for this block to global memory
+    if (tid == 0) {
+        atomicAdd(&psi_norm[m], shared_mem[0]);
+    }
+}
+
+// Second kernel: normalize vectors
+template <typename T>
+__global__ void normalize_vectors_kernel(
+    const int dim,
+    const int notconv,
+    T* psi_iter,
+    const int nbase,
+    const typename GetTypeReal<T>::type* psi_norm)
+{
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int m = tid / dim;
+    const int i = tid % dim;
+    
+    if (m < notconv && i < dim) {
+        psi_iter[(nbase + m) * dim + i] = psi_iter[(nbase + m) * dim + i] / sqrt(psi_norm[m]);
+    }
+}
+
+
+// Specialization for complex<float>
+template <>
+void normalize_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    std::complex<float>* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    float* psi_norm)
+{
+    const int threadsPerBlock = 256;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    
+    // First kernel: calculate norms
+    calculate_norm_kernel<thrust::complex<float>><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<const thrust::complex<float>*>(psi_iter),
+        nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<thrust::complex<float>><<<numBlocksForNormalize, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<thrust::complex<float>*>(psi_iter),
+        nbase, psi_norm);
+    cudaCheckOnDebug();
+}
+
+// Specialization for complex<double>
+template <>
+void normalize_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    std::complex<double>* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    double* psi_norm)
+{
+    const int threadsPerBlock = 256;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    
+    // First kernel: calculate norms
+    calculate_norm_kernel<thrust::complex<double>><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<const thrust::complex<double>*>(psi_iter),
+        nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<thrust::complex<double>><<<numBlocksForNormalize, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<thrust::complex<double>*>(psi_iter),
+        nbase, psi_norm);
+    cudaCheckOnDebug();
+}
+
+// Specialization for double (for LCAO)
+template <>
+void normalize_op<double, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    double* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    double* psi_norm)
+{
+    const int threadsPerBlock = 256;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    
+    // First kernel: calculate norms
+    calculate_norm_kernel<double><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv, psi_iter, nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<double><<<numBlocksForNormalize, threadsPerBlock>>>(
+        dim, notconv, psi_iter, nbase, psi_norm);
+    cudaCheckOnDebug();
+}
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
@@ -1045,6 +1401,9 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GP
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct precondition_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct normalize_op<std::complex<float>, base_device::DEVICE_GPU>;
 
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -1054,6 +1413,9 @@ template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_G
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct precondition_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct normalize_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
 template struct dot_real_op<double, base_device::DEVICE_GPU>;
@@ -1062,5 +1424,8 @@ template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_GPU>;
+template struct precondition_op<double, base_device::DEVICE_GPU>;
+template struct normalize_op<double, base_device::DEVICE_GPU>;
 #endif
 }  // namespace hsolver

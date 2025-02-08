@@ -14,6 +14,68 @@
 #include "module_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
+
+// Mock implementations for the template functions causing linking errors
+namespace ModulePW {
+    // Mock implementation for recip_to_real
+    template<typename FPTYPE, typename Device>
+    void PW_Basis_K::recip_to_real(const Device* ctx,
+                                  const std::complex<FPTYPE>* in,
+                                  std::complex<FPTYPE>* out,
+                                  const int ik,
+                                  const bool add,
+                                  const FPTYPE factor) const
+    {
+        // Simple mock implementation that does nothing
+        // In a real test, you might want to implement behavior that simulates the actual function
+    }
+
+    // Mock implementation for real_to_recip
+    template<typename FPTYPE, typename Device>
+    void PW_Basis_K::real_to_recip(const Device* ctx,
+                                  const std::complex<FPTYPE>* in,
+                                  std::complex<FPTYPE>* out,
+                                  const int ik,
+                                  const bool add,
+                                  const FPTYPE factor) const
+    {
+        // Simple mock implementation that does nothing
+    }
+
+    // Explicit template instantiations
+    template void PW_Basis_K::recip_to_real<float, base_device::DEVICE_CPU>(
+        const base_device::DEVICE_CPU* ctx,
+        const std::complex<float>* in,
+        std::complex<float>* out,
+        const int ik,
+        const bool add,
+        const float factor) const;
+
+    template void PW_Basis_K::recip_to_real<double, base_device::DEVICE_CPU>(
+        const base_device::DEVICE_CPU* ctx,
+        const std::complex<double>* in,
+        std::complex<double>* out,
+        const int ik,
+        const bool add,
+        const double factor) const;
+
+    template void PW_Basis_K::real_to_recip<float, base_device::DEVICE_CPU>(
+        const base_device::DEVICE_CPU* ctx,
+        const std::complex<float>* in,
+        std::complex<float>* out,
+        const int ik,
+        const bool add,
+        const float factor) const;
+
+    template void PW_Basis_K::real_to_recip<double, base_device::DEVICE_CPU>(
+        const base_device::DEVICE_CPU* ctx,
+        const std::complex<double>* in,
+        std::complex<double>* out,
+        const int ik,
+        const bool add,
+        const double factor) const;
+}
+
 /************************************************
  *  unit test of HSolverPW class
  ***********************************************/
