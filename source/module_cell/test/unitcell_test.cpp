@@ -45,9 +45,6 @@ Magnetism::~Magnetism()
     delete[] ucell->start_magnetization;
 }
 
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/

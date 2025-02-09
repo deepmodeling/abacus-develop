@@ -1,7 +1,8 @@
 #ifndef PRINT_CELL_H
 #define PRINT_CELL_H
-#include "atom_spec.h"
 
+#include "atom_spec.h"
+#include "module_cell/unitcell.h"
 namespace unitcell
 {
     void print_tau(Atom* atoms,
