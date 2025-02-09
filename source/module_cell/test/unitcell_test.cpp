@@ -895,7 +895,8 @@ TEST_F(UcellTest, PrintSTRU)
      * CASE: nspin1|Cartesian|no vel|no mag|no orb|no dpks_desc|rank0
      *
      */
-    ucell->print_stru_file(fn, 1, false, false, false, false, false, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                              fn, 1, false, false, false, false, false, 0);
     std::ifstream ifs;
     ifs.open("C1H2_STRU");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -926,7 +927,8 @@ TEST_F(UcellTest, PrintSTRU)
      * CASE: nspin2|Direct|vel|no mag|no orb|no dpks_desc|rank0
      *
      */
-    ucell->print_stru_file(fn, 2, true, true, false, false, false, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                            fn, 1, false, false, false, false, false, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
@@ -967,7 +969,8 @@ TEST_F(UcellTest, PrintSTRU)
     ucell->orbital_fn[1] = "__unittest_orbital_fn_1__";
     ucell->atom_mulliken
         = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}}; // first index is iat, the second is components, starts seems from 1
-    ucell->print_stru_file(fn, 2, true, false, true, true, true, 0);
+    unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
+                            fn, 1, false, false, false, false, false, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));

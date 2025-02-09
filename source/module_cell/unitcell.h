@@ -236,29 +236,7 @@ class UnitCell {
         std::ofstream& ofs_warning); // read in atomic positions
 
     int find_type(const std::string& label);
-    /**
-     * @brief UnitCell class is too heavy, this function would be moved
-     * elsewhere. Print STRU file respect to given setting
-     *
-     * @param fn STRU file name
-     * @param nspin PARAM.inp.nspin feed in
-     * @param direct true for direct coords, false for cartesian coords
-     * @param vol true for printing velocities
-     * @param magmom true for printing Mulliken population analysis produced
-     * magmom
-     * @param orb true for printing NUMERICAL_ORBITAL section
-     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
-     * @param iproc GlobalV::MY_RANK feed in
-     */
-    void print_stru_file(const std::string& fn,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0) const;
-    // void check_dtau();
+
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
 

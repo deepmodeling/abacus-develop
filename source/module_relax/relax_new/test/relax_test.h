@@ -9,16 +9,6 @@ namespace GlobalC
 UnitCell::UnitCell(){};
 UnitCell::~UnitCell(){};
 
-
-void UnitCell::print_stru_file(const std::string& fn, 
-                               const int& nspin,
-                               const bool& direct,
-                               const bool& vel,
-                               const bool& magmom,
-                               const bool& orb,
-                               const bool& dpks_desc,
-                               const int& iproc) const {};
-
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};
 

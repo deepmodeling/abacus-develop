@@ -31,14 +31,6 @@ void UnitCell::update_force(ModuleBase::matrix& fcs) {}
 void UnitCell::set_iat2itia() {}
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
 int UnitCell::find_type(const std::string& label) { return 0; }
-void UnitCell::print_stru_file(const std::string& fn,
-                               const int& nspin,
-                               const bool& direct,
-                               const bool& vel,
-                               const bool& magmom,
-                               const bool& orb,
-                               const bool& dpks_desc,
-                               const int& iproc) const {}
 void UnitCell::cal_nwfc(std::ofstream& log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream& log) {}
