@@ -68,9 +68,6 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-void UnitCell::print_tau() const
-{
-}
 Magnetism::Magnetism()
 {
 }

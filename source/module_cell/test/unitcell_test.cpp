@@ -7,6 +7,7 @@
 #include "module_elecstate/read_orb.h"
 #include "module_elecstate/read_pseudo.h"
 #include "module_cell/read_stru.h"
+#include "module_cell/print_cell.h"
 #include "memory"
 #include "module_cell/read_stru.h"
 #include "module_base/global_variable.h"
@@ -35,13 +36,13 @@ LCAO_Orbitals::~LCAO_Orbitals()
 #endif
 Magnetism::Magnetism()
 {
-    this->tot_magnetization = 0.0;
-    this->abs_magnetization = 0.0;
-    this->start_magnetization = nullptr;
+    ucell->tot_magnetization = 0.0;
+    ucell->abs_magnetization = 0.0;
+    ucell->start_magnetization = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_magnetization;
+    delete[] ucell->start_magnetization;
 }
 
 #define private public
@@ -1011,7 +1012,7 @@ TEST_F(UcellTest, PrintTauDirect)
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_running.open("print_tau_direct");
     EXPECT_EQ(ucell->Coordinate, "Direct");
-    ucell->print_tau();
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0);
     GlobalV::ofs_running.close();
     std::ifstream ifs;
     ifs.open("print_tau_direct");
@@ -1029,7 +1030,7 @@ TEST_F(UcellTest, PrintTauCartesian)
     ucell = utp.SetUcellInfo();
     GlobalV::ofs_running.open("print_tau_Cartesian");
     EXPECT_EQ(ucell->Coordinate, "Cartesian");
-    ucell->print_tau();
+    unitcell::print_tau(ucell->atoms,ucell->Coordinate,ucell->ntype,ucell->lat0);
     GlobalV::ofs_running.close();
     std::ifstream ifs;
     ifs.open("print_tau_Cartesian");

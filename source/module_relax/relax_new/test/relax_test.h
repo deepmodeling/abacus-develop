@@ -18,7 +18,6 @@ void UnitCell::print_stru_file(const std::string& fn,
                                const bool& orb,
                                const bool& dpks_desc,
                                const int& iproc) const {};
-void UnitCell::print_tau()const{};
 
 Magnetism::Magnetism(){};
 Magnetism::~Magnetism(){};

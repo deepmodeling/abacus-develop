@@ -236,7 +236,6 @@ class UnitCell {
         std::ofstream& ofs_warning); // read in atomic positions
 
     int find_type(const std::string& label);
-    void print_tau() const;
     /**
      * @brief UnitCell class is too heavy, this function would be moved
      * elsewhere. Print STRU file respect to given setting
