@@ -4,6 +4,7 @@
 #include "module_parameter/parameter.h"
 #undef private
 #include "module_elecstate/cal_ux.h"
+#include "module_elecstate/read_orb.h"
 #include "module_elecstate/read_pseudo.h"
 #include "module_cell/read_stru.h"
 #include "memory"
@@ -1101,7 +1102,7 @@ TEST_F(UcellTest, ReadOrbFile)
     std::string orb_file = "./support/C.orb";
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
-    ucell->read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
     ofs_running.close();
     EXPECT_EQ(ucell->atoms[0].nw, 25);
     remove("tmp_readorbfile");
@@ -1116,7 +1117,7 @@ TEST_F(UcellDeathTest, ReadOrbFileWarning)
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0])), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0])), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("ABACUS Cannot find the ORBITAL file"));
     ofs_running.close();
