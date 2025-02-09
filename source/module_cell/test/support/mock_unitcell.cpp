@@ -19,12 +19,6 @@ UnitCell::~UnitCell() {
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
 void UnitCell::print_cell_xyz(const std::string& fn) const {}
-bool UnitCell::read_atom_positions(std::ifstream& ifpos,
-                                   std::ofstream& ofs_running,
-                                   std::ofstream& ofs_warning) {
-    return true;
-}
-
 bool UnitCell::judge_big_cell() const { return true; }
 void UnitCell::update_stress(ModuleBase::matrix& scs) {}
 void UnitCell::update_force(ModuleBase::matrix& fcs) {}

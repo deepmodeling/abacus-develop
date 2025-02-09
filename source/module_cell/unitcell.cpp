@@ -1,7 +1,5 @@
 #include <cstdlib>
-#ifdef __MPI
-#include "mpi.h"
-#endif
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -9,21 +7,22 @@
 #include "unitcell.h"
 #include "bcast_cell.h"
 #include "module_parameter/parameter.h"
-#include "read_stru.h"
-#ifdef __LCAO
-#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
+#include "module_cell/read_stru.h"
 #include "module_base/atom_in.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/global_file.h"
 #include "module_base/parallel_common.h"
-
-#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 #include "module_parameter/parameter.h"
+
+#ifdef __MPI
+#include "mpi.h"
+#endif
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-
+#ifdef __LCAO
+#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#endif
 
 #include "update_cell.h"
 UnitCell::UnitCell() {
@@ -298,7 +297,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
+            ok2 = unitcell::read_atom_positions(*this,ifa, log, GlobalV::ofs_warning);
         }
     }
 #ifdef __MPI
