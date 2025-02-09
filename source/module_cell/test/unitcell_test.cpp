@@ -36,13 +36,13 @@ LCAO_Orbitals::~LCAO_Orbitals()
 #endif
 Magnetism::Magnetism()
 {
-    ucell->tot_magnetization = 0.0;
-    ucell->abs_magnetization = 0.0;
-    ucell->start_magnetization = nullptr;
+    this->tot_magnetization = 0.0;
+    this->abs_magnetization = 0.0;
+    this->start_magnetization = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] ucell->start_magnetization;
+    delete[] this->start_magnetization;
 }
 
 /************************************************
