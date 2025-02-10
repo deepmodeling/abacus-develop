@@ -197,7 +197,6 @@ class UnitCell {
     UnitCell();
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
-    void print_cell_xyz(const std::string& fn) const;
 
     bool judge_big_cell() const;
 

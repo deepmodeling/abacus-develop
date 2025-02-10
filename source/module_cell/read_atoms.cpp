@@ -552,8 +552,6 @@ bool read_atom_positions(UnitCell& ucell,
     }
 
     // mohan add 2010-06-30    
-    //xiaohui modify 2015-03-15, cancel outputfile "STRU_READIN.xyz"
-    //ucell.print_cell_xyz("STRU_READIN.xyz");
     unitcell::check_dtau(ucell.atoms,ucell.ntype, ucell.lat0, ucell.latvec);
 
     if (unitcell::check_tau(ucell.atoms, ucell.ntype, ucell.lat0))

@@ -57,35 +57,6 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
     return;
 }
 
-/*
-void UnitCell::print_cell_xyz(const std::string& fn) const
-{
-
-    if (GlobalV::MY_RANK != 0)
-        return; // xiaohui add 2015-03-15
-
-    std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << fn;
-
-    std::ofstream ofs(ss.str().c_str());
-
-    ofs << nat << std::endl;
-    ofs << latName << std::endl;
-    for (int it = 0; it < ntype; it++)
-    {
-        for (int ia = 0; ia < atoms[it].na; ia++)
-        {
-            ofs << atoms[it].label << " " << atoms[it].tau[ia].x * lat0 *
-0.529177 << " "
-                << atoms[it].tau[ia].y * lat0 * 0.529177 << " " <<
-atoms[it].tau[ia].z * lat0 * 0.529177 << std::endl;
-        }
-    }
-
-    ofs.close();
-    return;
-}
-*/
 
 void UnitCell::set_iat2itia() {
     assert(nat > 0);

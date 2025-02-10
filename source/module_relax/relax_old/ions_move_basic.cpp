@@ -218,8 +218,6 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     // Print the structure.
     //-----------------------------------------------------------
     unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
-    // xiaohui modify 2015-03-15, cancel outputfile "STRU_NOW.xyz"
-    // ucell.print_cell_xyz("STRU_NOW.xyz");
     return;
 }
 
