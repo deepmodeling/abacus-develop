@@ -198,11 +198,6 @@ class UnitCell {
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
 
-    bool judge_big_cell() const;
-
-    void update_stress(ModuleBase::matrix& scs); // updates stress
-    void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
-
     std::vector<double>      atom_mass;
     std::vector<std::string> atom_label;
     std::vector<std::string> pseudo_fn;
@@ -219,8 +214,6 @@ class UnitCell {
     InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
                          // 2021-09-07
 #endif
-
-    int find_type(const std::string& label);
 
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors

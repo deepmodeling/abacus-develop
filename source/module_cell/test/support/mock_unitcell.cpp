@@ -18,13 +18,8 @@ UnitCell::~UnitCell() {
     }
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
-void UnitCell::print_cell_xyz(const std::string& fn) const {}
-bool UnitCell::judge_big_cell() const { return true; }
-void UnitCell::update_stress(ModuleBase::matrix& scs) {}
-void UnitCell::update_force(ModuleBase::matrix& fcs) {}
 void UnitCell::set_iat2itia() {}
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
-int UnitCell::find_type(const std::string& label) { return 0; }
 void UnitCell::cal_nwfc(std::ofstream& log) {}
 void UnitCell::cal_meshx() {}
 void UnitCell::cal_natomwfc(std::ofstream& log) {}
