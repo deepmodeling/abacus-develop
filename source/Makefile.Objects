@@ -234,6 +234,7 @@ OBJS_ELECSTAT=elecstate.o\
     read_orb.o\
     cal_nelec_nband.o\
     read_pseudo.o\
+    cal_wfc.o\
 
 OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       elecstate_lcao_cal_tau.o\

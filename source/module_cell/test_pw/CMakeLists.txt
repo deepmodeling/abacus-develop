@@ -17,6 +17,7 @@ AddTest(
 	../read_pp_vwr.cpp ../read_pp_blps.cpp ../../module_io/output.cpp 
   ../../module_elecstate/read_pseudo.cpp ../../module_elecstate/cal_nelec_nband.cpp
   ../../module_elecstate/read_orb.cpp    ../../module_cell/print_cell.cpp
+  ../../module_elecstate/cal_wfc.cpp
 )
 
 find_program(BASH bash)

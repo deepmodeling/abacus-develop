@@ -22,6 +22,7 @@ add_executable(
     ../../../module_hamilt_pw/hamilt_pwdft/soc.cpp
     ../../../module_io/output.cpp
     ../../../module_elecstate/read_pseudo.cpp
+    ../../module_elecstate/cal_wfc.cpp
     ../../../module_elecstate/read_orb.cpp
     ../../../module_elecstate/cal_nelec_nband.cpp
     ../../../module_elecstate/module_dm/density_matrix.cpp

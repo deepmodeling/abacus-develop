@@ -223,9 +223,6 @@ class UnitCell {
     // cal_nwfc     : calculate total number of local basis and lmax
     // cal_meshx	: calculate max number of mesh points in pp file
     //================================================================
-    void cal_nwfc(std::ofstream& log);
-    void cal_meshx();
-    void cal_natomwfc(std::ofstream& log);
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
