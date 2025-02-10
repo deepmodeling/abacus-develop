@@ -49,6 +49,8 @@ class Test_SETGRAD : public testing::Test
             ucell.atoms[0].taud.resize(nat);
             ucell.atoms[0].tau.resize(nat);
             ucell.atoms[0].dis.resize(nat);
+            ucell.atoms[0].mag.resize(nat);
+            ucell.atoms[0].vel.resize(nat);
             ucell.lc = new int[3];
 
             ucell.iat2it[0] = 0;
