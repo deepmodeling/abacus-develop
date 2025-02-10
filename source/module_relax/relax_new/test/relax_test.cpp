@@ -270,10 +270,13 @@ class Test_RELAX : public testing::Test
             for(int i=0;i<ntype;i++)
             {
                 int na = ucell.atoms[i].na;
+                ucell.atoms[i].label="test";
                 ucell.atoms[i].mbl.resize(na);
                 ucell.atoms[i].taud.resize(na);
                 ucell.atoms[i].tau.resize(na);
                 ucell.atoms[i].dis.resize(na);
+                ucell.atoms[i].mag.resize(na);
+                ucell.atoms[i].vel.resize(na);
                 for (int j=0;j<na;j++)
                 {
                     ucell.atoms[i].mbl[j] = {1,1,1};
