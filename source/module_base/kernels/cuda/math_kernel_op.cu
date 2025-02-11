@@ -467,8 +467,7 @@ double dot_real_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
 // https://thrust.github.io/doc/group__transformed__reductions_ga321192d85c5f510e52300ae762c7e995.html denghui modify
 // 2022-10-03 Note that ddot_(2*dim,a,1,b,1) = REAL( zdotc_(dim,a,1,b,1) ) GPU specialization of actual computation.
 template <typename FPTYPE>
-inline FPTYPE dot_complex_wrapper(const base_device::DEVICE_GPU* d,
-                                  const int& dim,
+inline FPTYPE dot_complex_wrapper(const int& dim,
                                   const std::complex<FPTYPE>* psi_L,
                                   const std::complex<FPTYPE>* psi_R,
                                   const bool reduce)
@@ -492,7 +491,7 @@ float dot_real_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(cons
                                                                             const std::complex<float>* psi_R,
                                                                             const bool reduce)
 {
-    return dot_complex_wrapper(d, dim, psi_L, psi_R, reduce);
+    return dot_complex_wrapper(dim, psi_L, psi_R, reduce);
 }
 template <>
 double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& dim,
@@ -500,7 +499,7 @@ double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(co
                                                                               const std::complex<double>* psi_R,
                                                                               const bool reduce)
 {
-    return dot_complex_wrapper(d, dim, psi_L, psi_R, reduce);
+    return dot_complex_wrapper(dim, psi_L, psi_R, reduce);
 }
 
 // vector operator: result[i] = vector[i] / constant
