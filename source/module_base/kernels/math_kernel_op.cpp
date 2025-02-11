@@ -220,8 +220,7 @@ struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const int& N,
+    void operator()(const int& N,
                     const std::complex<FPTYPE>* alpha,
                     std::complex<FPTYPE>* X,
                     const int& incx)

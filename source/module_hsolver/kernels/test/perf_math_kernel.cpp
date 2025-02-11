@@ -199,7 +199,7 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_cpu)(benchmark::State
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_cpu)(benchmark::State& state) {
     for (auto _ : state) {
-        scal_op_cpu()(cpu_ctx, dim_vector, &zconstant_a, test_zvector_a, 1);
+        scal_op_cpu()(dim_vector, &zconstant_a, test_zvector_a, 1);
     }
 }
 
@@ -268,7 +268,7 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_axpy_op_gpu)(benchmark::State
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_scal_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        scal_op_gpu()(gpu_ctx, dim_vector, &zconstant_a, test_zvector_a_gpu, 1);
+        scal_op_gpu()(dim_vector, &zconstant_a, test_zvector_a_gpu, 1);
     }
 }
 

@@ -90,7 +90,6 @@ template <typename T, typename Device> struct dot_real_op {
   /// while enabling planewave parallization strategy.
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param psi_L : input array A
   /// \param psi_R : input array B
@@ -108,7 +107,6 @@ template <typename T, typename Device> struct vector_div_constant_op {
   /// @brief result[i] = vector[i] / constant
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector : input array
   /// \param constant : input constant
@@ -124,7 +122,6 @@ template <typename FPTYPE, typename Device> struct scal_op {
   /// @brief x = alpha * x
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param N : array size
   /// \param alpha : input constant
   /// \param X : input array
@@ -132,7 +129,7 @@ template <typename FPTYPE, typename Device> struct scal_op {
   ///
   /// Output Parameters
   /// \param X : output array
-  void operator()(const Device *d, const int &N,
+  void operator()(const int &N,
                   const std::complex<FPTYPE> *alpha, std::complex<FPTYPE> *X,
                   const int &incx);
 };

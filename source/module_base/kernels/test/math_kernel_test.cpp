@@ -323,7 +323,7 @@ TEST_F(TestModuleHsolverMathKernel, axpy_op_cpu)
 
 TEST_F(TestModuleHsolverMathKernel, scal_op_cpu)
 {
-    scal_op_cpu()(cpu_ctx, dim, &alpha_scal, X_scal.data(), 1);
+    scal_op_cpu()(dim, &alpha_scal, X_scal.data(), 1);
     for (int i = 0; i < input.size(); i++)
     {
         EXPECT_LT(fabs(X_scal[i].imag() - output_scal_op[i].imag()), 1e-8);
@@ -567,7 +567,7 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_gpu)
 
     // run
     ModuleBase::createGpuBlasHandle();
-    scal_op_gpu()(gpu_ctx, dim, &alpha_scal, X_scal_dev, 1);
+    scal_op_gpu()(dim, &alpha_scal, X_scal_dev, 1);
     ModuleBase::destoryBLAShandle();
 
     // syn the output data in GPU to CPU

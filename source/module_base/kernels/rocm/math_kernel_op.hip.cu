@@ -708,8 +708,7 @@ void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ba
 }
 
 template <>
-void scal_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                         const int& N,
+void scal_op<float, base_device::DEVICE_GPU>::operator()(const int& N,
                                                          const std::complex<float>* alpha,
                                                          std::complex<float>* X,
                                                          const int& incx)
@@ -718,8 +717,7 @@ void scal_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVI
 }
 
 template <>
-void scal_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const int& N,
+void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
                                                           const std::complex<double>* alpha,
                                                           std::complex<double>* X,
                                                           const int& incx)
