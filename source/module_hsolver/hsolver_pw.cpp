@@ -280,17 +280,18 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     std::vector<Real> eigenvalues(this->wfc_basis->nks * psi.get_nbands(), 0.0);
     ethr_band.resize(psi.get_nbands(), this->diag_thr);
 
-    // Check if using k-point continuity
-    use_k_continuity = (PARAM.init_wfc == "kcontinuity");
+    // using k-point continuity
     if (use_k_continuity) {
         build_k_neighbors();
     }
 
+    static int count = 0;
+
     /// Loop over k points for solve Hamiltonian to charge density
     for (int i = 0; i < this->wfc_basis->nks; ++i)
     {
-        const int ik = use_k_continuity ? k_order[i] : i;
-        
+	    const int ik = use_k_continuity ? k_order[i] : i;
+        ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));   
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
@@ -302,7 +303,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         psi.fix_k(ik);
 
         // If using k-point continuity and not first k-point, propagate from parent
-        if (use_k_continuity && i > 0) {
+        if (use_k_continuity && ik > 0 && count == 0) {
             propagate_psi(psi, k_parent[ik], ik);
         }
 
@@ -336,8 +337,10 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
+        ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));
         /// calculate the contribution of Psi for charge density rho
     }
+    count++;
     // END Loop over k points
 
     // copy eigenvalues to ekb in ElecState
@@ -680,39 +683,53 @@ template <typename T, typename Device>
 void HSolverPW<T, Device>::build_k_neighbors() {
     const int nk = this->wfc_basis->nks;
     kvecs_c.resize(nk);
+    k_order.clear();
     k_order.reserve(nk);
     
-    // Build k-point list
-    std::vector<std::pair<ModuleBase::Vector3<double>, int>> klist;
+    // 存储k点和对应索引的结构体
+    struct KPoint {
+        ModuleBase::Vector3<double> kvec;
+        int index;
+        double norm;
+        
+        KPoint(const ModuleBase::Vector3<double>& v, int i) : 
+            kvec(v), index(i), norm(v.norm()) {}
+    };
+    
+    // 构建k点列表
+    std::vector<KPoint> klist;
     for (int ik = 0; ik < nk; ++ik) {
-        kvecs_c[ik] = this->pes->klist->kvec_c[ik];
-        klist.emplace_back(kvecs_c[ik], ik);
+        kvecs_c[ik] = this->wfc_basis->kvec_c[ik];
+        klist.push_back(KPoint(kvecs_c[ik], ik));
     }
     
-    // Sort k-points by distance from origin
+    // 按照到原点距离排序k点
     std::sort(klist.begin(), klist.end(),
-        [](const auto& a, const auto& b) {
-            return a.first.norm() < b.first.norm();
+        [](const KPoint& a, const KPoint& b) {
+            return a.norm < b.norm;
         });
     
-    // Build parent-child relationships
-    k_order.push_back(klist[0].second);
+    // 构建父子关系
+    k_order.push_back(klist[0].index);
     
-    for (size_t i = 1; i < klist.size(); ++i) {
-        int ik = klist[i].second;
+    // 对每个k点找最近的已处理k点作为父节点
+    for (int i = 1; i < nk; ++i) {
+        int current_k = klist[i].index;
         double min_dist = 1e10;
         int parent = -1;
         
-        for (int jk : k_order) {
-            double dist = (kvecs_c[ik] - kvecs_c[jk]).norm2();
+        // 在已处理的k点中找最近邻
+        for (int j = 0; j < k_order.size(); ++j) {
+            int processed_k = k_order[j];
+            double dist = (kvecs_c[current_k] - kvecs_c[processed_k]).norm2();
             if (dist < min_dist) {
                 min_dist = dist;
-                parent = jk;
+                parent = processed_k;
             }
         }
         
-        k_parent[ik] = parent;
-        k_order.push_back(ik);
+        k_parent[current_k] = parent;
+        k_order.push_back(current_k);
     }
 }
 
@@ -730,17 +747,20 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, co
     // Process each band
     for (int ib = 0; ib < nbands; ++ib) {
         // IFFT to real space
-        this->wfc_basis->recip2real(psi.get_pointer(from_ik, ib), psi_real.data(), from_ik);
+        // TODO: Check if the call is correct
+        this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), psi_real.data(), from_ik);
         
         // Apply phase factor
-        for (int ir = 0; ir < this->wfc_basis->nrxx; ++ir) {
-            ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
-            double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
-            psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
-        }
+        //     // TODO: Check how to get the r vector
+        //     ModuleBase::Vector3<double> r = this->wfc_basis->get_ir2r(ir);
+        //     double phase = this->wfc_basis->tpiba * (dk.x * r.x + dk.y * r.y + dk.z * r.z);
+        //     psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
+        // }
         
         // FFT back to reciprocal space
-        this->wfc_basis->real2recip(psi_real.data(), psi.get_pointer(to_ik, ib), to_ik);
+        // TODO: Check if the call is correct
+
+        this->wfc_basis->real_to_recip(this->ctx, psi_real.data(), psi.get_pointer(ib), to_ik);
     }
 }
 
