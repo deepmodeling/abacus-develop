@@ -264,7 +264,7 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_cpu)
 TEST_F(TestModuleHsolverMathKernel, vector_div_constant_op_cpu)
 {
     std::vector<std::complex<double>> output(input.size());
-    vector_div_constant_op_cpu()(cpu_ctx, dim, output.data(), input.data(), constant);
+    vector_div_constant_op_cpu()(dim, output.data(), input.data(), constant);
     for (int i = 0; i < input.size(); i++)
     {
         EXPECT_LT(fabs(output[i].imag() - output_vector_div_constant_op[i].imag()), 1e-8);
@@ -395,7 +395,7 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_constant_op_gpu)
     // syn the input data in CPU to GPU
     synchronize_memory_op()(input_dev, input.data(), input.size());
     // run
-    vector_div_constant_op_gpu()(gpu_ctx, dim, output_dev, input_dev, constant);
+    vector_div_constant_op_gpu()(dim, output_dev, input_dev, constant);
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(output.data(), output_dev, output.size());
 

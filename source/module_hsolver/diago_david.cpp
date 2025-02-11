@@ -980,7 +980,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     else
     {
         // psi_m = psi_m / psi_norm
-        ModuleBase::vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
+        ModuleBase::vector_div_constant_op<T, Device>()(dim, psi_m, psi_m, psi_norm);
         // for (int i = 0; i < npw; i++)
         // {
         //     psi_m[i] /= psi_norm;

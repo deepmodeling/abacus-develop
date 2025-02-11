@@ -563,7 +563,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
     // {
     //     pphi_m[ig] /= psi_norm;
     // }
-    ModuleBase::vector_div_constant_op<T, Device>()(ctx_, this->n_basis_, phi_m.data<T>(), phi_m.data<T>(), psi_norm);
+    ModuleBase::vector_div_constant_op<T, Device>()(this->n_basis_, phi_m.data<T>(), phi_m.data<T>(), psi_norm);
 
     // ModuleBase::timer::tick("DiagoCG","schmit_orth");
 }

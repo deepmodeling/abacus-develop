@@ -115,7 +115,7 @@ template <typename T, typename Device> struct vector_div_constant_op {
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int dim, T *result, const T *vector,
+  void operator()(const int dim, T *result, const T *vector,
                   const Real constant);
 };
 
@@ -355,7 +355,7 @@ template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
 template <typename T>
 struct vector_div_constant_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int dim, T *result,
+  void operator()(const int dim, T *result,
                   const T *vector, const Real constant);
 };
 

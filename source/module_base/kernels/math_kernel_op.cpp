@@ -151,7 +151,7 @@ template <typename T>
 struct vector_div_constant_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d, const int dim, T* result, const T* vector, const Real constant)
+    void operator()(const int dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))

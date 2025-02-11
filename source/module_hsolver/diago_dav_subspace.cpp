@@ -382,8 +382,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         assert(psi_norm[i] > 0.0);
         psi_norm[i] = sqrt(psi_norm[i]);
 
-        ModuleBase::vector_div_constant_op<T, Device>()(this->ctx,
-                                                        this->dim,
+        ModuleBase::vector_div_constant_op<T, Device>()(this->dim,
                                                         psi_iter + (nbase + i) * this->dim,
                                                         psi_iter + (nbase + i) * this->dim,
                                                         psi_norm[i]);

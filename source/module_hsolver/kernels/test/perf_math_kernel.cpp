@@ -169,7 +169,7 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)(benchmark::
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_constant_op_cpu)(benchmark::State& state) {
     for (auto _ : state) {
-        vector_div_constant_op_cpu()(cpu_ctx, dim_vector, result_zvector, test_zvector_a, dconstant_a);
+        vector_div_constant_op_cpu()(dim_vector, result_zvector, test_zvector_a, dconstant_a);
     }
 }
 
@@ -238,7 +238,7 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_vector_div_constant_op_gpu)(benchmark::State& state) {
     for (auto _ : state) {
-        vector_div_constant_op_gpu()(gpu_ctx, dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a);
+        vector_div_constant_op_gpu()(dim_vector, result_zvector_gpu, test_zvector_a_gpu, dconstant_a);
     }
 }
 
