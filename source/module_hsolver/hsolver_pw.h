@@ -102,7 +102,7 @@ class HSolverPW
 #endif
 
     // K-point continuity related members
-    bool use_k_continuity = false;
+    bool use_k_continuity = true;
     std::vector<int> k_order;
     std::unordered_map<int, int> k_parent;
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
