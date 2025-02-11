@@ -309,8 +309,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             syncmem_var_h2d_op()(e_temp_hd, e_temp_cpu.data(), nbase);
         }
-        ModuleBase::vector_mul_vector_op<T, Device>()(this->ctx,
-                                                      nbase,
+        ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
                                                       vcc + m * this->nbase_x,
                                                       vcc + m * this->nbase_x,
                                                       e_temp_hd);
