@@ -110,8 +110,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct dot_real_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const base_device::DEVICE_CPU* d,
-                      const int& dim,
+    FPTYPE operator()(const int& dim,
                       const FPTYPE* psi_L,
                       const FPTYPE* psi_R,
                       const bool reduce)
@@ -129,8 +128,7 @@ struct dot_real_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct dot_real_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const base_device::DEVICE_CPU* d,
-                      const int& dim,
+    FPTYPE operator()(const int& dim,
                       const std::complex<FPTYPE>* psi_L,
                       const std::complex<FPTYPE>* psi_R,
                       const bool reduce)

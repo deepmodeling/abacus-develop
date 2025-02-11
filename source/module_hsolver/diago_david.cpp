@@ -953,7 +953,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                      1);
 
     // psi_norm = psi_norm - lagrange_m · lagrange_m
-    psi_norm -= ModuleBase::dot_real_op<T, Device>()(this->ctx, m, lagrange_m, lagrange_m, false);
+    psi_norm -= ModuleBase::dot_real_op<T, Device>()(m, lagrange_m, lagrange_m, false);
 
     // for (int j = 0; j < m; j++)
     // {

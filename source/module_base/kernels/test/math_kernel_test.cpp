@@ -257,7 +257,7 @@ class TestModuleHsolverMathKernel : public ::testing::Test
 // base_device::AbacusDevice_t device = base_device::CpuDevice, const bool reduce = true);
 TEST_F(TestModuleHsolverMathKernel, zdot_real_op_cpu)
 {
-    double result = zdot_real_cpu_op()(cpu_ctx, dim, psi_L.data(), psi_R.data(), false);
+    double result = zdot_real_cpu_op()(dim, psi_L.data(), psi_R.data(), false);
     EXPECT_LT(fabs(result - expected_result), 1e-12);
 }
 
@@ -376,7 +376,7 @@ TEST_F(TestModuleHsolverMathKernel, zdot_real_op_gpu)
     synchronize_memory_op()(psi_L_dev, psi_L.data(), psi_L.size());
     synchronize_memory_op()(psi_R_dev, psi_R.data(), psi_R.size());
     ModuleBase::createGpuBlasHandle();
-    double result = zdot_real_gpu_op()(gpu_ctx, dim, psi_L_dev, psi_R_dev, false);
+    double result = zdot_real_gpu_op()(dim, psi_L_dev, psi_R_dev, false);
     ModuleBase::destoryBLAShandle();
     EXPECT_LT(fabs(result - expected_result), 1e-12);
     delete_memory_op()(psi_L_dev);

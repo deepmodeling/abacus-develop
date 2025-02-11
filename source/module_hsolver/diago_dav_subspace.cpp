@@ -375,8 +375,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     std::vector<Real> psi_norm(notconv, 0.0);
     for (size_t i = 0; i < notconv; i++)
     {
-        psi_norm[i] = ModuleBase::dot_real_op<T, Device>()(this->ctx,
-                                                           this->dim,
+        psi_norm[i] = ModuleBase::dot_real_op<T, Device>()(this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            true);

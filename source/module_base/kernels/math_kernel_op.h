@@ -98,7 +98,7 @@ template <typename T, typename Device> struct dot_real_op {
   ///
   /// \return
   /// FPTYPE : dot product result
-  Real operator()(const Device *d, const int &dim, const T *psi_L,
+  Real operator()(const int &dim, const T *psi_L,
                   const T *psi_R, const bool reduce = true);
 };
 
@@ -347,7 +347,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
 // Partially specialize functor for base_device::GpuDevice.
 template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  Real operator()(const base_device::DEVICE_GPU *d, const int &dim,
+  Real operator()(const int &dim,
                   const T *psi_L, const T *psi_R, const bool reduce = true);
 };
 

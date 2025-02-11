@@ -162,7 +162,7 @@ class PerfModuleHsolverMathKernel : public benchmark::Fixture {
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_cpu_op)(benchmark::State& state) {
     for (auto _ : state) {
-        double result = zdot_real_cpu_op()(cpu_ctx, dim_vector, test_zvector_a, test_zvector_b, false);
+        double result = zdot_real_cpu_op()(dim_vector, test_zvector_a, test_zvector_b, false);
     }
 }
 
@@ -232,7 +232,7 @@ BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::
 
 BENCHMARK_DEFINE_F(PerfModuleHsolverMathKernel, BM_zdot_real_gpu_op)(benchmark::State& state) {
     for (auto _ : state) {
-        double result = zdot_real_gpu_op()(gpu_ctx, dim_vector, test_zvector_a_gpu, test_zvector_b_gpu, false);
+        double result = zdot_real_gpu_op()(dim_vector, test_zvector_a_gpu, test_zvector_b_gpu, false);
     }
 }
 

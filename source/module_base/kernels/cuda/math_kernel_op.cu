@@ -451,8 +451,7 @@ void calc_grad_with_block_op<T, base_device::DEVICE_GPU>::operator()(const Real*
 }
 
 template <>
-double dot_real_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                const int& dim,
+double dot_real_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                 const double* psi_L,
                                                                 const double* psi_R,
                                                                 const bool reduce)
@@ -488,8 +487,7 @@ inline FPTYPE dot_complex_wrapper(const base_device::DEVICE_GPU* d,
 }
 
 template <>
-float dot_real_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                            const int& dim,
+float dot_real_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                             const std::complex<float>* psi_L,
                                                                             const std::complex<float>* psi_R,
                                                                             const bool reduce)
@@ -497,8 +495,7 @@ float dot_real_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(cons
     return dot_complex_wrapper(d, dim, psi_L, psi_R, reduce);
 }
 template <>
-double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                              const int& dim,
+double dot_real_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                               const std::complex<double>* psi_L,
                                                                               const std::complex<double>* psi_R,
                                                                               const bool reduce)
