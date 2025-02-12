@@ -156,7 +156,6 @@ template <typename T, typename Device> struct vector_div_vector_op {
   /// @brief result[i] = vector1[i](complex) / vector2[i](not complex)
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param vector2 : input array B
@@ -365,7 +364,7 @@ template <typename T> struct vector_mul_vector_op<T, base_device::DEVICE_GPU> {
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int &dim, T *result,
+  void operator()(const int &dim, T *result,
                   const T *vector1, const Real *vector2);
 };
 

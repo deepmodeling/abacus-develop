@@ -286,7 +286,7 @@ TEST_F(TestModuleHsolverMathKernel, vector_mul_vector_op_cpu)
 TEST_F(TestModuleHsolverMathKernel, vector_div_vector_op_cpu)
 {
     std::vector<std::complex<double>> output(input.size());
-    vector_div_vector_op_cpu()(cpu_ctx, dim, output.data(), input.data(), input_double.data());
+    vector_div_vector_op_cpu()(dim, output.data(), input.data(), input_double.data());
     for (int i = 0; i < input.size(); i++)
     {
         EXPECT_LT(fabs(output[i].imag() - output_vector_div_vector_op[i].imag()), 1e-8);
@@ -464,7 +464,7 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_vector_op_gpu)
     synchronize_memory_op_double()(input_double_dev, input_double.data(), input.size());
 
     // run
-    vector_div_vector_op_gpu()(gpu_ctx, dim, output_dev, input_dev, input_double_dev);
+    vector_div_vector_op_gpu()(dim, output_dev, input_dev, input_double_dev);
 
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(output.data(), output_dev, output.size());

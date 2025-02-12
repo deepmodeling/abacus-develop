@@ -226,8 +226,8 @@ void DiagoCG<T, Device>::calc_grad(const ct::Tensor& prec,
     // }
     // denghui replace this at 20221106
     // TODO: use GPU precondition to initialize CG class
-    ModuleBase::vector_div_vector_op<T, Device>()(ctx_, this->n_basis_, grad.data<T>(), hphi.data<T>(), prec.data<Real>());
-    ModuleBase::vector_div_vector_op<T, Device>()(ctx_, this->n_basis_, pphi.data<T>(), sphi.data<T>(), prec.data<Real>());
+    ModuleBase::vector_div_vector_op<T, Device>()(this->n_basis_, grad.data<T>(), hphi.data<T>(), prec.data<Real>());
+    ModuleBase::vector_div_vector_op<T, Device>()(this->n_basis_, pphi.data<T>(), sphi.data<T>(), prec.data<Real>());
 
     // Update lambda !
     // (4) <psi|SPH|psi >

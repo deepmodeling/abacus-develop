@@ -598,8 +598,7 @@ void vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operat
 
 // vector operator: result[i] = vector1[i](not complex) / vector2[i](not complex)
 template <>
-void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const int& dim,
+void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                        double* result,
                                                                        const double* vector1,
                                                                        const double* vector2)
@@ -612,8 +611,7 @@ void vector_div_vector_op<double, base_device::DEVICE_GPU>::operator()(const bas
 }
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename FPTYPE>
-inline void vector_div_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
-                                              const int& dim,
+inline void vector_div_vector_complex_wrapper(const int& dim,
                                               std::complex<FPTYPE>* result,
                                               const std::complex<FPTYPE>* vector1,
                                               const FPTYPE* vector2)
@@ -627,23 +625,21 @@ inline void vector_div_vector_complex_wrapper(const base_device::DEVICE_GPU* d,
     cudaCheckOnDebug();
 }
 template <>
-void vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                                    const int& dim,
+void vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                                     std::complex<float>* result,
                                                                                     const std::complex<float>* vector1,
                                                                                     const float* vector2)
 {
-    vector_div_vector_complex_wrapper(d, dim, result, vector1, vector2);
+    vector_div_vector_complex_wrapper(dim, result, vector1, vector2);
 }
 template <>
 void vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* d,
     const int& dim,
     std::complex<double>* result,
     const std::complex<double>* vector1,
     const double* vector2)
 {
-    vector_div_vector_complex_wrapper(d, dim, result, vector1, vector2);
+    vector_div_vector_complex_wrapper(dim, result, vector1, vector2);
 }
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>

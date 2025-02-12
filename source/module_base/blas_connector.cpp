@@ -688,7 +688,7 @@ void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vec
 	}
 	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
 #ifdef __CUDA
-		ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU>()(gpu_ctx, dim, result, vector1, vector2);
+		ModuleBase::vector_div_vector_op<T, base_device::DEVICE_GPU>()(dim, result, vector1, vector2);
 #endif
 	}
 }

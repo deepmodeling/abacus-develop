@@ -466,8 +466,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
                                                           basis + dim * (nbase + m),
                                                           basis + dim * (nbase + m),
                                                           this->d_precondition);
@@ -475,8 +474,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
         else
         {
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
                                                           basis + dim * (nbase + m),
                                                           basis + dim * (nbase + m),
                                                           this->precondition);
