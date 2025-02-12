@@ -141,7 +141,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             }
             // sum all the results
             T one = 1.0;
-            ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp, 1, B, 1);
+            ModuleBase::axpy_op<T, Device>()(ncolB * LDA, &one, B_tmp, 1, B, 1);
         }
         delmem_dev_op()(U_tmp);
         delmem_dev_op()(B_tmp);

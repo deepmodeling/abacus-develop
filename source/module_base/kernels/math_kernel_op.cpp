@@ -251,8 +251,7 @@ struct gemv_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct axpy_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const int& dim,
+    void operator()(const int& dim,
                     const T* alpha,
                     const T* X,
                     const int& incX,

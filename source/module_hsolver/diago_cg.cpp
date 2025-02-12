@@ -386,7 +386,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
         {
             pcg[i] -= norma * pphi_m[i];
         }*/
-        ModuleBase::axpy_op<T, Device>()(ctx_, this->n_basis_, &znorma, phi_m.data<T>(), 1, cg.data<T>(), 1);
+        ModuleBase::axpy_op<T, Device>()(this->n_basis_, &znorma, phi_m.data<T>(), 1, cg.data<T>(), 1);
     }
 }
 

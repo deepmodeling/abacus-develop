@@ -589,8 +589,7 @@ void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::oper
 }
 
 template <>
-void axpy_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const int& N,
+void axpy_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
                                                           const double* alpha,
                                                           const double* X,
                                                           const int& incX,
@@ -601,8 +600,7 @@ void axpy_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
-void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const int& N,
+void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& N,
                                                                        const std::complex<float>* alpha,
                                                                        const std::complex<float>* X,
                                                                        const int& incX,
@@ -613,8 +611,7 @@ void axpy_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
 }
 
 template <>
-void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                        const int& N,
+void axpy_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& N,
                                                                         const std::complex<double>* alpha,
                                                                         const std::complex<double>* X,
                                                                         const int& incX,

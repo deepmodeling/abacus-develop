@@ -190,7 +190,6 @@ template <typename T, typename Device> struct axpy_op {
   /// @brief Y = alpha * X + Y
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param N : array size
   /// \param alpha : input constant alpha
   /// \param X : input array X
@@ -200,7 +199,7 @@ template <typename T, typename Device> struct axpy_op {
   ///
   /// Output Parameters
   /// \param Y : output array Y
-  void operator()(const Device *d, const int &N, const T *alpha, const T *X,
+  void operator()(const int &N, const T *alpha, const T *X,
                   const int &incX, T *Y, const int &incY);
 };
 
