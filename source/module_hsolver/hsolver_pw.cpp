@@ -689,7 +689,7 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     k_order.clear();
     k_order.reserve(nk);
     
-    // 存储k点和对应索引的结构体
+    // Store k-points and corresponding indices
     struct KPoint {
         ModuleBase::Vector3<double> kvec;
         int index;
@@ -699,29 +699,29 @@ void HSolverPW<T, Device>::build_k_neighbors() {
             kvec(v), index(i), norm(v.norm()) {}
     };
     
-    // 构建k点列表
+    // Build k-point list
     std::vector<KPoint> klist;
     for (int ik = 0; ik < nk; ++ik) {
         kvecs_c[ik] = this->wfc_basis->kvec_c[ik];
         klist.push_back(KPoint(kvecs_c[ik], ik));
     }
     
-    // 按照到原点距离排序k点
+    // Sort k-points by distance from origin
     std::sort(klist.begin(), klist.end(),
         [](const KPoint& a, const KPoint& b) {
             return a.norm < b.norm;
         });
     
-    // 构建父子关系
+    // Build parent-child relationships
     k_order.push_back(klist[0].index);
     
-    // 对每个k点找最近的已处理k点作为父节点
+    // Find nearest processed k-point as parent for each k-point
     for (int i = 1; i < nk; ++i) {
         int current_k = klist[i].index;
         double min_dist = 1e10;
         int parent = -1;
         
-        // 在已处理的k点中找最近邻
+        // find the nearest k-point as parent
         for (int j = 0; j < k_order.size(); ++j) {
             int processed_k = k_order[j];
             double dist = (kvecs_c[current_k] - kvecs_c[processed_k]).norm2();
@@ -744,14 +744,14 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, co
     // Get k-point difference
     ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
     
-    // Allocate temporary arrays
-    std::vector<T> psi_real(this->wfc_basis->nrxx);
+    // Allocate temporary arrays using device-aware memory management
+    T* porter = nullptr;
+    resmem_complex_op()(this->ctx, porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
     
     // Process each band
     for (int ib = 0; ib < nbands; ++ib) {
-        // IFFT to real space
-        // TODO: Check if the call is correct
-        this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), psi_real.data(), from_ik);
+        // FFT to real space
+        this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
         
         // Apply phase factor
         //     // TODO: Check how to get the r vector
@@ -761,10 +761,11 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, co
         // }
         
         // FFT back to reciprocal space
-        // TODO: Check if the call is correct
-
-        this->wfc_basis->real_to_recip(this->ctx, psi_real.data(), psi.get_pointer(ib), to_ik);
+        this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik, true);
     }
+    
+    // Clean up temporary arrays
+    delmem_complex_op()(this->ctx, porter);
 }
 
 template class HSolverPW<std::complex<float>, base_device::DEVICE_CPU>;
