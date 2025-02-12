@@ -113,7 +113,7 @@ class HSolverPW
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     
     void build_k_neighbors();
-    void propagate_psi(psi::Psi<T>& psi, const int from_ik, const int to_ik);
+    void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
 };
 
 } // namespace hsolver

@@ -291,7 +291,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     for (int i = 0; i < this->wfc_basis->nks; ++i)
     {
 	    const int ik = use_k_continuity ? k_order[i] : i;
-        ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));   
+        // ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));   
         /// update H(k) for each k point
         pHamilt->updateHk(ik);
 
@@ -333,7 +333,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  << " ; where current threshold is: " << this->diag_thr << " . " << std::endl;
             DiagoIterAssist<T, Device>::avg_iter = 0.0;
         }
-        ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));
+        // ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));
         /// calculate the contribution of Psi for charge density rho
     }
     count++;
@@ -737,7 +737,7 @@ void HSolverPW<T, Device>::build_k_neighbors() {
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, const int to_ik) {
+void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik) {
     const int nbands = psi.get_nbands();
     const int npwk = this->wfc_basis->npwk[to_ik];
     
