@@ -199,8 +199,7 @@ template <typename T>
 struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int& dim,
+    void operator()(const int& dim,
                     T* result,
                     const T* vector1,
                     const Real constant1,

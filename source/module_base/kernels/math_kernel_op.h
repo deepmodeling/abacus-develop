@@ -173,7 +173,6 @@ struct constantvector_addORsub_constantVector_op {
   /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param constant1 : input constant a
@@ -182,7 +181,7 @@ struct constantvector_addORsub_constantVector_op {
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int &dim, T *result, const T *vector1,
+  void operator()(const int &dim, T *result, const T *vector1,
                   const Real constant1, const T *vector2, const Real constant2);
 };
 
@@ -372,7 +371,7 @@ template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
 template <typename T>
 struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int &dim, T *result,
+  void operator()(const int &dim, T *result,
                   const T *vector1, const Real constant1, const T *vector2,
                   const Real constant2);
 };

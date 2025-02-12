@@ -643,8 +643,7 @@ void vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>::operat
 }
 // vector operator: result[i] = vector1[i] * constant1 + vector2[i] * constant2
 template <typename T>
-void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                                       const int& dim,
+void constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU>::operator()(const int& dim,
                                                                                        T* result,
                                                                                        const T* vector1,
                                                                                        const Real constant1,

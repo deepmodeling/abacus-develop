@@ -297,8 +297,7 @@ TEST_F(TestModuleHsolverMathKernel, vector_div_vector_op_cpu)
 TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_cpu)
 {
     std::vector<std::complex<double>> output(input.size());
-    constantvector_addORsub_constantVector_op_cpu()(cpu_ctx,
-                                                    dim,
+    constantvector_addORsub_constantVector_op_cpu()(dim,
                                                     output.data(),
                                                     input1.data(),
                                                     constant1,
@@ -500,8 +499,7 @@ TEST_F(TestModuleHsolverMathKernel, constantvector_addORsub_constantVector_op_gp
     synchronize_memory_op()(input2_dev, input2.data(), input.size());
 
     // run
-    constantvector_addORsub_constantVector_op_gpu()(gpu_ctx,
-                                                    dim,
+    constantvector_addORsub_constantVector_op_gpu()(dim,
                                                     output_dev,
                                                     input1_dev,
                                                     constant1,

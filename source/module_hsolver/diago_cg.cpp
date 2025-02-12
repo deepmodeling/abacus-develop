@@ -247,8 +247,7 @@ void DiagoCG<T, Device>::calc_grad(const ct::Tensor& prec,
     //     grad.data<T>()[i] -= lambda * this->pphi[i];
     // }
     // haozhihan replace this 2022-10-6
-    ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(ctx_,
-                                                                       this->n_basis_,
+    ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(this->n_basis_,
                                                                        grad.data<T>(),
                                                                        grad.data<T>(),
                                                                        1.0,
@@ -370,8 +369,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
         //     pcg[i] = gamma * pcg[i] + grad.data<T>()[i];
         // }
         // haozhihan replace this 2022-10-6
-        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(ctx_,
-                                                                           this->n_basis_,
+        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(this->n_basis_,
                                                                            cg.data<T>(),
                                                                            cg.data<T>(),
                                                                            gamma,
@@ -438,8 +436,7 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
     // }
 
     // haozhihan replace this 2022-10-6
-    ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(ctx_,
-                                                                       this->n_basis_,
+    ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(this->n_basis_,
                                                                        phi_m.data<T>(),
                                                                        phi_m.data<T>(),
                                                                        cost,
@@ -460,15 +457,13 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
         // }
 
         // haozhihan replace this 2022-10-6
-        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(ctx_,
-                                                                           this->n_basis_,
+        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(this->n_basis_,
                                                                            sphi.data<T>(),
                                                                            sphi.data<T>(),
                                                                            cost,
                                                                            scg.data<T>(),
                                                                            sint_norm);
-        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(ctx_,
-                                                                           this->n_basis_,
+        ModuleBase::constantvector_addORsub_constantVector_op<T, Device>()(this->n_basis_,
                                                                            hphi.data<T>(),
                                                                            hphi.data<T>(),
                                                                            cost,
