@@ -162,7 +162,7 @@ template <typename T, typename Device> struct vector_div_vector_op {
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int &dim, T *result, const T *vector1,
+  void operator()(const int &dim, T *result, const T *vector1,
                   const Real *vector2);
 };
 
