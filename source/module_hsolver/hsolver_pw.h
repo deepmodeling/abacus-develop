@@ -7,6 +7,7 @@
 #include "module_basis/module_pw/pw_basis_k.h"
 #include "module_psi/wavefunc.h"
 #include <unordered_map>
+#include "module_base/memory.h"
 
 namespace hsolver
 {
@@ -19,6 +20,9 @@ class HSolverPW
     // return T if T is real type(float, double),
     // otherwise return the real type of T(complex<float>, complex<double>)
     using Real = typename GetTypeReal<T>::type;
+    using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
+    using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
+    using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
 
   public:
     HSolverPW(ModulePW::PW_Basis_K* wfc_basis_in,
@@ -51,6 +55,7 @@ class HSolverPW
                const bool skip_charge,
                const double tpiba,
                const int nat);
+
 
   protected:
     // diago caller

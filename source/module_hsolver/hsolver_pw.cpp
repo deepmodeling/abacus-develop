@@ -96,7 +96,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
+void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T>& psi,
                                                 elecstate::ElecState* pes,
                                                 const double tpiba,
                                                 const int nat)
@@ -744,13 +744,18 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, co
     // Get k-point difference
     ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
     
-    // Allocate temporary arrays using device-aware memory management
+    // Allocate porter locally
     T* porter = nullptr;
     resmem_complex_op()(this->ctx, porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
     
     // Process each band
-    for (int ib = 0; ib < nbands; ++ib) {
+    for (int ib = 0; ib < nbands; ib++)
+    {
+        // Fix current k-point and band
+        // psi.fix_k(from_ik);
+        
         // FFT to real space
+        // this->wfc_basis->recip_to_real(this->ctx, psi.get_pointer(ib), porter, from_ik);
         this->wfc_basis->recip_to_real(this->ctx, &psi(from_ik, ib, 0), porter, from_ik);
         
         // Apply phase factor
@@ -760,11 +765,15 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T>& psi, const int from_ik, co
         //     psi_real[ir] *= std::exp(std::complex<double>(0.0, phase));
         // }
         
+        // Fix k-point for target
+        // psi.fix_k(to_ik);
+        
         // FFT back to reciprocal space
-        this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik, true);
+        // this->wfc_basis->real_to_recip(this->ctx, porter, psi.get_pointer(ib), to_ik, true);
+        this->wfc_basis->real_to_recip(this->ctx, porter, &psi(to_ik, ib, 0), to_ik);
     }
-    
-    // Clean up temporary arrays
+
+    // Clean up porter
     delmem_complex_op()(this->ctx, porter);
 }
 
