@@ -136,7 +136,7 @@ void DiagoIterAssist<T, Device>::diagH_subspace(const hamilt::Hamilt<T, Device>*
 
     if (!in_place)
     {
-        ModuleBase::matrixSetToAnother<T, Device>()(ctx, n_band, temp, ld_temp, evc.get_pointer(), dmax);
+        ModuleBase::matrixSetToAnother<T, Device>()(n_band, temp, ld_temp, evc.get_pointer(), dmax);
         delmem_complex_op()(temp);
     }
     delmem_complex_op()(hcc);
@@ -561,7 +561,7 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
                                          &zero,
                                          temp,
                                          dmin);
-        ModuleBase::matrixSetToAnother<T, Device>()(ctx, n_band, temp, dmin, evc.get_pointer(), dmax);
+        ModuleBase::matrixSetToAnother<T, Device>()(n_band, temp, dmin, evc.get_pointer(), dmax);
         delmem_complex_op()(temp);
     }
 

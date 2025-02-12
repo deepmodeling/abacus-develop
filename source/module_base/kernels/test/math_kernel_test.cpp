@@ -665,8 +665,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                                                         B.size());
 
     // run
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
-                                                                                 n,
+    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(n,
                                                                                  device_A,
                                                                                  LDA,
                                                                                  device_B,
@@ -680,8 +679,7 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                           B_gpu2cpu.size());
 
     std::vector<std::complex<double>> B_cpu(8);
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
-                                                                                 n,
+    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(n,
                                                                                  A.data(),
                                                                                  LDA,
                                                                                  B_cpu.data(),

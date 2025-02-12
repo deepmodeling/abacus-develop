@@ -980,8 +980,7 @@ void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator
 }
 
 template <>
-void matrixSetToAnother<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                     const int& n,
+void matrixSetToAnother<double, base_device::DEVICE_GPU>::operator()(const int& n,
                                                                      const double* A,
                                                                      const int& LDA,
                                                                      double* B,
@@ -993,8 +992,7 @@ void matrixSetToAnother<double, base_device::DEVICE_GPU>::operator()(const base_
     cudaCheckOnDebug();
 }
 template <>
-void matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                                  const int& n,
+void matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& n,
                                                                                   const std::complex<float>* A,
                                                                                   const int& LDA,
                                                                                   std::complex<float>* B,
@@ -1006,8 +1004,7 @@ void matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>::operator(
     cudaCheckOnDebug();
 }
 template <>
-void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                                   const int& n,
+void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& n,
                                                                                    const std::complex<double>* A,
                                                                                    const int& LDA,
                                                                                    std::complex<double>* B,

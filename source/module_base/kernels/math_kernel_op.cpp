@@ -339,7 +339,7 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct matrixSetToAnother<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d, const int& n, const T* A, const int& LDA, T* B, const int& LDB)
+    void operator()(const int& n, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))

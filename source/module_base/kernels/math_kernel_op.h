@@ -302,7 +302,6 @@ template <typename T, typename Device> struct matrixSetToAnother {
   /// @brief initialize matrix B with A
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param n : first dimension of matrix
   /// \param A : input matrix A
   /// \param LDA : leading dimension of A
@@ -310,7 +309,7 @@ template <typename T, typename Device> struct matrixSetToAnother {
   ///
   /// Output Parameters
   /// \param B : output matrix B
-  void operator()(const Device *d, const int &n, const T *A, const int &LDA,
+  void operator()(const int &n, const T *A, const int &LDA,
                   T *B, const int &LDB);
 };
 
@@ -372,7 +371,7 @@ struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU> {
 };
 
 template <typename T> struct matrixSetToAnother<T, base_device::DEVICE_GPU> {
-  void operator()(const base_device::DEVICE_GPU *d, const int &n,
+  void operator()(const int &n,
                   const T *A, // input
                   const int &LDA,
                   T *B, // output
