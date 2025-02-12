@@ -308,8 +308,7 @@ struct gemm_op_mt<T, base_device::DEVICE_CPU>
 template <typename T>
 struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int& row,
+    void operator()(const int& row,
                     const int& col,
                     const T* input_matrix,
                     T* output_matrix)

@@ -288,14 +288,13 @@ template <typename T, typename Device> struct matrixTranspose_op {
   /// @brief transpose the input matrix
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param row : first dimension of matrix
   /// \param col : second dimension of matrix
   /// \param input_matrix : input matrix
   ///
   /// Output Parameters
   /// \param output_matrix : output matrix
-  void operator()(const Device *d, const int &row, const int &col,
+  void operator()(const int &row, const int &col,
                   const T *input_matrix, T *output_matrix);
 };
 

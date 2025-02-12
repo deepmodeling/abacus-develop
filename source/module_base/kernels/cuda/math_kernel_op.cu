@@ -872,8 +872,7 @@ void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const ch
 }
 
 template <>
-void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                     const int& row,
+void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const int& row,
                                                                      const int& col,
                                                                      const double* input_matrix,
                                                                      double* output_matrix)
@@ -907,7 +906,6 @@ void matrixTranspose_op<double, base_device::DEVICE_GPU>::operator()(const base_
 
 template <>
 void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* d,
     const int& row,
     const int& col,
     const std::complex<float>* input_matrix,
@@ -949,7 +947,6 @@ void matrixTranspose_op<std::complex<float>, base_device::DEVICE_GPU>::operator(
 
 template <>
 void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* d,
     const int& row,
     const int& col,
     const std::complex<double>* input_matrix,

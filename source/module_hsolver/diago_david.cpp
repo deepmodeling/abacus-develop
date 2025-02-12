@@ -617,7 +617,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        ModuleBase::matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
         // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
 
         auto* swap = new T[notconv * nbase_x];
@@ -647,7 +647,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * nbase_x, notconv * nbase_x );
         // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * nbase_x, notconv * nbase_x );
 
-        ModuleBase::matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
         // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
     }
 #endif
