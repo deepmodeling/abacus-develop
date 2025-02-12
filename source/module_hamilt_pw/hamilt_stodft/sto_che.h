@@ -51,7 +51,7 @@ REAL vTMv(const REAL* v, const REAL* M, const int n)
     const REAL zero = 0;
     REAL* y = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(y, n);
-    ModuleBase::gemv_op<REAL, Device>()(ctx, normal, n, n, &one, M, n, v, inc, &zero, y, inc);
+    ModuleBase::gemv_op<REAL, Device>()(normal, n, n, &one, M, n, v, inc, &zero, y, inc);
     REAL result = 0;
     REAL* dot_device = nullptr;
     base_device::memory::resize_memory_op<REAL, Device>()(dot_device, 1);

@@ -231,8 +231,7 @@ struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename T>
 struct gemv_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const char& trans,
+    void operator()(const char& trans,
                     const int& m,
                     const int& n,
                     const T* alpha,

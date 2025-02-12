@@ -718,8 +718,7 @@ cublasOperation_t judge_trans_op(bool is_complex, const char& trans, const char*
 }
 
 template <>
-void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const char& trans,
+void gemv_op<double, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                           const int& m,
                                                           const int& n,
                                                           const double* alpha,
@@ -736,8 +735,7 @@ void gemv_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
-void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const char& trans,
+void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                                        const int& m,
                                                                        const int& n,
                                                                        const std::complex<float>* alpha_in,
@@ -756,8 +754,7 @@ void gemv_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
 }
 
 template <>
-void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                        const char& trans,
+void gemv_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const char& trans,
                                                                         const int& m,
                                                                         const int& n,
                                                                         const std::complex<double>* alpha_in,

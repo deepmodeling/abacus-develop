@@ -260,8 +260,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 int inc = 1;
-                gemv_op()(this->ctx,
-                          transa,
+                gemv_op()(transa,
                           npw,
                           this->ppcell->nkb,
                           &one,
@@ -351,8 +350,7 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
             if (nbands == 1)
             {
                 const int inc = 1;
-                gemv_op()(this->ctx,
-                          transa,
+                gemv_op()(transa,
                           npw,
                           this->ppcell->nkb,
                           &one,

@@ -208,7 +208,6 @@ template <typename T, typename Device> struct gemv_op {
   /// @brief y = alpha * op(A) * x + beta * y
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param trans : whether to transpose A
   /// \param m : first dimension of matrix
   /// \param n : second dimension of matrix
@@ -223,7 +222,7 @@ template <typename T, typename Device> struct gemv_op {
   ///
   /// Output Parameters
   /// \param Y : output array Y
-  void operator()(const Device *d, const char &trans, const int &m,
+  void operator()(const char &trans, const int &m,
                   const int &n, const T *alpha, const T *A, const int &lda,
                   const T *X, const int &incx, const T *beta, T *Y,
                   const int &incy);

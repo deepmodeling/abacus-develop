@@ -302,8 +302,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
         if (nbands == 1)
         {
             int inc = 1;
-            gemv_op()(this->ctx,
-                      transa,
+            gemv_op()(transa,
                       npw,
                       this->ppcell->nkb,
                       &one,

@@ -769,7 +769,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
         T* coef_real = nullptr;
         resmem_complex_op()(coef_real, N);
         castmem_d2z_op()(coef_real, p_che->coef_real, p_che->norder);
-        gemv_op()(this->ctx, transa, M, N, &one, stowf.chiallorder[ik].get_pointer(), LDA, coef_real, inc, &zero, out, inc);
+        gemv_op()(transa, M, N, &one, stowf.chiallorder[ik].get_pointer(), LDA, coef_real, inc, &zero, out, inc);
         // zgemv_(&transa, &M, &N, &one, stowf.chiallorder[ik].get_pointer(), &LDA, coef_real, &inc, &zero, out, &inc);
         delmem_complex_op()(coef_real);
     }

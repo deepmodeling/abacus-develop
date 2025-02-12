@@ -263,8 +263,7 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                    ct::Tensor& lagrange)
 {
     this->spsi_func_(grad, scg); // scg = S|grad>
-    ModuleBase::gemv_op<T, Device>()(ctx_,
-                                     'C',
+    ModuleBase::gemv_op<T, Device>()('C',
                                      this->n_basis_,
                                      m,
                                      this->one_,
@@ -281,8 +280,7 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
     // (3) orthogonal |g> and |scg> to all states (0~m-1)
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-07
-    ModuleBase::gemv_op<T, Device>()(ctx_,
-                                     'N',
+    ModuleBase::gemv_op<T, Device>()('N',
                                      this->n_basis_,
                                      m,
                                      this->neg_one_,
@@ -294,8 +292,7 @@ void DiagoCG<T, Device>::orth_grad(const ct::Tensor& psi,
                                      grad.data<T>(),
                                      1);
 
-    ModuleBase::gemv_op<T, Device>()(ctx_,
-                                     'N',
+    ModuleBase::gemv_op<T, Device>()('N',
                                      this->n_basis_,
                                      m,
                                      this->neg_one_,
@@ -491,8 +488,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
     int inc = 1;
-    ModuleBase::gemv_op<T, Device>()(ctx_,
-                                     'C',
+    ModuleBase::gemv_op<T, Device>()('C',
                                      this->n_basis_,
                                      m + 1,
                                      this->one_,
@@ -509,8 +505,7 @@ void DiagoCG<T, Device>::schmit_orth(const int& m, const ct::Tensor& psi, const 
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // haozhihan replace 2022-10-6
-    ModuleBase::gemv_op<T, Device>()(ctx_,
-                                     'N',
+    ModuleBase::gemv_op<T, Device>()('N',
                                      this->n_basis_,
                                      m,
                                      this->neg_one_,

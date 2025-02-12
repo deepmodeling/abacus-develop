@@ -912,8 +912,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     // calculate other lagranges for this band
     // lagrange_m[m - mv_size + 1]
     // = basis[m - mv_size + 1]' * spsi[m]
-    ModuleBase::gemv_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemv_op<T, Device>()('C',
                                      dim,
                                      mv_size,
                                      this->one,
@@ -935,8 +934,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
 
     // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
     // psi_m = psi_m - basis * lagrange_m
-    ModuleBase::gemv_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemv_op<T, Device>()('N',
                                      dim,
                                      m,
                                      this->neg_one,

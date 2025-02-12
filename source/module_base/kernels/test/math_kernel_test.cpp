@@ -332,8 +332,7 @@ TEST_F(TestModuleHsolverMathKernel, scal_op_cpu)
 
 TEST_F(TestModuleHsolverMathKernel, gemv_op_cpu)
 {
-    gemv_op_cpu()(cpu_ctx,
-                  'C',
+    gemv_op_cpu()('C',
                   2,
                   3,
                   &ModuleBase::ONE,
@@ -598,7 +597,7 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
 
     // run
     ModuleBase::createGpuBlasHandle();
-    gemv_op_gpu()(gpu_ctx, 'C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
+    gemv_op_gpu()('C', 2, 3, &ModuleBase::ONE, A_gemv_dev, 2, X_gemv_dev, 1, &ModuleBase::ONE, Y_gemv_dev, 1);
     ModuleBase::destoryBLAShandle();
     // syn the output data in GPU to CPU
     synchronize_memory_op_gpu()(Y_gemv.data(), Y_gemv_dev, Y_gemv.size());
