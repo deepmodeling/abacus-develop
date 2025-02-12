@@ -316,8 +316,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
         }
         else
         {
-            gemm_op()(this->ctx,
-                      transa,
+            gemm_op()(transa,
                       transb,
                       this->ppcell->nkb,
                       nbands,
@@ -367,8 +366,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
 
                         char transa = 'C';
                         char transb = 'N';
-                        gemm_op()(this->ctx,
-                                  transa,
+                        gemm_op()(transa,
                                   transb,
                                   atom->ncpp.nh,
                                   atom->ncpp.nh,
@@ -517,8 +515,7 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
                 // sum over atoms
                 char transa = 'N';
                 char transb = 'T';
-                gemm_op()(this->ctx,
-                          transa,
+                gemm_op()(transa,
                           transb,
                           npw,
                           nij,

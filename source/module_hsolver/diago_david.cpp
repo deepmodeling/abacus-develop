@@ -266,8 +266,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
             setmem_complex_op()(psi_in, 0, nband * ld_psi);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                             'N',
+            ModuleBase::gemm_op<T, Device>()('N',
                                              'N',
                                              dim,   // m: row of A,C
                                              nband, // n: col of B,C
@@ -377,8 +376,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = hpsi * vc_ev_vector = hpsi*vcc
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -438,8 +436,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //              = (H - lambda * S) * psi * vcc
     //              = (H - lambda * S) * psi_new 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -514,8 +511,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
     // calculate the square matrix for future lagranges
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemm_op<T, Device>()('C',
                                      'N',
                                      nbase,              // m: row of A,C
                                      notconv,            // n: col of B,C
@@ -588,8 +584,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
     // hcc[nbase](notconv, nbase + notconv)= basis[nbase]' * hpsi
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemm_op<T, Device>()('C',
                                      'N',
                                      notconv,
                                      nbase + notconv,
@@ -746,8 +741,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     setmem_complex_op()(basis , 0, nbase_x * dim);
 
     // basis(dim, nband) = hpsi(dim, nbase) * vcc(nbase, nband)
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,   // m: row of A,C
                                      nband, // n: col of B,C
@@ -763,8 +757,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // basis[nband] = spsi * vcc
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,   // m: row of A,C
                                      nband, // n: col of B,C
@@ -893,8 +886,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     {
         // lagrange_m[m - mv_size + 1 - mm_size]
         // = basis[m - mv_size + 1 - mm_size]' * spsi[m]
-        ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                         'C',
+        ModuleBase::gemm_op<T, Device>()('C',
                                          'N',
                                          mm_size,                                   // m: row of A,C
                                          mm_size,                                   // n: col of B,C

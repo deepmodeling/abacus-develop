@@ -711,8 +711,7 @@ void scal_op<double, base_device::DEVICE_GPU>::operator()(const int& N,
 }
 
 template <>
-void gemm_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                         const char& transa,
+void gemm_op<float, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                          const char& transb,
                                                          const int& m,
                                                          const int& n,
@@ -732,8 +731,7 @@ void gemm_op<float, base_device::DEVICE_GPU>::operator()(const base_device::DEVI
 }
 
 template <>
-void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                          const char& transa,
+void gemm_op<double, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                           const char& transb,
                                                           const int& m,
                                                           const int& n,
@@ -753,8 +751,7 @@ void gemm_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEV
 }
 
 template <>
-void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                       const char& transa,
+void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                                        const char& transb,
                                                                        const int& m,
                                                                        const int& n,
@@ -774,8 +771,7 @@ void gemm_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const bas
 }
 
 template <>
-void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU* d,
-                                                                        const char& transa,
+void gemm_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const char& transa,
                                                                         const char& transb,
                                                                         const int& m,
                                                                         const int& n,

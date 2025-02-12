@@ -188,7 +188,6 @@ void Nonlocal<OperatorPW<T, Device>>::add_nonlocal_pp(T *hpsi_in, const T *becp,
         //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         // denghui replace 2022-10-20
         gemm_op()(
-            this->ctx,
             transa,
             transb,
             this->npw,
@@ -263,7 +262,6 @@ void Nonlocal<OperatorPW<T, Device>>::act(
                 //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
                 // denghui replace 2022-10-20
                 gemm_op()(
-                    this->ctx,
                     transa,
                     transb,
                     nkb,

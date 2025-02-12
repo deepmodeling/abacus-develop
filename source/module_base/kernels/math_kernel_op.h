@@ -233,7 +233,6 @@ template <typename T, typename Device> struct gemm_op {
   /// @brief C = alpha * op(A) * op(B) + beta * C
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param transa : whether to transpose matrix A
   /// \param transb : whether to transpose matrix B
   /// \param m : first dimension of matrix mulplication
@@ -250,7 +249,7 @@ template <typename T, typename Device> struct gemm_op {
   ///
   /// Output Parameters
   /// \param c : output matrix C
-  void operator()(const Device *d, const char &transa, const char &transb,
+  void operator()(const char &transa, const char &transb,
                   const int &m, const int &n, const int &k, const T *alpha,
                   const T *a, const int &lda, const T *b, const int &ldb,
                   const T *beta, T *c, const int &ldc);
@@ -262,7 +261,6 @@ template <typename T, typename Device> struct gemm_op_mt {
   /// @brief C = alpha * op(A) * op(B) + beta * C
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param transa : whether to transpose matrix A
   /// \param transb : whether to transpose matrix B
   /// \param m : first dimension of matrix mulplication
@@ -279,7 +277,7 @@ template <typename T, typename Device> struct gemm_op_mt {
   ///
   /// Output Parameters
   /// \param c : output matrix C
-  void operator()(const Device *d, const char &transa, const char &transb,
+  void operator()(const char &transa, const char &transb,
                   const int &m, const int &n, const int &k, const T *alpha,
                   const T *a, const int &lda, const T *b, const int &ldb,
                   const T *beta, T *c, const int &ldc);

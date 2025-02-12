@@ -264,8 +264,7 @@ struct axpy_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemm_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const char& transa,
+    void operator()(const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,
@@ -287,8 +286,7 @@ struct gemm_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemm_op_mt<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const char& transa,
+    void operator()(const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,

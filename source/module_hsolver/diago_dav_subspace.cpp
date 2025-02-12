@@ -196,8 +196,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 #else
             ModuleBase::gemm_op<T, Device>()
 #endif
-                (this->ctx,
-                 'N',
+                ('N',
                  'N',
                  this->dim,
                  this->n_band,
@@ -280,8 +279,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'N',
+                        ('N',
                          'N',
                          this->dim,
                          notconv,
@@ -324,8 +322,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-        (this->ctx,
-         'N',
+        ('N',
          'N',
          this->dim,
          notconv,
@@ -409,8 +406,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif 
-                        (this->ctx,
-                         'C',
+                        ('C',
                          'N',
                          nbase + notconv,
                          notconv,
@@ -429,8 +425,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'C',
+                        ('C',
                          'N',
                          nbase + notconv,
                          notconv,
@@ -691,8 +686,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'N',
+                        ('N',
                          'N',
                          this->dim,
                          nband,
