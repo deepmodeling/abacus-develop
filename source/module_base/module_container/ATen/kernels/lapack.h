@@ -184,6 +184,9 @@ struct lapack_getrf {
  * @brief Computes the inverse of a matrix using LAPACK's GETRI routine.
  * 
  * GETRI computes the inverse of a matrix using the LU factorization computed by GETRF.
+ * 
+ * @warning cuSOLVER does \b not provide LU-based matrix inversion interface (getri).
+ *          To compute the inverse on \b GPU, use getrs instead.
  */
 template <typename T, typename Device>
 struct lapack_getri {
