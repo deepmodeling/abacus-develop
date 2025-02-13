@@ -84,6 +84,7 @@ struct lapack_potrf {
  */
 template <typename T, typename Device>
 struct lapack_dnevd {
+    using Real = typename GetTypeReal<T>::type;
     /**
      * @brief Perform eigenvalue decomposition.
      *
