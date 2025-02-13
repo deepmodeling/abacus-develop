@@ -116,6 +116,7 @@ struct lapack_dnevd {
  */
 template <typename T, typename Device>
 struct lapack_dngvd {
+    using Real = typename GetTypeReal<T>::type;
     /**
      * @brief Computes the generalized eigenvalues and eigenvectors of a pair of matrices.
      * 
@@ -141,7 +142,7 @@ struct lapack_dngvd {
         T* Mat_A,
         T* Mat_B,
         const int& dim,
-        typename GetTypeReal<T>::type* eigen_val);
+        Real* eigen_val);
 };
 
 
