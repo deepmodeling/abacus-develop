@@ -119,6 +119,11 @@ void sgetrs_(const char* trans, const int* n, const int* nrhs, const float* A, c
 void dgetrs_(const char* trans, const int* n, const int* nrhs, const double* A, const int* lda, const int* ipiv, double* B, const int* ldb, int* info);
 void cgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<float>* A, const int* lda, const int* ipiv, std::complex<float>* B, const int* ldb, int* info);
 void zgetrs_(const char* trans, const int* n, const int* nrhs, const std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* B, const int* ldb, int* info);
+
+void sgeqrf_(const int* m, const int* n, float* a, const int* lda, float* tau, float* work, const int* lwork, int* info);
+void dgeqrf_(const int* m, const int* n, double* a, const int* lda, double* tau, double* work, const int* lwork, int* info);
+void cgeqrf_(const int* m, const int* n, std::complex<float>* a, const int* lda, std::complex<float>* tau, std::complex<float>* work, const int* lwork, int* info);
+void zgeqrf_(const int* m, const int* n, std::complex<double>* a, const int* lda, std::complex<double>* tau, std::complex<double>* work, const int* lwork, int* info);
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.
@@ -397,6 +402,29 @@ void getrs(const char& trans, const int n, const int nrhs, std::complex<double>*
 {
     zgetrs_(&trans, &n, &nrhs, A, &lda, ipiv, B, &ldb, &info);
 }
+
+static inline
+void geqrf(const int m, const int n, float* A, const int lda, float* tau, float* work, const int lwork, int& info)
+{
+    sgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, double* A, const int lda, double* tau, double* work, const int lwork, int& info)
+{
+    dgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, std::complex<float>* A, const int lda, std::complex<float>* tau, std::complex<float>* work, const int lwork, int& info)
+{
+    cgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+static inline
+void geqrf(const int m, const int n, std::complex<double>* A, const int lda, std::complex<double>* tau, std::complex<double>* work, const int lwork, int& info)
+{
+    zgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
+}
+
+
 
 } // namespace lapackConnector
 } // namespace container

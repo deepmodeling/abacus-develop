@@ -249,6 +249,35 @@ struct lapack_getrs {
         const int& ldb);
 };
 
+
+// add geqrf wrapper
+template <typename T, typename Device>
+struct lapack_geqrf {
+    /**
+     * @brief Perform QR factorization on a matrix.
+     * 
+     * The factorization has the form
+     *    A = Q * R,
+     * where Q is orthogonal and R is upper triangular.
+     * 
+     * @param m The number of rows of the matrix.
+     * @param n The number of columns of the matrix.
+     * @param A Pointer to the matrix data.
+     * @param lda Leading dimension of the matrix.
+     * @param tau Pointer to the array of scalar factors of the elementary reflectors.
+     * @param work Pointer to the workspace array.
+     * @param lwork The size of the workspace array.
+     */
+    void operator()(
+        const int& m,
+        const int& n,
+        T* A,
+        const int& lda,
+        T* tau,
+        T* work,
+        const int& lwork);
+};
+
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles
 void createGpuSolverHandle();  // create cusolver handle

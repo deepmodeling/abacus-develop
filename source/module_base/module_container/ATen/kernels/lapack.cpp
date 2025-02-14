@@ -179,6 +179,26 @@ struct lapack_getrs<T, DEVICE_CPU> {
     }
 };
 
+
+template <typename T>
+struct lapack_geqrf<T, DEVICE_CPU> {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* A,
+        const int& lda,
+        T* tau,
+        T* work,
+        const int& lwork)
+    {
+        int info = 0;
+        lapackConnector::geqrf(m, n, A, lda, tau, work, lwork, info);
+        if (info != 0) {
+            throw std::runtime_error("geqrf failed with info = " + std::to_string(info));
+        }
+    }
+};
+
 template struct set_matrix<float,  DEVICE_CPU>;
 template struct set_matrix<double, DEVICE_CPU>;
 template struct set_matrix<std::complex<float>,  DEVICE_CPU>;
@@ -218,6 +238,11 @@ template struct lapack_getrs<float, DEVICE_CPU>;
 template struct lapack_getrs<double, DEVICE_CPU>;
 template struct lapack_getrs<std::complex<float>, DEVICE_CPU>;
 template struct lapack_getrs<std::complex<double>, DEVICE_CPU>;
+
+template struct lapack_geqrf<float, DEVICE_CPU>;
+template struct lapack_geqrf<double, DEVICE_CPU>;
+template struct lapack_geqrf<std::complex<float>, DEVICE_CPU>;
+template struct lapack_geqrf<std::complex<double>, DEVICE_CPU>;
 
 } // namespace kernels
 } // namespace container
