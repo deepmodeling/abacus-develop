@@ -3766,19 +3766,24 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Boolean
 - **Availability**:
-  - For PW and LCAO codes. if set to 1, occupations of bands will be setting of "ocp_set".
-  - For TDDFT in LCAO codes. if set to 1, occupations will be constrained since second ionic step.
-  - For OFDFT, this feature can't be used.
+  - For PW and LCAO codes: If set to 1, the band occupations will be determined by `ocp_set`.
+  - For RT-TDDFT in LCAO codes: If set to 1, same as above, but the occupations will be constrained starting from the second ionic step.
+  - For OFDFT: This feature is not available.
 - **Description**:
-- True: fix the occupations of bands.
-- False: do not fix the occupations of bands.
+- True: Fixes the band occupations based on the values specified in `ocp_set`.
+- False: Does not fix the band occupations.
 - **Default**: False
 
 ### ocp_set
 
 - **Type**: String
-- **Description**: If ocp is True, the ocp_set is a string to set the number of occupancy, like '1 10 * 1 0 1' representing the 13 band occupancy, 12th band occupancy 0 and the rest 1, the code is parsing this string into an array through a regular expression.
-- **Default**: none
+- **Description**:
+  - If `ocp` is set to 1, `ocp_set` must be provided as a string specifying the occupation numbers for each band across all k-points. The format follows a space-separated pattern, where occupations are assigned sequentially to bands for each k-point. A shorthand notation `N*x` can be used to repeat a value `x` for `N` bands.
+  - Example:
+    - `1 10*1 0 1` represents occupations for 13 bands, where the 12th band is fully unoccupied (`0`), and all others are occupied (`1`).
+    - For a system with multiple k-points, the occupations must be specified for all k-points, following their order in the output file kpoints (may lead to fractional occupations).
+  - Incorrect specification of `ocp_set` could lead to inconsistencies in electron counting, causing the calculation to terminate with an error.
+- **Default**: None
 
 [back to top](#full-list-of-input-keywords)
 

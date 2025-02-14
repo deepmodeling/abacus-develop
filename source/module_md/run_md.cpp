@@ -11,6 +11,7 @@
 #include "nhchain.h"
 #include "verlet.h"
 #include "module_cell/update_cell.h"
+#include "module_cell/print_cell.h"
 namespace Run_MD
 {
 
@@ -107,7 +108,10 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3)=="nao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao";
             need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
-            unit_in.print_stru_file(file.str(), 
+            unitcell::print_stru_file(unit_in,
+                                    unit_in.atoms,
+                                    unit_in.latvec,
+                                    file.str(), 
                                     PARAM.inp.nspin, 
                                     false, // Cartesian coordinates
                                     PARAM.inp.calculation == "md", 

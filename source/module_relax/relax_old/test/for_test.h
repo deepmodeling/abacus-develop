@@ -68,9 +68,6 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-void UnitCell::print_tau() const
-{
-}
 Magnetism::Magnetism()
 {
 }
@@ -82,7 +79,9 @@ Atom::Atom()
     na = 2;
     tau.resize(na);
     dis.resize(na);
+    mag.resize(na);
     mbl.resize(na);
+    vel.resize(na);
     taud.resize(na);
 }
 Atom::~Atom()

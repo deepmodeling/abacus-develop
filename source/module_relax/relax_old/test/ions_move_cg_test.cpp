@@ -43,12 +43,15 @@ class IonsMoveCGTest : public ::testing::Test
         for (int it = 0; it < ucell.ntype; it++)
         {
             Atom* atom = &ucell.atoms[it];
+            atom->label="test";
             for (int ia = 0; ia < atom->na; ia++)
             {
+                atom->mag[ia]= 1;
                 for (int ik = 0; ik < 3; ++ik)
                 {
                     atom->tau[ia][ik] = 1;
                     atom->mbl[ia][ik] = 1;
+                    atom->vel[ia][ik] = 1;
                 }
             }
         }

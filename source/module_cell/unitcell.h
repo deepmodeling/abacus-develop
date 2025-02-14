@@ -197,12 +197,6 @@ class UnitCell {
     UnitCell();
     ~UnitCell();
     void print_cell(std::ofstream& ofs) const;
-    void print_cell_xyz(const std::string& fn) const;
-
-    bool judge_big_cell() const;
-
-    void update_stress(ModuleBase::matrix& scs); // updates stress
-    void update_force(ModuleBase::matrix& fcs);  // updates force in Atom
 
     std::vector<double>      atom_mass;
     std::vector<std::string> atom_label;
@@ -221,45 +215,6 @@ class UnitCell {
                          // 2021-09-07
 #endif
 
-    /// @brief read number of numerical orbitals for each angular momentum
-    /// @param it index of atom type
-    /// @param orb_file orbital filename
-    /// @param ofs_running ofstream
-    /// @param atom Atom instance stored in UnitCell
-    void read_orb_file(int it,
-                       std::string& orb_file,
-                       std::ofstream& ofs_running,
-                       Atom* atom);
-    bool read_atom_positions(
-        std::ifstream& ifpos,
-        std::ofstream& ofs_running,
-        std::ofstream& ofs_warning); // read in atomic positions
-
-    int find_type(const std::string& label);
-    void print_tau() const;
-    /**
-     * @brief UnitCell class is too heavy, this function would be moved
-     * elsewhere. Print STRU file respect to given setting
-     *
-     * @param fn STRU file name
-     * @param nspin PARAM.inp.nspin feed in
-     * @param direct true for direct coords, false for cartesian coords
-     * @param vol true for printing velocities
-     * @param magmom true for printing Mulliken population analysis produced
-     * magmom
-     * @param orb true for printing NUMERICAL_ORBITAL section
-     * @param dpks_desc true for printing NUMERICAL_DESCRIPTOR section
-     * @param iproc GlobalV::MY_RANK feed in
-     */
-    void print_stru_file(const std::string& fn,
-                         const int& nspin = 1,
-                         const bool& direct = false,
-                         const bool& vel = false,
-                         const bool& magmom = false,
-                         const bool& orb = false,
-                         const bool& dpks_desc = false,
-                         const int& iproc = 0) const;
-    void check_dtau();
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
 
@@ -268,9 +223,6 @@ class UnitCell {
     // cal_nwfc     : calculate total number of local basis and lmax
     // cal_meshx	: calculate max number of mesh points in pp file
     //================================================================
-    void cal_nwfc(std::ofstream& log);
-    void cal_meshx();
-    void cal_natomwfc(std::ofstream& log);
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
