@@ -41,7 +41,7 @@ struct lapack_trtri<T, DEVICE_CPU> {
         int info = 0;
         lapackConnector::trtri(uplo, diag, dim, Mat, lda, info);
         if (info != 0) {
-            throw std::runtime_error("potrf failed with info = " + std::to_string(info));
+            throw std::runtime_error("trtri failed with info = " + std::to_string(info));
         }
     }
 };
