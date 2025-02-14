@@ -16,6 +16,7 @@ list(APPEND cell_simple_srcs
     ../unitcell.cpp
     ../update_cell.cpp
     ../bcast_cell.cpp
+    ../print_cell.cpp
     ../read_stru.cpp
     ../read_atom_species.cpp
     ../read_atoms.cpp
@@ -30,7 +31,9 @@ list(APPEND cell_simple_srcs
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
     ../../module_elecstate/read_pseudo.cpp
+    ../../module_elecstate/cal_wfc.cpp
     ../../module_elecstate/cal_nelec_nband.cpp
+    ../../module_elecstate/read_orb.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})

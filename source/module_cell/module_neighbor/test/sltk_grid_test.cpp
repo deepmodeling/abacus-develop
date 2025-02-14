@@ -1,13 +1,12 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "module_parameter/parameter.h"
-#undef private
 
 #define private public
 #include "../sltk_grid.h"
 #include "prepare_unitcell.h"
+#include "module_parameter/parameter.h"
 #undef private
+#include "module_cell/read_stru.h"
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -78,7 +77,7 @@ using SltkGridDeathTest = SltkGridTest;
 TEST_F(SltkGridTest, Init)
 {
     ofs.open("test.out");
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     Grid LatGrid(PARAM.input.test_grid);
@@ -96,7 +95,7 @@ TEST_F(SltkGridTest, Init)
 TEST_F(SltkGridTest, InitSmall)
 {
     ofs.open("test.out");
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     radius = 0.5;
@@ -129,7 +128,7 @@ TEST_F(SltkGridTest, InitSmall)
 TEST_F(SltkGridTest, InitNoExpand)
 {
     ofs.open("test.out");
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
     PARAM.input.test_grid = 1;
     double radius = 1e-1000;

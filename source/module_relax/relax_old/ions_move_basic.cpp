@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_cell/update_cell.h"
+#include "module_cell/print_cell.h"
 int Ions_Move_Basic::dim = 0;
 bool Ions_Move_Basic::converged = false;
 double Ions_Move_Basic::largest_grad = 0.0;
@@ -111,7 +112,7 @@ void Ions_Move_Basic::move_atoms(UnitCell &ucell, double *move, double *pos)
     //--------------------------------------------
     // Print out the structure file.
     //--------------------------------------------
-    ucell.print_tau();
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
 
     return;
 }
@@ -216,9 +217,7 @@ void Ions_Move_Basic::terminate(const UnitCell &ucell)
     //-----------------------------------------------------------
     // Print the structure.
     //-----------------------------------------------------------
-    ucell.print_tau();
-    // xiaohui modify 2015-03-15, cancel outputfile "STRU_NOW.xyz"
-    // ucell.print_cell_xyz("STRU_NOW.xyz");
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
     return;
 }
 

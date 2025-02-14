@@ -9,7 +9,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "prepare_unitcell.h"
-
+#include "module_cell/read_stru.h"
 #ifdef __LCAO
 InfoNonlocal::InfoNonlocal()
 {
@@ -108,7 +108,7 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
 
 TEST_F(SltkAtomArrangeTest, Search)
 {
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
     ofs.open("test.out");
     bool test_only = true;
@@ -124,7 +124,7 @@ TEST_F(SltkAtomArrangeTest, Search)
 
 TEST_F(SltkAtomArrangeTest, Filteradjs)
 {
-    ucell->check_dtau();
+    unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
     ofs.open("test.out");
     bool test_only = true;

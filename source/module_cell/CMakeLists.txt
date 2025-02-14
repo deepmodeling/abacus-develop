@@ -26,6 +26,7 @@ add_library(
     update_cell.cpp
     bcast_cell.cpp
     read_stru.cpp
+    print_cell.cpp
     read_atom_species.cpp
 )
 

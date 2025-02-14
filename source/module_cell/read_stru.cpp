@@ -1,6 +1,8 @@
 #include "read_stru.h"
 #include "module_base/timer.h"
 #include "module_base/vector3.h"
+#include "module_base/mathzone.h"
+
 
 namespace unitcell
 {
@@ -51,5 +53,42 @@ namespace unitcell
         }
         ModuleBase::timer::tick("UnitCell","check_tau");
         return true;
+    }
+
+    void check_dtau(Atom* atoms,
+                    const int& ntype,
+                    const double& lat0,
+                    ModuleBase::Matrix3& latvec)
+    {
+        for(int it=0; it<ntype; it++)
+        {
+            Atom* atom1 = &atoms[it];
+            for(int ia=0; ia<atoms[it].na; ia++)
+            {
+                // mohan add 2011-04-07            
+                // fmod(x,1.0) set the result between the [0,1.0),
+                // while the x may be the negtivate value,thus we add 10000.
+                atom1->taud[ia].x=fmod(atom1->taud[ia].x + 10000,1.0);
+                atom1->taud[ia].y=fmod(atom1->taud[ia].y + 10000,1.0);
+                atom1->taud[ia].z=fmod(atom1->taud[ia].z + 10000,1.0);
+
+                double cx2=0.0;
+                double cy2=0.0;
+                double cz2=0.0;
+
+                ModuleBase::Mathzone::Direct_to_Cartesian(
+                atom1->taud[ia].x, atom1->taud[ia].y, atom1->taud[ia].z,
+                latvec.e11, latvec.e12, latvec.e13,
+                latvec.e21, latvec.e22, latvec.e23,
+                latvec.e31, latvec.e32, latvec.e33,
+                cx2, cy2, cz2);
+
+                atom1->tau[ia].x = cx2;
+                atom1->tau[ia].y = cy2;
+                atom1->tau[ia].z = cz2;
+                
+            }
+        }
+        return;
     }
 }

@@ -9,6 +9,8 @@
 #include "module_io/read_exit_file.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
+#include "module_cell/print_cell.h"
+
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
 {
     ModuleBase::TITLE("Ions", "opt_ions");
@@ -100,7 +102,10 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             need_orb = need_orb || PARAM.inp.basis_type == "lcao_in_pw";
             std::stringstream ss, ss1;
             ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
-            ucell.print_stru_file(ss.str(),
+            unitcell::print_stru_file(ucell,
+                                  ucell.atoms,
+                                  ucell.latvec,
+                                  ss.str(),
                                   PARAM.inp.nspin,
                                   true,
                                   PARAM.inp.calculation == "md",
@@ -113,7 +118,10 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             {
                 ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
                 ss1 << istep << "_D";
-                ucell.print_stru_file(ss1.str(),
+                unitcell::print_stru_file(ucell,
+                                      ucell.atoms,
+                                      ucell.latvec,
+                                      ss1.str(),
                                       PARAM.inp.nspin,
                                       true,
                                       PARAM.inp.calculation == "md",
