@@ -10,10 +10,9 @@
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
 void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& ucell)
-{
+{ 
     ModuleBase::TITLE("Ions", "opt_ions");
     ModuleBase::timer::tick("Ions", "opt_ions");
-
     if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax" )
     {
         if (!PARAM.inp.relax_new)
@@ -25,7 +24,6 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
             rl.init_relax(ucell.nat);
         }
     }
-    
     this->istep = 1;
     int force_step = 1; // pengfei Li 2018-05-14
     int stress_step = 1;
@@ -89,7 +87,8 @@ void Relax_Driver::relax_driver(ModuleESolver::ESolver* p_esolver, UnitCell& uce
                                              force,
                                              stress,
                                              force_step,
-                                             stress_step); // pengfei Li 2018-05-14
+                                             stress_step,
+                                             p_esolver); // pengfei Li 2018-05-14
                 }         
                 // print structure
                 // changelog 20240509
