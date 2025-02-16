@@ -121,7 +121,8 @@ struct Input_para
 
     bool lspinorb = false;   ///< consider the spin-orbit interaction
     bool noncolin = false;   ///< using non-collinear-spin
-    bool multicolin = false;   ///< multi-collinear approach (in development)
+    bool multicolin = false;   ///< multi-collinear approach 
+    int lebedevgrids_order = 20; ///< lebedev grid points order used in multi-collinear approach
     double soc_lambda = 1.0; ///< The fraction of averaged SOC pseudopotential
                              ///< is given by (1-soc_lambda)
 

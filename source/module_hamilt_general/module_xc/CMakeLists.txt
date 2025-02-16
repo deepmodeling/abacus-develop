@@ -24,6 +24,13 @@ add_library(
     NCLibxc/LebedevGrid.cpp
     NCLibxc/FibonacciGrid.cpp
     NCLibxc/FibonacciGrid.h
+    NCLibxc/benchmark_tests.cpp
+    NCLibxc/gga.cpp
+    NCLibxc/lda.cpp
+    NCLibxc/mgga.cpp
+    NCLibxc/math.cpp
+    NCLibxc/print.cpp
+    NCLibxc/torque.cpp
 )
 
 if(ENABLE_COVERAGE)

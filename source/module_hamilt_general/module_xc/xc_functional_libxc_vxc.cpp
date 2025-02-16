@@ -82,8 +82,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     ModuleBase::matrix v(nspin,nrxx);
     ModuleBase::matrix v_nspin4(4,nrxx);
     bool use_v_nspin4 = false;
-    double etxc_col = 0.0; //for collinear tests
-    double vtxc_col = 0.0; //for collinear tests
+    //double etxc_col = 0.0; //for collinear tests
+    //double vtxc_col = 0.0; //for collinear tests
     double rho0_0 = 0.0; //for collinear tests
     double rho1_0 = 0.0; //for collinear tests
     double v1_col0 = 0.0; //for collinear tests
@@ -172,12 +172,16 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                         //auto [E_MC, V_MC] = NCLibxc::lda_mc(id, n, mx, my, mz);
                        std::tie(E_MC, V_MC) = NCLibxc::lda_mc(id, n, mx, my, mz);
                         exc = e2*E_MC[0];
-                        v_nspin4(0, ir) += std::real(e2*(V_MC[0][0][0]+V_MC[0][1][1])/two);
-                        v_nspin4(1, ir) += std::real(e2*(V_MC[0][0][1]+V_MC[0][1][0])/two);
-                        v_nspin4(2, ir) += std::real(e2*(V_MC[0][1][0]-V_MC[0][0][1])/twoi);
-                        v_nspin4(3, ir) += std::real(e2*(V_MC[0][0][0]-V_MC[0][1][1])/two);
+                        auto v00 = V_MC[0][0][0];
+                        auto v01 = V_MC[0][0][1];
+                        auto v10 = V_MC[0][1][0];
+                        auto v11 = V_MC[0][1][1];
+                        v_nspin4(0, ir) += std::real(e2*(v00+v11)/two);
+                        v_nspin4(1, ir) += std::real(e2*(v01+v10)/two);
+                        v_nspin4(2, ir) += std::real(e2*(v10-v01)/twoi);
+                        v_nspin4(3, ir) += std::real(e2*(v00-v11)/two);
                         etxc += exc * n[0];
-                        vtxc += v_nspin4(0, ir) * n[0] + v_nspin4(1, ir) * mx[0] + v_nspin4(2, ir) * my[0] + v_nspin4(3, ir) * mz[0];// vtxc is used the calculation of the total energy(Ts more specifically), because abacus doesn't directly programme the kinetic operator and instead uses the sum of occupied orbital energy
+                        vtxc += std::real(e2*(v00+v11)/two) * n[0] + std::real(e2*(v01+v10)/two) * mx[0] + std::real(e2*(v10-v01)/twoi) * my[0] + std::real(e2*(v00-v11)/two) * mz[0];// vtxc is used the calculation of the total energy(Ts more specifically), because abacus doesn't directly programme the kinetic operator and instead uses the sum of occupied orbital energy
                     }
                 }   
             }
@@ -1128,7 +1132,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                         vtxc += std::real(e2 * (v00 + v11) / two) * n[ir] + std::real(e2 * (v01 + v10) / two) * mx[ir] + std::real(e2 * (v10 - v01) / twoi) * my[ir] + std::real(e2 * (v00 - v11) / two) * mz[ir];
                     }
                 }
-
+/*
                 //collinear limit tests
                 std::vector<double> e(nrxx);
                 // Prepare inputs for postlibxc_gga
@@ -1362,7 +1366,7 @@ for (size_t i = 0; i < size; ++i) {
                         etxc_col += n[ir] * e_col[ir]*e2;
                         vtxc_col+= e2*(rho0[ir] * v1_col[ir] + rho1[ir] * v2_col[ir]);
                     }
-                }
+                }*/
                 
             }
         }
@@ -1374,29 +1378,29 @@ for (size_t i = 0; i < size; ++i) {
     #ifdef __MPI
     Parallel_Reduce::reduce_pool(etxc);
     Parallel_Reduce::reduce_pool(vtxc);
-    Parallel_Reduce::reduce_pool(etxc_col);
-    Parallel_Reduce::reduce_pool(vtxc_col);
+    //Parallel_Reduce::reduce_pool(etxc_col);
+    //Parallel_Reduce::reduce_pool(vtxc_col);
     #endif
+/*
+    std::cout << std::fixed << std::setprecision(8) << "etxc: " << etxc << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "etxc_col: " << etxc_col << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "vtxc: " << vtxc << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "vtxc_col: " << vtxc_col << std::endl; 
 
-    // std::cout << std::fixed << std::setprecision(8) << "etxc: " << etxc << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "etxc_col: " << etxc_col << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "vtxc: " << vtxc << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "vtxc_col: " << vtxc_col << std::endl; 
-
-    // // Debug prints for first point values
-    // std::cout << std::fixed << std::setprecision(8) << "n[0]: " << chr->rho[0][0] << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "mx[0]: " << chr->rho[1][0] << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "my[0]: " << chr->rho[2][0] << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "mz[0]: " << chr->rho[3][0] << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "rho0[0]: " << rho0_0 << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "rho1[0]: " << rho1_0 << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "v1_col[0]:"  << v1_col0 << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "v2_col[0]:"  << v2_col0 << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "nspin1[0]: " << v_nspin4(0,0) << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "nspin2[0]: " << v_nspin4(1,0) << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "nspin3[0]: " << v_nspin4(2,0) << std::endl;
-    // std::cout << std::fixed << std::setprecision(8) << "nspin4[0]: " << v_nspin4(3,0) << std::endl;
-
+    // Debug prints for first point values
+    std::cout << std::fixed << std::setprecision(8) << "n[0]: " << chr->rho[0][0] << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "mx[0]: " << chr->rho[1][0] << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "my[0]: " << chr->rho[2][0] << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "mz[0]: " << chr->rho[3][0] << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "rho0[0]: " << rho0_0 << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "rho1[0]: " << rho1_0 << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "v1_col[0]:"  << v1_col0 << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "v2_col[0]:"  << v2_col0 << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "nspin1[0]: " << v_nspin4(0,0) << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "nspin2[0]: " << v_nspin4(1,0) << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "nspin3[0]: " << v_nspin4(2,0) << std::endl;
+    std::cout << std::fixed << std::setprecision(8) << "nspin4[0]: " << v_nspin4(3,0) << std::endl;
+*/
     etxc *= omega / chr->rhopw->nxyz;
     vtxc *= omega / chr->rhopw->nxyz;
 

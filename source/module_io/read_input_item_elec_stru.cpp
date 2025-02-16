@@ -611,8 +611,14 @@ void ReadInput::item_elec_stru()
     }
     {
         Input_Item item("multicolin");
-        item.annotation = "multi-collinear approach (in development)";
+        item.annotation = "multi-collinear approach";
         read_sync_bool(input.multicolin);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("lebedevgrids_order");
+        item.annotation = "lebedev grid points order used in multi-collinear approach";
+        read_sync_int(input.lebedevgrids_order);
         this->add_item(item);
     }
     {

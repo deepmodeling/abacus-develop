@@ -1,0 +1,17389 @@
+// programmed by Xiaoyu Zhang, Peking University, Beijing, China, 2025/02/10
+// calculate f^{eff}/rho and v^{eff} for MGGA, which is different from GGA and LDA
+
+#include "NCLibxc.h"
+#include "interface_to_libxc.h"
+#include <iostream>
+#include <vector>
+#include <array>
+#include <cmath>
+#include <complex>
+#include <iomanip>
+#include <xc.h>
+#include <stdexcept>
+#include <fstream>
+
+void NCLibxc::postlibxc_mgga(int xc_id, 
+    const std::vector<double>& rho0, 
+    const std::vector<double>& rho1, 
+    const std::vector<double>& gradx_rho0, 
+    const std::vector<double>& grady_rho0, 
+    const std::vector<double>& gradz_rho0, 
+    const std::vector<double>& gradx_rho1, 
+    const std::vector<double>& grady_rho1, 
+    const std::vector<double>& gradz_rho1, 
+    const std::vector<double>& grad2xx_rho0, 
+    const std::vector<double>& grad2yy_rho0, 
+    const std::vector<double>& grad2zz_rho0, 
+    const std::vector<double>& grad2xy_rho0, 
+    const std::vector<double>& grad2yz_rho0, 
+    const std::vector<double>& grad2xz_rho0, 
+    const std::vector<double>& grad2xx_rho1, 
+    const std::vector<double>& grad2yy_rho1, 
+    const std::vector<double>& grad2zz_rho1, 
+    const std::vector<double>& grad2xy_rho1, 
+    const std::vector<double>& grad2yz_rho1, 
+    const std::vector<double>& grad2xz_rho1, 
+    const std::vector<double>& grad3xxx_rho0, 
+    const std::vector<double>& grad3xxy_rho0, 
+    const std::vector<double>& grad3xxz_rho0, 
+    const std::vector<double>& grad3xyy_rho0, 
+    const std::vector<double>& grad3xyz_rho0, 
+    const std::vector<double>& grad3xzz_rho0, 
+    const std::vector<double>& grad3yyy_rho0, 
+    const std::vector<double>& grad3yyz_rho0, 
+    const std::vector<double>& grad3yzz_rho0, 
+    const std::vector<double>& grad3zzz_rho0, 
+    const std::vector<double>& grad3xxx_rho1, 
+    const std::vector<double>& grad3xxy_rho1, 
+    const std::vector<double>& grad3xxz_rho1, 
+    const std::vector<double>& grad3xyy_rho1, 
+    const std::vector<double>& grad3xyz_rho1, 
+    const std::vector<double>& grad3xzz_rho1, 
+    const std::vector<double>& grad3yyy_rho1, 
+    const std::vector<double>& grad3yyz_rho1, 
+    const std::vector<double>& grad3yzz_rho1, 
+    const std::vector<double>& grad3zzz_rho1, 
+    const std::vector<double>& grad4xxxx_rho0, 
+    const std::vector<double>& grad4xxxy_rho0, 
+    const std::vector<double>& grad4xxxz_rho0, 
+    const std::vector<double>& grad4xxyy_rho0, 
+    const std::vector<double>& grad4xxyz_rho0, 
+    const std::vector<double>& grad4xxzz_rho0, 
+    const std::vector<double>& grad4xyyy_rho0, 
+    const std::vector<double>& grad4xyyz_rho0, 
+    const std::vector<double>& grad4xyzz_rho0, 
+    const std::vector<double>& grad4xzzz_rho0, 
+    const std::vector<double>& grad4yyyy_rho0, 
+    const std::vector<double>& grad4yyyz_rho0, 
+    const std::vector<double>& grad4yyzz_rho0, 
+    const std::vector<double>& grad4yzzz_rho0, 
+    const std::vector<double>& grad4zzzz_rho0, 
+    const std::vector<double>& grad4xxxx_rho1, 
+    const std::vector<double>& grad4xxxy_rho1, 
+    const std::vector<double>& grad4xxxz_rho1, 
+    const std::vector<double>& grad4xxyy_rho1, 
+    const std::vector<double>& grad4xxyz_rho1, 
+    const std::vector<double>& grad4xxzz_rho1, 
+    const std::vector<double>& grad4xyyy_rho1, 
+    const std::vector<double>& grad4xyyz_rho1, 
+    const std::vector<double>& grad4xyzz_rho1, 
+    const std::vector<double>& grad4xzzz_rho1, 
+    const std::vector<double>& grad4yyyy_rho1, 
+    const std::vector<double>& grad4yyyz_rho1, 
+    const std::vector<double>& grad4yyzz_rho1, 
+    const std::vector<double>& grad4yzzz_rho1, 
+    const std::vector<double>& grad4zzzz_rho1,
+    const std::vector<double>& tau0,
+    const std::vector<double>& tau1,
+    const std::vector<double>& gradx_tau0, 
+    const std::vector<double>& grady_tau0, 
+    const std::vector<double>& gradz_tau0, 
+    const std::vector<double>& gradx_tau1, 
+    const std::vector<double>& grady_tau1, 
+    const std::vector<double>& gradz_tau1, 
+    const std::vector<double>& grad2xx_tau0, 
+    const std::vector<double>& grad2yy_tau0, 
+    const std::vector<double>& grad2zz_tau0, 
+    const std::vector<double>& grad2xy_tau0, 
+    const std::vector<double>& grad2yz_tau0, 
+    const std::vector<double>& grad2xz_tau0, 
+    const std::vector<double>& grad2xx_tau1, 
+    const std::vector<double>& grad2yy_tau1, 
+    const std::vector<double>& grad2zz_tau1, 
+    const std::vector<double>& grad2xy_tau1, 
+    const std::vector<double>& grad2yz_tau1, 
+    const std::vector<double>& grad2xz_tau1, 
+    std::vector<double>& e, 
+    std::vector<double>& vn, 
+    std::vector<double>& vs,
+    std::vector<double>& vgn,
+    std::vector<double>& vgs
+    )
+    {
+        LibxcInterface libxc(xc_id, true); // xc_id now passed from the caller
+
+        size_t num_points = rho0.size();
+        size_t np = num_points;
+        std::vector<double> sigma0(num_points, 0.0), sigma1(num_points, 0.0), sigma2(num_points, 0.0);
+        for (size_t i = 0; i < num_points; ++i){
+            sigma0[i] = gradx_rho0[i]*gradx_rho0[i] + grady_rho0[i]*grady_rho0[i] + gradz_rho0[i]*gradz_rho0[i];
+            sigma1[i]= gradx_rho0[i]*gradx_rho1[i] + grady_rho0[i]*grady_rho1[i] + gradz_rho0[i]*gradz_rho1[i];
+            sigma2[i] = gradx_rho1[i]*gradx_rho1[i] + grady_rho1[i]*grady_rho1[i] + gradz_rho1[i]*gradz_rho1[i];
+        }
+        std::vector<double> lapl0(num_points, 0.0), lapl1(num_points, 0.0);
+        for (size_t i = 0; i < num_points; ++i){
+            lapl0[i] = grad2xx_rho0[i] + grad2yy_rho0[i] + grad2zz_rho0[i];
+            lapl1[i] = grad2xx_rho1[i] + grad2yy_rho1[i] + grad2zz_rho1[i];
+        }
+
+        std::vector<double> exc = libxc.mgga_exc(rho0, rho1, sigma0, sigma1, sigma2, lapl0, lapl1, tau0, tau1);
+
+        std::vector<double> vrho_1(rho0.size()), vrho_2(rho1.size());
+        std::vector<double> vsigma_1(np), vsigma_2(np), vsigma_3(np);
+        std::vector<double> vlapl_1(lapl0.size()), vlapl_2(lapl1.size());
+        std::vector<double> vtau_1(tau0.size()), vtau_2(tau1.size());
+
+        libxc.mgga_vxc(rho0, rho1, sigma0, sigma1, sigma2, lapl0, lapl1, tau0, tau1, vrho_1, vrho_2, vsigma_1, vsigma_2, vsigma_3, vlapl_1, vlapl_2, vtau_1, vtau_2);
+    
+        std::vector<double> v2rho2_1(rho0.size()), v2rho2_2(rho1.size()), v2rho2_3(rho0.size());
+        std::vector<double> v2rhosigma_1(rho0.size()), v2rhosigma_2(rho0.size()), v2rhosigma_3(rho0.size()), v2rhosigma_4(rho0.size()), v2rhosigma_5(rho0.size()), v2rhosigma_6(rho0.size());     
+        std::vector<double> v2rholapl_1(rho0.size()), v2rholapl_2(rho0.size()), v2rholapl_3(rho0.size()), v2rholapl_4(rho0.size());
+        std::vector<double> v2rhotau_1(rho0.size()), v2rhotau_2(rho0.size()), v2rhotau_3(rho0.size()), v2rhotau_4(rho0.size());
+        std::vector<double> v2sigma2_1(np), v2sigma2_2(np), v2sigma2_3(np), v2sigma2_4(np), v2sigma2_5(np), v2sigma2_6(np);
+        std::vector<double> v2sigmalapl_1(np), v2sigmalapl_2(sigma1.size()), v2sigmalapl_3(sigma1.size()), v2sigmalapl_4(sigma1.size()), v2sigmalapl_5(sigma1.size()), v2sigmalapl_6(sigma1.size());
+        std::vector<double> v2sigmatau_1(sigma1.size()), v2sigmatau_2(sigma1.size()), v2sigmatau_3(sigma1.size()), v2sigmatau_4(sigma1.size()), v2sigmatau_5(sigma1.size()), v2sigmatau_6(sigma1.size());
+        std::vector<double> v2lapl2_1(lapl0.size()), v2lapl2_2(lapl0.size()), v2lapl2_3(lapl0.size());
+        std::vector<double> v2lapltau_1(lapl0.size()), v2lapltau_2(lapl0.size()), v2lapltau_3(lapl0.size()), v2lapltau_4(lapl0.size());
+        std::vector<double> v2tau2_1(tau0.size()), v2tau2_2(tau0.size()), v2tau2_3(tau0.size());
+
+        libxc.mgga_fxc(rho0, rho1, sigma0, sigma1, sigma2, lapl0, lapl1, tau0, tau1, v2rho2_1, v2rho2_2, v2rho2_3, v2rhosigma_1, v2rhosigma_2, v2rhosigma_3, v2rhosigma_4, v2rhosigma_5, v2rhosigma_6, v2rholapl_1, v2rholapl_2, v2rholapl_3, v2rholapl_4, v2rhotau_1, v2rhotau_2, v2rhotau_3, v2rhotau_4, v2sigma2_1, v2sigma2_2, v2sigma2_3, v2sigma2_4, v2sigma2_5, v2sigma2_6, v2sigmalapl_1, v2sigmalapl_2, v2sigmalapl_3, v2sigmalapl_4, v2sigmalapl_5, v2sigmalapl_6, v2sigmatau_1, v2sigmatau_2, v2sigmatau_3, v2sigmatau_4, v2sigmatau_5, v2sigmatau_6, v2lapl2_1, v2lapl2_2, v2lapl2_3, v2lapltau_1, v2lapltau_2, v2lapltau_3, v2lapltau_4, v2tau2_1, v2tau2_2, v2tau2_3);
+    
+        std::vector<double> v3rho3_1(np), v3rho3_2(np), v3rho3_3(np), v3rho3_4(np);
+        std::vector<double> v3rho2sigma_1(np), v3rho2sigma_2(np), v3rho2sigma_3(np), v3rho2sigma_4(np), v3rho2sigma_5(np), v3rho2sigma_6(np), v3rho2sigma_7(np), v3rho2sigma_8(np), v3rho2sigma_9(np);
+        std::vector<double> v3rho2lapl_1(np), v3rho2lapl_2(np), v3rho2lapl_3(np), v3rho2lapl_4(np), v3rho2lapl_5(np), v3rho2lapl_6(np);
+        std::vector<double> v3rho2tau_1(np), v3rho2tau_2(np), v3rho2tau_3(np), v3rho2tau_4(np), v3rho2tau_5(np), v3rho2tau_6(np);
+        std::vector<double> v3rhosigma2_1(np), v3rhosigma2_2(np), v3rhosigma2_3(np), v3rhosigma2_4(np), v3rhosigma2_5(np), v3rhosigma2_6(np), v3rhosigma2_7(np), v3rhosigma2_8(np), v3rhosigma2_9(np), v3rhosigma2_10(np), v3rhosigma2_11(np), v3rhosigma2_12(np);
+        std::vector<double> v3rhosigmalapl_1(np), v3rhosigmalapl_2(np), v3rhosigmalapl_3(np), v3rhosigmalapl_4(np), v3rhosigmalapl_5(np), v3rhosigmalapl_6(np), v3rhosigmalapl_7(np), v3rhosigmalapl_8(np), v3rhosigmalapl_9(np), v3rhosigmalapl_10(np), v3rhosigmalapl_11(np), v3rhosigmalapl_12(np);
+        std::vector<double> v3rhosigmatau_1(np), v3rhosigmatau_2(np), v3rhosigmatau_3(np), v3rhosigmatau_4(np), v3rhosigmatau_5(np), v3rhosigmatau_6(np), v3rhosigmatau_7(np), v3rhosigmatau_8(np), v3rhosigmatau_9(np), v3rhosigmatau_10(np), v3rhosigmatau_11(np), v3rhosigmatau_12(np);
+        std::vector<double> v3rholapl2_1(np), v3rholapl2_2(np), v3rholapl2_3(np), v3rholapl2_4(np), v3rholapl2_5(np), v3rholapl2_6(np);
+        std::vector<double> v3rholapltau_1(np), v3rholapltau_2(np), v3rholapltau_3(np), v3rholapltau_4(np), v3rholapltau_5(np), v3rholapltau_6(np), v3rholapltau_7(np), v3rholapltau_8(np);       
+        std::vector<double> v3rhotau2_1(np), v3rhotau2_2(np), v3rhotau2_3(np), v3rhotau2_4(np), v3rhotau2_5(np), v3rhotau2_6(np);
+        std::vector<double> v3sigma3_1(np), v3sigma3_2(np), v3sigma3_3(np), v3sigma3_4(np), v3sigma3_5(np), v3sigma3_6(np), v3sigma3_7(np), v3sigma3_8(np), v3sigma3_9(np), v3sigma3_10(np);      
+        std::vector<double> v3sigma2lapl_1(np), v3sigma2lapl_2(np), v3sigma2lapl_3(np), v3sigma2lapl_4(np), v3sigma2lapl_5(np), v3sigma2lapl_6(np), v3sigma2lapl_7(np), v3sigma2lapl_8(np), v3sigma2lapl_9(np), v3sigma2lapl_10(np), v3sigma2lapl_11(np), v3sigma2lapl_12(np);
+        std::vector<double> v3sigma2tau_1(np), v3sigma2tau_2(np), v3sigma2tau_3(np), v3sigma2tau_4(np), v3sigma2tau_5(np), v3sigma2tau_6(np), v3sigma2tau_7(np), v3sigma2tau_8(np), v3sigma2tau_9(np), v3sigma2tau_10(np), v3sigma2tau_11(np), v3sigma2tau_12(np);
+        std::vector<double> v3sigmalapl2_1(np), v3sigmalapl2_2(np), v3sigmalapl2_3(np), v3sigmalapl2_4(np), v3sigmalapl2_5(np), v3sigmalapl2_6(np), v3sigmalapl2_7(np), v3sigmalapl2_8(np), v3sigmalapl2_9(np);
+        std::vector<double> v3sigmalapltau_1(np), v3sigmalapltau_2(np), v3sigmalapltau_3(np), v3sigmalapltau_4(np), v3sigmalapltau_5(np), v3sigmalapltau_6(np), v3sigmalapltau_7(np), v3sigmalapltau_8(np), v3sigmalapltau_9(np), v3sigmalapltau_10(np), v3sigmalapltau_11(np), v3sigmalapltau_12(np);
+        std::vector<double> v3sigmatau2_1(np), v3sigmatau2_2(np), v3sigmatau2_3(np), v3sigmatau2_4(np), v3sigmatau2_5(np), v3sigmatau2_6(np), v3sigmatau2_7(np), v3sigmatau2_8(np), v3sigmatau2_9(np);
+        std::vector<double> v3lapl3_1(np), v3lapl3_2(np), v3lapl3_3(np), v3lapl3_4(np);
+        std::vector<double> v3lapl2tau_1(np), v3lapl2tau_2(np), v3lapl2tau_3(np), v3lapl2tau_4(np), v3lapl2tau_5(np), v3lapl2tau_6(np);
+        std::vector<double> v3lapltau2_1(np), v3lapltau2_2(np), v3lapltau2_3(np), v3lapltau2_4(np), v3lapltau2_5(np), v3lapltau2_6(np);
+        std::vector<double> v3tau3_1(np), v3tau3_2(np), v3tau3_3(np), v3tau3_4(np);
+    
+        libxc.mgga_kxc(
+            rho0, rho1,
+            sigma0, sigma1, sigma2,
+            lapl0, lapl1,
+            tau0, tau1,
+            v3rho3_1, v3rho3_2, v3rho3_3, v3rho3_4,
+            v3rho2sigma_1, v3rho2sigma_2, v3rho2sigma_3,
+            v3rho2sigma_4, v3rho2sigma_5, v3rho2sigma_6,
+            v3rho2sigma_7, v3rho2sigma_8, v3rho2sigma_9,
+            v3rho2lapl_1, v3rho2lapl_2, v3rho2lapl_3,
+            v3rho2lapl_4, v3rho2lapl_5, v3rho2lapl_6,
+            v3rho2tau_1, v3rho2tau_2, v3rho2tau_3,
+            v3rho2tau_4, v3rho2tau_5, v3rho2tau_6,
+            v3rhosigma2_1, v3rhosigma2_2, v3rhosigma2_3,
+            v3rhosigma2_4, v3rhosigma2_5, v3rhosigma2_6,
+            v3rhosigma2_7, v3rhosigma2_8, v3rhosigma2_9,
+            v3rhosigma2_10, v3rhosigma2_11, v3rhosigma2_12,
+            v3rhosigmalapl_1, v3rhosigmalapl_2, v3rhosigmalapl_3,
+            v3rhosigmalapl_4, v3rhosigmalapl_5, v3rhosigmalapl_6,
+            v3rhosigmalapl_7, v3rhosigmalapl_8, v3rhosigmalapl_9,
+            v3rhosigmalapl_10, v3rhosigmalapl_11, v3rhosigmalapl_12,
+            v3rhosigmatau_1, v3rhosigmatau_2, v3rhosigmatau_3,
+            v3rhosigmatau_4, v3rhosigmatau_5, v3rhosigmatau_6,
+            v3rhosigmatau_7, v3rhosigmatau_8, v3rhosigmatau_9,
+            v3rhosigmatau_10, v3rhosigmatau_11, v3rhosigmatau_12,
+            v3rholapl2_1, v3rholapl2_2, v3rholapl2_3,
+            v3rholapl2_4, v3rholapl2_5, v3rholapl2_6,
+            v3rholapltau_1, v3rholapltau_2, v3rholapltau_3,
+            v3rholapltau_4, v3rholapltau_5, v3rholapltau_6,
+            v3rholapltau_7, v3rholapltau_8,
+            v3rhotau2_1, v3rhotau2_2, v3rhotau2_3,
+            v3rhotau2_4, v3rhotau2_5, v3rhotau2_6,
+            v3sigma3_1, v3sigma3_2, v3sigma3_3,
+            v3sigma3_4, v3sigma3_5, v3sigma3_6,
+            v3sigma3_7, v3sigma3_8, v3sigma3_9,
+            v3sigma3_10,
+            v3sigma2lapl_1, v3sigma2lapl_2, v3sigma2lapl_3,
+            v3sigma2lapl_4, v3sigma2lapl_5, v3sigma2lapl_6,
+            v3sigma2lapl_7, v3sigma2lapl_8, v3sigma2lapl_9,
+            v3sigma2lapl_10, v3sigma2lapl_11, v3sigma2lapl_12,
+            v3sigma2tau_1, v3sigma2tau_2, v3sigma2tau_3,
+            v3sigma2tau_4, v3sigma2tau_5, v3sigma2tau_6,
+            v3sigma2tau_7, v3sigma2tau_8, v3sigma2tau_9,
+            v3sigma2tau_10, v3sigma2tau_11, v3sigma2tau_12,
+            v3sigmalapl2_1, v3sigmalapl2_2, v3sigmalapl2_3,
+            v3sigmalapl2_4, v3sigmalapl2_5, v3sigmalapl2_6,
+            v3sigmalapl2_7, v3sigmalapl2_8, v3sigmalapl2_9,
+            v3sigmalapltau_1, v3sigmalapltau_2, v3sigmalapltau_3,
+            v3sigmalapltau_4, v3sigmalapltau_5, v3sigmalapltau_6,
+            v3sigmalapltau_7, v3sigmalapltau_8, v3sigmalapltau_9,
+            v3sigmalapltau_10, v3sigmalapltau_11, v3sigmalapltau_12,
+            v3sigmatau2_1, v3sigmatau2_2, v3sigmatau2_3,
+            v3sigmatau2_4, v3sigmatau2_5, v3sigmatau2_6,
+            v3sigmatau2_7, v3sigmatau2_8, v3sigmatau2_9,
+            v3lapl3_1, v3lapl3_2, v3lapl3_3, v3lapl3_4,
+            v3lapl2tau_1, v3lapl2tau_2, v3lapl2tau_3,
+            v3lapl2tau_4, v3lapl2tau_5, v3lapl2tau_6,
+            v3lapltau2_1, v3lapltau2_2, v3lapltau2_3,
+            v3lapltau2_4, v3lapltau2_5, v3lapltau2_6,
+            v3tau3_1, v3tau3_2, v3tau3_3, v3tau3_4
+        );
+    
+        std::vector<double> v4rho4_1(np), v4rho4_2(np), v4rho4_3(np), v4rho4_4(np), v4rho4_5(np);
+    std::vector<double> v4rho3sigma_1(np), v4rho3sigma_2(np), v4rho3sigma_3(np), v4rho3sigma_4(np), v4rho3sigma_5(np), v4rho3sigma_6(np), v4rho3sigma_7(np), v4rho3sigma_8(np), v4rho3sigma_9(np), v4rho3sigma_10(np), v4rho3sigma_11(np), v4rho3sigma_12(np);
+    std::vector<double> v4rho3lapl_1(np), v4rho3lapl_2(np), v4rho3lapl_3(np), v4rho3lapl_4(np), v4rho3lapl_5(np), v4rho3lapl_6(np), v4rho3lapl_7(np), v4rho3lapl_8(np);
+    std::vector<double> v4rho3tau_1(np), v4rho3tau_2(np), v4rho3tau_3(np), v4rho3tau_4(np), v4rho3tau_5(np), v4rho3tau_6(np), v4rho3tau_7(np), v4rho3tau_8(np);
+    std::vector<double> v4rho2sigma2_1(np), v4rho2sigma2_2(np), v4rho2sigma2_3(np), v4rho2sigma2_4(np), v4rho2sigma2_5(np), v4rho2sigma2_6(np), v4rho2sigma2_7(np), v4rho2sigma2_8(np), v4rho2sigma2_9(np), v4rho2sigma2_10(np), v4rho2sigma2_11(np), v4rho2sigma2_12(np), v4rho2sigma2_13(np), v4rho2sigma2_14(np), v4rho2sigma2_15(np), v4rho2sigma2_16(np), v4rho2sigma2_17(np), v4rho2sigma2_18(np);
+    std::vector<double> v4rho2sigmalapl_1(np), v4rho2sigmalapl_2(np), v4rho2sigmalapl_3(np), v4rho2sigmalapl_4(np), v4rho2sigmalapl_5(np), v4rho2sigmalapl_6(np), v4rho2sigmalapl_7(np), v4rho2sigmalapl_8(np), v4rho2sigmalapl_9(np), v4rho2sigmalapl_10(np), v4rho2sigmalapl_11(np), v4rho2sigmalapl_12(np), v4rho2sigmalapl_13(np), v4rho2sigmalapl_14(np), v4rho2sigmalapl_15(np), v4rho2sigmalapl_16(np), v4rho2sigmalapl_17(np), v4rho2sigmalapl_18(np);
+    std::vector<double> v4rho2sigmatau_1(np), v4rho2sigmatau_2(np), v4rho2sigmatau_3(np), v4rho2sigmatau_4(np), v4rho2sigmatau_5(np), v4rho2sigmatau_6(np), v4rho2sigmatau_7(np), v4rho2sigmatau_8(np), v4rho2sigmatau_9(np), v4rho2sigmatau_10(np), v4rho2sigmatau_11(np), v4rho2sigmatau_12(np), v4rho2sigmatau_13(np), v4rho2sigmatau_14(np), v4rho2sigmatau_15(np), v4rho2sigmatau_16(np), v4rho2sigmatau_17(np), v4rho2sigmatau_18(np);
+    std::vector<double> v4rho2lapl2_1(np), v4rho2lapl2_2(np), v4rho2lapl2_3(np), v4rho2lapl2_4(np), v4rho2lapl2_5(np), v4rho2lapl2_6(np), v4rho2lapl2_7(np), v4rho2lapl2_8(np), v4rho2lapl2_9(np);
+    
+    std::vector<double> v4rho2lapltau_1(np), v4rho2lapltau_2(np), v4rho2lapltau_3(np), v4rho2lapltau_4(np), v4rho2lapltau_5(np), v4rho2lapltau_6(np), v4rho2lapltau_7(np), v4rho2lapltau_8(np), v4rho2lapltau_9(np), v4rho2lapltau_10(np), v4rho2lapltau_11(np), v4rho2lapltau_12(np);
+    std::vector<double> v4rho2tau2_1(np), v4rho2tau2_2(np), v4rho2tau2_3(np), v4rho2tau2_4(np), v4rho2tau2_5(np), v4rho2tau2_6(np), v4rho2tau2_7(np), v4rho2tau2_8(np), v4rho2tau2_9(np);
+    std::vector<double> v4rhosigma3_1(np), v4rhosigma3_2(np), v4rhosigma3_3(np), v4rhosigma3_4(np), v4rhosigma3_5(np), v4rhosigma3_6(np), v4rhosigma3_7(np), v4rhosigma3_8(np), v4rhosigma3_9(np), v4rhosigma3_10(np), v4rhosigma3_11(np), v4rhosigma3_12(np), v4rhosigma3_13(np), v4rhosigma3_14(np), v4rhosigma3_15(np), v4rhosigma3_16(np), v4rhosigma3_17(np), v4rhosigma3_18(np), v4rhosigma3_19(np), v4rhosigma3_20(np);
+    std::vector<double> v4rhosigma2lapl_1(np), v4rhosigma2lapl_2(np), v4rhosigma2lapl_3(np), v4rhosigma2lapl_4(np), v4rhosigma2lapl_5(np), v4rhosigma2lapl_6(np), v4rhosigma2lapl_7(np), v4rhosigma2lapl_8(np), v4rhosigma2lapl_9(np), v4rhosigma2lapl_10(np), v4rhosigma2lapl_11(np), v4rhosigma2lapl_12(np), v4rhosigma2lapl_13(np), v4rhosigma2lapl_14(np), v4rhosigma2lapl_15(np), v4rhosigma2lapl_16(np), v4rhosigma2lapl_17(np), v4rhosigma2lapl_18(np), v4rhosigma2lapl_19(np), v4rhosigma2lapl_20(np), v4rhosigma2lapl_21(np), v4rhosigma2lapl_22(np), v4rhosigma2lapl_23(np), v4rhosigma2lapl_24(np);
+    std::vector<double> v4rhosigma2tau_1(np), v4rhosigma2tau_2(np), v4rhosigma2tau_3(np), v4rhosigma2tau_4(np), v4rhosigma2tau_5(np), v4rhosigma2tau_6(np), v4rhosigma2tau_7(np), v4rhosigma2tau_8(np), v4rhosigma2tau_9(np), v4rhosigma2tau_10(np), v4rhosigma2tau_11(np), v4rhosigma2tau_12(np), v4rhosigma2tau_13(np), v4rhosigma2tau_14(np), v4rhosigma2tau_15(np), v4rhosigma2tau_16(np), v4rhosigma2tau_17(np), v4rhosigma2tau_18(np), v4rhosigma2tau_19(np), v4rhosigma2tau_20(np), v4rhosigma2tau_21(np), v4rhosigma2tau_22(np), v4rhosigma2tau_23(np), v4rhosigma2tau_24(np);        
+    std::vector<double> v4rhosigmalapl2_1(np), v4rhosigmalapl2_2(np), v4rhosigmalapl2_3(np), v4rhosigmalapl2_4(np), v4rhosigmalapl2_5(np), v4rhosigmalapl2_6(np), v4rhosigmalapl2_7(np), v4rhosigmalapl2_8(np), v4rhosigmalapl2_9(np), v4rhosigmalapl2_10(np), v4rhosigmalapl2_11(np), v4rhosigmalapl2_12(np), v4rhosigmalapl2_13(np), v4rhosigmalapl2_14(np), v4rhosigmalapl2_15(np), v4rhosigmalapl2_16(np), v4rhosigmalapl2_17(np), v4rhosigmalapl2_18(np);
+    std::vector<double> v4rhosigmalapltau_1(np), v4rhosigmalapltau_2(np), v4rhosigmalapltau_3(np), v4rhosigmalapltau_4(np), v4rhosigmalapltau_5(np), v4rhosigmalapltau_6(np), v4rhosigmalapltau_7(np), v4rhosigmalapltau_8(np), v4rhosigmalapltau_9(np), v4rhosigmalapltau_10(np), v4rhosigmalapltau_11(np), v4rhosigmalapltau_12(np), v4rhosigmalapltau_13(np), v4rhosigmalapltau_14(np), v4rhosigmalapltau_15(np), v4rhosigmalapltau_16(np), v4rhosigmalapltau_17(np), v4rhosigmalapltau_18(np), v4rhosigmalapltau_19(np), v4rhosigmalapltau_20(np), v4rhosigmalapltau_21(np), v4rhosigmalapltau_22(np), v4rhosigmalapltau_23(np), v4rhosigmalapltau_24(np);
+    std::vector<double> v4rhosigmatau2_1(np), v4rhosigmatau2_2(np), v4rhosigmatau2_3(np), v4rhosigmatau2_4(np), v4rhosigmatau2_5(np), v4rhosigmatau2_6(np), v4rhosigmatau2_7(np), v4rhosigmatau2_8(np), v4rhosigmatau2_9(np), v4rhosigmatau2_10(np), v4rhosigmatau2_11(np), v4rhosigmatau2_12(np), v4rhosigmatau2_13(np), v4rhosigmatau2_14(np), v4rhosigmatau2_15(np), v4rhosigmatau2_16(np), v4rhosigmatau2_17(np), v4rhosigmatau2_18(np);
+    std::vector<double> v4rholapl3_1(np), v4rholapl3_2(np), v4rholapl3_3(np), v4rholapl3_4(np), v4rholapl3_5(np), v4rholapl3_6(np), v4rholapl3_7(np), v4rholapl3_8(np);
+    std::vector<double> v4rholapl2tau_1(np), v4rholapl2tau_2(np), v4rholapl2tau_3(np), v4rholapl2tau_4(np), v4rholapl2tau_5(np), v4rholapl2tau_6(np), v4rholapl2tau_7(np), v4rholapl2tau_8(np), v4rholapl2tau_9(np), v4rholapl2tau_10(np), v4rholapl2tau_11(np), v4rholapl2tau_12(np);
+    std::vector<double> v4rholapltau2_1(np), v4rholapltau2_2(np), v4rholapltau2_3(np), v4rholapltau2_4(np), v4rholapltau2_5(np), v4rholapltau2_6(np), v4rholapltau2_7(np), v4rholapltau2_8(np), v4rholapltau2_9(np), v4rholapltau2_10(np), v4rholapltau2_11(np), v4rholapltau2_12(np);
+    std::vector<double> v4rhotau3_1(np), v4rhotau3_2(np), v4rhotau3_3(np), v4rhotau3_4(np), v4rhotau3_5(np), v4rhotau3_6(np), v4rhotau3_7(np), v4rhotau3_8(np);
+    std::vector<double> v4sigma4_1(np), v4sigma4_2(np), v4sigma4_3(np), v4sigma4_4(np), v4sigma4_5(np), v4sigma4_6(np), v4sigma4_7(np), v4sigma4_8(np), v4sigma4_9(np), v4sigma4_10(np), v4sigma4_11(np), v4sigma4_12(np), v4sigma4_13(np), v4sigma4_14(np), v4sigma4_15(np);
+    std::vector<double> v4sigma3lapl_1(np), v4sigma3lapl_2(np), v4sigma3lapl_3(np), v4sigma3lapl_4(np), v4sigma3lapl_5(np), v4sigma3lapl_6(np), v4sigma3lapl_7(np), v4sigma3lapl_8(np), v4sigma3lapl_9(np), v4sigma3lapl_10(np), v4sigma3lapl_11(np), v4sigma3lapl_12(np), v4sigma3lapl_13(np), v4sigma3lapl_14(np), v4sigma3lapl_15(np), v4sigma3lapl_16(np), v4sigma3lapl_17(np), v4sigma3lapl_18(np), v4sigma3lapl_19(np), v4sigma3lapl_20(np);
+    std::vector<double> v4sigma3tau_1(np), v4sigma3tau_2(np), v4sigma3tau_3(np), v4sigma3tau_4(np), v4sigma3tau_5(np), v4sigma3tau_6(np), v4sigma3tau_7(np), v4sigma3tau_8(np), v4sigma3tau_9(np), v4sigma3tau_10(np), v4sigma3tau_11(np), v4sigma3tau_12(np), v4sigma3tau_13(np), v4sigma3tau_14(np), v4sigma3tau_15(np), v4sigma3tau_16(np), v4sigma3tau_17(np), v4sigma3tau_18(np), v4sigma3tau_19(np), v4sigma3tau_20(np);
+    std::vector<double> v4sigma2lapl2_1(np), v4sigma2lapl2_2(np), v4sigma2lapl2_3(np), v4sigma2lapl2_4(np), v4sigma2lapl2_5(np), v4sigma2lapl2_6(np), v4sigma2lapl2_7(np), v4sigma2lapl2_8(np), v4sigma2lapl2_9(np), v4sigma2lapl2_10(np), v4sigma2lapl2_11(np), v4sigma2lapl2_12(np), v4sigma2lapl2_13(np), v4sigma2lapl2_14(np), v4sigma2lapl2_15(np), v4sigma2lapl2_16(np), v4sigma2lapl2_17(np), v4sigma2lapl2_18(np);
+    std::vector<double> v4sigma2lapltau_1(np), v4sigma2lapltau_2(np), v4sigma2lapltau_3(np), v4sigma2lapltau_4(np), v4sigma2lapltau_5(np), v4sigma2lapltau_6(np), v4sigma2lapltau_7(np), v4sigma2lapltau_8(np), v4sigma2lapltau_9(np), v4sigma2lapltau_10(np), v4sigma2lapltau_11(np), v4sigma2lapltau_12(np), v4sigma2lapltau_13(np), v4sigma2lapltau_14(np), v4sigma2lapltau_15(np), v4sigma2lapltau_16(np), v4sigma2lapltau_17(np), v4sigma2lapltau_18(np), v4sigma2lapltau_19(np), v4sigma2lapltau_20(np), v4sigma2lapltau_21(np), v4sigma2lapltau_22(np), v4sigma2lapltau_23(np), v4sigma2lapltau_24(np);
+    std::vector<double> v4sigma2tau2_1(np), v4sigma2tau2_2(np), v4sigma2tau2_3(np), v4sigma2tau2_4(np), v4sigma2tau2_5(np), v4sigma2tau2_6(np), v4sigma2tau2_7(np), v4sigma2tau2_8(np), v4sigma2tau2_9(np), v4sigma2tau2_10(np), v4sigma2tau2_11(np), v4sigma2tau2_12(np), v4sigma2tau2_13(np), v4sigma2tau2_14(np), v4sigma2tau2_15(np), v4sigma2tau2_16(np), v4sigma2tau2_17(np), v4sigma2tau2_18(np);
+    std::vector<double> v4sigmalapl3_1(np), v4sigmalapl3_2(np), v4sigmalapl3_3(np), v4sigmalapl3_4(np), v4sigmalapl3_5(np), v4sigmalapl3_6(np), v4sigmalapl3_7(np), v4sigmalapl3_8(np), v4sigmalapl3_9(np), v4sigmalapl3_10(np), v4sigmalapl3_11(np), v4sigmalapl3_12(np);
+    std::vector<double> v4sigmalapl2tau_1(np), v4sigmalapl2tau_2(np), v4sigmalapl2tau_3(np), v4sigmalapl2tau_4(np), v4sigmalapl2tau_5(np), v4sigmalapl2tau_6(np), v4sigmalapl2tau_7(np), v4sigmalapl2tau_8(np), v4sigmalapl2tau_9(np), v4sigmalapl2tau_10(np), v4sigmalapl2tau_11(np), v4sigmalapl2tau_12(np), v4sigmalapl2tau_13(np), v4sigmalapl2tau_14(np), v4sigmalapl2tau_15(np), v4sigmalapl2tau_16(np), v4sigmalapl2tau_17(np), v4sigmalapl2tau_18(np);
+    std::vector<double> v4sigmalapltau2_1(np), v4sigmalapltau2_2(np), v4sigmalapltau2_3(np), v4sigmalapltau2_4(np), v4sigmalapltau2_5(np), v4sigmalapltau2_6(np), v4sigmalapltau2_7(np), v4sigmalapltau2_8(np), v4sigmalapltau2_9(np), v4sigmalapltau2_10(np), v4sigmalapltau2_11(np), v4sigmalapltau2_12(np), v4sigmalapltau2_13(np), v4sigmalapltau2_14(np), v4sigmalapltau2_15(np), v4sigmalapltau2_16(np), v4sigmalapltau2_17(np), v4sigmalapltau2_18(np);
+    std::vector<double> v4sigmatau3_1(np), v4sigmatau3_2(np), v4sigmatau3_3(np), v4sigmatau3_4(np), v4sigmatau3_5(np), v4sigmatau3_6(np), v4sigmatau3_7(np), v4sigmatau3_8(np), v4sigmatau3_9(np), v4sigmatau3_10(np), v4sigmatau3_11(np), v4sigmatau3_12(np);
+    std::vector<double> v4lapl4_1(np), v4lapl4_2(np), v4lapl4_3(np), v4lapl4_4(np), v4lapl4_5(np);
+    std::vector<double> v4lapl3tau_1(np), v4lapl3tau_2(np), v4lapl3tau_3(np), v4lapl3tau_4(np), v4lapl3tau_5(np), v4lapl3tau_6(np), v4lapl3tau_7(np), v4lapl3tau_8(np);
+    std::vector<double> v4lapl2tau2_1(np), v4lapl2tau2_2(np), v4lapl2tau2_3(np), v4lapl2tau2_4(np), v4lapl2tau2_5(np), v4lapl2tau2_6(np), v4lapl2tau2_7(np), v4lapl2tau2_8(np), v4lapl2tau2_9(np);
+    
+    std::vector<double> v4lapltau3_1(np), v4lapltau3_2(np), v4lapltau3_3(np), v4lapltau3_4(np), v4lapltau3_5(np), v4lapltau3_6(np), v4lapltau3_7(np), v4lapltau3_8(np);
+    std::vector<double> v4tau4_1(np), v4tau4_2(np), v4tau4_3(np), v4tau4_4(np), v4tau4_5(np);
+    
+    libxc.mgga_lxc(rho0,rho1,sigma0,sigma1,sigma2,lapl0,lapl1,tau0,tau1,v4rho4_1,v4rho4_2,v4rho4_3,v4rho4_4,v4rho4_5,v4rho3sigma_1,v4rho3sigma_2,v4rho3sigma_3,v4rho3sigma_4,v4rho3sigma_5,v4rho3sigma_6,v4rho3sigma_7,v4rho3sigma_8,v4rho3sigma_9,v4rho3sigma_10,v4rho3sigma_11,v4rho3sigma_12,v4rho3lapl_1,v4rho3lapl_2,v4rho3lapl_3,v4rho3lapl_4,v4rho3lapl_5,v4rho3lapl_6,v4rho3lapl_7,v4rho3lapl_8,v4rho3tau_1,v4rho3tau_2,v4rho3tau_3,v4rho3tau_4,v4rho3tau_5,v4rho3tau_6,v4rho3tau_7,v4rho3tau_8,v4rho2sigma2_1,v4rho2sigma2_2,v4rho2sigma2_3,v4rho2sigma2_4,v4rho2sigma2_5,v4rho2sigma2_6,v4rho2sigma2_7,v4rho2sigma2_8,v4rho2sigma2_9,v4rho2sigma2_10,v4rho2sigma2_11,v4rho2sigma2_12,v4rho2sigma2_13,v4rho2sigma2_14,v4rho2sigma2_15,v4rho2sigma2_16,v4rho2sigma2_17,v4rho2sigma2_18,v4rho2sigmalapl_1,v4rho2sigmalapl_2,v4rho2sigmalapl_3,v4rho2sigmalapl_4,v4rho2sigmalapl_5,v4rho2sigmalapl_6,v4rho2sigmalapl_7,v4rho2sigmalapl_8,v4rho2sigmalapl_9,v4rho2sigmalapl_10,v4rho2sigmalapl_11,v4rho2sigmalapl_12,v4rho2sigmalapl_13,v4rho2sigmalapl_14,v4rho2sigmalapl_15,v4rho2sigmalapl_16,v4rho2sigmalapl_17,v4rho2sigmalapl_18,v4rho2sigmatau_1,v4rho2sigmatau_2,v4rho2sigmatau_3,v4rho2sigmatau_4,v4rho2sigmatau_5,v4rho2sigmatau_6,v4rho2sigmatau_7,v4rho2sigmatau_8,v4rho2sigmatau_9,v4rho2sigmatau_10,v4rho2sigmatau_11,v4rho2sigmatau_12,v4rho2sigmatau_13,v4rho2sigmatau_14,v4rho2sigmatau_15,v4rho2sigmatau_16,v4rho2sigmatau_17,v4rho2sigmatau_18,v4rho2lapl2_1,v4rho2lapl2_2,v4rho2lapl2_3,v4rho2lapl2_4,v4rho2lapl2_5,v4rho2lapl2_6,v4rho2lapl2_7,v4rho2lapl2_8,v4rho2lapl2_9,v4rho2lapltau_1,v4rho2lapltau_2,v4rho2lapltau_3,v4rho2lapltau_4,v4rho2lapltau_5,v4rho2lapltau_6,v4rho2lapltau_7,v4rho2lapltau_8,v4rho2lapltau_9,v4rho2lapltau_10,v4rho2lapltau_11,v4rho2lapltau_12,v4rho2tau2_1,v4rho2tau2_2,v4rho2tau2_3,v4rho2tau2_4,v4rho2tau2_5,v4rho2tau2_6,v4rho2tau2_7,v4rho2tau2_8,v4rho2tau2_9,v4rhosigma3_1,v4rhosigma3_2,v4rhosigma3_3,v4rhosigma3_4,v4rhosigma3_5,v4rhosigma3_6,v4rhosigma3_7,v4rhosigma3_8,v4rhosigma3_9,v4rhosigma3_10,v4rhosigma3_11,v4rhosigma3_12,v4rhosigma3_13,v4rhosigma3_14,v4rhosigma3_15,v4rhosigma3_16,v4rhosigma3_17,v4rhosigma3_18,v4rhosigma3_19,v4rhosigma3_20,v4rhosigma2lapl_1,v4rhosigma2lapl_2,v4rhosigma2lapl_3,v4rhosigma2lapl_4,v4rhosigma2lapl_5,v4rhosigma2lapl_6,v4rhosigma2lapl_7,v4rhosigma2lapl_8,v4rhosigma2lapl_9,v4rhosigma2lapl_10,v4rhosigma2lapl_11,v4rhosigma2lapl_12,v4rhosigma2lapl_13,v4rhosigma2lapl_14,v4rhosigma2lapl_15,v4rhosigma2lapl_16,v4rhosigma2lapl_17,v4rhosigma2lapl_18,v4rhosigma2lapl_19,v4rhosigma2lapl_20,v4rhosigma2lapl_21,v4rhosigma2lapl_22,v4rhosigma2lapl_23,v4rhosigma2lapl_24,v4rhosigma2tau_1,v4rhosigma2tau_2,v4rhosigma2tau_3,v4rhosigma2tau_4,v4rhosigma2tau_5,v4rhosigma2tau_6,v4rhosigma2tau_7,v4rhosigma2tau_8,v4rhosigma2tau_9,v4rhosigma2tau_10,v4rhosigma2tau_11,v4rhosigma2tau_12,v4rhosigma2tau_13,v4rhosigma2tau_14,v4rhosigma2tau_15,v4rhosigma2tau_16,v4rhosigma2tau_17,v4rhosigma2tau_18,v4rhosigma2tau_19,v4rhosigma2tau_20,v4rhosigma2tau_21,v4rhosigma2tau_22,v4rhosigma2tau_23,v4rhosigma2tau_24,v4rhosigmalapl2_1,v4rhosigmalapl2_2,v4rhosigmalapl2_3,v4rhosigmalapl2_4,v4rhosigmalapl2_5,v4rhosigmalapl2_6,v4rhosigmalapl2_7,v4rhosigmalapl2_8,v4rhosigmalapl2_9,v4rhosigmalapl2_10,v4rhosigmalapl2_11,v4rhosigmalapl2_12,v4rhosigmalapl2_13,v4rhosigmalapl2_14,v4rhosigmalapl2_15,v4rhosigmalapl2_16,v4rhosigmalapl2_17,v4rhosigmalapl2_18,v4rhosigmalapltau_1,v4rhosigmalapltau_2,v4rhosigmalapltau_3,v4rhosigmalapltau_4,v4rhosigmalapltau_5,v4rhosigmalapltau_6,v4rhosigmalapltau_7,v4rhosigmalapltau_8,v4rhosigmalapltau_9,v4rhosigmalapltau_10,v4rhosigmalapltau_11,v4rhosigmalapltau_12,v4rhosigmalapltau_13,v4rhosigmalapltau_14,v4rhosigmalapltau_15,v4rhosigmalapltau_16,v4rhosigmalapltau_17,v4rhosigmalapltau_18,v4rhosigmalapltau_19,v4rhosigmalapltau_20,v4rhosigmalapltau_21,v4rhosigmalapltau_22,v4rhosigmalapltau_23,v4rhosigmalapltau_24,v4rhosigmatau2_1,v4rhosigmatau2_2,v4rhosigmatau2_3,v4rhosigmatau2_4,v4rhosigmatau2_5,v4rhosigmatau2_6,v4rhosigmatau2_7,v4rhosigmatau2_8,v4rhosigmatau2_9,v4rhosigmatau2_10,v4rhosigmatau2_11,v4rhosigmatau2_12,v4rhosigmatau2_13,v4rhosigmatau2_14,v4rhosigmatau2_15,v4rhosigmatau2_16,v4rhosigmatau2_17,v4rhosigmatau2_18,v4rholapl3_1,v4rholapl3_2,v4rholapl3_3,v4rholapl3_4,v4rholapl3_5,v4rholapl3_6,v4rholapl3_7,v4rholapl3_8,v4rholapl2tau_1,v4rholapl2tau_2,v4rholapl2tau_3,v4rholapl2tau_4,v4rholapl2tau_5,v4rholapl2tau_6,v4rholapl2tau_7,v4rholapl2tau_8,v4rholapl2tau_9,v4rholapl2tau_10,v4rholapl2tau_11,v4rholapl2tau_12,v4rholapltau2_1,v4rholapltau2_2,v4rholapltau2_3,v4rholapltau2_4,v4rholapltau2_5,v4rholapltau2_6,v4rholapltau2_7,v4rholapltau2_8,v4rholapltau2_9,v4rholapltau2_10,v4rholapltau2_11,v4rholapltau2_12,v4rhotau3_1,v4rhotau3_2,v4rhotau3_3,v4rhotau3_4,v4rhotau3_5,v4rhotau3_6,v4rhotau3_7,v4rhotau3_8,v4sigma4_1,v4sigma4_2,v4sigma4_3,v4sigma4_4,v4sigma4_5,v4sigma4_6,v4sigma4_7,v4sigma4_8,v4sigma4_9,v4sigma4_10,v4sigma4_11,v4sigma4_12,v4sigma4_13,v4sigma4_14,v4sigma4_15,v4sigma3lapl_1,v4sigma3lapl_2,v4sigma3lapl_3,v4sigma3lapl_4,v4sigma3lapl_5,v4sigma3lapl_6,v4sigma3lapl_7,v4sigma3lapl_8,v4sigma3lapl_9,v4sigma3lapl_10,v4sigma3lapl_11,v4sigma3lapl_12,v4sigma3lapl_13,v4sigma3lapl_14,v4sigma3lapl_15,v4sigma3lapl_16,v4sigma3lapl_17,v4sigma3lapl_18,v4sigma3lapl_19,v4sigma3lapl_20,v4sigma3tau_1,v4sigma3tau_2,v4sigma3tau_3,v4sigma3tau_4,v4sigma3tau_5,v4sigma3tau_6,v4sigma3tau_7,v4sigma3tau_8,v4sigma3tau_9,v4sigma3tau_10,v4sigma3tau_11,v4sigma3tau_12,v4sigma3tau_13,v4sigma3tau_14,v4sigma3tau_15,v4sigma3tau_16,v4sigma3tau_17,v4sigma3tau_18,v4sigma3tau_19,v4sigma3tau_20,v4sigma2lapl2_1,v4sigma2lapl2_2,v4sigma2lapl2_3,v4sigma2lapl2_4,v4sigma2lapl2_5,v4sigma2lapl2_6,v4sigma2lapl2_7,v4sigma2lapl2_8,v4sigma2lapl2_9,v4sigma2lapl2_10,v4sigma2lapl2_11,v4sigma2lapl2_12,v4sigma2lapl2_13,v4sigma2lapl2_14,v4sigma2lapl2_15,v4sigma2lapl2_16,v4sigma2lapl2_17,v4sigma2lapl2_18,v4sigma2lapltau_1,v4sigma2lapltau_2,v4sigma2lapltau_3,v4sigma2lapltau_4,v4sigma2lapltau_5,v4sigma2lapltau_6,v4sigma2lapltau_7,v4sigma2lapltau_8,v4sigma2lapltau_9,v4sigma2lapltau_10,v4sigma2lapltau_11,v4sigma2lapltau_12,v4sigma2lapltau_13,v4sigma2lapltau_14,v4sigma2lapltau_15,v4sigma2lapltau_16,v4sigma2lapltau_17,v4sigma2lapltau_18,v4sigma2lapltau_19,v4sigma2lapltau_20,v4sigma2lapltau_21,v4sigma2lapltau_22,v4sigma2lapltau_23,v4sigma2lapltau_24,v4sigma2tau2_1,v4sigma2tau2_2,v4sigma2tau2_3,v4sigma2tau2_4,v4sigma2tau2_5,v4sigma2tau2_6,v4sigma2tau2_7,v4sigma2tau2_8,v4sigma2tau2_9,v4sigma2tau2_10,v4sigma2tau2_11,v4sigma2tau2_12,v4sigma2tau2_13,v4sigma2tau2_14,v4sigma2tau2_15,v4sigma2tau2_16,v4sigma2tau2_17,v4sigma2tau2_18,v4sigmalapl3_1,v4sigmalapl3_2,v4sigmalapl3_3,v4sigmalapl3_4,v4sigmalapl3_5,v4sigmalapl3_6,v4sigmalapl3_7,v4sigmalapl3_8,v4sigmalapl3_9,v4sigmalapl3_10,v4sigmalapl3_11,v4sigmalapl3_12,v4sigmalapl2tau_1,v4sigmalapl2tau_2,v4sigmalapl2tau_3,v4sigmalapl2tau_4,v4sigmalapl2tau_5,v4sigmalapl2tau_6,v4sigmalapl2tau_7,v4sigmalapl2tau_8,v4sigmalapl2tau_9,v4sigmalapl2tau_10,v4sigmalapl2tau_11,v4sigmalapl2tau_12,v4sigmalapl2tau_13,v4sigmalapl2tau_14,v4sigmalapl2tau_15,v4sigmalapl2tau_16,v4sigmalapl2tau_17,v4sigmalapl2tau_18,v4sigmalapltau2_1,v4sigmalapltau2_2,v4sigmalapltau2_3,v4sigmalapltau2_4,v4sigmalapltau2_5,v4sigmalapltau2_6,v4sigmalapltau2_7,v4sigmalapltau2_8,v4sigmalapltau2_9,v4sigmalapltau2_10,v4sigmalapltau2_11,v4sigmalapltau2_12,v4sigmalapltau2_13,v4sigmalapltau2_14,v4sigmalapltau2_15,v4sigmalapltau2_16,v4sigmalapltau2_17,v4sigmalapltau2_18,v4sigmatau3_1,v4sigmatau3_2,v4sigmatau3_3,v4sigmatau3_4,v4sigmatau3_5,v4sigmatau3_6,v4sigmatau3_7,v4sigmatau3_8,v4sigmatau3_9,v4sigmatau3_10,v4sigmatau3_11,v4sigmatau3_12,v4lapl4_1,v4lapl4_2,v4lapl4_3,v4lapl4_4,v4lapl4_5,v4lapl3tau_1,v4lapl3tau_2,v4lapl3tau_3,v4lapl3tau_4,v4lapl3tau_5,v4lapl3tau_6,v4lapl3tau_7,v4lapl3tau_8,v4lapl2tau2_1,v4lapl2tau2_2,v4lapl2tau2_3,v4lapl2tau2_4,v4lapl2tau2_5,v4lapl2tau2_6,v4lapl2tau2_7,v4lapl2tau2_8,v4lapl2tau2_9,v4lapltau3_1,v4lapltau3_2,v4lapltau3_3,v4lapltau3_4,v4lapltau3_5,v4lapltau3_6,v4lapltau3_7,v4lapltau3_8,v4tau4_1,v4tau4_2,v4tau4_3,v4tau4_4,v4tau4_5);
+
+    e.resize(num_points);
+    vn.resize(num_points);
+    vs.resize(num_points);
+    vgn.resize(num_points);
+    vgs.resize(num_points);
+    
+    for (size_t i = 0; i < num_points; ++i){
+        e[i] =
+        (
+        0.5*(2.0*exc[i]*(rho0[i]+rho1[i])+
+        (tau0[i]-
+        tau1[i])
+        *(-
+        vtau_2[i]+
+        vtau_1[i])
+        +
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(-
+        vlapl_2[i]+
+        vlapl_1[i])
+        +
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(gradz_rho1[i]*(-
+        2*vsigma_3[i]+
+        vsigma_2[i])
+        -
+        gradz_rho0[i]*(vsigma_2[i]-
+        2*vsigma_1[i])
+        )
+        +
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grady_rho1[i]*(-
+        2*vsigma_3[i]+
+        vsigma_2[i])
+        -
+        grady_rho0[i]*(vsigma_2[i]-
+        2*vsigma_1[i])
+        )
+        +
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(gradx_rho1[i]*(-
+        2*vsigma_3[i]+
+        vsigma_2[i])
+        -
+        gradx_rho0[i]*(vsigma_2[i]-
+        2*vsigma_1[i])
+        )
+        +
+        (rho0[i]-
+        rho1[i])
+        *(-
+        vrho_2[i]+
+        vrho_1[i])
+        )
+        )/(rho0[i]+rho1[i]);
+
+
+        vn[i] = 
+        (0.25*(-
+        4*grad2zz_rho1[i]*vsigma_3[i]-
+        4*grad2yy_rho1[i]*vsigma_3[i]-
+        4*grad2xx_rho1[i]*vsigma_3[i]-
+        2*grad2zz_rho0[i]*vsigma_2[i]-
+        2*grad2zz_rho1[i]*vsigma_2[i]-
+        2*grad2yy_rho0[i]*vsigma_2[i]-
+        2*grad2yy_rho1[i]*vsigma_2[i]-
+        2*grad2xx_rho0[i]*vsigma_2[i]-
+        2*grad2xx_rho1[i]*vsigma_2[i]-
+        (gradz_tau0[i]-
+        gradz_tau1[i])
+        *(2*gradz_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        gradz_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        )
+        -
+        (grady_tau0[i]-
+        grady_tau1[i])
+        *(2*grady_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        grady_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        )
+        -
+        (gradx_tau0[i]-
+        gradx_tau1[i])
+        *(2*gradx_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        gradx_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        )
+        -
+        (grad3zzz_rho0[i]-
+        grad3zzz_rho1[i]+
+        grad3yyz_rho0[i]-
+        grad3yyz_rho1[i]+
+        grad3xxz_rho0[i]-
+        grad3xxz_rho1[i])
+        *(2*gradz_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        gradz_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        )
+        -
+        (grad3yzz_rho0[i]-
+        grad3yzz_rho1[i]+
+        grad3yyy_rho0[i]-
+        grad3yyy_rho1[i]+
+        grad3xxy_rho0[i]-
+        grad3xxy_rho1[i])
+        *(2*grady_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        grady_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        )
+        -
+        (grad3xzz_rho0[i]-
+        grad3xzz_rho1[i]+
+        grad3xyy_rho0[i]-
+        grad3xyy_rho1[i]+
+        grad3xxx_rho0[i]-
+        grad3xxx_rho1[i])
+        *(2*gradx_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        gradx_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        )
+        -
+        4*grad2zz_rho0[i]*vsigma_1[i]-
+        4*grad2yy_rho0[i]*vsigma_1[i]-
+        4*grad2xx_rho0[i]*vsigma_1[i]-
+        (gradz_tau0[i]-
+        gradz_tau1[i])
+        *(gradz_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*gradz_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        )
+        -
+        (grady_tau0[i]-
+        grady_tau1[i])
+        *(grady_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*grady_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        )
+        -
+        (gradx_tau0[i]-
+        gradx_tau1[i])
+        *(gradx_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*gradx_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        )
+        -
+        (grad3zzz_rho0[i]-
+        grad3zzz_rho1[i]+
+        grad3yyz_rho0[i]-
+        grad3yyz_rho1[i]+
+        grad3xxz_rho0[i]-
+        grad3xxz_rho1[i])
+        *(gradz_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*gradz_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        )
+        -
+        (grad3yzz_rho0[i]-
+        grad3yzz_rho1[i]+
+        grad3yyy_rho0[i]-
+        grad3yyy_rho1[i]+
+        grad3xxy_rho0[i]-
+        grad3xxy_rho1[i])
+        *(grady_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*grady_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        )
+        -
+        (grad3xzz_rho0[i]-
+        grad3xzz_rho1[i]+
+        grad3xyy_rho0[i]-
+        grad3xyy_rho1[i]+
+        grad3xxx_rho0[i]-
+        grad3xxx_rho1[i])
+        *(gradx_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*gradx_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        )
+        -
+        (grad2yz_rho0[i]-
+        grad2yz_rho1[i])
+        *(grady_rho1[i]*(2*gradz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grady_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        -
+        (grad2xz_rho0[i]-
+        grad2xz_rho1[i])
+        *(gradx_rho1[i]*(2*gradz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        gradx_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        -
+        (grad2yz_rho0[i]-
+        grad2yz_rho1[i])
+        *(gradz_rho1[i]*(2*grady_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grady_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        gradz_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grady_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        -
+        (grad2xy_rho0[i]-
+        grad2xy_rho1[i])
+        *(gradx_rho1[i]*(2*grady_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grady_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        gradx_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grady_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        -
+        (grad2xz_rho0[i]-
+        grad2xz_rho1[i])
+        *(gradz_rho1[i]*(2*gradx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        gradz_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        -
+        (grad2xy_rho0[i]-
+        grad2xy_rho1[i])
+        *(grady_rho1[i]*(2*gradx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grady_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        )
+        +
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i])
+        *(2*vsigma_3[i]-
+        vsigma_2[i]+
+        std::pow(gradz_rho1[i], 2)
+        *(4*v2sigma2_6[i]-
+        2*v2sigma2_5[i])
+        +
+        gradz_rho0[i]*gradz_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        std::pow(gradz_rho0[i], 2)
+        *(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        (grad2yy_rho0[i]-
+        grad2yy_rho1[i])
+        *(2*vsigma_3[i]-
+        vsigma_2[i]+
+        std::pow(grady_rho1[i], 2)
+        *(4*v2sigma2_6[i]-
+        2*v2sigma2_5[i])
+        +
+        grady_rho0[i]*grady_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        std::pow(grady_rho0[i], 2)
+        *(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        (grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(2*vsigma_3[i]-
+        vsigma_2[i]+
+        std::pow(gradx_rho1[i], 2)
+        *(4*v2sigma2_6[i]-
+        2*v2sigma2_5[i])
+        +
+        gradx_rho0[i]*gradx_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        std::pow(gradx_rho0[i], 2)
+        *(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        -
+        (grad2yz_rho0[i]-
+        grad2yz_rho1[i])
+        *(grady_rho1[i]*(gradz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grady_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        -
+        (grad2xz_rho0[i]-
+        grad2xz_rho1[i])
+        *(gradx_rho1[i]*(gradz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        gradx_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        -
+        (grad2yz_rho0[i]-
+        grad2yz_rho1[i])
+        *(gradz_rho1[i]*(grady_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        gradz_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        -
+        (grad2xy_rho0[i]-
+        grad2xy_rho1[i])
+        *(gradx_rho1[i]*(grady_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        gradx_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        -
+        (grad2xz_rho0[i]-
+        grad2xz_rho1[i])
+        *(gradz_rho1[i]*(gradx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        gradz_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        -
+        (grad2xy_rho0[i]-
+        grad2xy_rho1[i])
+        *(grady_rho1[i]*(gradx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grady_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        )
+        +
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i])
+        *(vsigma_2[i]+
+        std::pow(gradz_rho1[i], 2)
+        *(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        -
+        2*vsigma_1[i]+
+        gradz_rho0[i]*gradz_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*std::pow(gradz_rho0[i], 2)
+        *(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        (grad2yy_rho0[i]-
+        grad2yy_rho1[i])
+        *(vsigma_2[i]+
+        std::pow(grady_rho1[i], 2)
+        *(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        -
+        2*vsigma_1[i]+
+        grady_rho0[i]*grady_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*std::pow(grady_rho0[i], 2)
+        *(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        (grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(vsigma_2[i]+
+        std::pow(gradx_rho1[i], 2)
+        *(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        -
+        2*vsigma_1[i]+
+        gradx_rho0[i]*gradx_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*std::pow(gradx_rho0[i], 2)
+        *(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        2*vrho_2[i]+
+        (tau0[i]-
+        tau1[i])
+        *(-
+        v2rhotau_4[i]+
+        v2rhotau_3[i])
+        +
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(-
+        v2rholapl_4[i]+
+        v2rholapl_3[i])
+        +
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(gradz_rho1[i]*(-
+        2*v2rhosigma_6[i]+
+        v2rhosigma_5[i])
+        -
+        gradz_rho0[i]*(v2rhosigma_5[i]-
+        2*v2rhosigma_4[i])
+        )
+        +
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grady_rho1[i]*(-
+        2*v2rhosigma_6[i]+
+        v2rhosigma_5[i])
+        -
+        grady_rho0[i]*(v2rhosigma_5[i]-
+        2*v2rhosigma_4[i])
+        )
+        +
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(gradx_rho1[i]*(-
+        2*v2rhosigma_6[i]+
+        v2rhosigma_5[i])
+        -
+        gradx_rho0[i]*(v2rhosigma_5[i]-
+        2*v2rhosigma_4[i])
+        )
+        +
+        2*vrho_1[i]+
+        (tau0[i]-
+        tau1[i])
+        *(-
+        v2rhotau_2[i]+
+        v2rhotau_1[i])
+        +
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(-
+        v2rholapl_2[i]+
+        v2rholapl_1[i])
+        -
+        4*gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_6[i]+
+        gradz_tau0[i]*v2sigmatau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_3[i]+
+        gradz_rho1[i]*v2rhosigma_6[i]+
+        gradz_rho0[i]*v2rhosigma_3[i])
+        -
+        4*grady_rho1[i]*(grady_tau1[i]*v2sigmatau_6[i]+
+        grady_tau0[i]*v2sigmatau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_3[i]+
+        grady_rho1[i]*v2rhosigma_6[i]+
+        grady_rho0[i]*v2rhosigma_3[i])
+        -
+        4*gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_6[i]+
+        gradx_tau0[i]*v2sigmatau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_3[i]+
+        gradx_rho1[i]*v2rhosigma_6[i]+
+        gradx_rho0[i]*v2rhosigma_3[i])
+        -
+        gradz_rho1[i]*(-
+        gradz_tau1[i]*v2sigmatau_4[i]-
+        gradz_tau0[i]*v2sigmatau_3[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]-
+        gradz_rho1[i]*v2rhosigma_5[i]+
+        2*(gradz_tau1[i]*v2sigmatau_6[i]+
+        gradz_tau0[i]*v2sigmatau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_3[i]+
+        gradz_rho1[i]*v2rhosigma_6[i]+
+        gradz_rho0[i]*v2rhosigma_3[i])
+        -
+        gradz_rho0[i]*v2rhosigma_2[i])
+        -
+        2*gradz_rho0[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+        gradz_tau0[i]*v2sigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]+
+        gradz_rho1[i]*v2rhosigma_5[i]+
+        gradz_rho0[i]*v2rhosigma_2[i])
+        -
+        2*gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+        gradz_tau0[i]*v2sigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]+
+        gradz_rho1[i]*v2rhosigma_5[i]+
+        gradz_rho0[i]*v2rhosigma_2[i])
+        -
+        gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+        gradz_tau0[i]*v2sigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]+
+        gradz_rho1[i]*v2rhosigma_5[i]-
+        2*(gradz_tau1[i]*v2sigmatau_6[i]+
+        gradz_tau0[i]*v2sigmatau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_3[i]+
+        gradz_rho1[i]*v2rhosigma_6[i]+
+        gradz_rho0[i]*v2rhosigma_3[i])
+        +
+        gradz_rho0[i]*v2rhosigma_2[i])
+        -
+        grady_rho1[i]*(-
+        grady_tau1[i]*v2sigmatau_4[i]-
+        grady_tau0[i]*v2sigmatau_3[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]-
+        grady_rho1[i]*v2rhosigma_5[i]+
+        2*(grady_tau1[i]*v2sigmatau_6[i]+
+        grady_tau0[i]*v2sigmatau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_3[i]+
+        grady_rho1[i]*v2rhosigma_6[i]+
+        grady_rho0[i]*v2rhosigma_3[i])
+        -
+        grady_rho0[i]*v2rhosigma_2[i])
+        -
+        2*grady_rho0[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+        grady_tau0[i]*v2sigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]+
+        grady_rho1[i]*v2rhosigma_5[i]+
+        grady_rho0[i]*v2rhosigma_2[i])
+        -
+        2*grady_rho1[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+        grady_tau0[i]*v2sigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]+
+        grady_rho1[i]*v2rhosigma_5[i]+
+        grady_rho0[i]*v2rhosigma_2[i])
+        -
+        grady_rho1[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+        grady_tau0[i]*v2sigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]+
+        grady_rho1[i]*v2rhosigma_5[i]-
+        2*(grady_tau1[i]*v2sigmatau_6[i]+
+        grady_tau0[i]*v2sigmatau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_3[i]+
+        grady_rho1[i]*v2rhosigma_6[i]+
+        grady_rho0[i]*v2rhosigma_3[i])
+        +
+        grady_rho0[i]*v2rhosigma_2[i])
+        -
+        gradx_rho1[i]*(-
+        gradx_tau1[i]*v2sigmatau_4[i]-
+        gradx_tau0[i]*v2sigmatau_3[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]-
+        gradx_rho1[i]*v2rhosigma_5[i]+
+        2*(gradx_tau1[i]*v2sigmatau_6[i]+
+        gradx_tau0[i]*v2sigmatau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_3[i]+
+        gradx_rho1[i]*v2rhosigma_6[i]+
+        gradx_rho0[i]*v2rhosigma_3[i])
+        -
+        gradx_rho0[i]*v2rhosigma_2[i])
+        -
+        2*gradx_rho0[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+        gradx_tau0[i]*v2sigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]+
+        gradx_rho1[i]*v2rhosigma_5[i]+
+        gradx_rho0[i]*v2rhosigma_2[i])
+        -
+        2*gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+        gradx_tau0[i]*v2sigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]+
+        gradx_rho1[i]*v2rhosigma_5[i]+
+        gradx_rho0[i]*v2rhosigma_2[i])
+        -
+        gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+        gradx_tau0[i]*v2sigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]+
+        gradx_rho1[i]*v2rhosigma_5[i]-
+        2*(gradx_tau1[i]*v2sigmatau_6[i]+
+        gradx_tau0[i]*v2sigmatau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_3[i]+
+        gradx_rho1[i]*v2rhosigma_6[i]+
+        gradx_rho0[i]*v2rhosigma_3[i])
+        +
+        gradx_rho0[i]*v2rhosigma_2[i])
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(2*gradz_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        gradz_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(2*grady_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        grady_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(2*gradx_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        gradx_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(2*grad2zz_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        grad2zz_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*gradz_rho1[i]*(-
+        gradz_tau1[i]*v3sigmatau2_9[i]-
+        gradz_tau0[i]*v3sigmatau2_8[i]+
+        gradz_tau1[i]*v3sigmatau2_8[i]+
+        gradz_tau0[i]*v3sigmatau2_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_12[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_11[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_9[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_12[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_11[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_10[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_9[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_5[i]-
+        gradz_rho1[i]*v3rhosigmatau_12[i]+
+        gradz_rho1[i]*v3rhosigmatau_11[i]-
+        gradz_rho0[i]*v3rhosigmatau_6[i]+
+        gradz_rho0[i]*v3rhosigmatau_5[i])
+        +
+        gradz_rho0[i]*(-
+        gradz_tau1[i]*v3sigmatau2_6[i]-
+        gradz_tau0[i]*v3sigmatau2_5[i]+
+        gradz_tau1[i]*v3sigmatau2_5[i]+
+        gradz_tau0[i]*v3sigmatau2_4[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_3[i]-
+        gradz_rho1[i]*v3rhosigmatau_10[i]+
+        gradz_rho1[i]*v3rhosigmatau_9[i]-
+        gradz_rho0[i]*v3rhosigmatau_4[i]+
+        gradz_rho0[i]*v3rhosigmatau_3[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(2*grad2yy_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        grad2yy_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*grady_rho1[i]*(-
+        grady_tau1[i]*v3sigmatau2_9[i]-
+        grady_tau0[i]*v3sigmatau2_8[i]+
+        grady_tau1[i]*v3sigmatau2_8[i]+
+        grady_tau0[i]*v3sigmatau2_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_12[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_11[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_9[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_12[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_11[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_10[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_9[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_5[i]-
+        grady_rho1[i]*v3rhosigmatau_12[i]+
+        grady_rho1[i]*v3rhosigmatau_11[i]-
+        grady_rho0[i]*v3rhosigmatau_6[i]+
+        grady_rho0[i]*v3rhosigmatau_5[i])
+        +
+        grady_rho0[i]*(-
+        grady_tau1[i]*v3sigmatau2_6[i]-
+        grady_tau0[i]*v3sigmatau2_5[i]+
+        grady_tau1[i]*v3sigmatau2_5[i]+
+        grady_tau0[i]*v3sigmatau2_4[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_3[i]-
+        grady_rho1[i]*v3rhosigmatau_10[i]+
+        grady_rho1[i]*v3rhosigmatau_9[i]-
+        grady_rho0[i]*v3rhosigmatau_4[i]+
+        grady_rho0[i]*v3rhosigmatau_3[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(2*grad2xx_rho1[i]*(-
+        v2sigmatau_6[i]+
+        v2sigmatau_5[i])
+        +
+        grad2xx_rho0[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*gradx_rho1[i]*(-
+        gradx_tau1[i]*v3sigmatau2_9[i]-
+        gradx_tau0[i]*v3sigmatau2_8[i]+
+        gradx_tau1[i]*v3sigmatau2_8[i]+
+        gradx_tau0[i]*v3sigmatau2_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_12[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_11[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_9[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_12[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_11[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_10[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_9[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_5[i]-
+        gradx_rho1[i]*v3rhosigmatau_12[i]+
+        gradx_rho1[i]*v3rhosigmatau_11[i]-
+        gradx_rho0[i]*v3rhosigmatau_6[i]+
+        gradx_rho0[i]*v3rhosigmatau_5[i])
+        +
+        gradx_rho0[i]*(-
+        gradx_tau1[i]*v3sigmatau2_6[i]-
+        gradx_tau0[i]*v3sigmatau2_5[i]+
+        gradx_tau1[i]*v3sigmatau2_5[i]+
+        gradx_tau0[i]*v3sigmatau2_4[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_3[i]-
+        gradx_rho1[i]*v3rhosigmatau_10[i]+
+        gradx_rho1[i]*v3rhosigmatau_9[i]-
+        gradx_rho0[i]*v3rhosigmatau_4[i]+
+        gradx_rho0[i]*v3rhosigmatau_3[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(2*grad2zz_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        grad2zz_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*gradz_rho1[i]*(-
+        gradz_tau1[i]*v3sigmalapltau_12[i]-
+        gradz_tau0[i]*v3sigmalapltau_11[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_9[i]+
+        gradz_tau1[i]*v3sigmalapltau_10[i]+
+        gradz_tau0[i]*v3sigmalapltau_9[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_8[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_7[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_12[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_11[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_9[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_5[i]-
+        gradz_rho1[i]*v3rhosigmalapl_12[i]+
+        gradz_rho1[i]*v3rhosigmalapl_11[i]-
+        gradz_rho0[i]*v3rhosigmalapl_6[i]+
+        gradz_rho0[i]*v3rhosigmalapl_5[i])
+        +
+        gradz_rho0[i]*(-
+        gradz_tau1[i]*v3sigmalapltau_8[i]-
+        gradz_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_6[i]+
+        gradz_tau1[i]*v3sigmalapltau_6[i]+
+        gradz_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_3[i]-
+        gradz_rho1[i]*v3rhosigmalapl_10[i]+
+        gradz_rho1[i]*v3rhosigmalapl_9[i]-
+        gradz_rho0[i]*v3rhosigmalapl_4[i]+
+        gradz_rho0[i]*v3rhosigmalapl_3[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(2*grad2yy_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        grad2yy_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*grady_rho1[i]*(-
+        grady_tau1[i]*v3sigmalapltau_12[i]-
+        grady_tau0[i]*v3sigmalapltau_11[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_9[i]+
+        grady_tau1[i]*v3sigmalapltau_10[i]+
+        grady_tau0[i]*v3sigmalapltau_9[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_8[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_7[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_12[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_11[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_9[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_5[i]-
+        grady_rho1[i]*v3rhosigmalapl_12[i]+
+        grady_rho1[i]*v3rhosigmalapl_11[i]-
+        grady_rho0[i]*v3rhosigmalapl_6[i]+
+        grady_rho0[i]*v3rhosigmalapl_5[i])
+        +
+        grady_rho0[i]*(-
+        grady_tau1[i]*v3sigmalapltau_8[i]-
+        grady_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_6[i]+
+        grady_tau1[i]*v3sigmalapltau_6[i]+
+        grady_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_3[i]-
+        grady_rho1[i]*v3rhosigmalapl_10[i]+
+        grady_rho1[i]*v3rhosigmalapl_9[i]-
+        grady_rho0[i]*v3rhosigmalapl_4[i]+
+        grady_rho0[i]*v3rhosigmalapl_3[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(2*grad2xx_rho1[i]*(-
+        v2sigmalapl_6[i]+
+        v2sigmalapl_5[i])
+        +
+        grad2xx_rho0[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*gradx_rho1[i]*(-
+        gradx_tau1[i]*v3sigmalapltau_12[i]-
+        gradx_tau0[i]*v3sigmalapltau_11[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_9[i]+
+        gradx_tau1[i]*v3sigmalapltau_10[i]+
+        gradx_tau0[i]*v3sigmalapltau_9[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_8[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_7[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_12[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_11[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_9[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_5[i]-
+        gradx_rho1[i]*v3rhosigmalapl_12[i]+
+        gradx_rho1[i]*v3rhosigmalapl_11[i]-
+        gradx_rho0[i]*v3rhosigmalapl_6[i]+
+        gradx_rho0[i]*v3rhosigmalapl_5[i])
+        +
+        gradx_rho0[i]*(-
+        gradx_tau1[i]*v3sigmalapltau_8[i]-
+        gradx_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_6[i]+
+        gradx_tau1[i]*v3sigmalapltau_6[i]+
+        gradx_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_3[i]-
+        gradx_rho1[i]*v3rhosigmalapl_10[i]+
+        gradx_rho1[i]*v3rhosigmalapl_9[i]-
+        gradx_rho0[i]*v3rhosigmalapl_4[i]+
+        gradx_rho0[i]*v3rhosigmalapl_3[i])
+        )
+        +
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(gradz_rho1[i]*(-
+        2*v2rhosigma_3[i]+
+        v2rhosigma_2[i])
+        -
+        gradz_rho0[i]*(v2rhosigma_2[i]-
+        2*v2rhosigma_1[i])
+        )
+        +
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grady_rho1[i]*(-
+        2*v2rhosigma_3[i]+
+        v2rhosigma_2[i])
+        -
+        grady_rho0[i]*(v2rhosigma_2[i]-
+        2*v2rhosigma_1[i])
+        )
+        +
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(gradx_rho1[i]*(-
+        2*v2rhosigma_3[i]+
+        v2rhosigma_2[i])
+        -
+        gradx_rho0[i]*(v2rhosigma_2[i]-
+        2*v2rhosigma_1[i])
+        )
+        -
+        4*gradz_rho0[i]*(gradz_tau1[i]*v2sigmatau_2[i]+
+        gradz_tau0[i]*v2sigmatau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_1[i]+
+        gradz_rho1[i]*v2rhosigma_4[i]+
+        gradz_rho0[i]*v2rhosigma_1[i])
+        -
+        4*grady_rho0[i]*(grady_tau1[i]*v2sigmatau_2[i]+
+        grady_tau0[i]*v2sigmatau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_1[i]+
+        grady_rho1[i]*v2rhosigma_4[i]+
+        grady_rho0[i]*v2rhosigma_1[i])
+        -
+        4*gradx_rho0[i]*(gradx_tau1[i]*v2sigmatau_2[i]+
+        gradx_tau0[i]*v2sigmatau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_1[i]+
+        gradx_rho1[i]*v2rhosigma_4[i]+
+        gradx_rho0[i]*v2rhosigma_1[i])
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(gradz_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*gradz_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grady_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*grady_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(gradx_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*gradx_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(grad2zz_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*grad2zz_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        +
+        gradz_rho1[i]*(-
+        gradz_tau1[i]*v3sigmatau2_6[i]-
+        gradz_tau0[i]*v3sigmatau2_5[i]+
+        gradz_tau1[i]*v3sigmatau2_5[i]+
+        gradz_tau0[i]*v3sigmatau2_4[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_3[i]-
+        gradz_rho1[i]*v3rhosigmatau_10[i]+
+        gradz_rho1[i]*v3rhosigmatau_9[i]-
+        gradz_rho0[i]*v3rhosigmatau_4[i]+
+        gradz_rho0[i]*v3rhosigmatau_3[i])
+        +
+        2*gradz_rho0[i]*(-
+        gradz_tau1[i]*v3sigmatau2_3[i]-
+        gradz_tau0[i]*v3sigmatau2_2[i]+
+        gradz_tau1[i]*v3sigmatau2_2[i]+
+        gradz_tau0[i]*v3sigmatau2_1[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_4[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapltau_3[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapltau_1[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2tau_5[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_4[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2tau_3[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2tau_1[i]-
+        gradz_rho1[i]*v3rhosigmatau_8[i]+
+        gradz_rho1[i]*v3rhosigmatau_7[i]-
+        gradz_rho0[i]*v3rhosigmatau_2[i]+
+        gradz_rho0[i]*v3rhosigmatau_1[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(grad2yy_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*grad2yy_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        +
+        grady_rho1[i]*(-
+        grady_tau1[i]*v3sigmatau2_6[i]-
+        grady_tau0[i]*v3sigmatau2_5[i]+
+        grady_tau1[i]*v3sigmatau2_5[i]+
+        grady_tau0[i]*v3sigmatau2_4[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_3[i]-
+        grady_rho1[i]*v3rhosigmatau_10[i]+
+        grady_rho1[i]*v3rhosigmatau_9[i]-
+        grady_rho0[i]*v3rhosigmatau_4[i]+
+        grady_rho0[i]*v3rhosigmatau_3[i])
+        +
+        2*grady_rho0[i]*(-
+        grady_tau1[i]*v3sigmatau2_3[i]-
+        grady_tau0[i]*v3sigmatau2_2[i]+
+        grady_tau1[i]*v3sigmatau2_2[i]+
+        grady_tau0[i]*v3sigmatau2_1[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_4[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapltau_3[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapltau_1[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2tau_5[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_4[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2tau_3[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2tau_1[i]-
+        grady_rho1[i]*v3rhosigmatau_8[i]+
+        grady_rho1[i]*v3rhosigmatau_7[i]-
+        grady_rho0[i]*v3rhosigmatau_2[i]+
+        grady_rho0[i]*v3rhosigmatau_1[i])
+        )
+        -
+        (tau0[i]-
+        tau1[i])
+        *(grad2xx_rho1[i]*(-
+        v2sigmatau_4[i]+
+        v2sigmatau_3[i])
+        +
+        2*grad2xx_rho0[i]*(-
+        v2sigmatau_2[i]+
+        v2sigmatau_1[i])
+        +
+        gradx_rho1[i]*(-
+        gradx_tau1[i]*v3sigmatau2_6[i]-
+        gradx_tau0[i]*v3sigmatau2_5[i]+
+        gradx_tau1[i]*v3sigmatau2_5[i]+
+        gradx_tau0[i]*v3sigmatau2_4[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_8[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_7[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_5[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_10[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_9[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_3[i]-
+        gradx_rho1[i]*v3rhosigmatau_10[i]+
+        gradx_rho1[i]*v3rhosigmatau_9[i]-
+        gradx_rho0[i]*v3rhosigmatau_4[i]+
+        gradx_rho0[i]*v3rhosigmatau_3[i])
+        +
+        2*gradx_rho0[i]*(-
+        gradx_tau1[i]*v3sigmatau2_3[i]-
+        gradx_tau0[i]*v3sigmatau2_2[i]+
+        gradx_tau1[i]*v3sigmatau2_2[i]+
+        gradx_tau0[i]*v3sigmatau2_1[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_4[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapltau_3[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapltau_1[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_6[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2tau_5[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_4[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2tau_3[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2tau_1[i]-
+        gradx_rho1[i]*v3rhosigmatau_8[i]+
+        gradx_rho1[i]*v3rhosigmatau_7[i]-
+        gradx_rho0[i]*v3rhosigmatau_2[i]+
+        gradx_rho0[i]*v3rhosigmatau_1[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(grad2zz_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*grad2zz_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        +
+        gradz_rho1[i]*(-
+        gradz_tau1[i]*v3sigmalapltau_8[i]-
+        gradz_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_6[i]+
+        gradz_tau1[i]*v3sigmalapltau_6[i]+
+        gradz_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_3[i]-
+        gradz_rho1[i]*v3rhosigmalapl_10[i]+
+        gradz_rho1[i]*v3rhosigmalapl_9[i]-
+        gradz_rho0[i]*v3rhosigmalapl_4[i]+
+        gradz_rho0[i]*v3rhosigmalapl_3[i])
+        +
+        2*gradz_rho0[i]*(-
+        gradz_tau1[i]*v3sigmalapltau_4[i]-
+        gradz_tau0[i]*v3sigmalapltau_3[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_3[i]+
+        gradz_tau1[i]*v3sigmalapltau_2[i]+
+        gradz_tau0[i]*v3sigmalapltau_1[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_2[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigmalapl2_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigmalapl2_1[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_5[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma2lapl_3[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma2lapl_1[i]-
+        gradz_rho1[i]*v3rhosigmalapl_8[i]+
+        gradz_rho1[i]*v3rhosigmalapl_7[i]-
+        gradz_rho0[i]*v3rhosigmalapl_2[i]+
+        gradz_rho0[i]*v3rhosigmalapl_1[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(grad2yy_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*grad2yy_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        +
+        grady_rho1[i]*(-
+        grady_tau1[i]*v3sigmalapltau_8[i]-
+        grady_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_6[i]+
+        grady_tau1[i]*v3sigmalapltau_6[i]+
+        grady_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_3[i]-
+        grady_rho1[i]*v3rhosigmalapl_10[i]+
+        grady_rho1[i]*v3rhosigmalapl_9[i]-
+        grady_rho0[i]*v3rhosigmalapl_4[i]+
+        grady_rho0[i]*v3rhosigmalapl_3[i])
+        +
+        2*grady_rho0[i]*(-
+        grady_tau1[i]*v3sigmalapltau_4[i]-
+        grady_tau0[i]*v3sigmalapltau_3[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_3[i]+
+        grady_tau1[i]*v3sigmalapltau_2[i]+
+        grady_tau0[i]*v3sigmalapltau_1[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_2[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigmalapl2_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigmalapl2_1[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_5[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma2lapl_3[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma2lapl_1[i]-
+        grady_rho1[i]*v3rhosigmalapl_8[i]+
+        grady_rho1[i]*v3rhosigmalapl_7[i]-
+        grady_rho0[i]*v3rhosigmalapl_2[i]+
+        grady_rho0[i]*v3rhosigmalapl_1[i])
+        )
+        -
+        (grad2zz_rho0[i]-
+        grad2zz_rho1[i]+
+        grad2yy_rho0[i]-
+        grad2yy_rho1[i]+
+        grad2xx_rho0[i]-
+        grad2xx_rho1[i])
+        *(grad2xx_rho1[i]*(-
+        v2sigmalapl_4[i]+
+        v2sigmalapl_3[i])
+        +
+        2*grad2xx_rho0[i]*(-
+        v2sigmalapl_2[i]+
+        v2sigmalapl_1[i])
+        +
+        gradx_rho1[i]*(-
+        gradx_tau1[i]*v3sigmalapltau_8[i]-
+        gradx_tau0[i]*v3sigmalapltau_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_6[i]+
+        gradx_tau1[i]*v3sigmalapltau_6[i]+
+        gradx_tau0[i]*v3sigmalapltau_5[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_5[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_4[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_9[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_3[i]-
+        gradx_rho1[i]*v3rhosigmalapl_10[i]+
+        gradx_rho1[i]*v3rhosigmalapl_9[i]-
+        gradx_rho0[i]*v3rhosigmalapl_4[i]+
+        gradx_rho0[i]*v3rhosigmalapl_3[i])
+        +
+        2*gradx_rho0[i]*(-
+        gradx_tau1[i]*v3sigmalapltau_4[i]-
+        gradx_tau0[i]*v3sigmalapltau_3[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_3[i]+
+        gradx_tau1[i]*v3sigmalapltau_2[i]+
+        gradx_tau0[i]*v3sigmalapltau_1[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_2[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigmalapl2_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigmalapl2_1[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_5[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma2lapl_3[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma2lapl_1[i]-
+        gradx_rho1[i]*v3rhosigmalapl_8[i]+
+        gradx_rho1[i]*v3rhosigmalapl_7[i]-
+        gradx_rho0[i]*v3rhosigmalapl_2[i]+
+        gradx_rho0[i]*v3rhosigmalapl_1[i])
+        )
+        +
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(-
+        gradz_tau1[i]*v2sigmatau_4[i]-
+        gradz_tau0[i]*v2sigmatau_3[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]+
+        4*gradz_rho1[i]*grad2zz_rho1[i]*(2*v2sigma2_6[i]-
+        v2sigma2_5[i])
+        -
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]+
+        gradz_rho1[i]*grad2zz_rho0[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        gradz_rho0[i]*grad2zz_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        2*gradz_rho0[i]*grad2zz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        -
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]-
+        gradz_rho1[i]*v2rhosigma_5[i]+
+        2*(gradz_tau1[i]*v2sigmatau_6[i]+
+        gradz_tau0[i]*v2sigmatau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_3[i]+
+        gradz_rho1[i]*v2rhosigma_6[i]+
+        gradz_rho0[i]*v2rhosigma_3[i])
+        -
+        gradz_rho0[i]*v2rhosigma_2[i]+
+        std::pow(gradz_rho1[i], 2)
+        *(4*(gradz_tau1[i]*v3sigma2tau_12[i]+
+        gradz_tau0[i]*v3sigma2tau_11[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_6[i]+
+        gradz_rho1[i]*v3rhosigma2_12[i]+
+        gradz_rho0[i]*v3rhosigma2_6[i])
+        -
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        )
+        +
+        gradz_rho0[i]*gradz_rho1[i]*(-
+        gradz_tau1[i]*v3sigma2tau_8[i]-
+        gradz_tau0[i]*v3sigma2tau_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]-
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        4*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        -
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        4*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        std::pow(gradz_rho0[i], 2)
+        *(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        +
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(-
+        grady_tau1[i]*v2sigmatau_4[i]-
+        grady_tau0[i]*v2sigmatau_3[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]+
+        4*grady_rho1[i]*grad2yy_rho1[i]*(2*v2sigma2_6[i]-
+        v2sigma2_5[i])
+        -
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]+
+        grady_rho1[i]*grad2yy_rho0[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        grady_rho0[i]*grad2yy_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        2*grady_rho0[i]*grad2yy_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        -
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]-
+        grady_rho1[i]*v2rhosigma_5[i]+
+        2*(grady_tau1[i]*v2sigmatau_6[i]+
+        grady_tau0[i]*v2sigmatau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_3[i]+
+        grady_rho1[i]*v2rhosigma_6[i]+
+        grady_rho0[i]*v2rhosigma_3[i])
+        -
+        grady_rho0[i]*v2rhosigma_2[i]+
+        std::pow(grady_rho1[i], 2)
+        *(4*(grady_tau1[i]*v3sigma2tau_12[i]+
+        grady_tau0[i]*v3sigma2tau_11[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_6[i]+
+        grady_rho1[i]*v3rhosigma2_12[i]+
+        grady_rho0[i]*v3rhosigma2_6[i])
+        -
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        )
+        +
+        grady_rho0[i]*grady_rho1[i]*(-
+        grady_tau1[i]*v3sigma2tau_8[i]-
+        grady_tau0[i]*v3sigma2tau_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]-
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        4*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        -
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        4*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        std::pow(grady_rho0[i], 2)
+        *(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        2*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        +
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(-
+        gradx_tau1[i]*v2sigmatau_4[i]-
+        gradx_tau0[i]*v2sigmatau_3[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]+
+        4*gradx_rho1[i]*grad2xx_rho1[i]*(2*v2sigma2_6[i]-
+        v2sigma2_5[i])
+        -
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        gradx_rho0[i]*grad2xx_rho1[i]*(4*v2sigma2_5[i]-
+        v2sigma2_4[i]-
+        4*v2sigma2_3[i])
+        +
+        2*gradx_rho0[i]*grad2xx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        -
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]-
+        gradx_rho1[i]*v2rhosigma_5[i]+
+        2*(gradx_tau1[i]*v2sigmatau_6[i]+
+        gradx_tau0[i]*v2sigmatau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_3[i]+
+        gradx_rho1[i]*v2rhosigma_6[i]+
+        gradx_rho0[i]*v2rhosigma_3[i])
+        -
+        gradx_rho0[i]*v2rhosigma_2[i]+
+        std::pow(gradx_rho1[i], 2)
+        *(4*(gradx_tau1[i]*v3sigma2tau_12[i]+
+        gradx_tau0[i]*v3sigma2tau_11[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_6[i]+
+        gradx_rho1[i]*v3rhosigma2_12[i]+
+        gradx_rho0[i]*v3rhosigma2_6[i])
+        -
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        )
+        +
+        gradx_rho0[i]*gradx_rho1[i]*(-
+        gradx_tau1[i]*v3sigma2tau_8[i]-
+        gradx_tau0[i]*v3sigma2tau_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]-
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        4*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        -
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        4*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        std::pow(gradx_rho0[i], 2)
+        *(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grad2yz_rho1[i]*(2*gradz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2yz_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        grady_rho1[i]*(2*grad2zz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2zz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_12[i]+
+        gradz_tau0[i]*v3sigma2tau_11[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_6[i]+
+        gradz_rho1[i]*v3rhosigma2_12[i]+
+        gradz_rho0[i]*v3rhosigma2_6[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        grady_rho0[i]*(2*grad2zz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2zz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(grad2xz_rho1[i]*(2*gradz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2xz_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        gradx_rho1[i]*(2*grad2zz_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2zz_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_12[i]+
+        gradz_tau0[i]*v3sigma2tau_11[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_6[i]+
+        gradz_rho1[i]*v3rhosigma2_12[i]+
+        gradz_rho0[i]*v3rhosigma2_6[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        gradx_rho0[i]*(2*grad2zz_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2zz_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(grad2yz_rho1[i]*(2*grady_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grady_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2yz_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grady_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        gradz_rho1[i]*(2*grad2yy_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2yy_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]-
+        2*(grady_tau1[i]*v3sigma2tau_12[i]+
+        grady_tau0[i]*v3sigma2tau_11[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_6[i]+
+        grady_rho1[i]*v3rhosigma2_12[i]+
+        grady_rho0[i]*v3rhosigma2_6[i])
+        +
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]-
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        gradz_rho0[i]*(2*grad2yy_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2yy_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i]-
+        2*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        2*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(grad2xy_rho1[i]*(2*grady_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grady_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2xy_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grady_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        gradx_rho1[i]*(2*grad2yy_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2yy_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]-
+        2*(grady_tau1[i]*v3sigma2tau_12[i]+
+        grady_tau0[i]*v3sigma2tau_11[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_6[i]+
+        grady_rho1[i]*v3rhosigma2_12[i]+
+        grady_rho0[i]*v3rhosigma2_6[i])
+        +
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]-
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        gradx_rho0[i]*(2*grad2yy_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2yy_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i]-
+        2*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        2*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(grad2xz_rho1[i]*(2*gradx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2xz_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        gradz_rho1[i]*(2*grad2xx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2xx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_12[i]+
+        gradx_tau0[i]*v3sigma2tau_11[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_6[i]+
+        gradx_rho1[i]*v3rhosigma2_12[i]+
+        gradx_rho0[i]*v3rhosigma2_6[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        gradz_rho0[i]*(2*grad2xx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2xx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grad2xy_rho1[i]*(2*gradx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        gradx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        )
+        -
+        grad2xy_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        gradx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        )
+        +
+        grady_rho1[i]*(2*grad2xx_rho1[i]*(-
+        2*v2sigma2_6[i]+
+        v2sigma2_5[i])
+        +
+        grad2xx_rho0[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_12[i]+
+        gradx_tau0[i]*v3sigma2tau_11[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_12[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_11[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_10[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_6[i]+
+        gradx_rho1[i]*v3rhosigma2_12[i]+
+        gradx_rho0[i]*v3rhosigma2_6[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_4[i])
+        )
+        -
+        grady_rho0[i]*(2*grad2xx_rho1[i]*(v2sigma2_5[i]-
+        2*v2sigma2_3[i])
+        +
+        grad2xx_rho0[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        )
+        +
+        gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        )
+        )
+        +
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(gradz_tau1[i]*v2sigmatau_4[i]+
+        gradz_tau0[i]*v2sigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_5[i]+
+        2*gradz_rho1[i]*grad2zz_rho1[i]*(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        +
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_4[i]+
+        gradz_rho1[i]*grad2zz_rho0[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        gradz_rho0[i]*grad2zz_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_2[i]+
+        4*gradz_rho0[i]*grad2zz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradz_rho1[i]*v2rhosigma_5[i]+
+        gradz_rho0[i]*v2rhosigma_2[i]+
+        std::pow(gradz_rho1[i], 2)
+        *(-
+        gradz_tau1[i]*v3sigma2tau_8[i]-
+        gradz_tau0[i]*v3sigma2tau_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]-
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        -
+        gradz_rho0[i]*v3rhosigma2_4[i])
+        -
+        2*(gradz_tau1[i]*v2sigmatau_2[i]+
+        gradz_tau0[i]*v2sigmatau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v2sigma2_1[i]+
+        gradz_rho1[i]*v2rhosigma_4[i]+
+        gradz_rho0[i]*v2rhosigma_1[i])
+        +
+        gradz_rho0[i]*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]+
+        4*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        -
+        4*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*std::pow(gradz_rho0[i], 2)
+        *(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+        gradz_tau0[i]*v3sigma2tau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_1[i]+
+        gradz_rho1[i]*v3rhosigma2_7[i]+
+        gradz_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        +
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grady_tau1[i]*v2sigmatau_4[i]+
+        grady_tau0[i]*v2sigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_5[i]+
+        2*grady_rho1[i]*grad2yy_rho1[i]*(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        +
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_4[i]+
+        grady_rho1[i]*grad2yy_rho0[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        grady_rho0[i]*grad2yy_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_2[i]+
+        4*grady_rho0[i]*grad2yy_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        grady_rho1[i]*v2rhosigma_5[i]+
+        grady_rho0[i]*v2rhosigma_2[i]+
+        std::pow(grady_rho1[i], 2)
+        *(-
+        grady_tau1[i]*v3sigma2tau_8[i]-
+        grady_tau0[i]*v3sigma2tau_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]-
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        -
+        grady_rho0[i]*v3rhosigma2_4[i])
+        -
+        2*(grady_tau1[i]*v2sigmatau_2[i]+
+        grady_tau0[i]*v2sigmatau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v2sigma2_1[i]+
+        grady_rho1[i]*v2rhosigma_4[i]+
+        grady_rho0[i]*v2rhosigma_1[i])
+        +
+        grady_rho0[i]*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]+
+        4*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        -
+        4*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*std::pow(grady_rho0[i], 2)
+        *(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i]-
+        2*(grady_tau1[i]*v3sigma2tau_2[i]+
+        grady_tau0[i]*v3sigma2tau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_1[i]+
+        grady_rho1[i]*v3rhosigma2_7[i]+
+        grady_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        +
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(gradx_tau1[i]*v2sigmatau_4[i]+
+        gradx_tau0[i]*v2sigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_5[i]+
+        2*gradx_rho1[i]*grad2xx_rho1[i]*(2*v2sigma2_5[i]-
+        v2sigma2_4[i])
+        +
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_4[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        gradx_rho0[i]*grad2xx_rho1[i]*(v2sigma2_4[i]+
+        4*v2sigma2_3[i]-
+        4*v2sigma2_2[i])
+        +
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_2[i]+
+        4*gradx_rho0[i]*grad2xx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradx_rho1[i]*v2rhosigma_5[i]+
+        gradx_rho0[i]*v2rhosigma_2[i]+
+        std::pow(gradx_rho1[i], 2)
+        *(-
+        gradx_tau1[i]*v3sigma2tau_8[i]-
+        gradx_tau0[i]*v3sigma2tau_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]-
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        -
+        gradx_rho0[i]*v3rhosigma2_4[i])
+        -
+        2*(gradx_tau1[i]*v2sigmatau_2[i]+
+        gradx_tau0[i]*v2sigmatau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v2sigmalapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v2sigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v2sigma2_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v2sigma2_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v2sigma2_1[i]+
+        gradx_rho1[i]*v2rhosigma_4[i]+
+        gradx_rho0[i]*v2rhosigma_1[i])
+        +
+        gradx_rho0[i]*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]+
+        4*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        -
+        4*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*std::pow(gradx_rho0[i], 2)
+        *(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+        gradx_tau0[i]*v3sigma2tau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_1[i]+
+        gradx_rho1[i]*v3rhosigma2_7[i]+
+        gradx_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grad2yz_rho1[i]*(gradz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2yz_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        grady_rho1[i]*(grad2zz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2zz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        grady_rho0[i]*(grad2zz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2zz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+        gradz_tau0[i]*v3sigma2tau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_1[i]+
+        gradz_rho1[i]*v3rhosigma2_7[i]+
+        gradz_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(grad2xz_rho1[i]*(gradz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2xz_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        gradx_rho1[i]*(grad2zz_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2zz_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+        gradz_tau0[i]*v3sigma2tau_9[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_5[i]+
+        gradz_rho1[i]*v3rhosigma2_11[i]+
+        gradz_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+        gradz_tau0[i]*v3sigma2tau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_3[i]+
+        gradz_rho1[i]*v3rhosigma2_9[i]+
+        gradz_rho0[i]*v3rhosigma2_3[i])
+        +
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        gradx_rho0[i]*(grad2zz_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2zz_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+        gradz_tau0[i]*v3sigma2tau_7[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_4[i]+
+        gradz_rho1[i]*v3rhosigma2_10[i]+
+        gradz_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+        gradz_tau0[i]*v3sigma2tau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_2[i]+
+        gradz_rho1[i]*v3rhosigma2_8[i]+
+        gradz_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+        gradz_tau0[i]*v3sigma2tau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3sigma3_1[i]+
+        gradz_rho1[i]*v3rhosigma2_7[i]+
+        gradz_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(grad2yz_rho1[i]*(grady_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2yz_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        gradz_rho1[i]*(grad2yy_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2yy_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]-
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]-
+        2*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        +
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        gradz_rho0[i]*(grad2yy_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2yy_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        2*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i]-
+        2*(grady_tau1[i]*v3sigma2tau_2[i]+
+        grady_tau0[i]*v3sigma2tau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_1[i]+
+        grady_rho1[i]*v3rhosigma2_7[i]+
+        grady_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        -
+        (gradx_rho0[i]-
+        gradx_rho1[i])
+        *(grad2xy_rho1[i]*(grady_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grady_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2xy_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grady_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        gradx_rho1[i]*(grad2yy_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2yy_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]-
+        2*(grady_tau1[i]*v3sigma2tau_10[i]+
+        grady_tau0[i]*v3sigma2tau_9[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_5[i]+
+        grady_rho1[i]*v3rhosigma2_11[i]+
+        grady_rho0[i]*v3rhosigma2_5[i])
+        +
+        grady_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]-
+        2*(grady_tau1[i]*v3sigma2tau_6[i]+
+        grady_tau0[i]*v3sigma2tau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_3[i]+
+        grady_rho1[i]*v3rhosigma2_9[i]+
+        grady_rho0[i]*v3rhosigma2_3[i])
+        +
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        gradx_rho0[i]*(grad2yy_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2yy_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+        grady_tau0[i]*v3sigma2tau_7[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_4[i]+
+        grady_rho1[i]*v3rhosigma2_10[i]+
+        grady_rho0[i]*v3rhosigma2_4[i]-
+        2*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+        grady_tau0[i]*v3sigma2tau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_2[i]+
+        grady_rho1[i]*v3rhosigma2_8[i]+
+        grady_rho0[i]*v3rhosigma2_2[i]-
+        2*(grady_tau1[i]*v3sigma2tau_2[i]+
+        grady_tau0[i]*v3sigma2tau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3sigma3_1[i]+
+        grady_rho1[i]*v3rhosigma2_7[i]+
+        grady_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        -
+        (gradz_rho0[i]-
+        gradz_rho1[i])
+        *(grad2xz_rho1[i]*(gradx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2xz_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        gradz_rho1[i]*(grad2xx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2xx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        gradz_rho0[i]*(grad2xx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2xx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+        gradx_tau0[i]*v3sigma2tau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_1[i]+
+        gradx_rho1[i]*v3rhosigma2_7[i]+
+        gradx_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        -
+        (grady_rho0[i]-
+        grady_rho1[i])
+        *(grad2xy_rho1[i]*(gradx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*gradx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        )
+        -
+        grad2xy_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*gradx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        )
+        +
+        grady_rho1[i]*(grad2xx_rho1[i]*(-
+        2*v2sigma2_5[i]+
+        v2sigma2_4[i])
+        +
+        2*grad2xx_rho0[i]*(-
+        2*v2sigma2_3[i]+
+        v2sigma2_2[i])
+        +
+        gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+        gradx_tau0[i]*v3sigma2tau_9[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_10[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_9[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_9[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_5[i]+
+        gradx_rho1[i]*v3rhosigma2_11[i]+
+        gradx_rho0[i]*v3rhosigma2_5[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_4[i])
+        +
+        2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+        gradx_tau0[i]*v3sigma2tau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_3[i]+
+        gradx_rho1[i]*v3rhosigma2_9[i]+
+        gradx_rho0[i]*v3rhosigma2_3[i])
+        +
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        -
+        grady_rho0[i]*(grad2xx_rho1[i]*(v2sigma2_4[i]-
+        2*v2sigma2_2[i])
+        +
+        2*grad2xx_rho0[i]*(v2sigma2_2[i]-
+        2*v2sigma2_1[i])
+        +
+        gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+        gradx_tau0[i]*v3sigma2tau_7[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_8[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_7[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_8[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_7[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_4[i]+
+        gradx_rho1[i]*v3rhosigma2_10[i]+
+        gradx_rho0[i]*v3rhosigma2_4[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i])
+        )
+        +
+        2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+        gradx_tau0[i]*v3sigma2tau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_2[i]+
+        gradx_rho1[i]*v3rhosigma2_8[i]+
+        gradx_rho0[i]*v3rhosigma2_2[i]-
+        2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+        gradx_tau0[i]*v3sigma2tau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3sigma2lapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3sigma2lapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3sigma3_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3sigma3_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3sigma3_1[i]+
+        gradx_rho1[i]*v3rhosigma2_7[i]+
+        gradx_rho0[i]*v3rhosigma2_1[i])
+        )
+        )
+        )
+        +
+        (rho0[i]-
+        rho1[i])
+        *(-
+        v2rho2_3[i]+
+        v2rho2_2[i])
+        +
+        (rho0[i]-
+        rho1[i])
+        *(-
+        v2rho2_2[i]+
+        v2rho2_1[i])
+        -
+        (rho0[i]-
+        rho1[i])
+        *(2*grad2zz_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        grad2zz_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*gradz_rho1[i]*(-
+        gradz_tau1[i]*v3rhosigmatau_12[i]-
+        gradz_tau0[i]*v3rhosigmatau_11[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_12[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_11[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_12[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_11[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_9[i]-
+        gradz_rho1[i]*v3rho2sigma_9[i]+
+        gradz_tau1[i]*v3rhosigmatau_6[i]+
+        gradz_tau0[i]*v3rhosigmatau_5[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_6[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_6[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_5[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_3[i]-
+        gradz_rho0[i]*v3rho2sigma_6[i]+
+        gradz_rho1[i]*v3rho2sigma_6[i]+
+        gradz_rho0[i]*v3rho2sigma_3[i])
+        +
+        gradz_rho0[i]*(-
+        gradz_tau1[i]*v3rhosigmatau_10[i]-
+        gradz_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_8[i]-
+        gradz_rho1[i]*v3rho2sigma_8[i]+
+        gradz_tau1[i]*v3rhosigmatau_4[i]+
+        gradz_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_2[i]-
+        gradz_rho0[i]*v3rho2sigma_5[i]+
+        gradz_rho1[i]*v3rho2sigma_5[i]+
+        gradz_rho0[i]*v3rho2sigma_2[i])
+        )
+        -
+        (rho0[i]-
+        rho1[i])
+        *(2*grad2yy_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        grad2yy_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*grady_rho1[i]*(-
+        grady_tau1[i]*v3rhosigmatau_12[i]-
+        grady_tau0[i]*v3rhosigmatau_11[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_12[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_11[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_12[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_11[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_9[i]-
+        grady_rho1[i]*v3rho2sigma_9[i]+
+        grady_tau1[i]*v3rhosigmatau_6[i]+
+        grady_tau0[i]*v3rhosigmatau_5[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_6[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_6[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_5[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_3[i]-
+        grady_rho0[i]*v3rho2sigma_6[i]+
+        grady_rho1[i]*v3rho2sigma_6[i]+
+        grady_rho0[i]*v3rho2sigma_3[i])
+        +
+        grady_rho0[i]*(-
+        grady_tau1[i]*v3rhosigmatau_10[i]-
+        grady_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_8[i]-
+        grady_rho1[i]*v3rho2sigma_8[i]+
+        grady_tau1[i]*v3rhosigmatau_4[i]+
+        grady_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_2[i]-
+        grady_rho0[i]*v3rho2sigma_5[i]+
+        grady_rho1[i]*v3rho2sigma_5[i]+
+        grady_rho0[i]*v3rho2sigma_2[i])
+        )
+        -
+        (rho0[i]-
+        rho1[i])
+        *(2*grad2xx_rho1[i]*(-
+        v2rhosigma_6[i]+
+        v2rhosigma_3[i])
+        +
+        grad2xx_rho0[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*gradx_rho1[i]*(-
+        gradx_tau1[i]*v3rhosigmatau_12[i]-
+        gradx_tau0[i]*v3rhosigmatau_11[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_12[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_11[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_12[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_11[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_9[i]-
+        gradx_rho1[i]*v3rho2sigma_9[i]+
+        gradx_tau1[i]*v3rhosigmatau_6[i]+
+        gradx_tau0[i]*v3rhosigmatau_5[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_6[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_5[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_6[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_5[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_3[i]-
+        gradx_rho0[i]*v3rho2sigma_6[i]+
+        gradx_rho1[i]*v3rho2sigma_6[i]+
+        gradx_rho0[i]*v3rho2sigma_3[i])
+        +
+        gradx_rho0[i]*(-
+        gradx_tau1[i]*v3rhosigmatau_10[i]-
+        gradx_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_8[i]-
+        gradx_rho1[i]*v3rho2sigma_8[i]+
+        gradx_tau1[i]*v3rhosigmatau_4[i]+
+        gradx_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_2[i]-
+        gradx_rho0[i]*v3rho2sigma_5[i]+
+        gradx_rho1[i]*v3rho2sigma_5[i]+
+        gradx_rho0[i]*v3rho2sigma_2[i])
+        )
+        -
+        (rho0[i]-
+        rho1[i])
+        *(grad2zz_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*grad2zz_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        +
+        gradz_rho1[i]*(-
+        gradz_tau1[i]*v3rhosigmatau_10[i]-
+        gradz_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_8[i]-
+        gradz_rho1[i]*v3rho2sigma_8[i]+
+        gradz_tau1[i]*v3rhosigmatau_4[i]+
+        gradz_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_2[i]-
+        gradz_rho0[i]*v3rho2sigma_5[i]+
+        gradz_rho1[i]*v3rho2sigma_5[i]+
+        gradz_rho0[i]*v3rho2sigma_2[i])
+        +
+        2*gradz_rho0[i]*(-
+        gradz_tau1[i]*v3rhosigmatau_8[i]-
+        gradz_tau0[i]*v3rhosigmatau_7[i]-
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_8[i]-
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_7[i]-
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_9[i]-
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_8[i]-
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_7[i]-
+        gradz_rho1[i]*v3rho2sigma_7[i]+
+        gradz_tau1[i]*v3rhosigmatau_2[i]+
+        gradz_tau0[i]*v3rhosigmatau_1[i]+
+        (grad3zzz_rho1[i]+
+        grad3yyz_rho1[i]+
+        grad3xxz_rho1[i])
+        *v3rhosigmalapl_2[i]+
+        (grad3zzz_rho0[i]+
+        grad3yyz_rho0[i]+
+        grad3xxz_rho0[i])
+        *v3rhosigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho1[i])
+        *v3rhosigma2_3[i]+
+        (gradz_rho1[i]*grad2zz_rho0[i]+
+        gradz_rho0[i]*grad2zz_rho1[i]+
+        grady_rho1[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho1[i]+
+        gradx_rho1[i]*grad2xz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho1[i])
+        *v3rhosigma2_2[i]+
+        2*(gradz_rho0[i]*grad2zz_rho0[i]+
+        grady_rho0[i]*grad2yz_rho0[i]+
+        gradx_rho0[i]*grad2xz_rho0[i])
+        *v3rhosigma2_1[i]-
+        gradz_rho0[i]*v3rho2sigma_4[i]+
+        gradz_rho1[i]*v3rho2sigma_4[i]+
+        gradz_rho0[i]*v3rho2sigma_1[i])
+        )
+        -
+        (rho0[i]-
+        rho1[i])
+        *(grad2yy_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*grad2yy_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        +
+        grady_rho1[i]*(-
+        grady_tau1[i]*v3rhosigmatau_10[i]-
+        grady_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_8[i]-
+        grady_rho1[i]*v3rho2sigma_8[i]+
+        grady_tau1[i]*v3rhosigmatau_4[i]+
+        grady_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_2[i]-
+        grady_rho0[i]*v3rho2sigma_5[i]+
+        grady_rho1[i]*v3rho2sigma_5[i]+
+        grady_rho0[i]*v3rho2sigma_2[i])
+        +
+        2*grady_rho0[i]*(-
+        grady_tau1[i]*v3rhosigmatau_8[i]-
+        grady_tau0[i]*v3rhosigmatau_7[i]-
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_8[i]-
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_7[i]-
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_9[i]-
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_8[i]-
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_7[i]-
+        grady_rho1[i]*v3rho2sigma_7[i]+
+        grady_tau1[i]*v3rhosigmatau_2[i]+
+        grady_tau0[i]*v3rhosigmatau_1[i]+
+        (grad3yzz_rho1[i]+
+        grad3yyy_rho1[i]+
+        grad3xxy_rho1[i])
+        *v3rhosigmalapl_2[i]+
+        (grad3yzz_rho0[i]+
+        grad3yyy_rho0[i]+
+        grad3xxy_rho0[i])
+        *v3rhosigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho1[i])
+        *v3rhosigma2_3[i]+
+        (gradz_rho1[i]*grad2yz_rho0[i]+
+        gradz_rho0[i]*grad2yz_rho1[i]+
+        grady_rho1[i]*grad2yy_rho0[i]+
+        grady_rho0[i]*grad2yy_rho1[i]+
+        gradx_rho1[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho1[i])
+        *v3rhosigma2_2[i]+
+        2*(gradz_rho0[i]*grad2yz_rho0[i]+
+        grady_rho0[i]*grad2yy_rho0[i]+
+        gradx_rho0[i]*grad2xy_rho0[i])
+        *v3rhosigma2_1[i]-
+        grady_rho0[i]*v3rho2sigma_4[i]+
+        grady_rho1[i]*v3rho2sigma_4[i]+
+        grady_rho0[i]*v3rho2sigma_1[i])
+        )
+        -
+        (rho0[i]-
+        rho1[i])
+        *(grad2xx_rho1[i]*(-
+        v2rhosigma_5[i]+
+        v2rhosigma_2[i])
+        +
+        2*grad2xx_rho0[i]*(-
+        v2rhosigma_4[i]+
+        v2rhosigma_1[i])
+        +
+        gradx_rho1[i]*(-
+        gradx_tau1[i]*v3rhosigmatau_10[i]-
+        gradx_tau0[i]*v3rhosigmatau_9[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_10[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_9[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_11[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_10[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_8[i]-
+        gradx_rho1[i]*v3rho2sigma_8[i]+
+        gradx_tau1[i]*v3rhosigmatau_4[i]+
+        gradx_tau0[i]*v3rhosigmatau_3[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_4[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_3[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_5[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_4[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_2[i]-
+        gradx_rho0[i]*v3rho2sigma_5[i]+
+        gradx_rho1[i]*v3rho2sigma_5[i]+
+        gradx_rho0[i]*v3rho2sigma_2[i])
+        +
+        2*gradx_rho0[i]*(-
+        gradx_tau1[i]*v3rhosigmatau_8[i]-
+        gradx_tau0[i]*v3rhosigmatau_7[i]-
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_8[i]-
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_7[i]-
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_9[i]-
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_8[i]-
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_7[i]-
+        gradx_rho1[i]*v3rho2sigma_7[i]+
+        gradx_tau1[i]*v3rhosigmatau_2[i]+
+        gradx_tau0[i]*v3rhosigmatau_1[i]+
+        (grad3xzz_rho1[i]+
+        grad3xyy_rho1[i]+
+        grad3xxx_rho1[i])
+        *v3rhosigmalapl_2[i]+
+        (grad3xzz_rho0[i]+
+        grad3xyy_rho0[i]+
+        grad3xxx_rho0[i])
+        *v3rhosigmalapl_1[i]+
+        2*(gradz_rho1[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho1[i])
+        *v3rhosigma2_3[i]+
+        (gradz_rho1[i]*grad2xz_rho0[i]+
+        gradz_rho0[i]*grad2xz_rho1[i]+
+        grady_rho1[i]*grad2xy_rho0[i]+
+        grady_rho0[i]*grad2xy_rho1[i]+
+        gradx_rho1[i]*grad2xx_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho1[i])
+        *v3rhosigma2_2[i]+
+        2*(gradz_rho0[i]*grad2xz_rho0[i]+
+        grady_rho0[i]*grad2xy_rho0[i]+
+        gradx_rho0[i]*grad2xx_rho0[i])
+        *v3rhosigma2_1[i]-
+        gradx_rho0[i]*v3rho2sigma_4[i]+
+        gradx_rho1[i]*v3rho2sigma_4[i]+
+        gradx_rho0[i]*v3rho2sigma_1[i])
+        )
+        )
+        );
+
+        vs[i] = (0.25*(4*grad2zz_rho1[i]*vsigma_3[i]+
+4*grad2yy_rho1[i]*vsigma_3[i]+
+4*grad2xx_rho1[i]*vsigma_3[i]+
+2*grad2zz_rho1[i]*(2*vsigma_3[i]-
+vsigma_2[i])
++
+2*grad2yy_rho1[i]*(2*vsigma_3[i]-
+vsigma_2[i])
++
+2*grad2xx_rho1[i]*(2*vsigma_3[i]-
+vsigma_2[i])
++
+2*grad2zz_rho0[i]*vsigma_2[i]-
+2*grad2zz_rho1[i]*vsigma_2[i]+
+2*grad2yy_rho0[i]*vsigma_2[i]-
+2*grad2yy_rho1[i]*vsigma_2[i]+
+2*grad2xx_rho0[i]*vsigma_2[i]-
+2*grad2xx_rho1[i]*vsigma_2[i]+
+(gradz_tau0[i]-
+gradz_tau1[i])
+*(2*gradz_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+gradz_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
+)
++
+(grady_tau0[i]-
+grady_tau1[i])
+*(2*grady_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+grady_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
+)
++
+(gradx_tau0[i]-
+gradx_tau1[i])
+*(2*gradx_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+gradx_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
+)
++
+(grad3zzz_rho0[i]-
+grad3zzz_rho1[i]+
+grad3yyz_rho0[i]-
+grad3yyz_rho1[i]+
+grad3xxz_rho0[i]-
+grad3xxz_rho1[i])
+*(2*gradz_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+gradz_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
+)
++
+(grad3yzz_rho0[i]-
+grad3yzz_rho1[i]+
+grad3yyy_rho0[i]-
+grad3yyy_rho1[i]+
+grad3xxy_rho0[i]-
+grad3xxy_rho1[i])
+*(2*grady_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+grady_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
+)
++
+(grad3xzz_rho0[i]-
+grad3xzz_rho1[i]+
+grad3xyy_rho0[i]-
+grad3xyy_rho1[i]+
+grad3xxx_rho0[i]-
+grad3xxx_rho1[i])
+*(2*gradx_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+gradx_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
+)
++
+2*grad2zz_rho0[i]*(vsigma_2[i]-
+2*vsigma_1[i])
++
+2*grad2yy_rho0[i]*(vsigma_2[i]-
+2*vsigma_1[i])
++
+2*grad2xx_rho0[i]*(vsigma_2[i]-
+2*vsigma_1[i])
+-
+4*grad2zz_rho0[i]*vsigma_1[i]-
+4*grad2yy_rho0[i]*vsigma_1[i]-
+4*grad2xx_rho0[i]*vsigma_1[i]-
+(gradz_tau0[i]-
+gradz_tau1[i])
+*(gradz_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*gradz_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
+)
+-
+(grady_tau0[i]-
+grady_tau1[i])
+*(grady_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*grady_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
+)
+-
+(gradx_tau0[i]-
+gradx_tau1[i])
+*(gradx_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*gradx_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
+)
+-
+(grad3zzz_rho0[i]-
+grad3zzz_rho1[i]+
+grad3yyz_rho0[i]-
+grad3yyz_rho1[i]+
+grad3xxz_rho0[i]-
+grad3xxz_rho1[i])
+*(gradz_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*gradz_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
+)
+-
+(grad3yzz_rho0[i]-
+grad3yzz_rho1[i]+
+grad3yyy_rho0[i]-
+grad3yyy_rho1[i]+
+grad3xxy_rho0[i]-
+grad3xxy_rho1[i])
+*(grady_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*grady_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
+)
+-
+(grad3xzz_rho0[i]-
+grad3xzz_rho1[i]+
+grad3xyy_rho0[i]-
+grad3xyy_rho1[i]+
+grad3xxx_rho0[i]-
+grad3xxx_rho1[i])
+*(gradx_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*gradx_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
+)
++
+(grad2yz_rho0[i]-
+grad2yz_rho1[i])
+*(grady_rho1[i]*(2*gradz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grady_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
++
+(grad2xz_rho0[i]-
+grad2xz_rho1[i])
+*(gradx_rho1[i]*(2*gradz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+gradx_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
++
+(grad2yz_rho0[i]-
+grad2yz_rho1[i])
+*(gradz_rho1[i]*(2*grady_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grady_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+gradz_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grady_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
++
+(grad2xy_rho0[i]-
+grad2xy_rho1[i])
+*(gradx_rho1[i]*(2*grady_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grady_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+gradx_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grady_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
++
+(grad2xz_rho0[i]-
+grad2xz_rho1[i])
+*(gradz_rho1[i]*(2*gradx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+gradz_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
++
+(grad2xy_rho0[i]-
+grad2xy_rho1[i])
+*(grady_rho1[i]*(2*gradx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grady_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+)
+-
+(grad2zz_rho0[i]-
+grad2zz_rho1[i])
+*(2*vsigma_3[i]-
+vsigma_2[i]+
+std::pow(gradz_rho1[i], 2)
+*(4*v2sigma2_6[i]-
+2*v2sigma2_5[i])
++
+gradz_rho0[i]*gradz_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+std::pow(gradz_rho0[i], 2)
+*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+-
+(grad2yy_rho0[i]-
+grad2yy_rho1[i])
+*(2*vsigma_3[i]-
+vsigma_2[i]+
+std::pow(grady_rho1[i], 2)
+*(4*v2sigma2_6[i]-
+2*v2sigma2_5[i])
++
+grady_rho0[i]*grady_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+std::pow(grady_rho0[i], 2)
+*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+-
+(grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(2*vsigma_3[i]-
+vsigma_2[i]+
+std::pow(gradx_rho1[i], 2)
+*(4*v2sigma2_6[i]-
+2*v2sigma2_5[i])
++
+gradx_rho0[i]*gradx_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+std::pow(gradx_rho0[i], 2)
+*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
+-
+(grad2yz_rho0[i]-
+grad2yz_rho1[i])
+*(grady_rho1[i]*(gradz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grady_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
+-
+(grad2xz_rho0[i]-
+grad2xz_rho1[i])
+*(gradx_rho1[i]*(gradz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+gradx_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
+-
+(grad2yz_rho0[i]-
+grad2yz_rho1[i])
+*(gradz_rho1[i]*(grady_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+gradz_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
+-
+(grad2xy_rho0[i]-
+grad2xy_rho1[i])
+*(gradx_rho1[i]*(grady_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+gradx_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
+-
+(grad2xz_rho0[i]-
+grad2xz_rho1[i])
+*(gradz_rho1[i]*(gradx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+gradz_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
+-
+(grad2xy_rho0[i]-
+grad2xy_rho1[i])
+*(grady_rho1[i]*(gradx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grady_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+)
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i])
+*(vsigma_2[i]+
+std::pow(gradz_rho1[i], 2)
+*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
+-
+2*vsigma_1[i]+
+gradz_rho0[i]*gradz_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*std::pow(gradz_rho0[i], 2)
+*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+(grad2yy_rho0[i]-
+grad2yy_rho1[i])
+*(vsigma_2[i]+
+std::pow(grady_rho1[i], 2)
+*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
+-
+2*vsigma_1[i]+
+grady_rho0[i]*grady_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*std::pow(grady_rho0[i], 2)
+*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+(grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(vsigma_2[i]+
+std::pow(gradx_rho1[i], 2)
+*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
+-
+2*vsigma_1[i]+
+gradx_rho0[i]*gradx_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*std::pow(gradx_rho0[i], 2)
+*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
+-
+4*vrho_2[i]+
+(tau0[i]-
+tau1[i])
+*(v2rhotau_4[i]-
+v2rhotau_3[i])
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(v2rholapl_4[i]-
+v2rholapl_3[i])
+-
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(gradz_rho1[i]*(-
+2*v2rhosigma_6[i]+
+v2rhosigma_5[i])
+-
+gradz_rho0[i]*(v2rhosigma_5[i]-
+2*v2rhosigma_4[i])
+)
+-
+(grady_rho0[i]-
+grady_rho1[i])
+*(grady_rho1[i]*(-
+2*v2rhosigma_6[i]+
+v2rhosigma_5[i])
+-
+grady_rho0[i]*(v2rhosigma_5[i]-
+2*v2rhosigma_4[i])
+)
+-
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(gradx_rho1[i]*(-
+2*v2rhosigma_6[i]+
+v2rhosigma_5[i])
+-
+gradx_rho0[i]*(v2rhosigma_5[i]-
+2*v2rhosigma_4[i])
+)
++
+4*vrho_1[i]+
+(tau0[i]-
+tau1[i])
+*(-
+v2rhotau_2[i]+
+v2rhotau_1[i])
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(-
+v2rholapl_2[i]+
+v2rholapl_1[i])
++
+4*gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_6[i]+
+gradz_tau0[i]*v2sigmatau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_3[i]+
+gradz_rho1[i]*v2rhosigma_6[i]+
+gradz_rho0[i]*v2rhosigma_3[i])
++
+4*grady_rho1[i]*(grady_tau1[i]*v2sigmatau_6[i]+
+grady_tau0[i]*v2sigmatau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_3[i]+
+grady_rho1[i]*v2rhosigma_6[i]+
+grady_rho0[i]*v2rhosigma_3[i])
++
+4*gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_6[i]+
+gradx_tau0[i]*v2sigmatau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_3[i]+
+gradx_rho1[i]*v2rhosigma_6[i]+
+gradx_rho0[i]*v2rhosigma_3[i])
++
+gradz_rho1[i]*(-
+gradz_tau1[i]*v2sigmatau_4[i]-
+gradz_tau0[i]*v2sigmatau_3[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]-
+gradz_rho1[i]*v2rhosigma_5[i]+
+2*(gradz_tau1[i]*v2sigmatau_6[i]+
+gradz_tau0[i]*v2sigmatau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_3[i]+
+gradz_rho1[i]*v2rhosigma_6[i]+
+gradz_rho0[i]*v2rhosigma_3[i])
+-
+gradz_rho0[i]*v2rhosigma_2[i])
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+gradz_tau0[i]*v2sigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]+
+gradz_rho1[i]*v2rhosigma_5[i]+
+gradz_rho0[i]*v2rhosigma_2[i])
+-
+2*gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+gradz_tau0[i]*v2sigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]+
+gradz_rho1[i]*v2rhosigma_5[i]+
+gradz_rho0[i]*v2rhosigma_2[i])
+-
+gradz_rho1[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+gradz_tau0[i]*v2sigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]+
+gradz_rho1[i]*v2rhosigma_5[i]-
+2*(gradz_tau1[i]*v2sigmatau_6[i]+
+gradz_tau0[i]*v2sigmatau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_3[i]+
+gradz_rho1[i]*v2rhosigma_6[i]+
+gradz_rho0[i]*v2rhosigma_3[i])
++
+gradz_rho0[i]*v2rhosigma_2[i])
++
+grady_rho1[i]*(-
+grady_tau1[i]*v2sigmatau_4[i]-
+grady_tau0[i]*v2sigmatau_3[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]-
+grady_rho1[i]*v2rhosigma_5[i]+
+2*(grady_tau1[i]*v2sigmatau_6[i]+
+grady_tau0[i]*v2sigmatau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_3[i]+
+grady_rho1[i]*v2rhosigma_6[i]+
+grady_rho0[i]*v2rhosigma_3[i])
+-
+grady_rho0[i]*v2rhosigma_2[i])
++
+2*grady_rho0[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+grady_tau0[i]*v2sigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]+
+grady_rho1[i]*v2rhosigma_5[i]+
+grady_rho0[i]*v2rhosigma_2[i])
+-
+2*grady_rho1[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+grady_tau0[i]*v2sigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]+
+grady_rho1[i]*v2rhosigma_5[i]+
+grady_rho0[i]*v2rhosigma_2[i])
+-
+grady_rho1[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+grady_tau0[i]*v2sigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]+
+grady_rho1[i]*v2rhosigma_5[i]-
+2*(grady_tau1[i]*v2sigmatau_6[i]+
+grady_tau0[i]*v2sigmatau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_3[i]+
+grady_rho1[i]*v2rhosigma_6[i]+
+grady_rho0[i]*v2rhosigma_3[i])
++
+grady_rho0[i]*v2rhosigma_2[i])
++
+gradx_rho1[i]*(-
+gradx_tau1[i]*v2sigmatau_4[i]-
+gradx_tau0[i]*v2sigmatau_3[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]-
+gradx_rho1[i]*v2rhosigma_5[i]+
+2*(gradx_tau1[i]*v2sigmatau_6[i]+
+gradx_tau0[i]*v2sigmatau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_3[i]+
+gradx_rho1[i]*v2rhosigma_6[i]+
+gradx_rho0[i]*v2rhosigma_3[i])
+-
+gradx_rho0[i]*v2rhosigma_2[i])
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+gradx_tau0[i]*v2sigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]+
+gradx_rho1[i]*v2rhosigma_5[i]+
+gradx_rho0[i]*v2rhosigma_2[i])
+-
+2*gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+gradx_tau0[i]*v2sigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]+
+gradx_rho1[i]*v2rhosigma_5[i]+
+gradx_rho0[i]*v2rhosigma_2[i])
+-
+gradx_rho1[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+gradx_tau0[i]*v2sigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]+
+gradx_rho1[i]*v2rhosigma_5[i]-
+2*(gradx_tau1[i]*v2sigmatau_6[i]+
+gradx_tau0[i]*v2sigmatau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_3[i]+
+gradx_rho1[i]*v2rhosigma_6[i]+
+gradx_rho0[i]*v2rhosigma_3[i])
++
+gradx_rho0[i]*v2rhosigma_2[i])
++
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(2*gradz_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+gradz_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
+)
++
+(grady_rho0[i]-
+grady_rho1[i])
+*(2*grady_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+grady_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
+)
++
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(2*gradx_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+gradx_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
+)
++
+(tau0[i]-
+tau1[i])
+*(2*grad2zz_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+grad2zz_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*gradz_rho1[i]*(-
+gradz_tau1[i]*v3sigmatau2_9[i]-
+gradz_tau0[i]*v3sigmatau2_8[i]+
+gradz_tau1[i]*v3sigmatau2_8[i]+
+gradz_tau0[i]*v3sigmatau2_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_12[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_11[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_9[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_12[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_11[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_10[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_9[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_5[i]-
+gradz_rho1[i]*v3rhosigmatau_12[i]+
+gradz_rho1[i]*v3rhosigmatau_11[i]-
+gradz_rho0[i]*v3rhosigmatau_6[i]+
+gradz_rho0[i]*v3rhosigmatau_5[i])
++
+gradz_rho0[i]*(-
+gradz_tau1[i]*v3sigmatau2_6[i]-
+gradz_tau0[i]*v3sigmatau2_5[i]+
+gradz_tau1[i]*v3sigmatau2_5[i]+
+gradz_tau0[i]*v3sigmatau2_4[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_3[i]-
+gradz_rho1[i]*v3rhosigmatau_10[i]+
+gradz_rho1[i]*v3rhosigmatau_9[i]-
+gradz_rho0[i]*v3rhosigmatau_4[i]+
+gradz_rho0[i]*v3rhosigmatau_3[i])
+)
++
+(tau0[i]-
+tau1[i])
+*(2*grad2yy_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+grad2yy_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*grady_rho1[i]*(-
+grady_tau1[i]*v3sigmatau2_9[i]-
+grady_tau0[i]*v3sigmatau2_8[i]+
+grady_tau1[i]*v3sigmatau2_8[i]+
+grady_tau0[i]*v3sigmatau2_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_12[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_11[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_9[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_12[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_11[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_10[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_9[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_5[i]-
+grady_rho1[i]*v3rhosigmatau_12[i]+
+grady_rho1[i]*v3rhosigmatau_11[i]-
+grady_rho0[i]*v3rhosigmatau_6[i]+
+grady_rho0[i]*v3rhosigmatau_5[i])
++
+grady_rho0[i]*(-
+grady_tau1[i]*v3sigmatau2_6[i]-
+grady_tau0[i]*v3sigmatau2_5[i]+
+grady_tau1[i]*v3sigmatau2_5[i]+
+grady_tau0[i]*v3sigmatau2_4[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_3[i]-
+grady_rho1[i]*v3rhosigmatau_10[i]+
+grady_rho1[i]*v3rhosigmatau_9[i]-
+grady_rho0[i]*v3rhosigmatau_4[i]+
+grady_rho0[i]*v3rhosigmatau_3[i])
+)
++
+(tau0[i]-
+tau1[i])
+*(2*grad2xx_rho1[i]*(-
+v2sigmatau_6[i]+
+v2sigmatau_5[i])
++
+grad2xx_rho0[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*gradx_rho1[i]*(-
+gradx_tau1[i]*v3sigmatau2_9[i]-
+gradx_tau0[i]*v3sigmatau2_8[i]+
+gradx_tau1[i]*v3sigmatau2_8[i]+
+gradx_tau0[i]*v3sigmatau2_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_12[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_11[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_9[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_12[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_11[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_10[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_9[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_5[i]-
+gradx_rho1[i]*v3rhosigmatau_12[i]+
+gradx_rho1[i]*v3rhosigmatau_11[i]-
+gradx_rho0[i]*v3rhosigmatau_6[i]+
+gradx_rho0[i]*v3rhosigmatau_5[i])
++
+gradx_rho0[i]*(-
+gradx_tau1[i]*v3sigmatau2_6[i]-
+gradx_tau0[i]*v3sigmatau2_5[i]+
+gradx_tau1[i]*v3sigmatau2_5[i]+
+gradx_tau0[i]*v3sigmatau2_4[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_3[i]-
+gradx_rho1[i]*v3rhosigmatau_10[i]+
+gradx_rho1[i]*v3rhosigmatau_9[i]-
+gradx_rho0[i]*v3rhosigmatau_4[i]+
+gradx_rho0[i]*v3rhosigmatau_3[i])
+)
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(2*grad2zz_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+grad2zz_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*gradz_rho1[i]*(-
+gradz_tau1[i]*v3sigmalapltau_12[i]-
+gradz_tau0[i]*v3sigmalapltau_11[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_9[i]+
+gradz_tau1[i]*v3sigmalapltau_10[i]+
+gradz_tau0[i]*v3sigmalapltau_9[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_8[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_7[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_12[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_11[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_10[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_9[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_5[i]-
+gradz_rho1[i]*v3rhosigmalapl_12[i]+
+gradz_rho1[i]*v3rhosigmalapl_11[i]-
+gradz_rho0[i]*v3rhosigmalapl_6[i]+
+gradz_rho0[i]*v3rhosigmalapl_5[i])
++
+gradz_rho0[i]*(-
+gradz_tau1[i]*v3sigmalapltau_8[i]-
+gradz_tau0[i]*v3sigmalapltau_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_6[i]+
+gradz_tau1[i]*v3sigmalapltau_6[i]+
+gradz_tau0[i]*v3sigmalapltau_5[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_3[i]-
+gradz_rho1[i]*v3rhosigmalapl_10[i]+
+gradz_rho1[i]*v3rhosigmalapl_9[i]-
+gradz_rho0[i]*v3rhosigmalapl_4[i]+
+gradz_rho0[i]*v3rhosigmalapl_3[i])
+)
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(2*grad2yy_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+grad2yy_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*grady_rho1[i]*(-
+grady_tau1[i]*v3sigmalapltau_12[i]-
+grady_tau0[i]*v3sigmalapltau_11[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_9[i]+
+grady_tau1[i]*v3sigmalapltau_10[i]+
+grady_tau0[i]*v3sigmalapltau_9[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_8[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_7[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_12[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_11[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_10[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_9[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_5[i]-
+grady_rho1[i]*v3rhosigmalapl_12[i]+
+grady_rho1[i]*v3rhosigmalapl_11[i]-
+grady_rho0[i]*v3rhosigmalapl_6[i]+
+grady_rho0[i]*v3rhosigmalapl_5[i])
++
+grady_rho0[i]*(-
+grady_tau1[i]*v3sigmalapltau_8[i]-
+grady_tau0[i]*v3sigmalapltau_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_6[i]+
+grady_tau1[i]*v3sigmalapltau_6[i]+
+grady_tau0[i]*v3sigmalapltau_5[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_3[i]-
+grady_rho1[i]*v3rhosigmalapl_10[i]+
+grady_rho1[i]*v3rhosigmalapl_9[i]-
+grady_rho0[i]*v3rhosigmalapl_4[i]+
+grady_rho0[i]*v3rhosigmalapl_3[i])
+)
++
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(2*grad2xx_rho1[i]*(-
+v2sigmalapl_6[i]+
+v2sigmalapl_5[i])
++
+grad2xx_rho0[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*gradx_rho1[i]*(-
+gradx_tau1[i]*v3sigmalapltau_12[i]-
+gradx_tau0[i]*v3sigmalapltau_11[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_9[i]+
+gradx_tau1[i]*v3sigmalapltau_10[i]+
+gradx_tau0[i]*v3sigmalapltau_9[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_8[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_7[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_12[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_11[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_10[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_9[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_5[i]-
+gradx_rho1[i]*v3rhosigmalapl_12[i]+
+gradx_rho1[i]*v3rhosigmalapl_11[i]-
+gradx_rho0[i]*v3rhosigmalapl_6[i]+
+gradx_rho0[i]*v3rhosigmalapl_5[i])
++
+gradx_rho0[i]*(-
+gradx_tau1[i]*v3sigmalapltau_8[i]-
+gradx_tau0[i]*v3sigmalapltau_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_6[i]+
+gradx_tau1[i]*v3sigmalapltau_6[i]+
+gradx_tau0[i]*v3sigmalapltau_5[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_3[i]-
+gradx_rho1[i]*v3rhosigmalapl_10[i]+
+gradx_rho1[i]*v3rhosigmalapl_9[i]-
+gradx_rho0[i]*v3rhosigmalapl_4[i]+
+gradx_rho0[i]*v3rhosigmalapl_3[i])
+)
++
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(gradz_rho1[i]*(-
+2*v2rhosigma_3[i]+
+v2rhosigma_2[i])
+-
+gradz_rho0[i]*(v2rhosigma_2[i]-
+2*v2rhosigma_1[i])
+)
++
+(grady_rho0[i]-
+grady_rho1[i])
+*(grady_rho1[i]*(-
+2*v2rhosigma_3[i]+
+v2rhosigma_2[i])
+-
+grady_rho0[i]*(v2rhosigma_2[i]-
+2*v2rhosigma_1[i])
+)
++
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(gradx_rho1[i]*(-
+2*v2rhosigma_3[i]+
+v2rhosigma_2[i])
+-
+gradx_rho0[i]*(v2rhosigma_2[i]-
+2*v2rhosigma_1[i])
+)
+-
+4*gradz_rho0[i]*(gradz_tau1[i]*v2sigmatau_2[i]+
+gradz_tau0[i]*v2sigmatau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_1[i]+
+gradz_rho1[i]*v2rhosigma_4[i]+
+gradz_rho0[i]*v2rhosigma_1[i])
+-
+4*grady_rho0[i]*(grady_tau1[i]*v2sigmatau_2[i]+
+grady_tau0[i]*v2sigmatau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_1[i]+
+grady_rho1[i]*v2rhosigma_4[i]+
+grady_rho0[i]*v2rhosigma_1[i])
+-
+4*gradx_rho0[i]*(gradx_tau1[i]*v2sigmatau_2[i]+
+gradx_tau0[i]*v2sigmatau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_1[i]+
+gradx_rho1[i]*v2rhosigma_4[i]+
+gradx_rho0[i]*v2rhosigma_1[i])
+-
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(gradz_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*gradz_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
+)
+-
+(grady_rho0[i]-
+grady_rho1[i])
+*(grady_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*grady_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
+)
+-
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(gradx_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*gradx_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
+)
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v2sigmatau_4[i]+
+gradz_tau0[i]*v2sigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]+
+gradz_rho1[i]*v2rhosigma_5[i]+
+gradz_rho0[i]*v2rhosigma_2[i]-
+2*(gradz_tau1[i]*v2sigmatau_2[i]+
+gradz_tau0[i]*v2sigmatau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_1[i]+
+gradz_rho1[i]*v2rhosigma_4[i]+
+gradz_rho0[i]*v2rhosigma_1[i])
+)
++
+2*grady_rho0[i]*(grady_tau1[i]*v2sigmatau_4[i]+
+grady_tau0[i]*v2sigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]+
+grady_rho1[i]*v2rhosigma_5[i]+
+grady_rho0[i]*v2rhosigma_2[i]-
+2*(grady_tau1[i]*v2sigmatau_2[i]+
+grady_tau0[i]*v2sigmatau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_1[i]+
+grady_rho1[i]*v2rhosigma_4[i]+
+grady_rho0[i]*v2rhosigma_1[i])
+)
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v2sigmatau_4[i]+
+gradx_tau0[i]*v2sigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]+
+gradx_rho1[i]*v2rhosigma_5[i]+
+gradx_rho0[i]*v2rhosigma_2[i]-
+2*(gradx_tau1[i]*v2sigmatau_2[i]+
+gradx_tau0[i]*v2sigmatau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_1[i]+
+gradx_rho1[i]*v2rhosigma_4[i]+
+gradx_rho0[i]*v2rhosigma_1[i])
+)
+-
+(tau0[i]-
+tau1[i])
+*(grad2zz_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*grad2zz_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
++
+gradz_rho1[i]*(-
+gradz_tau1[i]*v3sigmatau2_6[i]-
+gradz_tau0[i]*v3sigmatau2_5[i]+
+gradz_tau1[i]*v3sigmatau2_5[i]+
+gradz_tau0[i]*v3sigmatau2_4[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_3[i]-
+gradz_rho1[i]*v3rhosigmatau_10[i]+
+gradz_rho1[i]*v3rhosigmatau_9[i]-
+gradz_rho0[i]*v3rhosigmatau_4[i]+
+gradz_rho0[i]*v3rhosigmatau_3[i])
++
+2*gradz_rho0[i]*(-
+gradz_tau1[i]*v3sigmatau2_3[i]-
+gradz_tau0[i]*v3sigmatau2_2[i]+
+gradz_tau1[i]*v3sigmatau2_2[i]+
+gradz_tau0[i]*v3sigmatau2_1[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_4[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapltau_3[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapltau_1[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2tau_5[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_4[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2tau_3[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2tau_1[i]-
+gradz_rho1[i]*v3rhosigmatau_8[i]+
+gradz_rho1[i]*v3rhosigmatau_7[i]-
+gradz_rho0[i]*v3rhosigmatau_2[i]+
+gradz_rho0[i]*v3rhosigmatau_1[i])
+)
+-
+(tau0[i]-
+tau1[i])
+*(grad2yy_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*grad2yy_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
++
+grady_rho1[i]*(-
+grady_tau1[i]*v3sigmatau2_6[i]-
+grady_tau0[i]*v3sigmatau2_5[i]+
+grady_tau1[i]*v3sigmatau2_5[i]+
+grady_tau0[i]*v3sigmatau2_4[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_3[i]-
+grady_rho1[i]*v3rhosigmatau_10[i]+
+grady_rho1[i]*v3rhosigmatau_9[i]-
+grady_rho0[i]*v3rhosigmatau_4[i]+
+grady_rho0[i]*v3rhosigmatau_3[i])
++
+2*grady_rho0[i]*(-
+grady_tau1[i]*v3sigmatau2_3[i]-
+grady_tau0[i]*v3sigmatau2_2[i]+
+grady_tau1[i]*v3sigmatau2_2[i]+
+grady_tau0[i]*v3sigmatau2_1[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_4[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapltau_3[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapltau_1[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2tau_5[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_4[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2tau_3[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2tau_1[i]-
+grady_rho1[i]*v3rhosigmatau_8[i]+
+grady_rho1[i]*v3rhosigmatau_7[i]-
+grady_rho0[i]*v3rhosigmatau_2[i]+
+grady_rho0[i]*v3rhosigmatau_1[i])
+)
+-
+(tau0[i]-
+tau1[i])
+*(grad2xx_rho1[i]*(-
+v2sigmatau_4[i]+
+v2sigmatau_3[i])
++
+2*grad2xx_rho0[i]*(-
+v2sigmatau_2[i]+
+v2sigmatau_1[i])
++
+gradx_rho1[i]*(-
+gradx_tau1[i]*v3sigmatau2_6[i]-
+gradx_tau0[i]*v3sigmatau2_5[i]+
+gradx_tau1[i]*v3sigmatau2_5[i]+
+gradx_tau0[i]*v3sigmatau2_4[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_8[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_7[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_5[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_10[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_9[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_3[i]-
+gradx_rho1[i]*v3rhosigmatau_10[i]+
+gradx_rho1[i]*v3rhosigmatau_9[i]-
+gradx_rho0[i]*v3rhosigmatau_4[i]+
+gradx_rho0[i]*v3rhosigmatau_3[i])
++
+2*gradx_rho0[i]*(-
+gradx_tau1[i]*v3sigmatau2_3[i]-
+gradx_tau0[i]*v3sigmatau2_2[i]+
+gradx_tau1[i]*v3sigmatau2_2[i]+
+gradx_tau0[i]*v3sigmatau2_1[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_4[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapltau_3[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapltau_1[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_6[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2tau_5[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_4[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2tau_3[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2tau_1[i]-
+gradx_rho1[i]*v3rhosigmatau_8[i]+
+gradx_rho1[i]*v3rhosigmatau_7[i]-
+gradx_rho0[i]*v3rhosigmatau_2[i]+
+gradx_rho0[i]*v3rhosigmatau_1[i])
+)
+-
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(grad2zz_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*grad2zz_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
++
+gradz_rho1[i]*(-
+gradz_tau1[i]*v3sigmalapltau_8[i]-
+gradz_tau0[i]*v3sigmalapltau_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_6[i]+
+gradz_tau1[i]*v3sigmalapltau_6[i]+
+gradz_tau0[i]*v3sigmalapltau_5[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_3[i]-
+gradz_rho1[i]*v3rhosigmalapl_10[i]+
+gradz_rho1[i]*v3rhosigmalapl_9[i]-
+gradz_rho0[i]*v3rhosigmalapl_4[i]+
+gradz_rho0[i]*v3rhosigmalapl_3[i])
++
+2*gradz_rho0[i]*(-
+gradz_tau1[i]*v3sigmalapltau_4[i]-
+gradz_tau0[i]*v3sigmalapltau_3[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_3[i]+
+gradz_tau1[i]*v3sigmalapltau_2[i]+
+gradz_tau0[i]*v3sigmalapltau_1[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_2[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigmalapl2_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigmalapl2_1[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma2lapl_5[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_4[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma2lapl_3[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma2lapl_1[i]-
+gradz_rho1[i]*v3rhosigmalapl_8[i]+
+gradz_rho1[i]*v3rhosigmalapl_7[i]-
+gradz_rho0[i]*v3rhosigmalapl_2[i]+
+gradz_rho0[i]*v3rhosigmalapl_1[i])
+)
+-
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(grad2yy_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*grad2yy_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
++
+grady_rho1[i]*(-
+grady_tau1[i]*v3sigmalapltau_8[i]-
+grady_tau0[i]*v3sigmalapltau_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_6[i]+
+grady_tau1[i]*v3sigmalapltau_6[i]+
+grady_tau0[i]*v3sigmalapltau_5[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_3[i]-
+grady_rho1[i]*v3rhosigmalapl_10[i]+
+grady_rho1[i]*v3rhosigmalapl_9[i]-
+grady_rho0[i]*v3rhosigmalapl_4[i]+
+grady_rho0[i]*v3rhosigmalapl_3[i])
++
+2*grady_rho0[i]*(-
+grady_tau1[i]*v3sigmalapltau_4[i]-
+grady_tau0[i]*v3sigmalapltau_3[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_3[i]+
+grady_tau1[i]*v3sigmalapltau_2[i]+
+grady_tau0[i]*v3sigmalapltau_1[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_2[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigmalapl2_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigmalapl2_1[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma2lapl_5[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_4[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma2lapl_3[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma2lapl_1[i]-
+grady_rho1[i]*v3rhosigmalapl_8[i]+
+grady_rho1[i]*v3rhosigmalapl_7[i]-
+grady_rho0[i]*v3rhosigmalapl_2[i]+
+grady_rho0[i]*v3rhosigmalapl_1[i])
+)
+-
+(grad2zz_rho0[i]-
+grad2zz_rho1[i]+
+grad2yy_rho0[i]-
+grad2yy_rho1[i]+
+grad2xx_rho0[i]-
+grad2xx_rho1[i])
+*(grad2xx_rho1[i]*(-
+v2sigmalapl_4[i]+
+v2sigmalapl_3[i])
++
+2*grad2xx_rho0[i]*(-
+v2sigmalapl_2[i]+
+v2sigmalapl_1[i])
++
+gradx_rho1[i]*(-
+gradx_tau1[i]*v3sigmalapltau_8[i]-
+gradx_tau0[i]*v3sigmalapltau_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_6[i]+
+gradx_tau1[i]*v3sigmalapltau_6[i]+
+gradx_tau0[i]*v3sigmalapltau_5[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_5[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_4[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_10[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_9[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_3[i]-
+gradx_rho1[i]*v3rhosigmalapl_10[i]+
+gradx_rho1[i]*v3rhosigmalapl_9[i]-
+gradx_rho0[i]*v3rhosigmalapl_4[i]+
+gradx_rho0[i]*v3rhosigmalapl_3[i])
++
+2*gradx_rho0[i]*(-
+gradx_tau1[i]*v3sigmalapltau_4[i]-
+gradx_tau0[i]*v3sigmalapltau_3[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_3[i]+
+gradx_tau1[i]*v3sigmalapltau_2[i]+
+gradx_tau0[i]*v3sigmalapltau_1[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_2[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigmalapl2_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigmalapl2_1[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_6[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma2lapl_5[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_4[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma2lapl_3[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma2lapl_1[i]-
+gradx_rho1[i]*v3rhosigmalapl_8[i]+
+gradx_rho1[i]*v3rhosigmalapl_7[i]-
+gradx_rho0[i]*v3rhosigmalapl_2[i]+
+gradx_rho0[i]*v3rhosigmalapl_1[i])
+)
+-
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(-
+gradz_tau1[i]*v2sigmatau_4[i]-
+gradz_tau0[i]*v2sigmatau_3[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+4*gradz_rho1[i]*grad2zz_rho1[i]*(2*v2sigma2_6[i]-
+v2sigma2_5[i])
+-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+gradz_rho1[i]*grad2zz_rho0[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+gradz_rho0[i]*grad2zz_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+2*gradz_rho0[i]*grad2zz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]-
+gradz_rho1[i]*v2rhosigma_5[i]+
+2*(gradz_tau1[i]*v2sigmatau_6[i]+
+gradz_tau0[i]*v2sigmatau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_3[i]+
+gradz_rho1[i]*v2rhosigma_6[i]+
+gradz_rho0[i]*v2rhosigma_3[i])
+-
+gradz_rho0[i]*v2rhosigma_2[i]+
+std::pow(gradz_rho1[i], 2)
+*(4*(gradz_tau1[i]*v3sigma2tau_12[i]+
+gradz_tau0[i]*v3sigma2tau_11[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_6[i]+
+gradz_rho1[i]*v3rhosigma2_12[i]+
+gradz_rho0[i]*v3rhosigma2_6[i])
+-
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
+)
++
+gradz_rho0[i]*gradz_rho1[i]*(-
+gradz_tau1[i]*v3sigma2tau_8[i]-
+gradz_tau0[i]*v3sigma2tau_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]-
+gradz_rho1[i]*v3rhosigma2_10[i]+
+4*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
+-
+gradz_rho0[i]*v3rhosigma2_4[i]-
+4*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
+)
++
+std::pow(gradz_rho0[i], 2)
+*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]-
+2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
+)
+-
+(grady_rho0[i]-
+grady_rho1[i])
+*(-
+grady_tau1[i]*v2sigmatau_4[i]-
+grady_tau0[i]*v2sigmatau_3[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+4*grady_rho1[i]*grad2yy_rho1[i]*(2*v2sigma2_6[i]-
+v2sigma2_5[i])
+-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+grady_rho1[i]*grad2yy_rho0[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+grady_rho0[i]*grad2yy_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+2*grady_rho0[i]*grad2yy_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]-
+grady_rho1[i]*v2rhosigma_5[i]+
+2*(grady_tau1[i]*v2sigmatau_6[i]+
+grady_tau0[i]*v2sigmatau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_3[i]+
+grady_rho1[i]*v2rhosigma_6[i]+
+grady_rho0[i]*v2rhosigma_3[i])
+-
+grady_rho0[i]*v2rhosigma_2[i]+
+std::pow(grady_rho1[i], 2)
+*(4*(grady_tau1[i]*v3sigma2tau_12[i]+
+grady_tau0[i]*v3sigma2tau_11[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_6[i]+
+grady_rho1[i]*v3rhosigma2_12[i]+
+grady_rho0[i]*v3rhosigma2_6[i])
+-
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
+)
++
+grady_rho0[i]*grady_rho1[i]*(-
+grady_tau1[i]*v3sigma2tau_8[i]-
+grady_tau0[i]*v3sigma2tau_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]-
+grady_rho1[i]*v3rhosigma2_10[i]+
+4*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
+-
+grady_rho0[i]*v3rhosigma2_4[i]-
+4*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
+)
++
+std::pow(grady_rho0[i], 2)
+*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]-
+2*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
+)
+-
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(-
+gradx_tau1[i]*v2sigmatau_4[i]-
+gradx_tau0[i]*v2sigmatau_3[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+4*gradx_rho1[i]*grad2xx_rho1[i]*(2*v2sigma2_6[i]-
+v2sigma2_5[i])
+-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+gradx_rho1[i]*grad2xx_rho0[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+gradx_rho0[i]*grad2xx_rho1[i]*(4*v2sigma2_5[i]-
+v2sigma2_4[i]-
+4*v2sigma2_3[i])
++
+2*gradx_rho0[i]*grad2xx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]-
+gradx_rho1[i]*v2rhosigma_5[i]+
+2*(gradx_tau1[i]*v2sigmatau_6[i]+
+gradx_tau0[i]*v2sigmatau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_3[i]+
+gradx_rho1[i]*v2rhosigma_6[i]+
+gradx_rho0[i]*v2rhosigma_3[i])
+-
+gradx_rho0[i]*v2rhosigma_2[i]+
+std::pow(gradx_rho1[i], 2)
+*(4*(gradx_tau1[i]*v3sigma2tau_12[i]+
+gradx_tau0[i]*v3sigma2tau_11[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_6[i]+
+gradx_rho1[i]*v3rhosigma2_12[i]+
+gradx_rho0[i]*v3rhosigma2_6[i])
+-
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
+)
++
+gradx_rho0[i]*gradx_rho1[i]*(-
+gradx_tau1[i]*v3sigma2tau_8[i]-
+gradx_tau0[i]*v3sigma2tau_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]-
+gradx_rho1[i]*v3rhosigma2_10[i]+
+4*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
+-
+gradx_rho0[i]*v3rhosigma2_4[i]-
+4*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
+)
++
+std::pow(gradx_rho0[i], 2)
+*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]-
+2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
+)
++
+(grady_rho0[i]-
+grady_rho1[i])
+*(grad2yz_rho1[i]*(2*gradz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2yz_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+grady_rho1[i]*(2*grad2zz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2zz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]-
+2*(gradz_tau1[i]*v3sigma2tau_12[i]+
+gradz_tau0[i]*v3sigma2tau_11[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_6[i]+
+gradz_rho1[i]*v3rhosigma2_12[i]+
+gradz_rho0[i]*v3rhosigma2_6[i])
++
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]-
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*v3rhosigma2_4[i])
+)
+-
+grady_rho0[i]*(2*grad2zz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2zz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i]-
+2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
+)
++
+gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]-
+2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(grad2xz_rho1[i]*(2*gradz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2xz_rho0[i]*(2*gradz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+gradx_rho1[i]*(2*grad2zz_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2zz_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]-
+2*(gradz_tau1[i]*v3sigma2tau_12[i]+
+gradz_tau0[i]*v3sigma2tau_11[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_6[i]+
+gradz_rho1[i]*v3rhosigma2_12[i]+
+gradz_rho0[i]*v3rhosigma2_6[i])
++
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]-
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*v3rhosigma2_4[i])
+)
+-
+gradx_rho0[i]*(2*grad2zz_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2zz_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i]-
+2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
+)
++
+gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]-
+2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(grad2yz_rho1[i]*(2*grady_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grady_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2yz_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grady_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+gradz_rho1[i]*(2*grad2yy_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2yy_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]-
+2*(grady_tau1[i]*v3sigma2tau_12[i]+
+grady_tau0[i]*v3sigma2tau_11[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_6[i]+
+grady_rho1[i]*v3rhosigma2_12[i]+
+grady_rho0[i]*v3rhosigma2_6[i])
++
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]-
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*v3rhosigma2_4[i])
+)
+-
+gradz_rho0[i]*(2*grad2yy_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2yy_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i]-
+2*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
+)
++
+grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]-
+2*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(grad2xy_rho1[i]*(2*grady_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grady_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2xy_rho0[i]*(2*grady_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grady_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+gradx_rho1[i]*(2*grad2yy_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2yy_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]-
+2*(grady_tau1[i]*v3sigma2tau_12[i]+
+grady_tau0[i]*v3sigma2tau_11[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_6[i]+
+grady_rho1[i]*v3rhosigma2_12[i]+
+grady_rho0[i]*v3rhosigma2_6[i])
++
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]-
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*v3rhosigma2_4[i])
+)
+-
+gradx_rho0[i]*(2*grad2yy_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2yy_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i]-
+2*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
+)
++
+grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]-
+2*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(grad2xz_rho1[i]*(2*gradx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2xz_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+gradz_rho1[i]*(2*grad2xx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2xx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]-
+2*(gradx_tau1[i]*v3sigma2tau_12[i]+
+gradx_tau0[i]*v3sigma2tau_11[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_6[i]+
+gradx_rho1[i]*v3rhosigma2_12[i]+
+gradx_rho0[i]*v3rhosigma2_6[i])
++
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]-
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*v3rhosigma2_4[i])
+)
+-
+gradz_rho0[i]*(2*grad2xx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2xx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i]-
+2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
+)
++
+gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]-
+2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(grady_rho0[i]-
+grady_rho1[i])
+*(grad2xy_rho1[i]*(2*gradx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+gradx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
+)
+-
+grad2xy_rho0[i]*(2*gradx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+gradx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
+)
++
+grady_rho1[i]*(2*grad2xx_rho1[i]*(-
+2*v2sigma2_6[i]+
+v2sigma2_5[i])
++
+grad2xx_rho0[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]-
+2*(gradx_tau1[i]*v3sigma2tau_12[i]+
+gradx_tau0[i]*v3sigma2tau_11[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_12[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_11[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_10[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_6[i]+
+gradx_rho1[i]*v3rhosigma2_12[i]+
+gradx_rho0[i]*v3rhosigma2_6[i])
++
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]-
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*v3rhosigma2_4[i])
+)
+-
+grady_rho0[i]*(2*grad2xx_rho1[i]*(v2sigma2_5[i]-
+2*v2sigma2_3[i])
++
+grad2xx_rho0[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i]-
+2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
+)
++
+gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]-
+2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
+)
+)
++
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(gradz_tau1[i]*v2sigmatau_4[i]+
+gradz_tau0[i]*v2sigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_5[i]+
+2*gradz_rho1[i]*grad2zz_rho1[i]*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
++
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_4[i]+
+gradz_rho1[i]*grad2zz_rho0[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+gradz_rho0[i]*grad2zz_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_2[i]+
+4*gradz_rho0[i]*grad2zz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradz_rho1[i]*v2rhosigma_5[i]+
+gradz_rho0[i]*v2rhosigma_2[i]+
+std::pow(gradz_rho1[i], 2)
+*(-
+gradz_tau1[i]*v3sigma2tau_8[i]-
+gradz_tau0[i]*v3sigma2tau_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]-
+gradz_rho1[i]*v3rhosigma2_10[i]+
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
+-
+gradz_rho0[i]*v3rhosigma2_4[i])
+-
+2*(gradz_tau1[i]*v2sigmatau_2[i]+
+gradz_tau0[i]*v2sigmatau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v2sigma2_1[i]+
+gradz_rho1[i]*v2rhosigma_4[i]+
+gradz_rho0[i]*v2rhosigma_1[i])
++
+gradz_rho0[i]*gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]+
+4*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
+-
+4*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*std::pow(gradz_rho0[i], 2)
+*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i]-
+2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+gradz_tau0[i]*v3sigma2tau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_1[i]+
+gradz_rho1[i]*v3rhosigma2_7[i]+
+gradz_rho0[i]*v3rhosigma2_1[i])
+)
+)
++
+(grady_rho0[i]-
+grady_rho1[i])
+*(grady_tau1[i]*v2sigmatau_4[i]+
+grady_tau0[i]*v2sigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_5[i]+
+2*grady_rho1[i]*grad2yy_rho1[i]*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
++
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_4[i]+
+grady_rho1[i]*grad2yy_rho0[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+grady_rho0[i]*grad2yy_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_2[i]+
+4*grady_rho0[i]*grad2yy_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+grady_rho1[i]*v2rhosigma_5[i]+
+grady_rho0[i]*v2rhosigma_2[i]+
+std::pow(grady_rho1[i], 2)
+*(-
+grady_tau1[i]*v3sigma2tau_8[i]-
+grady_tau0[i]*v3sigma2tau_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]-
+grady_rho1[i]*v3rhosigma2_10[i]+
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
+-
+grady_rho0[i]*v3rhosigma2_4[i])
+-
+2*(grady_tau1[i]*v2sigmatau_2[i]+
+grady_tau0[i]*v2sigmatau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v2sigma2_1[i]+
+grady_rho1[i]*v2rhosigma_4[i]+
+grady_rho0[i]*v2rhosigma_1[i])
++
+grady_rho0[i]*grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]+
+4*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
+-
+4*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*std::pow(grady_rho0[i], 2)
+*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i]-
+2*(grady_tau1[i]*v3sigma2tau_2[i]+
+grady_tau0[i]*v3sigma2tau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_1[i]+
+grady_rho1[i]*v3rhosigma2_7[i]+
+grady_rho0[i]*v3rhosigma2_1[i])
+)
+)
++
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(gradx_tau1[i]*v2sigmatau_4[i]+
+gradx_tau0[i]*v2sigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_5[i]+
+2*gradx_rho1[i]*grad2xx_rho1[i]*(2*v2sigma2_5[i]-
+v2sigma2_4[i])
++
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_4[i]+
+gradx_rho1[i]*grad2xx_rho0[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+gradx_rho0[i]*grad2xx_rho1[i]*(v2sigma2_4[i]+
+4*v2sigma2_3[i]-
+4*v2sigma2_2[i])
++
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_2[i]+
+4*gradx_rho0[i]*grad2xx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradx_rho1[i]*v2rhosigma_5[i]+
+gradx_rho0[i]*v2rhosigma_2[i]+
+std::pow(gradx_rho1[i], 2)
+*(-
+gradx_tau1[i]*v3sigma2tau_8[i]-
+gradx_tau0[i]*v3sigma2tau_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]-
+gradx_rho1[i]*v3rhosigma2_10[i]+
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
+-
+gradx_rho0[i]*v3rhosigma2_4[i])
+-
+2*(gradx_tau1[i]*v2sigmatau_2[i]+
+gradx_tau0[i]*v2sigmatau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v2sigmalapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v2sigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v2sigma2_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v2sigma2_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v2sigma2_1[i]+
+gradx_rho1[i]*v2rhosigma_4[i]+
+gradx_rho0[i]*v2rhosigma_1[i])
++
+gradx_rho0[i]*gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]+
+4*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
+-
+4*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*std::pow(gradx_rho0[i], 2)
+*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i]-
+2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+gradx_tau0[i]*v3sigma2tau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_1[i]+
+gradx_rho1[i]*v3rhosigma2_7[i]+
+gradx_rho0[i]*v3rhosigma2_1[i])
+)
+)
+-
+(grady_rho0[i]-
+grady_rho1[i])
+*(grad2yz_rho1[i]*(gradz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2yz_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+grady_rho1[i]*(grad2zz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2zz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]-
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*v3rhosigma2_4[i])
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]-
+2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
++
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
+-
+grady_rho0[i]*(grad2zz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2zz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]-
+2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i]-
+2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+gradz_tau0[i]*v3sigma2tau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_1[i]+
+gradz_rho1[i]*v3rhosigma2_7[i]+
+gradz_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
+-
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(grad2xz_rho1[i]*(gradz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2xz_rho0[i]*(gradz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+gradx_rho1[i]*(grad2zz_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2zz_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]-
+2*(gradz_tau1[i]*v3sigma2tau_10[i]+
+gradz_tau0[i]*v3sigma2tau_9[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_5[i]+
+gradz_rho1[i]*v3rhosigma2_11[i]+
+gradz_rho0[i]*v3rhosigma2_5[i])
++
+gradz_rho0[i]*v3rhosigma2_4[i])
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]-
+2*(gradz_tau1[i]*v3sigma2tau_6[i]+
+gradz_tau0[i]*v3sigma2tau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_3[i]+
+gradz_rho1[i]*v3rhosigma2_9[i]+
+gradz_rho0[i]*v3rhosigma2_3[i])
++
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
+-
+gradx_rho0[i]*(grad2zz_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2zz_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradz_rho1[i]*(gradz_tau1[i]*v3sigma2tau_8[i]+
+gradz_tau0[i]*v3sigma2tau_7[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_4[i]+
+gradz_rho1[i]*v3rhosigma2_10[i]+
+gradz_rho0[i]*v3rhosigma2_4[i]-
+2*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*gradz_rho0[i]*(gradz_tau1[i]*v3sigma2tau_4[i]+
+gradz_tau0[i]*v3sigma2tau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_2[i]+
+gradz_rho1[i]*v3rhosigma2_8[i]+
+gradz_rho0[i]*v3rhosigma2_2[i]-
+2*(gradz_tau1[i]*v3sigma2tau_2[i]+
+gradz_tau0[i]*v3sigma2tau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3sigma3_1[i]+
+gradz_rho1[i]*v3rhosigma2_7[i]+
+gradz_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
+-
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(grad2yz_rho1[i]*(grady_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2yz_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+gradz_rho1[i]*(grad2yy_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2yy_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]-
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*v3rhosigma2_4[i])
++
+2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]-
+2*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
++
+grady_rho0[i]*v3rhosigma2_2[i])
+)
+-
+gradz_rho0[i]*(grad2yy_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2yy_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]-
+2*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i]-
+2*(grady_tau1[i]*v3sigma2tau_2[i]+
+grady_tau0[i]*v3sigma2tau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_1[i]+
+grady_rho1[i]*v3rhosigma2_7[i]+
+grady_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
+-
+(gradx_rho0[i]-
+gradx_rho1[i])
+*(grad2xy_rho1[i]*(grady_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grady_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2xy_rho0[i]*(grady_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grady_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+gradx_rho1[i]*(grad2yy_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2yy_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]-
+2*(grady_tau1[i]*v3sigma2tau_10[i]+
+grady_tau0[i]*v3sigma2tau_9[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_5[i]+
+grady_rho1[i]*v3rhosigma2_11[i]+
+grady_rho0[i]*v3rhosigma2_5[i])
++
+grady_rho0[i]*v3rhosigma2_4[i])
++
+2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]-
+2*(grady_tau1[i]*v3sigma2tau_6[i]+
+grady_tau0[i]*v3sigma2tau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_3[i]+
+grady_rho1[i]*v3rhosigma2_9[i]+
+grady_rho0[i]*v3rhosigma2_3[i])
++
+grady_rho0[i]*v3rhosigma2_2[i])
+)
+-
+gradx_rho0[i]*(grad2yy_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2yy_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+grady_rho1[i]*(grady_tau1[i]*v3sigma2tau_8[i]+
+grady_tau0[i]*v3sigma2tau_7[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_4[i]+
+grady_rho1[i]*v3rhosigma2_10[i]+
+grady_rho0[i]*v3rhosigma2_4[i]-
+2*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*grady_rho0[i]*(grady_tau1[i]*v3sigma2tau_4[i]+
+grady_tau0[i]*v3sigma2tau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_2[i]+
+grady_rho1[i]*v3rhosigma2_8[i]+
+grady_rho0[i]*v3rhosigma2_2[i]-
+2*(grady_tau1[i]*v3sigma2tau_2[i]+
+grady_tau0[i]*v3sigma2tau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3sigma3_1[i]+
+grady_rho1[i]*v3rhosigma2_7[i]+
+grady_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
+-
+(gradz_rho0[i]-
+gradz_rho1[i])
+*(grad2xz_rho1[i]*(gradx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2xz_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+gradz_rho1[i]*(grad2xx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2xx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]-
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*v3rhosigma2_4[i])
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]-
+2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
++
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
+-
+gradz_rho0[i]*(grad2xx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2xx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]-
+2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i]-
+2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+gradx_tau0[i]*v3sigma2tau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_1[i]+
+gradx_rho1[i]*v3rhosigma2_7[i]+
+gradx_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
+-
+(grady_rho0[i]-
+grady_rho1[i])
+*(grad2xy_rho1[i]*(gradx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*gradx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
+)
+-
+grad2xy_rho0[i]*(gradx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*gradx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
+)
++
+grady_rho1[i]*(grad2xx_rho1[i]*(-
+2*v2sigma2_5[i]+
+v2sigma2_4[i])
++
+2*grad2xx_rho0[i]*(-
+2*v2sigma2_3[i]+
+v2sigma2_2[i])
++
+gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]-
+2*(gradx_tau1[i]*v3sigma2tau_10[i]+
+gradx_tau0[i]*v3sigma2tau_9[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_10[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_9[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_9[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_5[i]+
+gradx_rho1[i]*v3rhosigma2_11[i]+
+gradx_rho0[i]*v3rhosigma2_5[i])
++
+gradx_rho0[i]*v3rhosigma2_4[i])
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]-
+2*(gradx_tau1[i]*v3sigma2tau_6[i]+
+gradx_tau0[i]*v3sigma2tau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_3[i]+
+gradx_rho1[i]*v3rhosigma2_9[i]+
+gradx_rho0[i]*v3rhosigma2_3[i])
++
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
+-
+grady_rho0[i]*(grad2xx_rho1[i]*(v2sigma2_4[i]-
+2*v2sigma2_2[i])
++
+2*grad2xx_rho0[i]*(v2sigma2_2[i]-
+2*v2sigma2_1[i])
++
+gradx_rho1[i]*(gradx_tau1[i]*v3sigma2tau_8[i]+
+gradx_tau0[i]*v3sigma2tau_7[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_8[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_7[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_8[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_7[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_4[i]+
+gradx_rho1[i]*v3rhosigma2_10[i]+
+gradx_rho0[i]*v3rhosigma2_4[i]-
+2*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i])
+)
++
+2*gradx_rho0[i]*(gradx_tau1[i]*v3sigma2tau_4[i]+
+gradx_tau0[i]*v3sigma2tau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_2[i]+
+gradx_rho1[i]*v3rhosigma2_8[i]+
+gradx_rho0[i]*v3rhosigma2_2[i]-
+2*(gradx_tau1[i]*v3sigma2tau_2[i]+
+gradx_tau0[i]*v3sigma2tau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3sigma2lapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3sigma2lapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3sigma3_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3sigma3_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3sigma3_1[i]+
+gradx_rho1[i]*v3rhosigma2_7[i]+
+gradx_rho0[i]*v3rhosigma2_1[i])
+)
+)
+)
++
+(rho0[i]-
+rho1[i])
+*(v2rho2_3[i]-
+v2rho2_2[i])
++
+(rho0[i]-
+rho1[i])
+*(-
+v2rho2_2[i]+
+v2rho2_1[i])
++
+(rho0[i]-
+rho1[i])
+*(2*grad2zz_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+grad2zz_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*gradz_rho1[i]*(-
+gradz_tau1[i]*v3rhosigmatau_12[i]-
+gradz_tau0[i]*v3rhosigmatau_11[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_12[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_11[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_12[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_11[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_9[i]-
+gradz_rho1[i]*v3rho2sigma_9[i]+
+gradz_tau1[i]*v3rhosigmatau_6[i]+
+gradz_tau0[i]*v3rhosigmatau_5[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_6[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_6[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_5[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_3[i]-
+gradz_rho0[i]*v3rho2sigma_6[i]+
+gradz_rho1[i]*v3rho2sigma_6[i]+
+gradz_rho0[i]*v3rho2sigma_3[i])
++
+gradz_rho0[i]*(-
+gradz_tau1[i]*v3rhosigmatau_10[i]-
+gradz_tau0[i]*v3rhosigmatau_9[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_8[i]-
+gradz_rho1[i]*v3rho2sigma_8[i]+
+gradz_tau1[i]*v3rhosigmatau_4[i]+
+gradz_tau0[i]*v3rhosigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_2[i]-
+gradz_rho0[i]*v3rho2sigma_5[i]+
+gradz_rho1[i]*v3rho2sigma_5[i]+
+gradz_rho0[i]*v3rho2sigma_2[i])
+)
++
+(rho0[i]-
+rho1[i])
+*(2*grad2yy_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+grad2yy_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*grady_rho1[i]*(-
+grady_tau1[i]*v3rhosigmatau_12[i]-
+grady_tau0[i]*v3rhosigmatau_11[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_12[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_11[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_12[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_11[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_9[i]-
+grady_rho1[i]*v3rho2sigma_9[i]+
+grady_tau1[i]*v3rhosigmatau_6[i]+
+grady_tau0[i]*v3rhosigmatau_5[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_6[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_6[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_5[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_3[i]-
+grady_rho0[i]*v3rho2sigma_6[i]+
+grady_rho1[i]*v3rho2sigma_6[i]+
+grady_rho0[i]*v3rho2sigma_3[i])
++
+grady_rho0[i]*(-
+grady_tau1[i]*v3rhosigmatau_10[i]-
+grady_tau0[i]*v3rhosigmatau_9[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_8[i]-
+grady_rho1[i]*v3rho2sigma_8[i]+
+grady_tau1[i]*v3rhosigmatau_4[i]+
+grady_tau0[i]*v3rhosigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_2[i]-
+grady_rho0[i]*v3rho2sigma_5[i]+
+grady_rho1[i]*v3rho2sigma_5[i]+
+grady_rho0[i]*v3rho2sigma_2[i])
+)
++
+(rho0[i]-
+rho1[i])
+*(2*grad2xx_rho1[i]*(-
+v2rhosigma_6[i]+
+v2rhosigma_3[i])
++
+grad2xx_rho0[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*gradx_rho1[i]*(-
+gradx_tau1[i]*v3rhosigmatau_12[i]-
+gradx_tau0[i]*v3rhosigmatau_11[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_12[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_11[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_12[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_11[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_9[i]-
+gradx_rho1[i]*v3rho2sigma_9[i]+
+gradx_tau1[i]*v3rhosigmatau_6[i]+
+gradx_tau0[i]*v3rhosigmatau_5[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_6[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_5[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_6[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_5[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_3[i]-
+gradx_rho0[i]*v3rho2sigma_6[i]+
+gradx_rho1[i]*v3rho2sigma_6[i]+
+gradx_rho0[i]*v3rho2sigma_3[i])
++
+gradx_rho0[i]*(-
+gradx_tau1[i]*v3rhosigmatau_10[i]-
+gradx_tau0[i]*v3rhosigmatau_9[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_8[i]-
+gradx_rho1[i]*v3rho2sigma_8[i]+
+gradx_tau1[i]*v3rhosigmatau_4[i]+
+gradx_tau0[i]*v3rhosigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_2[i]-
+gradx_rho0[i]*v3rho2sigma_5[i]+
+gradx_rho1[i]*v3rho2sigma_5[i]+
+gradx_rho0[i]*v3rho2sigma_2[i])
+)
+-
+(rho0[i]-
+rho1[i])
+*(grad2zz_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*grad2zz_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
++
+gradz_rho1[i]*(-
+gradz_tau1[i]*v3rhosigmatau_10[i]-
+gradz_tau0[i]*v3rhosigmatau_9[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_8[i]-
+gradz_rho1[i]*v3rho2sigma_8[i]+
+gradz_tau1[i]*v3rhosigmatau_4[i]+
+gradz_tau0[i]*v3rhosigmatau_3[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_2[i]-
+gradz_rho0[i]*v3rho2sigma_5[i]+
+gradz_rho1[i]*v3rho2sigma_5[i]+
+gradz_rho0[i]*v3rho2sigma_2[i])
++
+2*gradz_rho0[i]*(-
+gradz_tau1[i]*v3rhosigmatau_8[i]-
+gradz_tau0[i]*v3rhosigmatau_7[i]-
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_8[i]-
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_7[i]-
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_9[i]-
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_8[i]-
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_7[i]-
+gradz_rho1[i]*v3rho2sigma_7[i]+
+gradz_tau1[i]*v3rhosigmatau_2[i]+
+gradz_tau0[i]*v3rhosigmatau_1[i]+
+(grad3zzz_rho1[i]+
+grad3yyz_rho1[i]+
+grad3xxz_rho1[i])
+*v3rhosigmalapl_2[i]+
+(grad3zzz_rho0[i]+
+grad3yyz_rho0[i]+
+grad3xxz_rho0[i])
+*v3rhosigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho1[i])
+*v3rhosigma2_3[i]+
+(gradz_rho1[i]*grad2zz_rho0[i]+
+gradz_rho0[i]*grad2zz_rho1[i]+
+grady_rho1[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yz_rho1[i]+
+gradx_rho1[i]*grad2xz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho1[i])
+*v3rhosigma2_2[i]+
+2*(gradz_rho0[i]*grad2zz_rho0[i]+
+grady_rho0[i]*grad2yz_rho0[i]+
+gradx_rho0[i]*grad2xz_rho0[i])
+*v3rhosigma2_1[i]-
+gradz_rho0[i]*v3rho2sigma_4[i]+
+gradz_rho1[i]*v3rho2sigma_4[i]+
+gradz_rho0[i]*v3rho2sigma_1[i])
+)
+-
+(rho0[i]-
+rho1[i])
+*(grad2yy_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*grad2yy_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
++
+grady_rho1[i]*(-
+grady_tau1[i]*v3rhosigmatau_10[i]-
+grady_tau0[i]*v3rhosigmatau_9[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_8[i]-
+grady_rho1[i]*v3rho2sigma_8[i]+
+grady_tau1[i]*v3rhosigmatau_4[i]+
+grady_tau0[i]*v3rhosigmatau_3[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_2[i]-
+grady_rho0[i]*v3rho2sigma_5[i]+
+grady_rho1[i]*v3rho2sigma_5[i]+
+grady_rho0[i]*v3rho2sigma_2[i])
++
+2*grady_rho0[i]*(-
+grady_tau1[i]*v3rhosigmatau_8[i]-
+grady_tau0[i]*v3rhosigmatau_7[i]-
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_8[i]-
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_7[i]-
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_9[i]-
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_8[i]-
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_7[i]-
+grady_rho1[i]*v3rho2sigma_7[i]+
+grady_tau1[i]*v3rhosigmatau_2[i]+
+grady_tau0[i]*v3rhosigmatau_1[i]+
+(grad3yzz_rho1[i]+
+grad3yyy_rho1[i]+
+grad3xxy_rho1[i])
+*v3rhosigmalapl_2[i]+
+(grad3yzz_rho0[i]+
+grad3yyy_rho0[i]+
+grad3xxy_rho0[i])
+*v3rhosigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho1[i])
+*v3rhosigma2_3[i]+
+(gradz_rho1[i]*grad2yz_rho0[i]+
+gradz_rho0[i]*grad2yz_rho1[i]+
+grady_rho1[i]*grad2yy_rho0[i]+
+grady_rho0[i]*grad2yy_rho1[i]+
+gradx_rho1[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho1[i])
+*v3rhosigma2_2[i]+
+2*(gradz_rho0[i]*grad2yz_rho0[i]+
+grady_rho0[i]*grad2yy_rho0[i]+
+gradx_rho0[i]*grad2xy_rho0[i])
+*v3rhosigma2_1[i]-
+grady_rho0[i]*v3rho2sigma_4[i]+
+grady_rho1[i]*v3rho2sigma_4[i]+
+grady_rho0[i]*v3rho2sigma_1[i])
+)
+-
+(rho0[i]-
+rho1[i])
+*(grad2xx_rho1[i]*(-
+v2rhosigma_5[i]+
+v2rhosigma_2[i])
++
+2*grad2xx_rho0[i]*(-
+v2rhosigma_4[i]+
+v2rhosigma_1[i])
++
+gradx_rho1[i]*(-
+gradx_tau1[i]*v3rhosigmatau_10[i]-
+gradx_tau0[i]*v3rhosigmatau_9[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_10[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_9[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_11[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_10[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_8[i]-
+gradx_rho1[i]*v3rho2sigma_8[i]+
+gradx_tau1[i]*v3rhosigmatau_4[i]+
+gradx_tau0[i]*v3rhosigmatau_3[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_4[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_3[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_5[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_4[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_2[i]-
+gradx_rho0[i]*v3rho2sigma_5[i]+
+gradx_rho1[i]*v3rho2sigma_5[i]+
+gradx_rho0[i]*v3rho2sigma_2[i])
++
+2*gradx_rho0[i]*(-
+gradx_tau1[i]*v3rhosigmatau_8[i]-
+gradx_tau0[i]*v3rhosigmatau_7[i]-
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_8[i]-
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_7[i]-
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_9[i]-
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_8[i]-
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_7[i]-
+gradx_rho1[i]*v3rho2sigma_7[i]+
+gradx_tau1[i]*v3rhosigmatau_2[i]+
+gradx_tau0[i]*v3rhosigmatau_1[i]+
+(grad3xzz_rho1[i]+
+grad3xyy_rho1[i]+
+grad3xxx_rho1[i])
+*v3rhosigmalapl_2[i]+
+(grad3xzz_rho0[i]+
+grad3xyy_rho0[i]+
+grad3xxx_rho0[i])
+*v3rhosigmalapl_1[i]+
+2*(gradz_rho1[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho1[i])
+*v3rhosigma2_3[i]+
+(gradz_rho1[i]*grad2xz_rho0[i]+
+gradz_rho0[i]*grad2xz_rho1[i]+
+grady_rho1[i]*grad2xy_rho0[i]+
+grady_rho0[i]*grad2xy_rho1[i]+
+gradx_rho1[i]*grad2xx_rho0[i]+
+gradx_rho0[i]*grad2xx_rho1[i])
+*v3rhosigma2_2[i]+
+2*(gradz_rho0[i]*grad2xz_rho0[i]+
+grady_rho0[i]*grad2xy_rho0[i]+
+gradx_rho0[i]*grad2xx_rho0[i])
+*v3rhosigma2_1[i]-
+gradx_rho0[i]*v3rho2sigma_4[i]+
+gradx_rho1[i]*v3rho2sigma_4[i]+
+gradx_rho0[i]*v3rho2sigma_1[i])
+)
+)
+);
+        vgn[i] = (0.125*(2*vtau_2[i]+
+            2*vtau_1[i]+
+            (tau0[i]-
+            tau1[i])
+            *(-
+            v2tau2_3[i]+
+            v2tau2_2[i])
+            +
+            (tau0[i]-
+            tau1[i])
+            *(-
+            v2tau2_2[i]+
+            v2tau2_1[i])
+            +
+            (grad2zz_rho0[i]-
+            grad2zz_rho1[i]+
+            grad2yy_rho0[i]-
+            grad2yy_rho1[i]+
+            grad2xx_rho0[i]-
+            grad2xx_rho1[i])
+            *(-
+            v2lapltau_4[i]+
+            v2lapltau_2[i])
+            +
+            (grad2zz_rho0[i]-
+            grad2zz_rho1[i]+
+            grad2yy_rho0[i]-
+            grad2yy_rho1[i]+
+            grad2xx_rho0[i]-
+            grad2xx_rho1[i])
+            *(-
+            v2lapltau_3[i]+
+            v2lapltau_1[i])
+            +
+            (gradz_rho0[i]-
+            gradz_rho1[i])
+            *(gradz_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            gradz_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            +
+            (grady_rho0[i]-
+            grady_rho1[i])
+            *(grady_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            grady_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            +
+            (gradx_rho0[i]-
+            gradx_rho1[i])
+            *(gradx_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            gradx_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            +
+            (gradz_rho0[i]-
+            gradz_rho1[i])
+            *(gradz_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            gradz_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (grady_rho0[i]-
+            grady_rho1[i])
+            *(grady_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            grady_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (gradx_rho0[i]-
+            gradx_rho1[i])
+            *(gradx_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            gradx_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (rho0[i]-
+            rho1[i])
+            *(-
+            v2rhotau_4[i]+
+            v2rhotau_2[i])
+            +
+            (rho0[i]-
+            rho1[i])
+            *(-
+            v2rhotau_3[i]+
+            v2rhotau_1[i])
+            )
+            );
+
+        vgs[i] = (0.125*(-
+            4*vtau_2[i]+
+            4*vtau_1[i]+
+            (tau0[i]-
+            tau1[i])
+            *(v2tau2_3[i]-
+            v2tau2_2[i])
+            +
+            (tau0[i]-
+            tau1[i])
+            *(-
+            v2tau2_2[i]+
+            v2tau2_1[i])
+            +
+            (grad2zz_rho0[i]-
+            grad2zz_rho1[i]+
+            grad2yy_rho0[i]-
+            grad2yy_rho1[i]+
+            grad2xx_rho0[i]-
+            grad2xx_rho1[i])
+            *(v2lapltau_4[i]-
+            v2lapltau_2[i])
+            +
+            (grad2zz_rho0[i]-
+            grad2zz_rho1[i]+
+            grad2yy_rho0[i]-
+            grad2yy_rho1[i]+
+            grad2xx_rho0[i]-
+            grad2xx_rho1[i])
+            *(-
+            v2lapltau_3[i]+
+            v2lapltau_1[i])
+            -
+            (gradz_rho0[i]-
+            gradz_rho1[i])
+            *(gradz_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            gradz_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            -
+            (grady_rho0[i]-
+            grady_rho1[i])
+            *(grady_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            grady_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            -
+            (gradx_rho0[i]-
+            gradx_rho1[i])
+            *(gradx_rho1[i]*(-
+            2*v2sigmatau_6[i]+
+            v2sigmatau_4[i])
+            -
+            gradx_rho0[i]*(v2sigmatau_4[i]-
+            2*v2sigmatau_2[i])
+            )
+            +
+            (gradz_rho0[i]-
+            gradz_rho1[i])
+            *(gradz_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            gradz_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (grady_rho0[i]-
+            grady_rho1[i])
+            *(grady_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            grady_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (gradx_rho0[i]-
+            gradx_rho1[i])
+            *(gradx_rho1[i]*(-
+            2*v2sigmatau_5[i]+
+            v2sigmatau_3[i])
+            -
+            gradx_rho0[i]*(v2sigmatau_3[i]-
+            2*v2sigmatau_1[i])
+            )
+            +
+            (rho0[i]-
+            rho1[i])
+            *(v2rhotau_4[i]-
+            v2rhotau_2[i])
+            +
+            (rho0[i]-
+            rho1[i])
+            *(-
+            v2rhotau_3[i]+
+            v2rhotau_1[i])
+            )
+            );
+    }
+
+    }
