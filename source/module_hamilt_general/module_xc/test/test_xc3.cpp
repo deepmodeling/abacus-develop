@@ -48,7 +48,7 @@ class XCTest_GRADCORR : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            ucell.cal_ux();
 
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];

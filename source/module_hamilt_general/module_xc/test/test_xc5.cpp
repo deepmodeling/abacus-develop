@@ -44,7 +44,7 @@ class XCTest_VXC : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            ucell.cal_ux();
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -142,7 +142,7 @@ class XCTest_VXC_Libxc : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            ucell.cal_ux();
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -240,7 +240,7 @@ class XCTest_VXC_meta : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            ucell.cal_ux();
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);

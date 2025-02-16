@@ -22,7 +22,8 @@ add_library(
     NCLibxc/interface_to_libxc.cpp
     NCLibxc/interface_to_libxc.h
     NCLibxc/LebedevGrid.cpp
-    xc_functional_NCLibxc_gga.cpp
+    NCLibxc/FibonacciGrid.cpp
+    NCLibxc/FibonacciGrid.h
 )
 
 if(ENABLE_COVERAGE)

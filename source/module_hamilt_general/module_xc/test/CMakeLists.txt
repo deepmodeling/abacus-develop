@@ -43,6 +43,7 @@ AddTest(
     ../../../module_base/libm/branred.cpp
     ../../../module_base/libm/sincos.cpp
     ../../../module_base/blas_connector.cpp
+    ../../../module_basis/module_pw/module_fft/fft_base.cpp
     ../../../module_basis/module_pw/module_fft/fft_bundle.cpp
     ../../../module_basis/module_pw/module_fft/fft_cpu.cpp
     ${FFT_SRC}
@@ -88,6 +89,7 @@ AddTest(
     ../../../module_base/timer.cpp
     ../../../module_base/libm/branred.cpp
     ../../../module_base/libm/sincos.cpp
+    ../../../module_basis/module_pw/module_fft/fft_base.cpp
     ../../../module_basis/module_pw/module_fft/fft_bundle.cpp
     ../../../module_basis/module_pw/module_fft/fft_cpu.cpp
     ${FFT_SRC}

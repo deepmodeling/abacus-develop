@@ -21,12 +21,6 @@
 #include "module_cell/unitcell.h"
 
 
-// for multi-collinear approach
-using Matrix2x2 = std::array<std::array<std::complex<double>, 2>, 2>;
-std::vector<std::array<double, 4>> MakeAngularGrid(int grid_level);
-
-#include <map> // added by jghan, 2024-10-10
-
 
 class XC_Functional
 {
@@ -87,10 +81,6 @@ class XC_Functional
 
 	//exx_hybrid_alpha for mixing exx in hybrid functional:
 	static double hybrid_alpha;
-
-	// added by jghan, 2024-07-07
-	// as a scaling factor for different xc-functionals
-	static std::map<int, double> scaling_factor_xc;
 
 	public:
 	static std::vector<int> get_func_id() { return func_id; }
@@ -174,7 +164,7 @@ class XC_Functional
                          ModulePW::PW_Basis* rhopw,
                          const UnitCell* ucell,
                          std::vector<double>& stress_gga,
-                         const bool is_stress = false);
+                         const bool is_stress = 0);
 	template <typename T, typename Device,
           typename Real = typename GetTypeReal<T>::type>
 	static void grad_wfc(
@@ -320,15 +310,7 @@ class XC_Functional
 	static void hcth(const double rho, const double grho, double &sx, double &v1x, double &v2x);
 	static void pwcorr(const double r, const double c[], double &g, double &dg);
 
-//-------------------
-// xc_functional_NCLibxc_gga.cpp
-//-------------------
-// This file is for implementing multi-collinear appraoch for GGA functionals.
-    static void postlibxc_gga(int xc_id, const std::vector<double>& rho_up, const std::vector<double>& rho_down, 
-					std::vector<double>& e, std::vector<double>& v1, std::vector<double>& v2, 
-					std::vector<double>& f1, std::vector<double>& f2, std::vector<double>& f3,const Charge* const chr,const double tpiba);
-	static std::pair<std::vector<double>, std::vector<Matrix2x2>> gga_mc(int xc_id, const std::vector<double>& n, 
-                                                              const std::vector<double>& mx, const std::vector<double>& my, const std::vector<double>& mz,const Charge* const chr,const double tpiba);
+
 
 };
 
