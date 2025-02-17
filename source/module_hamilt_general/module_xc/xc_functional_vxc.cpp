@@ -179,7 +179,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional::v_xc(
     if (PARAM.inp.nspin == 4 && PARAM.inp.multicolin)
     { // noncollinear case added by Xiaoyu Zhang, Peking University, 2024.10.02.  multicollinear method for lda Since NCLibxc needs libxc, this part codes will not be used.
 
-        std::cerr << "Error: Multi-collinear approach does not support running without Libxc." << std::endl;
+        ModuleBase::WARNING_QUIT("v_xc","NCXC cannot be used without libxc");
         std::exit(EXIT_FAILURE);
     }
    
