@@ -1,7 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
-#include <FibonacciGrid.h>
+#include "FibonacciGrid.h"
 
 namespace NCXC {
 
