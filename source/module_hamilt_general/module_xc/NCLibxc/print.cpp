@@ -1,6 +1,9 @@
 #include "NCLibxc.h"
 #include <iostream>
 #include <fstream>
+
+namespace NCXC{
+
 ///////////////////////////////////////////////////////////////////////////////////
 // print message and citation of the program
 // Function to print message and citation
@@ -16,4 +19,7 @@ void NCLibxc::print_NCLibxc()
     {
         std::cerr << "Unable to open log file." << std::endl;
     }
+}
+
+
 }

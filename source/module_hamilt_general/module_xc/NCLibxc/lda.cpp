@@ -3,6 +3,7 @@
 #include <vector>
 #include <xc.h>
 
+namespace NCXC{
 
 ///////////////////////////////////////////////////////////////////////////////////lda
 
@@ -42,3 +43,6 @@ void NCLibxc::postlibxc_lda(int xc_id, const std::vector<double>& rho_up, const 
         f3[i] = v2rho2_3[i] ; 
     }
 }
+
+
+}// end of namespace NCXC

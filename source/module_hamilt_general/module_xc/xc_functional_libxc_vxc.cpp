@@ -17,6 +17,8 @@
 // ...existing code...
 #include <iomanip>
 
+using namespace NCXC;
+
 
 std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		// Peize Lin update for nspin==4 at 2023.01.14
         const std::vector<int> &func_id,

@@ -6,7 +6,9 @@
 #include <complex>
 #include <utility>
 
-// 定义 2x2 复数矩阵类型
+namespace NCXC {
+
+// define 2*2 complex matrix
 using Matrix2x2 = std::array<std::array<std::complex<double>, 2>, 2>;
 
 class NCLibxc {
@@ -264,10 +266,13 @@ static std::vector<double> gga_torque(int xc_id, const std::vector<double>& n,
 
     //xc local torque from gga
     static void gga_local_torque_test();
+
+    // xc local torque and xc potential well-defined limit from gga
+    static void gga_deri_limit();
 };
 
 // 声明 MakeAngularGrid 函数
 std::vector<std::array<double, 4>> MakeAngularGrid(int grid_level);
 
-
+}
 #endif // NCLIBXC_H

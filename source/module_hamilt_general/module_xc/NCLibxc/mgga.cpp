@@ -13,6 +13,8 @@
 #include <stdexcept>
 #include <fstream>
 
+namespace NCXC{
+
 void NCLibxc::postlibxc_mgga(int xc_id, 
     const std::vector<double>& rho0, 
     const std::vector<double>& rho1, 
@@ -17387,3 +17389,5 @@ gradx_rho0[i]*v3rho2sigma_1[i])
     }
 
     }
+
+} //end of namespace NCXC   

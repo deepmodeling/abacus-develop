@@ -1,7 +1,7 @@
 #include "NCLibxc.h"
 #include <iostream>
 #include <iomanip>
-
+namespace NCXC {
 ///////////////////////////////////////////////////////////////////////////////////
 // collinear limit test for GGA
 void NCLibxc::gga_collinear_test()
@@ -640,4 +640,178 @@ void NCLibxc::gga_local_torque_test()
                   << torque[3*i+1] << ", " 
                   << torque[3*i+2] << ")" << std::endl;
     }
+}
+
+// xc local torque and xc potential from gga, prove well-defined torque and potential
+void NCLibxc::gga_deri_limit()
+{
+    // We now vary lambda from 1.0 down to 1e-20
+    int xc_id = 106;
+    std::complex<double> twoi(0.0, 2.0);
+    std::complex<double> two(2.0, 0.0);
+    for (int i = 0; i <= 20; ++i)
+    {
+        double lambda = std::pow(10.0, -static_cast<double>(i));
+
+        // We only need one point
+        std::vector<double> n (1, 2.0);
+        std::vector<double> mx(1, lambda);
+        std::vector<double> my(1, 0.1*lambda);
+        std::vector<double> mz(1, 0.01 * lambda);
+
+        // All gradients/derivatives set to 0.01
+        std::vector<double> gradx_n(1, 0.01), grady_n(1, 0.01), gradz_n(1, 0.01);
+        std::vector<double> gradx_mx(1, 0.01), grady_mx(1, 0.01), gradz_mx(1, 0.01);
+        std::vector<double> gradx_my(1, 0.01), grady_my(1, 0.01), gradz_my(1, 0.01);
+        std::vector<double> gradx_mz(1, 0.01), grady_mz(1, 0.01), gradz_mz(1, 0.01);
+
+        std::vector<double> grad2xx_n(1, 0.01), grad2yy_n(1, 0.01), grad2zz_n(1, 0.01);
+        std::vector<double> grad2xy_n(1, 0.01), grad2yz_n(1, 0.01), grad2xz_n(1, 0.01);
+        std::vector<double> grad2xx_mx(1, 0.01), grad2yy_mx(1, 0.01), grad2zz_mx(1, 0.01);
+        std::vector<double> grad2xy_mx(1, 0.01), grad2yz_mx(1, 0.01), grad2xz_mx(1, 0.01);
+        std::vector<double> grad2xx_my(1, 0.01), grad2yy_my(1, 0.01), grad2zz_my(1, 0.01);
+        std::vector<double> grad2xy_my(1, 0.01), grad2yz_my(1, 0.01), grad2xz_my(1, 0.01);
+        std::vector<double> grad2xx_mz(1, 0.01), grad2yy_mz(1, 0.01), grad2zz_mz(1, 0.01);
+        std::vector<double> grad2xy_mz(1, 0.01), grad2yz_mz(1, 0.01), grad2xz_mz(1, 0.01);
+
+        std::vector<double> grad3xxx_n(1, 0.01), grad3xxy_n(1, 0.01), grad3xxz_n(1, 0.01);
+        std::vector<double> grad3xyy_n(1, 0.01), grad3xyz_n(1, 0.01), grad3xzz_n(1, 0.01);
+        std::vector<double> grad3yyy_n(1, 0.01), grad3yyz_n(1, 0.01), grad3yzz_n(1, 0.01);
+        std::vector<double> grad3zzz_n(1, 0.01);
+
+        std::vector<double> grad3xxx_mx(1, 0.01), grad3xxy_mx(1, 0.01), grad3xxz_mx(1, 0.01);
+        std::vector<double> grad3xyy_mx(1, 0.01), grad3xyz_mx(1, 0.01), grad3xzz_mx(1, 0.01);
+        std::vector<double> grad3yyy_mx(1, 0.01), grad3yyz_mx(1, 0.01), grad3yzz_mx(1, 0.01);
+        std::vector<double> grad3zzz_mx(1, 0.01);
+
+        std::vector<double> grad3xxx_my(1, 0.01), grad3xxy_my(1, 0.01), grad3xxz_my(1, 0.01);
+        std::vector<double> grad3xyy_my(1, 0.01), grad3xyz_my(1, 0.01), grad3xzz_my(1, 0.01);
+        std::vector<double> grad3yyy_my(1, 0.01), grad3yyz_my(1, 0.01), grad3yzz_my(1, 0.01);
+        std::vector<double> grad3zzz_my(1, 0.01);
+
+        std::vector<double> grad3xxx_mz(1, 0.01), grad3xxy_mz(1, 0.01), grad3xxz_mz(1, 0.01);
+        std::vector<double> grad3xyy_mz(1, 0.01), grad3xyz_mz(1, 0.01), grad3xzz_mz(1, 0.01);
+        std::vector<double> grad3yyy_mz(1, 0.01), grad3yyz_mz(1, 0.01), grad3yzz_mz(1, 0.01);
+        std::vector<double> grad3zzz_mz(1, 0.01);
+
+        std::vector<double> grad4xxxx_n(1, 0.01), grad4xxxy_n(1, 0.01), grad4xxxz_n(1, 0.01);
+        std::vector<double> grad4xxyy_n(1, 0.01), grad4xxyz_n(1, 0.01), grad4xxzz_n(1, 0.01);
+        std::vector<double> grad4xyyy_n(1, 0.01), grad4xyyz_n(1, 0.01), grad4xyzz_n(1, 0.01);
+        std::vector<double> grad4xzzz_n(1, 0.01), grad4yyyy_n(1, 0.01), grad4yyyz_n(1, 0.01);
+        std::vector<double> grad4yyzz_n(1, 0.01), grad4yzzz_n(1, 0.01), grad4zzzz_n(1, 0.01);
+
+        std::vector<double> grad4xxxx_mx(1, 0.01), grad4xxxy_mx(1, 0.01), grad4xxxz_mx(1, 0.01);
+        std::vector<double> grad4xxyy_mx(1, 0.01), grad4xxyz_mx(1, 0.01), grad4xxzz_mx(1, 0.01);
+        std::vector<double> grad4xyyy_mx(1, 0.01), grad4xyyz_mx(1, 0.01), grad4xyzz_mx(1, 0.01);
+        std::vector<double> grad4xzzz_mx(1, 0.01), grad4yyyy_mx(1, 0.01), grad4yyyz_mx(1, 0.01);
+        std::vector<double> grad4yyzz_mx(1, 0.01), grad4yzzz_mx(1, 0.01), grad4zzzz_mx(1, 0.01);
+
+        std::vector<double> grad4xxxx_my(1, 0.01), grad4xxxy_my(1, 0.01), grad4xxxz_my(1, 0.01);
+        std::vector<double> grad4xxyy_my(1, 0.01), grad4xxyz_my(1, 0.01), grad4xxzz_my(1, 0.01);
+        std::vector<double> grad4xyyy_my(1, 0.01), grad4xyyz_my(1, 0.01), grad4xyzz_my(1, 0.01);
+        std::vector<double> grad4xzzz_my(1, 0.01), grad4yyyy_my(1, 0.01), grad4yyyz_my(1, 0.01);
+        std::vector<double> grad4yyzz_my(1, 0.01), grad4yzzz_my(1, 0.01), grad4zzzz_my(1, 0.01);
+
+        std::vector<double> grad4xxxx_mz(1, 0.01), grad4xxxy_mz(1, 0.01), grad4xxxz_mz(1, 0.01);
+        std::vector<double> grad4xxyy_mz(1, 0.01), grad4xxyz_mz(1, 0.01), grad4xxzz_mz(1, 0.01);
+        std::vector<double> grad4xyyy_mz(1, 0.01), grad4xyyz_mz(1, 0.01), grad4xyzz_mz(1, 0.01);
+        std::vector<double> grad4xzzz_mz(1, 0.01), grad4yyyy_mz(1, 0.01), grad4yyyz_mz(1, 0.01);
+        std::vector<double> grad4yyzz_mz(1, 0.01), grad4yzzz_mz(1, 0.01), grad4zzzz_mz(1, 0.01);
+
+        // Compute local torque
+        auto torque = gga_torque(
+            xc_id, n, mx, my, mz,
+            gradx_n, grady_n, gradz_n,
+            gradx_mx, grady_mx, gradz_mx,
+            gradx_my, grady_my, gradz_my,
+            gradx_mz, grady_mz, gradz_mz,
+            grad2xx_n, grad2yy_n, grad2zz_n, grad2xy_n, grad2yz_n, grad2xz_n,
+            grad2xx_mx, grad2yy_mx, grad2zz_mx, grad2xy_mx, grad2yz_mx, grad2xz_mx,
+            grad2xx_my, grad2yy_my, grad2zz_my, grad2xy_my, grad2yz_my, grad2xz_my,
+            grad2xx_mz, grad2yy_mz, grad2zz_mz, grad2xy_mz, grad2yz_mz, grad2xz_mz,
+            grad3xxx_n, grad3xxy_n, grad3xxz_n, grad3xyy_n, grad3xyz_n, grad3xzz_n,
+            grad3yyy_n, grad3yyz_n, grad3yzz_n, grad3zzz_n,
+            grad3xxx_mx, grad3xxy_mx, grad3xxz_mx, grad3xyy_mx, grad3xyz_mx, grad3xzz_mx,
+            grad3yyy_mx, grad3yyz_mx, grad3yzz_mx, grad3zzz_mx,
+            grad3xxx_my, grad3xxy_my, grad3xxz_my, grad3xyy_my, grad3xyz_my, grad3xzz_my,
+            grad3yyy_my, grad3yyz_my, grad3yzz_my, grad3zzz_my,
+            grad3xxx_mz, grad3xxy_mz, grad3xxz_mz, grad3xyy_mz, grad3xyz_mz, grad3xzz_mz,
+            grad3yyy_mz, grad3yyz_mz, grad3yzz_mz, grad3zzz_mz,
+            grad4xxxx_n, grad4xxxy_n, grad4xxxz_n, grad4xxyy_n, grad4xxyz_n, grad4xxzz_n,
+            grad4xyyy_n, grad4xyyz_n, grad4xyzz_n, grad4xzzz_n, grad4yyyy_n, grad4yyyz_n,
+            grad4yyzz_n, grad4yzzz_n, grad4zzzz_n,
+            grad4xxxx_mx, grad4xxxy_mx, grad4xxxz_mx, grad4xxyy_mx, grad4xxyz_mx, grad4xxzz_mx,
+            grad4xyyy_mx, grad4xyyz_mx, grad4xyzz_mx, grad4xzzz_mx, grad4yyyy_mx, grad4yyyz_mx,
+            grad4yyzz_mx, grad4yzzz_mx, grad4zzzz_mx,
+            grad4xxxx_my, grad4xxxy_my, grad4xxxz_my, grad4xxyy_my, grad4xxyz_my, grad4xxzz_my,
+            grad4xyyy_my, grad4xyyz_my, grad4xyzz_my, grad4xzzz_my, grad4yyyy_my, grad4yyyz_my,
+            grad4yyzz_my, grad4yzzz_my, grad4zzzz_my,
+            grad4xxxx_mz, grad4xxxy_mz, grad4xxxz_mz, grad4xxyy_mz, grad4xxyz_mz, grad4xxzz_mz,
+            grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz, grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
+            grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
+        );
+
+        // Compute E and V using gga_mc
+        auto [energy, potential] = gga_mc(
+            xc_id, n, mx, my, mz,
+            gradx_n, grady_n, gradz_n,
+            gradx_mx, grady_mx, gradz_mx,
+            gradx_my, grady_my, gradz_my,
+            gradx_mz, grady_mz, gradz_mz,
+            grad2xx_n, grad2yy_n, grad2zz_n, grad2xy_n, grad2yz_n, grad2xz_n,
+            grad2xx_mx, grad2yy_mx, grad2zz_mx, grad2xy_mx, grad2yz_mx, grad2xz_mx,
+            grad2xx_my, grad2yy_my, grad2zz_my, grad2xy_my, grad2yz_my, grad2xz_my,
+            grad2xx_mz, grad2yy_mz, grad2zz_mz, grad2xy_mz, grad2yz_mz, grad2xz_mz,
+            grad3xxx_n, grad3xxy_n, grad3xxz_n, grad3xyy_n, grad3xyz_n, grad3xzz_n,
+            grad3yyy_n, grad3yyz_n, grad3yzz_n, grad3zzz_n,
+            grad3xxx_mx, grad3xxy_mx, grad3xxz_mx, grad3xyy_mx, grad3xyz_mx, grad3xzz_mx,
+            grad3yyy_mx, grad3yyz_mx, grad3yzz_mx, grad3zzz_mx,
+            grad3xxx_my, grad3xxy_my, grad3xxz_my, grad3xyy_my, grad3xyz_my, grad3xzz_my,
+            grad3yyy_my, grad3yyz_my, grad3yzz_my, grad3zzz_my,
+            grad3xxx_mz, grad3xxy_mz, grad3xxz_mz, grad3xyy_mz, grad3xyz_mz, grad3xzz_mz,
+            grad3yyy_mz, grad3yyz_mz, grad3yzz_mz, grad3zzz_mz,
+            grad4xxxx_n, grad4xxxy_n, grad4xxxz_n, grad4xxyy_n, grad4xxyz_n, grad4xxzz_n,
+            grad4xyyy_n, grad4xyyz_n, grad4xyzz_n, grad4xzzz_n, grad4yyyy_n, grad4yyyz_n,
+            grad4yyzz_n, grad4yzzz_n, grad4zzzz_n,
+            grad4xxxx_mx, grad4xxxy_mx, grad4xxxz_mx, grad4xxyy_mx, grad4xxyz_mx, grad4xxzz_mx,
+            grad4xyyy_mx, grad4xyyz_mx, grad4xyzz_mx, grad4xzzz_mx, grad4yyyy_mx, grad4yyyz_mx,
+            grad4yyzz_mx, grad4yzzz_mx, grad4zzzz_mx,
+            grad4xxxx_my, grad4xxxy_my, grad4xxxz_my, grad4xxyy_my, grad4xxyz_my, grad4xxzz_my,
+            grad4xyyy_my, grad4xyyz_my, grad4xyzz_my, grad4xzzz_my, grad4yyyy_my, grad4yyyz_my,
+            grad4yyzz_my, grad4yzzz_my, grad4zzzz_my,
+            grad4xxxx_mz, grad4xxxy_mz, grad4xxxz_mz, grad4xxyy_mz, grad4xxyz_mz, grad4xxzz_mz,
+            grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz, grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
+            grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
+        );
+
+        // Print results
+        std::cout << std::fixed << std::setprecision(30);
+        std::cout << "For lambda=" << lambda << ":\n";
+
+        // Torque
+        std::cout << "Torque: ("
+                  << torque[0] << ", " 
+                  << torque[1] << ", "
+                  << torque[2] << ")" << std::endl;
+
+        // Energy
+        std::cout << "E = " << n[0]*energy[0] << std::endl;
+        
+
+        // Potential V: 2x2 matrix
+        const auto& mat = potential[0];
+        double V0 = std::real((mat[0][0]+mat[1][1])/two);
+        double V1 = std::real((mat[0][1]+mat[1][0])/two);
+        double V2 = std::real((mat[1][0]-mat[0][1])/twoi); 
+        double V3 = std::real((mat[0][0] - mat[1][1]) / two);
+        std::cout << "DE/Dn =" << V0
+                    << ", DE/Dmx = " << V1
+                    << ", DE/Dmy = " << V2
+                    << ", DE/Dmz = " << V3 << std::endl;
+        
+
+        std::cout << std::endl;
+    }
+}
+
 }

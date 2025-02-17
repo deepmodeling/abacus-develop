@@ -7,6 +7,8 @@
 #include <vector>
 #include <stdexcept>
 
+namespace NCXC{
+
 class LibxcInterface
 {
 private:
@@ -405,5 +407,5 @@ std::vector<double> &v4lapltau3_7, std::vector<double> &v4lapltau3_8,
     //void test_ggas_with_lxc();
 
 };
-
+}
 #endif // INTERFACE_TO_LIBXC_H

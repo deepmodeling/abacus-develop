@@ -26,6 +26,8 @@
 
 #include <iomanip>
 
+namespace NCXC {
+
 std::vector<std::array<double, 4>> SphGenOh(int code, double a, double b, double v) {
     std::vector<std::array<double, 4>> g;
 
@@ -6409,6 +6411,9 @@ std::vector<std::array<double, 3>> ConvertToSpherical(const std::vector<std::arr
     }
     return spherical_coords;
 }
+
+
+}// end of namespace
 /*
 // independent test for this file 
 int main() {

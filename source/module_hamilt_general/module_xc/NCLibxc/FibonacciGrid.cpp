@@ -1,10 +1,9 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <FibonacciGrid.h>
 
-struct Point {
-    double x, y, z, w;
-};
+namespace NCXC {
 
 std::vector<Point> fibonacci_sphere(int samples) {
     std::vector<Point> points;
@@ -25,7 +24,7 @@ std::vector<Point> fibonacci_sphere(int samples) {
     }
 
     return points;
-}
+}}
 /*
 int main() {
     int samples = 10;

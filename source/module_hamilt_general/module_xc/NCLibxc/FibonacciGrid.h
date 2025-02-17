@@ -4,10 +4,12 @@
 
 #include <vector>
 
+namespace NCXC {
+
 struct Point {
     double x, y, z, w;
 };
 
 std::vector<Point> fibonacci_sphere(int samples);
-
+}
 #endif // FIBONACCIGRID_H

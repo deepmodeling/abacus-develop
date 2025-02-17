@@ -10,6 +10,8 @@
 #include <stdexcept>
 #include <fstream>
 
+namespace NCXC {
+
 /////////////////////////////////////////////////////////////////////////////////// gga
 
 // post-processing of libxc. get partial derivatives from libxc and integrate them to get the 0th,1st,2nd derivatives of the functional
@@ -37037,3 +37039,5 @@ std::pow(gradx_rho0[i], 4)
 
     
 }
+
+}//end of namespace

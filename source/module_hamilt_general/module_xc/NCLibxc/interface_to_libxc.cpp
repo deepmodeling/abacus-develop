@@ -11,6 +11,8 @@ g++ -std=c++11 -o my_program interface_to_libxc.cpp -I/public1/home/scg0213/soft
 #include <iostream>
 #include <cstdio>
 
+namespace NCXC{
+
 LibxcInterface::LibxcInterface(int xc_id, bool spin_polarized)
 {
     int spin_option = spin_polarized ? XC_POLARIZED : XC_UNPOLARIZED;
@@ -2483,7 +2485,7 @@ mgga_lxc(rho_up,rho_down,sigma_1,sigma_2,sigma_3,lapl_up,lapl_down,tau_up,tau_do
 }
 
   
-
+}//end of namespace NCXC
 
     /////////////////////////////////////////////////////////////
     //meta-GGA START, up to the second derivative

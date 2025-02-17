@@ -17,6 +17,8 @@
 #include <tuple>
 #include "module_parameter/parameter.h"
 
+namespace NCXC{
+
 std::vector<std::array<double, 4>> MakeAngularGrid(int grid_level);
 
 
@@ -758,3 +760,6 @@ std::tuple<std::vector<double>, std::vector<Matrix2x2>, std::vector<Matrix2x2>> 
     }
     return std::make_tuple(E, Vpure, Vtau);
 }
+
+
+}// end of namespace
