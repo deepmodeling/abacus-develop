@@ -7,7 +7,6 @@
 
 #ifdef USE_LIBXC
 #include <xc.h>
-#include <xc_funcs.h>
 #else
 #include "xc_funcs.h"
 #endif	// ifdef USE_LIBXC
