@@ -178,7 +178,7 @@ void NCLibxc::gga_collinear_test()
         int xc_id = 106; // Example XC functional ID
 
         // Call gga_mc
-        auto [E_GGA_MC, V_GGA_MC] = NCLibxc::gga_mc(
+        auto[E_GGA_MC, V_GGA_MC] = NCLibxc::gga_mc(
     xc_id, n, mx, my, mz,
     gradx_n, grady_n, gradz_n,
     gradx_mx, grady_mx, gradz_mx,

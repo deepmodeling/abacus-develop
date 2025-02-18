@@ -148,7 +148,7 @@ set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
 include_directories(${ABACUS_SOURCE_DIR})
 include_directories(${ABACUS_SOURCE_DIR}/module_base/module_container)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_executable(${ABACUS_BIN_NAME} source/main.cpp)
