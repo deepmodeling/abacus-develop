@@ -72,7 +72,6 @@ void PW_Basis::getstartgr()
 {
     if(this->gamma_only)    this->nmaxgr = ( this->npw > (this->nrxx+1)/2 ) ? this->npw : (this->nrxx+1)/2;
     else                    this->nmaxgr = ( this->npw > this->nrxx ) ? this->npw : this->nrxx;
-    this->nmaxgr = (this->nz * this->nst > this->nxy * nplane) ? this->nz * this->nst : this->nxy * nplane;
     
     //---------------------------------------------
 	// sum : starting plane of FFT box.
