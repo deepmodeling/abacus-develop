@@ -111,10 +111,11 @@ void zhemm_(char *side, char *uplo, int *m, int *n,std::complex<double> *alpha,
             std::complex<double> *a,  int *lda,  std::complex<double> *b, int *ldb, std::complex<double> *beta, std::complex<double> *c, int *ldc);
 
 //solving triangular matrix with multiple right hand sides
-void dtrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-            double* alpha, double* a, int *lda, double*b, int *ldb);
-void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-            std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
+// # trsm is included in lapack definitions
+// void dtrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
+//             double* alpha, double* a, int *lda, double*b, int *ldb);
+// void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
+//             std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
 
 }
 

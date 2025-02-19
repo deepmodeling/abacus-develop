@@ -133,10 +133,10 @@ extern "C"
 		std::complex<double> *a,  int *lda,  std::complex<double> *b, int *ldb, std::complex<double> *beta, std::complex<double> *c, int *ldc);
 
 	//solving triangular matrix with multiple right hand sides
-	void dtrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-		double* alpha, double* a, int *lda, double*b, int *ldb);
-	void ztrsm_(char *side, char* uplo, char *transa, char *diag, int *m, int *n,
-	std::complex<double>* alpha, std::complex<double>* a, int *lda, std::complex<double>*b, int *ldb);
+	void dtrsm_(const char *side, const char *uplo, const char *transa, const char *diag, const int *m, const int *n,
+		const double *alpha, const double *a, const int *lda, double *b, const int *ldb);
+	void ztrsm_(const char *side, const char *uplo, const char *transa, const char *diag, const int *m, const int *n,
+		const std::complex<double> *alpha, const std::complex<double> *a, const int *lda, std::complex<double> *b, const int *ldb);
 
 }
 

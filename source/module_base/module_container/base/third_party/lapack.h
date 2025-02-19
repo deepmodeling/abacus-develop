@@ -428,7 +428,26 @@ void geqrf(const int m, const int n, std::complex<double>* A, const int lda, std
 {
     zgeqrf_(&m, &n, A, &lda, tau, work, &lwork, &info);
 }
-
+static inline
+void trsm(char side, char uplo, char transA, char diag, int m, int n, float alpha, const float* A, int lda, float* B, int ldb)
+{
+    strsm_(&side, &uplo, &transA, &diag, &m, &n, &alpha, A, &lda, B, &ldb);
+}
+static inline
+void trsm(char side, char uplo, char transA, char diag, int m, int n, double alpha, const double* A, int lda, double* B, int ldb)
+{
+    dtrsm_(&side, &uplo, &transA, &diag, &m, &n, &alpha, A, &lda, B, &ldb);
+}
+static inline
+void trsm(char side, char uplo, char transA, char diag, int m, int n, std::complex<float> alpha, const std::complex<float>* A, int lda, std::complex<float>* B, int ldb)
+{
+    ctrsm_(&side, &uplo, &transA, &diag, &m, &n, &alpha, A, &lda, B, &ldb);
+}
+static inline
+void trsm(char side, char uplo, char transA, char diag, int m, int n, std::complex<double> alpha, const std::complex<double>* A, int lda, std::complex<double>* B, int ldb)
+{
+    ztrsm_(&side, &uplo, &transA, &diag, &m, &n, &alpha, A, &lda, B, &ldb);
+}
 
 
 } // namespace lapackConnector
