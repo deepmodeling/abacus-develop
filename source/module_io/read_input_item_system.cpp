@@ -285,8 +285,13 @@ void ReadInput::item_system()
         item.annotation = "energy cutoff for wave functions";
         read_sync_double(input.ecutwfc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ecutwfc == 0){ // 0 means no input value
-                if (para.input.basis_type == "lcao")
+            if (para.input.ecutwfc == 0)
+            { // 0 means no input value
+                if (para.input.ecutrho > 0)
+                {
+                    para.input.ecutwfc = para.input.ecutrho / 4.0;
+                }
+                else if (para.input.basis_type == "lcao")
                 {
                     para.input.ecutwfc = 100;
                 }
@@ -323,6 +328,10 @@ void ReadInput::item_system()
             if (para.input.ecutrho / para.input.ecutwfc < 4 - 1e-8)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must >= 4");
+            }
+            if (para.sys.double_grid == true && para.input.basis_type == "lcao")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must = 4 for lcao calculation");
             }
         };
         this->add_item(item);
