@@ -199,6 +199,24 @@ struct lapack_geqrf<T, DEVICE_CPU> {
     }
 };
 
+template <typename T>
+struct lapack_trsm<T, DEVICE_CPU> {
+    void operator()(
+        char side,
+        char uplo,
+        char transA,
+        char diag,
+        int m,
+        int n,
+        T alpha,
+        T* A,
+        int lda,
+        T* B,
+        int ldb)
+    {
+        lapackConnector::trsm(side, uplo, transA, diag, m, n, alpha, A, lda, B, ldb);
+    }
+};
 
 template struct set_matrix<float,  DEVICE_CPU>;
 template struct set_matrix<double, DEVICE_CPU>;

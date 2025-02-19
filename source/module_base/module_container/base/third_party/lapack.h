@@ -124,6 +124,11 @@ void sgeqrf_(const int* m, const int* n, float* a, const int* lda, float* tau, f
 void dgeqrf_(const int* m, const int* n, double* a, const int* lda, double* tau, double* work, const int* lwork, int* info);
 void cgeqrf_(const int* m, const int* n, std::complex<float>* a, const int* lda, std::complex<float>* tau, std::complex<float>* work, const int* lwork, int* info);
 void zgeqrf_(const int* m, const int* n, std::complex<double>* a, const int* lda, std::complex<double>* tau, std::complex<double>* work, const int* lwork, int* info);
+
+void strsm_(const char* side, const char* uplo, const char* transa, const char* diag, const int* m, const int* n, const float* alpha, const float* a, const int* lda, float* b, const int* ldb);
+void dtrsm_(const char* side, const char* uplo, const char* transa, const char* diag, const int* m, const int* n, const double* alpha, const double* a, const int* lda, double* b, const int* ldb);
+void ctrsm_(const char* side, const char* uplo, const char* transa, const char* diag, const int* m, const int* n, const std::complex<float>* alpha, const std::complex<float>* a, const int* lda, std::complex<float>* b, const int* ldb);
+void ztrsm_(const char* side, const char* uplo, const char* transa, const char* diag, const int* m, const int* n, const std::complex<double>* alpha, const std::complex<double>* a, const int* lda, std::complex<double>* b, const int* ldb);
 }
 
 // Class LapackConnector provide the connector to fortran lapack routine.

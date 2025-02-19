@@ -285,6 +285,56 @@ struct lapack_geqrf {
         int lwork);
 };
 
+/**
+ * @brief Functor for solving a system of linear equations with a triangular matrix using LAPACK's TRSM routine.
+ * 
+ * TRSM: triangular solve matrix
+ * Solves one of the following matrix equations:
+ * - op(A) * X = alpha * B
+ * - X * op(A) = alpha * B
+ * where op(A) is either A, A^T, A^H, or A^T.
+ * 
+ */
+template <typename T, typename Device>
+struct lapack_trsm {
+    /**
+     * @brief Solve a system of linear equations with a triangular matrix.
+     * 
+     * Solves one of the following matrix equations:
+     * - op(A) * X = alpha * B
+     * - X * op(A) = alpha * B
+     * where op(A) is either A, A^T, A^H, or A^T.
+     *
+     * @param side Specifies whether op(A) multiplies B from the left or right.
+     *             'L' or 'l' for left, 'R' or 'r' for right.
+     * @param uplo Specifies whether the matrix A is an upper or lower triangular matrix.
+     *             'U' or 'u' for upper, 'L' or 'l' for lower.
+     * @param transA Specifies the form of op(A) to be used in the matrix multiplication.
+     *               'N' or 'n' for no transpose, 'T' or 't' for transpose, 'C' or 'c' for conjugate transpose.
+     * @param diag Specifies whether or not A is unit triangular.
+     *             'U' or 'u' for unit triangular, 'N' or 'n' for non-unit triangular.
+     * @param m The number of rows of the matrix B. m >= 0.
+     * @param n The number of columns of the matrix B. n >= 0.
+     * @param alpha Scalar multiplier applied to op(A) * B.
+     * @param A Pointer to the matrix A.
+     * @param lda Leading dimension of A. lda >= max(1, m) if side == 'L' or lda >= max(1, n) if side == 'R'.
+     * @param B Pointer to the matrix B.
+     * @param ldb Leading dimension of B. ldb >= max(1, m).
+     */
+    void operator()(
+        char side,
+        char uplo,
+        char transA,
+        char diag,
+        int m,
+        int n,
+        T alpha,
+        T* A,
+        int lda,
+        T* B,
+        int ldb);
+};
+
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles
