@@ -183,13 +183,13 @@ struct lapack_getrs<T, DEVICE_CPU> {
 template <typename T>
 struct lapack_geqrf<T, DEVICE_CPU> {
     void operator()(
-        const int m,
-        const int n,
+        int m,
+        int n,
         T* A,
-        const int lda,
+        int lda,
         T* tau,
         T* work,
-        const int lwork)
+        int lwork)
     {
         int info = 0;
         lapackConnector::geqrf(m, n, A, lda, tau, work, lwork, info);
@@ -198,6 +198,7 @@ struct lapack_geqrf<T, DEVICE_CPU> {
         }
     }
 };
+
 
 template struct set_matrix<float,  DEVICE_CPU>;
 template struct set_matrix<double, DEVICE_CPU>;

@@ -249,6 +249,15 @@ struct lapack_getrs {
         const int& ldb);
 };
 
+/**
+ * @brief Functor for performing QR factorization using LAPACK's GEQRF routine.
+ * 
+ * GEQRF: QR factorization
+ * Computes the QR factorization of a general m-by-n matrix A using Householder reflectors.
+ * The factorization has the form
+ *    A = Q * R,
+ * where Q is orthogonal and R is upper triangular.
+ */
 template <typename T, typename Device>
 struct lapack_geqrf {
     /**
@@ -267,13 +276,13 @@ struct lapack_geqrf {
      * @param lwork The size of the workspace array.
      */
     void operator()(
-        const int m,
-        const int n,
+        int m,
+        int n,
         T* A,
-        const int lda,
+        int lda,
         T* tau,
         T* work,
-        const int lwork);
+        int lwork);
 };
 
 
