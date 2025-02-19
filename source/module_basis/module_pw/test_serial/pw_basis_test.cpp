@@ -278,7 +278,7 @@ TEST_F(PWBasisTEST,GetStartGR)
 	EXPECT_EQ(pwb.nrxx,8000);
 	EXPECT_EQ(pwb.nxy,400);
 	EXPECT_EQ(pwb.nplane,20);
-	EXPECT_EQ(pwb.nmaxgr,8000);
+	EXPECT_EQ(pwb.nmaxgr,4000);
 	EXPECT_EQ(pwb.numg[0],3120);
 	EXPECT_EQ(pwb.numr[0],3120);
 	EXPECT_EQ(pwb.startg[0],0);
