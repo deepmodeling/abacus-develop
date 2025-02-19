@@ -249,8 +249,6 @@ struct lapack_getrs {
         const int& ldb);
 };
 
-
-// add geqrf wrapper
 template <typename T, typename Device>
 struct lapack_geqrf {
     /**
@@ -269,14 +267,15 @@ struct lapack_geqrf {
      * @param lwork The size of the workspace array.
      */
     void operator()(
-        const int& m,
-        const int& n,
+        const int m,
+        const int n,
         T* A,
-        const int& lda,
+        const int lda,
         T* tau,
         T* work,
-        const int& lwork);
+        const int lwork);
 };
+
 
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles

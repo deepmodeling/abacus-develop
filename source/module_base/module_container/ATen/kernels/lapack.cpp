@@ -183,13 +183,13 @@ struct lapack_getrs<T, DEVICE_CPU> {
 template <typename T>
 struct lapack_geqrf<T, DEVICE_CPU> {
     void operator()(
-        const int& m,
-        const int& n,
+        const int m,
+        const int n,
         T* A,
-        const int& lda,
+        const int lda,
         T* tau,
         T* work,
-        const int& lwork)
+        const int lwork)
     {
         int info = 0;
         lapackConnector::geqrf(m, n, A, lda, tau, work, lwork, info);
