@@ -75,7 +75,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     std::complex<double>* phase = new std::complex<double>[rhopw->nmaxgr];
 
     // get the phase value in realspace
-    for (int ig = 0; ig < rhopw->nmaxgr; ig++)
+    for (int ig = 0; ig < rhopw->npw; ig++)
     {
         ModuleBase::Vector3<double> delta_G = rhopw->gdirect[ig] - G;
         if (delta_G.norm2() < 1e-10) // rhopw->gdirect[ig] == G
@@ -89,7 +89,7 @@ std::complex<double> unkOverlap_pw::unkdotp_G0(const ModulePW::PW_Basis* rhopw,
     rhopw->recip2real(phase, phase);
     wfcpw->recip2real(&evc[0](ik_L, iband_L, 0), psi_r, ik_L);
 
-    for (int ir = 0; ir < rhopw->nmaxgr; ir++)
+    for (int ir = 0; ir < rhopw->nrxx; ir++)
     {
         psi_r[ir] = psi_r[ir] * phase[ir];
     }
