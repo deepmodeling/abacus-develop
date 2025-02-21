@@ -124,6 +124,7 @@ class H_TDDFT_pw : public PotBase
     static bool is_initialized; // static flag variable, used to ensure initialization only once
 
     static double amp;
+    static vector<double> global_vext_time;
 
     static double bmod;
     static double bvec[3];
