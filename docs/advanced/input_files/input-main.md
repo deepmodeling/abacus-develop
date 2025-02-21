@@ -2488,7 +2488,7 @@ These variables are relevant to electric field and dipole correction
   - True：A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
 
-> Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+> Note: If you do not want any electric field, the parameter `efield_amp` should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
 
 - **Default**: False
 
@@ -3537,19 +3537,29 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
+  `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=
+    \begin{cases}
+        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
+        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
+    \end{cases}
+  $$
 - **Default**: 0.05
 
 ### td_lcut2
 
 - **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
-- **Default**: 0.05
+  `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=
+    \begin{cases}
+        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
+        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
+    \end{cases}
+  $$
+- **Default**: 0.95
 
 ### td_gauss_freq
 
