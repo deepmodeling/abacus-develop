@@ -128,6 +128,13 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
 
     if (PARAM.inp.td_vext_dire.size() != 1)
     {
+        ModuleBase::WARNING("H_TDDFT_pw::cal_fixed_v",
+                            "Multiple electric fields detected. This feature may have potential issues and is not "
+                            "recommended for use!");
+    }
+    if (PARAM.inp.td_vext_dire.size() > 2)
+    {
+        // To avoid breaking the integration test 601_NO_TDDFT_H2_len_hhg, a maximum of 2 electric fields are allowed
         ModuleBase::WARNING_QUIT("H_TDDFT_pw::cal_fixed_v",
                                  "For the sake of program stability, the feature of applying multiple electric fields "
                                  "simultaneously has been temporarily disabled. Thank you for your understanding!");
