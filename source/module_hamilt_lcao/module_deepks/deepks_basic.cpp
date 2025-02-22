@@ -4,6 +4,8 @@
 
 #ifdef __DEEPKS
 #include "deepks_basic.h"
+
+#include "module_base/timer.h"
 #include "module_parameter/parameter.h"
 
 // d(Descriptor) / d(projected density matrix)
@@ -15,6 +17,7 @@ void DeePKS_domain::cal_gevdm(const int nat,
                               std::vector<torch::Tensor>& gevdm)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gevdm");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gevdm");
     // cal gevdm(d(EigenValue(D))/dD)
     int nlmax = inlmax / nat;
     for (int nl = 0; nl < nlmax; ++nl)
@@ -48,12 +51,14 @@ void DeePKS_domain::cal_gevdm(const int nat,
         gevdm.push_back(avmm);
     }
     assert(gevdm.size() == nlmax);
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gevdm");
     return;
 }
 
 void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script::Module& model)
 {
     ModuleBase::TITLE("DeePKS_domain", "load_model");
+    ModuleBase::timer::tick("DeePKS_domain", "load_model");
 
     try
     {
@@ -62,8 +67,10 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
     catch (const c10::Error& e)
     {
         std::cerr << "error loading the model" << std::endl;
+        ModuleBase::timer::tick("DeePKS_domain", "load_model");
         return;
     }
+    ModuleBase::timer::tick("DeePKS_domain", "load_model");
     return;
 }
 
@@ -122,16 +129,17 @@ inline void generate_py_files(const int lmaxd, const int nmaxd, const std::strin
 }
 
 void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
-                                   const int lmaxd,
-                                   const int nmaxd,
-                                   const int inlmax,
-                                   const int des_per_atom,
-                                   const int* inl_l,
-                                   const std::vector<torch::Tensor>& descriptor,
-                                   double** gedm,
-                                   double& E_delta)
+                                          const int lmaxd,
+                                          const int nmaxd,
+                                          const int inlmax,
+                                          const int des_per_atom,
+                                          const int* inl_l,
+                                          const std::vector<torch::Tensor>& descriptor,
+                                          double** gedm,
+                                          double& E_delta)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
 
     LCAO_deepks_io::save_npy_d(nat,
                                des_per_atom,
@@ -157,21 +165,24 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
     std::string cmd = "rm -f cal_edelta_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
+
+    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
+    return;
 }
 
 // obtain from the machine learning model dE_delta/dDescriptor
 // E_delta is also calculated here
 void DeePKS_domain::cal_edelta_gedm(const int nat,
-                             const int lmaxd,
-                             const int nmaxd,
-                             const int inlmax,
-                             const int des_per_atom,
-                             const int* inl_l,
-                             const std::vector<torch::Tensor>& descriptor,
-                             const std::vector<torch::Tensor>& pdm,
-                             torch::jit::script::Module& model_deepks,
-                             double** gedm,
-                             double& E_delta)
+                                    const int lmaxd,
+                                    const int nmaxd,
+                                    const int inlmax,
+                                    const int des_per_atom,
+                                    const int* inl_l,
+                                    const std::vector<torch::Tensor>& descriptor,
+                                    const std::vector<torch::Tensor>& pdm,
+                                    torch::jit::script::Module& model_deepks,
+                                    double** gedm,
+                                    double& E_delta)
 {
     if (PARAM.inp.deepks_equiv)
     {
@@ -179,6 +190,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
         return;
     }
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm");
 
     // forward
     std::vector<torch::jit::IValue> inputs;
@@ -213,6 +225,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
             }
         }
     }
+    ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm");
     return;
 }
 

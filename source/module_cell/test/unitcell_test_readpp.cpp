@@ -215,7 +215,7 @@ TEST_F(UcellTest, ReadCellPP) {
 
 TEST_F(UcellTest, CalMeshx) {
     elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
-    ucell->cal_meshx();
+    elecstate::cal_meshx(ucell->meshx,ucell->atoms,ucell->ntype);
     EXPECT_EQ(ucell->atoms[0].ncpp.msh, 1247);
     EXPECT_EQ(ucell->atoms[1].ncpp.msh, 1165);
     EXPECT_EQ(ucell->meshx, 1247);
@@ -225,7 +225,7 @@ TEST_F(UcellTest, CalNatomwfc1) {
     elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
-    ucell->cal_natomwfc(ofs);
+    elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
     EXPECT_EQ(ucell->atoms[0].ncpp.nchi, 2);
     EXPECT_EQ(ucell->atoms[1].ncpp.nchi, 1);
     EXPECT_EQ(ucell->atoms[0].na, 1);
@@ -239,7 +239,7 @@ TEST_F(UcellTest, CalNatomwfc2) {
     elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
-    ucell->cal_natomwfc(ofs);
+    elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
     EXPECT_EQ(ucell->atoms[0].ncpp.nchi, 2);
     EXPECT_EQ(ucell->atoms[1].ncpp.nchi, 1);
     EXPECT_EQ(ucell->atoms[0].na, 1);
@@ -253,7 +253,7 @@ TEST_F(UcellTest, CalNatomwfc3) {
     elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
-    ucell->cal_natomwfc(ofs);
+    elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
     EXPECT_EQ(ucell->atoms[0].ncpp.nchi, 3);
     EXPECT_EQ(ucell->atoms[1].ncpp.nchi, 1);
     EXPECT_EQ(ucell->atoms[0].na, 1);
@@ -267,7 +267,7 @@ TEST_F(UcellTest, CalNwfc1) {
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9;
-    ucell->cal_nwfc(ofs);
+    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
     EXPECT_EQ(ucell->atoms[0].iw2l[8], 2);
     EXPECT_EQ(ucell->atoms[0].iw2n[8], 0);
     EXPECT_EQ(ucell->atoms[0].iw2m[8], 4);
@@ -333,7 +333,7 @@ TEST_F(UcellTest, CalNwfc2) {
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9 * 2;
-    EXPECT_NO_THROW(ucell->cal_nwfc(ofs));
+    EXPECT_NO_THROW(elecstate::cal_nwfc(ofs,*ucell,ucell->atoms));
 }
 
 TEST_F(UcellDeathTest, CheckStructure) {

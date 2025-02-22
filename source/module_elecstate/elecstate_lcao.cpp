@@ -8,7 +8,8 @@
 #include "module_hamilt_lcao/module_gint/grid_technique.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-#include "elecstate_lcao_cal_tau.h"
+
+#include "module_hamilt_lcao/module_gint/temp_gint/gint_interface.h"
 
 #include <vector>
 
@@ -59,13 +60,17 @@ void ElecStateLCAO<std::complex<double>>::psiToRho(const psi::Psi<std::complex<d
     //------------------------------------------------------------
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+#ifndef __NEW_GINT
     this->gint_k->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_k->cal_gint(&inout);
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
 
     if (XC_Functional::get_ked_flag())
     {
-        elecstate::lcao_cal_tau_k(gint_k, this->charge);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();
@@ -92,15 +97,17 @@ void ElecStateLCAO<double>::psiToRho(const psi::Psi<double>& psi)
     //------------------------------------------------------------
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
 
+#ifndef __NEW_GINT 
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
-
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
-
     this->gint_gamma->cal_gint(&inout);
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
 
     if (XC_Functional::get_ked_flag())
     {
-        elecstate::lcao_cal_tau_gamma(gint_gamma, this->charge);
+        this->cal_tau(psi);
     }
 
     this->charge->renormalize_rho();
@@ -158,17 +165,25 @@ void ElecStateLCAO<double>::dmToRho(std::vector<double*> pexsi_DM, std::vector<d
     }
 
     ModuleBase::GlobalFunc::NOTE("Calculate the charge on real space grid!");
+#ifndef __NEW_GINT
     this->gint_gamma->transfer_DM2DtoGrid(this->DM->get_DMR_vector()); // transfer DM2D to DM_grid in gint
     Gint_inout inout(this->charge->rho, Gint_Tools::job_type::rho, PARAM.inp.nspin);
     this->gint_gamma->cal_gint(&inout);
+#else
+    ModuleGint::cal_gint_rho(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->rho);
+#endif
     if (XC_Functional::get_ked_flag())
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
             ModuleBase::GlobalFunc::ZEROS(this->charge->kin_r[0], this->charge->nrxx);
         }
+#ifndef __NEW_GINT
         Gint_inout inout1(this->charge->kin_r, Gint_Tools::job_type::tau);
         this->gint_gamma->cal_gint(&inout1);
+#else
+        ModuleGint::cal_gint_tau(this->DM->get_DMR_vector(), PARAM.inp.nspin, this->charge->kin_r);
+#endif
     }
 
     this->charge->renormalize_rho();

@@ -163,8 +163,8 @@ void ElecState::calculate_weights()
                              this->klist->isk);
         }
 #ifdef __MPI
-        // qianrui fix a bug on 2021-7-21
-        Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, this->f_en.demet);
+        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, this->f_en.demet);
 #endif
     }
     else if (Occupy::fixed_occupations)
@@ -192,16 +192,11 @@ void ElecState::calEBand()
         }
     }
     this->f_en.eband = eband;
-    if (GlobalV::KPAR != 1 && PARAM.inp.esolver_type != "sdft")
-    {
-        //==================================
-        // Reduce all the Energy in each cpu
-        //==================================
-        this->f_en.eband /= GlobalV::NPROC_IN_POOL;
+
 #ifdef __MPI
-        Parallel_Reduce::reduce_all(this->f_en.eband);
+    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, this->f_en.eband);
 #endif
-    }
     return;
 }
 
@@ -253,8 +248,8 @@ void ElecState::init_ks(Charge* chg_in, // pointer for class Charge
     // init nelec_spin with nelec and nupdown
     this->init_nelec_spin();
     // initialize ekb and wg
-    this->ekb.create(nk_in, PARAM.inp.nbands);
-    this->wg.create(nk_in, PARAM.inp.nbands);
+    this->ekb.create(nk_in, PARAM.globalv.nbands_l);
+    this->wg.create(nk_in, PARAM.globalv.nbands_l);
 }
 
 } // namespace elecstate

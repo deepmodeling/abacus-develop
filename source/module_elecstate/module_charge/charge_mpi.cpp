@@ -8,13 +8,8 @@
 #ifdef __MPI
 void Charge::init_chgmpi()
 {
-    if (INTER_POOL != MPI_COMM_NULL)
+    if (KP_WORLD == MPI_COMM_NULL)
     {
-        this->use_intel_pool = true;
-    }
-    else
-    {
-        this->use_intel_pool = false;
         delete[] rec;
         rec = new int[GlobalV::NPROC_IN_POOL];
         delete[] dis;
@@ -33,9 +28,9 @@ void Charge::reduce_diff_pools(double* array_rho) const
 {
     ModuleBase::TITLE("Charge", "reduce_diff_pools");
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
-    if (this->use_intel_pool)
+    if (KP_WORLD != MPI_COMM_NULL)
     {
-        MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, INTER_POOL);
+        MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
     }
     else
     {
@@ -97,11 +92,7 @@ void Charge::reduce_diff_pools(double* array_rho) const
         //==================================
         // Reduce all the rho in each cpu
         //==================================
-        if (PARAM.inp.esolver_type == "sdft") { // qinarui add it temporarily.
-            MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-        } else {
-            MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-}
+        MPI_Allreduce(array_tot_aux, array_tot, this->rhopw->nxyz, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
 
         //=====================================
         // Change the order of rho in each cpu
@@ -118,13 +109,17 @@ void Charge::reduce_diff_pools(double* array_rho) const
         delete[] array_tot;
         delete[] array_tmp;
     }
+    if(PARAM.globalv.all_ks_run && PARAM.inp.bndpar > 1)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, array_rho, this->nrxx, MPI_DOUBLE, MPI_SUM, BP_WORLD);
+    }
     ModuleBase::timer::tick("Charge", "reduce_diff_pools");
 }
 
 void Charge::rho_mpi()
 {
     ModuleBase::TITLE("Charge", "rho_mpi");
-    if (GlobalV::KPAR <= 1) {
+    if (GlobalV::KPAR * PARAM.inp.bndpar <= 1) {
         return;
 }
     ModuleBase::timer::tick("Charge", "rho_mpi");

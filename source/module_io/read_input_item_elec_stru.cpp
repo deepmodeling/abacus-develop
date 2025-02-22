@@ -248,6 +248,7 @@ void ReadInput::item_elec_stru()
             }
         };
         sync_double(input.nupdown);
+        add_bool_bcast(sys.two_fermi);
         this->add_item(item);
     }
     {

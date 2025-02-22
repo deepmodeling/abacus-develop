@@ -15,7 +15,7 @@
 // On output: the contribution is added to \(\text{forcenl}\).
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_us(ModuleBase::matrix& forcenl,
-                                          ModulePW::PW_Basis* rho_basis,
+                                          const ModulePW::PW_Basis* const rho_basis,
                                           const pseudopot_cell_vnl& nlpp,
                                           const elecstate::ElecState& elec,
                                           const UnitCell& ucell)

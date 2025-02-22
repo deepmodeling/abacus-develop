@@ -571,7 +571,8 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         }
     }
     // reduce mag from all k-pools
-    Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
+    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
     // occ has been reduced and calculate mag
     // parameters for orbital charge output
     FmtCore fmt_of_chg("%15.4f");

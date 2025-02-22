@@ -61,7 +61,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
                 if (ModuleIO::read_vdata_palgrid(pgrid,
-                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],
@@ -150,7 +150,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                         // mohan update 2012-02-10, sunliang update 2023-03-09
                         if (ModuleIO::read_vdata_palgrid(
                                 pgrid,
-                                (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                                (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                                 GlobalV::ofs_running,
                                 ssc.str(),
                                 this->kin_r[is],
@@ -223,7 +223,7 @@ void Charge::init_rho(elecstate::efermi& eferm_iout,
                 std::stringstream ssc;
                 ssc << PARAM.globalv.global_readin_dir << "SPIN" << is + 1 << "_CHG.cube";
                 if (ModuleIO::read_vdata_palgrid(pgrid,
-                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_STOGROUP : GlobalV::MY_RANK),
+                    (PARAM.inp.esolver_type == "sdft" ? GlobalV::RANK_IN_BPGROUP : GlobalV::MY_RANK),
                     GlobalV::ofs_running,
                     ssc.str(),
                     this->rho[is],

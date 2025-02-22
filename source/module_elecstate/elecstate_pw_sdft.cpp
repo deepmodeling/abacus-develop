@@ -19,7 +19,7 @@ void ElecStatePW_SDFT<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         setmem_var_op()(this->rho[is], 0, this->charge->nrxx);
     }
 
-    if (GlobalV::MY_STOGROUP == 0)
+    if (PARAM.globalv.ks_run)
     {
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {

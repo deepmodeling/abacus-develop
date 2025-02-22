@@ -22,10 +22,11 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                                       std::vector<hamilt::HContainer<double>*>& phialpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "allocate_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
 
     phialpha.resize(cal_deri ? 4 : 1);
 
-    phialpha[0] = new hamilt::HContainer<double>(pv); // phialpha is always real
+    phialpha[0] = new hamilt::HContainer<double>(ucell.nat); // phialpha is always real
     // Do not use fix_gamma, since it may find wrong matrix for gamma-only case in DeePKS
 
     // cutoff for alpha is same for all types of atoms
@@ -62,8 +63,17 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
                 {
                     continue;
                 }
-
-                hamilt::AtomPair<double> pair(iat, ibt, R_index, pv);
+                // Create virtual atom_begin_row and atom_begin_col for the construction of atom pair
+                // In DeePKS, phialpha is used to save data, so it is safe to do this
+                int atom_begin_row[ucell.nat];
+                int atom_begin_col[ucell.nat];
+                for (int i = 0; i < ucell.nat; ++i)
+                {
+                    atom_begin_row[i] = -1;
+                    atom_begin_col[i] = pv->atom_begin_col[i];
+                }
+                hamilt::AtomPair<double>
+                    pair(iat, ibt, R_index.x, R_index.y, R_index.z, atom_begin_row, atom_begin_col, ucell.nat);
                 // Notice: in AtomPair, the usage is set_size(ncol, nrow)
                 pair.set_size(nw_alpha, atom1->nw * PARAM.globalv.npol);
                 phialpha[0]->insert_pair(pair);
@@ -80,6 +90,7 @@ void DeePKS_domain::allocate_phialpha(const bool& cal_deri,
             phialpha[i] = new hamilt::HContainer<double>(*phialpha[0], nullptr); // copy constructor
         }
     }
+    ModuleBase::timer::tick("DeePKS_domain", "allocate_phialpha");
     return;
 }
 
@@ -206,10 +217,16 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                                    const LCAO_Orbitals& orb,
                                    const Grid_Driver& GridD,
                                    const Parallel_Orbitals* pv,
-                                   std::vector<hamilt::HContainer<double>*>& phialpha)
+                                   std::vector<hamilt::HContainer<double>*>& phialpha,
+                                   const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "check_phialpha");
     ModuleBase::timer::tick("DeePKS_domain", "check_phialpha");
+
+    if (rank != 0)
+    {
+        return;
+    }
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     // same for all types of atoms
@@ -287,6 +304,10 @@ void DeePKS_domain::check_phialpha(const bool& cal_deri,
                     ofs_z << "R : " << R[0] << " " << R[1] << " " << R[2] << std::endl;
                 }
 
+                if (phialpha[0]->find_pair(iat, ibt) == nullptr)
+                {
+                    continue;
+                }
                 const double* data_pointer = phialpha[0]->data(iat, ibt, R);
                 std::vector<double*> grad_pointer(3, nullptr);
                 if (cal_deri)

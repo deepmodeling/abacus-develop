@@ -36,7 +36,7 @@ class PGemmCN
      * @param LDB leading dimension of B in each proc
      * @param nrow number of rows of A or B
      * @param LDC leading dimension of C. C can be C_local or C_global
-     * @param gatherC whether gather C_local to C_global
+     * @param mode 1: gather C_local to C_global, 2:C_local(nrow * ncol_loc), 3:C_global(nrow_loc * ncol)
      */
     void set_dimension(
 #ifdef __MPI
@@ -49,7 +49,7 @@ class PGemmCN
         const int LDB,
         const int nrow,
         const int LDC,
-        const bool gatherC = true);
+        const int mode = 1);
 
     /**
      * @brief calculate C = alpha * A^H * B + beta * C
@@ -67,7 +67,8 @@ class PGemmCN
 
     std::vector<int> colA_loc; ///< [col_nproc] number of columns of A matrix in each proc
     int max_colA = 0;          ///< maximum number of columns of A matrix in all procs
-    std::vector<int> colB_loc; ///<[col_nproc] number of columns of B matrix in each proc
+    std::vector<int> colB_loc; ///< [col_nproc] number of columns of B matrix in each proc
+    int max_colB = 0;          ///< maximum number of columns of B matrix in all procs
 
     std::vector<MPI_Request> requests; ///< MPI request
     std::vector<int> recv_counts;      ///< receive counts for gathering C_local to C_global
@@ -75,6 +76,7 @@ class PGemmCN
     int size_C_local = 0;              ///< size of C_local, which is a local matrix in each proc
     int size_C_global = 0;             ///< size of C_global, which is the global C matrix gathered from all procs
     bool gatherC = true;               ///< whether gather C_local to C_global
+    bool divideCrow = false;           ///< whether divide C_global to C_local
 #endif
     int ncolA = 0; ///< number of columns of A, which is a local matrix in each proc
     int ncolB = 0; ///< number of columns of B, which is a local matrix in each proc
@@ -83,6 +85,14 @@ class PGemmCN
     int LDB = 0;   ///< leading dimension of B in each proc
     int LDC = 0;   ///< leading dimension of C, which can be C_local or C_global
   private:
+    /// @brief for col_nproc == 1
+    void multiply_single(const T alpha, const T* A, const T* B, const T beta, T* C);
+#ifdef __MPI
+    /// @brief for mode = 1 or 2
+    void multiply_col(const T alpha, const T* A, const T* B, const T beta, T* C);
+    /// @brief for mode = 3
+    void multiply_row(const T alpha, const T* A, const T* B, const T beta, T* C);
+#endif
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_dev_op = base_device::memory::delete_memory_op<T, Device>;
     using syncmem_dev_op = base_device::memory::synchronize_memory_op<T, Device, Device>;

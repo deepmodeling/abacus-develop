@@ -46,7 +46,13 @@ void test_deepks::check_phialpha()
                                   overlap_orb_alpha_,
                                   this->ld.phialpha);
 
-    DeePKS_domain::check_phialpha(PARAM.input.cal_force, ucell, ORB, Test_Deepks::GridD, &ParaO, this->ld.phialpha);
+    DeePKS_domain::check_phialpha(PARAM.input.cal_force,
+                                  ucell,
+                                  ORB,
+                                  Test_Deepks::GridD,
+                                  &ParaO,
+                                  this->ld.phialpha,
+                                  0); // 0 for rank
 
     this->compare_with_ref("phialpha.dat", "phialpha_ref.dat");
     this->compare_with_ref("dphialpha_x.dat", "dphialpha_x_ref.dat");
@@ -373,16 +379,16 @@ void test_deepks::check_edelta(std::vector<torch::Tensor>& descriptor)
         ld.allocate_V_delta(ucell.nat, kv.nkstot);
     }
     DeePKS_domain::cal_edelta_gedm(ucell.nat,
-                            this->ld.lmaxd,
-                            this->ld.nmaxd,
-                            this->ld.inlmax,
-                            this->ld.des_per_atom,
-                            this->ld.inl_l,
-                            descriptor,
-                            this->ld.pdm,
-                            this->ld.model_deepks,
-                            this->ld.gedm,
-                            this->ld.E_delta);
+                                   this->ld.lmaxd,
+                                   this->ld.nmaxd,
+                                   this->ld.inlmax,
+                                   this->ld.des_per_atom,
+                                   this->ld.inl_l,
+                                   descriptor,
+                                   this->ld.pdm,
+                                   this->ld.model_deepks,
+                                   this->ld.gedm,
+                                   this->ld.E_delta);
 
     std::ofstream ofs("E_delta.dat");
     ofs << std::setprecision(10) << this->ld.E_delta << std::endl;

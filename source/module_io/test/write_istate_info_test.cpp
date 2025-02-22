@@ -46,6 +46,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     // preconditions
     GlobalV::KPAR = 1;
     PARAM.input.nbands = 4;
+    PARAM.sys.nbands_l = 4;
     PARAM.input.nspin = 1;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
@@ -53,9 +54,9 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
                                 GlobalV::MY_RANK,
                                 PARAM.input.bndpar,
                                 GlobalV::KPAR,
-                                GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
@@ -96,6 +97,7 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
     // preconditions
     GlobalV::KPAR = 1;
     PARAM.input.nbands = 4;
+    PARAM.sys.nbands_l = 4;
     PARAM.input.nspin = 2;
     PARAM.sys.global_out_dir = "./";
     // mpi setting
@@ -103,9 +105,9 @@ TEST_F(IstateInfoTest, OutIstateInfoS2)
                                 GlobalV::MY_RANK,
                                 PARAM.input.bndpar,
                                 GlobalV::KPAR,
-                                GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);

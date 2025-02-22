@@ -96,6 +96,7 @@ class ElecStatePrintTest : public ::testing::Test
         ucell.magnet.tot_magnetization_nc[1] = 4.4;
         ucell.magnet.tot_magnetization_nc[2] = 5.5;
         PARAM.input.ks_solver = "dav";
+        PARAM.sys.log_file = "test.dat";
     }
     void TearDown()
     {
@@ -118,11 +119,11 @@ TEST_F(ElecStatePrintTest, PrintFormat)
 TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
 {
     PARAM.input.nspin = 2;
-    GlobalV::ofs_running.open("running_scf.log", std::ios::out);
+    GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
     elecstate.print_eigenvalue(GlobalV::ofs_running);
     GlobalV::ofs_running.close();
-    ifs.open("running_scf.log", std::ios::in);
+    ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("STATE ENERGY(eV) AND OCCUPATIONS"));
     EXPECT_THAT(str, testing::HasSubstr("NSPIN == 2"));
@@ -135,17 +136,17 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
     EXPECT_THAT(str, testing::HasSubstr("1        40.8171       0.300000"));
     EXPECT_THAT(str, testing::HasSubstr("2        54.4228       0.400000"));
     ifs.close();
-    std::remove("running_scf.log");
+    std::remove("test.dat");
 }
 
 TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
 {
     PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("running_scf.log", std::ios::out);
+    GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
     elecstate.print_eigenvalue(GlobalV::ofs_running);
     GlobalV::ofs_running.close();
-    ifs.open("running_scf.log", std::ios::in);
+    ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("STATE ENERGY(eV) AND OCCUPATIONS"));
     EXPECT_THAT(str, testing::HasSubstr("NSPIN == 4"));
@@ -156,51 +157,52 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
     EXPECT_THAT(str, testing::HasSubstr("1        40.8171       0.300000"));
     EXPECT_THAT(str, testing::HasSubstr("2        54.4228       0.400000"));
     ifs.close();
-    std::remove("running_scf.log");
+    std::remove("test.dat");
 }
 
 TEST_F(ElecStatePrintTest, PrintBand)
 {
     PARAM.input.nspin = 1;
     PARAM.input.nbands = 2;
+    PARAM.sys.nbands_l = 2;
     GlobalV::MY_RANK = 0;
-    GlobalV::ofs_running.open("running_scf.log", std::ios::out);
+    GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
     elecstate.print_band(0, 1, 0);
     GlobalV::ofs_running.close();
-    ifs.open("running_scf.log", std::ios::in);
+    ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     EXPECT_THAT(str, testing::HasSubstr("Energy (eV) & Occupations  for spin=1 K-point=1"));
     EXPECT_THAT(str, testing::HasSubstr("1        13.6057       0.100000"));
     EXPECT_THAT(str, testing::HasSubstr("2        27.2114       0.200000"));
     ifs.close();
-    std::remove("running_scf.log");
+    std::remove("test.dat");
 }
 
 TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
 {
     elecstate.ekb(0, 0) = 1.0e11;
     PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("running_scf.log", std::ios::out);
+    GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate.print_eigenvalue(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();
-    std::remove("running_scf.log");
+    std::remove("test.dat");
 }
 
 TEST_F(ElecStatePrintTest, PrintBandWarning)
 {
     elecstate.ekb(0, 0) = 1.0e11;
     PARAM.input.nspin = 4;
-    GlobalV::ofs_running.open("running_scf.log", std::ios::out);
+    GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
     EXPECT_EXIT(elecstate.print_band(0, 1, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();
-    std::remove("running_scf.log");
+    std::remove("test.dat");
 }
 
 TEST_F(ElecStatePrintTest, PrintEtot)

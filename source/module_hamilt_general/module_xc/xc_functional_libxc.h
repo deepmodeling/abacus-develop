@@ -7,6 +7,7 @@
 #include "module_base/vector3.h"
 
 #include <xc.h>
+#include <xc_funcs.h>
 
 #include <tuple>
 #include <vector>

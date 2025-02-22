@@ -38,6 +38,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                         torch::Tensor& v_delta_precalc)
 {
     ModuleBase::TITLE("DeePKS_domain", "calc_v_delta_precalc");
+    ModuleBase::timer::tick("DeePKS_domain", "calc_v_delta_precalc");
     // timeval t_start;
     // gettimeofday(&t_start,NULL);
 
@@ -79,12 +80,9 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 
                 ModuleBase::Vector3<int> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
 
-                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                 {
-                    if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 for (int ad2 = 0; ad2 < GridD.getAdjacentNum() + 1; ad2++)
@@ -107,12 +105,9 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
 
                     ModuleBase::Vector3<int> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                     {
-                        if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
 
                     for (int iw1 = 0; iw1 < nw1_tot; ++iw1)
@@ -272,6 +267,8 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
     //  gettimeofday(&t_end,NULL);
     //  std::cout<<"calculate v_delta_precalc time:\t"<<(double)(t_end.tv_sec-t_start.tv_sec) +
     //  (double)(t_end.tv_usec-t_start.tv_usec)/1000000.0<<std::endl;
+
+    ModuleBase::timer::tick("DeePKS_domain", "calc_v_delta_precalc");
     return;
 }
 
@@ -332,6 +329,7 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
                                      torch::Tensor& phialpha_out)
 {
     ModuleBase::TITLE("DeePKS_domain", "prepare_phialpha");
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
     constexpr torch::Dtype dtype = std::is_same<TK, double>::value ? torch::kFloat64 : torch::kComplexDouble;
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
@@ -372,12 +370,9 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
 
                 ModuleBase::Vector3<int> dR(GridD.getBox(ad).x, GridD.getBox(ad).y, GridD.getBox(ad).z);
 
-                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
                 {
-                    if (phialpha[0]->find_matrix(iat, ibt, dR.x, dR.y, dR.z) == nullptr)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 // middle loop : all atomic basis on the adjacent atom ad
@@ -448,6 +443,9 @@ void DeePKS_domain::prepare_phialpha(const int nlocal,
     Parallel_Reduce::reduce_all(data_ptr, size);
 
 #endif
+
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_phialpha");
+    return;
 }
 
 template <typename TK>
@@ -501,6 +499,8 @@ void DeePKS_domain::prepare_gevdm(const int nat,
                                   const std::vector<torch::Tensor>& gevdm_in,
                                   torch::Tensor& gevdm_out)
 {
+    ModuleBase::TITLE("DeePKS_domain", "prepare_gevdm");
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
     int nlmax = inlmax / nat;
     int mmax = 2 * lmaxd + 1;
     gevdm_out = torch::zeros({nat, nlmax, mmax, mmax, mmax}, torch::TensorOptions().dtype(torch::kFloat64));
@@ -528,6 +528,9 @@ void DeePKS_domain::prepare_gevdm(const int nat,
         }
     }
     assert(nl == nlmax);
+
+    ModuleBase::timer::tick("DeePKS_domain", "prepare_gevdm");
+    return;
 }
 
 void DeePKS_domain::check_vdp_gevdm(const int nat, const int lmaxd, const int inlmax, const torch::Tensor& gevdm)

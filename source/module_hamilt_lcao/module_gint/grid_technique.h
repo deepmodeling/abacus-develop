@@ -133,7 +133,6 @@ class Grid_Technique : public Grid_MeshBall {
     // atoms on meshball
     void init_atoms_on_grid(const int& ny,
                             const int& nplane,
-                            const int& startz_current,
                             const UnitCell& ucell);
     void init_atoms_on_grid2(const int* index2normal, const UnitCell& ucell);
     // initialize the ijr_info and nnrg
@@ -142,8 +141,7 @@ class Grid_Technique : public Grid_MeshBall {
     void cal_trace_lo(const UnitCell& ucell);
     void check_bigcell(int* ind_bigcell, char* bigcell_on_processor);
     void get_startind(const int& ny,
-                      const int& nplane,
-                      const int& startz_current);
+                      const int& nplane);
 
 #if ((defined __CUDA) /* || (defined __ROCM) */)
   public:

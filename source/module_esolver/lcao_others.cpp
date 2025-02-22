@@ -233,7 +233,13 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
+            DeePKS_domain::check_phialpha(PARAM.inp.cal_force,
+                                          ucell,
+                                          orb_,
+                                          this->gd,
+                                          pv,
+                                          this->ld.phialpha,
+                                          GlobalV::MY_RANK);
         }
     }
 #endif

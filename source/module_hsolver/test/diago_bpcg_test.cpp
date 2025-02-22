@@ -154,7 +154,7 @@ class DiagoBPCGPrepare
                 hpsi_out, ld_psi);
         };
         const int ndim = psi_local.get_current_ngk();
-        bpcg.init_iter(nband, npw, ndim);
+        bpcg.init_iter(nband, nband, npw, ndim);
         std::vector<double> ethr_band(nband, 1e-5);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
         bpcg.diag(hpsi_func, psi_local.get_pointer(), en, ethr_band);
@@ -283,6 +283,7 @@ int main(int argc, char **argv)
 	int nproc_in_pool, kpar=1, mypool, rank_in_pool;
     setupmpi(argc,argv,nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
+    MPI_Comm_split(MPI_COMM_WORLD,myrank,0,&BP_WORLD);
     GlobalV::NPROC_IN_POOL = nproc;
 #else
 	MPI_Init(&argc, &argv);	

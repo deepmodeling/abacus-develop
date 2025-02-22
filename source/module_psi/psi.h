@@ -134,7 +134,7 @@ class Psi
     // solve Range: return(pointer of begin, number of bands or k-points)
     std::tuple<const T*, int> to_range(const Range& range) const;
 
-    const int get_npol() const;
+    int get_npol() const;
 
   private:
     T* psi = nullptr; // avoid using C++ STL

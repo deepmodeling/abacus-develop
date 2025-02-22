@@ -46,158 +46,186 @@ std::string wfc_nao_gen_fname(const int out_type,
     return fn_out;
 }
 
-void wfc_nao_write2file(const std::string &name, const double* ctot, const int nlocal, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void wfc_nao_write2file(const std::string& name,
+                        const double* ctot,
+                        const int nlocal,
+                        const int ik,
+                        const ModuleBase::matrix& ekb,
+                        const ModuleBase::matrix& wg,
+                        const bool& writeBinary,
+                        const bool& append_flag)
 {
     ModuleBase::TITLE("ModuleIO", "write_wfc_nao");
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
 
-    //if (GlobalV::DRANK == 0)
+    int nbands = ekb.nc;
+
+    if (writeBinary)
     {
-        int nbands = ekb.nc;
-        
-        if (writeBinary)
+        Binstream ofs;
+        if (append_flag)
         {
-            Binstream ofs(name, "a");
-            if (!ofs)
-            {
-                ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
-            }
-
-            ofs << nbands;
-            ofs << nlocal;
-
-            for (int i = 0; i < nbands; i++)
-            {
-                ofs << i+1;
-                ofs << ekb(ik, i);
-                ofs << wg(ik, i);
-
-                for (int j = 0; j < nlocal; j++)
-                {
-                    ofs << ctot[i*nlocal + j];
-                }
-            }
-            ofs.close();
+            ofs.open(name, "a");
         }
         else
         {
-            std::ofstream ofs;
-            // if (PARAM.inp.out_app_flag)
-            // {
-            //     ofs.open(name.c_str(), std::ofstream::app);
-            // }
-            // else
-            {   // the default value of `out_app_flag`is true, but usually there's no use to save each step's LCAO wave function.
-                ofs.open(name.c_str());
-            }
-            if (!ofs)
-            {
-                ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
-            }
-            ofs << nbands << " (number of bands)" << std::endl;
-            ofs << nlocal << " (number of orbitals)";
-            ofs << std::setprecision(8);
-            ofs << std::scientific;
-
-            for (int i=0; i<nbands; i++)
-            {
-                // +1 to mean more clearly.
-                // band index start from 1.
-                ofs << "\n" << i+1 << " (band)";
-		    	ofs << "\n" << ekb(ik, i) << " (Ry)";
-		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
-                for (int j=0; j<nlocal; j++)
-                {
-                    if (j % 5 == 0) { ofs << "\n";
-}
-                    ofs << ctot[i*nlocal + j] << " ";
-                }
-            }
-            ofs << std::endl;
-            ofs.close();
+            ofs.open(name, "w");
         }
+        if (!ofs)
+        {
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
+        }
+
+        ofs << nbands;
+        ofs << nlocal;
+
+        for (int i = 0; i < nbands; i++)
+        {
+            ofs << i + 1;
+            ofs << ekb(ik, i);
+            ofs << wg(ik, i);
+
+            for (int j = 0; j < nlocal; j++)
+            {
+                ofs << ctot[i * nlocal + j];
+            }
+        }
+        ofs.close();
+    }
+    else
+    {
+        std::ofstream ofs;
+        if (append_flag)
+        {
+            ofs.open(name.c_str(), std::ofstream::app);
+        }
+        else
+        {
+            ofs.open(name.c_str());
+        }
+        if (!ofs)
+        {
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
+        }
+        ofs << nbands << " (number of bands)" << std::endl;
+        ofs << nlocal << " (number of orbitals)";
+        ofs << std::setprecision(8);
+        ofs << std::scientific;
+
+        for (int i = 0; i < nbands; i++)
+        {
+            // +1 to mean more clearly.
+            // band index start from 1.
+            ofs << "\n" << i + 1 << " (band)";
+            ofs << "\n" << ekb(ik, i) << " (Ry)";
+            ofs << "\n" << wg(ik, i) << " (Occupations)";
+            for (int j = 0; j < nlocal; j++)
+            {
+                if (j % 5 == 0)
+                {
+                    ofs << "\n";
+                }
+                ofs << ctot[i * nlocal + j] << " ";
+            }
+        }
+        ofs << std::endl;
+        ofs.close();
     }
 
     ModuleBase::timer::tick("ModuleIO", "write_wfc_nao");
     return;
 }
 
-void wfc_nao_write2file_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary)
+void wfc_nao_write2file_complex(const std::string& name,
+                                const std::complex<double>* ctot,
+                                const int nlocal,
+                                const int& ik,
+                                const ModuleBase::Vector3<double>& kvec_c,
+                                const ModuleBase::matrix& ekb,
+                                const ModuleBase::matrix& wg,
+                                const bool& writeBinary,
+                                const bool& append_flag)
 {
     ModuleBase::TITLE("ModuleIO","write_wfc_nao_complex");
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
 
-    
-    //if (GlobalV::DRANK==0)
+    int nbands = ekb.nc;
+
+    if (writeBinary)
     {
-        int nbands = ekb.nc;
-
-        if (writeBinary)
+        Binstream ofs;
+        if (append_flag)
         {
-            Binstream ofs(name, "a");
-            if (!ofs)
-            {
-                ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
-            }
-            ofs << ik+1;
-            ofs << kvec_c.x;
-            ofs << kvec_c.y;
-            ofs << kvec_c.z;
-            ofs << nbands;
-            ofs << nlocal;
-
-            for (int i = 0; i < nbands; i++)
-            {
-                ofs << i+1;
-                ofs << ekb(ik, i);
-                ofs << wg(ik, i);
-
-                for (int j = 0; j < nlocal; j++)
-                {
-                    ofs << ctot[i*nlocal + j].real() << ctot[i*nlocal + j].imag();
-                }
-            }
-            ofs.close();
+            ofs.open(name, "a");
         }
         else
         {
-            std::ofstream ofs;
-            // if (PARAM.inp.out_app_flag)
-            // {
-            //     ofs.open(name.c_str(), std::ofstream::app);
-            // }
-            // else
-            {   // the default value of `out_app_flag`is true, but usually there's no use to save each step's LCAO wave function.
-                ofs.open(name.c_str());
-            }
-            if (!ofs)
-            {
-                ModuleBase::WARNING("ModuleIO::write_wfc_nao","Can't write local orbital wave functions.");
-            }
-            ofs << std::setprecision(8);
-            ofs << ik+1 << " (index of k points)" << std::endl;
-		    ofs << kvec_c.x << " " << kvec_c.y << " " << kvec_c.z << std::endl;
-            ofs << nbands << " (number of bands)" << std::endl;
-            ofs << nlocal << " (number of orbitals)";
-            ofs << std::scientific;
-
-            for (int i=0; i<nbands; i++)
-            {
-                // +1 to mean more clearly.
-                // band index start from 1.
-                ofs << "\n" << i+1 << " (band)";
-		    	ofs << "\n" << ekb(ik, i) << " (Ry)";
-		    	ofs << "\n" << wg(ik,i) << " (Occupations)";
-                for (int j=0; j<nlocal; j++)
-                {
-                    if (j % 5 == 0) { ofs << "\n";
-}
-                    ofs << ctot[i*nlocal + j].real() << " " << ctot[i*nlocal + j].imag() << " ";
-                }
-            }
-            ofs << std::endl;
-            ofs.close();
+            ofs.open(name, "w");
         }
+        if (!ofs)
+        {
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
+        }
+        ofs << ik + 1;
+        ofs << kvec_c.x;
+        ofs << kvec_c.y;
+        ofs << kvec_c.z;
+        ofs << nbands;
+        ofs << nlocal;
+
+        for (int i = 0; i < nbands; i++)
+        {
+            ofs << i + 1;
+            ofs << ekb(ik, i);
+            ofs << wg(ik, i);
+
+            for (int j = 0; j < nlocal; j++)
+            {
+                ofs << ctot[i * nlocal + j].real() << ctot[i * nlocal + j].imag();
+            }
+        }
+        ofs.close();
+    }
+    else
+    {
+        std::ofstream ofs;
+        if (append_flag)
+        {
+            ofs.open(name.c_str(), std::ofstream::app);
+        }
+        else
+        {
+            ofs.open(name.c_str());
+        }
+        if (!ofs)
+        {
+            ModuleBase::WARNING("ModuleIO::write_wfc_nao", "Can't write local orbital wave functions.");
+        }
+        ofs << std::setprecision(8);
+        ofs << ik + 1 << " (index of k points)" << std::endl;
+        ofs << kvec_c.x << " " << kvec_c.y << " " << kvec_c.z << std::endl;
+        ofs << nbands << " (number of bands)" << std::endl;
+        ofs << nlocal << " (number of orbitals)";
+        ofs << std::scientific;
+
+        for (int i = 0; i < nbands; i++)
+        {
+            // +1 to mean more clearly.
+            // band index start from 1.
+            ofs << "\n" << i + 1 << " (band)";
+            ofs << "\n" << ekb(ik, i) << " (Ry)";
+            ofs << "\n" << wg(ik, i) << " (Occupations)";
+            for (int j = 0; j < nlocal; j++)
+            {
+                if (j % 5 == 0)
+                {
+                    ofs << "\n";
+                }
+                ofs << ctot[i * nlocal + j].real() << " " << ctot[i * nlocal + j].imag() << " ";
+            }
+        }
+        ofs << std::endl;
+        ofs.close();
     }
 
     ModuleBase::timer::tick("ModuleIO","write_wfc_nao_complex");
@@ -269,20 +297,30 @@ void write_wfc_nao(const int out_type,
         if (myid == 0)
         {
             std::string fn = PARAM.globalv.global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, istep);
+            bool append_flag = (istep > 0 && PARAM.inp.out_app_flag);
+            std::cout << "append_flag = " << append_flag << std::endl;
             if (std::is_same<double, T>::value)
             {
-                wfc_nao_write2file(fn, reinterpret_cast<double*>(ctot.data()), nlocal, ik, ekb, wg, writeBinary);
+                wfc_nao_write2file(fn,
+                                   reinterpret_cast<double*>(ctot.data()),
+                                   nlocal,
+                                   ik,
+                                   ekb,
+                                   wg,
+                                   writeBinary,
+                                   append_flag);
             }
             else
             {
                 wfc_nao_write2file_complex(fn,
-                                      reinterpret_cast<std::complex<double>*>(ctot.data()),
-                                      nlocal,
-                                      ik,
-                                      kvec_c[ik],
-                                      ekb,
-                                      wg,
-                                      writeBinary);
+                                           reinterpret_cast<std::complex<double>*>(ctot.data()),
+                                           nlocal,
+                                           ik,
+                                           kvec_c[ik],
+                                           ekb,
+                                           wg,
+                                           writeBinary,
+                                           append_flag);
             }
         }
     }

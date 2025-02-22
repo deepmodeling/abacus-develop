@@ -3,10 +3,10 @@
 #include "mpi.h"
 #include "parallel_global.h"
 
-MPI_Comm POOL_WORLD;
-MPI_Comm INTER_POOL; // communicator among different pools
-MPI_Comm STO_WORLD;
-MPI_Comm PARAPW_WORLD;
+MPI_Comm POOL_WORLD; //groups for different plane waves. In this group, only plane waves are different. K-points and bands are the same.
+MPI_Comm KP_WORLD;   // groups for differnt k. In this group, only k-points are different. Bands and plane waves are the same.
+MPI_Comm BP_WORLD;   // groups for differnt bands. In this group, only bands are different. K-points and plane waves are the same.
+MPI_Comm INT_BGROUP; // internal comm groups for same bands. In this group, only bands are the same. K-points and plane waves are different.
 MPI_Comm GRID_WORLD; // mohan add 2012-01-13
 MPI_Comm DIAG_WORLD; // mohan add 2012-01-13
 

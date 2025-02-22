@@ -222,7 +222,7 @@ void Sto_DOS::caldos(const double sigmain, const double de, const int npart)
         error[ie] = tmperror;
     }
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, STO_WORLD);
+    MPI_Allreduce(MPI_IN_PLACE, ks_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
     MPI_Allreduce(MPI_IN_PLACE, sto_dos.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(MPI_IN_PLACE, error.data(), ndos, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 #endif

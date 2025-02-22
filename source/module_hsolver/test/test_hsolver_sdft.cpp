@@ -252,7 +252,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     stowf.nchip_max = 0;
 //     psi_test_cd.resize(1, 2, 3);
 //     PARAM.input.nelec = 1.0;
-//     GlobalV::MY_STOGROUP = 0.0;
+//     GlobalV::MY_BNDGROUP = 0.0;
 //     int istep = 0;
 //     int iter = 0;
 
@@ -291,7 +291,7 @@ class TestHSolverPW_SDFT : public ::testing::Test
 //     psi_test_no.nbands = 0;
 //     psi_test_no.nbasis = 0;
 //     PARAM.input.nelec = 1.0;
-//     GlobalV::MY_STOGROUP = 0.0;
+//     GlobalV::MY_BNDGROUP = 0.0;
 //     PARAM.input.nspin = 1;
 //     elecstate_test.charge = new Charge;
 //     elecstate_test.charge->rho = new double*[1];
@@ -339,10 +339,10 @@ int main(int argc, char** argv)
 
     MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
     MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
-    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &PARAPW_WORLD);
+    MPI_Comm_split(MPI_COMM_WORLD, 0, 1, &BP_WORLD);
     int result = RUN_ALL_TESTS();
 
-    MPI_Comm_free(&PARAPW_WORLD);
+    MPI_Comm_free(&BP_WORLD);
     MPI_Finalize();
 
     return result;
