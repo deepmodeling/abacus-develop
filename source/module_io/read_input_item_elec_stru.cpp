@@ -616,6 +616,12 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("xc_torque");
+        item.annotation = "xc torque from NCXC (multi-collinear approach)";
+        read_sync_bool(input.xc_torque);
+        this->add_item(item);
+    }
+    {
         Input_Item item("lebedevgrids_order");
         item.annotation = "lebedev grid points order used in multi-collinear approach";
         read_sync_int(input.lebedevgrids_order);

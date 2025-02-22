@@ -83,13 +83,17 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     double vtxc = 0.0;
     ModuleBase::matrix v(nspin,nrxx);
     ModuleBase::matrix v_nspin4(4,nrxx);
+    if(PARAM.inp.xc_torque){
+        std::vector<double> torque(3 * nrxx, 0.0);
+    }
+    
     bool use_v_nspin4 = false;
     //double etxc_col = 0.0; //for collinear tests
     //double vtxc_col = 0.0; //for collinear tests
-    double rho0_0 = 0.0; //for collinear tests
-    double rho1_0 = 0.0; //for collinear tests
-    double v1_col0 = 0.0; //for collinear tests
-    double v2_col0 = 0.0; //for collinear tests
+   // double rho0_0 = 0.0; //for collinear tests
+   // double rho1_0 = 0.0; //for collinear tests
+   // double v1_col0 = 0.0; //for collinear tests
+    //double v2_col0 = 0.0; //for collinear tests
 
 
     for( xc_func_type &func : funcs )
@@ -1064,6 +1068,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
                 std::vector<double> E_MC;
                 std::vector<Matrix2x2> V_MC;
+                
                 for (const int& id : func_id) {
                     std::tie(E_MC, V_MC) = NCLibxc::gga_mc(
     id, 
@@ -1117,6 +1122,63 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
     grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
 );
+
+             if (PARAM.inp.xc_torque){
+                std::vector<double> torque_tmp = NCLibxc::gga_torque(
+                    id, 
+                    n, mx, my, mz,
+                    gradx_n, grady_n, gradz_n,
+                    gradx_mx, grady_mx, gradz_mx,
+                    gradx_my, grady_my, gradz_my,
+                    gradx_mz, grady_mz, gradz_mz,
+                    grad2xx_n, grad2yy_n, grad2zz_n,
+                    grad2xy_n, grad2yz_n, grad2xz_n,
+                    grad2xx_mx, grad2yy_mx, grad2zz_mx,
+                    grad2xy_mx, grad2yz_mx, grad2xz_mx,
+                    grad2xx_my, grad2yy_my, grad2zz_my,
+                    grad2xy_my, grad2yz_my, grad2xz_my,
+                    grad2xx_mz, grad2yy_mz, grad2zz_mz,
+                    grad2xy_mz, grad2yz_mz, grad2xz_mz,
+                    grad3xxx_n, grad3xxy_n, grad3xxz_n,
+                    grad3xyy_n, grad3xyz_n, grad3xzz_n,
+                    grad3yyy_n, grad3yyz_n, grad3yzz_n, grad3zzz_n,
+                    grad3xxx_mx, grad3xxy_mx, grad3xxz_mx,
+                    grad3xyy_mx, grad3xyz_mx, grad3xzz_mx,
+                    grad3yyy_mx, grad3yyz_mx, grad3yzz_mx, grad3zzz_mx,
+                    grad3xxx_my, grad3xxy_my, grad3xxz_my,
+                    grad3xyy_my, grad3xyz_my, grad3xzz_my,
+                    grad3yyy_my, grad3yyz_my, grad3yzz_my, grad3zzz_my,
+                    grad3xxx_mz, grad3xxy_mz, grad3xxz_mz,
+                    grad3xyy_mz, grad3xyz_mz, grad3xzz_mz,
+                    grad3yyy_mz, grad3yyz_mz, grad3yzz_mz, grad3zzz_mz,
+                    grad4xxxx_n, grad4xxxy_n, grad4xxxz_n,
+                    grad4xxyy_n, grad4xxyz_n, grad4xxzz_n,
+                    grad4xyyy_n, grad4xyyz_n, grad4xyzz_n,
+                    grad4xzzz_n, grad4yyyy_n, grad4yyyz_n,
+                    grad4yyzz_n, grad4yzzz_n, grad4zzzz_n,
+                    grad4xxxx_mx, grad4xxxy_mx, grad4xxxz_mx,
+                    grad4xxyy_mx, grad4xxyz_mx, grad4xxzz_mx,
+                    grad4xyyy_mx, grad4xyyz_mx, grad4xyzz_mx,
+                    grad4xzzz_mx, grad4yyyy_mx, grad4yyyz_mx,
+                    grad4yyzz_mx, grad4yzzz_mx, grad4zzzz_mx,
+                    grad4xxxx_my, grad4xxxy_my, grad4xxxz_my,
+                    grad4xxyy_my, grad4xxyz_my, grad4xxzz_my,
+                    grad4xyyy_my, grad4xyyz_my, grad4xyzz_my,
+                    grad4xzzz_my, grad4yyyy_my, grad4yyyz_my,
+                    grad4yyzz_my, grad4yzzz_my, grad4zzzz_my,
+                    grad4xxxx_mz, grad4xxxy_mz, grad4xxxz_mz,
+                    grad4xxyy_mz, grad4xxyz_mz, grad4xxzz_mz,
+                    grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz,
+                    grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
+                    grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
+                );
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024) reduction(+:torque[:nrxx*3]) 
+#endif 
+            for(int ir = 0; ir < 3*nrxx; ++ir){
+                torque[ir] += torque_tmp[ir];
+             }
+            }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024) reduction(+:etxc) reduction(+:vtxc)
 #endif
@@ -1383,6 +1445,12 @@ for (size_t i = 0; i < size; ++i) {
     //Parallel_Reduce::reduce_pool(etxc_col);
     //Parallel_Reduce::reduce_pool(vtxc_col);
     #endif
+    if(PARAM.inp.xc_torque){
+        #ifdef __MPI
+        Parallel_Reduce::reduce_pool(torque);
+        #endif
+    }
+    NCLibxc::print_torque(torque);
 /*
     std::cout << std::fixed << std::setprecision(8) << "etxc: " << etxc << std::endl;
     std::cout << std::fixed << std::setprecision(8) << "etxc_col: " << etxc_col << std::endl;

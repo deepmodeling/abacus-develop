@@ -255,6 +255,9 @@ static std::vector<double> gga_torque(int xc_id, const std::vector<double>& n,
     // print message and citation of the program
     static void print_NCLibxc();
 
+    //print xc torque
+    static void print_torque(const std::vector<double>& torque);
+
     // collinear test for gga
     static void gga_collinear_test();
 
