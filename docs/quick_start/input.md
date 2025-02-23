@@ -35,12 +35,12 @@ Furthermore, if a given parameter name appeared more than once in the input file
 
 In the above example, the meanings of the parameters are:
 
-- `suffix` : the name of the system, default `ABACUS`
-- `pseudo_dir` : the directory where pseudopotential files are provided
-- `orbital_dir` : the directory where orbital files are provided
-- `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg)
+- `suffix` : the name of the system, default `ABACUS`.
+- `pseudo_dir` : the directory where pseudopotential files are provided.
+- `orbital_dir` : the directory where orbital files are provided.
+- `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg).
 - `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg for PW, 1 for LCAO), we recommend `1e-7` for LCAO and `1e-9` for PW basis.
-- `basis_type` : the type of basis set for expanding the electronic wave functions, one can set lcao or pw
+- `basis_type` : the type of basis set for expanding the electronic wave functions, one can set lcao or pw.
 - `calculation` : the type of calculation to be performed by ABACUS
 - `out_chg` : setting for output the charge density in real space grid, -1 for no output, 0 for binary output, 1 for binary and cube output.
 
