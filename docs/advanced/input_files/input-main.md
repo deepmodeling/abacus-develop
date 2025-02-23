@@ -1234,6 +1234,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Real
 - **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
+- **Unit**: Ry (`scf_thr_type=1`), or not exist (`scf_thr_type=2`)
 
 ### scf_ene_thr
 
