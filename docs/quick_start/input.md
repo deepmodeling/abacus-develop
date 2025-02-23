@@ -67,7 +67,8 @@ Mg_gga_8au_100Ry_4s2p1d.orb
 O_gga_8au_100Ry_2s2p1d.orb
 
 LATTICE_CONSTANT
-1.8897259886 # 1.8897259886 Bohr =  1.0 Angstrom
+1.889726126 # 1.0 Ang = 1/a_0 = 1/0.529177210544
+# Bohr radius ref: https://physics.nist.gov/cgi-bin/cuu/Value?bohrrada0
 
 LATTICE_VECTORS
 4.25648 0.00000 0.00000  
