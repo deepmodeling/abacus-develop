@@ -178,7 +178,7 @@ void NCLibxc::gga_collinear_test()
         int xc_id = 106; // Example XC functional ID
 
         // Call gga_mc
-        auto[E_GGA_MC, V_GGA_MC] = NCLibxc::gga_mc(
+        auto [E_GGA_MC, V_GGA_MC] = NCLibxc::gga_mc(
     xc_id, n, mx, my, mz,
     gradx_n, grady_n, gradz_n,
     gradx_mx, grady_mx, gradz_mx,
@@ -600,7 +600,8 @@ void NCLibxc::gga_local_torque_test()
 
     int xc_id = 106;  
 
-    auto torque = gga_torque(xc_id, n, mx, my, mz,
+    auto [E_MC, V_MC] = NCLibxc::gga_mc(
+        xc_id, n, mx, my, mz,
         gradx_n, grady_n, gradz_n,
         gradx_mx, grady_mx, gradz_mx,
         gradx_my, grady_my, gradz_my,
@@ -628,18 +629,12 @@ void NCLibxc::gga_local_torque_test()
         grad4yyzz_my, grad4yzzz_my, grad4zzzz_my,
         grad4xxxx_mz, grad4xxxy_mz, grad4xxxz_mz, grad4xxyy_mz, grad4xxyz_mz, grad4xxzz_mz,
         grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz, grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
-        grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz);
+        grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
+    );
 
-    // print
-    std::cout << std::fixed << std::setprecision(8);
-    std::cout << "GGA local torque:" << std::endl;
-    for (size_t i = 0; i < torque.size()/3; ++i)
-    {
-        std::cout << "Grid point " << i << ": ("
-                  << torque[3*i] << ", " 
-                  << torque[3*i+1] << ", " 
-                  << torque[3*i+2] << ")" << std::endl;
-    }
+    auto torque = NCLibxc::gga_torque(mx,my,mz,V_MC);
+
+    NCLibxc::print_torque(torque);
 }
 
 // xc local torque and xc potential from gga, prove well-defined torque and potential
@@ -718,38 +713,6 @@ void NCLibxc::gga_deri_limit()
         std::vector<double> grad4xzzz_mz(1, 0.01), grad4yyyy_mz(1, 0.01), grad4yyyz_mz(1, 0.01);
         std::vector<double> grad4yyzz_mz(1, 0.01), grad4yzzz_mz(1, 0.01), grad4zzzz_mz(1, 0.01);
 
-        // Compute local torque
-        auto torque = gga_torque(
-            xc_id, n, mx, my, mz,
-            gradx_n, grady_n, gradz_n,
-            gradx_mx, grady_mx, gradz_mx,
-            gradx_my, grady_my, gradz_my,
-            gradx_mz, grady_mz, gradz_mz,
-            grad2xx_n, grad2yy_n, grad2zz_n, grad2xy_n, grad2yz_n, grad2xz_n,
-            grad2xx_mx, grad2yy_mx, grad2zz_mx, grad2xy_mx, grad2yz_mx, grad2xz_mx,
-            grad2xx_my, grad2yy_my, grad2zz_my, grad2xy_my, grad2yz_my, grad2xz_my,
-            grad2xx_mz, grad2yy_mz, grad2zz_mz, grad2xy_mz, grad2yz_mz, grad2xz_mz,
-            grad3xxx_n, grad3xxy_n, grad3xxz_n, grad3xyy_n, grad3xyz_n, grad3xzz_n,
-            grad3yyy_n, grad3yyz_n, grad3yzz_n, grad3zzz_n,
-            grad3xxx_mx, grad3xxy_mx, grad3xxz_mx, grad3xyy_mx, grad3xyz_mx, grad3xzz_mx,
-            grad3yyy_mx, grad3yyz_mx, grad3yzz_mx, grad3zzz_mx,
-            grad3xxx_my, grad3xxy_my, grad3xxz_my, grad3xyy_my, grad3xyz_my, grad3xzz_my,
-            grad3yyy_my, grad3yyz_my, grad3yzz_my, grad3zzz_my,
-            grad3xxx_mz, grad3xxy_mz, grad3xxz_mz, grad3xyy_mz, grad3xyz_mz, grad3xzz_mz,
-            grad3yyy_mz, grad3yyz_mz, grad3yzz_mz, grad3zzz_mz,
-            grad4xxxx_n, grad4xxxy_n, grad4xxxz_n, grad4xxyy_n, grad4xxyz_n, grad4xxzz_n,
-            grad4xyyy_n, grad4xyyz_n, grad4xyzz_n, grad4xzzz_n, grad4yyyy_n, grad4yyyz_n,
-            grad4yyzz_n, grad4yzzz_n, grad4zzzz_n,
-            grad4xxxx_mx, grad4xxxy_mx, grad4xxxz_mx, grad4xxyy_mx, grad4xxyz_mx, grad4xxzz_mx,
-            grad4xyyy_mx, grad4xyyz_mx, grad4xyzz_mx, grad4xzzz_mx, grad4yyyy_mx, grad4yyyz_mx,
-            grad4yyzz_mx, grad4yzzz_mx, grad4zzzz_mx,
-            grad4xxxx_my, grad4xxxy_my, grad4xxxz_my, grad4xxyy_my, grad4xxyz_my, grad4xxzz_my,
-            grad4xyyy_my, grad4xyyz_my, grad4xyzz_my, grad4xzzz_my, grad4yyyy_my, grad4yyyz_my,
-            grad4yyzz_my, grad4yzzz_my, grad4zzzz_my,
-            grad4xxxx_mz, grad4xxxy_mz, grad4xxxz_mz, grad4xxyy_mz, grad4xxyz_mz, grad4xxzz_mz,
-            grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz, grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
-            grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
-        );
 
         // Compute E and V using gga_mc
         auto [energy, potential] = gga_mc(
@@ -783,6 +746,8 @@ void NCLibxc::gga_deri_limit()
             grad4xyyy_mz, grad4xyyz_mz, grad4xyzz_mz, grad4xzzz_mz, grad4yyyy_mz, grad4yyyz_mz,
             grad4yyzz_mz, grad4yzzz_mz, grad4zzzz_mz
         );
+
+        auto torque = gga_torque(mx, my, mz, potential);
 
         // Print results
         std::cout << std::fixed << std::setprecision(30);
