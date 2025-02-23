@@ -35,7 +35,7 @@ Furthermore, if a given parameter name appeared more than once in the input file
 
 In the above example, the meanings of the parameters are:
 
-- `suffix` : the name of the system, default `ABACUS`.
+- `suffix` : the name of the system, default `ABACUS`, and output files will be in OUT.{suffix} directory. 
 - `pseudo_dir` : the directory where pseudopotential files are provided.
 - `orbital_dir` : the directory where orbital files are provided.
 - `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg).
