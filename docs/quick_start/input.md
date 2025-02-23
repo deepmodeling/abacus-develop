@@ -10,15 +10,14 @@ Below is an example `INPUT` file with some of the most important parameters that
 
 ```plaintext
 INPUT_PARAMETERS
-suffix                  MgO
-ntype                   2
-pseudo_dir              ./
-orbital_dir             ./
+suffix                  MgO  # the output files will be in OUT.{suffix} directory 
+pseudo_dir              ./   # where the pseudopotential for each element is
+orbital_dir             ./   # where the orbital file for each element is
 ecutwfc                 100  # in Rydberg
-scf_thr                 1e-4 # Rydberg
-basis_type              lcao
+scf_thr                 1e-6 # no unit for LCAO, Rydberg for PW
+basis_type              lcao # lcao or pw
 calculation             scf  # this is the key parameter telling abacus to do a scf calculation
-out_chg                 True
+out_chg                 0    # only output binary charge file for restart
 ```
 
 The parameter list always starts with key word `INPUT_PARAMETERS`. Any content before `INPUT_PARAMETERS` will be ignored.
@@ -37,18 +36,17 @@ Furthermore, if a given parameter name appeared more than once in the input file
 In the above example, the meanings of the parameters are:
 
 - `suffix` : the name of the system, default `ABACUS`
-- `ntype` : how many types of elements in the unit cell
 - `pseudo_dir` : the directory where pseudopotential files are provided
 - `orbital_dir` : the directory where orbital files are provided
 - `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg)
-- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg)
-- `basis_type` : the type of basis set for expanding the electronic wave functions
+- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg for PW, 1 for LCAO)
+- `basis_type` : the type of basis set for expanding the electronic wave functions, one can set lcao or pw
 - `calculation` : the type of calculation to be performed by ABACUS
-- `out_chg` : if true, output the charge density on real space grid
+- `out_chg` : setting for output the charge density in real space grid, -1 for no output, 0 for binary output, 1 for binary and cube output.
 
 For a complete list of input parameters, please consult this [instruction](../advanced/input_files/input-main.md).
 
-> **Note:** Users cannot change the filename “INPUT” to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg True 8` will output the charge density on realspace grid with 8 digits after the decimal point.
+> **Note:** Users cannot change the filename “INPUT” to other names. Boolean paramerters such as `out_chg` can be set by using `True` and `False`, `1` and `0`, or `T` and `F`. It is case insensitive so that other preferences such as `true` and `false`, `TRUE` and `FALSE`, and `t` and `f` for setting boolean values are also supported. Specifically for the `out_chg`, `-1` option is also available, which means turn off the checkpoint of charge density in binary (always dumped in `OUT.{suffix}`, whose name ends with `CHARGE-DENSITY.restart`). Some parameters controlling the output also support a second option to control the output precision, e.g., `out_chg 1 8` will output the charge density on realspace grid with 8 digits after the decimal point.
 
 ## *STRU*
 
