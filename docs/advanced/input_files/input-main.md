@@ -1234,7 +1234,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Real
 - **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
-- **Unit**: Ry if (`scf_thr_type=1`), **dimensionless** (`scf_thr_type=2`)
+- **Unit**: Ry if `scf_thr_type=1`, **dimensionless** if `scf_thr_type=2`
 
 ### scf_ene_thr
 
@@ -1248,7 +1248,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion.
   - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$, which is used in SCF of PW basis with unit Ry. 
-  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron, which is used in SCF of LCAO without any unit.
+  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron, which is used in SCF of LCAO with unit **dimensionless**.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
