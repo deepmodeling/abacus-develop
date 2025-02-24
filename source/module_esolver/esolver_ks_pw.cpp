@@ -81,7 +81,7 @@ ESolver_KS_PW<T, Device>::ESolver_KS_PW()
 #endif
 #ifdef __DSP
     std::cout << " ** Initializing DSP Hardware..." << std::endl;
-    dspInitHandle(GlobalV::MY_RANK);
+    mtfunc::dspInitHandle(GlobalV::MY_RANK);
 #endif
 }
 
@@ -109,7 +109,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     }
 #ifdef __DSP
     std::cout << " ** Closing DSP Hardware..." << std::endl;
-    dspDestoryHandle(GlobalV::MY_RANK);
+    mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
 #endif
     if(PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {

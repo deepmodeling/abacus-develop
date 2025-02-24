@@ -454,7 +454,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     {
 #ifdef __DSP
         // Only on dsp hardware need an extra space to reduce data
-        dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
+        mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
         auto* swap = new T[notconv * this->nbase_x];
 

@@ -226,7 +226,7 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 #ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		sgemm_mth_(&transb, &transa, &n, &m, &k,
+		mtfunc::sgemm_mth_(&transb, &transa, &n, &m, &k,
 		&alpha, b, &ldb, a, &lda,
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
@@ -240,79 +240,136 @@ void BlasConnector::gemm(const char transa, const char transb, const int m, cons
 	}
 }
 
-void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
-	const double alpha, const double *a, const int lda, const double *b, const int ldb,
-	const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm(const char transa,
+                         const char transb,
+                         const int m,
+                         const int n,
+                         const int k,
+                         const double alpha,
+                         const double* a,
+                         const int lda,
+                         const double* b,
+                         const int ldb,
+                         const double beta,
+                         double* c,
+                         const int ldc,
+                         base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-		dgemm_(&transb, &transa, &n, &m, &k,
-		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        dgemm_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		dgemm_mth_(&transb, &transa, &n, &m, &k,
-		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::dgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, &alpha, b, ldb, a, lda, &beta, c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(
+            cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, &alpha, b, ldb, a, lda, &beta, c, ldc));
 #endif
-	}
+    }
 }
 
-void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
-    const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
-    const std::complex<float> beta, std::complex<float> *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm(const char transa,
+                         const char transb,
+                         const int m,
+                         const int n,
+                         const int k,
+                         const std::complex<float> alpha,
+                         const std::complex<float>* a,
+                         const int lda,
+                         const std::complex<float>* b,
+                         const int ldb,
+                         const std::complex<float> beta,
+                         std::complex<float>* c,
+                         const int ldc,
+                         base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-    	cgemm_(&transb, &transa, &n, &m, &k,
-        &alpha, b, &ldb, a, &lda,
-        &beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        cgemm_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	cgemm_mth_(&transb, &transa, &n, &m, &k,
-        &alpha, b, &ldb, a, &lda,
-        &beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::cgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, (float2*)&alpha, (float2*)b, ldb, (float2*)a, lda, (float2*)&beta, (float2*)c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle,
+                                   cutransA,
+                                   cutransB,
+                                   n,
+                                   m,
+                                   k,
+                                   (float2*)&alpha,
+                                   (float2*)b,
+                                   ldb,
+                                   (float2*)a,
+                                   lda,
+                                   (float2*)&beta,
+                                   (float2*)c,
+                                   ldc));
 #endif
-	}
+    }
 }
 
-void BlasConnector::gemm(const char transa, const char transb, const int m, const int n, const int k,
-	const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
-	const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm(const char transa,
+                         const char transb,
+                         const int m,
+                         const int n,
+                         const int k,
+                         const std::complex<double> alpha,
+                         const std::complex<double>* a,
+                         const int lda,
+                         const std::complex<double>* b,
+                         const int ldb,
+                         const std::complex<double> beta,
+                         std::complex<double>* c,
+                         const int ldc,
+                         base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-		zgemm_(&transb, &transa, &n, &m, &k,
-		&alpha, b, &ldb, a, &lda,
-		&beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        zgemm_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	zgemm_mth_(&transb, &transa, &n, &m, &k,
-        &alpha, b, &ldb, a, &lda,
-        &beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::zgemm_mth_(&transb, &transa, &n, &m, &k, &alpha, b, &ldb, a, &lda, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle, cutransA, cutransB, n, m, k, (double2*)&alpha, (double2*)b, ldb, (double2*)a, lda, (double2*)&beta, (double2*)c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle,
+                                   cutransA,
+                                   cutransB,
+                                   n,
+                                   m,
+                                   k,
+                                   (double2*)&alpha,
+                                   (double2*)b,
+                                   ldb,
+                                   (double2*)a,
+                                   lda,
+                                   (double2*)&beta,
+                                   (double2*)c,
+                                   ldc));
 #endif
-	}
+    }
 }
 
 // Col-Major part
@@ -327,7 +384,7 @@ void BlasConnector::gemm_cm(const char transa, const char transb, const int m, c
 	}
 #ifdef __DSP
 	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		sgemm_mth_(&transb, &transa, &m, &n, &k,
+		mtfunc::sgemm_mth_(&transb, &transa, &m, &n, &k,
 		&alpha, a, &lda, b, &ldb,
 		&beta, c, &ldc, GlobalV::MY_RANK);
 	}
@@ -341,79 +398,136 @@ void BlasConnector::gemm_cm(const char transa, const char transb, const int m, c
 	}
 }
 
-void BlasConnector::gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
-	const double alpha, const double *a, const int lda, const double *b, const int ldb,
-	const double beta, double *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm_cm(const char transa,
+                            const char transb,
+                            const int m,
+                            const int n,
+                            const int k,
+                            const double alpha,
+                            const double* a,
+                            const int lda,
+                            const double* b,
+                            const int ldb,
+                            const double beta,
+                            double* c,
+                            const int ldc,
+                            base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-		dgemm_(&transa, &transb, &m, &n, &k,
-		&alpha, a, &lda, b, &ldb,
-		&beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        dgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice){
-		dgemm_mth_(&transa, &transb, &m, &n, &k,
-		&alpha, a, &lda, b, &ldb,
-		&beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::dgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(
+            cublasDgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, &alpha, a, lda, b, ldb, &beta, c, ldc));
 #endif
-	}
+    }
 }
 
-void BlasConnector::gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
-    const std::complex<float> alpha, const std::complex<float> *a, const int lda, const std::complex<float> *b, const int ldb,
-    const std::complex<float> beta, std::complex<float> *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm_cm(const char transa,
+                            const char transb,
+                            const int m,
+                            const int n,
+                            const int k,
+                            const std::complex<float> alpha,
+                            const std::complex<float>* a,
+                            const int lda,
+                            const std::complex<float>* b,
+                            const int ldb,
+                            const std::complex<float> beta,
+                            std::complex<float>* c,
+                            const int ldc,
+                            base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-    	cgemm_(&transa, &transb, &m, &n, &k,
-        &alpha, a, &lda, b, &ldb,
-        &beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        cgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	cgemm_mth_(&transa, &transb, &m, &n, &k,
-        &alpha, a, &lda, b, &ldb,
-        &beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::cgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, (float2*)&alpha, (float2*)a, lda, (float2*)b, ldb, (float2*)&beta, (float2*)c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(cublasCgemm(BlasUtils::cublas_handle,
+                                   cutransA,
+                                   cutransB,
+                                   m,
+                                   n,
+                                   k,
+                                   (float2*)&alpha,
+                                   (float2*)a,
+                                   lda,
+                                   (float2*)b,
+                                   ldb,
+                                   (float2*)&beta,
+                                   (float2*)c,
+                                   ldc));
 #endif
-	}
+    }
 }
 
-void BlasConnector::gemm_cm(const char transa, const char transb, const int m, const int n, const int k,
-	const std::complex<double> alpha, const std::complex<double> *a, const int lda, const std::complex<double> *b, const int ldb,
-	const std::complex<double> beta, std::complex<double> *c, const int ldc, base_device::AbacusDevice_t device_type)
+void BlasConnector::gemm_cm(const char transa,
+                            const char transb,
+                            const int m,
+                            const int n,
+                            const int k,
+                            const std::complex<double> alpha,
+                            const std::complex<double>* a,
+                            const int lda,
+                            const std::complex<double>* b,
+                            const int ldb,
+                            const std::complex<double> beta,
+                            std::complex<double>* c,
+                            const int ldc,
+                            base_device::AbacusDevice_t device_type)
 {
-	if (device_type == base_device::AbacusDevice_t::CpuDevice) {
-		zgemm_(&transa, &transb, &m, &n, &k,
-		&alpha, a, &lda, b, &ldb,
-		&beta, c, &ldc);
-	}
+    if (device_type == base_device::AbacusDevice_t::CpuDevice)
+    {
+        zgemm_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc);
+    }
 #ifdef __DSP
-	else if (device_type == base_device::AbacusDevice_t::DspDevice) {
-    	zgemm_mth_(&transa, &transb, &m, &n, &k,
-        &alpha, a, &lda, b, &ldb,
-        &beta, c, &ldc, GlobalV::MY_RANK);
-	}
+    else if (device_type == base_device::AbacusDevice_t::DspDevice)
+    {
+        mtfunc::zgemm_mth_(&transa, &transb, &m, &n, &k, &alpha, a, &lda, b, &ldb, &beta, c, &ldc, GlobalV::MY_RANK);
+    }
 #endif
-	else if (device_type == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type == base_device::AbacusDevice_t::GpuDevice)
+    {
 #ifdef __CUDA
-		cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
-		cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
-		cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle, cutransA, cutransB, m, n, k, (double2*)&alpha, (double2*)a, lda, (double2*)b, ldb, (double2*)&beta, (double2*)c, ldc));
+        cublasOperation_t cutransA = BlasUtils::judge_trans(false, transa, "gemm_op");
+        cublasOperation_t cutransB = BlasUtils::judge_trans(false, transb, "gemm_op");
+        cublasErrcheck(cublasZgemm(BlasUtils::cublas_handle,
+                                   cutransA,
+                                   cutransB,
+                                   m,
+                                   n,
+                                   k,
+                                   (double2*)&alpha,
+                                   (double2*)a,
+                                   lda,
+                                   (double2*)b,
+                                   ldb,
+                                   (double2*)&beta,
+                                   (double2*)c,
+                                   ldc));
 #endif
-	}
+    }
 }
 
 // Symm and Hemm part. Only col-major is supported.
