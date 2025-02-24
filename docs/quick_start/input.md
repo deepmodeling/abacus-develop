@@ -14,7 +14,7 @@ suffix                  MgO  # the output files will be in OUT.{suffix} director
 pseudo_dir              ./   # where the pseudopotential for each element is
 orbital_dir             ./   # where the orbital file for each element is
 ecutwfc                 100  # in Rydberg
-scf_thr                 1e-6 # no unit for LCAO, Rydberg for PW
+scf_thr                 1e-6 # dimensionless for LCAO, Rydberg for PW
 basis_type              lcao # lcao or pw
 calculation             scf  # this is the key parameter telling abacus to do a scf calculation
 out_chg                 0    # only output binary charge file for restart
@@ -39,7 +39,7 @@ In the above example, the meanings of the parameters are:
 - `pseudo_dir` : the directory where pseudopotential files are provided.
 - `orbital_dir` : the directory where orbital files are provided.
 - `ecutwfc` : the plane-wave energy cutoff for the wave function expansion (UNIT: Rydberg).
-- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg for PW, 1 for LCAO), we recommend `1e-7` for LCAO and `1e-9` for PW basis.
+- `scf_thr` : the threshold for the convergence of charge density (UNIT: Rydberg for PW, dimensionless for LCAO), we recommend `1e-7` for LCAO and `1e-9` for PW basis.
 - `basis_type` : the type of basis set for expanding the electronic wave functions, one can set lcao or pw.
 - `calculation` : the type of calculation to be performed by ABACUS
 - `out_chg` : setting for output the charge density in real space grid, -1 for no output, 0 for binary output, 1 for binary and cube output.

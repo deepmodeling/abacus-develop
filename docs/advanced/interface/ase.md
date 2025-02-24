@@ -74,10 +74,10 @@ The command to run jobs can be set by specifying `AbacusProfile`::
 
 ```python
   from ase.calculators.abacus import AbacusProfile
-  # for OpenMP setting
+  # for OpenMP setting inside python env
   import os
-  os.environ("OMP_NUM_THREADS") = 16
-  # for MPI setting
+  os.environ("OMP_NUM_THREADS") = 1
+  # for MPI setting used in abacus
   mpi_num = 4
   # for ABACUS Profile
   abacus = '/usr/local/bin/abacus' # specify abacus exec
