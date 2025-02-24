@@ -115,6 +115,26 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                              dpsi_u,
                              d2psi_u,
                              PARAM.inp.nstream);
+
+#ifdef __NEW_GINT
+    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb_.Phi,
+        ucell,
+        this->gd);
+    ModuleGint::Gint::init_gint_info(gint_info);
+#endif
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -227,7 +247,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            DeePKS_domain::check_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
+            DeePKS_domain::check_phialpha(PARAM.inp.cal_force,
+                                          ucell,
+                                          orb_,
+                                          this->gd,
+                                          pv,
+                                          this->ld.phialpha,
+                                          GlobalV::MY_RANK);
         }
     }
 #endif

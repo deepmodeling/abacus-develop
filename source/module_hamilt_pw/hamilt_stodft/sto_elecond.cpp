@@ -202,7 +202,7 @@ void Sto_EleCond::cal_jmatrix(const psi::Psi<std::complex<float>>& kspsi_all,
                        ks_fact->nrecv,
                        ks_fact->displs,
                        MPI_DOUBLE_COMPLEX,
-                       PARAPW_WORLD);
+                       BP_WORLD);
     }
 #endif
 
@@ -620,7 +620,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         }
         // Parallel for bands
         int allbands_ks = this->nbands_ks - cutib0;
-        parallel_distribution paraks(allbands_ks, PARAM.inp.bndpar, GlobalV::MY_STOGROUP);
+        parallel_distribution paraks(allbands_ks, PARAM.inp.bndpar, GlobalV::MY_BNDGROUP);
         int perbands_ks = paraks.num_per;
         int ib0_ks = paraks.start;
         ib0_ks += this->nbands_ks - allbands_ks;
@@ -629,10 +629,10 @@ void Sto_EleCond::sKG(const int& smear_type,
         int allbands_sto = perbands_sto;
         int allbands = perbands;
 #ifdef __MPI
-        MPI_Allreduce(&perbands, &allbands, 1, MPI_INT, MPI_SUM, PARAPW_WORLD);
+        MPI_Allreduce(&perbands, &allbands, 1, MPI_INT, MPI_SUM, BP_WORLD);
         allbands_sto = allbands - allbands_ks;
-        info_gatherv ks_fact(perbands_ks, PARAM.inp.bndpar, 1, PARAPW_WORLD);
-        info_gatherv sto_npwx(perbands_sto, PARAM.inp.bndpar, npwx, PARAPW_WORLD);
+        info_gatherv ks_fact(perbands_ks, PARAM.inp.bndpar, 1, BP_WORLD);
+        info_gatherv sto_npwx(perbands_sto, PARAM.inp.bndpar, npwx, BP_WORLD);
 #endif
         const int bandsinfo[6]{perbands_ks, perbands_sto, perbands, allbands_ks, allbands_sto, allbands};
         double* en_all = nullptr;
@@ -653,7 +653,7 @@ void Sto_EleCond::sKG(const int& smear_type,
         //-----------------------------------------------------------
         //               ks conductivity
         //-----------------------------------------------------------
-        if (GlobalV::MY_STOGROUP == 0 && allbands_ks > 0)
+        if (GlobalV::MY_BNDGROUP == 0 && allbands_ks > 0)
         {
             jjresponse_ks(ik, nt, dt, dEcut, this->p_elec->wg, velop, ct11.data(), ct12.data(), ct22.data());
         }

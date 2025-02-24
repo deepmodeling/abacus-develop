@@ -25,12 +25,11 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                 ModuleBase::matrix& svnl_dalpha)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_f_delta");
-
+    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
     f_delta.zero_out();
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     const int lmaxd = orb.get_lmax_d();
-    const int nrow = pv.nrow;
 
     for (int T0 = 0; T0 < ucell.ntype; T0++)
     {
@@ -146,6 +145,22 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                         }
                     }
 
+                    hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                    hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
+                    if (overlap_1 == nullptr || overlap_2 == nullptr)
+                    {
+                        continue;
+                    }
+                    std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
+                    std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
+                        grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
+                    }
+
+                    assert(overlap_1->get_col_size() == overlap_2->get_col_size());
+
                     const double* dm_current = dm_pair.get_pointer();
 
                     for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1)
@@ -154,18 +169,6 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                         {
                             double nlm[3] = {0, 0, 0};
                             double nlm_t[3] = {0, 0, 0}; // for stress
-
-                            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
-                            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
-                            std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
-                            std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
-                            for (int i = 0; i < 3; ++i)
-                            {
-                                grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
-                                grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
-                            }
-
-                            assert(overlap_1->get_col_size() == overlap_2->get_col_size());
 
                             if (!PARAM.inp.deepks_equiv)
                             {
@@ -310,7 +313,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
             }
         }
     }
-
+    ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
     return;
 }
 

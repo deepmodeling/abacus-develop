@@ -48,7 +48,22 @@ void write_wfc_nao(const int out_type,
                     const Parallel_Orbitals& pv,
                     const int istep=-1) ;
 
-void wfc_nao_write2file(const std::string &name, const double* ctot, const int nlocal, const int ik, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary);
-void wfc_nao_write2file_complex(const std::string &name, const std::complex<double>* ctot, const int nlocal,const int &ik, const ModuleBase::Vector3<double> &kvec_c, const ModuleBase::matrix& ekb, const ModuleBase::matrix& wg, bool writeBinary=false);
+void wfc_nao_write2file(const std::string& name,
+                        const double* ctot,
+                        const int nlocal,
+                        const int ik,
+                        const ModuleBase::matrix& ekb,
+                        const ModuleBase::matrix& wg,
+                        const bool& writeBinary,
+                        const bool& append_flag = false);
+void wfc_nao_write2file_complex(const std::string& name,
+                                const std::complex<double>* ctot,
+                                const int nlocal,
+                                const int& ik,
+                                const ModuleBase::Vector3<double>& kvec_c,
+                                const ModuleBase::matrix& ekb,
+                                const ModuleBase::matrix& wg,
+                                const bool& writeBinary = false,
+                                const bool& append_flag = false);
 }// namespace ModuleIO
 #endif

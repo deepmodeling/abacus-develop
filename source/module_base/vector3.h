@@ -365,6 +365,22 @@ template <class T> inline Vector3<T> cross(const Vector3<T> &u, const Vector3<T>
 //	         (u.z * (v.x * w.y - v.y * w.x)));
 // }
 
+// Overload the < operator for sorting
+template <class T> bool operator<(const Vector3<T> &u, const Vector3<T> &v)
+{
+    if (u.x < v.x)
+        return true;
+    if (u.x > v.x)
+        return false;
+    if (u.y < v.y)
+        return true;
+    if (u.y > v.y)
+        return false;
+    if (u.z < v.z)
+        return true;
+    return false;
+}
+
 // whether m1 != m2
 template <class T> inline bool operator!=(const Vector3<T> &u, const Vector3<T> &v)
 {

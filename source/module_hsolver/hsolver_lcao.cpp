@@ -47,14 +47,14 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
     if (this->method != "pexsi")
     {
-        if (GlobalV::KPAR_LCAO > 1
+        if (PARAM.globalv.kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
         {
 #ifdef __MPI
-            this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
+            this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
 #endif
         }
-        else if (GlobalV::KPAR_LCAO == 1)
+        else if (PARAM.globalv.kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)

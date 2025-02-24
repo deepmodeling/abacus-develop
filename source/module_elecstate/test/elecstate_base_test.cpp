@@ -128,6 +128,7 @@ class MockElecState : public ElecState
         PARAM.input.nupdown  = 0.0;
         PARAM.sys.two_fermi = false;
         PARAM.input.nbands = 6;
+        PARAM.sys.nbands_l = 6;
         PARAM.sys.nlocal = 6;
         PARAM.input.esolver_type = "ksdft";
         PARAM.input.lspinorb = false;

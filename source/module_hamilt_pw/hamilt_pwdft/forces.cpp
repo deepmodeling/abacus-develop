@@ -27,7 +27,7 @@ template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const elecstate::ElecState& elec,
-                                       ModulePW::PW_Basis* rho_basis,
+                                       const ModulePW::PW_Basis* const rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
                                        surchem& solvent,
@@ -486,7 +486,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
                                            ModuleBase::matrix& forcelc,
-                                           ModulePW::PW_Basis* rho_basis,
+                                           const ModulePW::PW_Basis* const rho_basis,
                                            const ModuleBase::matrix& vloc,
                                            const Charge* const chr)
 {
@@ -565,7 +565,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                                           ModuleBase::matrix& forceion,
-                                          ModulePW::PW_Basis* rho_basis,
+                                          const ModulePW::PW_Basis* const rho_basis,
                                           const Structure_Factor* p_sf)
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");

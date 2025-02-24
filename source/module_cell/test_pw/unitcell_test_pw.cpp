@@ -105,7 +105,7 @@ if(GlobalV::MY_RANK==0)
 	delete[] ucell->magnet.start_magnetization;
 	ucell->magnet.start_magnetization = new double[ucell->ntype];
 	//call read_atom_positions
-	EXPECT_NO_THROW(ucell->read_atom_positions(ifa,ofs_running,ofs_warning));
+	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();

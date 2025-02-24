@@ -15,6 +15,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
                                 const int nks)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_o_delta");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
 
     for (int ik = 0; ik < nks; ik++)
     {
@@ -64,6 +65,7 @@ void DeePKS_domain::cal_o_delta(const std::vector<TH>& dm_hl,
             o_delta(ik, 0) = o_delta_tmp.real();
         }
     }
+    ModuleBase::timer::tick("DeePKS_domain", "cal_o_delta");
     return;
 }
 

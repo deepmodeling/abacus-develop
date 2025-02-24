@@ -230,7 +230,7 @@ void Occupy::gweights(const int nks,
             continue;
 }
 
-        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+        for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
         {
             //================================
             // Calculate the gaussian weights
@@ -420,7 +420,8 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, sum2);
+    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, sum2);
 #endif
 
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;

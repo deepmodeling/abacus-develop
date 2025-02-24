@@ -2,6 +2,7 @@
 
 #include "module_base/macros.h"
 #include "module_base/memory.h"
+#include "module_base/parallel_device.h"
 #include "module_base/timer.h"
 #include "module_base/tool_quit.h"
 #include "module_hsolver/diago_iter_assist.h"
@@ -86,7 +87,7 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                         hamilt::Hamilt<T, Device>* p_hamilt,
                                         std::ofstream& ofs_running)
 {
-    if (kspw_psi->get_nbands() == 0 || GlobalV::MY_STOGROUP != 0)
+    if (kspw_psi->get_nbands() == 0 || (!PARAM.globalv.ks_run))
     {
         return;
     }
@@ -97,30 +98,34 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
 
     const int nbands_start = this->psi_initer->nbands_start();
-    const int nbands = psi->get_nbands();
+    const int nbands_l = psi->get_nbands();
     const int nbasis = psi->get_nbasis();
-    const bool not_equal = (nbands_start != nbands);
+    const bool not_equal = (nbands_start != nbands_l);
 
     Psi<T>* psi_cpu = reinterpret_cast<psi::Psi<T>*>(psi);
     Psi<T, Device>* psi_device = kspw_psi;
 
-    if (not_equal)
+    bool fill = PARAM.inp.ks_solver != "bpcg" || GlobalV::MY_BNDGROUP == 0;
+    if (fill)
     {
-        psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
-        psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
-                                               : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
-    }
-    else if (PARAM.inp.precision == "single")
-    {
-        if (PARAM.inp.device == "cpu")
-        {
-            psi_cpu = reinterpret_cast<psi::Psi<T>*>(kspw_psi);
-            psi_device = kspw_psi;
-        }
-        else
+        if (not_equal)
         {
             psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
-            psi_device = kspw_psi;  
+            psi_device = PARAM.inp.device == "gpu" ? new psi::Psi<T, Device>(psi_cpu[0])
+                                                   : reinterpret_cast<psi::Psi<T, Device>*>(psi_cpu);
+        }
+        else if (PARAM.inp.precision == "single")
+        {
+            if (PARAM.inp.device == "cpu")
+            {
+                psi_cpu = reinterpret_cast<psi::Psi<T>*>(kspw_psi);
+                psi_device = kspw_psi;
+            }
+            else
+            {
+                psi_cpu = new Psi<T>(1, nbands_start, nbasis, nbasis, true);
+                psi_device = kspw_psi;
+            }
         }
     }
 
@@ -134,58 +139,90 @@ void PSIInit<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
 
         //! Update Hamiltonian from other kpoint to the given one
         p_hamilt->updateHk(ik);
-
-        //! initialize psi_cpu
-        this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
-        if (psi_device->get_pointer() != psi_cpu->get_pointer())
+        if (fill)
         {
-            syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
-        }
-
-        std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
-
-        if (this->ks_solver == "cg")
-        {
-            if (not_equal)
+            //! initialize psi_cpu
+            this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
+            if (psi_device->get_pointer() != psi_cpu->get_pointer())
             {
-                // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be different
-                hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
-                                                                         psi_device->get_pointer(),
-                                                                         nbands_start,
-                                                                         nbasis,
-                                                                         *(kspw_psi),
-                                                                         etatom.data());
+                syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+            }
+
+            if (this->ks_solver == "cg")
+            {
+                std::vector<typename GetTypeReal<T>::type> etatom(nbands_start, 0.0);
+                if (not_equal)
+                {
+                    // for diagH_subspace_init, psi_device->get_pointer() and kspw_psi->get_pointer() should be
+                    // different
+                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace_init(p_hamilt,
+                                                                             psi_device->get_pointer(),
+                                                                             nbands_start,
+                                                                             nbasis,
+                                                                             *(kspw_psi),
+                                                                             etatom.data());
+                }
+                else
+                {
+                    // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
+                    hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
+                                                                        *psi_device,
+                                                                        *kspw_psi,
+                                                                        etatom.data(),
+                                                                        nbands_start);
+                }
+            }
+            else // dav, bpcg
+            {
+                if (psi_device->get_pointer() != kspw_psi->get_pointer())
+                {
+                    syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                }
+            }
+        }
+#ifdef __MPI
+        if (PARAM.inp.ks_solver == "bpcg" && PARAM.inp.bndpar > 1)
+        {
+            std::vector<int> sendcounts(PARAM.inp.bndpar);
+            std::vector<int> displs(PARAM.inp.bndpar);
+            MPI_Allgather(&nbands_l, 1, MPI_INT, sendcounts.data(), 1, MPI_INT, BP_WORLD);
+            displs[0] = 0;
+            sendcounts[0] *= nbasis;
+            for (int i = 1; i < PARAM.inp.bndpar; i++)
+            {
+                sendcounts[i] *= nbasis;
+                displs[i] = displs[i - 1] + sendcounts[i - 1];
+            }
+            if (GlobalV::MY_BNDGROUP == 0)
+            {
+                for (int ip = 1; ip < PARAM.inp.bndpar; ++ip)
+                {
+                    Parallel_Common::send_data(psi_cpu->get_pointer() + displs[ip], sendcounts[ip], ip, 0, BP_WORLD);
+                }
             }
             else
             {
-                // for diagH_subspace, psi_device->get_pointer() and kspw_psi->get_pointer() can be the same
-                hsolver::DiagoIterAssist<T, Device>::diagH_subspace(p_hamilt,
-                                                                    *psi_device,
-                                                                    *kspw_psi,
-                                                                    etatom.data(),
-                                                                    nbands_start);
-            }
+                MPI_Status status;
+                Parallel_Common::recv_dev<T, Device>(kspw_psi->get_pointer(), nbands_l * nbasis, 0, 0, BP_WORLD, &status);
+            }            
         }
-        else // dav, bpcg
-        {
-            if (psi_device->get_pointer() != kspw_psi->get_pointer())
-            {
-                syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands * nbasis);
-            }
-        }
+#endif
     } // end k-point loop
 
-    if (not_equal)
+    if (fill)
     {
-        delete psi_cpu;
-        if(PARAM.inp.device == "gpu")
+        if (not_equal)
         {
-            delete psi_device;
+            delete psi_cpu;
+            if (PARAM.inp.device == "gpu")
+            {
+                delete psi_device;
+            }
         }
-    }
-    else if (PARAM.inp.precision == "single" && PARAM.inp.device == "gpu")
-    {
-        delete psi_cpu;
+        else if (PARAM.inp.precision == "single" && PARAM.inp.device == "gpu")
+        {
+            delete psi_cpu;
+        }
     }
 
     ModuleBase::timer::tick("PSIInit", "initialize_psi");
@@ -203,7 +240,11 @@ void PSIInit<T, Device>::initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream&
     }
 }
 
-void allocate_psi(Psi<std::complex<double>>*& psi, const int& nks, const std::vector<int>& ngk, const int& nbands, const int& npwx)
+void allocate_psi(Psi<std::complex<double>>*& psi,
+                  const int& nks,
+                  const std::vector<int>& ngk,
+                  const int& nbands,
+                  const int& npwx)
 {
     assert(npwx > 0);
     assert(nks > 0);

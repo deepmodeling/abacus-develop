@@ -29,6 +29,31 @@ list(APPEND objects
     init_orb.cpp
 )
 
+if(NEW_GINT)
+  list(APPEND objects
+      temp_gint/biggrid_info.cpp
+      temp_gint/big_grid.cpp
+      temp_gint/divide_info.cpp
+      temp_gint/gint_atom.cpp
+      temp_gint/gint_info.cpp
+      temp_gint/gint.cpp
+      temp_gint/gint_vl.cpp
+      temp_gint/gint_vl_metagga.cpp
+      temp_gint/gint_vl_nspin4.cpp
+      temp_gint/gint_vl_metagga_nspin4.cpp
+      temp_gint/gint_rho.cpp
+      temp_gint/gint_tau.cpp
+      temp_gint/gint_fvl.cpp
+      temp_gint/gint_fvl_meta.cpp
+      temp_gint/localcell_info.cpp
+      temp_gint/phi_operator.cpp
+      temp_gint/set_ddphi.cpp
+      temp_gint/unitcell_info.cpp
+      temp_gint/gint_common.cpp
+      temp_gint/gint_interface.cpp
+      )
+endif()
+
 if(USE_CUDA)
   list(APPEND objects
       gint_gpu_interface.cpp

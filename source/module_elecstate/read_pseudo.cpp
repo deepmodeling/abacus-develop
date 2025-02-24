@@ -9,7 +9,6 @@
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 namespace elecstate {
-
 void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n\n\n";
@@ -154,14 +153,14 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     }
 
     // setup the total number of PAOs
-    ucell.cal_natomwfc(ofs);
+    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms);
 
     // Calculate the information of atoms from the pseudopotential to set PARAM
     CalAtomsInfo ca;
     ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
 
     // setup PARAM.globalv.nlocal
-    ucell.cal_nwfc(ofs);
+    cal_nwfc(ofs,ucell,ucell.atoms);
 
     // Check whether the number of valence is minimum
     if (GlobalV::MY_RANK == 0) {
@@ -226,7 +225,7 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
         }
     }
 
-    ucell.cal_meshx();
+    cal_meshx(ucell.meshx,ucell.atoms,ucell.ntype);
 
 #ifdef __MPI
     Parallel_Common::bcast_int(ucell.meshx);

@@ -34,7 +34,6 @@
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_elecstate/cal_ux.h"
-#include "module_elecstate/elecstate_lcao_cal_tau.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
@@ -241,16 +240,16 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 
     // 12) if kpar is not divisible by nks, print a warning
-    if (GlobalV::KPAR_LCAO > 1)
+    if (PARAM.globalv.kpar_lcao > 1)
     {
-        if (this->kv.get_nks() % GlobalV::KPAR_LCAO != 0)
+        if (this->kv.get_nks() % PARAM.globalv.kpar_lcao != 0)
         {
             ModuleBase::WARNING("ESolver_KS_LCAO::before_all_runners", "nks is not divisible by kpar.");
             std::cout << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
                          "%%%%%%%%%%%%%%%%%%%%%%%%%%"
                       << std::endl;
-            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar (" << GlobalV::KPAR_LCAO
+            std::cout << " Warning: nks (" << this->kv.get_nks() << ") is not divisible by kpar (" << PARAM.globalv.kpar_lcao
                       << ")." << std::endl;
             std::cout << " This may lead to poor load balance. It is strongly suggested to" << std::endl;
             std::cout << " set nks to be divisible by kpar, but if this is really what" << std::endl;
@@ -933,7 +932,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
     if (PARAM.inp.out_elf[0] > 0)
     {
-        elecstate::lcao_cal_tau<TK>(&(this->GG), &(this->GK), this->pelec->charge);
+        assert(this->psi != nullptr);
+        this->pelec->cal_tau(*(this->psi));
     }
 
     //! 2) call after_scf() of ESolver_KS

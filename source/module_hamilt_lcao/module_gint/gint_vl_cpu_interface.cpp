@@ -24,7 +24,7 @@ void Gint::gint_kernel_vlocal(Gint_inout* inout) {
         std::vector<int> block_index(max_size+1,0);
         std::vector<int> block_size(max_size,0);
         std::vector<double> vldr3(this->bxyz,0.0);
-        #pragma omp for
+        #pragma omp for schedule(dynamic)
         for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
             const int na_grid = this->gridt->how_many_atoms[grid_index];
             if (na_grid == 0) {
@@ -119,7 +119,7 @@ void Gint::gint_kernel_dvlocal(Gint_inout* inout) {
     std::vector<int> block_index(max_size+1,0);
     std::vector<int> block_size(max_size,0);
     std::vector<double> vldr3(this->bxyz,0.0);
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {
@@ -217,7 +217,7 @@ void Gint::gint_kernel_vlocal_meta(Gint_inout* inout) {
     std::vector<double> vldr3(this->bxyz,0.0);
     std::vector<double> vkdr3(this->bxyz,0.0);
 
-#pragma omp for
+#pragma omp for schedule(dynamic)
     for (int grid_index = 0; grid_index < this->nbxx; grid_index++) {
         const int na_grid = this->gridt->how_many_atoms[grid_index];
         if (na_grid == 0) {

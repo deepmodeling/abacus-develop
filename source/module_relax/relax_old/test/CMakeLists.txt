@@ -4,6 +4,7 @@ remove_definitions(-D__LCAO)
 list(APPEND cell_source_files
     ../../../module_cell/update_cell.cpp
     ../../../module_cell/bcast_cell.cpp
+    ../../../module_cell/print_cell.cpp
     ../../../module_io/output.cpp
 )
 AddTest(

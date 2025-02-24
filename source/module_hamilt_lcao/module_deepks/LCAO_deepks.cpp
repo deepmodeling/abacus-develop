@@ -53,6 +53,7 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
                        std::vector<int> na)
 {
     ModuleBase::TITLE("LCAO_Deepks", "init");
+    ModuleBase::timer::tick("LCAO_Deepks", "init");
 
     GlobalV::ofs_running << " Initialize the descriptor index for DeePKS (lcao line)" << std::endl;
 
@@ -123,6 +124,7 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
 
     this->pv = &pv_in;
 
+    ModuleBase::timer::tick("LCAO_Deepks", "init");
     return;
 }
 
@@ -169,6 +171,7 @@ void LCAO_Deepks::init_index(const int ntype,
 void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
+    ModuleBase::timer::tick("LCAO_Deepks", "allocate_V_delta");
 
     // initialize the H matrix H_V_delta
     if (PARAM.globalv.gamma_only_local)
@@ -205,6 +208,7 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
         ModuleBase::GlobalFunc::ZEROS(this->gedm[inl], pdm_size);
     }
 
+    ModuleBase::timer::tick("LCAO_Deepks", "allocate_V_delta");
     return;
 }
 

@@ -18,36 +18,8 @@ UnitCell::~UnitCell() {
     }
 }
 void UnitCell::print_cell(std::ofstream& ofs) const {}
-void UnitCell::print_cell_xyz(const std::string& fn) const {}
-bool UnitCell::read_atom_positions(std::ifstream& ifpos,
-                                   std::ofstream& ofs_running,
-                                   std::ofstream& ofs_warning) {
-    return true;
-}
-
-bool UnitCell::judge_big_cell() const { return true; }
-void UnitCell::update_stress(ModuleBase::matrix& scs) {}
-void UnitCell::update_force(ModuleBase::matrix& fcs) {}
 void UnitCell::set_iat2itia() {}
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
-void UnitCell::read_orb_file(int it,
-                             std::string& orb_file,
-                             std::ofstream& ofs_running,
-                             Atom* atom) {}
-int UnitCell::find_type(const std::string& label) { return 0; }
-void UnitCell::print_tau() const {}
-void UnitCell::print_stru_file(const std::string& fn,
-                               const int& nspin,
-                               const bool& direct,
-                               const bool& vel,
-                               const bool& magmom,
-                               const bool& orb,
-                               const bool& dpks_desc,
-                               const int& iproc) const {}
-void UnitCell::check_dtau() {}
-void UnitCell::cal_nwfc(std::ofstream& log) {}
-void UnitCell::cal_meshx() {}
-void UnitCell::cal_natomwfc(std::ofstream& log) {}
 bool UnitCell::if_atoms_can_move() const { return true; }
 bool UnitCell::if_cell_can_change() const { return true; }
 void UnitCell::setup(const std::string& latname_in,

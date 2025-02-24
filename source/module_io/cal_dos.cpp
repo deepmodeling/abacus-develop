@@ -4,6 +4,7 @@
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/parallel_reduce.h"
+#include "module_parameter/parameter.h"
 
 bool ModuleIO::calculate_dos(const int& is,
                              const std::string& fa,  // file address for DOS
@@ -40,12 +41,12 @@ bool ModuleIO::calculate_dos(const int& is,
     if (de_ev <= 0)
     {
         ModuleBase::WARNING("ModuleIO::calculate_dos", "de <= 0 ");
-        return 0;
+        return false;
     }
     else if (emax_ev < emin_ev)
     {
         ModuleBase::WARNING("ModuleIO::calculate_dos", "emax_ev < emin_ev");
-        return 0;
+        return false;
     }
 
     // mohan fixed bug 2010-1-18
@@ -56,7 +57,7 @@ bool ModuleIO::calculate_dos(const int& is,
     {
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "npoints", npoints);
         ModuleBase::WARNING("ModuleIO::calculate_dos", "npoints <= 0");
-        return 0;
+        return false;
     }
     if (GlobalV::MY_RANK == 0)
     {
@@ -102,7 +103,8 @@ bool ModuleIO::calculate_dos(const int& is,
             }
         }
 #ifdef __MPI
-        Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, count);
+        const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+        Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, count);
 #endif
         count = count / static_cast<double>(nkstot);
         sum += count;
@@ -157,5 +159,5 @@ bool ModuleIO::calculate_dos(const int& is,
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "sum up the states", sum);
     delete[] e_mod;
 
-    return 1;
+    return true;
 }

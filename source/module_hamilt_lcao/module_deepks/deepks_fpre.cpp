@@ -136,23 +136,27 @@ void DeePKS_domain::cal_gdmx(const int lmaxd,
 
                     dm_current = dm_pair.get_pointer();
 
+                    hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
+                    hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
+                    if (overlap_1 == nullptr || overlap_2 == nullptr)
+                    {
+                        continue;
+                    }
+                    std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
+                    std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
+
+                    assert(overlap_1->get_col_size() == overlap_2->get_col_size());
+
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
+                        grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
+                    }
+
                     for (int iw1 = 0; iw1 < row_indexes.size(); ++iw1)
                     {
                         for (int iw2 = 0; iw2 < col_indexes.size(); ++iw2)
                         {
-                            hamilt::BaseMatrix<double>* overlap_1 = phialpha[0]->find_matrix(iat, ibt1, dR1);
-                            hamilt::BaseMatrix<double>* overlap_2 = phialpha[0]->find_matrix(iat, ibt2, dR2);
-                            std::vector<hamilt::BaseMatrix<double>*> grad_overlap_1(3);
-                            std::vector<hamilt::BaseMatrix<double>*> grad_overlap_2(3);
-
-                            assert(overlap_1->get_col_size() == overlap_2->get_col_size());
-
-                            for (int i = 0; i < 3; ++i)
-                            {
-                                grad_overlap_1[i] = phialpha[i + 1]->find_matrix(iat, ibt1, dR1);
-                                grad_overlap_2[i] = phialpha[i + 1]->find_matrix(iat, ibt2, dR2);
-                            }
-
                             int ib = 0;
                             for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
                             {
@@ -266,7 +270,7 @@ void DeePKS_domain::cal_gvx(const int nat,
                             torch::Tensor& gvx)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_gvx");
-
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gvx");
     // gdmr : nat(derivative) * 3 * inl(projector) * nm * nm
     std::vector<torch::Tensor> gdmr;
     auto accessor = gdmx.accessor<double, 5>();
@@ -332,7 +336,7 @@ void DeePKS_domain::cal_gvx(const int nat,
         assert(gvx.size(2) == nat);
         assert(gvx.size(3) == des_per_atom);
     }
-
+    ModuleBase::timer::tick("DeePKS_domain", "cal_gvx");
     return;
 }
 

@@ -45,7 +45,8 @@ void check_phialpha(const bool& cal_deri /**< [in] 0 for 2-center intergration, 
                     const LCAO_Orbitals& orb,
                     const Grid_Driver& GridD,
                     const Parallel_Orbitals* pv,
-                    std::vector<hamilt::HContainer<double>*>& phialpha);
+                    std::vector<hamilt::HContainer<double>*>& phialpha,
+                    const int rank);
 } // namespace DeePKS_domain
 
 #endif

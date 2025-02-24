@@ -38,7 +38,8 @@ PW_Basis:: ~PW_Basis()
     delete[] ig2igg;
     delete[] gg_uniq;
 #if defined(__CUDA) || defined(__ROCM)
-    if (this->device == "gpu") {
+    if (this->device == "gpu")
+    {
         delmem_int_op()(this->d_is2fftixy);
     }
 #endif
@@ -70,9 +71,14 @@ void PW_Basis::setuptransform()
 
 void PW_Basis::getstartgr()
 {
-    if(this->gamma_only)    this->nmaxgr = ( this->npw > (this->nrxx+1)/2 ) ? this->npw : (this->nrxx+1)/2;
-    else                    this->nmaxgr = ( this->npw > this->nrxx ) ? this->npw : this->nrxx;
-    this->nmaxgr = (this->nz * this->nst > this->nxy * nplane) ? this->nz * this->nst : this->nxy * nplane;
+    if(this->gamma_only)    
+    {
+        this->nmaxgr = ( this->npw > (this->nrxx+1)/2 ) ? this->npw : (this->nrxx+1)/2;
+    }
+    else
+    {
+        this->nmaxgr = ( this->npw > this->nrxx ) ? this->npw : this->nrxx;
+    }
     
     //---------------------------------------------
 	// sum : starting plane of FFT box.
@@ -85,23 +91,35 @@ void PW_Basis::getstartgr()
 	// Each processor has a set of full sticks,
 	// 'rank_use' processor send a piece(npps[ip]) of these sticks(nst_per[rank_use])
 	// to all the other processors in this pool
-	for (int ip = 0;ip < poolnproc; ++ip) this->numg[ip] = this->nst_per[poolrank] * this->numz[ip];
+	for (int ip = 0;ip < poolnproc; ++ip)
+    {
+        this->numg[ip] = this->nst_per[poolrank] * this->numz[ip];
+    }
 
 
 	// Each processor in a pool send a piece of each stick(nst_per[ip]) to
 	// other processors in this pool
 	// rank_use processor receive datas in npps[rank_p] planes.
-	for (int ip = 0;ip < poolnproc; ++ip) this->numr[ip] = this->nst_per[ip] * this->numz[poolrank];
+	for (int ip = 0;ip < poolnproc; ++ip)
+    {
+        this->numr[ip] = this->nst_per[ip] * this->numz[poolrank];
+    }
 
 
 	// startg record the starting 'numg' position in each processor.
 	this->startg[0] = 0;
-	for (int ip = 1;ip < poolnproc; ++ip) this->startg[ip] = this->startg[ip-1] + this->numg[ip-1];
+	for (int ip = 1;ip < poolnproc; ++ip)
+    {
+        this->startg[ip] = this->startg[ip-1] + this->numg[ip-1];
+    }
 
 
 	// startr record the starting 'numr' position
 	this->startr[0] = 0;
-	for (int ip = 1;ip < poolnproc; ++ip) this->startr[ip] = this->startr[ip-1] + this->numr[ip-1];
+	for (int ip = 1;ip < poolnproc; ++ip)
+    {
+        this->startr[ip] = this->startr[ip-1] + this->numr[ip-1];
+    }
     return;
 }
 
@@ -112,7 +130,10 @@ void PW_Basis::getstartgr()
 /// 
 void PW_Basis::collect_local_pw()
 {
-    if(this->npw <= 0) return;
+    if(this->npw <= 0)
+    {
+        return;
+    }
     this->ig_gge0 = -1;
     delete[] this->gg; this->gg = new double[this->npw];
     delete[] this->gdirect; this->gdirect = new ModuleBase::Vector3<double>[this->npw];
@@ -127,16 +148,28 @@ void PW_Basis::collect_local_pw()
         int ixy = this->is2fftixy[is];
         int ix = ixy / this->fftny;
         int iy = ixy % this->fftny;
-        if (ix >= int(this->nx/2) + 1) ix -= this->nx;
-        if (iy >= int(this->ny/2) + 1) iy -= this->ny;
-        if (iz >= int(this->nz/2) + 1) iz -= this->nz;
+        if (ix >= int(this->nx/2) + 1)
+        {
+            ix -= this->nx;
+        }
+        if (iy >= int(this->ny/2) + 1)
+        {
+            iy -= this->ny;
+        }
+        if (iz >= int(this->nz/2) + 1)
+        {
+            iz -= this->nz;
+        }
         f.x = ix;
         f.y = iy;
         f.z = iz;
         this->gg[ig] = f * (this->GGT * f);
         this->gdirect[ig] = f;
         this->gcar[ig] = f * this->G;
-        if(this->gg[ig] < 1e-8) this->ig_gge0 = ig;
+        if(this->gg[ig] < 1e-8)
+        {
+            this->ig_gge0 = ig;
+        }
     }
     return;
 }
@@ -148,10 +181,13 @@ void PW_Basis::collect_local_pw()
 /// 
 void PW_Basis::collect_uniqgg()
 {
-    if(this->npw <= 0) return;
+    if(this->npw <= 0)
+    {
+        return;
+    }
     this->ig_gge0 = -1;
     delete[] this->ig2igg; this->ig2igg = new int [this->npw];
-//add by A.s 202406
+    
     int *sortindex = new int [this->npw];//Reconstruct the mapping of the plane wave index ig according to the energy size of the plane waves
     double *tmpgg = new double [this->npw];//Ranking the plane waves by energy size while ensuring that the same energy is preserved for each wave to correspond
     double *tmpgg2 = new double [this->npw];//ranking the plane waves by energy size and removing the duplicates
@@ -164,14 +200,26 @@ void PW_Basis::collect_uniqgg()
         int ixy = this->is2fftixy[is];
         int ix = ixy / this->fftny;
         int iy = ixy % this->fftny;
-        if (ix >= int(this->nx/2) + 1) ix -= this->nx;
-        if (iy >= int(this->ny/2) + 1) iy -= this->ny;
-        if (iz >= int(this->nz/2) + 1) iz -= this->nz;
+        if (ix >= int(this->nx/2) + 1)
+        {
+            ix -= this->nx;
+        }
+        if (iy >= int(this->ny/2) + 1)
+        {
+            iy -= this->ny;
+        }
+        if (iz >= int(this->nz/2) + 1)
+        {
+            iz -= this->nz;
+        }
         f.x = ix;
         f.y = iy;
         f.z = iz;
         tmpgg[ig] = f * (this->GGT * f);
-        if(tmpgg[ig] < 1e-8) this->ig_gge0 = ig;
+        if(tmpgg[ig] < 1e-8)
+        {
+            this->ig_gge0 = ig;
+        }
     }
 
     ModuleBase::GlobalFunc::ZEROS(sortindex, this->npw);
@@ -215,7 +263,10 @@ void PW_Basis::collect_uniqgg()
 void PW_Basis::getfftixy2is(int * fftixy2is) const
 {
 //Note: please assert when is1 >= is2, fftixy2is[is1] >= fftixy2is[is2]!
-    for(int ixy = 0 ; ixy < this->fftnxy ; ++ixy)   fftixy2is[ixy] = -1;
+    for(int ixy = 0 ; ixy < this->fftnxy ; ++ixy)
+    {
+        fftixy2is[ixy] = -1;
+    }
     int ixy = 0;
     for(int is = 0; is < this->nst; ++is)
     {

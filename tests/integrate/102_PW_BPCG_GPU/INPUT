@@ -15,6 +15,7 @@ smearing_sigma      0.02
 ecutwfc             40
 scf_thr             1e-7
 scf_nmax            100
+bndpar              2
 
 #Parameters (LCAO)
 basis_type          pw

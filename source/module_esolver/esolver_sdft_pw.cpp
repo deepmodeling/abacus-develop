@@ -198,7 +198,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
     // set_diagethr need it
     this->esolver_KS_ne = hsolver_pw_sdft_obj.stoiter.KS_ne;
 
-    if (GlobalV::MY_STOGROUP == 0)
+    if (PARAM.globalv.ks_run)
     {
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -217,7 +217,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
 #endif
     }
 #ifdef __MPI
-    MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, PARAPW_WORLD);
+    MPI_Bcast(&(this->pelec->f_en.deband), 1, MPI_DOUBLE, 0, BP_WORLD);
 #endif
     ModuleBase::timer::tick("ESolver_SDFT_PW", "hamilt2density");
 }

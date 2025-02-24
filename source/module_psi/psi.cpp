@@ -296,7 +296,7 @@ const int& Psi<T, Device>::get_current_ngk() const
 }
 
 template <typename T, typename Device>
-const int Psi<T, Device>::get_npol() const 
+int Psi<T, Device>::get_npol() const 
 { 
     if (PARAM.inp.nspin == 4)
     {
