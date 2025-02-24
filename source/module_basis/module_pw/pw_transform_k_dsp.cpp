@@ -35,7 +35,7 @@ namespace ModulePW
                                                             this->nxyz,
                                                             add,
                                                             factor,
-                                                            this->ig2ixyz_k_cpu + startig,
+                                                            this->ig2ixyz_k_cpu.data() + startig,
                                                             auxr,
                                                             out);
     }
@@ -49,23 +49,19 @@ namespace ModulePW
         assert(this->gamma_only == false);
         const base_device::DEVICE_CPU* ctx;
         const base_device::DEVICE_GPU* gpux;
-        printf("beforce the recip2real_dsp\n");
         // memset the auxr of 0 in the auxr,here the len of the auxr is nxyz
         auto * auxr = this->fft_bundle.get_auxr_3d_data<double>();
         memset(auxr,0,this->nxyz*2*8);
 
         const int startig = ik * this->npwk_max;
         const int npw_k   = this->npwk[ik];
-        printf("beforce the set_3d_fft_box_op\n");
         //copy the mapping form the type of stick to the 3dfft
         set_3d_fft_box_op<double,base_device::DEVICE_CPU>()
         (
-            ctx,npw_k,this->ig2ixyz_k_cpu+startig,in,auxr
+            ctx,npw_k,this->ig2ixyz_k_cpu.data()+startig,in,auxr
         );
-        printf("beforce the fft3D_backward\n");
         // use 3d fft backward
         this->fft_bundle.fft3D_backward(gpux,auxr,auxr);
-        printf("beforce the add\n");
         if(add) 
         {
             const int one =1;
@@ -76,7 +72,6 @@ namespace ModulePW
         {
             memcpy(out,auxr,nrxx*2*8);
         }
-        printf("after the add\n");
     }
     template <>
     void PW_Basis_K::convolution(const base_device::DEVICE_CPU* ctx,
@@ -114,7 +109,7 @@ namespace ModulePW
         //copy the mapping form the type of stick to the 3dfft
         set_3d_fft_box_op<double,base_device::DEVICE_CPU>()
         (
-            ctx,npw_k,this->ig2ixyz_k_cpu+startig,input,auxr
+            ctx,npw_k,this->ig2ixyz_k_cpu.data()+startig,input,auxr
         );
 
         // use 3d fft backward
@@ -135,7 +130,7 @@ namespace ModulePW
                                                             this->nxyz,
                                                             add,
                                                             factor,
-                                                            this->ig2ixyz_k_cpu + startig,
+                                                            this->ig2ixyz_k_cpu.data() + startig,
                                                             auxr,
                                                             output);
         ModuleBase::timer::tick(this->classname,"convolution");

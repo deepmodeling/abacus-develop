@@ -308,7 +308,6 @@ void PW_Basis_K::real_to_recip(const base_device::DEVICE_CPU* /*dev*/,
                                const double factor) const
 {
     #if defined(__DSP)
-        printf("beforce the real_to_recip\n");
         this->real2recip_dsp(in,out,ik,add,factor);
     #else
         this->real2recip(in, out, ik, add, factor);
@@ -334,7 +333,6 @@ void PW_Basis_K::recip_to_real(const base_device::DEVICE_CPU* /*dev*/,
                                const double factor) const
 {
     #if defined(__DSP)
-        printf("beforce the recip_to_real\n");
         this->recip2real_dsp(in,out,ik,add,factor);
     #else
         this->recip2real(in, out, ik, add, factor);

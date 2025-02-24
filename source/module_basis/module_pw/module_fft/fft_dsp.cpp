@@ -23,8 +23,7 @@ void FFT_DSP<double>::setupFFT()
     PLAN* ptr_plan_backward;
     INT   num_thread=8;
     INT   size;
-
-    hthread_dat_load(cluster_id, "/vol8/home/dptech_zyz1/develop/blasfft/mtfftblas/datfile/mt_fft_blas.dat");
+    hthread_dat_load(cluster_id, FFT_DAT_DIR);
     
     //compute the size of and malloc thread
     size = nx*ny*nz*2*sizeof(E);

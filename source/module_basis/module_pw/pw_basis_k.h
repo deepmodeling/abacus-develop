@@ -87,7 +87,7 @@ public:
     int *igl2isz_k=nullptr, * d_igl2isz_k = nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz)
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
     int *ig2ixyz_k=nullptr; ///< [npw] map ig to ixyz
-    int *ig2ixyz_k_cpu = nullptr; /// [npw] map ig to ixyz,which is used in dsp fft.
+    std::vector<int> ig2ixyz_k_cpu; /// [npw] map ig to ixyz,which is used in dsp fft.
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
     // liuyu add 2023-09-06

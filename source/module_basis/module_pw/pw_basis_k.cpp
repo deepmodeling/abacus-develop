@@ -22,9 +22,6 @@ PW_Basis_K::~PW_Basis_K()
     delete[] igl2isz_k;
     delete[] igl2ig_k;
     delete[] gk2;
-#if defined(__DSP)
-    delete[] ig2ixyz_k_cpu;
-#endif
 #if defined(__CUDA) || defined(__ROCM)
     if (this->device == "gpu") {
         if (this->precision == "single") {
@@ -148,7 +145,7 @@ void PW_Basis_K::setupIndGk()
 
     //get igl2isz_k and igl2ig_k
     if(this->npwk_max <= 0) { return;}
-    
+
     delete[] igl2isz_k; this->igl2isz_k = new int [this->nks * this->npwk_max];
     delete[] igl2ig_k; this->igl2ig_k = new int [this->nks * this->npwk_max];
     for (int ik = 0; ik < this->nks; ik++)
@@ -188,7 +185,11 @@ void PW_Basis_K::setuptransform()
     this->getstartgr();
     this->setupIndGk();
     this->fft_bundle.clear();
-    this->fft_bundle.setfft("dsp",this->precision);
+    #if defined(__DSP)
+        this->fft_bundle.setfft("dsp",this->precision);
+    #else
+        this->fft_bundle.setfft("cpu",this->precision);
+    #endif
     if(this->xprime){
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }else{     
@@ -337,12 +338,12 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
 
 void PW_Basis_K::get_ig2ixyz_k()
 {
-    if (this->device != "gpu")
-    {
-        //only GPU need to get ig2ixyz_k
-        return;
-    }
-    int * ig2ixyz_k_cpu = new int [this->npwk_max * this->nks];
+    // if (this->device != "gpu")
+    // {
+    //     //only GPU need to get ig2ixyz_k
+    //     return;
+    // }
+    ig2ixyz_k_cpu.resize(this->npwk_max * this->nks);
     ModuleBase::Memory::record("PW_B_K::ig2ixyz", sizeof(int) * this->npwk_max * this->nks);
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
     for(int ik = 0; ik < this->nks; ++ik)
@@ -359,10 +360,7 @@ void PW_Basis_K::get_ig2ixyz_k()
         }
     }
     resmem_int_op()(ig2ixyz_k, this->npwk_max * this->nks);
-    syncmem_int_h2d_op()(this->ig2ixyz_k, ig2ixyz_k_cpu, this->npwk_max * this->nks);
-    #if not defined (__DSP)
-        delete[] this->ig2ixyz_k_cpu;
-    #endif
+    syncmem_int_h2d_op()(this->ig2ixyz_k, ig2ixyz_k_cpu.data(), this->npwk_max * this->nks);
 }
 
 std::vector<int> PW_Basis_K::get_ig2ix(const int ik) const
