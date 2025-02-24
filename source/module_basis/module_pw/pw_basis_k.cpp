@@ -188,7 +188,7 @@ void PW_Basis_K::setuptransform()
     #if defined(__DSP)
         this->fft_bundle.setfft("dsp",this->precision);
     #else
-        this->fft_bundle.setfft("cpu",this->precision);
+        this->fft_bundle.setfft(this->device,this->precision);
     #endif
     if(this->xprime){
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
@@ -338,11 +338,13 @@ int& PW_Basis_K::getigl2ig(const int ik, const int igl) const
 
 void PW_Basis_K::get_ig2ixyz_k()
 {
-    // if (this->device != "gpu")
-    // {
-    //     //only GPU need to get ig2ixyz_k
-    //     return;
-    // }
+    #if not defined(__DSP)
+    if (this->device != "gpu")
+    {
+        //only GPU need to get ig2ixyz_k
+        return;
+    }
+    #endif
     ig2ixyz_k_cpu.resize(this->npwk_max * this->nks);
     ModuleBase::Memory::record("PW_B_K::ig2ixyz", sizeof(int) * this->npwk_max * this->nks);
     assert(gamma_only == false); //We only finish non-gamma_only fft on GPU temperarily.
