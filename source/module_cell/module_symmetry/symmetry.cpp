@@ -2307,11 +2307,15 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
         }
         for (auto& mag_iat : mag_type_atoms.at(mag_it))
         {
-
-            const int index_in_newpos = 3 * (this->istart[st.iat2it[mag_iat]] + st.iat2ia[mag_iat]);
+            // this->newpos have been ordered by original structure(ntype, na), it cannot be directly used here.
+            // we need to reset the calculate again the coordinate of the new structure.
+            const ModuleBase::Vector3<double> direct_tmp = atoms[st.iat2it[mag_iat]].tau[st.iat2ia[mag_iat]] * this->optlat.Inverse();
+            std::array<double, 3> direct = { direct_tmp.x, direct_tmp.y, direct_tmp.z };
             for (int i = 0; i < 3; ++i)
             {
-                mag_pos.push_back(this->newpos[index_in_newpos + i]);
+                this->check_translation(direct[i], -floor(direct[i]));
+                this->check_boundary(direct[i]);
+                mag_pos.push_back(direct[i]);
             }
         }
     }
