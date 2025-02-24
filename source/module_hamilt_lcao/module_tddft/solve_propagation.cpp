@@ -7,6 +7,7 @@
 
 namespace module_tddft
 {
+#ifdef __MPI
 void solve_propagation(const Parallel_Orbitals* pv,
                         const int nband,
                         const int nlocal,
@@ -106,4 +107,5 @@ void solve_propagation(const Parallel_Orbitals* pv,
     delete []operator_A;
     delete []operator_B;
 }
+#endif // __MPI
 } // namespace module_tddft
