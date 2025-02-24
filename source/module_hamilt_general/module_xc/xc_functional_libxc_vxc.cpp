@@ -1128,25 +1128,11 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
                     mx,my,mz,V_MC
                 );
                 #ifdef _OPENMP
-                #pragma omp parallel
-                {
-                    std::vector<double> local_torque(3 * nrxx, 0.0);
-                #pragma omp for schedule(static, 1024) nowait
-                    for (int ir = 0; ir < 3 * nrxx; ++ir) {
-                        local_torque[ir] = torque_tmp[ir];
-                    }
-                #pragma omp critical
-                    {
-                        for (int ir = 0; ir < 3 * nrxx; ++ir) {
-                            torque[ir] += local_torque[ir];
-                        }
-                    }
-                } // end parallel
-                #else
+                #pragma omp parallel for schedule(static, 1024) 
+                #endif
                     for (int ir = 0; ir < 3 * nrxx; ++ir) {
                         torque[ir] += torque_tmp[ir];
                     }
-                #endif
             }
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024) reduction(+:etxc) reduction(+:vtxc)
@@ -1415,9 +1401,6 @@ for (size_t i = 0; i < size; ++i) {
     //Parallel_Reduce::reduce_pool(vtxc_col);
     #endif
     if(PARAM.inp.xc_torque){
-        #ifdef __MPI
-        Parallel_Reduce::reduce_pool(torque);
-        #endif
         NCLibxc::print_torque(torque);
     }
     

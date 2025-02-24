@@ -13,7 +13,7 @@ namespace Parallel_Reduce
 	void reduce_int_all(int &object);
 	void reduce_int_pool(int &object);
 
-	void reduce_double_vector_pool(std::vector<double>& vec);
+
 	
 	// reduce double in all process
 	void reduce_double_all(double &object);

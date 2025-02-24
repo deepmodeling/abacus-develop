@@ -19,12 +19,6 @@ void Parallel_Reduce::reduce_int_pool(int &object)
 }
 
 
-void Parallel_Reduce::reduce_double_vector_pool(std::vector<double>& vec)
-{
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, vec.data(), static_cast<int>(vec.size()), MPI_DOUBLE, MPI_SUM, POOL_WORLD);
-#endif
-}
 
 
 void Parallel_Reduce::reduce_double_all(double &object)
