@@ -13,6 +13,7 @@ if(ENABLE_LCAO)
         td_velocity.cpp
         td_current.cpp
         snap_psibeta_half_tddft.cpp
+        solve_propagation.cpp
     )
 
     add_library(
