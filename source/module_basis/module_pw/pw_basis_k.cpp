@@ -147,8 +147,8 @@ void PW_Basis_K::setupIndGk()
     
 
     //get igl2isz_k and igl2ig_k
-    if(this->npwk_max <= 0) { return;
-}
+    if(this->npwk_max <= 0) { return;}
+    
     delete[] igl2isz_k; this->igl2isz_k = new int [this->nks * this->npwk_max];
     delete[] igl2ig_k; this->igl2ig_k = new int [this->nks * this->npwk_max];
     for (int ik = 0; ik < this->nks; ik++)
@@ -188,7 +188,7 @@ void PW_Basis_K::setuptransform()
     this->getstartgr();
     this->setupIndGk();
     this->fft_bundle.clear();
-    this->fft_bundle.setfft(this->device,this->precision);
+    this->fft_bundle.setfft("dsp",this->precision);
     if(this->xprime){
         this->fft_bundle.initfft(this->nx,this->ny,this->nz,this->lix,this->rix,this->nst,this->nplane,this->poolnproc,this->gamma_only, this->xprime);
     }else{     

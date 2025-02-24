@@ -136,18 +136,29 @@ public:
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
     #if defined(__DSP)
+    template <typename FPTYPE, typename Device>
+    void convolution(const Device* ctx,
+                      const int ik,
+                      const int size,
+                      const std::complex<FPTYPE>* input,
+                      const FPTYPE*               input1,
+                      std::complex<FPTYPE>*       output,
+                      const bool add = false,
+                      const FPTYPE factor =1.0) const ;
+
     template <typename FPTYPE>
-    void real2recip_3d(const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out,
-                    const int ik,
-                    const bool add = false,
-                    const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    void real2recip_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
     template <typename FPTYPE>
-    void recip2real_3d(const std::complex<FPTYPE>* in,
-                    std::complex<FPTYPE>* out,
-                    const int ik,
-                    const bool add = false,
-                    const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    void recip2real_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    
     #endif
 
     template <typename FPTYPE, typename Device>

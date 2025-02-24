@@ -16,6 +16,7 @@ endif()
 if (USE_DSP)
   list (APPEND FFT_SRC
       module_fft/fft_dsp.cpp
+      module_fft/fft_dsp_float.cpp
       pw_transform_k_dsp.cpp)
 endif()
 
@@ -41,6 +42,10 @@ add_library(
     ${objects}
 )
 
+if (USE_DSP)
+target_link_libraries(planewave  PRIVATE
+${MTBLAS_FFT_LIBRARY_DIR}/lib/libmtfft.a)
+endif()
 if(ENABLE_COVERAGE)
   add_coverage(planewave)
 endif()

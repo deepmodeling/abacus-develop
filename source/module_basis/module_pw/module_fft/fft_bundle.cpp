@@ -3,6 +3,7 @@
 
 #include "module_base/module_device/device.h"
 #include "module_base/module_device/memory_op.h"
+#include "module_base/tool_quit.h"
 #if defined(__CUDA)
 #include "fft_cuda.h"
 #endif
@@ -42,7 +43,7 @@ void FFT_Bundle::initfft(int nx_in,
                          bool xprime_in , 
                          bool mpifft_in)
 {
-    assert(this->device=="cpu" || this->device=="gpu");
+    assert(this->device=="cpu" || this->device=="gpu" || this->device=="dsp");
     assert(this->precision=="single" || this->precision=="double" || this->precision=="mixing");
 
     if (this->precision=="single")
@@ -64,15 +65,17 @@ void FFT_Bundle::initfft(int nx_in,
     {
         double_flag = true;
     }
-
+    #if defined(__DSP)
+    if (device=="dsp")
+        {
+            if (float_flag)
+                ModuleBase::WARNING_QUIT("device","now dsp fft is not support for the float type");
+            fft_double=make_unique<FFT_DSP<double>>();
+            fft_double->initfft(nx_in,ny_in,nz_in);
+        }
+    #endif
     if (device=="cpu")
     {
-        #if defined(__DSP)
-        if (float_flag==true)
-            ModuleBase::WARNING_QUT("device","now dsp fft is not support for the float type");
-        fft_double=make_unique<FFT_DSP<double>>();
-        fft_double->initfft(nx_in,ny_in,nz_in);
-        #else
         fft_float = make_unique<FFT_CPU<float>>(this->fft_mode);
         fft_double = make_unique<FFT_CPU<double>>(this->fft_mode);
         if (float_flag)
@@ -101,7 +104,6 @@ void FFT_Bundle::initfft(int nx_in,
                                 gamma_only_in,
                                 xprime_in);
         }
-        #endif
     }
     if (device=="gpu")
     {
