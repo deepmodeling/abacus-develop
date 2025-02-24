@@ -136,7 +136,7 @@ namespace ModuleSymmetry
         symm.getgroup(bvk_npg, bvk_nsg, GlobalV::ofs_running, bvk_nop,
             bvk_op.data(), bvk_gmatrix.data(), bvk_gtrans.data(),
             bvk_dpos.data(), bvk_rot_dpos.data(), order_index.data(),
-            bvk_itmin_type, bvk_itmin_start, bvk_istart.data(), bvk_na.data());
+            symm.ntype, bvk_itmin_type, bvk_itmin_start, bvk_istart.data(), bvk_na.data());
         bvk_gmatrix.resize(bvk_nsg);
         bvk_gtrans.resize(bvk_nsg);
         this->bvk_nsym_ = bvk_nsg;
