@@ -3477,9 +3477,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Integer
 - **Description**:
   method of propagator
-  - 0: Crank-Nicolson.
+  - 0: Crank-Nicolson, based on matrix inversion.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
+  - 3: Crank-Nicolson, based on solving linear equation.
 - **Default**: 0
 
 ### td_vext
