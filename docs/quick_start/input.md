@@ -14,7 +14,7 @@ suffix                  MgO  # the output files will be in OUT.{suffix} director
 pseudo_dir              ./   # where the pseudopotential for each element is
 orbital_dir             ./   # where the orbital file for each element is
 ecutwfc                 100  # in Rydberg
-scf_thr                 1e-6 # dimensionless for LCAO, Rydberg for PW
+scf_thr                 1e-6 # dimensionless for LCAO, Rydberg for PW. See documents for details.
 basis_type              lcao # lcao or pw
 calculation             scf  # this is the key parameter telling abacus to do a scf calculation
 out_chg                 0    # only output binary charge file for restart
