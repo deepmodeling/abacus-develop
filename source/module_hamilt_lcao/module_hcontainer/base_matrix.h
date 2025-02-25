@@ -62,7 +62,14 @@ class BaseMatrix
      * @param j_col column index
      * @return T&
      */
-    T& get_value(const size_t& i_row, const size_t& j_col) const;
+    T& get_value(const size_t& i_row, const size_t& j_col) const
+    {
+      #ifdef __DEBUG
+      assert(this->value_begin != nullptr);
+      #endif
+          int index = i_row * this->ncol_local + j_col;
+          return value_begin[index];
+    };
 
     /**
      * @brief get pointer of value from a submatrix
