@@ -18,6 +18,9 @@ double H_TDDFT_pw::amp;
 double H_TDDFT_pw::bmod;
 double H_TDDFT_pw::bvec[3];
 
+// Used for calculating electric field force on ions
+vector<double> H_TDDFT_pw::global_vext_time = {0.0, 0.0, 0.0};
+
 int H_TDDFT_pw::stype; // 0 : length gauge  1: velocity gauge
 
 std::vector<int> H_TDDFT_pw::ttype;
@@ -121,10 +124,28 @@ void H_TDDFT_pw::cal_fixed_v(double* vl_pseudo)
     trigo_count = 0;
     heavi_count = 0;
 
+    global_vext_time = {0.0, 0.0, 0.0};
+
+    if (PARAM.inp.td_vext_dire.size() != 1)
+    {
+        ModuleBase::WARNING("H_TDDFT_pw::cal_fixed_v",
+                            "Multiple electric fields detected. This feature may have potential issues and is not "
+                            "recommended for use!");
+    }
+    if (PARAM.inp.td_vext_dire.size() > 2)
+    {
+        // To avoid breaking the integration test 601_NO_TDDFT_H2_len_hhg, a maximum of 2 electric fields are allowed
+        ModuleBase::WARNING_QUIT("H_TDDFT_pw::cal_fixed_v",
+                                 "For the sake of program stability, the feature of applying multiple electric fields "
+                                 "simultaneously has been temporarily disabled. Thank you for your understanding!");
+    }
+
     for (auto direc: PARAM.inp.td_vext_dire)
     {
         std::vector<double> vext_space(this->rho_basis_->nrxx, 0.0);
         double vext_time = cal_v_time(ttype[count], true);
+
+        global_vext_time[direc - 1] += vext_time;
 
         if (PARAM.inp.out_efield && GlobalV::MY_RANK == 0)
         {
@@ -479,7 +500,7 @@ void H_TDDFT_pw::prepare(const ModuleBase::Matrix3& G, int& dir)
     bmod = sqrt(pow(bvec[0], 2) + pow(bvec[1], 2) + pow(bvec[2], 2));
 }
 
-void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
+void H_TDDFT_pw::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
 {
     int iat = 0;
     for (int it = 0; it < cell.ntype; ++it)
@@ -488,7 +509,9 @@ void H_TDDFT_pw ::compute_force(const UnitCell& cell, ModuleBase::matrix& fe)
         {
             for (int jj = 0; jj < 3; ++jj)
             {
-                fe(iat, jj) = ModuleBase::e2 * amp * cell.atoms[it].ncpp.zv * bvec[jj] / bmod;
+                // No need to multiply ModuleBase::e2, since the unit of force is Ry/Bohr
+                fe(iat, jj)
+                    = (std::abs(bmod) > 1e-10 ? global_vext_time[jj] * cell.atoms[it].ncpp.zv * bvec[jj] / bmod : 0);
             }
             ++iat;
         }
