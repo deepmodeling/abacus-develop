@@ -2,6 +2,7 @@
 
 #include "kernels/math_kernel_op.h"
 #include "parallel_device.h"
+#include "module_base/timer.h"
 namespace ModuleBase
 {
 template <typename T, typename Device>
@@ -109,6 +110,7 @@ void PGemmCN<T, Device>::set_dimension(
 template <typename T, typename Device>
 void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T beta, T* C)
 {
+    ModuleBase::timer::tick("PGemmCN", "multiply");
 #ifdef __MPI
     if (this->col_nproc > 1)
     {
@@ -126,6 +128,7 @@ void PGemmCN<T, Device>::multiply(const T alpha, const T* A, const T* B, const T
     {
         multiply_single(alpha, A, B, beta, C);
     }
+    ModuleBase::timer::tick("PGemmCN", "multiply");
 }
 
 template <typename T, typename Device>
@@ -154,10 +157,12 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
 
     std::vector<T> B_tmp(max_colA * LDA);
     std::vector<T> isend_tmp;
+#ifndef __CUDA_MPI
     if (std::is_same<Device, base_device::DEVICE_GPU>::value)
     {
         isend_tmp.resize(max_colA * LDA);
     }
+#endif
     for (int ip = 0; ip < col_nproc; ip++)
     {
         if (col_rank != ip)
@@ -244,6 +249,13 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
 
     if (this->gatherC)
     {
+#ifdef __CUDA_MPI
+        if (this->row_nproc > 1)
+        {
+            Parallel_Common::reduce_data(C_local, size_C_local, row_world);
+        }
+        Parallel_Common::gatherv_data(C_local, size_C_local, C, recv_counts.data(), displs.data(), col_world);
+#else
         T* Cglobal_cpu = nullptr;
         T* Clocal_cpu = C_tmp.data();
         std::vector<T> cpu_tmp;
@@ -277,6 +289,7 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
         {
             syncmem_h2d_op()(C, Cglobal_cpu, size_C_global);
         }
+#endif
     }
     else
     {

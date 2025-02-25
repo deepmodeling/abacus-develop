@@ -1,4 +1,5 @@
 #include "para_linear_transform.h"
+#include "module_base/timer.h"
 
 #include <algorithm>
 #include <vector>
@@ -54,6 +55,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
+    ModuleBase::timer::tick("PLinearTransform", "act");
     const Device* ctx = {};
 #ifdef __MPI
     if (nproc_col > 1)
@@ -65,7 +67,9 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             A_tmp_device = nullptr;
+#ifndef __CUDA_MPI
             isend_tmp.resize(max_colA * LDA);
+#endif
             resmem_dev_op()(A_tmp_device, max_colA * LDA);
         }
         T* B_tmp = nullptr;
@@ -168,6 +172,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                          B,
                                          LDA);
     }
+    ModuleBase::timer::tick("PLinearTransform", "act");
 };
 
 template struct PLinearTransform<double, base_device::DEVICE_CPU>;
