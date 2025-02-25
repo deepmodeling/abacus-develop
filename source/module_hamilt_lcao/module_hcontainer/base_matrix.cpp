@@ -120,22 +120,6 @@ assert(this->value_begin != nullptr);
     }
 }
 
-template <typename T>
-void BaseMatrix<T>::add_element(int mu, int nu, const T& value)
-{
-#ifdef __DEBUG
-assert(this->value_begin != nullptr);
-#endif
-    int index = mu * this->ncol_local + nu;
-    value_begin[index] += value;
-}
-
-template <typename T>
-T* BaseMatrix<T>::get_pointer() const
-{
-    return value_begin;
-}
-
 // operator= for copy assignment
 template <typename T>
 BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
