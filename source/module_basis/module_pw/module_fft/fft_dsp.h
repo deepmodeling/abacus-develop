@@ -65,17 +65,16 @@ class FFT_DSP : public FFT_BASE<FPTYPE>
         void fft3D_backward(std::complex<FPTYPE>* in, 
                             std::complex<FPTYPE>* out) const override;
     public:
-        int nxyz;
+        int nxyz=0;
         INT cluster_id=0;
-        mutable INT   b_id;
+        mutable INT   b_id=0;
         mutable INT thread_id_for=0;
         PLAN* ptr_plan_forward=nullptr;
         PLAN* ptr_plan_backward=nullptr;
         mutable unsigned long args_for[2];
         mutable unsigned long args_back[2];
-        mutable E *   forward_in;
-        mutable E *   convert2;
-        std::complex<float>* c_auxr_3d = nullptr;  // fft space
+        E *   forward_in=nullptr;
+        std::complex<float>*  c_auxr_3d = nullptr;  // fft space
         std::complex<double>* z_auxr_3d = nullptr; // fft space
 
 };
