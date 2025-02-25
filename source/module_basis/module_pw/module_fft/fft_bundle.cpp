@@ -146,6 +146,20 @@ void FFT_Bundle::clear()
     }
 }
 
+void FFT_Bundle::resource_handler(const int flag) const
+{
+    if (this->device=="dsp")
+    {
+        if (double_flag)
+        {
+            fft_double->resource_handler(flag);
+        }
+        if (float_flag)
+        {
+            fft_float->resource_handler(flag);
+        }
+    }
+}
 template <>
 void FFT_Bundle::fftxyfor(std::complex<float>* in, std::complex<float>* out) const
 {

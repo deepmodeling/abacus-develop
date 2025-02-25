@@ -17,4 +17,9 @@ void FFT_DSP<float>::cleanFFT()
 {
 
 }
+template<>
+void FFT_DSP<float>::resource_handler(const int flag) const
+{
+    
+}
 }

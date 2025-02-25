@@ -81,6 +81,7 @@ class FFT_Bundle
 
     void clear();
 
+    void resource_handler(const int flag) const;
     /**
      * @brief Get the real space data.
      * @return FPTYPE*  the real space data.

@@ -60,33 +60,36 @@ void FFT_DSP<double>::setupFFT()
     ptr_plan_backward->out = forward_in;
     args_back[1] = (unsigned long)ptr_plan_backward;
 }
-
+template <>
+void FFT_DSP<double>::resource_handler(const int flag) const
+{
+    if (flag==0)
+    {
+        hthread_barrier_destroy(b_id);
+        hthread_group_destroy(thread_id_for);
+    }
+    else if (flag==1)
+    {
+        INT num_thread = 8;
+        thread_id_for = hthread_group_create(cluster_id, num_thread, NULL, 0, 0, NULL);
+        // create b_id for the barrier
+        b_id = hthread_barrier_create(cluster_id);
+        args_for[0] = b_id;
+        args_back[0] = b_id;
+    }
+}
 template <>
 void FFT_DSP<double>::fft3D_forward(std::complex<double>* in, std::complex<double>* out) const
 {
-    INT num_thread = 8;
-    thread_id_for = hthread_group_create(cluster_id, num_thread, NULL, 0, 0, NULL);
-    // create b_id for the barrier
-    b_id = hthread_barrier_create(cluster_id);
-    args_for[0] = b_id;
     hthread_group_exec(thread_id_for, "execute_device", 1, 1, args_for);
     hthread_group_wait(thread_id_for);
-    hthread_barrier_destroy(b_id);
-    hthread_group_destroy(thread_id_for);
 }
 
 template <>
 void FFT_DSP<double>::fft3D_backward(std::complex<double>* in, std::complex<double>* out) const
 {
-    INT num_thread = 8;
-    thread_id_for = hthread_group_create(cluster_id, num_thread, NULL, 0, 0, NULL);
-    // create b_id for the barrier
-    b_id = hthread_barrier_create(cluster_id);
-    args_back[0] = b_id;
     hthread_group_exec(thread_id_for, "execute_device", 1, 1, args_back);
     hthread_group_wait(thread_id_for);
-    hthread_barrier_destroy(b_id);
-    hthread_group_destroy(thread_id_for);
 }
 template <>
 void FFT_DSP<double>::cleanFFT()
