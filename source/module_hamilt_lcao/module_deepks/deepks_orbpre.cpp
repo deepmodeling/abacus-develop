@@ -94,12 +94,9 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
                 ModuleBase::Vector3<int> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
 
-                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                 {
-                    if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 auto row_indexes = pv.get_indexes_row(ibt1);
@@ -150,12 +147,9 @@ void DeePKS_domain::cal_orbital_precalc(const std::vector<TH>& dm_hl,
 
                     ModuleBase::Vector3<int> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
 
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                     {
-                        if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
 
                     auto col_indexes = pv.get_indexes_col(ibt2);

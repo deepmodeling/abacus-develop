@@ -261,11 +261,11 @@ void LCAO_deepks_io::save_matrix2npy(const std::string& file_name,
 template <typename T>
 void LCAO_deepks_io::save_tensor2npy(const std::string& file_name, const torch::Tensor& tensor, const int rank)
 {
+    ModuleBase::TITLE("LCAO_deepks_io", "save_tensor2npy");
     if (rank != 0)
     {
         return;
     }
-    ModuleBase::TITLE("LCAO_deepks_io", "save_tensor2npy");
     const int dim = tensor.dim();
     std::vector<long unsigned> shape(dim);
     for (int i = 0; i < dim; i++)

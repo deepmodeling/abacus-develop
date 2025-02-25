@@ -52,7 +52,7 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.input.dft_functional = "default";
     PARAM.sys.nlocal = 18;
     elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
-    ucell->cal_nwfc(ofs);
+    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
     ModuleIO::write_orb_info(ucell);
     ofs.close();
     std::ifstream ifs("Orbital");

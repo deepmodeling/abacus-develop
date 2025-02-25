@@ -102,6 +102,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_pdm");
+    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
 
     // if pdm has been initialized, skip the calculation
     if (init_pdm)
@@ -132,8 +133,6 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
         }
     }
-
-    ModuleBase::timer::tick("DeePKS_domain", "cal_pdm");
 
     const double Rcut_Alpha = orb.Alpha[0].getRcut();
     for (int T0 = 0; T0 < ucell.ntype; T0++)
@@ -204,12 +203,9 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 }
 
                 ModuleBase::Vector3<int> dR1(GridD.getBox(ad1).x, GridD.getBox(ad1).y, GridD.getBox(ad1).z);
-                if constexpr (std::is_same<TK, std::complex<double>>::value)
+                if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
                 {
-                    if (phialpha[0]->find_matrix(iat, ibt1, dR1.x, dR1.y, dR1.z) == nullptr)
-                    {
-                        continue;
-                    }
+                    continue;
                 }
 
                 auto row_indexes = pv.get_indexes_row(ibt1);
@@ -242,12 +238,9 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                     const int nw2_tot = atom2->nw * PARAM.globalv.npol;
 
                     ModuleBase::Vector3<int> dR2(GridD.getBox(ad2).x, GridD.getBox(ad2).y, GridD.getBox(ad2).z);
-                    if constexpr (std::is_same<TK, std::complex<double>>::value)
+                    if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
                     {
-                        if (phialpha[0]->find_matrix(iat, ibt2, dR2.x, dR2.y, dR2.z) == nullptr)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
 
                     const double Rcut_AO2 = orb.Phi[T2].getRcut();

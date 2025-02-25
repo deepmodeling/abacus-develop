@@ -1,7 +1,5 @@
 #include <cstdlib>
-#ifdef __MPI
-#include "mpi.h"
-#endif
+#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 #include "module_base/constants.h"
 #include "module_base/global_function.h"
@@ -9,21 +7,22 @@
 #include "unitcell.h"
 #include "bcast_cell.h"
 #include "module_parameter/parameter.h"
-#include "read_stru.h"
-#ifdef __LCAO
-#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
+#include "module_cell/read_stru.h"
 #include "module_base/atom_in.h"
 #include "module_base/element_elec_config.h"
 #include "module_base/global_file.h"
 #include "module_base/parallel_common.h"
-
-#include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 #include "module_parameter/parameter.h"
+
+#ifdef __MPI
+#include "mpi.h"
+#endif
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
-
+#ifdef __LCAO
+#include "../module_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
+#endif
 
 #include "update_cell.h"
 UnitCell::UnitCell() {
@@ -58,35 +57,6 @@ void UnitCell::print_cell(std::ofstream& ofs) const {
     return;
 }
 
-/*
-void UnitCell::print_cell_xyz(const std::string& fn) const
-{
-
-    if (GlobalV::MY_RANK != 0)
-        return; // xiaohui add 2015-03-15
-
-    std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << fn;
-
-    std::ofstream ofs(ss.str().c_str());
-
-    ofs << nat << std::endl;
-    ofs << latName << std::endl;
-    for (int it = 0; it < ntype; it++)
-    {
-        for (int ia = 0; ia < atoms[it].na; ia++)
-        {
-            ofs << atoms[it].label << " " << atoms[it].tau[ia].x * lat0 *
-0.529177 << " "
-                << atoms[it].tau[ia].y * lat0 * 0.529177 << " " <<
-atoms[it].tau[ia].z * lat0 * 0.529177 << std::endl;
-        }
-    }
-
-    ofs.close();
-    return;
-}
-*/
 
 void UnitCell::set_iat2itia() {
     assert(nat > 0);
@@ -298,7 +268,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = this->read_atom_positions(ifa, log, GlobalV::ofs_warning);
+            ok2 = unitcell::read_atom_positions(*this,ifa, log, GlobalV::ofs_warning);
         }
     }
 #ifdef __MPI
@@ -413,157 +383,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {
     return;
 }
 
-//===========================================
-// calculate the total number of local basis
-// Target : nwfc, lmax,
-// 			atoms[].stapos_wf
-// 			PARAM.inp.nbands
-//===========================================
-void UnitCell::cal_nwfc(std::ofstream& log) {
-    ModuleBase::TITLE("UnitCell", "cal_nwfc");
-    assert(ntype > 0);
-    assert(nat > 0);
-
-    //===========================
-    // (1) set iw2l, iw2n, iw2m
-    //===========================
-    for (int it = 0; it < ntype; it++) {
-        this->atoms[it].set_index();
-    }
-
-    //===========================
-    // (2) set namax and nwmax
-    //===========================
-    this->namax = 0;
-    this->nwmax = 0;
-    for (int it = 0; it < ntype; it++) {
-        this->namax = std::max(atoms[it].na, namax);
-        this->nwmax = std::max(atoms[it].nw, nwmax);
-    }
-    assert(namax > 0);
-    // for tests
-    //		OUT(GlobalV::ofs_running,"max input atom number",namax);
-    //		OUT(GlobalV::ofs_running,"max wave function number",nwmax);
-
-    //===========================
-    // (3) set nwfc and stapos_wf
-    //===========================
-    int nlocal_tmp = 0;
-    for (int it = 0; it < ntype; it++) {
-        atoms[it].stapos_wf = nlocal_tmp;
-        const int nlocal_it = atoms[it].nw * atoms[it].na;
-        if (PARAM.inp.nspin != 4) {
-            nlocal_tmp += nlocal_it;
-        } else {
-            nlocal_tmp += nlocal_it * 2; // zhengdy-soc
-        }
-
-        // for tests
-        //		OUT(GlobalV::ofs_running,ss1.str(),nlocal_it);
-        //		OUT(GlobalV::ofs_running,"start position of local
-        //orbitals",atoms[it].stapos_wf);
-    }
-
-    // OUT(GlobalV::ofs_running,"NLOCAL",PARAM.globalv.nlocal);
-    log << " " << std::setw(40) << "NLOCAL"
-        << " = " << nlocal_tmp << std::endl;
-    //========================================================
-    // (4) set index for itia2iat, itiaiw2iwt
-    //========================================================
-
-    // mohan add 2010-09-26
-    assert(nlocal_tmp > 0);
-    assert(nlocal_tmp == PARAM.globalv.nlocal);
-    delete[] iwt2iat;
-    delete[] iwt2iw;
-    this->iwt2iat = new int[nlocal_tmp];
-    this->iwt2iw = new int[nlocal_tmp];
-
-    this->itia2iat.create(ntype, namax);
-    // this->itiaiw2iwt.create(ntype, namax, nwmax*PARAM.globalv.npol);
-    this->set_iat2iwt(PARAM.globalv.npol);
-    int iat = 0;
-    int iwt = 0;
-    for (int it = 0; it < ntype; it++) {
-        for (int ia = 0; ia < atoms[it].na; ia++) {
-            this->itia2iat(it, ia) = iat;
-            // this->iat2ia[iat] = ia;
-            for (int iw = 0; iw < atoms[it].nw * PARAM.globalv.npol; iw++) {
-                // this->itiaiw2iwt(it, ia, iw) = iwt;
-                this->iwt2iat[iwt] = iat;
-                this->iwt2iw[iwt] = iw;
-                ++iwt;
-            }
-            ++iat;
-        }
-    }
-
-    //========================
-    // (5) set lmax and nmax
-    //========================
-    this->lmax = 0;
-    this->nmax = 0;
-    this->nmax_total = 0;
-    for (int it = 0; it < ntype; it++) {
-        lmax = std::max(lmax, atoms[it].nwl);
-        for (int l = 0; l < atoms[it].nwl + 1; l++) {
-            nmax = std::max(nmax, atoms[it].l_nchi[l]);
-        }
-
-        int nchi = 0;
-        for (int l = 0; l < atoms[it].nwl + 1; l++) {
-            nchi += atoms[it].l_nchi[l];
-        }
-        this->nmax_total = std::max(nmax_total, nchi);
-    }
-
-    //=======================
-    // (6) set lmax_ppwf
-    //=======================
-    this->lmax_ppwf = 0;
-    for (int it = 0; it < ntype; it++) {
-        for (int ic = 0; ic < atoms[it].ncpp.nchi; ic++) {
-            if (lmax_ppwf < atoms[it].ncpp.lchi[ic]) {
-                this->lmax_ppwf = atoms[it].ncpp.lchi[ic];
-            }
-        }
-    }
-
-    /*
-    for(int it=0; it< ntype; it++)
-    {
-        std::cout << " label=" << it << " nbeta=" << atoms[it].nbeta <<
-    std::endl; for(int ic=0; ic<atoms[it].nbeta; ic++)
-        {
-            std::cout << " " << atoms[it].lll[ic] << std::endl;
-        }
-    }
-    */
-
-    //	OUT(GlobalV::ofs_running,"lmax between L(pseudopotential)",lmax_ppwf);
-
-    //=====================
-    // Use localized basis
-    //=====================
-    if ((PARAM.inp.basis_type == "lcao") || (PARAM.inp.basis_type == "lcao_in_pw")
-        || ((PARAM.inp.basis_type == "pw") && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
-            && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
-    {
-        ModuleBase::GlobalFunc::AUTO_SET("NBANDS", PARAM.inp.nbands);
-    } else // plane wave basis
-    {
-        // if(winput::after_iter && winput::sph_proj)
-        //{
-        //	if(PARAM.inp.nbands < PARAM.globalv.nlocal)
-        //	{
-        //		ModuleBase::WARNING_QUIT("cal_nwfc","NBANDS must > PARAM.globalv.nlocal
-        //!");
-        //	}
-        // }
-    }
-
-    return;
-}
 
 void UnitCell::set_iat2iwt(const int& npol_in) {
 #ifdef __DEBUG
@@ -585,67 +404,7 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
     return;
 }
 
-//======================
-// Target : meshx
-// Demand : atoms[].msh
-//======================
-void UnitCell::cal_meshx() {
-    if (PARAM.inp.test_pseudo_cell) {
-        ModuleBase::TITLE("UnitCell", "cal_meshx");
-}
-    this->meshx = 0;
-    for (int it = 0; it < this->ntype; it++) {
-        const int mesh = this->atoms[it].ncpp.msh;
-        if (mesh > this->meshx) {
-            this->meshx = mesh;
-        }
-    }
-    return;
-}
 
-//=========================
-// Target : natomwfc
-// Demand : atoms[].nchi
-// 			atoms[].lchi
-// 			atoms[].oc
-// 			atoms[].na
-//=========================
-void UnitCell::cal_natomwfc(std::ofstream& log) {
-    if (PARAM.inp.test_pseudo_cell) {
-        ModuleBase::TITLE("UnitCell", "cal_natomwfc");
-}
-
-    this->natomwfc = 0;
-    for (int it = 0; it < ntype; it++) {
-        //============================
-        // Use pseudo-atomic orbitals
-        //============================
-        int tmp = 0;
-        for (int l = 0; l < atoms[it].ncpp.nchi; l++) {
-            if (atoms[it].ncpp.oc[l] >= 0) {
-                if (PARAM.inp.nspin == 4) {
-                    if (atoms[it].ncpp.has_so) {
-                        tmp += 2 * atoms[it].ncpp.lchi[l];
-                        if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l]
-                                 - 0.5)
-                            < 1e-6) {
-                            tmp += 2;
-}
-                    } else {
-                        tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
-                    }
-                } else {
-                    tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
-}
-            }
-        }
-        natomwfc += tmp * atoms[it].na;
-    }
-    ModuleBase::GlobalFunc::OUT(log,
-                                "initial pseudo atomic orbital number",
-                                natomwfc);
-    return;
-}
 
 // check if any atom can be moved
 bool UnitCell::if_atoms_can_move() const {

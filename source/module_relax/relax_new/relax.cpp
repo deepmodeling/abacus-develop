@@ -5,6 +5,7 @@
 #include "module_base/parallel_common.h"
 #include "module_base/tool_title.h"
 #include "module_cell/update_cell.h"
+#include "module_cell/print_cell.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
 #include "module_relax/relax_old/ions_move_basic.h"
@@ -636,7 +637,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir)
     unitcell::update_pos_taud(ucell.lat,move_ion,ucell.ntype,ucell.nat,ucell.atoms);
 
     // Print the structure file.
-    ucell.print_tau();
+    unitcell::print_tau(ucell.atoms,ucell.Coordinate,ucell.ntype,ucell.lat0);
 
     // =================================================================
     // Step 4 : update G,GT and other stuff
