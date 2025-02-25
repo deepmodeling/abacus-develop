@@ -263,12 +263,6 @@ void RI_2D_Comm::add_HexxR(
                         cell_nearest->get_cell_nearest_discrete(iat0, iat1, cell)
                         : cell));
                 hamilt::BaseMatrix<TR>* HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
-                if (HlocR == nullptr)
-                { // add R to HContainer
-                    hamilt::AtomPair<TR> tmp(iat0, iat1, R.x, R.y, R.z, &pv);
-                    hR.insert_pair(tmp);
-                    HlocR = hR.find_matrix(iat0, iat1, R.x, R.y, R.z);
-                }
                 auto row_indexes = pv.get_indexes_row(iat0);
                 auto col_indexes = pv.get_indexes_col(iat1);
                 const RI::Tensor<Tdata>& HexxR = (Tdata)alpha * Hs_tmpB.second;

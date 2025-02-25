@@ -298,7 +298,6 @@ void write_wfc_nao(const int out_type,
         {
             std::string fn = PARAM.globalv.global_out_dir + wfc_nao_gen_fname(out_type, gamma_only, PARAM.inp.out_app_flag, ik, istep);
             bool append_flag = (istep > 0 && PARAM.inp.out_app_flag);
-            std::cout << "append_flag = " << append_flag << std::endl;
             if (std::is_same<double, T>::value)
             {
                 wfc_nao_write2file(fn,
