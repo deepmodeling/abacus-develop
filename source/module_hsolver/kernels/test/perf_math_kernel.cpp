@@ -6,8 +6,8 @@
 #include <complex>
 #include <benchmark/benchmark.h>
 #include <iostream>
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 #include <chrono>
 
 /************************************************
