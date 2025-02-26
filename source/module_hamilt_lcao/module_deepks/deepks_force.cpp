@@ -33,8 +33,8 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
 
 #pragma omp parallel
 {
-    ModuleBase::matrix svnl_dalpha_local(svnl_dalpha.nr, svnl_dalpha.nc);
     ModuleBase::matrix f_delta_local(f_delta.nr, f_delta.nc);
+    ModuleBase::matrix svnl_dalpha_local(svnl_dalpha.nr, svnl_dalpha.nc);
 #pragma omp for schedule(dynamic)
     for (int iat = 0; iat < ucell.nat; iat++)
     {
@@ -299,13 +299,16 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
             }         // ad2
         }             // ad1
     }                 // iat
-    for (int ipol = 0; ipol < 3; ipol++)
+    if(isstress)
     {
-        for (int jpol = ipol; jpol < 3; jpol++)
+        for (int ipol = 0; ipol < 3; ipol++)
         {
-            #pragma omp atomic
-            svnl_dalpha(ipol, jpol)
-                += svnl_dalpha_local(ipol, jpol);
+            for (int jpol = ipol; jpol < 3; jpol++)
+            {
+                #pragma omp atomic
+                svnl_dalpha(ipol, jpol)
+                    += svnl_dalpha_local(ipol, jpol);
+            }
         }
     }
     for (int iat = 0; iat < ucell.nat; iat++)
