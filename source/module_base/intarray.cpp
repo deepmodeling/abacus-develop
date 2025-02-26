@@ -153,7 +153,7 @@ void IntArray::create(const int d1, const int d2)
 //****************************
 // zeroes out the whole array
 //****************************
-void IntArray::zero_out(void)
+void IntArray::zero_out()
 {
 	if (size <= 0) 
 	{
