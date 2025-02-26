@@ -184,8 +184,9 @@ void DiagoCG<T, Device>::diag_mock(const ct::Tensor& prec_in,
                 int ii = 0;
                 for (ii = m - 2; ii >= 0; ii--)
                 {
-                    if (eigen_pack[m] - eigen_pack[ii] > 2.0 * pw_diag_thr_)
+                    if (eigen_pack[m] - eigen_pack[ii] > 2.0 * pw_diag_thr_){
                         break;
+                    }
                 }
                 ii++;
                 // last calculated eigenvalue should be in the ii-th position: reorder
@@ -401,8 +402,9 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
 {
     cg_norm = sqrt(ModuleBase::dot_real_op<T, Device>()(this->n_basis_, cg.data<T>(), scg.data<T>()));
 
-    if (cg_norm < 1.0e-10)
+    if (cg_norm < 1.0e-10){
         return true;
+    }
 
     const Real a0
         = ModuleBase::dot_real_op<T, Device>()(this->n_basis_, phi_m.data<T>(), pphi.data<T>()) * 2.0 / cg_norm;
