@@ -96,14 +96,9 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
         {
             T real_beta = ip == 0 ? beta : 0;
             const int ncolA_ip = colA_loc[ip];
-            // get U_tmp
-
             const int start_row = start_colA[ip];
-            for (int i = 0; i < ncolB; ++i)
-            {
-                const T* U_part = U + start_row + (i + start) * ncolA_glo;
-                syncmem_dev_op()(U_tmp + i * ncolA_ip, U_part, ncolA_ip);
-            }
+            const T* U_part = U + start_row + start * ncolA_glo;
+            ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp, ncolA_ip);
 
             if (ip == rank_col)
             {

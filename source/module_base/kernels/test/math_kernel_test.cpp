@@ -633,7 +633,7 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     delete_memory_op()(Y_gemv_dev);
 }
 
-TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
+TEST_F(TestModuleHsolverMathKernel, matrixCopy_op_gpu)
 {
     // const std::vector<std::complex<double> > expect_result = {
     //   {-0.11893203,-0.13492526}, {-0.40314756, 0.07734553}, {0.06892412, 0.14837423}, {0.0,  0.0},
@@ -668,8 +668,9 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                                                         B.size());
 
     // run
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
+    ModuleBase::matrixCopy<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                                  n,
+                                                                                 LDA,
                                                                                  device_A,
                                                                                  LDA,
                                                                                  device_B,
@@ -683,8 +684,9 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                           B_gpu2cpu.size());
 
     std::vector<std::complex<double>> B_cpu(8);
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
+    ModuleBase::matrixCopy<std::complex<double>, base_device::DEVICE_CPU>()(cpu_ctx,
                                                                                  n,
+                                                                                 LDA,
                                                                                  A.data(),
                                                                                  LDA,
                                                                                  B_cpu.data(),
