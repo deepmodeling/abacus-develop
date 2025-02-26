@@ -275,7 +275,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 const double* dm_current = nullptr;
                 for (int is = 0; is < dm->get_DMR_vector().size(); is++)
                 {
-                    int dRx, dRy, dRz;
+                    int dRx=0, dRy=0, dRz=0;
                     if constexpr (std::is_same<TK, double>::value)
                     {
                         dRx = 0;

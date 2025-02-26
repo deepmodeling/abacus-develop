@@ -76,8 +76,8 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                     continue;
                 }
 
-                double r0[3];
-                double r1[3];
+                double r0[3]{};
+                double r1[3]{};
                 if (isstress)
                 {
                     r1[0] = (tau1.x - tau0.x);
@@ -96,9 +96,9 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                     continue;
                 }
 
-                int dRx;
-                int dRy;
-                int dRz;
+                int dRx = 0;
+                int dRy = 0;
+                int dRz = 0;
                 if constexpr (std::is_same<TK, double>::value) // for gamma-only
                 {
                     dRx = 0;
@@ -136,7 +136,8 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                     for (int ik = 0; ik < nks; ik++)
                     {
                         const double arg = -(kvec_d[ik] * dR) * ModuleBase::TWO_PI;
-                        double sinp, cosp;
+                        double sinp = 0;
+                        double cosp = 0;
                         ModuleBase::libm::sincos(arg, &sinp, &cosp);
                         const std::complex<double> kphase = std::complex<double>(cosp, sinp);
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
