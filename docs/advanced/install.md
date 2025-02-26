@@ -115,6 +115,8 @@ To build NVIDIA GPU support for ABACUS, define `USE_CUDA` flag. You can also spe
 cmake -B build -DUSE_CUDA=1 -DCMAKE_CUDA_COMPILER=${path to cuda toolkit}/bin/nvcc
 ```
 
+If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_MPI=ON`. In this case, the program will directly communicate data with the CUDA hardware, rather than transferring it to the CPU first before communication. But note that if CUDA Aware is not supported, adding `-DUSE_CUDA_MPI=ON` will cause the program to throw an error.
+
 ## Build math library from source
 
 > Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.

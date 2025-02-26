@@ -42,6 +42,7 @@ option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 option(USE_DSP "Enable DSP usage." OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
+option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -130,6 +131,10 @@ endif()
 
 if (USE_CUDA_ON_DCU)
   add_compile_definitions(__CUDA_ON_DCU)
+endif()
+
+if (USE_CUDA_MPI)
+  add_compile_definitions(__CUDA_MPI)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
