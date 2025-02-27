@@ -4,6 +4,23 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 
 namespace sparse_format {
+    template<typename T>
+    std::set<Abfs::Vector3_Order<int>> get_R_range(const hamilt::HContainer<T>& hR)
+    {
+        std::set<Abfs::Vector3_Order<int>> all_R_coor;
+        for (int iap = 0;iap < hR.size_atom_pairs(); ++iap)
+        {
+            const hamilt::AtomPair<T>& atom_pair = hR.get_atom_pair(iap);
+            for (int iR = 0; iR < atom_pair.get_R_size(); ++iR)
+            {
+                const auto& r_index = atom_pair.get_R_index(iR);
+                Abfs::Vector3_Order<int> dR(r_index.x, r_index.y, r_index.z);
+                all_R_coor.insert(dR);
+            }
+        }
+        return all_R_coor;
+    };
+
     using TAC = std::pair<int, std::array<int, 3>>;
     void cal_HSR(const UnitCell& ucell,
                  const Parallel_Orbitals& pv,
