@@ -107,12 +107,38 @@ class HSolverPW
 #endif
 
     // K-point continuity related members
+    /**
+     * @brief Indicates whether to use K-point continuity.
+     */
     bool use_k_continuity = true;
+
+    /**
+     * @brief Order of K-points.
+     */
     std::vector<int> k_order;
+
+    /**
+     * @brief Parent-child relationships for K-points.
+     */
     std::unordered_map<int, int> k_parent;
+
+    /**
+     * @brief K-vectors for K-points in continuous space.
+     */
     std::vector<ModuleBase::Vector3<double>> kvecs_c;
     
+    /**
+     * @brief Builds the K-neighbors for the K-points.
+     */
     void build_k_neighbors();
+
+    /**
+     * @brief Propagates the wave function from one K-point to another.
+     * 
+     * @param psi The wave function object.
+     * @param from_ik The index of the starting K-point.
+     * @param to_ik The index of the target K-point.
+     */
     void propagate_psi(psi::Psi<T, Device>& psi, const int from_ik, const int to_ik);
 };
 

@@ -96,7 +96,7 @@ void HSolverPW<T, Device>::call_paw_cell_set_currentk(const int ik)
 }
 
 template <typename T, typename Device>
-void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T>& psi,
+void HSolverPW<T, Device>::paw_func_after_kloop(psi::Psi<T, Device>& psi,
                                                 elecstate::ElecState* pes,
                                                 const double tpiba,
                                                 const int nat)
@@ -689,11 +689,13 @@ void HSolverPW<T, Device>::build_k_neighbors() {
     k_order.clear();
     k_order.reserve(nk);
     
-    // Store k-points and corresponding indices
+    /**
+     * @brief Structure representing a K-point with its vector, index, and norm.
+     */
     struct KPoint {
-        ModuleBase::Vector3<double> kvec;
-        int index;
-        double norm;
+        ModuleBase::Vector3<double> kvec; ///< K-vector of the K-point.
+        int index; ///< Index of the K-point.
+        double norm; ///< Norm of the K-vector.
         
         KPoint(const ModuleBase::Vector3<double>& v, int i) : 
             kvec(v), index(i), norm(v.norm()) {}
@@ -744,7 +746,9 @@ void HSolverPW<T, Device>::propagate_psi(psi::Psi<T, Device>& psi, const int fro
     // Get k-point difference
     ModuleBase::Vector3<double> dk = kvecs_c[to_ik] - kvecs_c[from_ik];
     
-    // Allocate porter locally
+    /**
+     * @brief Allocates memory for the porter used in FFT operations.
+     */
     T* porter = nullptr;
     resmem_complex_op()(this->ctx, porter, this->wfc_basis->nmaxgr, "HSolverPW::porter");
     
