@@ -22,13 +22,12 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS.h"
 #include "module_io/write_dmr.h"
-#include "module_io/write_eband_terms.hpp"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_proj_band_lcao.h"
-#include "module_io/write_vxc.hpp"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
+
 
 //--------------temporary----------------------------
 #include "module_base/global_function.h"

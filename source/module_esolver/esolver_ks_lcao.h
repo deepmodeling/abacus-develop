@@ -20,6 +20,10 @@
 // added by jghan for rdmft calculation
 #include "module_rdmft/rdmft.h"
 
+//be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
+#include "module_io/write_eband_terms.hpp"
+#include "module_io/write_vxc.hpp"
+
 #include <memory>
 
 namespace LR
