@@ -29,6 +29,11 @@
 #include "module_parameter/parameter.h"
 
 
+//be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
+#include "module_io/write_eband_terms.hpp"
+#include "module_io/write_vxc.hpp"
+#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
+
 //--------------temporary----------------------------
 #include "module_base/global_function.h"
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
@@ -36,7 +41,6 @@
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h" // need DeePKS_init
-#include "module_hamilt_lcao/hamilt_lcaodft/hs_matrix_k.hpp"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
