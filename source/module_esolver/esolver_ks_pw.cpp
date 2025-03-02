@@ -6,7 +6,6 @@
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/occupy.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 //-----force-------------------
@@ -16,17 +15,16 @@
 //---------------------------------------------------
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/memory.h"
 #include "module_base/module_device/device.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/cube_io.h"
 #include "module_io/get_pchg_pw.h"
@@ -254,16 +252,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
         this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
-    if (ucell.ionic_position_updated)
-    {
-        this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid,
-                                    ucell,
-                                    this->pelec->charge,
-                                    &this->sf,
-                                    GlobalV::ofs_running,
-                                    GlobalV::ofs_warning);
-    }
 
     // init Hamilt, this should be allocated before each scf loop
     // Operators in HamiltPW should be reallocated once cell changed
@@ -272,76 +260,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     // allocate HamiltPW
     this->allocate_hamilt(ucell);
-
-    //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
-    //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
-    if (vdw_solver != nullptr)
-    {
-        this->pelec->f_en.evdw = vdw_solver->get_energy();
-    }
-
-    // calculate ewald energy
-    if (!PARAM.inp.test_skip_ewald)
-    {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
-    }
-
-    //! cal_ux should be called before init_scf because
-    //! the direction of ux is used in noncoline_rho
-    elecstate::cal_ux(ucell);
-
-    //! calculate the total local pseudopotential in real space
-    this->pelec
-        ->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
-
-    //! output the initial charge density
-    if (PARAM.inp.out_chg[0] == 2)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->charge->rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          this->pelec->eferm.ef,
-                                          &(ucell));
-        }
-    }
-
-    //! output total local potential of the initial charge density
-    if (PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->pot->get_effective_v(is),
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          0.0, // efermi
-                                          &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
-        }
-    }
-
-    //! Symmetry_rho should behind init_scf, because charge should be
-    //! initialized first. liuyu comment: Symmetry_rho should be located between
-    //! init_rho and v_of_rho?
-    Symmetry_rho srho;
-    for (int is = 0; is < PARAM.inp.nspin; is++)
-    {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
-    }
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
