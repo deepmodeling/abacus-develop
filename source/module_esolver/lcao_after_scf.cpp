@@ -257,7 +257,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 
         //! dedwfc = d E/d wfc
         psi::Psi<TK> dedwfc(this->psi->get_nk(), this->psi->get_nbands(), this->psi->get_nbasis(), this->kv.ngk, true);
-        dE_dWfc.zero_out();
+        dedwfc.zero_out();
 
         double etot_rdmft = this->rdmft_solver.run(dedocc, dedwfc);
     }
