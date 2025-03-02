@@ -282,21 +282,29 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         this->pelec->f_en.evdw = vdw_solver->get_energy();
     }
 
+    //----------------------------------------------------------
     // calculate ewald energy
+    //----------------------------------------------------------
     if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
     }
 
+    //----------------------------------------------------------
     //! cal_ux should be called before init_scf because
     //! the direction of ux is used in noncoline_rho
+    //----------------------------------------------------------
     elecstate::cal_ux(ucell);
 
+    //----------------------------------------------------------
     //! calculate the total local pseudopotential in real space
+    //----------------------------------------------------------
     this->pelec
         ->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
 
+    //----------------------------------------------------------
     //! output the initial charge density
+    //----------------------------------------------------------
     if (PARAM.inp.out_chg[0] == 2)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -314,7 +322,9 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         }
     }
 
+    //----------------------------------------------------------
     //! output total local potential of the initial charge density
+    //----------------------------------------------------------
     if (PARAM.inp.out_pot == 3)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -334,19 +344,23 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
         }
     }
 
+    //----------------------------------------------------------
     //! Symmetry_rho should behind init_scf, because charge should be
     //! initialized first. liuyu comment: Symmetry_rho should be located between
     //! init_rho and v_of_rho?
+    //----------------------------------------------------------
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
     }
 
+    //----------------------------------------------------------
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
     // calculate the effective coefficient matrix for non-local pseudopotential
     // projectors
+    //----------------------------------------------------------
     ModuleBase::matrix veff = this->pelec->pot->get_effective_v();
 
     this->ppcell.cal_effective_D(veff, this->pw_rhod, ucell);
