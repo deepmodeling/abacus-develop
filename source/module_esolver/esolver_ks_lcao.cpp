@@ -46,10 +46,6 @@
 #include "module_io/print_info.h"
 
 #include <memory>
-#ifdef __EXX
-#include "module_io/restart_exx_csr.h"
-#include "module_ri/RPA_LRI.h"
-#endif
 
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
@@ -62,9 +58,6 @@
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
 #include "module_hsolver/hsolver_lcao.h"
-// function used by deepks
-// #include "module_elecstate/cal_dm.h"
-//---------------------------------------------------
 
 // test RDMFT
 #include "module_rdmft/rdmft.h"
