@@ -90,7 +90,7 @@ namespace ModuleESolver
 //! 18) write quasi-orbitals
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
+void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
@@ -103,7 +103,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep)
     }
 
     //! 2) call after_scf() of ESolver_KS
-    ESolver_KS<TK>::after_scf(ucell, istep);
+    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
 
     //! 3) write density matrix for sparse matrix
     ModuleIO::write_dmr(dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM()->get_DMR_vector(),

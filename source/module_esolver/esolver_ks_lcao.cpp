@@ -776,11 +776,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
 //! 1) print potential
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter)
+void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "update_pot");
 
-    if (!this->conv_esolver)
+    if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
@@ -801,7 +801,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
 //! 4) output charge density and density matrix
 //------------------------------------------------------------------------------
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
@@ -850,7 +850,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     }
 
     // call iter_finish() of ESolver_KS
-    ESolver_KS<TK>::iter_finish(ucell, istep, iter);
+    ESolver_KS<TK>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // 1) mix density matrix if mixing_restart + mixing_dmr + not first
     // mixing_restart at every iter
@@ -884,7 +884,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                                                                this->scf_ene_thr,
                                                                                iter,
                                                                                istep,
-                                                                               this->conv_esolver)
+                                                                               conv_esolver)
                                                   : this->exc->exx_iter_finish(this->kv,
                                                                                ucell,
                                                                                *this->p_hamilt,
@@ -893,13 +893,13 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
                                                                                this->scf_ene_thr,
                                                                                iter,
                                                                                istep,
-                                                                               this->conv_esolver);
+                                                                               conv_esolver);
         }
     }
 #endif
 
     // 6) use the converged occupation matrix for next MD/Relax SCF calculation
-    if (PARAM.inp.dft_plus_u && this->conv_esolver)
+    if (PARAM.inp.dft_plus_u && conv_esolver)
     {
         GlobalC::dftu.initialed_locale = true;
     }

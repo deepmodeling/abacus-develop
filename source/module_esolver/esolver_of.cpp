@@ -164,6 +164,9 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(pelec->charge->rho, this->pw_rho);
 #endif
 
+
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+
     while (true)
     {
         // once we get a new rho and phi, update potential
@@ -174,8 +177,9 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
         this->energy_last_ = this->energy_current_;
         this->energy_current_ = this->cal_energy();
 
+
         // check if the job is done
-        if (this->check_exit())
+        if (this->check_exit(conv_esolver))
         {
             break;
         }
@@ -188,10 +192,10 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 
         this->iter_++;
 
-        ESolver_FP::iter_finish(ucell, istep, this->iter_);
+        ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
     }
 
-    this->after_opt(istep, ucell);
+    this->after_opt(istep, ucell, conv_esolver);
 
     ModuleBase::timer::tick("ESolver_OF", "runner");
 }
@@ -434,9 +438,9 @@ void ESolver_OF::update_rho()
  *
  * @return exit or not
  */
-bool ESolver_OF::check_exit()
+bool ESolver_OF::check_exit(bool& conv_esolver)
 {
-    this->conv_esolver = false;
+    conv_esolver = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
@@ -457,12 +461,12 @@ bool ESolver_OF::check_exit()
         energyConv = true;
     }
 
-    this->conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
+    conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                          || (this->of_conv_ == "both" && potConv && energyConv);
 
-    this->print_info();
+    this->print_info(conv_esolver);
 
-    if (this->conv_esolver || this->iter_ >= this->max_iter_)
+    if (conv_esolver || this->iter_ >= this->max_iter_)
     {
         return true;
     }
@@ -488,7 +492,7 @@ bool ESolver_OF::check_exit()
  * @param istep
  * @param ucell
  */
-void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
+void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_OF", "after_opt");
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
@@ -538,7 +542,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
     }
 #endif
     // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(ucell, istep);
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 }

@@ -175,12 +175,12 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
     {
-        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter);
+        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
 
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
+        if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
         {
             // no separate_loop case
             if (!GlobalC::exx_info.info_global.separate_loop)
@@ -198,7 +198,7 @@ namespace ModuleESolver
                     iter = 0;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
-                    this->conv_esolver = false;
+                    conv_esolver = false;
                 }
             }
             // has separate_loop case
@@ -206,7 +206,7 @@ namespace ModuleESolver
             else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
                      || (iter == 1 && this->two_level_step != 0))
             {
-                this->conv_esolver = true;
+                conv_esolver = true;
             }
             else
             {
@@ -230,7 +230,7 @@ namespace ModuleESolver
                           << (double)(t_end.tv_sec - t_start.tv_sec)
                                  + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
                           << std::defaultfloat << " (s)" << std::endl;
-                this->conv_esolver = false;
+                conv_esolver = false;
             }
         }
 #endif

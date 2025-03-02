@@ -569,9 +569,9 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
 
 // Temporary, it should be rewritten with Hamilt class.
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter)
+void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver)
 {
-    if (!this->conv_esolver)
+    if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
@@ -587,10 +587,10 @@ void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, cons
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // 1) Call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter);
+    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
 
     // 2) Update USPP-related quantities
     // D in uspp need vloc, thus needs update when veff updated
@@ -606,7 +606,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // 4) Print out electronic wavefunctions
     if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
     {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || this->conv_esolver)
+        if (iter % PARAM.inp.out_freq_elec == 0 || 
+            iter == PARAM.inp.scf_nmax || 
+            conv_esolver)
         {
             std::stringstream ssw;
             ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
@@ -635,7 +637,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
+void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
@@ -647,7 +649,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
     }
 
     // 2) call after_scf() of ESolver_KS
-    ESolver_KS<T, Device>::after_scf(ucell, istep);
+    ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
     // 3) output wavefunctions
     if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)

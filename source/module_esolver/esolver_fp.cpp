@@ -127,15 +127,15 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-void ESolver_FP::after_scf(UnitCell& ucell, const int istep)
+void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
     // 0) output convergence information
-    ModuleIO::output_convergence_after_scf(this->conv_esolver, this->pelec->f_en.etot);
+    ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
 
     // 1) write fermi energy
-    ModuleIO::output_efermi(this->conv_esolver, this->pelec->eferm.ef);
+    ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
 
     // 2) update delta rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
@@ -286,12 +286,12 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     return;
 }
 
-void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     //! output charge density
     if (PARAM.inp.out_chg[0] != -1)
     {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || this->conv_esolver)
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
         {
             std::complex<double>** rhog_tot
                 = (PARAM.inp.dm_to_rho) ? this->pelec->charge->rhog : this->pelec->charge->rhog_save;
