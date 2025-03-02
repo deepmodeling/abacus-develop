@@ -40,6 +40,11 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/print_info.h"
 
+
+//mohan add 20250302
+#include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/ekinetic_new.h"
+
+
 #include <memory>
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
@@ -402,7 +407,6 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                                GlobalV::DRANK);
         }
 
-        // where is new? mohan ask 2024-11-28
         delete ekinetic;
     }
 
