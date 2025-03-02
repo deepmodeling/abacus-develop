@@ -84,7 +84,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
         if (PARAM.inp.nspin == 1)
         {
             const int nbands1 = static_cast<int>(occupied_bands) + 10;
-            const int nbands2 = static_cast<int>(1.2 * occupied_bands) + 1;
+            const int nbands2 = static_cast<int>(PARAM.inp.nbands_mul * occupied_bands) + 1;
             nbands = std::max(nbands1, nbands2);
             if (PARAM.inp.basis_type != "pw") {
                 nbands = std::min(nbands, nlocal);
@@ -93,7 +93,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
         else if (PARAM.inp.nspin == 4)
         {
             const int nbands3 = nelec + 20;
-            const int nbands4 = static_cast<int>(1.2 * nelec) + 1;
+            const int nbands4 = static_cast<int>(PARAM.inp.nbands_mul * nelec) + 1;
             nbands = std::max(nbands3, nbands4);
             if (PARAM.inp.basis_type != "pw") {
                 nbands = std::min(nbands, nlocal);
@@ -103,7 +103,7 @@ void cal_nbands(const int& nelec, const int& nlocal, const std::vector<double>& 
         {
             const double max_occ = std::max(nelec_spin[0], nelec_spin[1]);
             const int nbands3 = static_cast<int>(max_occ) + 11;
-            const int nbands4 = static_cast<int>(1.2 * max_occ) + 1;
+            const int nbands4 = static_cast<int>(PARAM.inp.nbands_mul * max_occ) + 1;
             nbands = std::max(nbands3, nbands4);
             if (PARAM.inp.basis_type != "pw") {
                 nbands = std::min(nbands, nlocal);

@@ -60,6 +60,7 @@
     - [basis\_type](#basis_type)
     - [ks\_solver](#ks_solver)
     - [nbands](#nbands)
+    - [nbands_mul](#nbands_mul)
     - [nelec](#nelec)
     - [nelec\_delta](#nelec_delta)
     - [nupdown](#nupdown)
@@ -967,9 +968,15 @@ calculations.
 - **Type**: Integer
 - **Description**: The number of Kohn-Sham orbitals to calculate. It is recommended to setup this value, especially when smearing techniques are utilized, more bands should be included.
 - **Default**:
-  - nspin=1: max(1.2\*occupied_bands, occupied_bands + 10)
-  - nspin=2: max(1.2\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
-  - nspin=4: max(1.2\*nelec, nelec + 20)
+  - nspin=1: max(`nbands_mul`\*occupied_bands, occupied_bands + 10)
+  - nspin=2: max(`nbands_mul`\*nelec_spin, nelec_spin + 10), in which nelec_spin = max(nelec_spin_up, nelec_spin_down)
+  - nspin=4: max(`nbands_mul`\*nelec, nelec + 20)
+
+### nbands_mul
+
+- **Type**: Real
+- **Description**: the multiply value of default formular of `nbands`. It is recommended that the user set a larger default multiplier for systems with complex electron levels near the Fermi surface, such as `2.0`.
+- **Default**: 1.2
 
 ### nelec
 
