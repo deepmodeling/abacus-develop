@@ -2,6 +2,10 @@
 #include "module_base/timer.h"
 #include "module_base/element_covalent_radius.h"
 
+void process_i(int i, double dx_lat, double dy_lat, double dz_lat)
+{
+    
+}
 void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor) {
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
@@ -48,7 +52,9 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
     latvec[0]=ucell.a1.x; latvec[1]=ucell.a2.x; latvec[2]=ucell.a3.x;
     latvec[3]=ucell.a1.y; latvec[4]=ucell.a2.y; latvec[5]=ucell.a3.y;
     latvec[6]=ucell.a1.z; latvec[7]=ucell.a2.z; latvec[8]=ucell.a3.z;
-    std::vector<double> A(27*3);
+    double* A = new double[27*3];
+    std::vector<std::string> cell(27);
+    std::vector<std::string> label(ntype);
     for (int i=0;i<27;i++)
     {
         int a = (i / 9) % 3 - 1; // 计算a的值
@@ -57,6 +63,17 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         A[3*i]= a*latvec[0] + b *latvec[1] + c* latvec[2];
         A[3*i+1]= a*latvec[3] + b *latvec[4] + c* latvec[5];
         A[3*i+2]= a*latvec[6] + b *latvec[7] + c* latvec[8];
+        std::ostringstream tmp_oss;
+        tmp_oss << " (cell:" << std::setw(2) << a
+                << " " << std::setw(2) << b << " "
+                << std::setw(2) << c << "), distance= ";
+        cell[i] = tmp_oss.str();
+    }
+    for (int it=0;it<ntype;it++)
+    {
+        std::ostringstream tmp_oss;
+        tmp_oss << std::setw(3) << ucell.atoms[it].label;
+        label[it] = tmp_oss.str();
     }
     for (int it1 = 0; it1 < ntype; it1++) {
         const double symbol1_covalent_radius=symbol_covalent_radiuss[it1];
@@ -66,9 +83,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
             double z1 = ucell.atoms[it1].taud[ia1].z;
 
             for (int it2 = it1; it2 < ucell.ntype; it2++) {
-                std::string symbol2 = ucell.atoms[it2].label;
-                double symbol2_covalent_radius=symbol_covalent_radiuss[it1];
-
+                double symbol2_covalent_radius=symbol_covalent_radiuss[it2];
                 double covalent_length = (symbol1_covalent_radius + symbol2_covalent_radius) / ModuleBase::BOHR_TO_A;
                 const double min_error = covalent_length * min_factor_coef / ucell.lat0;
                 const double min_error_2 = min_error * min_error;
@@ -81,13 +96,17 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                     const double delta_x_lat = delta_x*latvec[0] + delta_y*latvec[1]+ delta_z*latvec[2];
                     const double delta_y_lat = delta_x*latvec[3] + delta_y*latvec[4]+ delta_z*latvec[5];
                     const double delta_z_lat = delta_x*latvec[6] + delta_y*latvec[7]+ delta_z*latvec[8];
+                    
+                    double* current_ptr = &A[0];
+                    const bool is_same_atom = (it1 == it2) && (ia1 == ia2);
+                    const bool warning_error = all_pass || no_warning;
+                    if (is_same_atom)
+                    {
+  
                     for (int i=0;i<27;i++)
                     {
-
-                        if (it1 == it2 && ia1 == ia2 && i==13) 
-                        {
+                        if (i==13)
                             continue;
-                        }
                         double part1= delta_x_lat+A[3*i];
                         double part2= delta_y_lat+A[3*i+1];
                         double part3= delta_z_lat+A[3*i+2];
@@ -95,18 +114,15 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
 
                         if (bond_length < min_error_2) 
                         {
-                            errorlog << std::setw(3) << ia1 + 1
-                                        << "-th " << std::setw(3)
-                                        << ucell.atoms[it1].label << ", "
-                                        << std::setw(3) << ia2 + 1
-                                        << "-th " << std::setw(3)
-                                        << ucell.atoms[it2].label
-                                        << " (cell:" << std::setw(2) << (i / 9) % 3 - 1
-                                        << " " << std::setw(2) << (i / 3) % 3 - 1 << " "
-                                        << std::setw(2) << i % 3 - 1 << "), distance= "
-                                        << std::setprecision(3)
-                                        << sqrt(bond_length)/lat0 << " Bohr ("
-                                    << sqrt(bond_length) /lat0 * ModuleBase::BOHR_TO_A
+                           const double sqrt_bon = sqrt(bond_length)/lat0;
+                           errorlog << std::setw(3) << ia1 + 1 << "-th " 
+                                    << label[it1] << ", "
+                                    << std::setw(3) << ia2 + 1 << "-th " 
+                                    << label[it2]
+                                    << cell[i]
+                                    << std::setprecision(3)
+                                    << sqrt_bon << " Bohr ("
+                                    << sqrt_bon * ModuleBase::BOHR_TO_A
                                     << " Angstrom)\n";
                             if (all_pass || no_warning)
                             {
@@ -119,7 +135,43 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                             }
                             
                         }
-                    }         // a
+                    }   
+                    }
+                    else
+                    {
+                        for (int i=0;i<27;i++)
+                        {
+                            const double part1= delta_x_lat + *(current_ptr++);
+                            const double part2= delta_y_lat + *(current_ptr++);
+                            const double part3= delta_z_lat + *(current_ptr++);
+                            const double bond_length = part1*part1 + part2*part2+ part3*part3;
+                            
+                            if (bond_length < min_error_2) 
+                            {
+                                const double sqrt_bon = sqrt(bond_length)/lat0;
+                                errorlog << std::setw(3) << ia1 + 1 << "-th " 
+                                            << label[it1] << ", "
+                                            << std::setw(3) << ia2 + 1 << "-th " 
+                                            << label[it2]
+                                            << cell[i]
+                                            << std::setprecision(3)
+                                            << sqrt_bon << " Bohr ("
+                                            << sqrt_bon * ModuleBase::BOHR_TO_A
+                                            << " Angstrom)\n";
+                                    if (warning_error)
+                                    {
+                                        if (bond_length < pow(covalent_length * factor/lat0,2)) 
+                                        {
+                                            all_pass = false;
+                                        } else {
+                                            no_warning = false;
+                                        }
+                                    }
+                                
+                            }
+                        }         // a
+                    }
+                  
                 }             // ia2
             }                 // it2
         }                     // ia1
