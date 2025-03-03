@@ -1,46 +1,37 @@
 #include "esolver_ks_pw.h"
 
-#include <iostream>
-
-//--------------temporary----------------------------
-#include "module_elecstate/cal_ux.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_elecstate/occupy.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-#include "module_io/print_info.h"
-#include "module_hamilt_pw/hamilt_pwdft/forces.h"
-#include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
-//---------------------------------------------------
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
-#include "module_base/module_device/device.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
+#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+#include "module_hamilt_lcao/module_dftu/dftu.h"
 #include "module_hamilt_pw/hamilt_pwdft/elecond.h"
+#include "module_hamilt_pw/hamilt_pwdft/forces.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
+#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+#include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
-#include "module_hsolver/kernels/dngvd_op.h"
-#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
-#include "module_io/cube_io.h"
 #include "module_io/get_pchg_pw.h"
-#include "module_io/input_conv.h"
 #include "module_io/nscf_band.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
-#include "module_io/output_log.h"
 #include "module_io/to_wannier90_pw.h"
 #include "module_io/winput.h"
 #include "module_io/write_dos_pw.h"
-#include "module_io/write_elecstat_pot.h"
 #include "module_io/write_istate_info.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
 #include "module_parameter/parameter.h"
+
+#include <iostream>
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
 #endif
@@ -55,9 +46,7 @@
 #include "module_base/kernels/dsp/dsp_connector.h"
 #endif
 
-#include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
-#include "module_hamilt_lcao/module_dftu/dftu.h"
-#include "module_hamilt_pw/hamilt_pwdft/onsite_projector.h"
+
 
 namespace ModuleESolver
 {
