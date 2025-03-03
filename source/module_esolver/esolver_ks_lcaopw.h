@@ -27,7 +27,7 @@ namespace ModuleESolver
 
       protected:
         virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
-        virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
+        virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
         /// All the other interfaces except this one are the same as ESolver_KS_PW.
         virtual void hamilt2density_single(UnitCell& ucell,

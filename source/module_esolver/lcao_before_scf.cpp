@@ -267,6 +267,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif // __EXX
 
+    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
@@ -313,6 +315,14 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
         ModuleBase::timer::tick("ESolver_KS_LCAO", "before_scf");
         return;
+    }
+
+    // the electron charge density should be symmetrized,
+    // here is the initialization
+    Symmetry_rho srho;
+    for (int is = 0; is < PARAM.inp.nspin; is++)
+    {
+        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
     }
 
     this->p_hamilt->non_first_scf = istep;

@@ -163,7 +163,11 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(
+		UnitCell& ucell, 
+		const int istep, 
+		int& iter,
+		bool& conv_esolver)
 {
     // print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -189,14 +193,17 @@ void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(UnitCell& ucell, const int istep
                              << std::endl;
     }
 
-    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter);
+    ESolver_KS_LCAO<std::complex<double>, double>::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep, const int iter)
+void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, 
+		const int istep, 
+		const int iter, 
+		const bool conv_esolver)
 {
     // Calculate new potential according to new Charge Density
-    if (!this->conv_esolver)
+    if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
@@ -214,7 +221,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
     const int nlocal = PARAM.globalv.nlocal;
 
     // store wfc and Hk laststep
-    if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && this->conv_esolver)
+    if (istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1) && conv_esolver)
     {
         if (this->psi_laststep == nullptr)
         {
@@ -305,7 +312,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
     }
 
     // print "eigen value" for tddft
-    if (this->conv_esolver)
+    if (conv_esolver)
     {
         GlobalV::ofs_running << "---------------------------------------------------------------"
                                 "---------------------------------"
@@ -331,10 +338,10 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell, const int istep,
 }
 
 template <typename Device>
-void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep)
+void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
-    ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "after_scf");
-    ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
+    ModuleBase::TITLE("ESolver_LCAO_TDDFT", "after_scf");
+    ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
 
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
@@ -366,9 +373,9 @@ void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep)
                                 orb_,
                                 this->RA);
     }
-    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(ucell, istep);
+    ESolver_KS_LCAO<std::complex<double>, double>::after_scf(ucell, istep, conv_esolver);
 
-    ModuleBase::timer::tick("ESolver_KS_LCAO_TDDFT", "after_scf");
+    ModuleBase::timer::tick("ESolver_LCAO_TDDFT", "after_scf");
 }
 
 template <typename Device>
