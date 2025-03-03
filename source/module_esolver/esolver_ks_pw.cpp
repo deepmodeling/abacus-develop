@@ -18,6 +18,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/stress_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
+#include "module_hsolver/kernels/dngvd_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/get_pchg_pw.h"
 #include "module_io/nscf_band.h"
