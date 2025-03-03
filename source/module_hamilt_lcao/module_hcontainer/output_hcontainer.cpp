@@ -50,7 +50,6 @@ void Output_HContainer<T>::write()
             {
                 if (this->_hcontainer->find_R(ix, iy, iz) != -1)
                 {
-                    std::cout << "write R: " << ix << " " << iy << " " << iz << std::endl;
                     this->write_single_R(ix, iy, iz);
                 }
             }
