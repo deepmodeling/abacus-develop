@@ -258,16 +258,8 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
         }
     }
-    if (ucell.ionic_position_updated)
-    {
-        CE.update_all_dis(ucell);
-        CE.extrapolate_charge(&Pgrid, ucell, pelec->charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    }
 
     this->pelec->init_scf(istep, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
-
-    // calculate ewald energy
-    this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)

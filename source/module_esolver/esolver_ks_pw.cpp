@@ -2,6 +2,7 @@
 
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_base/memory.h"
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/elecstate_pw.h"
@@ -99,7 +100,7 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
     std::cout << " ** Closing DSP Hardware..." << std::endl;
     mtfunc::dspDestoryHandle(GlobalV::MY_RANK);
 #endif
-    if(PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
+    if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         delete this->kspw_psi;
     }
@@ -181,7 +182,6 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
                                                     &(this->pelec->f_en.vtxc));
     }
 
-
     //! initalize local pseudopotential
     this->locpp.init_vloc(ucell, this->pw_rhod);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
@@ -243,16 +243,6 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
         this->p_psi_init->prepare_init(PARAM.inp.pw_seed);
     }
-    if (ucell.ionic_position_updated)
-    {
-        this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&this->Pgrid,
-                                    ucell,
-                                    this->pelec->charge,
-                                    &this->sf,
-                                    GlobalV::ofs_running,
-                                    GlobalV::ofs_warning);
-    }
 
     // init Hamilt, this should be allocated before each scf loop
     // Operators in HamiltPW should be reallocated once cell changed
@@ -263,75 +253,10 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
-    //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
-    if (vdw_solver != nullptr)
-    {
-        this->pelec->f_en.evdw = vdw_solver->get_energy();
-    }
-
-    //----------------------------------------------------------
-    // calculate ewald energy
-    //----------------------------------------------------------
-    if (!PARAM.inp.test_skip_ewald)
-    {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
-    }
-
-    //----------------------------------------------------------
-    //! cal_ux should be called before init_scf because
-    //! the direction of ux is used in noncoline_rho
-    //----------------------------------------------------------
-    elecstate::cal_ux(ucell);
-
-    //----------------------------------------------------------
     //! calculate the total local pseudopotential in real space
     //----------------------------------------------------------
     this->pelec
         ->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm, (void*)this->pw_wfc);
-
-    //----------------------------------------------------------
-    //! output the initial charge density
-    //----------------------------------------------------------
-    if (PARAM.inp.out_chg[0] == 2)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->charge->rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          this->pelec->eferm.ef,
-                                          &(ucell));
-        }
-    }
-
-    //----------------------------------------------------------
-    //! output total local potential of the initial charge density
-    //----------------------------------------------------------
-    if (PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->pot->get_effective_v(is),
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          0.0, // efermi
-                                          &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
-        }
-    }
 
     //----------------------------------------------------------
     //! Symmetry_rho should behind init_scf, because charge should be
@@ -583,7 +508,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 
     // 2) Update USPP-related quantities
     // D in USPP needs vloc, thus needs update when veff updated
-    // calculate the effective coefficient matrix for non-local pp projectors 
+    // calculate the effective coefficient matrix for non-local pp projectors
     // liuyu 2023-10-24
     if (PARAM.globalv.use_uspp)
     {
@@ -594,9 +519,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     // 3) Print out electronic wavefunctions in pw basis
     if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
     {
-        if (iter % PARAM.inp.out_freq_elec == 0 || 
-            iter == PARAM.inp.scf_nmax || 
-            conv_esolver)
+        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
         {
             std::stringstream ssw;
             ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
@@ -931,35 +854,35 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
 
 #ifdef __MLKEDF
     // generate training data for ML-KEDF
-    if(PARAM.inp.of_ml_gene_data == 1)
+    if (PARAM.inp.of_ml_gene_data == 1)
     {
         this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
 
-		ML_data ml_data;
-		ml_data.set_para(this->pelec->charge->nrxx, 
-				PARAM.inp.nelec, 
-				PARAM.inp.of_tf_weight, 
-				PARAM.inp.of_vw_weight,
-				PARAM.inp.of_ml_chi_p, 
-				PARAM.inp.of_ml_chi_q, 
-				PARAM.inp.of_ml_chi_xi, 
-				PARAM.inp.of_ml_chi_pnl, 
-				PARAM.inp.of_ml_chi_qnl,
-				PARAM.inp.of_ml_nkernel, 
-				PARAM.inp.of_ml_kernel, 
-				PARAM.inp.of_ml_kernel_scaling, 
-				PARAM.inp.of_ml_yukawa_alpha, 
-				PARAM.inp.of_ml_kernel_file, 
-				ucell.omega, 
-				this->pw_rho);
+        ML_data ml_data;
+        ml_data.set_para(this->pelec->charge->nrxx,
+                         PARAM.inp.nelec,
+                         PARAM.inp.of_tf_weight,
+                         PARAM.inp.of_vw_weight,
+                         PARAM.inp.of_ml_chi_p,
+                         PARAM.inp.of_ml_chi_q,
+                         PARAM.inp.of_ml_chi_xi,
+                         PARAM.inp.of_ml_chi_pnl,
+                         PARAM.inp.of_ml_chi_qnl,
+                         PARAM.inp.of_ml_nkernel,
+                         PARAM.inp.of_ml_kernel,
+                         PARAM.inp.of_ml_kernel_scaling,
+                         PARAM.inp.of_ml_yukawa_alpha,
+                         PARAM.inp.of_ml_kernel_file,
+                         ucell.omega,
+                         this->pw_rho);
 
-		ml_data.generateTrainData_KS(this->kspw_psi, 
-				this->pelec, 
-				this->pw_wfc, 
-				this->pw_rho, 
-				ucell, 
-				this->pelec->pot->get_effective_v(0));
-	}
+        ml_data.generateTrainData_KS(this->kspw_psi,
+                                     this->pelec,
+                                     this->pw_wfc,
+                                     this->pw_rho,
+                                     ucell,
+                                     this->pelec->pot->get_effective_v(0));
+    }
 #endif
 }
 
