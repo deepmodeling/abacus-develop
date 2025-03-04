@@ -81,12 +81,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "after_scf");
 
     //------------------------------------------------------------------
-    //! 1) call after_scf() of ESolver_KS
-    //------------------------------------------------------------------
-    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
-
-    //------------------------------------------------------------------
-    //! 2) calculate the kinetic energy density tau in LCAO basis
+    //! 1) calculate the kinetic energy density tau in LCAO basis
     //！sunliang 2024-09-18
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
@@ -94,6 +89,12 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
         assert(this->psi != nullptr);
         this->pelec->cal_tau(*(this->psi));
     }
+
+    //------------------------------------------------------------------
+    //! 2) call after_scf() of ESolver_KS
+    //------------------------------------------------------------------
+    ESolver_KS<TK>::after_scf(ucell, istep, conv_esolver);
+
 
     //------------------------------------------------------------------
     //! 3) write density matrix for sparse matrix in LCAO basis
