@@ -242,15 +242,20 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 /// @param ik: index of kpoints
 /// @param printe: print energy every 'printe' electron iteration.
 /// @param iter: index of iterations
-void ElecState::print_band(const int& ik, const int& printe, const int& iter)
+void print_band(const ModuleBase::matrix& ekb, 
+                const ModuleBase::matrix& wg,
+                const K_Vectors* klist,
+                const int& ik, 
+                const int& printe, 
+                const int& iter)
 {
     // check the band energy.
     bool wrong = false;
     for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
     {
-        if (std::abs(this->ekb(ik, ib)) > 1.0e10)
+        if (std::abs(ekb(ik, ib)) > 1.0e10)
         {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
+            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry"
                                  << std::endl;
             wrong = true;
         }
@@ -265,16 +270,16 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
+            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                     << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
+                                     << ekb(ik, ib) * ModuleBase::Ry_to_eV;
                 // for the first electron iteration, we don't have the energy
                 // spectrum, so we can't get the occupations.
-                GlobalV::ofs_running << std::setw(15) << this->wg(ik, ib);
+                GlobalV::ofs_running << std::setw(15) << wg(ik, ib);
                 GlobalV::ofs_running << std::endl;
             }
         }

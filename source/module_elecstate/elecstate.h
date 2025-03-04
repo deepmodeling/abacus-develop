@@ -179,7 +179,7 @@ class ElecState
                     bool print = true);
     void print_format(const std::string& name, const double& value);
 
-    void print_band(const int& ik, const int& printe, const int& iter);
+
 
     void print_eigenvalue(std::ofstream& ofs);
 

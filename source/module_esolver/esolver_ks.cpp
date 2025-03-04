@@ -9,6 +9,7 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_print.h"
 
 #include <ctime>
 #include <iostream>
@@ -540,7 +541,12 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        this->pelec->print_band(ik, PARAM.inp.printe, iter);
+        elecstate::print_band(this->pelec->ekb,
+                              this->pelec->wg,
+                              this->pelec->klist,
+                              ik, 
+                              PARAM.inp.printe, 
+                              iter);
     }
 
     // compute magnetization, only for LSDA(spin==2)

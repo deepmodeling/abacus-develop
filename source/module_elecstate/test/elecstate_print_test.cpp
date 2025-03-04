@@ -10,7 +10,8 @@
 #include "module_elecstate/potentials/gatefield.h"
 #include "module_hamilt_general/module_xc/xc_functional.h"
 #include "module_parameter/parameter.h"
-
+#include "module_elecstate/elecstate_print.h"
+#undef private 
 /***************************************************************
  *  mock functions
  ****************************************************************/
@@ -168,7 +169,7 @@ TEST_F(ElecStatePrintTest, PrintBand)
     GlobalV::MY_RANK = 0;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
-    elecstate.print_band(0, 1, 0);
+    elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0);
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -198,7 +199,7 @@ TEST_F(ElecStatePrintTest, PrintBandWarning)
     PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate.print_band(0, 1, 0), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::print_band(elecstate.ekb,elecstate.wg,elecstate.klist, 0, 1, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();
