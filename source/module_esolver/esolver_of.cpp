@@ -498,17 +498,18 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 
     //------------------------------------------------------------------
-    // 1) call after_scf() of ESolver_FP
-    //------------------------------------------------------------------
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
-
-    //------------------------------------------------------------------
-    // 2) calculate kinetic energy density and ELF
+    // 1) calculate kinetic energy density and ELF
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
     }
+
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_FP
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+
 
     // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)

@@ -639,18 +639,19 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 
     //------------------------------------------------------------------
-    // 1) call after_scf() of ESolver_KS
-    //------------------------------------------------------------------
-    ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
-
-    //------------------------------------------------------------------
-    // 2) calculate the kinetic energy density tau in pw basis
+    // 1) calculate the kinetic energy density tau in pw basis
     // sunliang 2024-09-18
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->pelec->cal_tau(*(this->psi));
     }
+
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_KS
+    //------------------------------------------------------------------
+    ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
+
 
     //------------------------------------------------------------------
     // 3) output wavefunctions in pw basis
