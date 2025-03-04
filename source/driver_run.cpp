@@ -48,51 +48,51 @@ void Driver::driver_run()
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
     Check_Atomic_Stru::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
-//     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-//     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
+    //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
 
-//     //! 3: initialize Esolver and fill json-structure
-//     p_esolver->before_all_runners(ucell, PARAM.inp);
+    //! 3: initialize Esolver and fill json-structure
+    p_esolver->before_all_runners(ucell, PARAM.inp);
 
-//     // this Json part should be moved to before_all_runners, mohan 2024-05-12
-// #ifdef __RAPIDJSON
-//     Json::gen_stru_wrapper(&ucell);
-// #endif
+    // this Json part should be moved to before_all_runners, mohan 2024-05-12
+#ifdef __RAPIDJSON
+    Json::gen_stru_wrapper(&ucell);
+#endif
 
-//     const std::string cal_type = PARAM.inp.calculation;
+    const std::string cal_type = PARAM.inp.calculation;
 
-//     //! 4: different types of calculations
-//     if (cal_type == "md")
-//     {
-//         Run_MD::md_line(ucell, p_esolver, PARAM);
-//     }
-//     else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax" || cal_type == "nscf")
-//     {
-//         Relax_Driver rl_driver;
-//         rl_driver.relax_driver(p_esolver, ucell);
-//     }
-//     else if (cal_type == "get_S")
-//     {
-//         p_esolver->runner(ucell, 0);
-//     }
-//     else
-//     {
-//         //! supported "other" functions:
-//         //! get_pchg(LCAO),
-//         //! test_memory(PW,LCAO),
-//         //! test_neighbour(LCAO),
-//         //! gen_bessel(PW), et al.
-//         const int istep = 0;
-//         p_esolver->others(ucell, istep);
-//     }
+    //! 4: different types of calculations
+    if (cal_type == "md")
+    {
+        Run_MD::md_line(ucell, p_esolver, PARAM);
+    }
+    else if (cal_type == "scf" || cal_type == "relax" || cal_type == "cell-relax" || cal_type == "nscf")
+    {
+        Relax_Driver rl_driver;
+        rl_driver.relax_driver(p_esolver, ucell);
+    }
+    else if (cal_type == "get_S")
+    {
+        p_esolver->runner(ucell, 0);
+    }
+    else
+    {
+        //! supported "other" functions:
+        //! get_pchg(LCAO),
+        //! test_memory(PW,LCAO),
+        //! test_neighbour(LCAO),
+        //! gen_bessel(PW), et al.
+        const int istep = 0;
+        p_esolver->others(ucell, istep);
+    }
 
-//     //! 5: clean up esolver
-//     p_esolver->after_all_runners(ucell);
+    //! 5: clean up esolver
+    p_esolver->after_all_runners(ucell);
 
-//     ModuleESolver::clean_esolver(p_esolver);
+    ModuleESolver::clean_esolver(p_esolver);
 
-//     //! 6: output the json file
-//     Json::create_Json(&ucell, PARAM);
-//     ModuleBase::timer::tick("Driver", "driver_line");
+    //! 6: output the json file
+    Json::create_Json(&ucell, PARAM);
+    ModuleBase::timer::tick("Driver", "driver_line");
     return;
 }

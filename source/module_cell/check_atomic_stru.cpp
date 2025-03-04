@@ -156,21 +156,6 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
 
         GlobalV::ofs_running << mess.str() << mess.str() << mess.str() << errorlog.str();
         std::cout << mess.str() << mess.str() << mess.str() << std::endl;
-        std::ofstream outFile("example2.txt");
-        if (outFile.is_open())
-        {
-
-            // 将stringstream中的内容写入到文件
-            outFile << errorlog.str();
-
-            // 关闭文件
-            outFile.close();
-            std::cout << "数据成功写入到文件。\n";
-        }
-        else
-        {
-            std::cerr << "无法打开文件进行写入。\n";
-        }
         if (!all_pass)
         {
             mess.clear();
