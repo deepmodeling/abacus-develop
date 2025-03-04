@@ -216,9 +216,12 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     #pragma omp critical
     {
-        for(int i = 0; i < 6; i++)
+        if(cal_stress)
         {
-            stress_tmp[i] += stress_local[i];
+            for(int i = 0; i < 6; i++)
+            {
+                stress_tmp[i] += stress_local[i];
+            }
         }
     }
     }
