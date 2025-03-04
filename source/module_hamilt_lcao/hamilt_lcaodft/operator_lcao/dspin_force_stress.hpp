@@ -32,7 +32,10 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
-    int atom_index = 0;
+    #pragma omp parallel
+    {
+    std::vector<double> stress_local(6, 0);
+    #pragma omp for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         if(!this->constraint_atom_list[iat0])
@@ -183,11 +186,19 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                              this->nspin,
                                              dis1,
                                              dis2,
-                                             stress_tmp.data());
+                                             stress_local.data());
                     }
                 }
             }
         }
+    }
+    #pragma omp critical
+    {
+        for(int i = 0; i < 6; i++)
+        {
+            stress_tmp[i] += stress_local[i];
+        }
+    }
     }
 
     if (cal_force)
@@ -281,9 +292,14 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                         tmp[2] = lambda_tmp * nlm1[index + length * 3] * nlm2[index] * dm_pointer[step_trace[is]];
                         // force1 = - VU * <d phi_{I,R1}/d R1|chi_m> * <chi_m'|phi_{J,R2}>
                         // force2 = - VU * <phi_{I,R1}|d chi_m/d R0> * <chi_m'|phi_{J,R2>}
+                        #pragma omp atomic
                         force1[0] += tmp[0];
+                        #pragma omp atomic
                         force1[1] += tmp[1];
+                        #pragma omp atomic
                         force1[2] += tmp[2];
+                        // different threads have different addresses for force2, 
+                        // so there is no need to add atomic here.
                         force2[0] -= tmp[0];
                         force2[1] -= tmp[1];
                         force2[2] -= tmp[2];
