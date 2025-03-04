@@ -27,7 +27,10 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
-    int atom_index = 0;
+    #pragma omp parallel
+    {
+    std::vector<double> stress_local(6, 0);
+    #pragma omp for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     { 
         // skip the atoms without plus-U
@@ -157,11 +160,19 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                                              tmp,
                                              dis1,
                                              dis2,
-                                             stress_tmp.data());
+                                             stress_local.data());
                     }
                 }
             }
         }
+    }
+    #pragma omp critical
+    {
+        for(int i = 0; i < 6; i++)
+        {
+            stress_tmp[i] += stress_local[i];
+        }
+    }
     }
 
     if (cal_force)
@@ -258,6 +269,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
                         + dm_pointer[step_trace[1]] * nlm_tmp[i+3]
                         + dm_pointer[step_trace[2]] * nlm_tmp[i+6]
                         + dm_pointer[step_trace[3]] * nlm_tmp[i+9]).real();
+                #pragma omp atomic
                 force1[i] += tmp;
                 force2[i] -= tmp;
             }
@@ -379,7 +391,10 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
             // calculate the force, transfer nlm_tmp to pauli matrix
             for(int i = 0; i < 3; i++)
             {
+                #pragma omp atomic
                 force1[i] += dm_pointer[0] * nlm_tmp[i];
+                // different threads have different addresses for force2, 
+                // so there is no need to add atomic here.
                 force2[i] -= dm_pointer[0] * nlm_tmp[i];
             }
             dm_pointer++;
