@@ -31,7 +31,7 @@ std::string parse_xcname(const std::string &xc_input,
         " in the pseudopotential files");
     }
     const std::string xc = xc_psp_uniq[0];
-    std::cout << "ModuleHamiltGeneral::ModuleVDW::parse_xcname: "
+    std::cout << " ***WARNING*** ModuleHamiltGeneral::ModuleVDW::parse_xcname: "
               << "XC name is automatically inferred from pseudopotential as `" 
               << xc << "`" << std::endl;
     return xc;
