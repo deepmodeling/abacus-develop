@@ -476,12 +476,10 @@ void ElecState::print_etot(const Magnetism& magnet,
 /// @brief function to print name, value and value*Ry_to_eV
 /// @param name: name
 /// @param value: value
-void ElecState::print_format(const std::string& name, const double& value)
+void print_format(const std::string& name, const double& value)
 {
     GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
-    std::stringstream name2;
-    name2 << name;
-    GlobalV::ofs_running << " " << std::setw(16) << name2.str() << std::setw(30) << value << std::setw(30)
+    GlobalV::ofs_running << " " << std::setw(16) << name << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;
     GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
     return;

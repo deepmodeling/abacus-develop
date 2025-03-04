@@ -108,7 +108,7 @@ class ElecStatePrintTest : public ::testing::Test
 TEST_F(ElecStatePrintTest, PrintFormat)
 {
     GlobalV::ofs_running.open("test.dat", std::ios::out);
-    elecstate.print_format("test", 0.1);
+    elecstate::print_format("test", 0.1);
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());

@@ -9,6 +9,8 @@ namespace elecstate
                 const int& ik, 
                 const int& printe, 
                 const int& iter);
-                
+
+    void print_format(const std::string& name, 
+                    const double& value);
 }
 #endif
