@@ -301,10 +301,11 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                         force1[1] += tmp[1];
                         #pragma omp atomic
                         force1[2] += tmp[2];
-                        // different threads have different addresses for force2, 
-                        // so there is no need to add atomic here.
+                        #pragma omp atomic
                         force2[0] -= tmp[0];
+                        #pragma omp atomic
                         force2[1] -= tmp[1];
+                        #pragma omp atomic
                         force2[2] -= tmp[2];
                     }
                 }
