@@ -30,6 +30,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
     f_delta.zero_out();
 
     const int lmaxd = orb.get_lmax_d();
+    const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
 #pragma omp parallel
 {
@@ -76,8 +77,8 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                     continue;
                 }
 
-                double r0[3]{};
                 double r1[3]{};
+                double r2[3]{};
                 if (isstress)
                 {
                     r1[0] = (tau1.x - tau0.x);
