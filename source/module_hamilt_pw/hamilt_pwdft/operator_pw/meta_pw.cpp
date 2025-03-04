@@ -70,7 +70,7 @@ void Meta<OperatorPW<T, Device>>::act(
             wfcpw->recip_to_real(this->ctx, this->porter, this->porter, this->ik);
 
             if(this->vk_col != 0) {
-                vector_mul_vector_op()(this->ctx, this->vk_col, this->porter, this->porter, this->vk + current_spin * this->vk_col);
+                vector_mul_vector_op()(this->vk_col, this->porter, this->porter, this->vk + current_spin * this->vk_col);
             }
 
             wfcpw->real_to_recip(this->ctx, this->porter, this->porter, this->ik);

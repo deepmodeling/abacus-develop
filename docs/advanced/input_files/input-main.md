@@ -20,8 +20,8 @@
     - [kspacing](#kspacing)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
-    - [nb2d](#nb2d)
     - [precision](#precision)
+    - [nb2d](#nb2d)
   - [Variables related to input files](#variables-related-to-input-files)
     - [stru\_file](#stru_file)
     - [kpoint\_file](#kpoint_file)
@@ -224,6 +224,8 @@
     - [of\_ml\_q](#of_ml_q)
     - [of\_ml\_tanhp](#of_ml_tanhp)
     - [of\_ml\_tanhq](#of_ml_tanhq)
+    - [of\_ml\_chi\_p](#of_ml_chi_p)
+    - [of\_ml\_chi\_q](#of_ml_chi_q)
     - [of\_ml\_gammanl](#of_ml_gammanl)
     - [of\_ml\_pnl](#of_ml_pnl)
     - [of\_ml\_qnl](#of_ml_qnl)
@@ -234,8 +236,6 @@
     - [of\_ml\_tanh\_qnl](#of_ml_tanh_qnl)
     - [of\_ml\_tanhp\_nl](#of_ml_tanhp_nl)
     - [of\_ml\_tanhq\_nl](#of_ml_tanhq_nl)
-    - [of\_ml\_chi\_p](#of_ml_chi_p)
-    - [of\_ml\_chi\_q](#of_ml_chi_q)
     - [of\_ml\_chi\_xi](#of_ml_chi_xi)
     - [of\_ml\_chi\_pnl](#of_ml_chi_pnl)
     - [of\_ml\_chi\_qnl](#of_ml_chi_qnl)
@@ -583,7 +583,7 @@ These variables are used to control general system parameters.
 ### init_wfc
 
 - **Type**: String
-- **Description**: Only useful for plane wave basis only now. It is the name of the starting wave functions. In the future. we should also make this variable available for localized orbitals set.
+- **Description**: The type of the starting wave functions.
 
   Available options are:
 
@@ -593,6 +593,8 @@ These variables are used to control general system parameters.
   - random: random numbers
   - nao: from numerical atomic orbitals. If they are not enough, other wave functions are initialized with random numbers.
   - nao+random: add small random numbers on numerical atomic orbitals
+  
+  > Only the `file` option is useful for the lcao basis set, which is mostly used when [calculation](#calculation) is set to `set_wf` and `get_pchg`. See more details in [out_wfc_lcao](#out_wfc_lcao).
 - **Default**: atomic
 
 ### init_chg
@@ -1234,6 +1236,7 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 - **Type**: Real
 - **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
+- **Unit**: Ry if `scf_thr_type=1`, **dimensionless** if `scf_thr_type=2`
 
 ### scf_ene_thr
 
@@ -1246,10 +1249,8 @@ Note: In new angle mixing, you should set `mixing_beta_mag >> mixing_beta`. The 
 
 - **Type**: Integer
 - **Description**: Choose the calculation method of convergence criterion.
-  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$.
-  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron.
-
-  Note: This parameter is still under testing and the default setting is usually sufficient.
+  - **1**: the criterion is defined as $\Delta\rho_G = \frac{1}{2}\iint{\frac{\Delta\rho(r)\Delta\rho(r')}{|r-r'|}d^3r d^3r'}$, which is used in SCF of PW basis with unit Ry. 
+  - **2**: the criterion is defined as $\Delta\rho_R = \frac{1}{N_e}\int{|\Delta\rho(r)|d^3r}$, where $N_e$ is the number of electron, which is used in SCF of LCAO with unit **dimensionless**.
 
 - **Default**: 1 (plane-wave basis), or 2 (localized atomic orbital basis).
 
@@ -2488,7 +2489,7 @@ These variables are relevant to electric field and dipole correction
   - True：A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
 
-> Note: If you want no electric field, parameter efield_amp  should be zero. Must be used ONLY in a slab geometry for surface alculations, with the discontinuity FALLING IN THE EMPTY SPACE.
+> Note: If you do not want any electric field, the parameter `efield_amp` should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
 
 - **Default**: False
 
@@ -3475,9 +3476,10 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Type**: Integer
 - **Description**:
   method of propagator
-  - 0: Crank-Nicolson.
+  - 0: Crank-Nicolson, based on matrix inversion.
   - 1: 4th Taylor expansions of exponential.
   - 2: enforced time-reversal symmetry (ETRS).
+  - 3: Crank-Nicolson, based on solving linear equation.
 - **Default**: 0
 
 ### td_vext
@@ -3537,19 +3539,29 @@ These variables are used to control berry phase and wannier90 interface paramete
 
 - **Type**: Real
 - **Description**:
-  cut1 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
+  `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=
+    \begin{cases}
+        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
+        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
+    \end{cases}
+  $$
 - **Default**: 0.05
 
 ### td_lcut2
 
 - **Type**: Real
 - **Description**:
-  cut2 of interval in length gauge\
-  E = E0 , cut1<x<cut2\
-  E = -E0/(cut1+1-cut2) , x<cut1 or cut2<x<1
-- **Default**: 0.05
+  `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
+  $$
+    E(x)=
+    \begin{cases}
+        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
+        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
+    \end{cases}
+  $$
+- **Default**: 0.95
 
 ### td_gauss_freq
 

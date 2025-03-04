@@ -91,9 +91,10 @@ public:
 
     void getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
         const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int ntype, const int itmin_type, const int itmin_start, int* istart, int* na)const;
     bool checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-        double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const;
+        double* pos, double* rotpos, int* index, const int itmin_type,
+        const int ntype, const int itmin_start, int* istart, int* na)const;
     /// @brief  primitive cell analysis
     void pricell(double* pos, const Atom* atoms);
 
@@ -145,6 +146,10 @@ public:
     /// Loop the magmom of each atoms in its type when NSPIN>1. If not all the same, primitive cells should not be looped in rhog_symmetry.
     bool magmom_same_check(const Atom* atoms)const;
 
+    /// Analyze magnetic group without time-reversal symmetry 
+    /// (because currently the charge density symmetrization does not support it)
+    /// Method: treat atoms with different magmom as atoms of different type
+    void analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out);
 };
 }
 

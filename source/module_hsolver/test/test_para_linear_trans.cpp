@@ -106,8 +106,7 @@ class ParaLinearTransformTest : public ::testing::Test
             random_data(A_global, B_global, U_global, alpha, beta);
             B_global_ref = B_global;
             const base_device::DEVICE_CPU* ctx = {};
-            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()(ctx,
-                                                              'N',
+            ModuleBase::gemm_op<T, base_device::DEVICE_CPU>()('N',
                                                               'N',
                                                               nrow,
                                                               ncolB_glo,

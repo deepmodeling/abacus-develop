@@ -386,7 +386,7 @@ void ESolver_OF::test_direction(double* dEdtheta, double** ptemp_phi, UnitCell& 
  * @brief Print nessecary information to the screen,
  * and write the components of the total energy into running_log.
  */
-void ESolver_OF::print_info()
+void ESolver_OF::print_info(const bool conv_esolver)
 {
     if (this->iter_ == 0)
     {
@@ -431,8 +431,11 @@ void ESolver_OF::print_info()
     std::vector<std::string> titles;
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
-    if ((PARAM.inp.printe > 0
-        && ((this->iter_ + 1) % PARAM.inp.printe == 0 || this->conv_esolver || this->iter_ == PARAM.inp.scf_nmax)) || PARAM.inp.init_chg == "file")
+	if ((PARAM.inp.printe > 0 && 
+				((this->iter_ + 1) % PARAM.inp.printe == 0 || 
+				 conv_esolver || 
+				 this->iter_ == PARAM.inp.scf_nmax)) || 
+			PARAM.inp.init_chg == "file")
     {
         titles.push_back("E_Total");
         energies_Ry.push_back(this->pelec->f_en.etot);

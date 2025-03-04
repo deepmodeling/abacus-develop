@@ -1,4 +1,5 @@
 #include "para_linear_transform.h"
+#include "module_base/timer.h"
 
 #include <algorithm>
 #include <vector>
@@ -54,6 +55,7 @@ void PLinearTransform<T, Device>::set_dimension(const int nrowA,
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
+    ModuleBase::timer::tick("PLinearTransform", "act");
     const Device* ctx = {};
 #ifdef __MPI
     if (nproc_col > 1)
@@ -65,7 +67,9 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             A_tmp_device = nullptr;
+#ifndef __CUDA_MPI
             isend_tmp.resize(max_colA * LDA);
+#endif
             resmem_dev_op()(A_tmp_device, max_colA * LDA);
         }
         T* B_tmp = nullptr;
@@ -103,8 +107,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
 
             if (ip == rank_col)
             {
-                ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 'N',
+                ModuleBase::gemm_op<T, Device>()('N',
                                                  'N',
                                                  nrowA,
                                                  ncolB,
@@ -124,8 +127,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                 MPI_Status status;
                 Parallel_Common::recv_dev<T, Device>(A_tmp_device, size, ip, 0, col_world, &status, A_tmp.data());
                 MPI_Wait(&requests[ip], &status);
-                ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 'N',
+                ModuleBase::gemm_op<T, Device>()('N',
                                                  'N',
                                                  nrowA,
                                                  ncolB,
@@ -141,7 +143,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             }
             // sum all the results
             T one = 1.0;
-            ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp, 1, B, 1);
+            ModuleBase::axpy_op<T, Device>()(ncolB * LDA, &one, B_tmp, 1, B, 1);
         }
         delmem_dev_op()(U_tmp);
         delmem_dev_op()(B_tmp);
@@ -153,8 +155,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
     else
 #endif
     {
-        ModuleBase::gemm_op<T, Device>()(ctx,
-                                         'N',
+        ModuleBase::gemm_op<T, Device>()('N',
                                          'N',
                                          nrowA,
                                          ncolB,
@@ -168,6 +169,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                          B,
                                          LDA);
     }
+    ModuleBase::timer::tick("PLinearTransform", "act");
 };
 
 template struct PLinearTransform<double, base_device::DEVICE_CPU>;

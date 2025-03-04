@@ -266,8 +266,7 @@ int DiagoDavid<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
             setmem_complex_op()(psi_in, 0, nband * ld_psi);
             //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-            ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                             'N',
+            ModuleBase::gemm_op<T, Device>()('N',
                                              'N',
                                              dim,   // m: row of A,C
                                              nband, // n: col of B,C
@@ -377,8 +376,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // basis[nbase] = hpsi * vc_ev_vector = hpsi*vcc
     // basis'        =   vc_ev_vector' * hpsi'
     // (dim, notconv)  (dim, nbase) (nbase, notconv)
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -416,8 +414,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
             Real* e_temp_gpu = nullptr;
             resmem_var_op()(e_temp_gpu, nbase);
             syncmem_var_h2d_op()(e_temp_gpu, e_temp_cpu.data(), nbase);
-            ModuleBase::vector_mul_vector_op<T, Device>()(this->ctx,
-                                                          nbase,
+            ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
                                                           vc_ev_vector + m * nbase,
                                                           vc_ev_vector + m * nbase,
                                                           e_temp_gpu);
@@ -426,8 +423,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
         else
         {
-            ModuleBase::vector_mul_vector_op<T, Device>()(this->ctx,
-                                                          nbase,
+            ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
                                                           vc_ev_vector + m * nbase,
                                                           vc_ev_vector + m * nbase,
                                                           e_temp_cpu.data());
@@ -440,8 +436,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     //              = (H - lambda * S) * psi * vcc
     //              = (H - lambda * S) * psi_new 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,                 // m: row of A,C
                                      notconv,             // n: col of B,C
@@ -468,8 +463,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
 #if defined(__CUDA) || defined(__ROCM)
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
                                                           basis + dim * (nbase + m),
                                                           basis + dim * (nbase + m),
                                                           this->d_precondition);
@@ -477,8 +471,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         }
         else
         {
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(dim,
                                                           basis + dim * (nbase + m),
                                                           basis + dim * (nbase + m),
                                                           this->precondition);
@@ -518,8 +511,7 @@ void DiagoDavid<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     // first nbase bands psi* dot notconv bands spsi to prepare lagrange_matrix
 
     // calculate the square matrix for future lagranges
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemm_op<T, Device>()('C',
                                      'N',
                                      nbase,              // m: row of A,C
                                      notconv,            // n: col of B,C
@@ -592,8 +584,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
     ModuleBase::timer::tick("DiagoDavid", "cal_elem");
 
     // hcc[nbase](notconv, nbase + notconv)= basis[nbase]' * hpsi
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemm_op<T, Device>()('C',
                                      'N',
                                      notconv,
                                      nbase + notconv,
@@ -626,7 +617,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
 #ifdef __MPI
     if (diag_comm.nproc > 1)
     {
-        ModuleBase::matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
         // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
 
         auto* swap = new T[notconv * nbase_x];
@@ -656,7 +647,7 @@ void DiagoDavid<T, Device>::cal_elem(const int& dim,
         // Parallel_Reduce::reduce_complex_double_pool( hcc + nbase * nbase_x, notconv * nbase_x );
         // Parallel_Reduce::reduce_complex_double_pool( scc + nbase * nbase_x, notconv * nbase_x );
 
-        ModuleBase::matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, hcc, hcc);
+        ModuleBase::matrixTranspose_op<T, Device>()(nbase_x, nbase_x, hcc, hcc);
         // matrixTranspose_op<T, Device>()(this->ctx, nbase_x, nbase_x, scc, scc);
     }
 #endif
@@ -750,8 +741,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
     setmem_complex_op()(basis , 0, nbase_x * dim);
 
     // basis(dim, nband) = hpsi(dim, nbase) * vcc(nbase, nband)
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,   // m: row of A,C
                                      nband, // n: col of B,C
@@ -767,8 +757,7 @@ void DiagoDavid<T, Device>::refresh(const int& dim,
 
     //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
     // basis[nband] = spsi * vcc
-    ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
                                      dim,   // m: row of A,C
                                      nband, // n: col of B,C
@@ -897,8 +886,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     {
         // lagrange_m[m - mv_size + 1 - mm_size]
         // = basis[m - mv_size + 1 - mm_size]' * spsi[m]
-        ModuleBase::gemm_op<T, Device>()(this->ctx,
-                                         'C',
+        ModuleBase::gemm_op<T, Device>()('C',
                                          'N',
                                          mm_size,                                   // m: row of A,C
                                          mm_size,                                   // n: col of B,C
@@ -916,8 +904,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     // calculate other lagranges for this band
     // lagrange_m[m - mv_size + 1]
     // = basis[m - mv_size + 1]' * spsi[m]
-    ModuleBase::gemv_op<T, Device>()(this->ctx,
-                                     'C',
+    ModuleBase::gemv_op<T, Device>()('C',
                                      dim,
                                      mv_size,
                                      this->one,
@@ -939,8 +926,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
 
     // / psi_m = psi_m - \sum_{i < m} \langle psi(i)|S|psi(m) \rangle psi(i)
     // psi_m = psi_m - basis * lagrange_m
-    ModuleBase::gemv_op<T, Device>()(this->ctx,
-                                     'N',
+    ModuleBase::gemv_op<T, Device>()('N',
                                      dim,
                                      m,
                                      this->neg_one,
@@ -953,7 +939,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
                                      1);
 
     // psi_norm = psi_norm - lagrange_m · lagrange_m
-    psi_norm -= ModuleBase::dot_real_op<T, Device>()(this->ctx, m, lagrange_m, lagrange_m, false);
+    psi_norm -= ModuleBase::dot_real_op<T, Device>()(m, lagrange_m, lagrange_m, false);
 
     // for (int j = 0; j < m; j++)
     // {
@@ -980,7 +966,7 @@ void DiagoDavid<T, Device>::SchmidtOrth(const int& dim,
     else
     {
         // psi_m = psi_m / psi_norm
-        ModuleBase::vector_div_constant_op<T, Device>()(this->ctx, dim, psi_m, psi_m, psi_norm);
+        ModuleBase::vector_div_constant_op<T, Device>()(dim, psi_m, psi_m, psi_norm);
         // for (int i = 0; i < npw; i++)
         // {
         //     psi_m[i] /= psi_norm;

@@ -104,6 +104,13 @@ if(USE_ROCM)
   )
 endif()
 
+if(USE_DSP)
+  list(APPEND device_srcs
+  module_base/kernels/dsp/dsp_connector.cpp
+  )
+endif()
+
+
 add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)

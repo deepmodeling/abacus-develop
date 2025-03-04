@@ -52,7 +52,14 @@ class BaseMatrix
      * @param nu column index
      * @param value value to be added
      */
-    void add_element(int mu, int nu, const T& value);
+    void add_element(int mu, int nu, const T& value)
+    {
+        #ifdef __DEBUG
+        assert(this->value_begin != nullptr);
+        #endif
+            int index = mu * this->ncol_local + nu;
+            value_begin[index] += value;
+    };
 
     // for inside matrix
     /**
@@ -62,12 +69,19 @@ class BaseMatrix
      * @param j_col column index
      * @return T&
      */
-    T& get_value(const size_t& i_row, const size_t& j_col) const;
+    T& get_value(const size_t& i_row, const size_t& j_col) const
+    {
+        #ifdef __DEBUG
+        assert(this->value_begin != nullptr);
+        #endif
+            int index = i_row * this->ncol_local + j_col;
+            return value_begin[index];
+    };
 
     /**
      * @brief get pointer of value from a submatrix
      */
-    T* get_pointer() const;
+    T* get_pointer() const { return value_begin; };
 
     // operator= for copy assignment
     BaseMatrix& operator=(const BaseMatrix& other);

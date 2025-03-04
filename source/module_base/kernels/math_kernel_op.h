@@ -90,7 +90,6 @@ template <typename T, typename Device> struct dot_real_op {
   /// while enabling planewave parallization strategy.
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param psi_L : input array A
   /// \param psi_R : input array B
@@ -98,7 +97,7 @@ template <typename T, typename Device> struct dot_real_op {
   ///
   /// \return
   /// FPTYPE : dot product result
-  Real operator()(const Device *d, const int &dim, const T *psi_L,
+  Real operator()(const int &dim, const T *psi_L,
                   const T *psi_R, const bool reduce = true);
 };
 
@@ -108,14 +107,13 @@ template <typename T, typename Device> struct vector_div_constant_op {
   /// @brief result[i] = vector[i] / constant
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector : input array
   /// \param constant : input constant
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int dim, T *result, const T *vector,
+  void operator()(const int dim, T *result, const T *vector,
                   const Real constant);
 };
 
@@ -124,7 +122,6 @@ template <typename FPTYPE, typename Device> struct scal_op {
   /// @brief x = alpha * x
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param N : array size
   /// \param alpha : input constant
   /// \param X : input array
@@ -132,7 +129,7 @@ template <typename FPTYPE, typename Device> struct scal_op {
   ///
   /// Output Parameters
   /// \param X : output array
-  void operator()(const Device *d, const int &N,
+  void operator()(const int &N,
                   const std::complex<FPTYPE> *alpha, std::complex<FPTYPE> *X,
                   const int &incx);
 };
@@ -143,14 +140,13 @@ template <typename T, typename Device> struct vector_mul_vector_op {
   /// @brief result[i] = vector1[i](complex) * vector2[i](not complex)
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param vector2 : input array B
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int &dim, T *result, const T *vector1,
+  void operator()(const int &dim, T *result, const T *vector1,
                   const Real *vector2);
 };
 
@@ -160,14 +156,13 @@ template <typename T, typename Device> struct vector_div_vector_op {
   /// @brief result[i] = vector1[i](complex) / vector2[i](not complex)
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param vector2 : input array B
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int &dim, T *result, const T *vector1,
+  void operator()(const int &dim, T *result, const T *vector1,
                   const Real *vector2);
 };
 
@@ -178,7 +173,6 @@ struct constantvector_addORsub_constantVector_op {
   /// @brief result[i] = vector1[i] * constant1 + vector2[i] * constant2
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param dim : array size
   /// \param vector1 : input array A
   /// \param constant1 : input constant a
@@ -187,7 +181,7 @@ struct constantvector_addORsub_constantVector_op {
   ///
   /// Output Parameters
   /// \param result : output array
-  void operator()(const Device *d, const int &dim, T *result, const T *vector1,
+  void operator()(const int &dim, T *result, const T *vector1,
                   const Real constant1, const T *vector2, const Real constant2);
 };
 
@@ -196,7 +190,6 @@ template <typename T, typename Device> struct axpy_op {
   /// @brief Y = alpha * X + Y
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param N : array size
   /// \param alpha : input constant alpha
   /// \param X : input array X
@@ -206,7 +199,7 @@ template <typename T, typename Device> struct axpy_op {
   ///
   /// Output Parameters
   /// \param Y : output array Y
-  void operator()(const Device *d, const int &N, const T *alpha, const T *X,
+  void operator()(const int &N, const T *alpha, const T *X,
                   const int &incX, T *Y, const int &incY);
 };
 
@@ -215,7 +208,6 @@ template <typename T, typename Device> struct gemv_op {
   /// @brief y = alpha * op(A) * x + beta * y
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param trans : whether to transpose A
   /// \param m : first dimension of matrix
   /// \param n : second dimension of matrix
@@ -230,7 +222,7 @@ template <typename T, typename Device> struct gemv_op {
   ///
   /// Output Parameters
   /// \param Y : output array Y
-  void operator()(const Device *d, const char &trans, const int &m,
+  void operator()(const char &trans, const int &m,
                   const int &n, const T *alpha, const T *A, const int &lda,
                   const T *X, const int &incx, const T *beta, T *Y,
                   const int &incy);
@@ -241,7 +233,6 @@ template <typename T, typename Device> struct gemm_op {
   /// @brief C = alpha * op(A) * op(B) + beta * C
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param transa : whether to transpose matrix A
   /// \param transb : whether to transpose matrix B
   /// \param m : first dimension of matrix mulplication
@@ -258,7 +249,7 @@ template <typename T, typename Device> struct gemm_op {
   ///
   /// Output Parameters
   /// \param c : output matrix C
-  void operator()(const Device *d, const char &transa, const char &transb,
+  void operator()(const char &transa, const char &transb,
                   const int &m, const int &n, const int &k, const T *alpha,
                   const T *a, const int &lda, const T *b, const int &ldb,
                   const T *beta, T *c, const int &ldc);
@@ -270,7 +261,6 @@ template <typename T, typename Device> struct gemm_op_mt {
   /// @brief C = alpha * op(A) * op(B) + beta * C
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param transa : whether to transpose matrix A
   /// \param transb : whether to transpose matrix B
   /// \param m : first dimension of matrix mulplication
@@ -287,7 +277,7 @@ template <typename T, typename Device> struct gemm_op_mt {
   ///
   /// Output Parameters
   /// \param c : output matrix C
-  void operator()(const Device *d, const char &transa, const char &transb,
+  void operator()(const char &transa, const char &transb,
                   const int &m, const int &n, const int &k, const T *alpha,
                   const T *a, const int &lda, const T *b, const int &ldb,
                   const T *beta, T *c, const int &ldc);
@@ -298,14 +288,13 @@ template <typename T, typename Device> struct matrixTranspose_op {
   /// @brief transpose the input matrix
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param row : first dimension of matrix
   /// \param col : second dimension of matrix
   /// \param input_matrix : input matrix
   ///
   /// Output Parameters
   /// \param output_matrix : output matrix
-  void operator()(const Device *d, const int &row, const int &col,
+  void operator()(const int &row, const int &col,
                   const T *input_matrix, T *output_matrix);
 };
 
@@ -313,7 +302,6 @@ template <typename T, typename Device> struct matrixSetToAnother {
   /// @brief initialize matrix B with A
   ///
   /// Input Parameters
-  /// \param d : the type of computing device
   /// \param n : first dimension of matrix
   /// \param A : input matrix A
   /// \param LDA : leading dimension of A
@@ -321,7 +309,7 @@ template <typename T, typename Device> struct matrixSetToAnother {
   ///
   /// Output Parameters
   /// \param B : output matrix B
-  void operator()(const Device *d, const int &n, const T *A, const int &LDA,
+  void operator()(const int &n, const T *A, const int &LDA,
                   T *B, const int &LDB);
 };
 
@@ -347,7 +335,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_GPU> {
 // Partially specialize functor for base_device::GpuDevice.
 template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  Real operator()(const base_device::DEVICE_GPU *d, const int &dim,
+  Real operator()(const int &dim,
                   const T *psi_L, const T *psi_R, const bool reduce = true);
 };
 
@@ -355,21 +343,21 @@ template <typename T> struct dot_real_op<T, base_device::DEVICE_GPU> {
 template <typename T>
 struct vector_div_constant_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int dim, T *result,
+  void operator()(const int dim, T *result,
                   const T *vector, const Real constant);
 };
 
 // vector operator: result[i] = vector1[i](complex) * vector2[i](not complex)
 template <typename T> struct vector_mul_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int &dim, T *result,
+  void operator()(const int &dim, T *result,
                   const T *vector1, const Real *vector2);
 };
 
 // vector operator: result[i] = vector1[i](complex) / vector2[i](not complex)
 template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int &dim, T *result,
+  void operator()(const int &dim, T *result,
                   const T *vector1, const Real *vector2);
 };
 
@@ -377,13 +365,13 @@ template <typename T> struct vector_div_vector_op<T, base_device::DEVICE_GPU> {
 template <typename T>
 struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_GPU> {
   using Real = typename GetTypeReal<T>::type;
-  void operator()(const base_device::DEVICE_GPU *d, const int &dim, T *result,
+  void operator()(const int &dim, T *result,
                   const T *vector1, const Real constant1, const T *vector2,
                   const Real constant2);
 };
 
 template <typename T> struct matrixSetToAnother<T, base_device::DEVICE_GPU> {
-  void operator()(const base_device::DEVICE_GPU *d, const int &n,
+  void operator()(const int &n,
                   const T *A, // input
                   const int &LDA,
                   T *B, // output

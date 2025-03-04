@@ -20,6 +20,7 @@
 // added by jghan for rdmft calculation
 #include "module_rdmft/rdmft.h"
 
+
 #include <memory>
 
 namespace LR
@@ -53,11 +54,11 @@ class ESolver_KS_LCAO : public ESolver_KS<TK>
 
     virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
-    virtual void after_scf(UnitCell& ucell, const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     virtual void others(UnitCell& ucell, const int istep) override;
 

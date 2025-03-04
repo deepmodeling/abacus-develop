@@ -65,7 +65,10 @@ add_library(
 )
 
 target_link_libraries(base PUBLIC container)
-
+if (USE_DSP)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblas.a)
+  target_link_libraries(base PUBLIC ${MTBLAS_FFT_DIR}/libmtblas/lib/libmtblasdev.a)
+endif()
 add_subdirectory(module_container)
 
 if(ENABLE_COVERAGE)
