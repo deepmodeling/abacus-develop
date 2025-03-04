@@ -224,6 +224,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         DeePKS_domain::read_pdm((PARAM.inp.init_chg == "file"),
                                 PARAM.inp.deepks_equiv,
                                 ld.init_pdm,
+                                ucell.nat,
                                 orb_.Alpha[0].getTotal_nchi() * ucell.nat,
                                 ld.lmaxd,
                                 ld.inl_l,
