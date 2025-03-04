@@ -259,6 +259,7 @@ OBJS_ESOLVER=esolver.o\
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       lcao_before_scf.o\
+      lcao_after_scf.o\
       esolver_gets.o\
       lcao_others.o\
 
