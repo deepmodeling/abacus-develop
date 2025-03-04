@@ -206,6 +206,18 @@ void ReadInput::item_elec_stru()
         this->add_item(item);
     }
     {
+        Input_Item item("nbands_mul");
+        item.annotation = "value to multiply the number of bands";
+        read_sync_double(input.nbands_mul);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.nbands_mul < 1.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_mul should be greater than 1.0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("nelec");
         item.annotation = "input number of electrons";
         item.check_value = [](const Input_Item& item, const Parameter& para) {

@@ -75,6 +75,7 @@ struct Input_para
     std::string basis_type = "pw";     ///< xiaohui add 2013-09-01, for structural adjustment
     bool use_paw = false;              ///< whether to use PAW in pw calculation
     int nbands = 0;                    ///< number of bands
+    double nbands_mul = 1.2;           ///< multiplier for nbands
     double nelec = 0.0;                ///< total number of electrons
     double nelec_delta = 0.0;          ///< change in the number of total electrons
     double nupdown = 0.0;

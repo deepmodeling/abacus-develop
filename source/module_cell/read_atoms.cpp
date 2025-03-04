@@ -862,7 +862,9 @@ bool UnitCell::read_atom_positions(std::ifstream &ifpos, std::ofstream &ofs_runn
                 }
             }
         }
-        if (autoset_mag)
+	// atomic initial magnetism will be autoset if user set zero for every atom
+	// one exception is `lspinorb 1` with `noncolin 0`, this setting imply no-mag material but SOC included
+        if (autoset_mag && !PARAM.inp.lspinorb || PARAM.inp.noncolin)
         {
             if(PARAM.inp.nspin==4)
             {

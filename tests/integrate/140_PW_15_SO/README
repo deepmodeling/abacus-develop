@@ -4,6 +4,7 @@ This test for:
 *kpoints 2*2*2
 *sg15 pseudopotential
 *smearing_method gauss
-*ks_solver cg
+*ks_solver dav_subspace
 *mixing_type broyden-kerker
 *mixing_beta 0.4
+*initial magnetic won't be autoset with SOC only
