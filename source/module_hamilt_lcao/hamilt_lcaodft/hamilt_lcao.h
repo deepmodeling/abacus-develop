@@ -104,6 +104,13 @@ class HamiltLCAO : public Hamilt<TK>
     {
         return this->sR;
     }
+#ifdef __DEEPKS
+    /// get V_delta_R pointer of *this->V_delta_R, which is a HContainer<TR> and contains V_delta(R)
+    HContainer<TR>*& get_V_delta_R()
+    {
+        return this->V_delta_R;
+    }
+#endif
     /// refresh the status of HR
     void refresh() override;
 
@@ -130,6 +137,10 @@ class HamiltLCAO : public Hamilt<TK>
     // Real space Hamiltonian
     HContainer<TR>* hR = nullptr;
     HContainer<TR>* sR = nullptr;
+
+#ifdef __DEEPKS
+    HContainer<TR>* V_delta_R = nullptr;
+#endif
 
     HS_Matrix_K<TK>* hsk = nullptr;
     // special case for NSPIN=2 , data of HR should be separated into two parts

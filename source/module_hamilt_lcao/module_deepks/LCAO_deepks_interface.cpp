@@ -6,6 +6,7 @@
 #include "module_base/tool_title.h"
 #include "module_elecstate/cal_dm.h"
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
+#include "module_hamilt_lcao/module_hcontainer/output_hcontainer.h"
 #include "module_parameter/parameter.h"
 
 template <typename TK, typename TR>
@@ -279,16 +280,58 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         }                                                                 // end bandgap label
 
         // H(R) matrix part, not realized now
-        if (true) // should be modified later!
+        if (PARAM.inp.deepks_v_delta < 0)
         {
-            const std::string file_hr = PARAM.globalv.global_out_dir + "deepks_hr.npy";
-            const hamilt::HContainer<TR>& hR = *(p_ham->getHR());
+            const std::string file_hrtot = PARAM.globalv.global_out_dir + "deepks_hrtot.npy";
+            hamilt::HContainer<TR>* hR_tot = (p_ham->getHR());
 
             // How to save H(R)?
+            // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_tot, file_hrtot, rank);
+            if constexpr (std::is_same<TR, double>::value)
+            {
+                // For test only
+                if (rank == 0)
+                {
+                    std::ofstream ofs_hr("HR_outtest", std::ios::out);
+                    double sparse_threshold = 1e-10;
+                    int precision = 8;
+                    hamilt::Output_HContainer<TR> out_hr(hR_tot, ofs_hr, sparse_threshold, precision);
+                    out_hr.write();
+                    ofs_hr.close();
+                }
+            }
+
+            if (PARAM.inp.deepks_scf)
+            {
+                const std::string file_vdeltar = PARAM.globalv.global_out_dir + "deepks_vdeltar.npy";
+                // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_delta, file_vdeltar, rank);
+                hamilt::HContainer<TR>* h_deltaR = p_ham->get_V_delta_R();
+                if constexpr (std::is_same<TR, double>::value)
+                {
+                    // For test only
+                    if (rank == 0)
+                    {
+                        std::ofstream ofs_hr("HR_delta_outtest", std::ios::out);
+                        double sparse_threshold = 1e-10;
+                        int precision = 8;
+                        hamilt::Output_HContainer<TR> out_hr(h_deltaR, ofs_hr, sparse_threshold, precision);
+                        out_hr.write();
+                        ofs_hr.close();
+                    }
+                }
+
+                const std::string file_hrbase = PARAM.globalv.global_out_dir + "deepks_hrbase.npy";
+                // LCAO_deepks_io::save_npy_hr<TK, TR>(?, file_hrbase, rank);
+            }
+            else
+            {
+                const std::string file_hrbase = PARAM.globalv.global_out_dir + "deepks_hrbase.npy";
+                // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_tot, file_hrbase, rank);
+            }
         }
 
         // H(k) matrix part
-        if (PARAM.inp.deepks_v_delta)
+        if (PARAM.inp.deepks_v_delta > 0)
         {
             std::vector<TH> h_tot(nks);
             std::vector<std::vector<TK>> h_mat(nks, std::vector<TK>(ParaV->nloc));

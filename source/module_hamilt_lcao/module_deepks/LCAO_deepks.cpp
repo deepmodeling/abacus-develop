@@ -120,9 +120,9 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         pdm_size = pdm_size * pdm_size;
         this->des_per_atom = pdm_size;
         ofs << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
-        for (int inl = 0; inl < this->inlmax; inl++)
+        for (int iat = 0; iat < nat; iat++)
         {
-            this->pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
+            this->pdm[iat] = torch::zeros({pdm_size}, torch::kFloat64);
         }
     }
 
