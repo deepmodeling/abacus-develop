@@ -1,4 +1,5 @@
 #include "para_linear_transform.h"
+
 #include "module_base/timer.h"
 
 #include <algorithm>
@@ -75,7 +76,6 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
         T* B_tmp = nullptr;
         resmem_dev_op()(B_tmp, ncolB * LDA);
         syncmem_dev_op()(B_tmp, B, ncolB * LDA);
-        setmem_dev_op()(B, 0.0, ncolB * LDA);
 
         T* U_tmp = nullptr;
         resmem_dev_op()(U_tmp, max_colA * max_colB);
@@ -90,39 +90,38 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
             }
         }
 
-        // Receive
+        // local part
         const int start = this->localU ? 0 : start_colB[rank_col];
+        const T* U_part = U + start_colA[rank_col] + start * ncolA_glo;
+        ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA, U_part, ncolA_glo, U_tmp, ncolA);
+        ModuleBase::gemm_op<T, Device>()(ctx,
+                                         'N',
+                                         'N',
+                                         nrowA,
+                                         ncolB,
+                                         ncolA,
+                                         &alpha,
+                                         A,
+                                         LDA,
+                                         U_tmp,
+                                         ncolA,
+                                         &beta,
+                                         B,
+                                         LDA);
+
+        // Receive
         for (int ip = 0; ip < nproc_col; ++ip)
         {
-            T real_beta = ip == 0 ? beta : 0;
-            const int ncolA_ip = colA_loc[ip];
-            const int start_row = start_colA[ip];
-            const T* U_part = U + start_row + start * ncolA_glo;
-            ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp, ncolA_ip);
+            if (ip != rank_col)
+            {
+                T zero = 0.0;
+                const int ncolA_ip = colA_loc[ip];
+                const T* U_part = U + start_colA[ip] + start * ncolA_glo;
+                ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp, ncolA_ip);
 
-            if (ip == rank_col)
-            {
-                ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 'N',
-                                                 'N',
-                                                 nrowA,
-                                                 ncolB,
-                                                 ncolA_ip,
-                                                 &alpha,
-                                                 A,
-                                                 LDA,
-                                                 U_tmp,
-                                                 ncolA_ip,
-                                                 &real_beta,
-                                                 B_tmp,
-                                                 LDA);
-            }
-            else
-            {
                 int size = LDA * ncolA_ip;
                 MPI_Status status;
                 Parallel_Common::recv_dev<T, Device>(A_tmp_device, size, ip, 0, col_world, &status, A_tmp.data());
-                MPI_Wait(&requests[ip], &status);
                 ModuleBase::gemm_op<T, Device>()(ctx,
                                                  'N',
                                                  'N',
@@ -134,19 +133,28 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                                  LDA,
                                                  U_tmp,
                                                  ncolA_ip,
-                                                 &real_beta,
+                                                 &zero,
                                                  B_tmp,
                                                  LDA);
+                // sum all the results
+                T one = 1.0;
+                ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp, 1, B, 1);
             }
-            // sum all the results
-            T one = 1.0;
-            ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp, 1, B, 1);
         }
         delmem_dev_op()(U_tmp);
         delmem_dev_op()(B_tmp);
         if (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
             delmem_dev_op()(A_tmp_device);
+        }
+
+        for (int ip = 0; ip < nproc_col; ++ip)
+        {
+            if (rank_col != ip)
+            {
+                MPI_Status status;
+                MPI_Wait(&requests[ip], &status);
+            }
         }
     }
     else
