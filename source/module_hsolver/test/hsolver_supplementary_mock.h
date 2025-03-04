@@ -31,12 +31,6 @@ void ElecState::calEBand()
     return;
 }
 
-
-void ElecState::print_eigenvalue(std::ofstream& ofs)
-{
-    return;
-}
-
 void ElecState::init_scf(const int istep,
                          const UnitCell& ucell,
                          const Parallel_Grid& pgrid,

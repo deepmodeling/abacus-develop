@@ -178,8 +178,6 @@ class ElecState
                     const double& avg_iter = 0,
                     bool print = true);
 
-    void print_eigenvalue(std::ofstream& ofs);
-
   public:
     // calculate ebands for all k points and all occupied bands
     void calEBand();

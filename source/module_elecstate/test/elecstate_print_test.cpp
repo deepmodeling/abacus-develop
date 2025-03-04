@@ -122,7 +122,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS2)
     PARAM.input.nspin = 2;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
-    elecstate.print_eigenvalue(GlobalV::ofs_running);
+    elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running);
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -145,7 +145,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueS4)
     PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     // print eigenvalue
-    elecstate.print_eigenvalue(GlobalV::ofs_running);
+    elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running);
     GlobalV::ofs_running.close();
     ifs.open("test.dat", std::ios::in);
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -186,7 +186,7 @@ TEST_F(ElecStatePrintTest, PrintEigenvalueWarning)
     PARAM.input.nspin = 4;
     GlobalV::ofs_running.open("test.dat", std::ios::out);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate.print_eigenvalue(GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::print_eigenvalue(elecstate.ekb,elecstate.wg,elecstate.klist,GlobalV::ofs_running), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Eigenvalues are too large!"));
     GlobalV::ofs_running.close();

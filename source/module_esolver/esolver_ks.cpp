@@ -712,7 +712,7 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep)
     // 2) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
     }
 }
 

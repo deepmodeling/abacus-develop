@@ -149,19 +149,21 @@ void print_scf_iterinfo(const std::string& ks_solver,
 }
 /// @brief print and check for band energy and occupations
 /// @param ofs
-void ElecState::print_eigenvalue(std::ofstream& ofs)
+void print_eigenvalue(const ModuleBase::matrix& ekb,
+                      const ModuleBase::matrix& wg,
+                      const K_Vectors* klist,
+                      std::ofstream& ofs)
 {
     bool wrong = false;
-    const int nks = this->klist->get_nks();
-    const int nkstot = this->klist->get_nkstot();
+    const int nks = klist->get_nks();
+    const int nkstot = klist->get_nkstot();
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < this->ekb.nc; ++ib)
+        for (int ib = 0; ib < ekb.nc; ++ib)
         {
-            if (std::abs(this->ekb(ik, ib)) > 1.0e10)
+            if (std::abs(ekb(ik, ib)) > 1.0e10)
             {
-                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                     << std::endl;
+                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry\n";
                 wrong = true;
             }
         }
@@ -175,7 +177,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     }
 
     std::string filename = PARAM.globalv.global_out_dir + PARAM.globalv.log_file;
-    std::vector<int> ngk_tot = this->klist->ngk;
+    std::vector<int> ngk_tot = klist->ngk;
 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
@@ -188,15 +190,17 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     const int nks_np = nks / nk_fac;
     const int nkstot_np = nkstot / nk_fac;
     ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
+    std::ofstream ofs_eig(filename.c_str(), std::ios::app);
+    ofs_eig << std::setiosflags(std::ios::showpoint);
     for (int is = 0; is < nk_fac; ++is)
     {
         if (is == 0 && nk_fac == 2)
         {
-            ofs << "SPIN UP : " << std::endl;
+            ofs << "SPIN UP : \n";
         }
         else if (is == 1 && nk_fac == 2)
         {
-            ofs << "SPIN DOWN : " << std::endl;
+            ofs << "SPIN DOWN : \n";
         }
 
         for (int ip = 0; ip < GlobalV::KPAR; ++ip)
@@ -211,30 +215,27 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                 const int end_ik = nks_np * (is + 1);
                 for (int ik = start_ik; ik < end_ik; ++ik)
                 {
-                    std::ofstream ofs_eig(filename.c_str(), std::ios::app);
                     ofs_eig << std::setprecision(5);
-                    ofs_eig << std::setiosflags(std::ios::showpoint);
-                    ofs_eig << " " << this->klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
-                            << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y
-                            << " " << this->klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
+                    ofs_eig << " " << klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
+                            << " kpoint (Cartesian) = " << klist->kvec_c[ik].x << " " << klist->kvec_c[ik].y << " "
+                            << klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)\n";
 
                     ofs_eig << std::setprecision(6);
-                    ofs_eig << std::setiosflags(std::ios::showpoint);
-                    for (int ib = 0; ib < this->ekb.nc; ib++)
+                    for (int ib = 0; ib < ekb.nc; ib++)
                     {
-                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << std::setw(15) << this->wg(ik, ib) << std::endl;
+                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << std::setw(15) << wg(ik, ib) << std::endl;
                     }
                     ofs_eig << std::endl;
-                    ofs_eig.close();
                 }
             }
         }
 #ifdef __MPI
-            MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(MPI_COMM_WORLD);
 #endif
-        ofs.seekp(0, std::ios::end);
     }
+    ofs_eig.close();
+    ofs.seekp(0, std::ios::end);
     return;
 }
 
@@ -242,11 +243,11 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 /// @param ik: index of kpoints
 /// @param printe: print energy every 'printe' electron iteration.
 /// @param iter: index of iterations
-void print_band(const ModuleBase::matrix& ekb, 
+void print_band(const ModuleBase::matrix& ekb,
                 const ModuleBase::matrix& wg,
                 const K_Vectors* klist,
-                const int& ik, 
-                const int& printe, 
+                const int& ik,
+                const int& printe,
                 const int& iter)
 {
     // check the band energy.
@@ -255,8 +256,7 @@ void print_band(const ModuleBase::matrix& ekb,
     {
         if (std::abs(ekb(ik, ib)) > 1.0e10)
         {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry"
-                                 << std::endl;
+            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
             wrong = true;
         }
     }

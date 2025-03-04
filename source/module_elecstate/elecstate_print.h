@@ -12,5 +12,10 @@ namespace elecstate
 
     void print_format(const std::string& name, 
                     const double& value);
+    
+    void print_eigenvalue(const ModuleBase::matrix& ekb,
+                      const ModuleBase::matrix& wg,
+                      const K_Vectors* klist,
+                      std::ofstream& ofs);
 }
 #endif
