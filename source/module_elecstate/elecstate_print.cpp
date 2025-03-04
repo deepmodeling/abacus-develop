@@ -154,7 +154,7 @@ void print_eigenvalue(const ModuleBase::matrix& ekb,
                       const K_Vectors* klist,
                       std::ofstream& ofs)
 {
-    bool wrong = false;
+     bool wrong = false;
     const int nks = klist->get_nks();
     const int nkstot = klist->get_nkstot();
     for (int ik = 0; ik < nks; ++ik)
@@ -190,16 +190,15 @@ void print_eigenvalue(const ModuleBase::matrix& ekb,
     const int nks_np = nks / nk_fac;
     const int nkstot_np = nkstot / nk_fac;
     ofs << "   NSPIN == " << PARAM.inp.nspin << std::endl;
-
     for (int is = 0; is < nk_fac; ++is)
     {
         if (is == 0 && nk_fac == 2)
         {
-            ofs << "SPIN UP : \n";
+            ofs << "SPIN UP : " << std::endl;
         }
         else if (is == 1 && nk_fac == 2)
         {
-            ofs << "SPIN DOWN : \n";
+            ofs << "SPIN DOWN : " << std::endl;
         }
 
         for (int ip = 0; ip < GlobalV::KPAR; ++ip)
@@ -215,13 +214,14 @@ void print_eigenvalue(const ModuleBase::matrix& ekb,
                 for (int ik = start_ik; ik < end_ik; ++ik)
                 {
                     std::ofstream ofs_eig(filename.c_str(), std::ios::app);
-                    ofs_eig << std::setiosflags(std::ios::showpoint);
                     ofs_eig << std::setprecision(5);
+                    ofs_eig << std::setiosflags(std::ios::showpoint);
                     ofs_eig << " " << klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
-                            << " kpoint (Cartesian) = " << klist->kvec_c[ik].x << " " << klist->kvec_c[ik].y << " "
-                            << klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" <<std::endl;
+                            << " kpoint (Cartesian) = " << klist->kvec_c[ik].x << " " << klist->kvec_c[ik].y
+                            << " " << klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
 
                     ofs_eig << std::setprecision(6);
+                    ofs_eig << std::setiosflags(std::ios::showpoint);
                     for (int ib = 0; ib < ekb.nc; ib++)
                     {
                         ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV
@@ -233,11 +233,10 @@ void print_eigenvalue(const ModuleBase::matrix& ekb,
             }
         }
 #ifdef __MPI
-        MPI_Barrier(MPI_COMM_WORLD);
+            MPI_Barrier(MPI_COMM_WORLD);
 #endif
+        ofs.seekp(0, std::ios::end);
     }
-
-    ofs.seekp(0, std::ios::end);
     return;
 }
 
