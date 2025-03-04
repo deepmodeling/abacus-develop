@@ -1,8 +1,11 @@
 #include "esolver_fp.h"
 
 #include "module_base/global_variable.h"
+#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_elecstate/read_pseudo.h"
+#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
+#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_io/cif_io.h"
 #include "module_io/cube_io.h"
@@ -281,6 +284,77 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
         kv.set_after_vc(PARAM.inp.nspin, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
+    }
+
+    // charge extrapolation
+    if (ucell.ionic_position_updated)
+    {
+        this->CE.update_all_dis(ucell);
+        this->CE.extrapolate_charge(&(this->Pgrid),
+                                    ucell,
+                                    this->pelec->charge,
+                                    &(this->sf),
+                                    GlobalV::ofs_running,
+                                    GlobalV::ofs_warning);
+    }
+
+    //----------------------------------------------------------
+    // about vdw, jiyy add vdwd3 and linpz add vdwd2
+    //----------------------------------------------------------
+    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
+    if (vdw_solver != nullptr)
+    {
+        this->pelec->f_en.evdw = vdw_solver->get_energy();
+    }
+
+    // calculate ewald energy
+    if (!PARAM.inp.test_skip_ewald)
+    {
+        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
+    }
+
+    //----------------------------------------------------------
+    //! cal_ux should be called before init_scf because
+    //! the direction of ux is used in noncoline_rho
+    //----------------------------------------------------------
+    elecstate::cal_ux(ucell);
+
+    //! output the initial charge density
+    if (PARAM.inp.out_chg[0] == 2)
+    {
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            std::stringstream ss;
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
+            ModuleIO::write_vdata_palgrid(this->Pgrid,
+                                          this->pelec->charge->rho[is],
+                                          is,
+                                          PARAM.inp.nspin,
+                                          istep,
+                                          ss.str(),
+                                          this->pelec->eferm.ef,
+                                          &(ucell));
+        }
+    }
+
+    //! output total local potential of the initial charge density
+    if (PARAM.inp.out_pot == 3)
+    {
+        for (int is = 0; is < PARAM.inp.nspin; is++)
+        {
+            std::stringstream ss;
+            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
+            ModuleIO::write_vdata_palgrid(this->Pgrid,
+                                          this->pelec->pot->get_effective_v(is),
+                                          is,
+                                          PARAM.inp.nspin,
+                                          istep,
+                                          ss.str(),
+                                          0.0, // efermi
+                                          &(ucell),
+                                          11, // precsion
+                                          0); // out_fermi
+        }
     }
 
     return;
