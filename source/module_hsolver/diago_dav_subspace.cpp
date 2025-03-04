@@ -288,27 +288,29 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
                          psi_iter + (nbase) * this->dim,
                          this->dim);
 
-    std::vector<Real> e_temp_cpu(nbase, 0);
+    std::vector<Real> e_temp_cpu(this->notconv, 0);
     Real* e_temp_hd = e_temp_cpu.data();
-    if(this->device == base_device::GpuDevice)
+    if (this->device == base_device::GpuDevice)
     {
         e_temp_hd = nullptr;
-        resmem_real_op()(this->ctx, e_temp_hd, nbase);
+        resmem_real_op()(this->ctx, e_temp_hd, this->notconv);
     }
-    for (int m = 0; m < notconv; m++)
+
+    // Prepare the eigenvalues for the kernel
+    for (int m = 0; m < this->notconv; m++)
     {
-        e_temp_cpu.assign(nbase, (-1.0 * (*eigenvalue_iter)[m]));
-        if (this->device == base_device::GpuDevice)
-        {
-            syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), nbase);
-        }
-        vector_mul_vector_op<T, Device>()(this->ctx,
-                                                nbase,
-                                                vcc + m * this->nbase_x,
-                                                vcc + m * this->nbase_x,
-                                                e_temp_hd);
+        e_temp_cpu[m] = -(*eigenvalue_iter)[m]; // Assign -lambda_m
     }
-    if(this->device == base_device::GpuDevice)
+
+    if (this->device == base_device::GpuDevice)
+    {
+        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, e_temp_hd, e_temp_cpu.data(), this->notconv);
+    }
+
+    // Call apply_eigenvalues_op with nbase and nbase_x
+    apply_eigenvalues_op<T, Device>()(this->ctx, nbase, this->nbase_x, this->notconv, this->vcc, this->vcc, e_temp_hd);
+
+    if (this->device == base_device::GpuDevice)
     {
         delmem_real_op()(this->ctx, e_temp_hd);
     }

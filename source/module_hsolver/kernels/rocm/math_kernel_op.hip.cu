@@ -943,7 +943,67 @@ void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator
     hipCheckOnDebug();
 }
 
+// Wrapper for applying eigenvalues to complex vectors
+template <typename FPTYPE>
+inline void apply_eigenvalues_complex_wrapper(const base_device::DEVICE_GPU* d,
+                                              const int& nbase,
+                                              const int& nbase_x,
+                                              const int& notconv,
+                                              const std::complex<FPTYPE>* eigenvalues,
+                                              const std::complex<FPTYPE>* vectors,
+                                              std::complex<FPTYPE>* result)
+{
+    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
+    const thrust::complex<FPTYPE>* eigenvalues_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(eigenvalues);
+    const thrust::complex<FPTYPE>* vectors_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vectors);
 
+    int thread = 1024;
+    int block = (nbase + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(apply_eigenvalues_kernel<thrust::complex<FPTYPE>>), dim3(block, notconv), dim3(thread), 0, 0,
+                       eigenvalues_tmp, vectors_tmp, result_tmp, nbase, nbase_x, notconv);
+
+    hipCheckOnDebug();
+}
+
+// Kernel for applying eigenvalues to vectors
+template <typename T>
+__global__ void apply_eigenvalues_kernel(const T* eigenvalues, const T* vectors, T* result, int nbase, int nbase_x, int notconv) {
+    int m = blockIdx.y; // Row index (vector index)
+    int idx = blockIdx.x * blockDim.x + threadIdx.x; // Column index (element index)
+
+    if (m < notconv && idx < nbase) {
+        result[m * nbase_x + idx] = -eigenvalues[m] * vectors[m * nbase_x + idx];
+    }
+}
+
+// Specialization for double
+template <>
+void apply_eigenvalues_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                       const double *eigenvalues, const double *vectors, double *result) {
+    int thread = 1024;
+    int block = (nbase + thread - 1) / thread;
+    hipLaunchKernelGGL(HIP_KERNEL_NAME(apply_eigenvalues_kernel<double>), dim3(block, notconv), dim3(thread), 0, 0,
+                       eigenvalues, vectors, result, nbase, nbase_x, notconv);
+
+    hipCheckOnDebug();
+}
+
+// Specialization for std::complex<float>
+template <>
+void apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                      const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                      const std::complex<float> *eigenvalues, const std::complex<float> *vectors, std::complex<float> *result) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
+
+// Specialization for std::complex<double>
+template <>
+void apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                       const std::complex<double> *eigenvalues, const std::complex<double> *vectors, std::complex<double> *result) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
@@ -951,6 +1011,7 @@ template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>;
@@ -960,6 +1021,7 @@ template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVIC
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>;
@@ -968,6 +1030,7 @@ template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU
 template struct dot_real_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;

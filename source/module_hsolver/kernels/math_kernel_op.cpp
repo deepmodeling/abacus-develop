@@ -174,6 +174,22 @@ struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
+struct apply_eigenvalues_op<T, base_device::DEVICE_CPU>
+{
+    using Real = typename GetTypeReal<T>::type;
+    void operator()(const base_device::DEVICE_CPU* d, const int& nbase, const int& nbase_x, const int& notconv, T* result, const T* vectors, const Real* eigenvalues)
+    {
+        for (int m = 0; m < notconv; m++)
+        {
+            for (int idx = 0; idx < nbase; idx++)
+            {
+                result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+            }
+        }
+    }
+};
+
+template <typename T>
 struct vector_div_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
@@ -365,6 +381,7 @@ template struct gemm_op<float, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<float>, base_device::DEVICE_CPU>;
@@ -381,6 +398,7 @@ template struct gemm_op<double, base_device::DEVICE_CPU>;
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -392,6 +410,7 @@ template struct line_minimize_with_block_op<std::complex<double>, base_device::D
 template struct axpy_op<double, base_device::DEVICE_CPU>;
 template struct dot_real_op<double, base_device::DEVICE_CPU>;
 template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;

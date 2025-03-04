@@ -325,6 +325,14 @@ template <typename T, typename Device> struct matrixSetToAnother {
                   T *B, const int &LDB);
 };
 
+template <typename T, typename Device>
+struct apply_eigenvalues_op {
+    using Real = typename GetTypeReal<T>::type;
+
+    void operator()(const Device *d, const int &nbase, const int &nbase_x, const int &notconv,
+                    T *result, const T *vectors, const Real *eigenvalues);
+};
+
 #if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 
 template <typename T>
@@ -392,6 +400,14 @@ template <typename T> struct matrixSetToAnother<T, base_device::DEVICE_GPU> {
 
 void createGpuBlasHandle();
 void destoryBLAShandle();
+
+// vector operator: result[i] = -lambda[i] * vector[i]
+template <typename T> struct apply_eigenvalues_op<T, base_device::DEVICE_GPU> {
+    using Real = typename GetTypeReal<T>::type;
+
+    void operator()(const base_device::DEVICE_GPU *d, const int &nbase, const int &nbase_x, const int &notconv,
+                    T *result, const T *vectors, const Real *eigenvalues);
+};
 
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
 } // namespace hsolver

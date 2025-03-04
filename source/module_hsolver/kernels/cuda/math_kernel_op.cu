@@ -1035,6 +1035,69 @@ void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator
     cudaCheckOnDebug();
 }
 
+// Kernel for applying eigenvalues to vectors
+
+template <typename T>
+__global__ void apply_eigenvalues_kernel(const T* eigenvalues, const T* vectors, T* result, int nbase, int nbase_x, int notconv)
+{
+    int m = blockIdx.y;                     // Each block in y-dimension handles a different m
+    int idx = blockIdx.x * blockDim.x + threadIdx.x; // Thread index in x-dimension for idx
+
+    if (m < notconv && idx < nbase)         // Boundary check
+    {
+        result[m * nbase_x + idx] = eigenvalues[m] * vectors[m * nbase_x + idx];
+    }
+}
+
+// Wrapper for applying eigenvalues to complex vectors
+template <typename FPTYPE>
+inline void apply_eigenvalues_complex_wrapper(const base_device::DEVICE_GPU* d,
+                                              const int& nbase,
+                                              const int& nbase_x,
+                                              const int& notconv,
+                                              const FPTYPE* eigenvalues,
+                                              const std::complex<FPTYPE>* vectors,
+                                              std::complex<FPTYPE>* result)
+{
+    thrust::complex<FPTYPE>* result_tmp = reinterpret_cast<thrust::complex<FPTYPE>*>(result);
+    const thrust::complex<FPTYPE>* eigenvalues_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(eigenvalues);
+    const thrust::complex<FPTYPE>* vectors_tmp = reinterpret_cast<const thrust::complex<FPTYPE>*>(vectors);
+
+    dim3 threadsPerBlock(256, 1);  // 256 threads per block in x-dimension
+    dim3 numBlocks((nbase + threadsPerBlock.x - 1) / threadsPerBlock.x, notconv); // Ceiling division for x
+    apply_eigenvalues_kernel<thrust::complex<FPTYPE>> <<<numBlocks, threadsPerBlock>>>(
+        eigenvalues_tmp, vectors_tmp, result_tmp, nbase, nbase_x, notconv);
+
+    cudaCheckOnDebug();
+}
+
+// Specialization for double
+template <>
+void apply_eigenvalues_op<double, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                       double *result, const double *vectors, const double *eigenvalues) {
+    dim3 threadsPerBlock(256, 1);  // 256 threads per block in x-dimension
+    dim3 numBlocks((nbase + threadsPerBlock.x - 1) / threadsPerBlock.x, notconv); // Ceiling division for x
+    apply_eigenvalues_kernel<double><<<numBlocks, threadsPerBlock>>>(
+        eigenvalues, vectors, result, nbase, nbase_x, notconv);
+    cudaCheckOnDebug();
+}
+
+// Specialization for std::complex<float>
+template <>
+void apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                      const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                      std::complex<float> *result, const std::complex<float> *vectors, const float *eigenvalues) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
+
+// Specialization for std::complex<double>
+template <>
+void apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(const base_device::DEVICE_GPU *d,
+                                                                                       const int &nbase, const int &nbase_x, const int &notconv,
+                                                                                       std::complex<double> *result, const std::complex<double> *vectors, const double *eigenvalues) {
+    apply_eigenvalues_complex_wrapper(d, nbase, nbase_x, notconv, eigenvalues, vectors, result);
+}
 
 // Explicitly instantiate functors for the types of functor registered.
 template struct dot_real_op<std::complex<float>, base_device::DEVICE_GPU>;
@@ -1045,6 +1108,7 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GP
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<float>, base_device::DEVICE_GPU>;
 
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -1054,6 +1118,7 @@ template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_G
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
 template struct dot_real_op<double, base_device::DEVICE_GPU>;
@@ -1062,5 +1127,6 @@ template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
 template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
+template struct apply_eigenvalues_op<double, base_device::DEVICE_GPU>;
 #endif
 }  // namespace hsolver
