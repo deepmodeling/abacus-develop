@@ -49,16 +49,16 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
             const int nw2_tot,
             ModuleBase::Vector3<int> dR2)
         {
-            double r0[3] = {0, 0, 0};
             double r1[3] = {0, 0, 0};
+            double r2[3] = {0, 0, 0};
             if (isstress)
             {
                 r1[0] = (tau1.x - tau0.x);
                 r1[1] = (tau1.y - tau0.y);
                 r1[2] = (tau1.z - tau0.z);
-                r0[0] = (tau2.x - tau0.x);
-                r0[1] = (tau2.y - tau0.y);
-                r0[2] = (tau2.z - tau0.z);
+                r2[0] = (tau2.x - tau0.x);
+                r2[1] = (tau2.y - tau0.y);
+                r2[2] = (tau2.z - tau0.z);
             }
 
             auto row_indexes = pv.get_indexes_row(ibt1);
@@ -255,7 +255,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                             for (int jpol = ipol; jpol < 3; jpol++)
                             {
                                 svnl_dalpha(ipol, jpol)
-                                    += *dm_current * (nlm[ipol] * r0[jpol] + nlm_t[ipol] * r1[jpol]);
+                                    += *dm_current * (nlm[ipol] * r2[jpol] + nlm_t[ipol] * r1[jpol]);
                             }
                         }
                     }

@@ -57,14 +57,14 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
             const int nw2_tot,
             ModuleBase::Vector3<int> dR2)
         {
-            double r0[3] = {0, 0, 0};
             double r1[3] = {0, 0, 0};
+            double r2[3] = {0, 0, 0};
             r1[0] = (tau1.x - tau0.x);
             r1[1] = (tau1.y - tau0.y);
             r1[2] = (tau1.z - tau0.z);
-            r0[0] = (tau2.x - tau0.x);
-            r0[1] = (tau2.y - tau0.y);
-            r0[2] = (tau2.z - tau0.z);
+            r2[0] = (tau2.x - tau0.x);
+            r2[1] = (tau2.y - tau0.y);
+            r2[2] = (tau2.z - tau0.z);
             auto row_indexes = pv.get_indexes_row(ibt1);
             auto col_indexes = pv.get_indexes_col(ibt2);
             if (row_indexes.size() * col_indexes.size() == 0)
@@ -152,7 +152,7 @@ void DeePKS_domain::cal_gdmepsl(const int lmaxd,
                                             accessor[mm][inl][m2][m1]
                                                 += ucell.lat0 * *dm_current
                                                    * (grad_overlap_2[jpol]->get_value(col_indexes[iw2], ib + m2)
-                                                      * overlap_1->get_value(row_indexes[iw1], ib + m1) * r0[ipol]);
+                                                      * overlap_1->get_value(row_indexes[iw1], ib + m1) * r2[ipol]);
                                             accessor[mm][inl][m2][m1]
                                                 += ucell.lat0 * *dm_current
                                                    * (overlap_2->get_value(col_indexes[iw2], ib + m1)
