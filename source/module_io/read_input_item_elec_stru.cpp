@@ -3,6 +3,40 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <map>
+
+// next time if there are other keywords need the support of alias, move this function
+// to an upper level
+std::string alias_to_full_name(const std::map<std::string, std::vector<std::string>>& m,
+                               const std::string& in)
+{
+    for (const auto& key : m)
+    {
+        if (std::find(key.second.begin(), key.second.end(), in) != key.second.end())
+        {
+            return key.first;
+        }
+    }
+    ModuleBase::WARNING_QUIT("ModuleIO::ReadInput::read_input_item_elec_stru::alias_to_full_name", 
+                             "The alias: `" + in + "` is not supported.");
+}
+
+// support the alias for keyword `smearing_type`
+void alias_update_smearing_method(std::string& in)
+{
+    // once there is new option added, update this map
+    const std::map<std::string, std::vector<std::string>> alias = {
+        {"fixed", {"fixed"}},
+        {"gaussian", {"gaussian", "gauss", "gau"}},
+        {"fermi-dirac", {"fermi-dirac", "fd", "f-d"}},
+        {"mp", {"mp", "methfessel-paxton", "m-p"}},
+        {"mp2", {"mp2", "mp-2"}},
+        {"mp3", {"mp3", "mp-3"}},
+        {"marzari-vanderbilt", {"marzari-vanderbilt", "mv", "m-v", "cold"}}
+    };
+    in = alias_to_full_name(alias, in);
+}
+
 namespace ModuleIO
 {
 void ReadInput::item_elec_stru()
@@ -335,20 +369,9 @@ void ReadInput::item_elec_stru()
     }
     {
         Input_Item item("smearing_method");
-        item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
+        item.annotation = "type of smearing on electronic occupation";
+        alias_update_smearing_method(item.str_values[0]); // it might not be the best place
         read_sync_string(input.smearing_method);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> methods = {"gauss", "gaussian", 
-                                                      "fd", "fermi-dirac",
-                                                      "fixed",
-                                                      "mp", "mp2", "mp3"
-                                                      "marzari-vanderbilt", "cold", "mv"};
-            if (std::find(methods.begin(), methods.end(), para.input.smearing_method) == methods.end())
-            {
-                const std::string warningstr = nofound_str(methods, "smearing_method");
-                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
-            }
-        };
         this->add_item(item);
     }
     {
