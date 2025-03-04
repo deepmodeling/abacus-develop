@@ -138,6 +138,9 @@ class Psi
     std::tuple<const T*, int> to_range(const Range& range) const;
     int npol = 1;
 
+    // Whether this is the first iteration for k-point propagation
+    bool is_first_iter = true;
+
   private:
     T* psi = nullptr; // avoid using C++ STL
 

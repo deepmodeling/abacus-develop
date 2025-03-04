@@ -430,6 +430,8 @@ struct Input_para
     double block_up = 0.55;    ///< high bound of the block
     double block_height = 0.1; ///< height of the block
 
+    bool use_k_continuity = true; ///< whether to use K-point continuity for wave function propagation
+
     //    implicit solvation model       Menglin Sun added on 2022-04-04
     bool imp_sol = false;    ///< true: implicit solvation correction; false:
                              ///< vacuum calculation(default)

@@ -175,7 +175,8 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
                                                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace);
+                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                           PARAM.inp.use_k_continuity);
 
     hsolver_pw_sdft_obj.solve(ucell,
                               this->p_hamilt,

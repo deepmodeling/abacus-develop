@@ -428,7 +428,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                                                 PARAM.inp.use_k_continuity);
 
                 hsolver_pw_obj.solve(hamilt_t,
                          psi_t[0],
@@ -503,7 +504,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::SCF_ITER,
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_NMAX,
                                                  hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_THR,
-                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace);
+                                                 hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace,
+                                                 PARAM.inp.use_k_continuity);
 
                 hsolver_pw_obj.solve(hamilt_t,
                          psi_t[0],

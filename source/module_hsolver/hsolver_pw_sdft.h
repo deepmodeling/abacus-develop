@@ -26,7 +26,8 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                    const int scf_iter_in,
                    const int diag_iter_max_in,
                    const double diag_thr_in,
-                   const bool need_subspace_in)
+                   const bool need_subspace_in,
+                   const bool use_k_continuity_in = false)
         : HSolverPW<T, Device>(wfc_basis_in,
                                calculation_type_in,
                                basis_type_in,
@@ -37,7 +38,8 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                                scf_iter_in,
                                diag_iter_max_in,
                                diag_thr_in,
-                               need_subspace_in)
+                               need_subspace_in,
+                               use_k_continuity_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }

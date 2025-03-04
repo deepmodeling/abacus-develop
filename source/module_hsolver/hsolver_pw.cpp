@@ -303,7 +303,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         psi.fix_k(ik);
 
         // If using k-point continuity and not first k-point, propagate from parent
-        if (use_k_continuity && ik > 0 && count == 0) {
+        if (use_k_continuity && ik > 0 && psi.is_first_iter) {
             propagate_psi(psi, k_parent[ik], ik);
         }
 
@@ -336,7 +336,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         // ModuleBase::timer::tick("HsolverPW", "k_point: " + std::to_string(ik));
         /// calculate the contribution of Psi for charge density rho
     }
-    count++;
+    psi.is_first_iter = false;
     // END Loop over k points
 
     // copy eigenvalues to ekb in ElecState

@@ -818,5 +818,11 @@ void ReadInput::item_elec_stru()
         read_sync_double(input.bessel_nao_sigma);
         this->add_item(item);
     }
+    {
+        Input_Item item("use_k_continuity");
+        item.annotation = "whether to use K-point continuity for wave function propagation";
+        read_sync_bool(input.use_k_continuity);
+        this->add_item(item);
+    }
 }
 } // namespace ModuleIO
