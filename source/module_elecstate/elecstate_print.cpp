@@ -149,19 +149,21 @@ void print_scf_iterinfo(const std::string& ks_solver,
 }
 /// @brief print and check for band energy and occupations
 /// @param ofs
-void ElecState::print_eigenvalue(std::ofstream& ofs)
+void print_eigenvalue(const ModuleBase::matrix& ekb,
+                      const ModuleBase::matrix& wg,
+                      const K_Vectors* klist,
+                      std::ofstream& ofs)
 {
-    bool wrong = false;
-    const int nks = this->klist->get_nks();
-    const int nkstot = this->klist->get_nkstot();
+     bool wrong = false;
+    const int nks = klist->get_nks();
+    const int nkstot = klist->get_nkstot();
     for (int ik = 0; ik < nks; ++ik)
     {
-        for (int ib = 0; ib < this->ekb.nc; ++ib)
+        for (int ib = 0; ib < ekb.nc; ++ib)
         {
-            if (std::abs(this->ekb(ik, ib)) > 1.0e10)
+            if (std::abs(ekb(ik, ib)) > 1.0e10)
             {
-                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                     << std::endl;
+                GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
                 wrong = true;
             }
         }
@@ -175,7 +177,7 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
     }
 
     std::string filename = PARAM.globalv.global_out_dir + PARAM.globalv.log_file;
-    std::vector<int> ngk_tot = this->klist->ngk;
+    std::vector<int> ngk_tot = klist->ngk;
 
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, ngk_tot.data(), nks, MPI_INT, MPI_SUM, POOL_WORLD);
@@ -214,16 +216,16 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
                     std::ofstream ofs_eig(filename.c_str(), std::ios::app);
                     ofs_eig << std::setprecision(5);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
-                    ofs_eig << " " << this->klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
-                            << " kpoint (Cartesian) = " << this->klist->kvec_c[ik].x << " " << this->klist->kvec_c[ik].y
-                            << " " << this->klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
+                    ofs_eig << " " << klist->ik2iktot[ik] + 1 - is * nkstot_np << "/" << nkstot_np
+                            << " kpoint (Cartesian) = " << klist->kvec_c[ik].x << " " << klist->kvec_c[ik].y
+                            << " " << klist->kvec_c[ik].z << " (" << ngk_tot[ik] << " pws)" << std::endl;
 
                     ofs_eig << std::setprecision(6);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
-                    for (int ib = 0; ib < this->ekb.nc; ib++)
+                    for (int ib = 0; ib < ekb.nc; ib++)
                     {
-                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << this->ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << std::setw(15) << this->wg(ik, ib) << std::endl;
+                        ofs_eig << std::setw(8) << ib + 1 << std::setw(15) << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << std::setw(15) << wg(ik, ib) << std::endl;
                     }
                     ofs_eig << std::endl;
                     ofs_eig.close();
@@ -242,16 +244,20 @@ void ElecState::print_eigenvalue(std::ofstream& ofs)
 /// @param ik: index of kpoints
 /// @param printe: print energy every 'printe' electron iteration.
 /// @param iter: index of iterations
-void ElecState::print_band(const int& ik, const int& printe, const int& iter)
+void print_band(const ModuleBase::matrix& ekb,
+                const ModuleBase::matrix& wg,
+                const K_Vectors* klist,
+                const int& ik,
+                const int& printe,
+                const int& iter)
 {
     // check the band energy.
     bool wrong = false;
     for (int ib = 0; ib < PARAM.globalv.nbands_l; ++ib)
     {
-        if (std::abs(this->ekb(ik, ib)) > 1.0e10)
+        if (std::abs(ekb(ik, ib)) > 1.0e10)
         {
-            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << this->ekb(ik, ib) << " Ry"
-                                 << std::endl;
+            GlobalV::ofs_warning << " ik=" << ik + 1 << " ib=" << ib + 1 << " " << ekb(ik, ib) << " Ry" << std::endl;
             wrong = true;
         }
     }
@@ -265,16 +271,16 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
         if (printe > 0 && ((iter + 1) % printe == 0))
         {
             GlobalV::ofs_running << std::setprecision(6);
-            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << this->klist->isk[ik] + 1
+            GlobalV::ofs_running << " Energy (eV) & Occupations  for spin=" << klist->isk[ik] + 1
                                  << " K-point=" << ik + 1 << std::endl;
             GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
             for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
             {
                 GlobalV::ofs_running << " " << std::setw(6) << ib + 1 << std::setw(15)
-                                     << this->ekb(ik, ib) * ModuleBase::Ry_to_eV;
+                                     << ekb(ik, ib) * ModuleBase::Ry_to_eV;
                 // for the first electron iteration, we don't have the energy
                 // spectrum, so we can't get the occupations.
-                GlobalV::ofs_running << std::setw(15) << this->wg(ik, ib);
+                GlobalV::ofs_running << std::setw(15) << wg(ik, ib);
                 GlobalV::ofs_running << std::endl;
             }
         }
@@ -291,25 +297,25 @@ void ElecState::print_band(const int& ik, const int& printe, const int& iter)
 /// @param pw_diag_thr: threshold for diagonalization
 /// @param avg_iter: averaged diagonalization iteration of each scf iteration
 /// @param print: if print to screen
-void ElecState::print_etot(const Magnetism& magnet,
-                           const bool converged,
-                           const int& iter_in,
-                           const double& scf_thr,
-                           const double& scf_thr_kin,
-                           const double& duration,
-                           const int printe,
-                           const double& pw_diag_thr,
-                           const double& avg_iter,
-                           const bool print)
+void print_etot(const Magnetism& magnet,
+                const ElecState& elec,
+                const bool converged,
+                const int& iter_in,
+                const double& scf_thr,
+                const double& scf_thr_kin,
+                const double& duration,
+                const int printe,
+                const double& pw_diag_thr,
+                const double& avg_iter,
+                const bool print)
 {
     ModuleBase::TITLE("energy", "print_etot");
     const int iter = iter_in;
-    const int nrxx = this->charge->nrxx;
-    const int nxyz = this->charge->nxyz;
+    const int nrxx = elec.charge->nrxx;
+    const int nxyz = elec.charge->nxyz;
 
     GlobalV::ofs_running << std::setprecision(12);
     GlobalV::ofs_running << std::setiosflags(std::ios::right);
-
     GlobalV::ofs_running << "\n Density error is " << scf_thr << std::endl;
 
     if (PARAM.inp.basis_type == "pw")
@@ -324,46 +330,46 @@ void ElecState::print_etot(const Magnetism& magnet,
     {
         int n_order = std::max(0, Occupy::gaussian_type);
         titles.push_back("E_KohnSham");
-        energies_Ry.push_back(this->f_en.etot);
+        energies_Ry.push_back(elec.f_en.etot);
         titles.push_back("E_KS(sigma->0)");
-        energies_Ry.push_back(this->f_en.etot - this->f_en.demet / (2 + n_order));
+        energies_Ry.push_back(elec.f_en.etot - elec.f_en.demet / (2 + n_order));
         titles.push_back("E_Harris");
-        energies_Ry.push_back(this->f_en.etot_harris);
+        energies_Ry.push_back(elec.f_en.etot_harris);
         titles.push_back("E_band");
-        energies_Ry.push_back(this->f_en.eband);
+        energies_Ry.push_back(elec.f_en.eband);
         titles.push_back("E_one_elec");
-        energies_Ry.push_back(this->f_en.eband + this->f_en.deband);
+        energies_Ry.push_back(elec.f_en.eband + elec.f_en.deband);
         titles.push_back("E_Hartree");
-        energies_Ry.push_back(this->f_en.hartree_energy);
+        energies_Ry.push_back(elec.f_en.hartree_energy);
         titles.push_back("E_xc");
-        energies_Ry.push_back(this->f_en.etxc - this->f_en.etxcc);
+        energies_Ry.push_back(elec.f_en.etxc - elec.f_en.etxcc);
         titles.push_back("E_Ewald");
-        energies_Ry.push_back(this->f_en.ewald_energy);
+        energies_Ry.push_back(elec.f_en.ewald_energy);
         titles.push_back("E_entropy(-TS)");
-        energies_Ry.push_back(this->f_en.demet);
+        energies_Ry.push_back(elec.f_en.demet);
         titles.push_back("E_descf");
-        energies_Ry.push_back(this->f_en.descf);
+        energies_Ry.push_back(elec.f_en.descf);
         titles.push_back("E_LocalPP");
-        energies_Ry.push_back(this->f_en.e_local_pp);
+        energies_Ry.push_back(elec.f_en.e_local_pp);
         std::string vdw_method = PARAM.inp.vdw_method;
         if (vdw_method == "d2") // Peize Lin add 2014-04, update 2021-03-09
         {
             titles.push_back("E_vdwD2");
-            energies_Ry.push_back(this->f_en.evdw);
+            energies_Ry.push_back(elec.f_en.evdw);
         }
         else if (vdw_method == "d3_0" || vdw_method == "d3_bj") // jiyy add 2019-05, update 2021-05-02
         {
             titles.push_back("E_vdwD3");
-            energies_Ry.push_back(this->f_en.evdw);
+            energies_Ry.push_back(elec.f_en.evdw);
         }
         titles.push_back("E_exx");
-        energies_Ry.push_back(this->f_en.exx);
+        energies_Ry.push_back(elec.f_en.exx);
         if (PARAM.inp.imp_sol)
         {
             titles.push_back("E_sol_el");
-            energies_Ry.push_back(this->f_en.esol_el);
+            energies_Ry.push_back(elec.f_en.esol_el);
             titles.push_back("E_sol_cav");
-            energies_Ry.push_back(this->f_en.esol_cav);
+            energies_Ry.push_back(elec.f_en.esol_cav);
         }
         if (PARAM.inp.efield_flag)
         {
@@ -380,43 +386,43 @@ void ElecState::print_etot(const Magnetism& magnet,
         if (PARAM.inp.deepks_scf) // caoyu add 2021-08-10
         {
             titles.push_back("E_DeePKS");
-            energies_Ry.push_back(this->f_en.edeepks_delta);
+            energies_Ry.push_back(elec.f_en.edeepks_delta);
         }
 #endif
     }
     else
     {
         titles.push_back("E_KohnSham");
-        energies_Ry.push_back(this->f_en.etot);
+        energies_Ry.push_back(elec.f_en.etot);
         titles.push_back("E_Harris");
-        energies_Ry.push_back(this->f_en.etot_harris);
+        energies_Ry.push_back(elec.f_en.etot_harris);
     }
 
     if (PARAM.globalv.two_fermi)
     {
         titles.push_back("E_Fermi_up");
-        energies_Ry.push_back(this->eferm.ef_up);
+        energies_Ry.push_back(elec.eferm.ef_up);
         titles.push_back("E_Fermi_dw");
-        energies_Ry.push_back(this->eferm.ef_dw);
+        energies_Ry.push_back(elec.eferm.ef_dw);
     }
     else
     {
         titles.push_back("E_Fermi");
-        energies_Ry.push_back(this->eferm.ef);
+        energies_Ry.push_back(elec.eferm.ef);
     }
     if (PARAM.inp.out_bandgap)
     {
         if (!PARAM.globalv.two_fermi)
         {
             titles.push_back("E_bandgap");
-            energies_Ry.push_back(this->bandgap);
+            energies_Ry.push_back(elec.bandgap);
         }
         else
         {
             titles.push_back("E_bandgap_up");
-            energies_Ry.push_back(this->bandgap_up);
+            energies_Ry.push_back(elec.bandgap_up);
             titles.push_back("E_bandgap_dw");
-            energies_Ry.push_back(this->bandgap_dw);
+            energies_Ry.push_back(elec.bandgap_dw);
         }
     }
     energies_eV.resize(energies_Ry.size());
@@ -457,8 +463,8 @@ void ElecState::print_etot(const Magnetism& magnet,
                                       6,
                                       mag,
                                       10,
-                                      this->f_en.etot * ModuleBase::Ry_to_eV,
-                                      this->f_en.etot_delta * ModuleBase::Ry_to_eV,
+                                      elec.f_en.etot * ModuleBase::Ry_to_eV,
+                                      elec.f_en.etot_delta * ModuleBase::Ry_to_eV,
                                       16,
                                       drho,
                                       12,
@@ -471,12 +477,10 @@ void ElecState::print_etot(const Magnetism& magnet,
 /// @brief function to print name, value and value*Ry_to_eV
 /// @param name: name
 /// @param value: value
-void ElecState::print_format(const std::string& name, const double& value)
+void print_format(const std::string& name, const double& value)
 {
     GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
-    std::stringstream name2;
-    name2 << name;
-    GlobalV::ofs_running << " " << std::setw(16) << name2.str() << std::setw(30) << value << std::setw(30)
+    GlobalV::ofs_running << " " << std::setw(16) << name << std::setw(30) << value << std::setw(30)
                          << value * ModuleBase::Ry_to_eV << std::endl;
     GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
     return;
