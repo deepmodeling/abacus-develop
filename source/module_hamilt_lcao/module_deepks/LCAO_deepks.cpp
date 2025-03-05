@@ -20,7 +20,6 @@ template <typename T>
 LCAO_Deepks<T>::LCAO_Deepks()
 {
     inl_index = new ModuleBase::IntArray[1];
-    inl_l = nullptr;
     gedm = nullptr;
     this->phialpha.resize(1);
 }
@@ -30,7 +29,6 @@ template <typename T>
 LCAO_Deepks<T>::~LCAO_Deepks()
 {
     delete[] inl_index;
-    delete[] inl_l;
 
     //=======1. to use deepks, pdm is required==========
     pdm.clear();
@@ -106,7 +104,7 @@ void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
         // init pdm
         for (int inl = 0; inl < this->inlmax; inl++)
         {
-            int nm = 2 * inl_l[inl] + 1;
+            int nm = 2 * inl2l[inl] + 1;
             pdm_size += nm * nm;
             this->pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
         }
@@ -142,9 +140,7 @@ void LCAO_Deepks<T>::init_index(const int ntype,
 {
     delete[] this->inl_index;
     this->inl_index = new ModuleBase::IntArray[ntype];
-    delete[] this->inl_l;
-    this->inl_l = new int[this->inlmax];
-    ModuleBase::GlobalFunc::ZEROS(this->inl_l, this->inlmax);
+    this->inl2l.resize(this->inlmax, 0);
 
     int inl = 0;
     int alpha = 0;
@@ -162,7 +158,7 @@ void LCAO_Deepks<T>::init_index(const int ntype,
                 for (int n = 0; n < orb.Alpha[0].getNchi(l); n++)
                 {
                     this->inl_index[it](ia, l, n) = inl;
-                    this->inl_l[inl] = l;
+                    this->inl2l[inl] = l;
                     inl++;
                 }
             }

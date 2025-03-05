@@ -35,7 +35,7 @@ void read_pdm(bool read_pdm_file,
               const int nat,
               const int inlmax,
               const int lmaxd,
-              const int* inl_l,
+              const std::vector<int>& inl2l,
               const Numerical_Orbital& alpha,
               std::vector<torch::Tensor>& pdm);
 
@@ -48,7 +48,7 @@ template <typename TK>
 void cal_pdm(bool& init_pdm,
              const int inlmax,
              const int lmaxd,
-             const int* inl_l,
+             const std::vector<int>& inl2l,
              const ModuleBase::IntArray* inl_index,
              const elecstate::DensityMatrix<TK, double>* dm,
              const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -58,7 +58,7 @@ void cal_pdm(bool& init_pdm,
              const Parallel_Orbitals& pv,
              std::vector<torch::Tensor>& pdm);
 
-void check_pdm(const int inlmax, const int* inl_l, const std::vector<torch::Tensor>& pdm);
+void check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm);
 } // namespace DeePKS_domain
 
 #endif

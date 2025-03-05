@@ -59,7 +59,7 @@ void check_gdmx(const torch::Tensor& gdmx);
 void cal_gvx(const int nat,
              const int inlmax,
              const int des_per_atom,
-             const int* inl_l,
+             const std::vector<int>& inl2l,
              const std::vector<torch::Tensor>& gevdm,
              const torch::Tensor& gdmx,
              torch::Tensor& gvx,

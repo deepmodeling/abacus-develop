@@ -27,7 +27,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                                         const int inlmax,
                                         const int nat,
                                         const int nks,
-                                        const int* inl_l,
+                                        const std::vector<int>& inl2l,
                                         const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                         const std::vector<hamilt::HContainer<double>*> phialpha,
                                         const std::vector<torch::Tensor> gevdm,
@@ -176,7 +176,7 @@ void DeePKS_domain::cal_v_delta_precalc(const int nlocal,
                     for (int iat = 0; iat < nat; ++iat)
                     {
                         int inl = iat * nlmax + nl;
-                        int nm = 2 * inl_l[inl] + 1;
+                        int nm = 2 * inl2l[inl] + 1;
                         std::vector<TK> mmv;
 
                         for (int m1 = 0; m1 < nm; ++m1) // m1 = 1 for s, 3 for p, 5 for d
@@ -505,7 +505,7 @@ template void DeePKS_domain::cal_v_delta_precalc<double>(const int nlocal,
                                                          const int inlmax,
                                                          const int nat,
                                                          const int nks,
-                                                         const int* inl_l,
+                                                         const std::vector<int>& inl2l,
                                                          const std::vector<ModuleBase::Vector3<double>>& kvec_d,
                                                          const std::vector<hamilt::HContainer<double>*> phialpha,
                                                          const std::vector<torch::Tensor> gevdm,
@@ -521,7 +521,7 @@ template void DeePKS_domain::cal_v_delta_precalc<std::complex<double>>(
     const int inlmax,
     const int nat,
     const int nks,
-    const int* inl_l,
+    const std::vector<int>& inl2l,
     const std::vector<ModuleBase::Vector3<double>>& kvec_d,
     const std::vector<hamilt::HContainer<double>*> phialpha,
     const std::vector<torch::Tensor> gevdm,

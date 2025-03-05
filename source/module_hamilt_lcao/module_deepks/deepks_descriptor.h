@@ -30,14 +30,14 @@ namespace DeePKS_domain
 /// which are eigenvalues of pdm in blocks of I_n_l
 void cal_descriptor(const int nat,
                     const int inlmax,
-                    const int* inl_l,
+                    const std::vector<int>& inl2l,
                     const std::vector<torch::Tensor>& pdm,
                     std::vector<torch::Tensor>& descriptor,
                     const int des_per_atom);
 /// print descriptors based on LCAO basis
 void check_descriptor(const int inlmax,
                       const int des_per_atom,
-                      const int* inl_l,
+                      const std::vector<int>& inl2l,
                       const UnitCell& ucell,
                       const std::string& out_dir,
                       const std::vector<torch::Tensor>& descriptor,
