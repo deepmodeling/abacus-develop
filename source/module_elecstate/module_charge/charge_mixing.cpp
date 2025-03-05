@@ -193,7 +193,6 @@ void Charge_Mixing::mix_reset()
 bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, const int iternum_used, const double threshold)
 {
     ModuleBase::TITLE("Charge_Mixing", "if_scf_oscillate");
-    ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
 
     if(this->_drho_history.size() == 0)
     {
@@ -241,7 +240,4 @@ bool Charge_Mixing::if_scf_oscillate(const int iteration, const double drho, con
     }
 
     return false;
-
-    ModuleBase::timer::tick("Charge_Mixing", "if_scf_oscillate");
-  
 }
