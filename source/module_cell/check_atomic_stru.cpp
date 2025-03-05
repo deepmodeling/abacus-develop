@@ -127,16 +127,14 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                         // #pragma omp critical
                         {
                             no_warning = false;
-                            all_pass   = bond_length < factor_error ? false :true;
+                            all_pass   = all_pass && ( bond_length < factor_error ? false :true);
                             errorlog << std::setw(3) << ia1 + 1 << "-th " << &label[it1] << ", " << std::setw(3)
                                     << ia2 + 1 << "-th " << &label[it2] << &cell[i]
                                     << std::setprecision(3) << sqrt_bon
                                     << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
                         }
                     }
-
                 } // a
-
             } // ia2
         } // it2
     }
@@ -169,4 +167,5 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
             // ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
         }
     }
+    ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
 }
