@@ -21,7 +21,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
     bool all_pass = true;
     bool no_warning = true;
     const double warning_coef = 0.6;
-    const double min_factor_coef = std::min(warning_coef, factor);
+    const double max_factor_coef = std::max(warning_coef, factor);
 
     std::stringstream errorlog;
     errorlog.setf(std::ios_base::fixed, std::ios_base::floatfield);
@@ -66,9 +66,9 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
     std::vector<std::string> label(ntype);
     for (int i = 0; i < 27; i++)
     {
-        int a = (i / 9) % 3 - 1; // 计算a的值
-        int b = (i / 3) % 3 - 1; // 计算b的值
-        int c = i % 3 - 1;       // 计算c的值
+        int a = (i / 9) % 3 - 1; 
+        int b = (i / 3) % 3 - 1; 
+        int c = i % 3 - 1;       
         A[3 * i] = a * latvec[0] + b * latvec[1] + c * latvec[2];
         A[3 * i + 1] = a * latvec[3] + b * latvec[4] + c * latvec[5];
         A[3 * i + 2] = a * latvec[6] + b * latvec[7] + c * latvec[8];
@@ -85,7 +85,8 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
     }
     
     std::vector<double> delta_lat(3);
-    // #pragma omp parallel for 
+    const double bohr_to_a= ModuleBase::BOHR_TO_A;
+    #pragma omp parallel for
     for(int iat = 0; iat < ucell.nat; iat++)
     {
         const int it1 = ucell.iat2it[iat];
@@ -97,10 +98,9 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         for (int it2 = it1; it2 < ntype; it2++)
         {
             double symbol2_covalent_radius = symbol_covalent_radiuss[it2];
-            const double bohr_to_a= ModuleBase::BOHR_TO_A;
             double covalent_length = (symbol1_covalent_radius + symbol2_covalent_radius) / bohr_to_a;
-            const double min_error = covalent_length * min_factor_coef / ucell.lat0;
-            const double min_error_2 = min_error * min_error;
+            const double max_error = covalent_length * max_factor_coef / ucell.lat0;
+            const double max_error_2 = max_error * max_error;
             const double factor_error = covalent_length * factor;
             for (int ia2 = ia1; ia2 < ucell.atoms[it2].na; ia2++)
             {
@@ -120,7 +120,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                     const double part2 = delta_lat[1] + A[offset+1];
                     const double part3 = delta_lat[2] + A[offset+2];
                     const double bond_length = part1 * part1 + part2 * part2 + part3 * part3;
-                    const bool flag = bond_length < min_error_2 ? true : false;
+                    const bool flag = bond_length < max_error_2 ? true : false;
                     if (flag)
                     {
                         const double sqrt_bon = sqrt(bond_length) / lat0;
