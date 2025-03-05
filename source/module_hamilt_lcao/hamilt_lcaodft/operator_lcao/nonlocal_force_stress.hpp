@@ -30,6 +30,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     #pragma omp parallel
     {
     std::vector<double> stress_local(6, 0);
+    ModuleBase::matrix force_local(force.nr, force.nc);
     #pragma omp for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     { 
@@ -115,8 +116,8 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = ucell->itia2iat(T1, I1);
-            double* force_tmp1 = (cal_force) ? &force(iat1, 0) : nullptr;
-            double* force_tmp2 = (cal_force) ? &force(iat0, 0) : nullptr;
+            double* force_tmp1 = (cal_force) ? &force_local(iat1, 0) : nullptr;
+            double* force_tmp2 = (cal_force) ? &force_local(iat0, 0) : nullptr;
             ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             ModuleBase::Vector3<double> dis1 = adjs.adjacent_tau[ad1] - tau0;
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
@@ -171,6 +172,10 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     }
     #pragma omp critical
     {
+        if(cal_force)
+        {
+            force += force_local;
+        }
         if(cal_stress)
         {
             for(int i = 0; i < 6; i++)
@@ -178,6 +183,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
                 stress_tmp[i] += stress_local[i];
             }
         }
+
     }
     }
 
@@ -276,9 +282,7 @@ void NonlocalNew<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_
                         + dm_pointer[step_trace[1]] * nlm_tmp[i+3]
                         + dm_pointer[step_trace[2]] * nlm_tmp[i+6]
                         + dm_pointer[step_trace[3]] * nlm_tmp[i+9]).real();
-                #pragma omp atomic
                 force1[i] += tmp;
-                #pragma omp atomic
                 force2[i] -= tmp;
             }
             dm_pointer += npol;
@@ -401,9 +405,7 @@ void NonlocalNew<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
             // calculate the force, transfer nlm_tmp to pauli matrix
             for(int i = 0; i < 3; i++)
             {
-                #pragma omp atomic
                 force1[i] += dm_pointer[0] * nlm_tmp[i];
-                #pragma omp atomic
                 force2[i] -= dm_pointer[0] * nlm_tmp[i];
             }
             dm_pointer++;
