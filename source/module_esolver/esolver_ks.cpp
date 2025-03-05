@@ -9,6 +9,7 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_print.h"
 
 #include <ctime>
 #include <iostream>
@@ -540,7 +541,12 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        this->pelec->print_band(ik, PARAM.inp.printe, iter);
+        elecstate::print_band(this->pelec->ekb,
+                              this->pelec->wg,
+                              this->pelec->klist,
+                              ik, 
+                              PARAM.inp.printe, 
+                              iter);
     }
 
     // compute magnetization, only for LSDA(spin==2)
@@ -673,7 +679,8 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
     }
 
-    this->pelec->print_etot(ucell.magnet,conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
+
+    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
 
     // Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
@@ -708,7 +715,7 @@ void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bo
     // 2) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
     }
 }
 

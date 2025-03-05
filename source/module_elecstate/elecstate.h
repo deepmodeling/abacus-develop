@@ -166,23 +166,6 @@ class ElecState
     ModuleBase::matrix ekb; ///< band energy at each k point, each band.
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
-  public: // print something. See elecstate_print.cpp
-    void print_etot(const Magnetism& magnet,
-                    const bool converged,
-                    const int& iter,
-                    const double& scf_thr,
-                    const double& scf_thr_kin,
-                    const double& duration,
-                    const int printe,
-                    const double& pw_diag_thr = 0,
-                    const double& avg_iter = 0,
-                    bool print = true);
-    void print_format(const std::string& name, const double& value);
-
-    void print_band(const int& ik, const int& printe, const int& iter);
-
-    void print_eigenvalue(std::ofstream& ofs);
-
   public:
     // calculate ebands for all k points and all occupied bands
     void calEBand();
