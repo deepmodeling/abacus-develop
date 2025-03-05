@@ -285,6 +285,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
     const int npol = this->ucell->get_npol();
 
     // 1. calculate <phi|alpha> for each pair of atoms
+    #pragma omp parallel for schedule(dynamic)
     for (int iat0 = 0; iat0 < this->ucell->nat; iat0++)
     {
         auto tau0 = ucell->get_tau(iat0);
@@ -342,14 +343,13 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
         //--------------------------------------------------
 
         // if nlm_tot is not calculated already, calculate it on the fly now
-        int iat00 = iat0;
-        if (nlm_tot.size() != this->ucell->nat)
+        std::vector<std::unordered_map<int, std::vector<double>>> nlm_on_the_fly;
+        const bool is_on_the_fly = (nlm_tot.size() != this->ucell->nat);
+        if (is_on_the_fly)
         {
-            iat00 = 0;
-            nlm_tot[iat00].clear();
-            this->pre_calculate_nlm(iat0, nlm_tot[iat00]);
+            this->pre_calculate_nlm(iat0, nlm_on_the_fly);
         }
-        std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat = nlm_tot[iat00];
+        std::vector<std::unordered_map<int, std::vector<double>>>& nlm_iat = is_on_the_fly ? nlm_on_the_fly : nlm_tot[iat0];
 
         // 2. calculate <phi_I|beta>D<beta|phi_{J,R}> for each pair of <IJR> atoms
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
@@ -432,7 +432,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                        hr_current.data(),
                        &col_size);
                 // add data of HR to target BaseMatrix
+            #pragma omp critical
+            {
                 this->cal_HR_IJR(hr_current.data(), row_size, col_size, tmp->get_pointer());
+            }
             }
         }
     }

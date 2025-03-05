@@ -17,6 +17,7 @@ if(ENABLE_LCAO)
       esolver_ks_lcao.cpp
       esolver_ks_lcao_tddft.cpp
       lcao_before_scf.cpp
+      lcao_after_scf.cpp
       esolver_gets.cpp
       lcao_others.cpp
   )
