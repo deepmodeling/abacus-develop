@@ -551,16 +551,24 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
     ModuleBase::timer::tick("ESolver_KS_PW", "after_scf");
 
-    // 1) calculate the kinetic energy density tau, sunliang 2024-09-18
+    //------------------------------------------------------------------
+    // 1) calculate the kinetic energy density tau in pw basis
+    // sunliang 2024-09-18
+    //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->pelec->cal_tau(*(this->psi));
     }
 
+    //------------------------------------------------------------------
     // 2) call after_scf() of ESolver_KS
+    //------------------------------------------------------------------
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
+
+    //------------------------------------------------------------------
     // 3) output wavefunctions in pw basis
+    //------------------------------------------------------------------
     if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
     {
         std::stringstream ssw;
@@ -568,8 +576,10 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
+    //------------------------------------------------------------------
     // 4) transfer data from GPU to CPU in pw basis
     // a question: the wavefunctions have been output, then the data transfer occurs? mohan 20250302
+    //------------------------------------------------------------------
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
@@ -577,7 +587,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                             this->psi[0].size());
     }
 
+    //------------------------------------------------------------------
     // 5) calculate band-decomposed (partial) charge density in pw basis
+    //------------------------------------------------------------------
     const std::vector<int> bands_to_print = PARAM.inp.bands_to_print;
     if (bands_to_print.size() > 0)
     {
@@ -604,7 +616,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               PARAM.inp.if_separate_k);
     }
 
-    //! 6) calculate Wannier functions in PW basis
+    //------------------------------------------------------------------
+    //! 6) calculate Wannier functions in pw basis
+    //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && PARAM.inp.towannier90)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Wannier functions calculation");
@@ -620,7 +634,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
-    //! 7) calculate Berry phase polarization
+    //------------------------------------------------------------------
+    //! 7) calculate Berry phase polarization in pw basis
+    //------------------------------------------------------------------
     if (PARAM.inp.calculation == "nscf" && berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != 1)
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "Berry phase polarization");
@@ -629,8 +645,10 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Berry phase polarization");
     }
 
-    // 8) write spin constrian results
+    //------------------------------------------------------------------
+    // 8) write spin constrian results in pw basis
     // spin constrain calculations, write atomic magnetization and magnetic force.
+    //------------------------------------------------------------------
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<std::complex<double>>& sc
@@ -639,7 +657,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         sc.print_Mag_Force(GlobalV::ofs_running);
     }
 
+    //------------------------------------------------------------------
     // 9) write onsite occupations for charge and magnetizations
+    //------------------------------------------------------------------
     if (PARAM.inp.onsite_radius > 0)
     { // float type has not been implemented
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();

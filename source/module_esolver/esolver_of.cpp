@@ -489,30 +489,47 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     ModuleBase::TITLE("ESolver_OF", "after_opt");
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 
-    // 1) calculate the kinetic energy density
+    //------------------------------------------------------------------
+    // 1) calculate kinetic energy density and ELF
+    //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
     }
 
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_FP
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+
+
+    // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
         this->pelec->charge->rho_save[0][ir] = this->pelec->charge->rho[0][ir];
     }
 
 #ifdef __MLKEDF
+    //------------------------------------------------------------------
     // Check the positivity of Pauli energy
+    //------------------------------------------------------------------
     if (this->of_kinetic_ == "ml")
     {
         this->tf_->get_energy(this->pelec->charge->rho);
-        std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+
+        std::cout << "ML Term = " << this->ml_->ml_energy 
+                  << " Ry, TF Term = " << this->tf_->tf_energy 
+                  << " Ry." << std::endl;
+
         if (this->ml_->ml_energy >= this->tf_->tf_energy)
         {
             std::cout << "WARNING: ML >= TF" << std::endl;
         }
     }
 
+    //------------------------------------------------------------------
     // Generate data if needed
+    //------------------------------------------------------------------
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
@@ -533,8 +550,6 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         this->ml_->generateTrainData(pelec->charge->rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
     }
 #endif
-    // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 }

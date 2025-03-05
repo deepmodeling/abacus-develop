@@ -102,12 +102,13 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                     TR* data_pointer);
 
     const Grid_Driver* gridD = nullptr;
-    int current_type = 0;
+
     /**
      * @brief calculate the atomic Force of <I,J,R> atom pair
      */
     void cal_force_IJR(const int& iat1,
                        const int& iat2,
+                       const int& T0,
                        const Parallel_Orbitals* paraV,
                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
@@ -119,6 +120,7 @@ class NonlocalNew<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      */
     void cal_stress_IJR(const int& iat1,
                         const int& iat2,
+                        const int& T0,
                         const Parallel_Orbitals* paraV,
                         const std::unordered_map<int, std::vector<double>>& nlm1_all,
                         const std::unordered_map<int, std::vector<double>>& nlm2_all,
