@@ -331,7 +331,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        &ucell.symm);
 
     // delete RA after cal_force
-
     this->RA.delete_grid();
 
     this->have_force = true;
@@ -349,12 +348,16 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 
+    // if the users do not want to calculate forces but want stress,
+    // we call cal_force
     if (!this->have_force)
     {
         ModuleBase::matrix fcs;
         this->cal_force(ucell, fcs);
     }
-    stress = this->scs; // copy the stress
+
+    // the 'scs' stress has already been calculated in 'cal_force'
+    stress = this->scs;
     this->have_force = false;
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
