@@ -3,29 +3,27 @@
 #include "module_base/element_covalent_radius.h"
 #include "module_base/timer.h"
 
-void process_i(int i, double dx_lat, double dy_lat, double dz_lat)
-{
-}
-
 void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
 {
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
     // if there has bond length is shorter than covalent_bond_length * factor,
     // we think this structure is unreasonable.
+    assert(ucell.ntype > 0);
+    bool all_pass = true;
+    bool no_warning = true;
+    std::stringstream errorlog;
+    errorlog.setf(std::ios_base::fixed, std::ios_base::floatfield);
+
     if (GlobalV::MY_RANK == 0)
     {
         ModuleBase::timer::tick("Check_Atomic_Stru", "Check_Atomic_Stru");
-        assert(ucell.ntype > 0);
+        
         const int ntype = ucell.ntype;
         const double lat0 = ucell.lat0;
-        bool all_pass = true;
-        bool no_warning = true;
+
         const double warning_coef = 0.6;
         const double max_factor_coef = std::max(warning_coef, factor);
-
-        std::stringstream errorlog;
-        errorlog.setf(std::ios_base::fixed, std::ios_base::floatfield);
 
         std::vector<double> symbol_covalent_radiuss(ntype);
         for (int it = 0; it < ntype; it++)
@@ -86,10 +84,10 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         }
 
         const double bohr_to_a = ModuleBase::BOHR_TO_A;
-#pragma omp parallel
+// #pragma omp parallel
         {
             std::vector<double> delta_lat(3);
-#pragma omp for schedule(dynamic)
+// #pragma omp for schedule(dynamic)
             for (int iat = 0; iat < ucell.nat; iat++)
             {
                 const int it1 = ucell.iat2it[iat];
@@ -126,11 +124,11 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                             const bool flag = bond_length < max_error_2 ? true : false;
                             if (flag)
                             {
-                                const double sqrt_bon = sqrt(bond_length) / lat0;
-                                #pragma omp critical
+                                const double sqrt_bon = sqrt(bond_length) * lat0;
+                                // #pragma omp critical
                                 {
                                     no_warning = false;
-                                    all_pass = all_pass && (bond_length < factor_error ? false : true);
+                                    all_pass = all_pass && (sqrt_bon < factor_error ? false : true);
                                     errorlog << std::setw(3) << ia1 + 1 << "-th " << &label[it1] << ", " << std::setw(3)
                                              << ia2 + 1 << "-th " << &label[it2] << &cell[i] << std::setprecision(3)
                                              << sqrt_bon << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
@@ -144,32 +142,32 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         delete[] latvec;
         delete[] A;
         ModuleBase::timer::tick("Check_Atomic_Stru", "Check_Atomic_Stru");
-        if (!all_pass || !no_warning)
-        {
-            std::stringstream mess;
-            mess << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-            mess << "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
-            mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-            mess << "!!! WARNING: Some atoms are too close!!!" << std::endl;
-            mess << "!!! Please check the nearest-neighbor list in log file." << std::endl;
-            mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
-            mess << "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
-            mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+    }
+    if (!all_pass || !no_warning)
+    {
+        std::stringstream mess;
+        mess << "\n%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "!!! WARNING: Some atoms are too close!!!" << std::endl;
+        mess << "!!! Please check the nearest-neighbor list in log file." << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
+        mess << "%%%%%% WARNING  WARNING  WARNING  WARNING  WARNING  %%%%%%" << std::endl;
+        mess << "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%" << std::endl;
 
-            GlobalV::ofs_running << mess.str() << mess.str() << mess.str() << errorlog.str();
-            std::cout << mess.str() << mess.str() << mess.str() << std::endl;
-            if (!all_pass)
-            {
-                mess.clear();
-                mess.str("");
-                mess << "If this structure is what you want, you can set "
-                        "'min_dist_coef'"
-                     << std::endl;
-                mess << "as a smaller value (the current value is " << factor << ") in INPUT file." << std::endl;
-                GlobalV::ofs_running << mess.str();
-                std::cout << mess.str();
-                ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
-            }
+        GlobalV::ofs_running << mess.str() << mess.str() << mess.str() << errorlog.str();
+        std::cout << mess.str() << mess.str() << mess.str() << std::endl;
+        if (!all_pass)
+        {
+            mess.clear();
+            mess.str("");
+            mess << "If this structure is what you want, you can set "
+                    "'min_dist_coef'"
+                    << std::endl;
+            mess << "as a smaller value (the current value is " << factor << ") in INPUT file." << std::endl;
+            GlobalV::ofs_running << mess.str();
+            std::cout << mess.str();
+            ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
         }
     }
 }
