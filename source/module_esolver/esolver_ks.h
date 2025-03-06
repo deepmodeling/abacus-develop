@@ -72,7 +72,7 @@ class ESolver_KS : public ESolver_FP
     //! PW for wave functions, only used in KSDFT, not in OFDFT
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
 
-    //! Charge mixing method, only used in KDSFT, not in OFDFT
+    //! Charge mixing method
     Charge_Mixing* p_chgmix = nullptr;
 
     //! nonlocal pseudopotentials
