@@ -5,6 +5,7 @@ if(ENABLE_DEEPKS)
       deepks_descriptor.cpp
       deepks_force.cpp
       deepks_fpre.cpp
+      deepks_iterate.cpp
       deepks_spre.cpp
       deepks_orbital.cpp
       deepks_orbpre.cpp

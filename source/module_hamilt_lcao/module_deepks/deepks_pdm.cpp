@@ -27,6 +27,7 @@
 void DeePKS_domain::read_pdm(bool read_pdm_file,
                              bool is_equiv,
                              bool& init_pdm,
+                             const int nat,
                              const int inlmax,
                              const int lmaxd,
                              const int* inl_l,
@@ -68,9 +69,9 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                 nproj += (2 * il + 1) * alpha.getNchi(il);
             }
             pdm_size = nproj * nproj;
-            for (int inl = 0; inl < inlmax; inl++)
+            for (int iat = 0; iat < nat; iat++)
             {
-                auto accessor = pdm[inl].accessor<double, 1>();
+                auto accessor = pdm[iat].accessor<double, 1>();
                 for (int ind = 0; ind < pdm_size; ind++)
                 {
                     double c;
@@ -128,9 +129,9 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             nproj += (2 * il + 1) * orb.Alpha[0].getNchi(il);
         }
         pdm_size = nproj * nproj;
-        for (int inl = 0; inl < inlmax; inl++)
+        for (int iat = 0; iat < ucell.nat; iat++)
         {
-            pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
+            pdm[iat] = torch::zeros({pdm_size}, torch::kFloat64);
         }
     }
 
@@ -270,19 +271,13 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         s_2t[i * col_size + icol] = col_ptr->get_value(col_indexes[icol], trace_alpha_col[i]);
                     }
                 }
-                // prepare DM_gamma from DMR
+                // prepare DM from DMR
                 std::vector<double> dm_array(row_size * col_size, 0.0);
                 const double* dm_current = nullptr;
                 for (int is = 0; is < dm->get_DMR_vector().size(); is++)
                 {
-                    int dRx=0, dRy=0, dRz=0;
-                    if constexpr (std::is_same<TK, double>::value)
-                    {
-                        dRx = 0;
-                        dRy = 0;
-                        dRz = 0;
-                    }
-                    else
+                    int dRx = 0, dRy = 0, dRz = 0;
+                    if constexpr (std::is_same<TK, std::complex<double>>::value)
                     {
                         dRx = dR2.x - dR1.x;
                         dRy = dR2.y - dR1.y;
@@ -308,7 +303,10 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 }
 
                 dm_current = dm_array.data();
-                // dgemm for s_2t and dm_current to get g_1dmt
+                // use s_2t and dm_current to get g_1dmt
+                // dgemm_: C = alpha * A * B + beta * C
+                // C = g_1dmt, A = dm_current, B = s_2t
+                // all the input should be data pointer
                 constexpr char transa = 'T', transb = 'N';
                 const double gemm_alpha = 1.0, gemm_beta = 1.0;
                 dgemm_(&transa,
@@ -365,6 +363,8 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                 {
                     for (int jproj = 0; jproj < nproj; jproj++)
                     {
+                        // ddot_: dot product of two vectors
+                        // inc means the increment of the index
                         accessor[iproj * nproj + jproj] += ddot_(&row_size,
                                                                     g_1dmt.data() + index * row_size,
                                                                     &inc,

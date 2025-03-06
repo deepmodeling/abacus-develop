@@ -40,7 +40,8 @@ void check_descriptor(const int inlmax,
                       const int* inl_l,
                       const UnitCell& ucell,
                       const std::string& out_dir,
-                      const std::vector<torch::Tensor>& descriptor);
+                      const std::vector<torch::Tensor>& descriptor,
+                      const int rank);
 
 void cal_descriptor_equiv(const int nat,
                           const int des_per_atom,

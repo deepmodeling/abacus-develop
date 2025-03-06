@@ -77,11 +77,12 @@ void DeePKS_domain::check_descriptor(const int inlmax,
                                      const int* inl_l,
                                      const UnitCell& ucell,
                                      const std::string& out_dir,
-                                     const std::vector<torch::Tensor>& descriptor)
+                                     const std::vector<torch::Tensor>& descriptor,
+                                     const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "check_descriptor");
 
-    if (GlobalV::MY_RANK != 0)
+    if (rank != 0)
     {
         return;
     }

@@ -220,7 +220,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
     if (this->psi != nullptr && (istep % PARAM.inp.out_interval == 0))
     {
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks> ld_shared_ptr(&ld, [](LCAO_Deepks*) {});
+        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&ld, [](LCAO_Deepks<TK>*) {});
         LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
 
         deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
@@ -235,7 +235,8 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
                               &(this->pv),
                               *(this->psi),
                               dynamic_cast<const elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM(),
-                              p_ham_deepks);
+                              p_ham_deepks,
+                              GlobalV::MY_RANK);
     }
 #endif
 

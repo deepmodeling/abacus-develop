@@ -190,7 +190,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
 #ifdef __DEEPKS
                                 ModuleBase::matrix& fvnl_dalpha,
                                 ModuleBase::matrix& svnl_dalpha,
-                                LCAO_Deepks& ld,
+                                LCAO_Deepks<double>& ld,
 #endif
                                 TGint<double>::type& gint,
                                 const TwoCenterBundle& two_center_bundle,
@@ -252,21 +252,7 @@ void Force_LCAO<double>::ftable(const bool isforce,
     {
         const std::vector<std::vector<double>>& dm_gamma = dm->get_DMK_vector();
 
-        // These calculations have been done in LCAO_Deepks_Interface in after_scf
-        // std::vector<torch::Tensor> descriptor;
-        // DeePKS_domain::cal_descriptor(ucell.nat, ld.inlmax, ld.inl_l, ld.pdm, descriptor, ld.des_per_atom);
-        // DeePKS_domain::cal_edelta_gedm(ucell.nat,
-        //                         ld.lmaxd,
-        //                         ld.nmaxd,
-        //                         ld.inlmax,
-        //                         ld.des_per_atom,
-        //                         ld.inl_l,
-        //                         descriptor,
-        //                         ld.pdm,
-        //                         ld.model_deepks,
-        //                         ld.gedm,
-        //                         ld.E_delta);
-
+        // No need to update E_delta here since it have been done in LCAO_Deepks_Interface in after_scf
         const int nks = 1;
         DeePKS_domain::cal_f_delta<double>(dm_gamma,
                                            ucell,
