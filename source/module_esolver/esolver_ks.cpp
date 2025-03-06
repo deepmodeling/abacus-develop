@@ -10,6 +10,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_print.h"
+#include "module_hsolver/hsolver.h"
 
 #include <ctime>
 #include <iostream>

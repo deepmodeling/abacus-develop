@@ -34,6 +34,9 @@
 #include "module_io/restart_exx_csr.h"
 #endif
 
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
+
 namespace ModuleESolver
 {
 

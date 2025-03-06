@@ -2,7 +2,12 @@
 #define ESOLVER_KS_LCAO_H
 
 #include "esolver_ks.h"
+
+// for adjacent atoms
 #include "module_hamilt_lcao/hamilt_lcaodft/record_adj.h"
+
+// for NAO basis
+#include "module_basis/module_nao/two_center_bundle.h"
 
 // for grid integration
 #include "module_hamilt_lcao/module_gint/gint_gamma.h"
@@ -20,9 +25,6 @@
 #include "module_ri/Exx_LRI_interface.h"
 #include "module_ri/Mix_DMk_2D.h"
 #endif
-
-#include "module_basis/module_nao/two_center_bundle.h"
-#include "module_io/output_mat_sparse.h"
 
 // for RDMFT
 #include "module_rdmft/rdmft.h"
