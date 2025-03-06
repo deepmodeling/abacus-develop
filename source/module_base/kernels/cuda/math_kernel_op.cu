@@ -1066,7 +1066,9 @@ template struct line_minimize_with_block_op<std::complex<double>, base_device::D
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct matrixCopy<double, base_device::DEVICE_GPU>;
 template struct matrixCopy<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
@@ -1074,7 +1076,5 @@ template struct dot_real_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
-template struct matrixCopy<double, base_device::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 #endif
 }  // namespace ModuleBase

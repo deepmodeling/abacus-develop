@@ -400,6 +400,7 @@ template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_C
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrixCopy<double, base_device::DEVICE_CPU>;
 template struct matrixCopy<std::complex<double>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
@@ -409,7 +410,6 @@ template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
-template struct matrixCopy<double, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
 #endif
 #ifdef __DSP
