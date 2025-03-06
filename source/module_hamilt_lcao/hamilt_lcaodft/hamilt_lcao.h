@@ -47,7 +47,7 @@ class HamiltLCAO : public Hamilt<TK>
                elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __DEEPKS
                ,
-               LCAO_Deepks* ld_in
+               LCAO_Deepks<TK>* ld_in
 #endif
 #ifdef __EXX
                ,

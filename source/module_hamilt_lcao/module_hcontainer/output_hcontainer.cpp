@@ -25,10 +25,35 @@ void Output_HContainer<T>::write()
 {
     int size_for_loop_R = this->_hcontainer->size_R_loop();
     int rx, ry, rz;
+    int R_range[2] = {0, 0};
+    // find the range of R
     for (int iR = 0; iR < size_for_loop_R; iR++)
     {
         this->_hcontainer->loop_R(iR, rx, ry, rz);
-        this->write_single_R(rx, ry, rz);
+        int max_R = std::max({rx, ry, rz});
+        int min_R = std::min({rx, ry, rz});
+        if (max_R > R_range[1])
+        {
+            R_range[1] = max_R;
+        }
+        if (min_R < R_range[0])
+        {
+            R_range[0] = min_R;
+        }
+    }
+    // write in order of R
+    for (int ix = R_range[0]; ix <= R_range[1]; ix++)
+    {
+        for (int iy = R_range[0]; iy <= R_range[1]; iy++)
+        {
+            for (int iz = R_range[0]; iz <= R_range[1]; iz++)
+            {
+                if (this->_hcontainer->find_R(ix, iy, iz) != -1)
+                {
+                    this->write_single_R(ix, iy, iz);
+                }
+            }
+        }
     }
 }
 

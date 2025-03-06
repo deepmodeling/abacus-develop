@@ -66,7 +66,7 @@ class Force_LCAO
 #ifdef __DEEPKS
                 ModuleBase::matrix& fvnl_dalpha,
                 ModuleBase::matrix& svnl_dalpha,
-                LCAO_Deepks& ld,
+                LCAO_Deepks<T>& ld,
 #endif
                 typename TGint<T>::type& gint,
                 const TwoCenterBundle& two_center_bundle,

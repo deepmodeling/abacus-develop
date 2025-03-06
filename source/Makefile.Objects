@@ -200,6 +200,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\
+        deepks_iterate.o\
         deepks_spre.o\
         deepks_orbital.o\
         deepks_orbpre.o\

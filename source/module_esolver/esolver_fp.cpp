@@ -134,18 +134,18 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
-    // 0) output convergence information
+    // 1) output convergence information
     ModuleIO::output_convergence_after_scf(conv_esolver, this->pelec->f_en.etot);
 
-    // 1) write fermi energy
+    // 2) write fermi energy
     ModuleIO::output_efermi(conv_esolver, this->pelec->eferm.ef);
 
-    // 2) update delta rho for charge extrapolation
+    // 3) update delta rho for charge extrapolation
     CE.update_delta_rho(ucell, &(this->chr), &(this->sf));
 
     if (istep % PARAM.inp.out_interval == 0)
     {
-        // 3) write charge density
+        // 4) write charge density
         if (PARAM.inp.out_chg[0] > 0)
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -187,7 +187,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
             }
         }
 
-        // 4) write potential
+        // 5) write potential
         if (PARAM.inp.out_pot == 1 || PARAM.inp.out_pot == 3)
         {
             for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -223,7 +223,7 @@ void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
                 this->solvent);
         }
 
-        // 5) write ELF
+        // 6) write ELF
         if (PARAM.inp.out_elf[0] > 0)
         {
             this->pelec->charge->cal_elf = true;

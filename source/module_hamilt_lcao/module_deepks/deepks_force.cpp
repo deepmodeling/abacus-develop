@@ -3,6 +3,7 @@
 #ifdef __DEEPKS
 
 #include "deepks_force.h"
+#include "deepks_iterate.h"
 #include "module_base/constants.h"
 #include "module_base/libm/libm.h"
 #include "module_base/timer.h"
@@ -28,8 +29,8 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
     ModuleBase::timer::tick("DeePKS_domain", "cal_f_delta");
     f_delta.zero_out();
 
-    const double Rcut_Alpha = orb.Alpha[0].getRcut();
     const int lmaxd = orb.get_lmax_d();
+    const double Rcut_Alpha = orb.Alpha[0].getRcut();
 
 #pragma omp parallel
 {
@@ -76,16 +77,16 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                     continue;
                 }
 
-                double r0[3]{};
                 double r1[3]{};
+                double r2[3]{};
                 if (isstress)
                 {
                     r1[0] = (tau1.x - tau0.x);
                     r1[1] = (tau1.y - tau0.y);
                     r1[2] = (tau1.z - tau0.z);
-                    r0[0] = (tau2.x - tau0.x);
-                    r0[1] = (tau2.y - tau0.y);
-                    r0[2] = (tau2.z - tau0.z);
+                    r2[0] = (tau2.x - tau0.x);
+                    r2[1] = (tau2.y - tau0.y);
+                    r2[2] = (tau2.z - tau0.z);
                 }
 
                 auto row_indexes = pv.get_indexes_row(ibt1);
@@ -99,13 +100,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                 int dRx = 0;
                 int dRy = 0;
                 int dRz = 0;
-                if constexpr (std::is_same<TK, double>::value) // for gamma-only
-                {
-                    dRx = 0;
-                    dRy = 0;
-                    dRz = 0;
-                }
-                else // for multi-k
+                if constexpr (std::is_same<TK, std::complex<double>>::value) // for multi-k
                 {
                     dRx = dR2.x - dR1.x;
                     dRy = dR2.y - dR1.y;
@@ -288,7 +283,7 @@ void DeePKS_domain::cal_f_delta(const std::vector<std::vector<TK>>& dm,
                                 for (int jpol = ipol; jpol < 3; jpol++)
                                 {
                                     svnl_dalpha_local(ipol, jpol)
-                                        += *dm_current * (nlm[ipol] * r0[jpol] + nlm_t[ipol] * r1[jpol]);
+                                        += *dm_current * (nlm[ipol] * r2[jpol] + nlm_t[ipol] * r1[jpol]);
                                 }
                             }
 

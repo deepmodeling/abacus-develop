@@ -41,19 +41,19 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                  elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __DEEPKS
                                  ,
-                                 LCAO_Deepks* ld_in
+                                 LCAO_Deepks<TK>* ld_in
 #endif
-                                 );
+    );
     ~DeePKS();
 
     /**
      * @brief contribute the DeePKS correction to real space Hamiltonian
-     * this function is used for update hR and H_V_delta
+     * this function is used for update hR and V_delta_R
      */
     virtual void contributeHR() override;
 #ifdef __DEEPKS
     /**
-     * @brief contribute the DeePKS correction for each k-point to ld.H_V_delta or ld.H_V_delta_k
+     * @brief contribute the DeePKS correction for each k-point to V_delta
      * this function is not used for update hK, but for DeePKS module
      * @param ik: the index of k-point
      */
@@ -68,7 +68,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     const Grid_Driver* gd = nullptr;
 
-    HContainer<TR>* H_V_delta = nullptr;
+    HContainer<TR>* V_delta_R = nullptr;
 
     // the following variable is introduced temporarily during LCAO refactoring
     const TwoCenterIntegrator* intor_orb_alpha_ = nullptr;
@@ -76,7 +76,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
 #ifdef __DEEPKS
 
-    LCAO_Deepks* ld = nullptr;
+    LCAO_Deepks<TK>* ld = nullptr;
 
     /**
      * @brief initialize HR, search the nearest neighbor atoms
@@ -99,7 +99,7 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     void pre_calculate_nlm(const int iat0, std::vector<std::unordered_map<int, std::vector<double>>>& nlm_in);
     std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
     /**
-     * @brief initialize H_V_delta, search the nearest neighbor atoms
+     * @brief initialize V_delta_R, search the nearest neighbor atoms
      * used for calculate the DeePKS real space Hamiltonian correction with specific <I,J,R> atom-pairs
      */
     std::vector<AdjacentAtomInfo> adjs_all;

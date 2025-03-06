@@ -8,7 +8,7 @@
 //   - init : allocates some arrays
 //   - init_index : records the index (inl)
 // 2. subroutines that are related to V_delta:
-//   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
+//   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
 #ifdef __DEEPKS
 
@@ -16,7 +16,8 @@
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 
 // Constructor of the class
-LCAO_Deepks::LCAO_Deepks()
+template <typename T>
+LCAO_Deepks<T>::LCAO_Deepks()
 {
     inl_index = new ModuleBase::IntArray[1];
     inl_l = nullptr;
@@ -25,7 +26,8 @@ LCAO_Deepks::LCAO_Deepks()
 }
 
 // Desctructor of the class
-LCAO_Deepks::~LCAO_Deepks()
+template <typename T>
+LCAO_Deepks<T>::~LCAO_Deepks()
 {
     delete[] inl_index;
     delete[] inl_l;
@@ -45,17 +47,19 @@ LCAO_Deepks::~LCAO_Deepks()
     }
 }
 
-void LCAO_Deepks::init(const LCAO_Orbitals& orb,
-                       const int nat,
-                       const int ntype,
-                       const int nks,
-                       const Parallel_Orbitals& pv_in,
-                       std::vector<int> na)
+template <typename T>
+void LCAO_Deepks<T>::init(const LCAO_Orbitals& orb,
+                          const int nat,
+                          const int ntype,
+                          const int nks,
+                          const Parallel_Orbitals& pv_in,
+                          std::vector<int> na,
+                          std::ofstream& ofs)
 {
     ModuleBase::TITLE("LCAO_Deepks", "init");
     ModuleBase::timer::tick("LCAO_Deepks", "init");
 
-    GlobalV::ofs_running << " Initialize the descriptor index for DeePKS (lcao line)" << std::endl;
+    ofs << " Initialize the descriptor index for DeePKS (lcao line)" << std::endl;
 
     const int lm = orb.get_lmax_d();
     const int nm = orb.get_nchimax_d();
@@ -75,8 +79,8 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
     this->lmaxd = lm;
     this->nmaxd = nm;
 
-    GlobalV::ofs_running << " lmax of descriptor = " << this->lmaxd << std::endl;
-    GlobalV::ofs_running << " nmax of descriptor = " << nmaxd << std::endl;
+    ofs << " lmax of descriptor = " << this->lmaxd << std::endl;
+    ofs << " nmax of descriptor = " << nmaxd << std::endl;
 
     int pdm_size = 0;
     this->inlmax = tot_inl;
@@ -92,12 +96,12 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
         }
         this->n_descriptor = nat * this->des_per_atom;
 
-        this->init_index(ntype, nat, na, tot_inl, orb);
+        this->init_index(ntype, nat, na, tot_inl, orb, ofs);
     }
 
     if (!PARAM.inp.deepks_equiv)
     {
-        GlobalV::ofs_running << " total basis (all atoms) for descriptor = " << std::endl;
+        ofs << " total basis (all atoms) for descriptor = " << std::endl;
 
         // init pdm
         for (int inl = 0; inl < this->inlmax; inl++)
@@ -115,7 +119,7 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
         }
         pdm_size = pdm_size * pdm_size;
         this->des_per_atom = pdm_size;
-        GlobalV::ofs_running << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
+        ofs << " Equivariant version, size of pdm matrices : " << pdm_size << std::endl;
         for (int inl = 0; inl < this->inlmax; inl++)
         {
             this->pdm[inl] = torch::zeros({pdm_size}, torch::kFloat64);
@@ -128,11 +132,13 @@ void LCAO_Deepks::init(const LCAO_Orbitals& orb,
     return;
 }
 
-void LCAO_Deepks::init_index(const int ntype,
-                             const int nat,
-                             std::vector<int> na,
-                             const int Total_nchi,
-                             const LCAO_Orbitals& orb)
+template <typename T>
+void LCAO_Deepks<T>::init_index(const int ntype,
+                                const int nat,
+                                std::vector<int> na,
+                                const int Total_nchi,
+                                const LCAO_Orbitals& orb,
+                                std::ofstream& ofs)
 {
     delete[] this->inl_index;
     this->inl_index = new ModuleBase::IntArray[ntype];
@@ -146,7 +152,7 @@ void LCAO_Deepks::init_index(const int ntype,
     {
         this->inl_index[it].create(na[it], this->lmaxd + 1, this->nmaxd);
 
-        GlobalV::ofs_running << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
+        ofs << " Type " << it + 1 << " number_of_atoms " << na[it] << std::endl;
 
         for (int ia = 0; ia < na[it]; ia++)
         {
@@ -163,31 +169,23 @@ void LCAO_Deepks::init_index(const int ntype,
         } // end ia
     }     // end it
     assert(Total_nchi == inl);
-    GlobalV::ofs_running << " descriptors_per_atom " << this->des_per_atom << std::endl;
-    GlobalV::ofs_running << " total_descriptors " << this->n_descriptor << std::endl;
+    ofs << " descriptors_per_atom " << this->des_per_atom << std::endl;
+    ofs << " total_descriptors " << this->n_descriptor << std::endl;
     return;
 }
 
-void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
+template <typename T>
+void LCAO_Deepks<T>::allocate_V_delta(const int nat, const int nks)
 {
     ModuleBase::TITLE("LCAO_Deepks", "allocate_V_delta");
     ModuleBase::timer::tick("LCAO_Deepks", "allocate_V_delta");
 
-    // initialize the H matrix H_V_delta
-    if (PARAM.globalv.gamma_only_local)
+    // initialize the H matrix V_delta
+    V_delta.resize(nks);
+    for (int ik = 0; ik < nks; ik++)
     {
-        H_V_delta.resize(1); // the first dimension is for the consistence with H_V_delta_k
-        this->H_V_delta[0].resize(pv->nloc);
-        ModuleBase::GlobalFunc::ZEROS(this->H_V_delta[0].data(), pv->nloc);
-    }
-    else
-    {
-        H_V_delta_k.resize(nks);
-        for (int ik = 0; ik < nks; ik++)
-        {
-            this->H_V_delta_k[ik].resize(pv->nloc);
-            ModuleBase::GlobalFunc::ZEROS(this->H_V_delta_k[ik].data(), pv->nloc);
-        }
+        this->V_delta[ik].resize(pv->nloc);
+        ModuleBase::GlobalFunc::ZEROS(this->V_delta[ik].data(), pv->nloc);
     }
 
     // init gedm**
@@ -212,24 +210,13 @@ void LCAO_Deepks::allocate_V_delta(const int nat, const int nks)
     return;
 }
 
-template <typename TK>
-void LCAO_Deepks::dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks)
+template <typename T>
+void LCAO_Deepks<T>::dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks)
 {
-    std::vector<std::vector<TK>> h_delta;
-    if constexpr (std::is_same<TK, double>::value)
-    {
-        h_delta = this->H_V_delta;
-    }
-    else
-    {
-        h_delta = this->H_V_delta_k;
-    }
-    DeePKS_domain::cal_e_delta_band(dm, h_delta, nks, this->pv, this->e_delta_band);
+    DeePKS_domain::cal_e_delta_band(dm, this->V_delta, nks, this->pv, this->e_delta_band);
 }
 
-template void LCAO_Deepks::dpks_cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm, const int nks);
-template void LCAO_Deepks::dpks_cal_e_delta_band<std::complex<double>>(
-    const std::vector<std::vector<std::complex<double>>>& dm,
-    const int nks);
+template class LCAO_Deepks<double>;
+template class LCAO_Deepks<std::complex<double>>;
 
 #endif

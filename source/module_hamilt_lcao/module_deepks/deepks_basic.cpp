@@ -76,12 +76,6 @@ void DeePKS_domain::load_model(const std::string& model_file, torch::jit::script
 
 inline void generate_py_files(const int lmaxd, const int nmaxd, const std::string& out_dir)
 {
-
-    if (GlobalV::MY_RANK != 0)
-    {
-        return;
-    }
-
     std::ofstream ofs("cal_edelta_gedm.py");
     ofs << "import torch" << std::endl;
     ofs << "import numpy as np" << std::endl << std::endl;
@@ -136,7 +130,8 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                           const int* inl_l,
                                           const std::vector<torch::Tensor>& descriptor,
                                           double** gedm,
-                                          double& E_delta)
+                                          double& E_delta,
+                                          const int rank)
 {
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm_equiv");
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm_equiv");
@@ -148,12 +143,11 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                PARAM.inp.deepks_equiv,
                                descriptor,
                                PARAM.globalv.global_out_dir,
-                               GlobalV::MY_RANK); // libnpy needed
+                               rank); // libnpy needed
 
-    generate_py_files(lmaxd, nmaxd, PARAM.globalv.global_out_dir);
-
-    if (GlobalV::MY_RANK == 0)
+    if (rank == 0)
     {
+        generate_py_files(lmaxd, nmaxd, PARAM.globalv.global_out_dir);
         std::string cmd = "python cal_edelta_gedm.py " + PARAM.inp.deepks_model;
         int stat = std::system(cmd.c_str());
         assert(stat == 0);
@@ -161,7 +155,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 
     MPI_Barrier(MPI_COMM_WORLD);
 
-    LCAO_deepks_io::load_npy_gedm(nat, des_per_atom, gedm, E_delta, GlobalV::MY_RANK);
+    LCAO_deepks_io::load_npy_gedm(nat, des_per_atom, gedm, E_delta, rank);
 
     std::string cmd = "rm -f cal_edelta_gedm.py basis.yaml ec.npy gedm.npy";
     std::system(cmd.c_str());
@@ -173,8 +167,6 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 // obtain from the machine learning model dE_delta/dDescriptor
 // E_delta is also calculated here
 void DeePKS_domain::cal_edelta_gedm(const int nat,
-                                    const int lmaxd,
-                                    const int nmaxd,
                                     const int inlmax,
                                     const int des_per_atom,
                                     const int* inl_l,
@@ -184,11 +176,6 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     double** gedm,
                                     double& E_delta)
 {
-    if (PARAM.inp.deepks_equiv)
-    {
-        DeePKS_domain::cal_edelta_gedm_equiv(nat, lmaxd, nmaxd, inlmax, des_per_atom, inl_l, descriptor, gedm, E_delta);
-        return;
-    }
     ModuleBase::TITLE("DeePKS_domain", "cal_edelta_gedm");
     ModuleBase::timer::tick("DeePKS_domain", "cal_edelta_gedm");
 

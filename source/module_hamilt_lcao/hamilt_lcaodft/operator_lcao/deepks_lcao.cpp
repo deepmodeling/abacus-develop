@@ -25,7 +25,7 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
                                      elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __DEEPKS
                                      ,
-                                     LCAO_Deepks* ld_in
+                                     LCAO_Deepks<TK>* ld_in
 #endif
                                      )
     : OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in), DM(DM_in), ucell(ucell_in), intor_orb_alpha_(intor_orb_alpha),
@@ -42,9 +42,9 @@ DeePKS<OperatorLCAO<TK, TR>>::DeePKS(HS_Matrix_K<TK>* hsk_in,
 template <typename TK, typename TR>
 DeePKS<OperatorLCAO<TK, TR>>::~DeePKS()
 {
-    if (this->H_V_delta != nullptr)
+    if (this->V_delta_R != nullptr)
     {
-        delete this->H_V_delta;
+        delete this->V_delta_R;
     }
 }
 
@@ -59,11 +59,11 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     auto* paraV = this->hR->get_paraV(); // get parallel orbitals from HR
     // TODO: if paraV is nullptr, AtomPair can not use paraV for constructor, I will repair it in the future.
 
-    this->H_V_delta = new HContainer<TR>(paraV);
+    this->V_delta_R = new HContainer<TR>(paraV);
     if (std::is_same<TK, double>::value)
     {
-        // this->H_V_delta = new HContainer<TR>(paraV);
-        this->H_V_delta->fix_gamma();
+        // this->V_delta_R = new HContainer<TR>(paraV);
+        this->V_delta_R->fix_gamma();
     }
 
     this->adjs_all.clear();
@@ -129,7 +129,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
                                          paraV);
                 // if (std::is_same<TK, double>::value)
                 // {
-                this->H_V_delta->insert_pair(tmp);
+                this->V_delta_R->insert_pair(tmp);
                 // }
             }
         }
@@ -141,10 +141,10 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Driv
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
     // if (std::is_same<TK, double>::value)
     // {
-    this->H_V_delta->allocate(nullptr, true);
-    // expand hR with H_V_delta
+    this->V_delta_R->allocate(nullptr, true);
+    // expand hR with V_delta_R
     // update : for computational rigor, gamma-only and multi-k cases both have full size of Hamiltonian of DeePKS now
-    this->hR->add(*this->H_V_delta);
+    this->hR->add(*this->V_delta_R);
     this->hR->allocate(nullptr, false);
     // }
 
@@ -186,32 +186,46 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                       this->ld->pdm,
                                       descriptor,
                                       this->ld->des_per_atom);
-        DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
-                                this->ld->lmaxd,
-                                this->ld->nmaxd,
-                                inlmax,
-                                this->ld->des_per_atom,
-                                this->ld->inl_l,
-                                descriptor,
-                                this->ld->pdm,
-                                this->ld->model_deepks,
-                                this->ld->gedm,
-                                this->ld->E_delta);
+        if (PARAM.inp.deepks_equiv)
+        {
+            DeePKS_domain::cal_edelta_gedm_equiv(this->ucell->nat,
+                                                 this->ld->lmaxd,
+                                                 this->ld->nmaxd,
+                                                 inlmax,
+                                                 this->ld->des_per_atom,
+                                                 this->ld->inl_l,
+                                                 descriptor,
+                                                 this->ld->gedm,
+                                                 this->ld->E_delta,
+                                                 GlobalV::MY_RANK);
+        }
+        else
+        {
+            DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
+                                           inlmax,
+                                           this->ld->des_per_atom,
+                                           this->ld->inl_l,
+                                           descriptor,
+                                           this->ld->pdm,
+                                           this->ld->model_deepks,
+                                           this->ld->gedm,
+                                           this->ld->E_delta);
+        }
 
-        // // recalculate the H_V_delta
-        // if (this->H_V_delta == nullptr)
+        // // recalculate the V_delta_R
+        // if (this->V_delta_R == nullptr)
         // {
-        //     this->H_V_delta = new hamilt::HContainer<std::complex<double>>(*this->hR);
+        //     this->V_delta_R = new hamilt::HContainer<std::complex<double>>(*this->hR);
         // }
-        this->H_V_delta->set_zero();
+        this->V_delta_R->set_zero();
         this->calculate_HR();
 
         this->ld->set_hr_cal(false);
 
         ModuleBase::timer::tick("DeePKS", "contributeHR");
     }
-    // save H_V_delta to hR
-    this->hR->add(*this->H_V_delta);
+    // save V_delta_R to hR
+    this->hR->add(*this->V_delta_R);
 #endif
 }
 
@@ -275,13 +289,13 @@ template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 {
     ModuleBase::TITLE("DeePKS", "calculate_HR");
-    if (this->H_V_delta->size_atom_pairs() == 0)
+    if (this->V_delta_R->size_atom_pairs() == 0)
     {
         return;
     }
     ModuleBase::timer::tick("DeePKS", "calculate_HR");
 
-    const Parallel_Orbitals* paraV = this->H_V_delta->get_paraV();
+    const Parallel_Orbitals* paraV = this->V_delta_R->get_paraV();
     const int npol = this->ucell->get_npol();
 
     // 1. calculate <phi|alpha> for each pair of atoms
@@ -385,7 +399,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                                                   R_index2[1] - R_index1[1],
                                                   R_index2[2] - R_index1[2]);
                 hamilt::BaseMatrix<TR>* tmp
-                    = this->H_V_delta->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                    = this->V_delta_R->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
                 // if not found , skip this pair of atoms
                 if (tmp == nullptr)
                 {
@@ -475,16 +489,9 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
 }
 
 template <typename TK>
-inline void get_h_delta_k(int ik, TK*& h_delta_k, LCAO_Deepks* ld_in)
+inline void get_h_delta_k(int ik, TK*& h_delta_k, LCAO_Deepks<TK>* ld_in)
 {
-    if constexpr (std::is_same<TK, double>::value)
-    {
-        h_delta_k = ld_in->H_V_delta[ik].data();
-    }
-    else
-    {
-        h_delta_k = ld_in->H_V_delta_k[ik].data();
-    }
+    h_delta_k = ld_in->V_delta[ik].data();
     return;
 }
 
@@ -503,12 +510,12 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
     {
         const int nrow = this->hsk->get_pv()->get_row_size();
-        hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], nrow, 1);
+        hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], nrow, 1);
     }
     else
     {
         const int ncol = this->hsk->get_pv()->get_col_size();
-        hamilt::folding_HR(*this->H_V_delta, h_delta_k, this->kvec_d[ik], ncol, 0);
+        hamilt::folding_HR(*this->V_delta_R, h_delta_k, this->kvec_d[ik], ncol, 0);
     }
     ModuleBase::timer::tick("DeePKS", "contributeHk");
 }
