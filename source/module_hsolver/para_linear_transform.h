@@ -74,12 +74,14 @@ class PLinearTransform
      */
     void act(const T alpha, const T* A, const T* U_global, const T beta, T* B);
 
+#ifdef __MPI
   private:
     std::vector<T> A_tmp_;      // temperory memory for A
     std::vector<T> isend_tmp_;  // temperory memory for isend
     T* U_tmp_ = nullptr;        // temperory memory for U
     T* B_tmp_ = nullptr;        // temperory memory for B
     T* A_tmp_device_ = nullptr; // temperory pointer
+#endif
 };
 } // namespace hsolver
 #endif

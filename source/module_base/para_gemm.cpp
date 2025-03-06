@@ -12,9 +12,11 @@ PGemmCN<T, Device>::PGemmCN()
 template <typename T, typename Device>
 PGemmCN<T, Device>::~PGemmCN()
 {
+#ifdef __MPI
     delmem_dev_op()(C_local_tmp_);
     delmem_dev_op()(A_tmp_device_);
     delmem_dev_op()(B_tmp_device_);
+#endif
 }
 
 template <typename T, typename Device>

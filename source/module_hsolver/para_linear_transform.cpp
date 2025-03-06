@@ -9,9 +9,11 @@ namespace hsolver
 template <typename T, typename Device>
 PLinearTransform<T, Device>::~PLinearTransform()
 {
+#ifdef __MPI
     delmem_dev_op()(U_tmp_);
     delmem_dev_op()(B_tmp_);
     delmem_dev_op()(A_tmp_device_);
+#endif
 }
 template <typename T, typename Device>
 void PLinearTransform<T, Device>::set_dimension(const int nrowA,
