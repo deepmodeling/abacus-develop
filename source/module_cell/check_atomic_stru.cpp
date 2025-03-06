@@ -128,8 +128,8 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                                 {
                                     no_warning = false;
                                     all_pass = all_pass && (sqrt_bon < factor_error ? false : true);
-                                    errorlog << std::setw(3) << ia1 + 1 << "-th " << &label[it1] << ", " << std::setw(3)
-                                             << ia2 + 1 << "-th " << &label[it2] << &cell[i] << std::setprecision(3)
+                                    errorlog << std::setw(3) << ia1 + 1 << "-th " << label[it1] << ", " << std::setw(3)
+                                             << ia2 + 1 << "-th " << label[it2] << cell[i] << std::setprecision(3)
                                              << sqrt_bon << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
                                 }
                             }
@@ -160,9 +160,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         {
             mess.clear();
             mess.str("");
-            mess << "If this structure is what you want, you can set "
-                    "'min_dist_coef'"
-                    << std::endl;
+            mess << "If this structure is what you want, you can set 'min_dist_coef'\n";
             mess << "as a smaller value (the current value is " << factor << ") in INPUT file." << std::endl;
             GlobalV::ofs_running << mess.str();
             std::cout << mess.str();
