@@ -279,7 +279,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (PARAM.globalv.gamma_only_local)
         {
             ISC.begin(this->GG,
-                      this->pelec->charge->rho,
+                      this->chr.rho,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod->nrxx,
@@ -307,8 +307,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         else
         {
             ISC.begin(this->GK,
-                      this->pelec->charge->rho,
-                      this->pelec->charge->rhog,
+                      this->chr.rho,
+                      this->chr.rhog,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod,
@@ -335,7 +335,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->kv,
                       PARAM.inp.if_separate_k,
                       &this->Pgrid,
-                      this->pelec->charge->ngmc);
+                      this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }

@@ -20,7 +20,7 @@ void ESolver_OF::init_elecstate(UnitCell& ucell)
     if (this->pelec == nullptr)
     {
         this->pelec = new elecstate::ElecState((Charge*)(&chr), this->pw_rho, pw_big);
-        this->pelec->charge->allocate(PARAM.inp.nspin);
+        this->chr.allocate(PARAM.inp.nspin);
     }
     this->pelec->omega = ucell.omega;
 
@@ -402,15 +402,15 @@ void ESolver_OF::print_info(const bool conv_esolver)
         // min/max(dE/dPhi)" << endl;
     }
     // ============ used to compare with PROFESS3.0 ================
-    // double minDen = pelec->charge->rho[0][0];
-    // double maxDen = pelec->charge->rho[0][0];
+    // double minDen = this->chr.rho[0][0];
+    // double maxDen = this->chr.rho[0][0];
     // double minPot = this->pdEdphi_[0][0];
     // double maxPot = this->pdEdphi_[0][0];
     // for (int i = 0; i < this->pw_rho->nrxx; ++i)
     // {
-    //     if (pelec->charge->rho[0][i] < minDen) minDen =
-    //     pelec->charge->rho[0][i]; if (pelec->charge->rho[0][i] > maxDen)
-    //     maxDen = pelec->charge->rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
+    //     if (this->chr.rho[0][i] < minDen) minDen =
+    //     this->chr.rho[0][i]; if (this->chr.rho[0][i] > maxDen)
+    //     maxDen = this->chr.rho[0][i]; if (this->pdEdphi_[0][i] < minPot)
     //     minPot = this->pdEdphi_[0][i]; if (this->pdEdphi_[0][i] > maxPot)
     //     maxPot = this->pdEdphi_[0][i];
     // }
