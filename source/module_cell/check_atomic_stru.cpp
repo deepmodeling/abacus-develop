@@ -21,7 +21,6 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         
         const int ntype = ucell.ntype;
         const double lat0 = ucell.lat0;
-
         const double warning_coef = 0.6;
         const double max_factor_coef = std::max(warning_coef, factor);
 
@@ -84,10 +83,10 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         }
 
         const double bohr_to_a = ModuleBase::BOHR_TO_A;
-// #pragma omp parallel
+#pragma omp parallel
         {
             std::vector<double> delta_lat(3);
-// #pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
             for (int iat = 0; iat < ucell.nat; iat++)
             {
                 const int it1 = ucell.iat2it[iat];
@@ -125,7 +124,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                             if (flag)
                             {
                                 const double sqrt_bon = sqrt(bond_length) * lat0;
-                                // #pragma omp critical
+                                #pragma omp critical
                                 {
                                     no_warning = false;
                                     all_pass = all_pass && (sqrt_bon < factor_error ? false : true);
