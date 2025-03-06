@@ -532,7 +532,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     if (PARAM.inp.of_ml_gene_data)
     {
-        this->pelec->pot->update_from_charge(this->chr, &ucell); // Hartree + XC + external
+        this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
         this->kinetic_potential(this->chr.rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
         
         const double* vr_eff = this->pelec->pot->get_effective_v(0);
