@@ -32,17 +32,23 @@ void cal_ux(UnitCell& ucell) {
                    + pow(ucell.atoms[it].m_loc_[ia].y, 2)
                    + pow(ucell.atoms[it].m_loc_[ia].z, 2);
 
+            // find the first atom (it,ia) whose magnetism is not zero
+            // compute ux
 			if (amag > absolute_mag_thr) 
 			{
 				ucell.magnet.ux_[0] = ucell.atoms[it].m_loc_[ia].x;
 				ucell.magnet.ux_[1] = ucell.atoms[it].m_loc_[ia].y;
 				ucell.magnet.ux_[2] = ucell.atoms[it].m_loc_[ia].z;
+
 				starting_it = it;
 				starting_ia = ia;
+
 				ucell.magnet.lsign_ = true;
 				break;
 			}
 		}
+
+        // if any atom has magnetism, then break the for iteration
 		if (ucell.magnet.lsign_) 
 		{
 			break;
@@ -63,6 +69,8 @@ void cal_ux(UnitCell& ucell) {
 		}
 	}
 
+    // if all of the atoms have the same parallel magnetism direction,
+    // then set the direction to a unit vector
 	if (ucell.magnet.lsign_) 
 	{
 		uxmod = pow(ucell.magnet.ux_[0], 2) 
@@ -73,6 +81,8 @@ void cal_ux(UnitCell& ucell) {
 		{
 			ModuleBase::WARNING_QUIT("elecstate::cal_ux", "wrong uxmod");
 		}
+
+        // reset the magnetism for each direction
 		for (int i = 0; i < 3; i++) 
 		{
 			ucell.magnet.ux_[i] *= 1 / sqrt(uxmod);
