@@ -279,54 +279,39 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
             }                                                             // end deepks_scf == 0
         }                                                                 // end bandgap label
 
-        // H(R) matrix part, not realized now
+        // H(R) matrix part, for HR, base will not be calculated since they are HContainer objects
         if (PARAM.inp.deepks_v_delta < 0)
         {
-            const std::string file_hrtot = PARAM.globalv.global_out_dir + "deepks_hrtot.npy";
+            // set the output
+            const double sparse_threshold = 1e-10;
+            const int precision = 8;
+            const std::string file_hrtot = PARAM.globalv.global_out_dir + "deepks_hrtot.csr";
             hamilt::HContainer<TR>* hR_tot = (p_ham->getHR());
 
-            // How to save H(R)?
-            // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_tot, file_hrtot, rank);
-            if constexpr (std::is_same<TR, double>::value)
+            if (rank == 0)
             {
-                // For test only
-                if (rank == 0)
-                {
-                    std::ofstream ofs_hr("HR_outtest", std::ios::out);
-                    double sparse_threshold = 1e-10;
-                    int precision = 8;
-                    hamilt::Output_HContainer<TR> out_hr(hR_tot, ofs_hr, sparse_threshold, precision);
-                    out_hr.write();
-                    ofs_hr.close();
-                }
+                std::ofstream ofs_hr(file_hrtot, std::ios::out);
+                ofs_hr << "Matrix Dimension of H(R): " << hR_tot->get_nbasis() << std::endl;
+                ofs_hr << "Matrix number of H(R): " << hR_tot->size_R_loop() << std::endl;
+                hamilt::Output_HContainer<TR> out_hr(hR_tot, ofs_hr, sparse_threshold, precision);
+                out_hr.write();
+                ofs_hr.close();
             }
 
             if (PARAM.inp.deepks_scf)
             {
-                const std::string file_vdeltar = PARAM.globalv.global_out_dir + "deepks_vdeltar.npy";
-                // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_delta, file_vdeltar, rank);
+                const std::string file_vdeltar = PARAM.globalv.global_out_dir + "deepks_hrdelta.csr";
                 hamilt::HContainer<TR>* h_deltaR = p_ham->get_V_delta_R();
-                if constexpr (std::is_same<TR, double>::value)
-                {
-                    // For test only
-                    if (rank == 0)
-                    {
-                        std::ofstream ofs_hr("HR_delta_outtest", std::ios::out);
-                        double sparse_threshold = 1e-10;
-                        int precision = 8;
-                        hamilt::Output_HContainer<TR> out_hr(h_deltaR, ofs_hr, sparse_threshold, precision);
-                        out_hr.write();
-                        ofs_hr.close();
-                    }
-                }
 
-                const std::string file_hrbase = PARAM.globalv.global_out_dir + "deepks_hrbase.npy";
-                // LCAO_deepks_io::save_npy_hr<TK, TR>(?, file_hrbase, rank);
-            }
-            else
-            {
-                const std::string file_hrbase = PARAM.globalv.global_out_dir + "deepks_hrbase.npy";
-                // LCAO_deepks_io::save_npy_hr<TK, TR>(hR_tot, file_hrbase, rank);
+                if (rank == 0)
+                {
+                    std::ofstream ofs_hr(file_vdeltar, std::ios::out);
+                    ofs_hr << "Matrix Dimension of H_delta(R): " << h_deltaR->get_nbasis() << std::endl;
+                    ofs_hr << "Matrix number of H_delta(R): " << h_deltaR->size_R_loop() << std::endl;
+                    hamilt::Output_HContainer<TR> out_hr(h_deltaR, ofs_hr, sparse_threshold, precision);
+                    out_hr.write();
+                    ofs_hr.close();
+                }
             }
         }
 
