@@ -876,7 +876,7 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     // generate training data for ML-KEDF
     if (PARAM.inp.of_ml_gene_data == 1)
     {
-        this->pelec->pot->update_from_charge(this->chr, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
 
         ML_data ml_data;
         ml_data.set_para(this->chr.nrxx,
