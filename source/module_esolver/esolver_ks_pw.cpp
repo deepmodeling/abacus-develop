@@ -164,7 +164,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     }
 
     //! 4) inititlize the charge density.
-    this->pelec->charge->allocate(PARAM.inp.nspin);
+    this->chr.allocate(PARAM.inp.nspin);
 
     //! 5) set the cell volume variable in pelec
     this->pelec->omega = ucell.omega;
@@ -266,7 +266,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
     }
 
     //----------------------------------------------------------
@@ -470,7 +470,7 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
     }
 
     // deband is calculated from "output" charge density calculated
@@ -488,7 +488,7 @@ void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, cons
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
 #ifdef __MPI
         MPI_Bcast(&(this->pelec->f_en.descf), 1, MPI_DOUBLE, 0, BP_WORLD);
@@ -605,7 +605,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                               this->kv.wk,
                               this->pw_big->bz,
                               this->pw_big->nbz,
-                              this->pelec->charge->ngmc,
+                              this->chr.ngmc,
                               &ucell,
                               this->psi,
                               this->pw_rhod,
@@ -876,10 +876,10 @@ void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
     // generate training data for ML-KEDF
     if (PARAM.inp.of_ml_gene_data == 1)
     {
-        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
 
         ML_data ml_data;
-        ml_data.set_para(this->pelec->charge->nrxx,
+        ml_data.set_para(this->chr.nrxx,
                          PARAM.inp.nelec,
                          PARAM.inp.of_tf_weight,
                          PARAM.inp.of_vw_weight,

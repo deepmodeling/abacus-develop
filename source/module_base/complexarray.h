@@ -5,6 +5,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <cassert>
 
 namespace ModuleBase
 {
@@ -58,11 +59,27 @@ public:
 
 	/// overloaded subscript operator for non-const std::complex Array const reference return creates an lvakue
 	std::complex <double> &operator()
-		(const int ind1=0, const int ind2=0, const int ind3=0, const int ind4=0);
+		(const int ind1=0, const int ind2=0, const int ind3=0, const int ind4=0)
+		{
+			assert(ind1>=0);	assert(ind1<bound1);
+			assert(ind2>=0);	assert(ind2<bound2);
+			assert(ind3>=0);	assert(ind3<bound3);
+			assert(ind4>=0);	assert(ind4<bound4);
+			const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
+			return ptr[ind];
+		};
 	//  std::complex < double> &operator()(int, int, int, int, int);
 	/// overloaded subscript operator for const std::complex Array const reference return creates an cvakue
 	const std::complex <double> &operator()
-		(const int ind1=0, const int ind2=0, const int ind3=0, const int ind4=0)const;
+		(const int ind1=0, const int ind2=0, const int ind3=0, const int ind4=0) const
+		{
+			assert(ind1>=0);	assert(ind1<bound1);
+			assert(ind2>=0);	assert(ind2<bound2);
+			assert(ind3>=0);	assert(ind3<bound3);
+			assert(ind4>=0);	assert(ind4<bound4);
+			const int ind = ((ind1 * bound2 + ind2) * bound3 + ind3) * bound4 + ind4;
+			return ptr[ind];
+		};
 	//  const std::complex < double> &operator()(int, int, int, int, int)const;
 
 	/****************************************************
