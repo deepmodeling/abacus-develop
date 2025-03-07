@@ -11,6 +11,7 @@
 #include "module_elecstate/read_pseudo.h"
 #include <valarray>
 #include <vector>
+#include "string.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -341,29 +342,37 @@ TEST_F(UcellDeathTest, CheckStructure) {
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     // trial 1
+    
     testing::internal::CaptureStdout();
     double factor = 0.2;
+    ucell->set_iat2itia();
     EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,
-                testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
     // trial 2
-    testing::internal::CaptureStdout();
+    GlobalV::ofs_running.open("CheckStructure2.txt");
+    ::testing::FLAGS_gtest_death_test_style = "threadsafe";
     factor = 0.4;
     EXPECT_EXIT(Check_Atomic_Stru::check_atomic_stru(*ucell, factor),
                 ::testing::ExitedWithCode(1),
                 "");
-    output = testing::internal::GetCapturedStdout();
+    std::ifstream ifs("CheckStructure2.txt");
+    if (ifs.is_open()) 
+    {
+        std::string line;
+        while (std::getline(ifs, line)) {
+            output+=line;
+        }
+    }
     EXPECT_THAT(output, testing::HasSubstr("The structure is unreasonable!"));
+    GlobalV::ofs_running.open("running.log");
     // trial 3
     ucell->atoms[0].label = "arbitrary";
     testing::internal::CaptureStdout();
     factor = 0.2;
     EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(
-        output,
-        testing::HasSubstr("Notice: symbol 'arbitrary' is not an element "
+    EXPECT_THAT(output,testing::HasSubstr("Notice: symbol 'arbitrary' is not an element "
                            "symbol!!!! set the covalent radius to be 0."));
     // trial 4
     ucell->atoms[0].label = "Fe1";
@@ -371,8 +380,7 @@ TEST_F(UcellDeathTest, CheckStructure) {
     factor = 0.2;
     EXPECT_NO_THROW(Check_Atomic_Stru::check_atomic_stru(*ucell, factor));
     output = testing::internal::GetCapturedStdout();
-    EXPECT_THAT(output,
-                testing::HasSubstr("WARNING: Some atoms are too close!!!"));
+    EXPECT_THAT(output,testing::HasSubstr("WARNING: Some atoms are too close!!!"));
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning1) {

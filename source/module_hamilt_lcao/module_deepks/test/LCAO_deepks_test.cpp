@@ -140,7 +140,7 @@ void test_deepks<T>::check_pdm()
     DeePKS_domain::cal_pdm(this->ld.init_pdm,
                            this->ld.inlmax,
                            this->ld.lmaxd,
-                           this->ld.inl_l,
+                           this->ld.inl2l,
                            this->ld.inl_index,
                            p_elec_DM,
                            this->ld.phialpha,
@@ -149,7 +149,7 @@ void test_deepks<T>::check_pdm()
                            Test_Deepks::GridD,
                            ParaO,
                            this->ld.pdm);
-    DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl_l, this->ld.pdm);
+    DeePKS_domain::check_pdm(this->ld.inlmax, this->ld.inl2l, this->ld.pdm);
     this->compare_with_ref("pdm.dat", "pdm_ref.dat");
 }
 
@@ -229,11 +229,11 @@ void test_deepks<T>::check_descriptor(std::vector<torch::Tensor>& descriptor)
 {
     DeePKS_domain::cal_descriptor(ucell.nat,
                                   this->ld.inlmax,
-                                  this->ld.inl_l,
+                                  this->ld.inl2l,
                                   this->ld.pdm,
                                   descriptor,
                                   this->ld.des_per_atom);
-    DeePKS_domain::check_descriptor(this->ld.inlmax, this->ld.des_per_atom, this->ld.inl_l, ucell, "./", descriptor, 0);
+    DeePKS_domain::check_descriptor(this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, ucell, "./", descriptor, 0);
     this->compare_with_ref("deepks_desc.dat", "descriptor_ref.dat");
 }
 
@@ -241,9 +241,9 @@ template <typename T>
 void test_deepks<T>::check_gvx(torch::Tensor& gdmx)
 {
     std::vector<torch::Tensor> gevdm;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl_l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
     torch::Tensor gvx;
-    DeePKS_domain::cal_gvx(ucell.nat, this->ld.inlmax, this->ld.des_per_atom, this->ld.inl_l, gevdm, gdmx, gvx, 0);
+    DeePKS_domain::cal_gvx(ucell.nat, this->ld.inlmax, this->ld.des_per_atom, this->ld.inl2l, gevdm, gdmx, gvx, 0);
     DeePKS_domain::check_gvx(gvx, 0);
 
     for (int ia = 0; ia < ucell.nat; ia++)
@@ -274,12 +274,12 @@ template <typename T>
 void test_deepks<T>::check_gvepsl(torch::Tensor& gdmepsl)
 {
     std::vector<torch::Tensor> gevdm;
-    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl_l, this->ld.pdm, gevdm);
+    DeePKS_domain::cal_gevdm(ucell.nat, this->ld.inlmax, this->ld.inl2l, this->ld.pdm, gevdm);
     torch::Tensor gvepsl;
     DeePKS_domain::cal_gvepsl(ucell.nat,
                               this->ld.inlmax,
                               this->ld.des_per_atom,
-                              this->ld.inl_l,
+                              this->ld.inl2l,
                               gevdm,
                               gdmepsl,
                               gvepsl,
@@ -310,7 +310,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
                                              this->ld.nmaxd,
                                              this->ld.inlmax,
                                              this->ld.des_per_atom,
-                                             this->ld.inl_l,
+                                             this->ld.inl2l,
                                              descriptor,
                                              this->ld.gedm,
                                              this->ld.E_delta,
@@ -321,7 +321,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
         DeePKS_domain::cal_edelta_gedm(ucell.nat,
                                        this->ld.inlmax,
                                        this->ld.des_per_atom,
-                                       this->ld.inl_l,
+                                       this->ld.inl2l,
                                        descriptor,
                                        this->ld.pdm,
                                        this->ld.model_deepks,
@@ -334,7 +334,7 @@ void test_deepks<T>::check_edelta(std::vector<torch::Tensor>& descriptor)
     ofs.close();
     this->compare_with_ref("E_delta.dat", "E_delta_ref.dat");
 
-    DeePKS_domain::check_gedm(this->ld.inlmax, this->ld.inl_l, this->ld.gedm);
+    DeePKS_domain::check_gedm(this->ld.inlmax, this->ld.inl2l, this->ld.gedm);
     this->compare_with_ref("gedm.dat", "gedm_ref.dat");
 }
 

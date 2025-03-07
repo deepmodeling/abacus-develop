@@ -221,7 +221,7 @@ void DeePKS_domain::check_gdmx(const torch::Tensor& gdmx)
 void DeePKS_domain::cal_gvx(const int nat,
                             const int inlmax,
                             const int des_per_atom,
-                            const int* inl_l,
+                            const std::vector<int>& inl2l,
                             const std::vector<torch::Tensor>& gevdm,
                             const torch::Tensor& gdmx,
                             torch::Tensor& gvx,
@@ -249,7 +249,7 @@ void DeePKS_domain::cal_gvx(const int nat,
                     for (int iat = 0; iat < nat; ++iat)
                     {
                         int inl = iat * nlmax + nl;
-                        int nm = 2 * inl_l[inl] + 1;
+                        int nm = 2 * inl2l[inl] + 1;
                         std::vector<double> mmv;
                         for (int m1 = 0; m1 < nm; ++m1)
                         {

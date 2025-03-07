@@ -119,9 +119,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
     this->_hcontainer->unfix_R();
 }
 
-// explicit instantiation of template class with double type
 template class Output_HContainer<double>;
-// to do: explicit instantiation of template class with std::complex<double> type
-// template class Output_HContainer<std::complex<double>>;
+template class Output_HContainer<std::complex<double>>;
 
 } // namespace hamilt

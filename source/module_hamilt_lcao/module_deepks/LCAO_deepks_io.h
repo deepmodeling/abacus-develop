@@ -42,7 +42,7 @@ void load_npy_gedm(const int nat, const int des_per_atom, double** gedm, double&
 void save_npy_d(const int nat,
                 const int des_per_atom,
                 const int inlmax,
-                const int* inl_l,
+                const std::vector<int>& inl2l,
                 const bool deepks_equiv,
                 const std::vector<torch::Tensor>& descriptor,
                 const std::string& out_dir,

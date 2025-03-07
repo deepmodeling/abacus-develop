@@ -58,6 +58,11 @@ class DeePKS<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * @param ik: the index of k-point
      */
     virtual void contributeHk(int ik) override;
+
+    HContainer<TR>* get_V_delta_R() const
+    {
+        return this->V_delta_R;
+    }
 #endif
 
   private:
