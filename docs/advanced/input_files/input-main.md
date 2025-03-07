@@ -3541,11 +3541,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   `td_lcut1` is the lower bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
   $$
-    E(x)=
-    \begin{cases}
-        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
-        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
-    \end{cases}
+    E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
 - **Default**: 0.05
 
@@ -3555,11 +3551,7 @@ These variables are used to control berry phase and wannier90 interface paramete
 - **Description**:
   `td_lcut2` is the upper bound of the interval in the length gauge RT-TDDFT, where $x$ is the fractional coordinate:
   $$
-    E(x)=
-    \begin{cases}
-        E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\
-        -E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & \text{$0<x<\mathtt{cut1}$ or $\mathtt{cut2}<x<1$}
-    \end{cases}
+    E(x)=\begin{cases}E_0, & \mathtt{cut1}\leqslant x \leqslant \mathtt{cut2} \\-E_0\left(\dfrac{1}{\mathtt{cut1}+1-\mathtt{cut2}}-1\right), & 0 < x < \mathtt{cut1~~or~~cut2} < x < 1 \end{cases}
   $$
 - **Default**: 0.95
 

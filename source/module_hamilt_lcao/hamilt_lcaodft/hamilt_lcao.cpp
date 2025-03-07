@@ -216,6 +216,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     DM_in,
                                                                     ld_in);
             this->getOperator()->add(deepks);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
         }
 #endif
 
@@ -340,6 +341,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     DM_in,
                                                                     ld_in);
             this->getOperator()->add(deepks);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
         }
 #endif
         // TDDFT_velocity_gague

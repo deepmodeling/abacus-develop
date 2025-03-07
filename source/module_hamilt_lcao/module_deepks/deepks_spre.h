@@ -52,7 +52,7 @@ void check_gdmepsl(const torch::Tensor& gdmepsl);
 void cal_gvepsl(const int nat,
                 const int inlmax,
                 const int des_per_atom,
-                const int* inl_l,
+                const std::vector<int>& inl2l,
                 const std::vector<torch::Tensor>& gevdm,
                 const torch::Tensor& gdmepsl,
                 torch::Tensor& gvepsl,
