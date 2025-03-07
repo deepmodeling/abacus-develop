@@ -43,6 +43,15 @@ void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const dou
             force[i][j]=_force(i,j)*ModuleBase::Ry_to_eV/ModuleBase::BOHR_TO_A;
         }
     }
+    /*std::cout<<"force"<<std::endl;
+    for(int i=0;i<size;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            std::cout<<force[i][j]<<' ';
+        }
+        std::cout<<std::endl;
+    }*/
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
     {
@@ -65,6 +74,7 @@ void LBFGS::relax_step(const ModuleBase::matrix _force,UnitCell& ucell,const dou
     }
     //std::cout<<"enterstep1"<<std::endl;
     this->PrepareStep(force,pos,H,pos0,force0,dpos,ucell,etot);
+    this->DetermineStep(steplength,dpos,maxstep);
     //std::cout<<"enterstep2"<<std::endl;
     /*std::cout<<"force"<<std::endl;
     for(int i=0;i<size;i++)
@@ -138,7 +148,7 @@ std::vector<std::vector<double>>& dpos,
 UnitCell& ucell,
 const double &etot)
 {
-    std::cout<<"force"<<std::endl;
+    /*std::cout<<"force"<<std::endl;
     for(int i=0;i<force.size();i++)
     {
         for(int j=0;j<3;j++)
@@ -146,11 +156,11 @@ const double &etot)
             std::cout<<force[i][j]<<' ';
         }
         std::cout<<std::endl;
-    }
+    }*/
     std::vector<double> changedforce = this->ReshapeMToV(force);
     std::vector<double> changedpos = this->ReshapeMToV(pos);
     this->Update(pos_taud,pos_taud0,changedforce,force0,ucell,iteration,memory,s,y,rho);
-    std::cout<<'s'<<std::endl;
+    /*std::cout<<'s'<<std::endl;
     for(int i=0;i<s.size();i++)
     {
         for(int j=0;j<s[i].size();j++)
@@ -169,7 +179,7 @@ const double &etot)
         }
     std::cout<<std::endl;
     }
-    std::cout<<std::endl;
+    std::cout<<std::endl;*/
     std::vector<double> q=DotInVAndFloat(changedforce,-1);
     int loopmax=std::min(memory,iteration);
     std::vector<double> a(loopmax);
@@ -179,12 +189,12 @@ const double &etot)
         auto temp=this->DotInVAndFloat(y[i],a[i]);
         q=this->VSubV(q,temp);
     }
-    std::cout<<'q'<<std::endl;
+    /*std::cout<<'q'<<std::endl;
     for(int i=0;i<q.size();i++)
     {
         std::cout<<q[i]<<' ';
     }
-    std::cout<<std::endl;
+    std::cout<<std::endl;*/
     std::vector<double> z=this->DotInVAndFloat(q,H0);
     for(int i=0;i<loopmax;i++)
     {
@@ -204,7 +214,7 @@ const double &etot)
     //auto temp2=DotInVAndFloat(temp0,alpha_k);
     auto temp2=DotInVAndFloat(temp0,1);
     dpos=ReshapeVToM(temp2);
-    std::cout<<"dpos"<<std::endl;
+    /*std::cout<<"dpos"<<std::endl;
     for(int i=0;i<force.size();i++)
     {
         for(int j=0;j<3;j++)
@@ -212,6 +222,15 @@ const double &etot)
             std::cout<<dpos[i][j]<<' ';
         }
         std::cout<<std::endl;
+    }*/
+    for(int i = 0; i < size; i++)
+    {
+        double k = 0;
+        for(int j = 0; j < 3; j++)
+        {
+            k += dpos[i][j] * dpos[i][j];
+        }
+        steplength[i] = sqrt(k);
     }
     iteration+=1;
     pos0 = this->ReshapeMToV(pos);
@@ -292,6 +311,24 @@ void LBFGS::Update(std::vector<std::vector<double>>& pos_taud,
         s.erase(s.begin());
         y.erase(y.begin());
         rho.erase(rho.begin());
+    }
+}
+void LBFGS::DetermineStep(std::vector<double>& steplength,
+                         std::vector<std::vector<double>>& dpos,
+                         double& maxstep)
+{
+    auto maxsteplength = max_element(steplength.begin(), steplength.end());
+    double a = *maxsteplength;
+    if(a >= maxstep)
+    {
+        double scale = maxstep / a;
+        for(int i = 0; i < size; i++)
+        {
+            for(int j=0;j<3;j++)
+            {
+                dpos[i][j]*=scale;
+            }
+        }
     }
 }
 double LBFGS::LineSearch(UnitCell& ucell,std::vector<std::vector<double>>& r,std::vector<std::vector<double>>& g,double e)
@@ -778,7 +815,11 @@ void LBFGS::UpdatePos(UnitCell& ucell)
             a[i*3+j]/=ModuleBase::BOHR_TO_A;
         }
     }
-    int k=0;
+    /*std::cout<<"a"<<std::endl;
+    for(int i=0;i<3*size;i++)
+    {
+        std::cout<<a[i]<<std::endl;
+    }*/
     ucell.update_pos_tau(a);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);

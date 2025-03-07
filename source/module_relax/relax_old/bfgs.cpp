@@ -43,6 +43,15 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             force[i][j]=_force(i,j)*ModuleBase::Ry_to_eV/ModuleBase::BOHR_TO_A;
         }
     }
+    /*std::cout<<"force"<<std::endl;
+    for(int i=0;i<size;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            std::cout<<force[i][j]<<' ';
+        }
+        std::cout<<std::endl;
+    }*/
     
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
@@ -67,8 +76,16 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
     
     this->PrepareStep(force,pos,H,pos0,force0,steplength,dpos,ucell);
     this->DetermineStep(steplength,dpos,maxstep);
-    
-    /*std::cout<<"force"<<std::endl;
+    /*std::cout<<"dpos"<<std::endl;
+    for(int i=0;i<force.size();i++)
+    {
+        for(int j=0;j<3;j++)
+        {
+            std::cout<<dpos[i][j]<<' ';
+        }
+        std::cout<<std::endl;
+    }
+    std::cout<<"force"<<std::endl;
     for(int i=0;i<size;i++)
     {
         for(int j=0;j<3;j++)
@@ -76,8 +93,8 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             std::cout<<force[i][j]<<' ';
         }
         std::cout<<std::endl;
-    }
-    std::cout<<"dpos"<<std::endl;
+    }*/
+    /*std::cout<<"dpos"<<std::endl;
     for(int i=0;i<size;i++)
     {
         for(int j=0;j<3;j++)
@@ -331,8 +348,6 @@ void BFGS::UpdatePos(UnitCell& ucell)
             a[i*3+j]/=ModuleBase::BOHR_TO_A;
         }
     }
-    std::cout<<std::endl;
-    int k=0;
     ucell.update_pos_tau(a);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);

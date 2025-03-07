@@ -97,6 +97,7 @@ private:
     double Step(double stp,double f,double g,double c1,double c2,double xtol,std::vector<int>& isave,std::vector<double>& dsave);
     void UpdateLineSearch(double& stx,double& fx,double& gx,double& sty,double& fy,double& gy,double& stp,double& fp,double& gp,double& stpmin,double& stpmax);
     double DetermineStep(double stp);
+    void DetermineStep(std::vector<double>& steplength,std::vector<std::vector<double>>& dpos,double& maxstep);
     void UpdatePos(UnitCell& ucell);
     void Save(int a,double b,double c,double d,double e,double f,double g,double h,double i,double j,double k,double l,double m,double n);
     double GetEnergy(UnitCell& ucell,double stp);
