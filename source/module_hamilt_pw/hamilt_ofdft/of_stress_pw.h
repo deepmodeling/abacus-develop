@@ -2,6 +2,7 @@
 #define OF_STRESS_PW_H
 
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/stress_func.h"
 
 class OF_Stress_PW : public Stress_Func<double>

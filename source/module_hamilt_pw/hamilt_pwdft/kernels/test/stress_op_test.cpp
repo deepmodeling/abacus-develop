@@ -137,24 +137,24 @@ TEST(TestSrcPWStressMultiDevice, cal_dbecp_noevc_nl_op_gpu)
     std::complex<double> * d_vkb0i = nullptr, * d_vkb0j = nullptr, * d_vkb = nullptr,
                 * d_vkb1 = nullptr, * d_vkb2 = nullptr, * d_dbecp_noevc = nullptr;
     double * d_gcar = nullptr, * d_kvec_c = nullptr;
-    resmem_zd_op()(gpu_ctx, d_vkb0i, vkb0i.size());
-    resmem_zd_op()(gpu_ctx, d_vkb0j, vkb0j.size());
-    resmem_zd_op()(gpu_ctx, d_vkb, vkb.size());
-    resmem_zd_op()(gpu_ctx, d_vkb1, vkb1.size());
-    resmem_zd_op()(gpu_ctx, d_vkb2, vkb2.size());
-    resmem_zd_op()(gpu_ctx, d_dbecp_noevc, dbecp_noevc.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_vkb0i, vkb0i.data(), vkb0i.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_vkb0j, vkb0j.data(), vkb0j.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_vkb, vkb.data(), vkb.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_vkb1, vkb1.data(), vkb1.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_vkb2, vkb2.data(), vkb2.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_dbecp_noevc, dbecp_noevc.data(), dbecp_noevc.size());
+    resmem_zd_op()(d_vkb0i, vkb0i.size());
+    resmem_zd_op()(d_vkb0j, vkb0j.size());
+    resmem_zd_op()(d_vkb, vkb.size());
+    resmem_zd_op()(d_vkb1, vkb1.size());
+    resmem_zd_op()(d_vkb2, vkb2.size());
+    resmem_zd_op()(d_dbecp_noevc, dbecp_noevc.size());
+    syncmem_z2z_h2d_op()(d_vkb0i, vkb0i.data(), vkb0i.size());
+    syncmem_z2z_h2d_op()(d_vkb0j, vkb0j.data(), vkb0j.size());
+    syncmem_z2z_h2d_op()(d_vkb, vkb.data(), vkb.size());
+    syncmem_z2z_h2d_op()(d_vkb1, vkb1.data(), vkb1.size());
+    syncmem_z2z_h2d_op()(d_vkb2, vkb2.data(), vkb2.size());
+    syncmem_z2z_h2d_op()(d_dbecp_noevc, dbecp_noevc.data(), dbecp_noevc.size());
 
-    resmem_dd_op()(gpu_ctx, d_gcar, gcar.size());
-    resmem_dd_op()(gpu_ctx, d_kvec_c, kvec_c.size());
+    resmem_dd_op()(d_gcar, gcar.size());
+    resmem_dd_op()(d_kvec_c, kvec_c.size());
 
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_gcar, gcar.data(), gcar.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_kvec_c, kvec_c.data(), kvec_c.size());
+    syncmem_d2d_h2d_op()(d_gcar, gcar.data(), gcar.size());
+    syncmem_d2d_h2d_op()(d_kvec_c, kvec_c.data(), kvec_c.size());
 
     hamilt::cal_dbecp_noevc_nl_op<double, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                      ipol,
@@ -173,21 +173,21 @@ TEST(TestSrcPWStressMultiDevice, cal_dbecp_noevc_nl_op_gpu)
                                                                      d_vkb2,
                                                                      d_dbecp_noevc);
 
-    syncmem_z2z_d2h_op()(cpu_ctx, gpu_ctx, dbecp_noevc.data(), d_dbecp_noevc, dbecp_noevc.size());
+    syncmem_z2z_d2h_op()(dbecp_noevc.data(), d_dbecp_noevc, dbecp_noevc.size());
 
     for (int ii = 0; ii < dbecp_noevc.size(); ii++) {
         EXPECT_LT(fabs(dbecp_noevc[ii] - expected_dbecpnoevc[ii]), 6e-5);
     }
 
-    delmem_zd_op()(gpu_ctx, d_vkb0i);
-    delmem_zd_op()(gpu_ctx, d_vkb0j);
-    delmem_zd_op()(gpu_ctx, d_vkb);
-    delmem_zd_op()(gpu_ctx, d_vkb1);
-    delmem_zd_op()(gpu_ctx, d_vkb2);
-    delmem_zd_op()(gpu_ctx, d_dbecp_noevc);
+    delmem_zd_op()(d_vkb0i);
+    delmem_zd_op()(d_vkb0j);
+    delmem_zd_op()(d_vkb);
+    delmem_zd_op()(d_vkb1);
+    delmem_zd_op()(d_vkb2);
+    delmem_zd_op()(d_dbecp_noevc);
 
-    delmem_dd_op()(gpu_ctx, d_gcar);
-    delmem_dd_op()(gpu_ctx, d_kvec_c);
+    delmem_dd_op()(d_gcar);
+    delmem_dd_op()(d_kvec_c);
 }
 
 TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
@@ -236,31 +236,31 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     double * d_wg = nullptr, * d_deeq = nullptr, * d_stress = nullptr;
     double * d_ekb = nullptr, * d_qq_nt = nullptr;
     int * d_atom_nh = nullptr, * d_atom_na = nullptr;
-    resmem_zd_op()(gpu_ctx, d_becp, becp.size());
-    resmem_zd_op()(gpu_ctx, d_dbecp, dbecp.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_becp, becp.data(), becp.size());
-    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_dbecp, dbecp.data(), dbecp.size());
+    resmem_zd_op()(d_becp, becp.size());
+    resmem_zd_op()(d_dbecp, dbecp.size());
+    syncmem_z2z_h2d_op()(d_becp, becp.data(), becp.size());
+    syncmem_z2z_h2d_op()(d_dbecp, dbecp.data(), dbecp.size());
 
-    resmem_dd_op()(gpu_ctx, d_wg, wg.size());
-    resmem_dd_op()(gpu_ctx, d_deeq, deeq.size());
-    resmem_dd_op()(gpu_ctx, d_stress, stress.size());
-    resmem_dd_op()(gpu_ctx, d_ekb, ekb.size());
-    resmem_dd_op()(gpu_ctx, d_qq_nt, qq_nt.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_wg, wg.data(), wg.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_deeq, deeq.data(), deeq.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_stress, stress.data(), stress.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_ekb, ekb.data(), ekb.size());
-    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_qq_nt, qq_nt.data(), qq_nt.size());
+    resmem_dd_op()(d_wg, wg.size());
+    resmem_dd_op()(d_deeq, deeq.size());
+    resmem_dd_op()(d_stress, stress.size());
+    resmem_dd_op()(d_ekb, ekb.size());
+    resmem_dd_op()(d_qq_nt, qq_nt.size());
+    syncmem_d2d_h2d_op()(d_wg, wg.data(), wg.size());
+    syncmem_d2d_h2d_op()(d_deeq, deeq.data(), deeq.size());
+    syncmem_d2d_h2d_op()(d_stress, stress.data(), stress.size());
+    syncmem_d2d_h2d_op()(d_ekb, ekb.data(), ekb.size());
+    syncmem_d2d_h2d_op()(d_qq_nt, qq_nt.data(), qq_nt.size());
 
     using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
     using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
     using syncmem_int_h2d_op
         = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
 
-    resmem_int_op()(gpu_ctx, d_atom_nh, atom_nh.size());
-    resmem_int_op()(gpu_ctx, d_atom_na, atom_na.size());
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_nh, atom_nh.data(), atom_nh.size());
-    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_na, atom_na.data(), atom_na.size());
+    resmem_int_op()(d_atom_nh, atom_nh.size());
+    resmem_int_op()(d_atom_na, atom_na.size());
+    syncmem_int_h2d_op()(d_atom_nh, atom_nh.data(), atom_nh.size());
+    syncmem_int_h2d_op()(d_atom_na, atom_na.data(), atom_na.size());
 
     hamilt::cal_stress_nl_op<double, base_device::DEVICE_GPU>()(gpu_ctx,
                                                                 multi_proj,
@@ -284,22 +284,22 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
                                                                 d_dbecp,
                                                                 d_stress);
 
-    syncmem_d2d_d2h_op()(cpu_ctx, gpu_ctx, stress.data(), d_stress, stress.size());
+    syncmem_d2d_d2h_op()(stress.data(), d_stress, stress.size());
 
     for (int ii = 0; ii < stress.size(); ii++) {
         EXPECT_LT(fabs(stress[ii] - expected_stress[ii]), 6e-5);
     }
 
-    delmem_zd_op()(gpu_ctx, d_becp);
-    delmem_zd_op()(gpu_ctx, d_dbecp);
+    delmem_zd_op()(d_becp);
+    delmem_zd_op()(d_dbecp);
 
-    delmem_dd_op()(gpu_ctx, d_wg);
-    delmem_dd_op()(gpu_ctx, d_deeq);
-    delmem_dd_op()(gpu_ctx, d_stress);
-    delmem_dd_op()(gpu_ctx, d_ekb);
-    delmem_dd_op()(gpu_ctx, d_qq_nt);
+    delmem_dd_op()(d_wg);
+    delmem_dd_op()(d_deeq);
+    delmem_dd_op()(d_stress);
+    delmem_dd_op()(d_ekb);
+    delmem_dd_op()(d_qq_nt);
 
-    delmem_int_op()(gpu_ctx, d_atom_nh);
-    delmem_int_op()(gpu_ctx, d_atom_na);
+    delmem_int_op()(d_atom_nh);
+    delmem_int_op()(d_atom_na);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM

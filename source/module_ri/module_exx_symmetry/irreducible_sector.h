@@ -127,8 +127,6 @@ namespace ModuleSymmetry
 
         /// symmetry info for BvK supercell
         std::vector<int> isymbvk_to_isym_;
-        std::vector<ModuleBase::Matrix3> bvk_gmatrix_;
-        std::vector<ModuleBase::Vector3<double>> bvk_gtrans_;
         int bvk_nsym_;
 
         friend class Symmetry_rotation;

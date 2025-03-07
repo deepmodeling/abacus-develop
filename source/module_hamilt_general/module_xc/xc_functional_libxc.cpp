@@ -74,7 +74,7 @@ std::pair<int,std::vector<int>> XC_Functional_Libxc::set_xc_type_libxc(std::stri
 
     // determine the id
 	std::vector<int> func_id; // libxc id of functional
-    int pos = 0;
+    size_t pos = 0;
     std::string delimiter = "+";
     std::string token;
     while ((pos = xc_func_in.find(delimiter)) != std::string::npos)

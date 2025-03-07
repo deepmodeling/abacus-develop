@@ -30,7 +30,7 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -45,6 +45,9 @@
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
 #include "module_base/formatter.h"
+
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
 
 namespace ModuleESolver {
 

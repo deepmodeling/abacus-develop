@@ -1,10 +1,9 @@
 #include "occupy.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/constants.h"
 #include "module_base/mymath.h"
 #include "module_base/parallel_reduce.h"
-#include "module_elecstate/elecstate_getters.h"
+#include "module_parameter/parameter.h"
 
 Occupy::Occupy()
 {
@@ -142,10 +141,12 @@ void Occupy::iweights(
 {
     assert(is < 2);
     double degspin = 2.0;
-    if (PARAM.inp.nspin == 4)
+    if (PARAM.inp.nspin == 4) {
         degspin = 1.0;
-    if (is != -1)
+}
+    if (is != -1) {
         degspin = 1.0;
+}
 
     double ib_mind = nelec / degspin;
     int ib_min = std::ceil(ib_mind);
@@ -225,10 +226,11 @@ void Occupy::gweights(const int nks,
     for (int ik = 0; ik < nks; ik++)
     {
         // mohan add 2011-04-03
-        if (is != -1 && is != isk[ik])
+        if (is != -1 && is != isk[ik]) {
             continue;
+}
 
-        for (int ib = 0; ib < PARAM.inp.nbands; ib++)
+        for (int ib = 0; ib < PARAM.globalv.nbands_l; ib++)
         {
             //================================
             // Calculate the gaussian weights
@@ -400,8 +402,9 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     double sum2 = 0.0;
     for (int ik = 0; ik < nks; ik++)
     {
-        if (is != -1 && is != isk[ik])
+        if (is != -1 && is != isk[ik]) {
             continue;
+}
 
         double sum1 = 0.0;
         for (int ib = 0; ib < nband; ib++)
@@ -417,7 +420,8 @@ double Occupy::sumkg(const ModuleBase::matrix& ekb,
     // GlobalV::ofs_running << "\n sum2 before reduce = " << sum2 << std::endl;
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, sum2);
+    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, sum2);
 #endif
 
     // GlobalV::ofs_running << "\n sum2 after reduce = " << sum2 << std::endl;

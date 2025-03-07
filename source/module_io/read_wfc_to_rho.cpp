@@ -9,6 +9,7 @@
 
 void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
                                ModuleSymmetry::Symmetry& symm,
+                               const int* ik2iktot,
                                const int nkstot,
                                const std::vector<int>& isk,
                                Charge& chg)
@@ -39,13 +40,29 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
         std::string filename = PARAM.globalv.global_readin_dir + "istate.info";
         std::ifstream ifs(filename);
         std::string useless;
-        for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
+        if (PARAM.inp.nspin == 2)
         {
-            ifs >> useless;
-            getline(ifs, useless);
-            for(int ib = 0; ib < nbands; ++ib)
+            const int nkstot_np = nkstot / 2;
+            for (int iktot_np = 0; iktot_np < nkstot_np; ++iktot_np)
             {
-                ifs >> useless >> useless >> wg_tmp(ik_tot, ib);
+                ifs >> useless;
+                getline(ifs, useless);
+                for (int ib = 0; ib < nbands; ++ib)
+                {
+                    ifs >> useless >> useless >> wg_tmp(iktot_np, ib) >> useless >> wg_tmp(iktot_np + nkstot_np, ib);
+                }
+            }
+        }
+        else
+        {
+            for (int ik_tot = 0; ik_tot < nkstot; ++ik_tot)
+            {
+                ifs >> useless;
+                getline(ifs, useless);
+                for (int ib = 0; ib < nbands; ++ib)
+                {
+                    ifs >> useless >> useless >> wg_tmp(ik_tot, ib);
+                }
             }
         }
     }
@@ -54,20 +71,6 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
     MPI_Bcast(wg_tmp.c, nkstot * nbands, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 
-    auto get_ikstot = [&](int ik) {
-        int nkp = nkstot / kpar;
-        int rem = nkstot % kpar;
-        int ikstot;
-        if (my_pool < rem)
-        {
-            ikstot = my_pool * nkp + my_pool + ik;
-        }
-        else
-        {
-            ikstot = my_pool * nkp + rem + ik;
-        }
-        return ikstot;
-    };
     for (int ik = 0; ik < pw_wfc->nks; ++ik)
     {
         int is = 0;
@@ -75,10 +78,10 @@ void ModuleIO::read_wfc_to_rho(const ModulePW::PW_Basis_K* pw_wfc,
         {
             is = isk[ik];
         }
-        const int ikstot = get_ikstot(ik);
         std::stringstream filename;
+        const int ikstot = ik2iktot[ik];
         filename << PARAM.globalv.global_readin_dir << "WAVEFUNC" << ikstot + 1 << ".dat";
-        ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, nkstot, wfc_tmp);
+        ModuleIO::read_wfc_pw(filename.str(), pw_wfc, ik, ikstot, nkstot, wfc_tmp);
         if (PARAM.inp.nspin == 4)
         {
             std::vector<std::complex<double>> rho_tmp2(nrxx);

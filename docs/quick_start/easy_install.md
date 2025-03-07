@@ -192,6 +192,8 @@ OMP_NUM_THREADS=4 mpirun -n 4 abacus
 
 In this case, the total thread count is 16.
 
+> Notice: If the MPI library you are using is OpenMPI, which is commonly the case, when you set the number of processes to 1 or 2, OpenMPI will default to `--bind-to core`. This means that no matter how many threads you set, these threads will be restricted to run on 1 or 2 CPU cores. Therefore, setting a higher number of OpenMP threads might result in slower program execution. Hence, when using `mpirun -n` set to 1 or 2, it is recommended to set `--bind-to none` to avoid performance degradation. For example:`OMP_NUM_THREADS=6 mpirun --bind-to none -n 1 abacus`. The detailed binding strategy of OpenMPI can be referred to at https://docs.open-mpi.org/en/v5.0.x/man-openmpi/man1/mpirun.1.html#quick-summary.
+
 ABACUS will try to determine the number of threads used by each process if `OMP_NUM_THREADS` is not set. However, it is **required** to set `OMP_NUM_THREADS` before running `mpirun` to avoid potential performance issues.
 
 Please refer to [hands-on guide](./hands_on.md) for more instructions.

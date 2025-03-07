@@ -35,7 +35,7 @@ template <typename T, typename Device>
 void Stochastic_WF<T, Device>::init(K_Vectors* p_kv, const int npwx_in)
 {
     this->nks = p_kv->get_nks();
-    this->ngk = p_kv->ngk.data();
+    this->ngk = p_kv->ngk;
     this->npwx = npwx_in;
     nchip = new int[nks];
 
@@ -52,7 +52,7 @@ void Stochastic_WF<T, Device>::allocate_chiallorder(const int& norder)
     for (int ik = 0; ik < this->nks; ++ik)
     {
         chiallorder[ik].resize(1, this->nchip[ik] * this->npwx, norder);
-        setmem_complex_op()(chiallorder[ik].get_device(), chiallorder[ik].get_pointer(), 0, chiallorder[ik].size());
+        setmem_complex_op()(chiallorder[ik].get_pointer(), 0, chiallorder[ik].size());
     }
 }
 
@@ -72,7 +72,7 @@ void Stochastic_WF<T, Device>::init_sto_orbitals(const int seed_in)
     }
     else
     {
-        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_STOGROUP * GlobalV::NPROC_IN_STOGROUP + GlobalV::RANK_IN_STOGROUP) * 10000);
+        srand((unsigned)std::abs(seed_in) + (GlobalV::MY_BNDGROUP * GlobalV::NPROC_IN_BNDGROUP + GlobalV::RANK_IN_BPGROUP) * 10000);
     }
 
     this->allocate_chi0();
@@ -88,12 +88,12 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     // former processor calculate more bands
     if (firstrankmore)
     {
-        igroup = GlobalV::MY_STOGROUP;
+        igroup = GlobalV::MY_BNDGROUP;
     }
     // latter processor calculate more bands
     else
     {
-        igroup = PARAM.inp.bndpar - GlobalV::MY_STOGROUP - 1;
+        igroup = PARAM.inp.bndpar - GlobalV::MY_BNDGROUP - 1;
     }
     const int nchi = PARAM.inp.nbands_sto;
     const int npwx = this->npwx;
@@ -111,7 +111,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
 
     this->nchip_max = tmpnchip;
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<T>(nks, this->nchip_max, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<T>(nks, this->nchip_max, npwx, this->ngk, true);
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(T));
 
     for (int ik = 0; ik < nks; ++ik)
@@ -123,7 +123,7 @@ void Stochastic_WF<T, Device>::allocate_chi0()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {
@@ -172,16 +172,16 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     // former processor calculate more bands
     if (firstrankmore)
     {
-        igroup = GlobalV::MY_STOGROUP;
+        igroup = GlobalV::MY_BNDGROUP;
     }
     // latter processor calculate more bands
     else
     {
-        igroup = PARAM.inp.bndpar - GlobalV::MY_STOGROUP - 1;
+        igroup = PARAM.inp.bndpar - GlobalV::MY_BNDGROUP - 1;
     }
     const int ngroup = PARAM.inp.bndpar;
     const int n_in_pool = GlobalV::NPROC_IN_POOL;
-    const int i_in_group = GlobalV::RANK_IN_STOGROUP;
+    const int i_in_group = GlobalV::RANK_IN_BPGROUP;
     const int i_in_pool = GlobalV::RANK_IN_POOL;
 
     int* totnpw = new int[nks];
@@ -207,7 +207,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
         delete[] npwip;
     }
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, this->nchip_max, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, this->nchip_max, npwx, this->ngk, true);
     this->chi0_cpu->zero_out();
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(std::complex<double>));
     for (int ik = 0; ik < nks; ++ik)
@@ -252,7 +252,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {
@@ -266,7 +266,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     const int npwx = this->npwx;
     const int nks = this->nks;
     size_t size = this->nchip_max * npwx * nks;
-    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, npwx, npwx, this->ngk);
+    this->chi0_cpu = new psi::Psi<std::complex<double>>(nks, npwx, npwx, this->ngk, true);
     this->chi0_cpu->zero_out();
     ModuleBase::Memory::record("SDFT::chi0_cpu", size * sizeof(std::complex<double>));
     for (int ik = 0; ik < nks; ++ik)
@@ -284,7 +284,7 @@ void Stochastic_WF<T, Device>::init_com_orbitals()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk);
+        this->chi0 = new psi::Psi<T, Device>(nks, this->nchip_max, npwx, this->ngk, true);
     }
     else
     {
@@ -315,17 +315,17 @@ void Stochastic_WF<T, Device>::init_sto_orbitals_Ecut(const int seed_in,
     int* nrecv = new int[PARAM.inp.bndpar];
     const int nchiper = this->nchip[0];
 #ifdef __MPI
-    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, PARAPW_WORLD);
+    MPI_Allgather(&nchiper, 1, MPI_INT, nrecv, 1, MPI_INT, BP_WORLD);
 #endif
     int ichi_start = 0;
-    for (int i = 0; i < GlobalV::MY_STOGROUP; ++i)
+    for (int i = 0; i < GlobalV::MY_BNDGROUP; ++i)
     {
         ichi_start += nrecv[i];
     }
 
     for (int ik = 0; ik < nks; ++ik)
     {
-        const int iktot = K_Vectors::get_ik_global(ik, nkstot);
+        const int iktot = kv.ik2iktot[ik];
         const int npw = wfcpw.npwk[ik];
         int* ig2ixyz = new int[npw];
 
@@ -374,9 +374,7 @@ void Stochastic_WF<T, Device>::sync_chi0()
     Device* ctx = {};
     if (base_device::get_device_type<Device>(ctx) == base_device::GpuDevice)
     {
-        syncmem_h2d_op()(this->chi0->get_device(),
-                         this->chi0_cpu->get_device(),
-                         this->chi0->get_pointer(),
+        syncmem_h2d_op()(this->chi0->get_pointer(),
                          this->chi0_cpu->get_pointer(),
                          this->chi0_cpu->size());
     }

@@ -67,13 +67,13 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
 void sparse_format::set_R_range(std::set<Abfs::Vector3_Order<int>>& all_R_coor, const Grid_Driver& grid)
 {
-    const int RminX = int(-grid.getTrueCellX());
-    const int RminY = int(-grid.getTrueCellY());
-    const int RminZ = int(-grid.getTrueCellZ());
+    int RminX = int(-grid.getGlayerX_minus());
+    int RminY = int(-grid.getGlayerY_minus());
+    int RminZ = int(-grid.getGlayerZ_minus());
 
-    const int Rx = grid.getCellX();
-    const int Ry = grid.getCellY();
-    const int Rz = grid.getCellZ();
+    int Rx = grid.getGlayerX() + grid.getGlayerX_minus();
+    int Ry = grid.getGlayerY() + grid.getGlayerY_minus();
+    int Rz = grid.getGlayerZ() + grid.getGlayerZ_minus();
 
     for (int ix = 0; ix < Rx; ix++)
     {

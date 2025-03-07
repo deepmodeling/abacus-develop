@@ -2,6 +2,7 @@
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_PW_HAMILT_PWDFT_STRESS_PW_H
 
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "stress_func.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
@@ -13,6 +14,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
                     UnitCell& ucell,
+                    const pseudopot_cell_vl& locpp,
                     const pseudopot_cell_vnl& nlpp,
                     ModulePW::PW_Basis* rho_basis,
                     ModuleSymmetry::Symmetry* p_symm,

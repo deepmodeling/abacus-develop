@@ -82,7 +82,7 @@ void LCAO_Orbitals::init(
             this->orbital_file.push_back(orbital_dir + orbital_file[it]);
         }
     }
-
+    this->descriptor_file = descriptor_file;
 #ifdef __MPI
     bcast_files(ntype, my_rank);
 #endif
@@ -263,7 +263,6 @@ void LCAO_Orbitals::Read_Orbitals(std::ofstream& ofs_in,
 
         delete[] this->Alpha;
         this->Alpha = new Numerical_Orbital[1]; // not related to atom type -- remain to be discussed
-
         this->Read_Descriptor(ofs_in, force_flag, my_rank);
     }
 

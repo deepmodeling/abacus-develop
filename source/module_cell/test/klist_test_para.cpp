@@ -19,6 +19,7 @@
 #include "module_cell/setup_nonlocal.h"
 #include "module_cell/unitcell.h"
 #include "module_elecstate/magnetism.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/parallel_grid.h"
 #include "module_io/berryphase.h"
@@ -228,9 +229,9 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::MY_RANK,
                                 PARAM.input.bndpar,
                                 GlobalV::KPAR,
-                                GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
@@ -285,9 +286,9 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::MY_RANK,
                                 PARAM.input.bndpar,
                                 GlobalV::KPAR,
-                                GlobalV::NPROC_IN_STOGROUP,
-                                GlobalV::RANK_IN_STOGROUP,
-                                GlobalV::MY_STOGROUP,
+                                GlobalV::NPROC_IN_BNDGROUP,
+                                GlobalV::RANK_IN_BPGROUP,
+                                GlobalV::MY_BNDGROUP,
                                 GlobalV::NPROC_IN_POOL,
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);

@@ -51,7 +51,7 @@ class test_orb : public testing::Test
     double randr(double Rmax);
     void gen_table_center2();
 
-    bool force_flag = 0;
+    bool force_flag = false;
     int my_rank = 0;
     int ntype_read;
 
@@ -66,7 +66,7 @@ class test_orb : public testing::Test
     int lmax = 1;
     double lat0 = 1.0;
     std::string case_dir = "./GaAs/";
-    std::string* orbital_fn;
+    std::vector<std::string> orbital_fn;
     std::string descriptor_file;
 };
 #endif

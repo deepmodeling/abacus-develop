@@ -1,4 +1,3 @@
-#include "module_elecstate/cal_ux.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_esolver/esolver_ks_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/hamilt_lcao.h"
@@ -22,8 +21,6 @@
 #include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
@@ -47,29 +44,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     //! 1) call before_scf() of ESolver_KS
     ESolver_KS<TK>::before_scf(ucell, istep);
-
-    if (ucell.ionic_position_updated)
-    {
-        this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(
-#ifdef __MPI
-            &(GlobalC::Pgrid),
-#endif
-            ucell,
-            this->pelec->charge,
-            &(this->sf),
-            GlobalV::ofs_running,
-            GlobalV::ofs_warning);
-    }
-
-    //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
-    //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
-    if (vdw_solver != nullptr)
-    {
-        this->pelec->f_en.evdw = vdw_solver->get_energy();
-    }
 
     // 1. prepare HS matrices, prepare grid integral
     // (1) Find adjacent atoms for each atom.
@@ -118,6 +92,26 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                              dpsi_u,
                              d2psi_u,
                              PARAM.inp.nstream);
+
+#ifdef __NEW_GINT
+    auto gint_info = std::make_shared<ModuleGint::GintInfo>(
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbz,
+        this->pw_rho->nx,
+        this->pw_rho->ny,
+        this->pw_rho->nz,
+        0,
+        0,
+        this->pw_big->nbzp_start,
+        this->pw_big->nbx,
+        this->pw_big->nby,
+        this->pw_big->nbzp,
+        orb_.Phi,
+        ucell,
+        this->gd);
+    ModuleGint::Gint::init_gint_info(gint_info);
+#endif
     psi_u.clear();
     psi_u.shrink_to_fit();
     dpsi_u.clear();
@@ -162,7 +156,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             ncol = PARAM.inp.nbands;
 #endif
         }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, nullptr);
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
     }
 
     // init wfc from file
@@ -197,6 +191,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             two_center_bundle_,
             orb_,
             DM
+#ifdef __DEEPKS
+            ,
+            &this->ld
+#endif
 #ifdef __EXX
             ,
             istep,
@@ -208,17 +206,31 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 
 #ifdef __DEEPKS
-    // for each ionic step, the overlap <psi|alpha> must be rebuilt
+    // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
     {
         const Parallel_Orbitals* pv = &this->pv;
-        // build and save <psi(0)|alpha(R)> at beginning
-        GlobalC::ld.build_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, *(two_center_bundle_.overlap_orb_alpha));
+        // allocate <phi(0)|alpha(R)>, phialpha is different every ion step, so it is allocated here
+        DeePKS_domain::allocate_phialpha(PARAM.inp.cal_force, ucell, orb_, this->gd, pv, this->ld.phialpha);
+        // build and save <phi(0)|alpha(R)> at beginning
+        DeePKS_domain::build_phialpha(PARAM.inp.cal_force,
+                                      ucell,
+                                      orb_,
+                                      this->gd,
+                                      pv,
+                                      *(two_center_bundle_.overlap_orb_alpha),
+                                      this->ld.phialpha);
 
         if (PARAM.inp.deepks_out_unittest)
         {
-            GlobalC::ld.check_psialpha(PARAM.inp.cal_force, ucell, orb_, this->gd);
+            DeePKS_domain::check_phialpha(PARAM.inp.cal_force,
+                                          ucell,
+                                          orb_,
+                                          this->gd,
+                                          pv,
+                                          this->ld.phialpha,
+                                          GlobalV::MY_RANK);
         }
     }
 #endif
@@ -239,11 +251,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                    this->psi,
                    this->pelec);
     }
-    //=========================================================
-    // cal_ux should be called before init_scf because
-    // the direction of ux is used in noncoline_rho
-    //=========================================================
-    elecstate::cal_ux(ucell);
 
     // Peize Lin add 2016-12-03
 #ifdef __EXX // set xc type before the first cal of xc in pelec->init_scf
@@ -260,45 +267,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif // __EXX
 
-    this->pelec->init_scf(istep, this->sf.strucFac, this->ppcell.numeric, ucell.symm);
-
-    //! output the initial charge density
-    if (PARAM.inp.out_chg[0] == 2)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_CHG_INI.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                                          this->pelec->charge->rho[is],
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          this->pelec->eferm.ef,
-                                          &(ucell));
-        }
-    }
-
-    //! output total local potential of the initial charge density
-    if (PARAM.inp.out_pot == 3)
-    {
-        for (int is = 0; is < PARAM.inp.nspin; is++)
-        {
-            std::stringstream ss;
-            ss << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_POT_INI.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                                          this->pelec->pot->get_effective_v(is),
-                                          is,
-                                          PARAM.inp.nspin,
-                                          istep,
-                                          ss.str(),
-                                          0.0, // efermi
-                                          &(ucell),
-                                          11, // precsion
-                                          0); // out_fermi
-        }
-    }
+    this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
     // initalize DMR
     // DMR should be same size with Hamiltonian(R)
@@ -332,8 +301,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         for (int is = 0; is < nspin0; is++)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
-            ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
-                                          this->pelec->charge->rho[is],
+            ModuleIO::write_vdata_palgrid(this->Pgrid,
+                                          this->chr.rho[is],
                                           is,
                                           PARAM.inp.nspin,
                                           istep,
@@ -353,14 +322,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
-    }
-
-    // 1. calculate ewald energy.
-    // mohan update 2021-02-25
-    if (!PARAM.inp.test_skip_ewald)
-    {
-        this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, this->sf.strucFac);
+        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
     this->p_hamilt->non_first_scf = istep;
@@ -371,7 +333,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp
         rdmft_solver.update_ion(ucell,
                                 *(this->pw_rho),
-                                this->ppcell.vloc,
+                                this->locpp.vloc,
                                 this->sf.strucFac); // add by jghan, 2024-03-16/2024-10-08
     }
 

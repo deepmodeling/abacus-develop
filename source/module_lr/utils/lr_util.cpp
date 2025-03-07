@@ -179,4 +179,17 @@ namespace LR_Util
             vl.data(), &ldvl, vr.data(), &ldvr, work2.data(), &lwork, rwork.data(), &info);
         if (info) { std::cout << "ERROR: Lapack solver zgeev, info=" << info << std::endl; }
     }
+
+    std::string tolower(const std::string& str)
+    {
+        std::string str_lower = str;
+        std::transform(str_lower.begin(), str_lower.end(), str_lower.begin(), ::tolower);
+        return str_lower;
+    }
+    std::string toupper(const std::string& str)
+    {
+        std::string str_upper = str;
+        std::transform(str_upper.begin(), str_upper.end(), str_upper.begin(), ::toupper);
+        return str_upper;
+    }
 }

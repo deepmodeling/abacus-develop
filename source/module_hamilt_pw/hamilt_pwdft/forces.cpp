@@ -24,12 +24,13 @@
 #endif
 
 template <typename FPTYPE, typename Device>
-void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
+void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModuleBase::matrix& force,
                                        const elecstate::ElecState& elec,
-                                       ModulePW::PW_Basis* rho_basis,
+                                       const ModulePW::PW_Basis* const rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
                                        Structure_Factor* p_sf,
+                                       surchem& solvent,
                                        const pseudopot_cell_vl* locpp,
                                        const pseudopot_cell_vnl* p_nlpp,
                                        K_Vectors* pkv,
@@ -160,7 +161,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
         // DFT+U and DeltaSpin
         if(PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
         {
-            this->cal_force_onsite(forceonsite, wg, wfc_basis, GlobalC::ucell, psi_in);
+            this->cal_force_onsite(forceonsite, wg, wfc_basis, ucell, psi_in);
         }
     }
 
@@ -168,7 +169,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
     // not relevant for PAW
     if (!PARAM.inp.use_paw)
     {
-        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, GlobalC::ucell);
+        Forces::cal_force_cc(forcecc, rho_basis, chr, locpp->numeric, ucell);
     }
     else
     {
@@ -231,7 +232,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
     if (PARAM.inp.imp_sol)
     {
         forcesol.create(this->nat, 3);
-        GlobalC::solvent_model.cal_force_sol(ucell, rho_basis, locpp->vloc, forcesol);
+        solvent.cal_force_sol(ucell, rho_basis, locpp->vloc, forcesol);
         if (PARAM.inp.test_force)
         {
             ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL      FORCE (Ry/Bohr)", forcesol);
@@ -485,7 +486,7 @@ void Forces<FPTYPE, Device>::cal_force(const UnitCell& ucell,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
                                            ModuleBase::matrix& forcelc,
-                                           ModulePW::PW_Basis* rho_basis,
+                                           const ModulePW::PW_Basis* const rho_basis,
                                            const ModuleBase::matrix& vloc,
                                            const Charge* const chr)
 {
@@ -564,7 +565,7 @@ void Forces<FPTYPE, Device>::cal_force_loc(const UnitCell& ucell,
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force_ew(const UnitCell& ucell,
                                           ModuleBase::matrix& forceion,
-                                          ModulePW::PW_Basis* rho_basis,
+                                          const ModulePW::PW_Basis* const rho_basis,
                                           const Structure_Factor* p_sf)
 {
     ModuleBase::TITLE("Forces", "cal_force_ew");

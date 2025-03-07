@@ -45,7 +45,7 @@ void Charge_Mixing::Kerker_screen_recip(std::complex<double>* drhog)
             amin = this->mixing_beta;
         }
 
-        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+        gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif
@@ -110,7 +110,7 @@ void Charge_Mixing::Kerker_screen_real(double* drhor)
             amin = this->mixing_beta;
         }
         
-        gg0 = std::pow(fac * 0.529177 / GlobalC::ucell.tpiba, 2);
+        gg0 = std::pow(fac * 0.529177 / *this->tpiba, 2);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 512)
 #endif

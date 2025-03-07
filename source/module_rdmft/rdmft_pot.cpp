@@ -54,7 +54,7 @@ void RDMFT<TK, TR>::cal_V_TV()
     V_ekinetic_potential = new hamilt::EkineticNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                                  kv->kvec_d,
                                                                                  HR_TV,
-                                                                                 &GlobalC::ucell,
+                                                                                 this->ucell,
                                                                                  orb->cutoffs(),
                                                                                  this->gd,
                                                                                  two_center_bundle->kinetic_orb.get());
@@ -62,7 +62,7 @@ void RDMFT<TK, TR>::cal_V_TV()
     V_nonlocal = new hamilt::NonlocalNew<hamilt::OperatorLCAO<TK, TR>>(hsk_TV,
                                                                        kv->kvec_d,
                                                                        HR_TV,
-                                                                       &GlobalC::ucell,
+                                                                       this->ucell,
                                                                        orb->cutoffs(),
                                                                        this->gd,
                                                                        two_center_bundle->overlap_orb_beta.get());
@@ -74,7 +74,7 @@ void RDMFT<TK, TR>::cal_V_TV()
                                                 kv->kvec_d,
                                                 this->pelec->pot,
                                                 HR_TV,
-                                                &GlobalC::ucell,
+                                                this->ucell,
                                                 orb->cutoffs(),
                                                 this->gd,
                                                 nspin,
@@ -91,7 +91,7 @@ void RDMFT<TK, TR>::cal_V_TV()
                                                 kv->kvec_d,
                                                 this->pelec->pot,
                                                 HR_TV,
-                                                &GlobalC::ucell,
+                                                this->ucell,
                                                 orb->cutoffs(),
                                                 this->gd,
                                                 nspin,
@@ -122,7 +122,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
                                                   kv->kvec_d,
                                                   this->pelec->pot,
                                                   HR_hartree,
-                                                  &GlobalC::ucell,
+                                                  this->ucell,
                                                   orb->cutoffs(),
                                                   this->gd,
                                                   nspin,
@@ -140,7 +140,7 @@ void RDMFT<TK, TR>::cal_V_hartree()
                                                   kv->kvec_d,
                                                   this->pelec->pot,
                                                   HR_hartree,
-                                                  &GlobalC::ucell,
+                                                  this->ucell,
                                                   orb->cutoffs(),
                                                   this->gd,
                                                   nspin,
@@ -170,7 +170,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
 
     // elecstate::DensityMatrix<TK, double> DM_test(ParaV, nspin, kv->kvec_d, nk_total);
     // elecstate::cal_dm_psi(ParaV, wg, wfc, DM_test);
-    // DM_test.init_DMR(this->gd, &GlobalC::ucell);
+    // DM_test.init_DMR(this->gd, this->ucell);
     // DM_test.cal_DMR();
 
     // // compare DM_XC and DM get in update_charge(or ABACUS)
@@ -202,7 +202,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                                                      kv->kvec_d,
                                                      this->pelec->pot,
                                                      HR_dft_XC,
-                                                     &GlobalC::ucell,
+                                                     this->ucell,
                                                      orb->cutoffs(),
                                                      this->gd,
                                                      nspin,
@@ -222,7 +222,7 @@ void RDMFT<TK, TR>::cal_V_XC(const UnitCell& ucell)
                                                      kv->kvec_d,
                                                      this->pelec->pot,
                                                      HR_dft_XC,
-                                                     &GlobalC::ucell,
+                                                     this->ucell,
                                                      orb->cutoffs(),
                                                      this->gd,
                                                      nspin,

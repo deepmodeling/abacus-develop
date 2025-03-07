@@ -170,43 +170,10 @@ void Input_Conv::Convert()
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "pseudo_dir", PARAM.inp.pseudo_dir);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "orbital_dir", PARAM.inp.orbital_dir);
     // GlobalV::global_pseudo_type = PARAM.inp.pseudo_type;
-    GlobalC::ucell.setup(PARAM.inp.latname,
-                         PARAM.inp.ntype,
-                         PARAM.inp.lmaxmax,
-                         PARAM.inp.init_vel,
-                         PARAM.inp.fixed_axes);
-
-    if (PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax")
-    {
-    }
 
 
-    if (PARAM.inp.device  == "gpu" && PARAM.inp.basis_type == "pw")
-    {
-        GlobalV::KPAR = base_device::information::get_device_kpar(PARAM.inp.kpar, PARAM.inp.bndpar);
-    }
-#ifdef __LCAO
-    else if (PARAM.inp.basis_type == "lcao") {
-        /// GlobalV::KPAR_LCAO is used in LCAO diagonalization only
-        GlobalV::KPAR_LCAO = PARAM.inp.kpar;
-        /// all other parts of the code use GlobalV::KPAR = 1
-        GlobalV::KPAR = 1;
-    }
-#endif
-    else
-    {
-        GlobalV::KPAR = PARAM.inp.kpar;
-    }
-    if (PARAM.inp.device  == "cpu" and PARAM.inp.precision == "single")
-    {
-// cpu single precision is not supported while float_fftw lib is not available
-#ifndef __ENABLE_FLOAT_FFTW
-        ModuleBase::WARNING_QUIT(
-            "Input_Conv",
-            "Single precision with cpu is not supported while float_fftw lib is not available; \
-            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
-#endif // __ENABLE_FLOAT_FFTW
-    }
+    GlobalV::KPAR = PARAM.inp.kpar;
+    
 
 
 #ifdef __LCAO
@@ -280,22 +247,12 @@ void Input_Conv::Convert()
 // Fuxiang He add 2016-10-26
 //----------------------------------------------------------
 #ifdef __LCAO
-    module_tddft::Evolve_elec::td_force_dt = PARAM.inp.td_force_dt;
-    module_tddft::Evolve_elec::td_vext = PARAM.inp.td_vext;
-    if (module_tddft::Evolve_elec::td_vext)
-    {
-        parse_expression(PARAM.inp.td_vext_dire, module_tddft::Evolve_elec::td_vext_dire_case);
-    }
-    module_tddft::Evolve_elec::out_dipole = PARAM.inp.out_dipole;
-    module_tddft::Evolve_elec::out_efield = PARAM.inp.out_efield;
-    module_tddft::Evolve_elec::td_print_eij = PARAM.inp.td_print_eij;
-    module_tddft::Evolve_elec::td_edm = PARAM.inp.td_edm;
     TD_Velocity::out_current = PARAM.inp.out_current;
     TD_Velocity::out_current_k = PARAM.inp.out_current_k;
     TD_Velocity::out_vecpot = PARAM.inp.out_vecpot;
     TD_Velocity::init_vecpot_file = PARAM.inp.init_vecpot_file;
     read_td_efield();
-#endif
+#endif // __LCAO
 
    
 

@@ -36,11 +36,11 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
 
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter) override;
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
-    virtual void after_scf(UnitCell& ucell, const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     virtual void others(UnitCell& ucell, const int istep) override;
 
@@ -53,7 +53,7 @@ class ESolver_KS_PW : public ESolver_KS<T, Device>
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 
     // psi_initializer controller
-    psi::PSIInit<T, Device>* p_wf_init = nullptr;
+    psi::PSIInit<T, Device>* p_psi_init = nullptr;
 
     Device* ctx = {};
 

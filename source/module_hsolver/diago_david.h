@@ -12,7 +12,16 @@
 
 namespace hsolver
 {
-
+/**
+ * @class DiagoDavid
+ * @brief A class that implements the block-Davidson algorithm for solving generalized eigenvalue problems.
+ *
+ * The DiagoDavid class provides methods for performing iterative diagonalization using the Davidson algorithm.
+ * It supports both real and complex data types and can be executed on different devices (CPU or GPU).
+ *
+ * @tparam T The data type of the matrices and arrays (e.g., float, double, std::complex<float>, std::complex<double>).
+ * @tparam Device The device type (e.g., base_device::DEVICE_CPU or DEVICE_GPU).
+ */
 template <typename T = std::complex<double>, typename Device = base_device::DEVICE_CPU>
 class DiagoDavid
 {
@@ -24,6 +33,23 @@ class DiagoDavid
   
   public:
 
+    /**
+     * @brief Constructor for the DiagoDavid class.
+     * 
+     * @param[in] precondition_in Pointer to the preconditioning matrix.
+     * @param[in] nband_in Number of eigenpairs required(i.e. bands).
+     * @param[in] dim_in Dimension of the matrix.
+     * @param[in] david_ndim_in Dimension of the reduced basis set of Davidson.
+     *                      `david_ndim_in` * `nband_in` is the maximum allowed size of
+     *                      the reduced basis set before \b restart of Davidson.
+     * @param[in] use_paw_in Flag indicating whether to use PAW.
+     * @param[in] diag_comm_in Communication information for diagonalization.
+     * 
+     * @tparam T The data type of the matrices and arrays.
+     * @tparam Device The device type (base_device::DEVICE_CPU or DEVICE_GPU).
+     * 
+     * @note Auxiliary memory is allocated in the constructor and deallocated in the destructor.
+     */
     DiagoDavid(const Real* precondition_in,
                const int nband_in,
                const int dim_in,
@@ -31,7 +57,14 @@ class DiagoDavid
                const bool use_paw_in,
                const diag_comm_info& diag_comm_in);
 
-     ~DiagoDavid();
+    /**
+     * @brief Destructor for the DiagoDavid class.
+     * 
+     * This destructor releases the dynamically allocated memory used by the class members.
+     * It deletes the basis, hpsi, spsi, hcc, scc, vcc, lagrange_matrix, and eigenvalue arrays.
+     * 
+     */
+    ~DiagoDavid();
 
 
     // declare type of matrix-blockvector functions.
@@ -73,6 +106,27 @@ class DiagoDavid
      */
     using SPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
+    /**
+     * @brief Performs iterative diagonalization using the David algorithm.
+     * 
+     * @warning Please see docs of `HPsiFunc` for more information about the hpsi mat-vec interface.
+     * 
+     * @tparam T The type of the elements in the matrix.
+     * @tparam Device The device type (CPU or GPU).
+     * @param hpsi_func The function object that computes the matrix-blockvector product H * psi.
+     * @param spsi_func The function object that computes the matrix-blockvector product overlap S * psi.
+     * @param ld_psi The leading dimension of the psi_in array.
+     * @param psi_in The input wavefunction.
+     * @param eigenvalue_in The array to store the eigenvalues.
+     * @param david_diag_thr The convergence threshold for the diagonalization.
+     * @param david_maxiter The maximum number of iterations for the diagonalization.
+     * @param ntry_max The maximum number of attempts for the diagonalization restart.
+     * @param notconv_max The maximum number of bands unconverged allowed.
+     * @return The total number of iterations performed during the diagonalization.
+     * 
+     * @note ntry_max is an empirical parameter that should be specified in external routine, default 5
+     *       notconv_max is determined by the accuracy required for the calculation, default 0
+     */
     int diag(
       const HPsiFunc& hpsi_func,  // function void hpsi(T*, T*, const int, const int) 
       const SPsiFunc& spsi_func,  // function void spsi(T*, T*, const int, const int, const int) 
@@ -137,6 +191,21 @@ class DiagoDavid
                   const std::vector<double>& ethr_band,
                   const int david_maxiter);
 
+    /**
+     * Calculates the preconditioned gradient of the eigenvectors in Davidson method.
+     *
+     * @param hpsi_func The function to calculate the matrix-blockvector product H * psi.
+     * @param spsi_func The function to calculate the matrix-blockvector product overlap S * psi.
+     * @param dim The dimension of the blockvector.
+     * @param nbase The current dimension of the reduced basis.
+     * @param nbase_x The maximum dimension of the reduced basis set.
+     * @param notconv The number of unconverged eigenpairs.
+     * @param hpsi The output array for the Hamiltonian H times blockvector psi.
+     * @param spsi The output array for the overlap matrix S times blockvector psi.
+     * @param vcc The input array for the eigenvector coefficients.
+     * @param unconv The array of indices for the unconverged eigenpairs.
+     * @param eigenvalue The array of eigenvalues.
+     */
     void cal_grad(const HPsiFunc& hpsi_func,
                   const SPsiFunc& spsi_func,
                   const int& dim,
@@ -149,6 +218,18 @@ class DiagoDavid
                   const int* unconv,
                   const Real* eigenvalue);
 
+    /**
+     * Calculates the elements of the diagonalization matrix for the DiagoDavid class.
+     * 
+     * @param dim The dimension of the problem.
+     * @param nbase The current dimension of the reduced basis.
+     * @param nbase_x The maximum dimension of the reduced basis set.
+     * @param notconv The number of newly added basis vectors.
+     * @param hpsi The output array for the Hamiltonian H times blockvector psi.
+     * @param spsi The output array for the overlap matrix S times blockvector psi.
+     * @param hcc Pointer to the array where the calculated Hamiltonian matrix elements will be stored.
+     * @param scc Pointer to the array where the calculated overlap matrix elements will be stored.
+     */
     void cal_elem(const int& dim,
                   int& nbase,
                   const int nbase_x,
@@ -158,6 +239,23 @@ class DiagoDavid
                   T* hcc,
                   T* scc);
 
+    /**
+     * Refreshes the diagonalization solver by updating the basis and the reduced Hamiltonian.
+     * 
+     * @param dim The dimension of the problem.
+     * @param nband The number of bands.
+     * @param nbase The number of basis states.
+     * @param nbase_x The maximum dimension of the reduced basis set.
+     * @param eigenvalue_in Pointer to the array of eigenvalues.
+     * @param psi_in Pointer to the array of wavefunctions.
+     * @param ld_psi The leading dimension of the wavefunction array.
+     * @param hpsi Pointer to the output array for the updated basis set.
+     * @param spsi Pointer to the output array for the updated basis set (nband-th column).
+     * @param hcc Pointer to the output array for the updated reduced Hamiltonian.
+     * @param scc Pointer to the output array for the updated overlap matrix.
+     * @param vcc Pointer to the output array for the updated eigenvector matrix.
+     * 
+     */
     void refresh(const int& dim,
                  const int& nband,
                  int& nbase,
@@ -171,6 +269,19 @@ class DiagoDavid
                  T* scc,
                  T* vcc);
 
+    /**
+     * SchmidtOrth function performs orthogonalization of the starting eigenfunction to those already calculated.
+     * It takes the dimension of the basis, number of bands, index of the current band, starting eigenfunction psi_m,
+     * lagrange_m array, mm_size, and mv_size as input parameters.
+     *
+     * @param dim The dimension of the basis.
+     * @param nband The number of bands.
+     * @param m The index of the current band.
+     * @param spsi Pointer to the starting eigenfunction psi_m.
+     * @param lagrange_m Pointer to the lagrange_m array.
+     * @param mm_size The size of the square matrix for future lagranges.
+     * @param mv_size The size of the lagrange_m array.
+     */
     void SchmidtOrth(const int& dim,
                      const int nband,
                      const int m,
@@ -179,6 +290,15 @@ class DiagoDavid
                      const int mm_size,
                      const int mv_size);
 
+    /**
+     * @brief Plans the Schmidt orthogonalization for a given number of bands.
+     * 
+     * @tparam T The type of the elements in the vectors.
+     * @tparam Device The device on which the computation will be performed.
+     * @param nband The number of bands.
+     * @param pre_matrix_mm_m The vector to store the matrix sizes.
+     * @param pre_matrix_mv_m The vector to store the number of matrix-vector multiplications.
+     */
     void planSchmidtOrth(const int nband, std::vector<int>& pre_matrix_mm_m, std::vector<int>& pre_matrix_mv_m);
 
     void diag_zhegvx(const int& nbase,
@@ -189,6 +309,26 @@ class DiagoDavid
                      Real* eigenvalue,
                      T* vcc);
 
+    /**
+     * @brief Check the convergence of block eigenvectors in the Davidson iteration.
+     *
+     * This function determines whether the block eigenvectors have reached convergence
+     * during the iterative diagonalization process. Convergence is judged based on
+     * the number of eigenvectors that have not converged and the maximum allowed
+     * number of such eigenvectors.
+     *
+     * @tparam T The data type for the eigenvalues and eigenvectors (e.g., float, double).
+     * @tparam Device The device type (e.g., base_device::DEVICE_CPU).
+     * @param ntry The current number of tries for diagonalization.
+     * @param notconv The current number of eigenvectors that have not converged.
+     * @param ntry_max The maximum allowed number of tries for diagonalization.
+     * @param notconv_max The maximum allowed number of eigenvectors that can fail to converge.
+     * @return true if the eigenvectors are considered converged or the maximum number
+     *         of tries has been reached, false otherwise.
+     *
+     * @note Exits the diagonalization loop if either the convergence criteria
+     *       are met or the maximum number of tries is exceeded.
+     */
     bool check_block_conv(const int &ntry, const int &notconv, const int &ntry_max, const int &notconv_max);
 
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;

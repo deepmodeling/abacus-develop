@@ -21,7 +21,8 @@ void write_elecstat_pot(
     ModulePW::PW_Basis* rho_basis,
     const Charge* const chr,
     const UnitCell* ucell,
-    const double* v_eff)
+    const double* v_eff,
+    const surchem& solvent)
 {
     ModuleBase::TITLE("ModuleIO", "write_elecstat_pot");
     ModuleBase::timer::tick("ModuleIO", "write_elecstat_pot");
@@ -50,7 +51,7 @@ void write_elecstat_pot(
                                                  const_cast<ModulePW::PW_Basis*>(rho_basis),
                                                  nspin,
                                                  chr->rho,
-                                                 GlobalC::solvent_model);
+                                                 solvent);
     }
 
     //==========================================
@@ -67,7 +68,7 @@ void write_elecstat_pot(
         }
         if(imp_sol == true)
         {
-            v_elecstat[ir] += GlobalC::solvent_model.delta_phi[ir];
+            v_elecstat[ir] += solvent.delta_phi[ir];
         }
     }
 
@@ -93,7 +94,7 @@ void write_elecstat_pot(
     double ef_tmp = 0.0;
     int out_fermi = 0;
 
-    ModuleIO::write_vdata_palgrid(GlobalC::Pgrid,
+    ModuleIO::write_vdata_palgrid(*chr->pgrid,
         v_elecstat.data(),
         is,
         nspin,

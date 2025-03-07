@@ -120,32 +120,6 @@ assert(this->value_begin != nullptr);
     }
 }
 
-template <typename T>
-void BaseMatrix<T>::add_element(int mu, int nu, const T& value)
-{
-#ifdef __DEBUG
-assert(this->value_begin != nullptr);
-#endif
-    int index = mu * this->ncol_local + nu;
-    value_begin[index] += value;
-}
-
-template <typename T>
-T& BaseMatrix<T>::get_value(const size_t& i_row, const size_t& j_col) const
-{
-#ifdef __DEBUG
-assert(this->value_begin != nullptr);
-#endif
-    int index = i_row * this->ncol_local + j_col;
-    return value_begin[index];
-}
-
-template <typename T>
-T* BaseMatrix<T>::get_pointer() const
-{
-    return value_begin;
-}
-
 // operator= for copy assignment
 template <typename T>
 BaseMatrix<T>& BaseMatrix<T>::operator=(const BaseMatrix<T>& other)
@@ -214,6 +188,14 @@ size_t BaseMatrix<T>::get_memory_size() const
         memory_size += nrow_local * ncol_local * sizeof(T);
     }
     return memory_size;
+}
+
+// set size
+template <typename T>
+void BaseMatrix<T>::set_size(const int& nrow, const int& ncol)
+{
+    this->nrow_local = nrow;
+    this->ncol_local = ncol;
 }
 
 // T of BaseMatrix can be double or complex<double>

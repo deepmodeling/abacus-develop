@@ -83,10 +83,12 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
-    //set globalv parameters
-    void set_globalv(Parameter& para);
-    // add bcast functions for global values
-    void set_globalv_bcast();
+    /// @brief set System_para according to input parameters
+    /// INPUT and STRU need to refer to each other in ABACUS, 
+    /// so it is necessary to obtain the file paths related to all inputs
+    void set_global_dir(const Input_para& inp, System_para& sys);
+    // set System_para according to input parameters
+    void set_globalv(const Input_para& inp, System_para& sys);
     // system items
     void item_system();
     // items for electronic structure

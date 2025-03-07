@@ -16,12 +16,6 @@
  *    So, we just test if they can be called without error.
  */
 #include "module_cell/klist.h"
-K_Vectors::K_Vectors()
-{
-}
-K_Vectors::~K_Vectors()
-{
-}
 
 class SpinConstrainTest : public testing::Test
 {

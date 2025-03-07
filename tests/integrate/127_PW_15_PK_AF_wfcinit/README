@@ -1,0 +1,7 @@
+Fe Antiferromagnetic
+NSPIN 2
+pw
+init magnet: up + down
+SG15
+init_wfc file
+init_chg wfc

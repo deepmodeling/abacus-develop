@@ -1,18 +1,18 @@
 #ifndef DIAGO_BPCG_H_
 #define DIAGO_BPCG_H_
 
+#include "module_base/kernels/math_kernel_op.h"
+#include "module_base/module_device/memory_op.h"
+#include "module_base/module_device/types.h"
+#include "module_base/para_gemm.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-
-#include "module_base/module_device/types.h"
-#include "module_base/module_device/memory_op.h"
-
-#include "module_hsolver/kernels/math_kernel_op.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include <module_base/macros.h>
+#include "module_hsolver/para_linear_transform.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
+#include <module_base/macros.h>
 
 namespace hsolver {
 
@@ -50,10 +50,12 @@ class DiagoBPCG
      * This function allocates all the related variables, such as hpsi, hsub, before the diag call.
      * It is called by the HsolverPW::initDiagh() function.
      *
-     * @param nband The number of bands.
+     * @param nband The number of bands of all processes.
+     * @param nband_l The number of bands of current process.
      * @param nbasis The number of basis functions. Leading dimension of psi.
+     * @param ndim The number of valid dimension of psi.
      */
-    void init_iter(const int nband, const int nbasis);
+    void init_iter(const int nband, const int nband_l, const int nbasis, const int ndim);
 
     using HPsiFunc = std::function<void(T*, T*, const int, const int)>;
 
@@ -73,12 +75,20 @@ class DiagoBPCG
               const std::vector<double>& ethr_band);
 
   private:
-    /// the number of rows of the input psi
+    /// the number of bands of all processes
     int n_band = 0;
+    /// the number of bands of current process
+    int n_band_l = 0;
     /// the number of cols of the input psi
     int n_basis = 0;
+    /// valid dimension of psi
+    int n_dim = 0;
     /// max iter steps for all-band cg loop
     int nline = 4;
+    /// parallel matrix multiplication
+    ModuleBase::PGemmCN<T, Device> pmmcn;
+    PLinearTransform<T, Device> plintrans;
+
 
     ct::DataType r_type  = ct::DataType::DT_INVALID;
     ct::DataType t_type  = ct::DataType::DT_INVALID;
@@ -106,6 +116,13 @@ class DiagoBPCG
 
     /// work for some calculations within this class, including rotate_wf call
     ct::Tensor work = {};
+
+    // These are for hsolver gemm_op use
+    /// ctx is nothing but the devices used in gemm_op (Device * ctx = nullptr;),
+    Device * ctx = {};
+    // Pointer to objects of 1 and 0 for gemm 
+    const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
+    const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
 
     /**
      * @brief Update the precondition array.
@@ -175,7 +192,6 @@ class DiagoBPCG
      * psi_out[dim: n_basis x n_band, column major, lda = n_basis_max],
      *
      * @param hsub_in Subspace matrix input, dim [n_basis, n_band] with column major.
-     * @param workspace_in Workspace matrix, dim [n_basis, n_band] with column major..
      * @param psi_out output wavefunction matrix with dim [n_basis, n_band], column major.
      */
     void rotate_wf(
@@ -330,8 +346,12 @@ class DiagoBPCG
     using resmem_complex_op = ct::kernels::resize_memory<T, ct_Device>;
     using syncmem_complex_op = ct::kernels::synchronize_memory<T, ct_Device, ct_Device>;
 
-    using calc_grad_with_block_op = hsolver::calc_grad_with_block_op<T, Device>;
-    using line_minimize_with_block_op = hsolver::line_minimize_with_block_op<T, Device>;
+    // note: these operators use template parameter base_device::Device_*
+    // defined in module_base/module_device/types.h
+    // different from ct_Device!
+    using calc_grad_with_block_op = ModuleBase::calc_grad_with_block_op<T, Device>;
+    using line_minimize_with_block_op = ModuleBase::line_minimize_with_block_op<T, Device>;
+    using gemm_op = ModuleBase::gemm_op<T, Device>;
 
 };
 

@@ -65,6 +65,42 @@ struct lapack_dngvd {
         Real* eigen_val);
 };
 
+
+template <typename T, typename Device>
+struct lapack_getrf {
+    void operator()(
+        const int& m,
+        const int& n,
+        T* Mat,
+        const int& lda,
+        int* ipiv);
+};
+
+
+template <typename T, typename Device>
+struct lapack_getri {
+    void operator()(
+        const int& n,
+        T* Mat,
+        const int& lda,
+        const int* ipiv,
+        T* work,
+        const int& lwork);
+};
+
+template <typename T, typename Device>
+struct lapack_getrs {
+    void operator()(
+        const char& trans,
+        const int& n,
+        const int& nrhs,
+        T* A,
+        const int& lda,
+        const int* ipiv,
+        T* B,
+        const int& ldb);
+};
+
 #if defined(__CUDA) || defined(__ROCM)
 // TODO: Use C++ singleton to manage the GPU handles
 void createGpuSolverHandle();  // create cusolver handle

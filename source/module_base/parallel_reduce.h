@@ -31,8 +31,8 @@ void reduce_int_grid(int* object, const int n); // mohan add 2012-01-12
 void reduce_double_grid(double* object, const int n);
 void reduce_double_diag(double* object, const int n);
 
-void reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double& object);
-void reduce_double_allpool(const int& kpar, const int& nproc_in_pool, double* object, const int n);
+void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double& object);
+void reduce_double_allpool(const int& npool, const int& nproc_in_pool, double* object, const int n);
 
 void gather_min_int_all(const int& nproc, int& v);
 void gather_max_double_all(const int& nproc, double& v);

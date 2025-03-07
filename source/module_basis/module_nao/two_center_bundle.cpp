@@ -107,7 +107,7 @@ void TwoCenterBundle::tabulate()
     {
         overlap_orb_alpha = std::unique_ptr<TwoCenterIntegrator>(new TwoCenterIntegrator);
         overlap_orb_alpha->tabulate(*orb_, *alpha_, 'S', nr, cutoff);
-        ModuleBase::Memory::record("TwoCenterTable: Descriptor", overlap_orb_beta->table_memory());
+        ModuleBase::Memory::record("TwoCenterTable: Descriptor", overlap_orb_alpha->table_memory());
     }
 
     if (orb_onsite_)

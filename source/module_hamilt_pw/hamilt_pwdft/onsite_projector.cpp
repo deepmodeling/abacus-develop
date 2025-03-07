@@ -8,7 +8,7 @@
 
 #include "module_base/projgen.h"
 #include "module_base/blas_connector.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #ifdef __MPI
 #include "module_base/parallel_reduce.h"
 #include "module_base/parallel_common.h"
@@ -165,7 +165,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
         RadialProjection::RadialProjector::_build_backward_map(it2iproj, lproj, irow2it_, irow2iproj_, irow2m_);
         RadialProjection::RadialProjector::_build_forward_map(it2ia, it2iproj, lproj, itiaiprojm2irow_);
         //rp_._build_sbt_tab(rgrid, projs, lproj, nq, dq);
-        rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.npol, tab, nhtol);
+        rp_._build_sbt_tab(nproj, rgrid, projs, lproj, nq, dq, ucell_in->omega, psi.get_npol(), tab, nhtol);
         // For being compatible with present cal_force and cal_stress framework  
         // uncomment the following code block if you want to use the Onsite_Proj_tools
         if(this->tab_atomic_ == nullptr)
@@ -173,7 +173,7 @@ void projectors::OnsiteProjector<T, Device>::init(const std::string& orbital_dir
             this->tot_nproj = itiaiprojm2irow_.size();
             this->npwx_ = this->pw_basis_->npwk_max;
             this->size_vproj = this->tot_nproj * this->npwx_;
-            resmem_complex_op()(this->ctx, this->tab_atomic_, this->size_vproj, "OnsiteP::tab_atomic_");
+            resmem_complex_op()(this->tab_atomic_, this->size_vproj, "OnsiteP::tab_atomic_");
         }
 
         delete this->fs_tools; // it is okay to delete nullptr
@@ -191,12 +191,12 @@ projectors::OnsiteProjector<T, Device>::~OnsiteProjector()
 {
     //delete[] becp;
     delete fs_tools;
-    delmem_complex_op()(this->ctx, this->tab_atomic_);
+    delmem_complex_op()(this->tab_atomic_);
     if(this->device == base_device::GpuDevice)
     {
-        delmem_complex_h_op()(this->cpu_ctx, this->h_becp);
+        delmem_complex_h_op()(this->h_becp);
     }
-    delmem_complex_op()(this->ctx, this->becp);
+    delmem_complex_op()(this->becp);
 
 }
 
@@ -390,10 +390,10 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     if(this->becp == nullptr || this->size_becp < npm*this->tot_nproj)
     {
         this->size_becp = npm*this->tot_nproj;
-        resmem_complex_op()(this->ctx, this->becp, this->size_becp);
+        resmem_complex_op()(this->becp, this->size_becp);
         if(this->device == base_device::GpuDevice )
         {
-            resmem_complex_h_op()(this->cpu_ctx, this->h_becp, this->size_becp);
+            resmem_complex_h_op()(this->h_becp, this->size_becp);
         }
         else
         {
@@ -403,7 +403,7 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     this->fs_tools->cal_becp(ik_, npm/npol, this->becp, ppsi); // in cal_becp, npm should be the one not multiplied by npol
     if(this->device == base_device::GpuDevice)
     {
-        syncmem_complex_d2h_op()(this->cpu_ctx, this->ctx, h_becp, this->becp, this->size_becp);
+        syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
     ModuleBase::timer::tick("OnsiteProj", "overlap");
 }
@@ -541,7 +541,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         }
         // std::cout << __FILE__ << ":" << __LINE__ << " nbands = " << nbands << std::endl;
         this->overlap_proj_psi(
-                        nbands * psi_in->npol,
+                        nbands * psi_in->get_npol(),
                         psi_in->get_pointer());
         const std::complex<double>* becp_p = this->get_h_becp();
         // becp(nbands*npol , nkb)
@@ -571,7 +571,8 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(const psi::Psi<std:
         }
     }
     // reduce mag from all k-pools
-    Parallel_Reduce::reduce_double_allpool(GlobalV::KPAR, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
+    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
+    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
     // occ has been reduced and calculate mag
     // parameters for orbital charge output
     FmtCore fmt_of_chg("%15.4f");
