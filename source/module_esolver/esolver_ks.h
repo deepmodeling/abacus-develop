@@ -43,7 +43,7 @@ class ESolver_KS : public ESolver_FP
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2density function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter) override;
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
     virtual void hamilt2density_single(UnitCell& ucell, const int istep, const int iter, const double ethr);
@@ -52,10 +52,10 @@ class ESolver_KS : public ESolver_FP
     void hamilt2density(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(UnitCell& ucell, const int istep) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
     //! <Temporary> It should be replaced by a function in Hamilt Class
-    virtual void update_pot(UnitCell& ucell, const int istep, const int iter){};
+    virtual void update_pot(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver){};
 
     //! Hamiltonian
     hamilt::Hamilt<T, Device>* p_hamilt = nullptr;

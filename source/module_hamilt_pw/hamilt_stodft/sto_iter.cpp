@@ -98,8 +98,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
         else
         {
             // sum(b<NBANDS, a<nchi) = < psi_b | chi_a >
-            ModuleBase::gemm_op<T, Device>()(ctx,
-                                             'C',
+            ModuleBase::gemm_op<T, Device>()('C',
                                              'N',
                                              nbands,
                                              nchipk,
@@ -115,8 +114,7 @@ void Stochastic_Iter<T, Device>::orthog(const int& ik, psi::Psi<T, Device>& psi,
             Parallel_Reduce::reduce_pool(sum, nbands * nchipk);
 
             // psi -= psi * sum
-            ModuleBase::gemm_op<T, Device>()(ctx,
-                                             'N',
+            ModuleBase::gemm_op<T, Device>()('N',
                                              'N',
                                              npw,
                                              nchipk,
@@ -428,7 +426,7 @@ void Stochastic_Iter<T, Device>::calPn(const int& ik, Stochastic_WF<T, Device>& 
         const int N = norder;
         const Real kweight = this->pkv->wk[ik];
         
-        ModuleBase::gemm_op<Real, Device>()(this->ctx, trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
+        ModuleBase::gemm_op<Real, Device>()(trans, normal, N, N, M, &kweight, vec_all, LDA, vec_all, LDA, &one, spolyv, N);
         // dgemm_(&trans, &normal, &N, &N, &M, &kweight, vec_all, &LDA, vec_all, &LDA, &one, spolyv, &N);
     }
     ModuleBase::timer::tick("Stochastic_Iter", "calPn");
@@ -769,7 +767,7 @@ void Stochastic_Iter<T, Device>::calTnchi_ik(const int& ik, Stochastic_WF<T, Dev
         T* coef_real = nullptr;
         resmem_complex_op()(coef_real, N);
         castmem_d2z_op()(coef_real, p_che->coef_real, p_che->norder);
-        gemv_op()(this->ctx, transa, M, N, &one, stowf.chiallorder[ik].get_pointer(), LDA, coef_real, inc, &zero, out, inc);
+        gemv_op()(transa, M, N, &one, stowf.chiallorder[ik].get_pointer(), LDA, coef_real, inc, &zero, out, inc);
         // zgemv_(&transa, &M, &N, &one, stowf.chiallorder[ik].get_pointer(), &LDA, coef_real, &inc, &zero, out, &inc);
         delmem_complex_op()(coef_real);
     }

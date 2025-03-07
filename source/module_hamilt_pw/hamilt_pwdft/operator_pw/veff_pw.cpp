@@ -53,7 +53,9 @@ void Veff<OperatorPW<T, Device>>::act(
 
     int max_npw = nbasis / npol;
     const int current_spin = this->isk[this->ik];
-    
+#ifdef __DSP
+    wfcpw->fft_bundle.resource_handler(1);
+#endif
     // T *porter = new T[wfcpw->nmaxgr];
     for (int ib = 0; ib < nbands; ib += npol)
     {
@@ -75,6 +77,13 @@ void Veff<OperatorPW<T, Device>>::act(
             }
             // wfcpw->real2recip(porter, tmhpsi, this->ik, true);
             wfcpw->real_to_recip(this->ctx, this->porter, tmhpsi, this->ik, true);
+            // wfcpw->convolution(this->ctx,
+            // this->ik,
+            // this->veff_col,
+            // tmpsi_in,
+            // this->veff+current_spin,
+            // tmhpsi,
+            // true);
         }
         else
         {
@@ -111,6 +120,9 @@ void Veff<OperatorPW<T, Device>>::act(
         tmhpsi += max_npw * npol;
         tmpsi_in += max_npw * npol;
     }
+#ifdef __DSP
+    wfcpw->fft_bundle.resource_handler(0);
+#endif
     ModuleBase::timer::tick("Operator", "VeffPW");
 }
 

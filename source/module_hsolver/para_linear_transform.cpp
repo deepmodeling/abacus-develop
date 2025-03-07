@@ -78,7 +78,6 @@ template <typename T, typename Device>
 void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, const T beta, T* B)
 {
     ModuleBase::timer::tick("PLinearTransform", "act");
-    const Device* ctx = {};
 #ifdef __MPI
     if (nproc_col > 1)
     {
@@ -97,21 +96,8 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
         // local part
         const int start = this->localU ? 0 : start_colB[rank_col];
         const T* U_part = U + start_colA[rank_col] + start * ncolA_glo;
-        ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA, U_part, ncolA_glo, U_tmp_, ncolA);
-        ModuleBase::gemm_op<T, Device>()(ctx,
-                                         'N',
-                                         'N',
-                                         nrowA,
-                                         ncolB,
-                                         ncolA,
-                                         &alpha,
-                                         A,
-                                         LDA,
-                                         U_tmp_,
-                                         ncolA,
-                                         &beta,
-                                         B,
-                                         LDA);
+        ModuleBase::matrixCopy<T, Device>()(ncolB, ncolA, U_part, ncolA_glo, U_tmp_, ncolA);
+        ModuleBase::gemm_op<T, Device>()('N', 'N', nrowA, ncolB, ncolA, &alpha, A, LDA, U_tmp_, ncolA, &beta, B, LDA);
 
         // Receive
         T* Atmp_device = nullptr;
@@ -130,13 +116,12 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                 T zero = 0.0;
                 const int ncolA_ip = colA_loc[ip];
                 const T* U_part = U + start_colA[ip] + start * ncolA_glo;
-                ModuleBase::matrixCopy<T, Device>()(ctx, ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp_, ncolA_ip);
+                ModuleBase::matrixCopy<T, Device>()(ncolB, ncolA_ip, U_part, ncolA_glo, U_tmp_, ncolA_ip);
 
                 int size = LDA * ncolA_ip;
                 MPI_Status status;
                 Parallel_Common::recv_dev<T, Device>(Atmp_device, size, ip, 0, col_world, &status, A_tmp_.data());
-                ModuleBase::gemm_op<T, Device>()(ctx,
-                                                 'N',
+                ModuleBase::gemm_op<T, Device>()('N',
                                                  'N',
                                                  nrowA,
                                                  ncolB,
@@ -151,7 +136,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
                                                  LDA);
                 // sum all the results
                 T one = 1.0;
-                ModuleBase::axpy_op<T, Device>()(ctx, ncolB * LDA, &one, B_tmp_, 1, B, 1);
+                ModuleBase::axpy_op<T, Device>()(ncolB * LDA, &one, B_tmp_, 1, B, 1);
             }
         }
 
@@ -167,8 +152,7 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
     else
 #endif
     {
-        ModuleBase::gemm_op<T, Device>()(ctx,
-                                         'N',
+        ModuleBase::gemm_op<T, Device>()('N',
                                          'N',
                                          nrowA,
                                          ncolB,

@@ -62,8 +62,9 @@ void cal_gvx(const int nat,
              const int* inl_l,
              const std::vector<torch::Tensor>& gevdm,
              const torch::Tensor& gdmx,
-             torch::Tensor& gvx);
-void check_gvx(const torch::Tensor& gvx);
+             torch::Tensor& gvx,
+             const int rank);
+void check_gvx(const torch::Tensor& gvx, const int rank);
 
 } // namespace DeePKS_domain
 #endif

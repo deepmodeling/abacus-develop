@@ -46,6 +46,7 @@
 // caoyu add 2021-03-29
 // wenfei modified 2022-1-5
 //
+template <typename T>
 class LCAO_Deepks
 {
 
@@ -59,10 +60,8 @@ class LCAO_Deepks
     double e_delta_band = 0.0;
 
     /// Correction term to the Hamiltonian matrix: \f$\langle\phi|V_\delta|\phi\rangle\f$ (for gamma only)
-    /// The size of first dimension is 1, which is used for the consitence with H_V_delta_k
-    std::vector<std::vector<double>> H_V_delta;
-    /// Correction term to Hamiltonian, for multi-k
-    std::vector<std::vector<std::complex<double>>> H_V_delta_k;
+    /// The first dimension is for k-points V_delta(k)
+    std::vector<std::vector<T>> V_delta;
 
     //-------------------
     // private variables
@@ -117,7 +116,7 @@ class LCAO_Deepks
     //   - init : allocates some arrays
     //   - init_index : records the index (inl)
     // 2. subroutines that are related to V_delta:
-    //   - allocate_V_delta : allocates H_V_delta; if calculating force, it also allocates F_delta
+    //   - allocate_V_delta : allocates V_delta; if calculating force, it also allocates F_delta
 
   public:
     explicit LCAO_Deepks();
@@ -130,14 +129,14 @@ class LCAO_Deepks
               const int ntype,
               const int nks,
               const Parallel_Orbitals& pv_in,
-              std::vector<int> na);
+              std::vector<int> na,
+              std::ofstream& ofs);
 
     /// Allocate memory for correction to Hamiltonian
     void allocate_V_delta(const int nat, const int nks = 1);
 
     //! a temporary interface for cal_e_delta_band
-    template <typename TK>
-    void dpks_cal_e_delta_band(const std::vector<std::vector<TK>>& dm, const int nks);
+    void dpks_cal_e_delta_band(const std::vector<std::vector<T>>& dm, const int nks);
 
   private:
     // flag of HR status,
@@ -146,7 +145,12 @@ class LCAO_Deepks
     bool hr_cal = true;
 
     // arrange index of descriptor in all atoms
-    void init_index(const int ntype, const int nat, std::vector<int> na, const int tot_inl, const LCAO_Orbitals& orb);
+    void init_index(const int ntype,
+                    const int nat,
+                    std::vector<int> na,
+                    const int tot_inl,
+                    const LCAO_Orbitals& orb,
+                    std::ofstream& ofs);
 
     const Parallel_Orbitals* pv;
 };

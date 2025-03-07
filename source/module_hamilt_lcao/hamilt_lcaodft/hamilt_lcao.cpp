@@ -83,7 +83,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                elecstate::DensityMatrix<TK, double>* DM_in
 #ifdef __DEEPKS
                                ,
-                               LCAO_Deepks* ld_in
+                               LCAO_Deepks<TK>* ld_in
 #endif
 #ifdef __EXX
                                ,

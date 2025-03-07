@@ -145,8 +145,7 @@ TEST_F(TestModuleHsolverMathDngvd, transpose_gpu)
 
     // run
     ModuleBase::createGpuBlasHandle();
-    ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(gpu_ctx,
-                                                                                 2,
+    ModuleBase::matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>()(2,
                                                                                  3,
                                                                                  device_transpose,
                                                                                  device_transpose);

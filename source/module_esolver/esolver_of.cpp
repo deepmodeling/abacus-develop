@@ -164,6 +164,9 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
     if (PARAM.inp.of_ml_local_test) this->ml_->localTest(pelec->charge->rho, this->pw_rho);
 #endif
 
+
+    bool conv_esolver = false; // this conv_esolver is added by mohan 20250302 
+
     while (true)
     {
         // once we get a new rho and phi, update potential
@@ -174,8 +177,9 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
         this->energy_last_ = this->energy_current_;
         this->energy_current_ = this->cal_energy();
 
+
         // check if the job is done
-        if (this->check_exit())
+        if (this->check_exit(conv_esolver))
         {
             break;
         }
@@ -188,10 +192,10 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 
         this->iter_++;
 
-        ESolver_FP::iter_finish(ucell, istep, this->iter_);
+        ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
     }
 
-    this->after_opt(istep, ucell);
+    this->after_opt(istep, ucell, conv_esolver);
 
     ModuleBase::timer::tick("ESolver_OF", "runner");
 }
@@ -254,16 +258,8 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             this->precip_dir_[is] = new std::complex<double>[pw_rho->npw];
         }
     }
-    if (ucell.ionic_position_updated)
-    {
-        CE.update_all_dis(ucell);
-        CE.extrapolate_charge(&Pgrid, ucell, pelec->charge, &sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-    }
 
     this->pelec->init_scf(istep, ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
-
-    // calculate ewald energy
-    this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rho, sf.strucFac);
 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -434,9 +430,9 @@ void ESolver_OF::update_rho()
  *
  * @return exit or not
  */
-bool ESolver_OF::check_exit()
+bool ESolver_OF::check_exit(bool& conv_esolver)
 {
-    this->conv_esolver = false;
+    conv_esolver = false;
     bool potConv = false;
     bool potHold = false; // if normdLdphi nearly remains unchanged
     bool energyConv = false;
@@ -457,12 +453,12 @@ bool ESolver_OF::check_exit()
         energyConv = true;
     }
 
-    this->conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
+    conv_esolver = (this->of_conv_ == "energy" && energyConv) || (this->of_conv_ == "potential" && potConv)
                          || (this->of_conv_ == "both" && potConv && energyConv);
 
-    this->print_info();
+    this->print_info(conv_esolver);
 
-    if (this->conv_esolver || this->iter_ >= this->max_iter_)
+    if (conv_esolver || this->iter_ >= this->max_iter_)
     {
         return true;
     }
@@ -488,35 +484,52 @@ bool ESolver_OF::check_exit()
  * @param istep
  * @param ucell
  */
-void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
+void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_OF", "after_opt");
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 
-    // 1) calculate the kinetic energy density
+    //------------------------------------------------------------------
+    // 1) calculate kinetic energy density and ELF
+    //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
         this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
     }
 
+    //------------------------------------------------------------------
+    // 2) call after_scf() of ESolver_FP
+    //------------------------------------------------------------------
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+
+
+    // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
         this->pelec->charge->rho_save[0][ir] = this->pelec->charge->rho[0][ir];
     }
 
 #ifdef __MLKEDF
+    //------------------------------------------------------------------
     // Check the positivity of Pauli energy
+    //------------------------------------------------------------------
     if (this->of_kinetic_ == "ml")
     {
         this->tf_->get_energy(this->pelec->charge->rho);
-        std::cout << "ML Term = " << this->ml_->ml_energy << " Ry, TF Term = " << this->tf_->tf_energy << " Ry." << std::endl;
+
+        std::cout << "ML Term = " << this->ml_->ml_energy 
+                  << " Ry, TF Term = " << this->tf_->tf_energy 
+                  << " Ry." << std::endl;
+
         if (this->ml_->ml_energy >= this->tf_->tf_energy)
         {
             std::cout << "WARNING: ML >= TF" << std::endl;
         }
     }
 
+    //------------------------------------------------------------------
     // Generate data if needed
+    //------------------------------------------------------------------
     if (PARAM.inp.of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
@@ -537,8 +550,6 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell)
         this->ml_->generateTrainData(pelec->charge->rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
     }
 #endif
-    // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(ucell, istep);
 
     ModuleBase::timer::tick("ESolver_OF", "after_opt");
 }

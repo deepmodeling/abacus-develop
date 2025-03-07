@@ -32,6 +32,7 @@ namespace DeePKS_domain
 void read_pdm(bool read_pdm_file,
               bool is_equiv,
               bool& init_pdm,
+              const int nat,
               const int inlmax,
               const int lmaxd,
               const int* inl_l,
