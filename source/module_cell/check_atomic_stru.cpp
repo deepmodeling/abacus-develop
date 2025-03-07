@@ -49,7 +49,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                 std::cout << mess.str();
             }
         }
-        double* latvec = new double[9];
+        std::vector<double> latvec (9);
         latvec[0] = ucell.a1.x;
         latvec[1] = ucell.a2.x;
         latvec[2] = ucell.a3.x;
@@ -59,7 +59,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         latvec[6] = ucell.a1.z;
         latvec[7] = ucell.a2.z;
         latvec[8] = ucell.a3.z;
-        double* A = new double[27 * 3];
+        std::vector<double> A(27);
         std::vector<std::string> cell(27);
         std::vector<std::string> label(ntype);
         for (int i = 0; i < 27; i++)
@@ -133,13 +133,11 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                                              << sqrt_bon << " Bohr (" << sqrt_bon * bohr_to_a << " Angstrom)\n";
                                 }
                             }
-                        } // ia2
-                    } // it2
-                } // iat
-            }
+                        } 
+                    } // ia2
+                } // it2
+            } // iat
         }
-        delete[] latvec;
-        delete[] A;
         ModuleBase::timer::tick("Check_Atomic_Stru", "Check_Atomic_Stru");
     }
     if (!all_pass || !no_warning)
