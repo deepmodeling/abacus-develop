@@ -154,7 +154,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::hamilt2density_single(UnitCell& ucell,
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(pelec->charge), pw_rho, ucell.symm);
+            srho.begin(is, this->chr, pw_rho, ucell.symm);
         }
     }
 
@@ -206,7 +206,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
@@ -365,8 +365,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::after_scf(UnitCell& ucell, const int istep, 
             std::stringstream ss_dipole;
             ss_dipole << PARAM.globalv.global_out_dir << "SPIN" << is + 1 << "_DIPOLE";
             ModuleIO::write_dipole(ucell,
-                                   pelec->charge->rho_save[is],
-                                   pelec->charge->rhopw,
+                                   this->chr.rho_save[is],
+                                   this->chr.rhopw,
                                    is,
                                    istep,
                                    ss_dipole.str());

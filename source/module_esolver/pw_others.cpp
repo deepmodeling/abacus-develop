@@ -46,6 +46,9 @@
 #include <ATen/kernels/lapack.h>
 #include "module_base/formatter.h"
 
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
+
 namespace ModuleESolver {
 
 template <typename T, typename Device>

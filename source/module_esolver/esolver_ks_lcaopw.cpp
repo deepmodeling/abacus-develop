@@ -163,7 +163,7 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
+            srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
         }
 
         // deband is calculated from "output" charge density calculated
@@ -255,7 +255,7 @@ namespace ModuleESolver
                                 *this->pw_rho,
                                 *this->pw_rhod,
                                 this->locpp.vloc,
-                                *this->pelec->charge,
+                                this->chr,
                                 this->kv,
                                 this->pelec->wg
 #ifdef __EXX
