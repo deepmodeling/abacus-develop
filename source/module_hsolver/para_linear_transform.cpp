@@ -120,6 +120,11 @@ void PLinearTransform<T, Device>::act(const T alpha, const T* A, const T* U, con
 
                 int size = LDA * ncolA_ip;
                 MPI_Status status;
+#ifdef __CUDA_MPI
+                // If the memory is not set to zero, it may cause the result to be wrong when using CUDA Aware MPI
+                // I am not sure if it is due to CUDA Aware MPI or not
+                base_device::memory::set_memory_op<T, Device>()(Atmp_device, 0, size);
+#endif
                 Parallel_Common::recv_dev<T, Device>(Atmp_device, size, ip, 0, col_world, &status, A_tmp_.data());
                 ModuleBase::gemm_op<T, Device>()('N',
                                                  'N',
