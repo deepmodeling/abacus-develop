@@ -160,7 +160,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 #ifdef __EXX
     // 5) initialize exx
     // PLEASE simplify the Exx_Global interface
-    if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"
+    if (PARAM.inp.calculation == "scf" 
+        || PARAM.inp.calculation == "relax" 
+        || PARAM.inp.calculation == "cell-relax"
         || PARAM.inp.calculation == "md")
     {
         if (GlobalC::exx_info.info_global.cal_exx)
