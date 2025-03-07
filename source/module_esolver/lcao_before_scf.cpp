@@ -302,7 +302,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         {
             std::string fn = PARAM.globalv.global_out_dir + "/SPIN" + std::to_string(is + 1) + "_CHG.cube";
             ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                          this->pelec->charge->rho[is],
+                                          this->chr.rho[is],
                                           is,
                                           PARAM.inp.nspin,
                                           istep,
@@ -322,7 +322,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
     this->p_hamilt->non_first_scf = istep;

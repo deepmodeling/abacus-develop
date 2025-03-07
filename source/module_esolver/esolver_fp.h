@@ -2,15 +2,30 @@
 #define ESOLVER_FP_H
 
 #include "esolver.h"
+
+//! plane wave basis
 #include "module_basis/module_pw/pw_basis.h"
+
+//! symmetry analysis
 #include "module_cell/module_symmetry/symmetry.h"
+
+//! electronic states
 #include "module_elecstate/elecstate.h"
+
+//! charge extrapolation
 #include "module_elecstate/module_charge/charge_extra.h"
+
+//! solvation model
 #include "module_hamilt_general/module_surchem/surchem.h"
+
+//! local pseudopotential
 #include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
+
+//! structure factor related to plane wave basis
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 
 #include <fstream>
+
 
 //! The First-Principles (FP) Energy Solver Class
 /**
@@ -22,7 +37,7 @@
 
 namespace ModuleESolver
 {
-class ESolver_FP : public ESolver
+class ESolver_FP: public ESolver
 {
   public:
     //! Constructor
@@ -49,39 +64,34 @@ class ESolver_FP : public ESolver
     //! ------------------------------------------------------------------------------
     elecstate::ElecState* pelec = nullptr; ///< Electronic states
 
-    //! ------------------------------------------------------------------------------
+    //! K points in Brillouin zone
+    K_Vectors kv;
 
     //! Electorn charge density
     Charge chr;
 
-    //! Structure factors that used with plane-wave basis set
-    Structure_Factor sf;
-
-    //! K points in Brillouin zone
-    K_Vectors kv;
-
-    //! Plane-wave basis set for charge density
+    //! pw_rho: Plane-wave basis set for charge density
+    //! pw_rhod: same as pw_rho for NCPP. Here 'd' stands for 'dense',
+    //!          dense grid for for uspp, used for ultrasoft augmented charge density.
+    //!          charge density and potential are defined on dense grids,
+    //!          but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
     ModulePW::PW_Basis* pw_rho;
+    ModulePW::PW_Basis* pw_rhod;    //! dense grid for USPP
+    ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
 
     //! parallel for rho grid
     Parallel_Grid Pgrid;
 
-    //! pointer to local pseudopotential
+    //! Structure factors that used with plane-wave basis set
+    Structure_Factor sf;
+
+    //! local pseudopotentials
     pseudopot_cell_vl locpp;
 
-    /**
-     * @brief same as pw_rho for ncpp. Here 'd' stands for 'dense'
-     * dense grid for for uspp, used for ultrasoft augmented charge density.
-     * charge density and potential are defined on dense grids,
-     * but effective potential needs to be interpolated on smooth grids in order to compute Veff|psi>
-     */
-    ModulePW::PW_Basis* pw_rhod;
-    ModulePW::PW_Basis_Big* pw_big; ///< [temp] pw_basis_big class
-
-    //! Charge extrapolation
+    //! charge extrapolation method
     Charge_Extra CE;
 
-    // solvent model
+    //! solvent model
     surchem solvent;
 };
 } // namespace ModuleESolver

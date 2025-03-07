@@ -236,13 +236,13 @@ void ESolver_OF::kinetic_stress(ModuleBase::matrix& kinetic_stress_)
 
     if (this->of_kinetic_ == "wt")
     {
-        this->wt_->get_stress(pelec->charge->rho, this->pw_rho, PARAM.inp.of_vw_weight);
+        this->wt_->get_stress(this->chr.rho, this->pw_rho, PARAM.inp.of_vw_weight);
         kinetic_stress_ += this->wt_->stress;
     }
 
     if (this->of_kinetic_ == "lkt")
     {
-        this->lkt_->get_stress(pelec->charge->rho, this->pw_rho);
+        this->lkt_->get_stress(this->chr.rho, this->pw_rho);
         kinetic_stress_ += this->lkt_->stress;
     }
     if (this->of_kinetic_ == "ml")

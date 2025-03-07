@@ -1,13 +1,22 @@
 #ifndef ESOLVER_KS_H
 #define ESOLVER_KS_H
+
 #include "esolver_fp.h"
+
+// for plane wave basis set 
 #include "module_basis/module_pw/pw_basis_k.h"
+
+// for k-points in Brillouin zone
 #include "module_cell/klist.h"
+
+// for charge mixing
 #include "module_elecstate/module_charge/charge_mixing.h"
-#include "module_hamilt_general/hamilt.h"
-#include "module_hsolver/hsolver.h"
-#include "module_io/cal_test.h"
+
+// for electronic wave functions
 #include "module_psi/psi.h"
+
+// for Hamiltonian
+#include "module_hamilt_general/hamilt.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -63,23 +72,14 @@ class ESolver_KS : public ESolver_FP
     //! PW for wave functions, only used in KSDFT, not in OFDFT
     ModulePW::PW_Basis_K* pw_wfc = nullptr;
 
-    //! Charge mixing method, only used in KDSFT, not in OFDFT
+    //! Charge mixing method
     Charge_Mixing* p_chgmix = nullptr;
 
-    //! nonlocal pseudo potential
+    //! nonlocal pseudopotentials
     pseudopot_cell_vnl ppcell;
 
     //! Electronic wavefunctions
     psi::Psi<T>* psi = nullptr;
-
-    //! plane wave or LCAO
-    std::string basisname;
-
-    //! number of electrons
-    double esolver_KS_ne = 0.0;
-
-    //! whether esolver is oscillated
-    bool oscillate_esolver = false;
 
     //! the start time of scf iteration
 #ifdef __MPI
@@ -88,13 +88,16 @@ class ESolver_KS : public ESolver_FP
     std::chrono::system_clock::time_point iter_time;
 #endif
 
-    double diag_ethr;     //! the threshold for diagonalization
-    double scf_thr;       //! scf density threshold
-    double scf_ene_thr;   //! scf energy threshold
-    double drho;          //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
-    double hsolver_error; //! the error of HSolver
-    int maxniter;         //! maximum iter steps for scf
-    int niter;            //! iter steps actually used in scf
+    std::string basisname;      //! esolver_ks_lcao.cpp
+    double esolver_KS_ne = 0.0; //! number of electrons
+    double diag_ethr;           //! the threshold for diagonalization
+    double scf_thr;             //! scf density threshold
+    double scf_ene_thr;         //! scf energy threshold
+    double drho;                //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
+    double hsolver_error;       //! the error of HSolver
+    int maxniter;               //! maximum iter steps for scf
+    int niter;                  //! iter steps actually used in scf
+    bool oscillate_esolver = false; // whether esolver is oscillated
 };
 } // namespace ModuleESolver
 #endif

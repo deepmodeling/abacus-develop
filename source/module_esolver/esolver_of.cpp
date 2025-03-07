@@ -161,7 +161,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
 
 #ifdef __MLKEDF
     // for ML KEDF test
-    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(pelec->charge->rho, this->pw_rho);
+    if (PARAM.inp.of_ml_local_test) this->ml_->localTest(this->chr.rho, this->pw_rho);
 #endif
 
 
@@ -264,7 +264,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(pelec->charge), this->pw_rho, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -275,15 +275,15 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             {
                 // Here we initialize rho to be uniform,
                 // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                pelec->charge->rho[is][ibs] = this->nelec_[is] / this->pelec->omega;
-                this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+                this->chr.rho[is][ibs] = this->nelec_[is] / this->pelec->omega;
+                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
             }
         }
         else
         {
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
-                this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
             }
         }
     }
@@ -315,8 +315,8 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     // (1) get dL/dphi
     elecstate::cal_ux(ucell);
 
-    this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
-    this->kinetic_potential(pelec->charge->rho,
+    this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
+    this->kinetic_potential(this->chr.rho,
                             this->pphi_,
                             this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
     for (int is = 0; is < PARAM.inp.nspin; ++is)
@@ -405,7 +405,7 @@ void ESolver_OF::update_rho()
         {
             this->pphi_[is][ir]
                 = this->pphi_[is][ir] * cos(this->theta_[is]) + this->pdirect_[is][ir] * sin(this->theta_[is]);
-            pelec->charge->rho[is][ir] = this->pphi_[is][ir] * this->pphi_[is][ir];
+            this->chr.rho[is][ir] = this->pphi_[is][ir] * this->pphi_[is][ir];
         }
     }
     // // ------------ turn on symmetry may cause instability in optimization ------------
@@ -414,10 +414,10 @@ void ESolver_OF::update_rho()
     //     Symmetry_rho srho;
     //     for (int is = 0; is < PARAM.inp.nspin; is++)
     //     {
-    //         srho.begin(is, *(pelec->charge), this->pw_rho, Pgrid, ucell.symm);
+    //         srho.begin(is, *(this->chr), this->pw_rho, Pgrid, ucell.symm);
     //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
     //         {
-    //             this->pphi_[is][ibs] = sqrt(pelec->charge->rho[is][ibs]);
+    //             this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
     //         }
     //     }
     // }
@@ -494,7 +494,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->kinetic_energy_density(this->pelec->charge->rho, this->pphi_, this->pelec->charge->kin_r);
+        this->kinetic_energy_density(this->chr.rho, this->pphi_, this->chr.kin_r);
     }
 
     //------------------------------------------------------------------
@@ -506,7 +506,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     // should not be here? mohan note 2025-03-03
     for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
     {
-        this->pelec->charge->rho_save[0][ir] = this->pelec->charge->rho[0][ir];
+        this->chr.rho_save[0][ir] = this->chr.rho[0][ir];
     }
 
 #ifdef __MLKEDF
@@ -515,7 +515,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     if (this->of_kinetic_ == "ml")
     {
-        this->tf_->get_energy(this->pelec->charge->rho);
+        this->tf_->get_energy(this->chr.rho);
 
         std::cout << "ML Term = " << this->ml_->ml_energy 
                   << " Ry, TF Term = " << this->tf_->tf_energy 
@@ -532,8 +532,8 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     if (PARAM.inp.of_ml_gene_data)
     {
-        this->pelec->pot->update_from_charge(pelec->charge, &ucell); // Hartree + XC + external
-        this->kinetic_potential(pelec->charge->rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
+        this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
+        this->kinetic_potential(this->chr.rho, this->pphi_, this->pelec->pot->get_effective_v()); // (kinetic + Hartree + XC + external) * 2 * phi
         
         const double* vr_eff = this->pelec->pot->get_effective_v(0);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -547,7 +547,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
         // =================
         std::cout << "Generating Training data..." << std::endl;
         std::cout << "mu = " << this->pelec->eferm.get_efval(0) << std::endl;
-        this->ml_->generateTrainData(pelec->charge->rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
+        this->ml_->generateTrainData(this->chr.rho, *(this->wt_), *(this->tf_), this->pw_rho, vr_eff);
     }
 #endif
 
@@ -580,7 +580,7 @@ double ESolver_OF::cal_energy()
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {
         pseudopot_energy += this->inner_product(this->pelec->pot->get_fixed_v(),
-                                                pelec->charge->rho[is],
+                                                this->chr.rho[is],
                                                 this->pw_rho->nrxx,
                                                 this->dV_);
     }
