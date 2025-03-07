@@ -27,7 +27,7 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
-
+#include "module_elecstate/elecstate_tools.h"
 
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
@@ -596,7 +596,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             if (!PARAM.inp.dm_to_rho)
             {
                 auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                _pelec->calEBand();
+                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
                 elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
                 _pelec->DM->cal_DMR();
             }

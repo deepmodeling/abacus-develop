@@ -26,10 +26,6 @@ void ElecState::calculate_weights()
     return;
 }
 
-void ElecState::calEBand()
-{
-    return;
-}
 
 void ElecState::init_scf(const int istep,
                          const UnitCell& ucell,

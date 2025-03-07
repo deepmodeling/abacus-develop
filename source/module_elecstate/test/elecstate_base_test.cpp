@@ -7,6 +7,7 @@
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate.h"
 #include "module_elecstate/occupy.h"
+#include "module_elecstate/elecstate_tools.h"
 #undef protected
 #undef private
 
@@ -335,7 +336,7 @@ TEST_F(ElecStateTest, CalEBand)
         }
     }
     GlobalV::KPAR = 2;
-    elecstate->calEBand();
+    elecstate::calEBand(elecstate->ekb,elecstate->wg,elecstate->f_en);
     EXPECT_DOUBLE_EQ(elecstate->f_en.eband, 60.0);
 }
 

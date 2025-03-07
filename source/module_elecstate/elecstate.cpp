@@ -176,29 +176,6 @@ void ElecState::calculate_weights()
 }
 
 
-void ElecState::calEBand()
-{
-    ModuleBase::TITLE("ElecState", "calEBand");
-    // calculate ebands using wg and ekb
-    double eband = 0.0;
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) reduction(+ : eband)
-#endif
-    for (int ik = 0; ik < this->ekb.nr; ++ik)
-    {
-        for (int ibnd = 0; ibnd < this->ekb.nc; ibnd++)
-        {
-            eband += this->ekb(ik, ibnd) * this->wg(ik, ibnd);
-        }
-    }
-    this->f_en.eband = eband;
-
-#ifdef __MPI
-    const int npool = GlobalV::KPAR * PARAM.inp.bndpar;
-    Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, this->f_en.eband);
-#endif
-    return;
-}
 
 
 void ElecState::init_scf(const int istep, 

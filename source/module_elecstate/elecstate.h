@@ -167,11 +167,11 @@ class ElecState
     ModuleBase::matrix wg;  ///< occupation weight for each k-point and band
 
   public:
-    // calculate ebands for all k points and all occupied bands
-    void calEBand();
 
     bool skip_weights = false;
 };
+    
+
 
 } // namespace elecstate
 #endif

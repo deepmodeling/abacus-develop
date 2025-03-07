@@ -13,6 +13,8 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
 #include "module_psi/psi.h"
+#include "module_elecstate/elecstate_tools.h"
+
 
 #include <algorithm>
 #include <vector>
@@ -336,7 +338,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
         this->wfc_basis->nks * psi.get_nbands());
 
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
+    auto _pes_pw = reinterpret_cast<elecstate::ElecStatePW<T>*>(pes);
+    elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
     if (skip_charge)
     {
         if (PARAM.globalv.use_uspp)

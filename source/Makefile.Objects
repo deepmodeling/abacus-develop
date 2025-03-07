@@ -222,6 +222,7 @@ OBJS_ELECSTAT=elecstate.o\
     elecstate_pw_sdft.o\
     elecstate_pw_cal_tau.o\
     elecstate_op.o\
+    elecstate_tools.o\
     efield.o\
     gatefield.o\
     potential_new.o\

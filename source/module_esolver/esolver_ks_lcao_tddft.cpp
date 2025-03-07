@@ -6,6 +6,7 @@
 #include "module_io/write_HS.h"
 #include "module_io/write_HS_R.h"
 #include "module_io/write_wfc_nao.h"
+#include "module_elecstate/elecstate_tools.h"
 
 //--------------temporary----------------------------
 #include "module_base/blas_connector.h"
@@ -404,7 +405,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::weight_dm_rho()
     }
 
     // calculate Eband energy
-    this->pelec->calEBand();
+    elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
 
     // calculate the density matrix
     ModuleBase::GlobalFunc::NOTE("Calculate the density matrix.");

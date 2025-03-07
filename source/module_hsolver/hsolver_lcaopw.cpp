@@ -9,6 +9,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_tools.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -275,7 +276,8 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         pes->ekb.nr * pes->ekb.nc);
 
     reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
+    auto pes_pw = dynamic_cast<elecstate::ElecStatePW<T>*>(pes);
+    elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
     if (skip_charge)
     {
         if (PARAM.globalv.use_uspp)
