@@ -59,7 +59,7 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
         latvec[6] = ucell.a1.z;
         latvec[7] = ucell.a2.z;
         latvec[8] = ucell.a3.z;
-        std::vector<double> A(27);
+        std::vector<double> A(27*3);
         std::vector<std::string> cell(27);
         std::vector<std::string> label(ntype);
         for (int i = 0; i < 27; i++)
