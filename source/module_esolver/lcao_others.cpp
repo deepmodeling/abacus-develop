@@ -34,6 +34,9 @@
 #include "module_io/restart_exx_csr.h"
 #endif
 
+// mohan add 2025-03-06
+#include "module_io/cal_test.h"
+
 namespace ModuleESolver
 {
 
@@ -173,7 +176,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     {
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
         {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::beforesolver", "read wfc nao failed");
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "read wfc nao failed");
         }
     }
 
@@ -276,7 +279,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         if (PARAM.globalv.gamma_only_local)
         {
             ISC.begin(this->GG,
-                      this->pelec->charge->rho,
+                      this->chr.rho,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod->nrxx,
@@ -304,8 +307,8 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         else
         {
             ISC.begin(this->GK,
-                      this->pelec->charge->rho,
-                      this->pelec->charge->rhog,
+                      this->chr.rho,
+                      this->chr.rhog,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
                       this->pw_rhod,
@@ -332,7 +335,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                       this->kv,
                       PARAM.inp.if_separate_k,
                       &this->Pgrid,
-                      this->pelec->charge->ngmc);
+                      this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }

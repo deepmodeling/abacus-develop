@@ -193,7 +193,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
     // 8) inititlize the charge density
-    this->pelec->charge->allocate(PARAM.inp.nspin);
+    this->chr.allocate(PARAM.inp.nspin);
     this->pelec->omega = ucell.omega;
 
     // 9) initialize the potential
@@ -331,7 +331,6 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
                        &ucell.symm);
 
     // delete RA after cal_force
-
     this->RA.delete_grid();
 
     this->have_force = true;
@@ -349,12 +348,16 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
 
+    // if the users do not want to calculate forces but want stress,
+    // we call cal_force
     if (!this->have_force)
     {
         ModuleBase::matrix fcs;
         this->cal_force(ucell, fcs);
     }
-    stress = this->scs; // copy the stress
+
+    // the 'scs' stress has already been calculated in 'cal_force'
+    stress = this->scs;
     this->have_force = false;
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "cal_stress");
@@ -466,7 +469,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                     *this->pw_rho,
                                     *this->pw_rhod,
                                     this->locpp.vloc,
-                                    *this->pelec->charge,
+                                    this->chr,
                                     this->GG,
                                     this->GK,
                                     this->kv,
@@ -494,7 +497,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
                                             *this->pw_rho,
                                             *this->pw_rhod,
                                             this->locpp.vloc,
-                                            *this->pelec->charge,
+                                            this->chr,
                                             this->GG,
                                             this->GK,
                                             this->kv,
@@ -625,7 +628,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             elecstate::cal_ux(ucell);
 
             //! update the potentials by using new electron charge density
-            this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+            this->pelec->pot->update_from_charge(&this->chr, &ucell);
 
             //! compute the correction energy for metals
             this->pelec->f_en.descf = this->pelec->cal_delta_escf();
@@ -662,7 +665,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             GlobalC::dftu.set_dmr(dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->get_DM());
         }
         // Calculate U and J if Yukawa potential is used
-        GlobalC::dftu.cal_slater_UJ(ucell, this->pelec->charge->rho, this->pw_rho->nrxx);
+        GlobalC::dftu.cal_slater_UJ(ucell, this->chr.rho, this->pw_rho->nrxx);
     }
 
 #ifdef __DEEPKS
@@ -760,7 +763,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2density_single(UnitCell& ucell, int istep, 
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
-        srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
+        srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
     // 12) calculate delta energy
@@ -780,7 +783,7 @@ void ESolver_KS_LCAO<TK, TR>::update_pot(UnitCell& ucell, const int istep, const
     if (!conv_esolver)
     {
         elecstate::cal_ux(ucell);
-        this->pelec->pot->update_from_charge(this->pelec->charge, &ucell);
+        this->pelec->pot->update_from_charge(&this->chr, &ucell);
         this->pelec->f_en.descf = this->pelec->cal_delta_escf();
     }
     else
@@ -863,7 +866,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     {
         for (int is = 0; is < PARAM.inp.nspin; ++is)
         {
-            GlobalC::restart.save_disk("charge", is, this->pelec->charge->nrxx, this->pelec->charge->rho[is]);
+            GlobalC::restart.save_disk("charge", is, this->chr.nrxx, this->chr.rho[is]);
         }
     }
 

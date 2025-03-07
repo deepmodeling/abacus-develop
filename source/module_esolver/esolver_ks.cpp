@@ -10,6 +10,7 @@
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
 #include "module_elecstate/elecstate_print.h"
+#include "module_hsolver/hsolver.h"
 
 #include <ctime>
 #include <iostream>
@@ -367,7 +368,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
         // double drho = this->estate.caldr2();
         // EState should be used after it is constructed.
 
-        drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
+        drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
         hsolver_error = 0.0;
         if (iter == 1 && PARAM.inp.calculation != "nscf")
         {
@@ -389,7 +390,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
 
                 this->hamilt2density_single(ucell, istep, iter, diag_ethr);
 
-                drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
+                drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
                 hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                           PARAM.inp.esolver_type,
@@ -521,7 +522,7 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
     }
 
     // 1) save input rho
-    this->pelec->charge->save_rho_before_sum_band();
+    this->chr.save_rho_before_sum_band();
 }
 
 template <typename T, typename Device>
@@ -551,9 +552,9 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     // compute magnetization, only for LSDA(spin==2)
     ucell.magnet.compute_magnetization(ucell.omega,
-                                       this->pelec->charge->nrxx,
-                                       this->pelec->charge->nxyz,
-                                       this->pelec->charge->rho,
+                                       this->chr.nrxx,
+                                       this->chr.nxyz,
+                                       this->chr.rho,
                                        this->pelec->nelec_spin.data());
 
     if (PARAM.globalv.ks_run)
@@ -628,11 +629,11 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
             }
             else
             {
-                p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
+                p_chgmix->mix_rho(&this->chr); // update chr->rho by mixing
             }
             if (PARAM.inp.scf_thr_type == 2)
             {
-                pelec->charge->renormalize_rho(); // renormalize rho in R-space would
+                this->chr.renormalize_rho(); // renormalize rho in R-space would
                                                   // induce a error in K-space
             }
             //----------charge mixing done-----------
@@ -644,7 +645,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     // be careful! conv_esolver is bool, not double !! Maybe a bug 20250302 by mohan 
     MPI_Bcast(&conv_esolver, 1, MPI_DOUBLE, 0, BP_WORLD);
-    MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
+    MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
     // update potential
@@ -676,7 +677,7 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     double dkin = 0.0; // for meta-GGA
     if (XC_Functional::get_ked_flag())
     {
-        dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
+        dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
     }
 
 
