@@ -565,26 +565,24 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     //------------------------------------------------------------------
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-
     //------------------------------------------------------------------
-    // 3) output wavefunctions in pw basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    //------------------------------------------------------------------
-    // 4) transfer data from GPU to CPU in pw basis
-    // a question: the wavefunctions have been output, then the data transfer occurs? mohan 20250302
+    // 3) transfer data from GPU to CPU in pw basis
     //------------------------------------------------------------------
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
+    }
+    
+    //------------------------------------------------------------------
+    // 4) output wavefunctions in pw basis
+    //------------------------------------------------------------------
+    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
+    {
+        std::stringstream ssw;
+        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
+        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
     //------------------------------------------------------------------
