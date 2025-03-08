@@ -26,4 +26,6 @@
 --with-libnpy=no \
 --with-libri=no \
 --with-libcomm=no \
+--with-openmpi-4th=no \
 | tee compile.log
+# if you want to use openmpi-version4: set --with-openmpi-4th=yes

@@ -320,6 +320,7 @@ export intel_classic="no"
 # zhaoqing by 2023.08
 export intelmpi_classic="no"
 export with_ifx="yes"
+export openmpi_4th="no"
 export GPUVER="no"
 export MPICH_DEVICE="ch4"
 export TARGET_CPU="native"
@@ -507,6 +508,9 @@ while [ $# -ge 1 ]; do
       if [ "${with_openmpi}" != "__DONTUSE__" ]; then
         export MPI_MODE=openmpi
       fi
+      ;;
+    --with-openmpi-4th)
+      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
       ;;
     --with-intelmpi*)
       with_intelmpi=$(read_with "${1}" "__SYSTEM__")
