@@ -1,6 +1,6 @@
 # The ABACUS Toolchain
 
-Version 2024.3
+Version 2025.1
 
 ## Author
 
@@ -27,12 +27,12 @@ and give setup files that you can use to compile ABACUS.
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU compilation, users can add `-DUSE_CUDA=1` in builder scripts.
+- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC`
 - [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
 - [ ] Modulefile generation scripts.
-- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC`
 
 
 ## Usage Online & Offline
@@ -109,15 +109,15 @@ just by using this toolchain
 
 The needed dependencies version default:
 
-- `cmake` 3.30.0
+- `cmake` 3.31.2
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
-- `OpenMPI` 4.1.6 (5.0.5 can be used but have some problem in OpenMP parallel computation in ELPA)
-- `MPICH` 4.2.2
+- `OpenMPI` 5.0.6 (Version 5 OpenMPI is good but will have compability problem, user can manually downarade to Version 4 in toolchain scripts)
+- `MPICH` 4.3.2
 - `OpenBLAS` 0.3.28 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1 (a developing version)
 - `FFTW` 3.3.10
 - `LibXC` 6.2.2
-- `ELPA` 2024.05.001
+- `ELPA` 2025.01.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
 And Intel-oneAPI need user or server manager to manually install from Intel.
@@ -180,10 +180,46 @@ or you can also do it in a more completely way:
 
 ## Common Problems and Solutions
 
-### LibRI and LibComm for EXX
+### Intel-oneAPI problem
+
+#### ELPA problem via Intel-oneAPI toolchain in AMD server
+
+The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
+
+The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in *toolchain_intel.sh* via `--with-intel-classic=yes`
+
+Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in QE website. You need to download Base-toolkit for MKL and HPC-toolkit for MPi and compiler for Intel-OneAPI 2023.2.0, while in Intel-OneAPI 2024.x, only the HPC-toolkit is needed.
+
+You can get Intel-OneAPI in [QE-managed website](https://pranabdas.github.io/espresso/setup/hpc/#installing-intel-oneapi-libraries), and use this code to get Intel oneAPI Base Toolkit and HPC Toolkit:
+```shell
+wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/992857b9-624c-45de-9701-f6445d845359/l_BaseKit_p_2023.2.0.49397_offline.sh
+wget https://registrationcenter-download.intel.com/akdlm/IRC_NAS/0722521a-34b5-4c41-af3f-d5d14e88248d/l_HPCKit_p_2023.2.0.49440_offline.sh
+```
+
+Related discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
+
+#### link problem in early 2023 version oneAPI
+
+Sometimes Intel-oneAPI have problem to link `mpirun`, 
+which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
+Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
+
+which is fixed in 2024.0.0 version of Intel-oneAPI, 
+And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
+
+More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
+
+
+### OpenMPI problem
+
+#### in EXX and LibRI
 
 - GCC toolchain with OpenMPI cannot compile LibComm v0.1.1 due to the different MPI variable type from MPICH and IntelMPI, see discussion here [#5033](https://github.com/deepmodeling/abacus-develop/issues/5033), you can switch to GCC-MPICH or Intel toolchain
 - It is recommended to use Intel toolchain if one wants to include EXX feature in ABACUS, which can have much better performance and can use more than 16 threads in OpenMP parallelization to accelerate the EXX process.
+
+#### OpenMPI-v5 
+
+OpenMPI in version 5 has huge update, lead to compatibility problem. If one wants to use the OpenMPI in version 4 (4.1.6), one can specify `--with-openmpi-4th=yes` in *toolchain_gnu.sh*
 
 ### GPU version of ABACUS
 
@@ -242,26 +278,6 @@ When you encounter problem like `GLIBCXX_3.4.29 not found`, it is sure that your
 
 After my test, you need `gcc`>11.3.1 to enable deepmd feature in ABACUS.
 
-### Intel-oneAPI problem
-
-#### ELPA problem via Intel-oneAPI toolchain in AMD server
-
-The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
-
-The best way is to change `icpx` to `icpc`, `icx` to `icc`. user can manually change it in toolchain*.sh via `--with-intel-classic=yes`
-
-Notice: `icc` and `icpc` from Intel Classic Compiler of Intel-oneAPI is not supported for 2024.0 and newer version. And Intel-OneAPI 2023.2.0 can be found in website. See discussion here [#4976](https://github.com/deepmodeling/abacus-develop/issues/4976)
-
-#### link problem in early 2023 version oneAPI
-
-Sometimes Intel-oneAPI have problem to link `mpirun`, 
-which will always show in 2023.2.0 version of MPI in Intel-oneAPI. 
-Try `source /path/to/setvars.sh` or install another version of IntelMPI may help.
-
-which is fixed in 2024.0.0 version of Intel-oneAPI, 
-And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
-
-More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
 
 ## Advanced Installation Usage
 

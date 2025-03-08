@@ -16,6 +16,7 @@ if [ "${openmpi_4th}" = "yes" ]; then
 else
     openmpi_ver="5.0.6"
     openmpi_sha256="bd4183fcbc43477c254799b429df1a6e576c042e74a2d2f8b37d537b2ff98157"
+fi
 openmpi_pkg="openmpi-${openmpi_ver}.tar.bz2"
 
 source "${SCRIPT_DIR}"/common_vars.sh
