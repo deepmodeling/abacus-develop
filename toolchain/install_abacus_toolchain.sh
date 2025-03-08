@@ -504,14 +504,14 @@ while [ $# -ge 1 ]; do
         export MPI_MODE=mpich
       fi
       ;;
+    --with-4th-openmpi*)
+      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
+      ;;
     --with-openmpi*)
       with_openmpi=$(read_with "${1}")
       if [ "${with_openmpi}" != "__DONTUSE__" ]; then
         export MPI_MODE=openmpi
       fi
-      ;;
-    --with-openmpi-4th)
-      openmpi_4th=$(read_with "${1}" "no") # default new openmpi
       ;;
     --with-intelmpi*)
       with_intelmpi=$(read_with "${1}" "__SYSTEM__")
@@ -528,7 +528,7 @@ while [ $# -ge 1 ]; do
     --with-intel-mpi-clas*)
       intelmpi_classic=$(read_with "${1}" "no") # default new intel mpi compiler
       ;;
-    --with-intel*)
+    --with-intel*)  # must be read after items above
       with_intel=$(read_with "${1}" "__SYSTEM__")
       ;;
     --with-ifx*)
