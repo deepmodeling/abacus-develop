@@ -25,3 +25,4 @@ MKL_FFTW="yes"
 cd "${BUILDDIR}"
 
 # Not Completed
+# Only need to deal with LAPACK in AOCL, ScaLAPACK and FFTW can use other scripts

@@ -106,10 +106,8 @@ case "${with_openmpi}" in
     check_command mpifort "openmpi" && MPIFC="$(command -v mpifort)" || exit 1
     MPIFORT="${MPIFC}"
     MPIF77="${MPIFC}"
-    # Fortran code in ABACUS is built via the mpifort wrapper, but we may need additional
-    # libraries and linker flags for C/C++-based MPI codepaths, pull them in at this point.
-    OPENMPI_CFLAGS="$(mpicxx --showme:compile)"
-    OPENMPI_LDFLAGS="$(mpicxx --showme:link)"
+    # OPENMPI_CFLAGS="$(mpicxx --showme:compile)"
+    # OPENMPI_LDFLAGS="$(mpicxx --showme:link)"
     ;;
   __DONTUSE__)
     # Nothing to do
