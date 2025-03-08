@@ -59,10 +59,11 @@ USAGE:
 
 $(basename $SCRIPT_NAME) [options]
 
-Or a more RECOMMENDED way is to use it by pre-setting workflow scripts:
+A MORE RECOMMENDED way is to use it by pre-setting workflow scripts:
 > gcc-openmpi-openblas environments: toolchain_gnu.sh
 > intel-mkl-mpi environments: toolchain_intel.sh
 > intel-mpich environments: toolchain_intel_mpich.sh
+> AMD environments: toolchain_amd.sh [in development]
 
 OPTIONS:
 
@@ -148,9 +149,9 @@ The --with-PKG options follow the rules:
   --with-PKG              The option keyword alone will be equivalent to
                           --with-PKG=install
 
-  --with-gcc              The GCC compiler to use to compile ABACUS.
+  --with-gcc              Use the GNU compiler to use to build ABACUS.
                           Default = system
-  --with-intel            Use the Intel compiler to compile ABACUS.
+  --with-intel            Use the Intel compiler to build ABACUS.
                           Default = system
   --with-intel-classic    Use the classic Intel compiler (icc, icpc, ifort) to compile ABACUS.
                           Default = no
@@ -603,7 +604,7 @@ export ENABLE_CRAY="${enable_cray}"
 # ------------------------------------------------------------------------
 # Compiler conflicts
 if [ "${with_intel}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
-  echo "You have chosen to use the Intel compiler, therefore the installation of the GCC compiler will be skipped."
+  echo "You have chosen to use the Intel compiler, therefore the installation of the GNU compiler will be skipped."
   with_gcc="__SYSTEM__"
 fi
 if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
@@ -627,7 +628,7 @@ if [ "${MPI_MODE}" = "no" ]; then
 else
   # if gcc is installed, then mpi needs to be installed too
   if [ "${with_gcc}" = "__INSTALL__" ]; then
-    echo "You have chosen to install the GCC compiler, therefore MPI libraries have to be installed too"
+    echo "You have chosen to install the GNU compiler, therefore MPI libraries have to be installed too"
     case ${MPI_MODE} in
       mpich)
         with_mpich="__INSTALL__"
