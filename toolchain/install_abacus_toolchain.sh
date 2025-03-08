@@ -156,6 +156,8 @@ The --with-PKG options follow the rules:
                           Default = no
   --with-ifx              Use the new Intel Fortran compiler ifx instead of ifort to compile dependence of ABACUS, along with mpiifx (if --with-intel-classic=no)
                           Default = yes
+  --with-amd              Use the AMD compiler to build CP2K.
+                          Default = system
   --with-cmake            Cmake utilities
                           Default = install
   --with-openmpi          OpenMPI, important if you want a parallel version of ABACUS.
@@ -233,7 +235,7 @@ EOF
 # PACKAGE LIST: register all new dependent tools and libs here. Order
 # is important, the first in the list gets installed first
 # ------------------------------------------------------------------------
-tool_list="gcc intel cmake"
+tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl openblas"
 lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm"
@@ -288,6 +290,7 @@ if (command -v mpiexec > /dev/null 2>&1); then
   elif (mpiexec --version 2>&1 | grep -s -q "Intel"); then
     echo "MPI is detected and it appears to be Intel MPI"
     with_gcc="__DONTUSE__"
+    with_amd="__DONTUSE__"
     with_intel="__SYSTEM__"
     with_intelmpi="__SYSTEM__"
     export MPI_MODE="intelmpi"
@@ -336,6 +339,7 @@ if [ "${CRAY_LD_LIBRARY_PATH}" ]; then
   export MPI_MODE="mpich"
   # set default value for some installers appropriate for CLE
   with_gcc="__DONTUSE__"
+  with_amd="__DONTUSE__"
   with_intel="__DONTUSE__"
   with_fftw="__SYSTEM__"
   with_scalapack="__DONTUSE__"
@@ -373,7 +377,9 @@ while [ $# -ge 1 ]; do
     --install-all)
       # set all package to the default installation status
       for ii in ${package_list}; do
-        if [ "${ii}" != "intel" ] && [ "${ii}" != "intelmpi" ]; then
+        if [ "${ii}" != "intel" ] && 
+          [ "${ii}" != "intelmpi" ] &&
+          [ "${ii}" != "amd" ]; then
           eval with_${ii}="__INSTALL__"
         fi
       done
@@ -508,6 +514,9 @@ while [ $# -ge 1 ]; do
         export MPI_MODE=intelmpi
       fi
       ;;
+    --with-amd*)
+      with_amd=$(read_with "${1}" "__SYSTEM__")
+      ;;
     --with-intel-classic*)
       intel_classic=$(read_with "${1}" "no") # default new intel compiler
       ;;
@@ -592,6 +601,14 @@ export ENABLE_CRAY="${enable_cray}"
 if [ "${with_intel}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
   echo "You have chosen to use the Intel compiler, therefore the installation of the GCC compiler will be skipped."
   with_gcc="__SYSTEM__"
+fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_gcc}" = "__INSTALL__" ]; then
+  echo "You have chosen to use the AMD compiler, therefore the installation of the GNU compiler will be skipped."
+  with_gcc="__SYSTEM__"
+fi
+if [ "${with_amd}" != "__DONTUSE__" ] && [ "${with_intel}" != "__DONTUSE__" ]; then
+  report_error "You have chosen to use the AMD and the Intel compiler. Select only one compiler."
+  exit 1
 fi
 # MPI library conflicts
 if [ "${MPI_MODE}" = "no" ]; then
