@@ -196,8 +196,7 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 #else
             ModuleBase::gemm_op<T, Device>()
 #endif
-                (this->ctx,
-                 'N',
+                ('N',
                  'N',
                  this->dim,
                  this->n_band,
@@ -280,8 +279,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'N',
+                        ('N',
                          'N',
                          this->dim,
                          notconv,
@@ -309,8 +307,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             syncmem_var_h2d_op()(e_temp_hd, e_temp_cpu.data(), nbase);
         }
-        ModuleBase::vector_mul_vector_op<T, Device>()(this->ctx,
-                                                      nbase,
+        ModuleBase::vector_mul_vector_op<T, Device>()(nbase,
                                                       vcc + m * this->nbase_x,
                                                       vcc + m * this->nbase_x,
                                                       e_temp_hd);
@@ -325,8 +322,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-        (this->ctx,
-         'N',
+        ('N',
          'N',
          this->dim,
          notconv,
@@ -354,8 +350,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         if (this->device == base_device::GpuDevice)
         {
             syncmem_var_h2d_op()(this->d_precondition, pre.data(), this->dim);
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          this->dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(this->dim,
                                                           psi_iter + (nbase + m) * this->dim,
                                                           psi_iter + (nbase + m) * this->dim,
                                                           this->d_precondition);
@@ -363,8 +358,7 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         else
 #endif
         {
-            ModuleBase::vector_div_vector_op<T, Device>()(this->ctx,
-                                                          this->dim,
+            ModuleBase::vector_div_vector_op<T, Device>()(this->dim,
                                                           psi_iter + (nbase + m) * this->dim,
                                                           psi_iter + (nbase + m) * this->dim,
                                                           pre.data());
@@ -375,16 +369,14 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
     std::vector<Real> psi_norm(notconv, 0.0);
     for (size_t i = 0; i < notconv; i++)
     {
-        psi_norm[i] = ModuleBase::dot_real_op<T, Device>()(this->ctx,
-                                                           this->dim,
+        psi_norm[i] = ModuleBase::dot_real_op<T, Device>()(this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            psi_iter + (nbase + i) * this->dim,
                                                            true);
         assert(psi_norm[i] > 0.0);
         psi_norm[i] = sqrt(psi_norm[i]);
 
-        ModuleBase::vector_div_constant_op<T, Device>()(this->ctx,
-                                                        this->dim,
+        ModuleBase::vector_div_constant_op<T, Device>()(this->dim,
                                                         psi_iter + (nbase + i) * this->dim,
                                                         psi_iter + (nbase + i) * this->dim,
                                                         psi_norm[i]);
@@ -414,8 +406,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif 
-                        (this->ctx,
-                         'C',
+                        ('C',
                          'N',
                          nbase + notconv,
                          notconv,
@@ -434,8 +425,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'C',
+                        ('C',
                          'N',
                          nbase + notconv,
                          notconv,
@@ -454,7 +444,7 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
     {
 #ifdef __DSP
         // Only on dsp hardware need an extra space to reduce data
-        dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
+        mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
         auto* swap = new T[notconv * this->nbase_x];
 
@@ -696,8 +686,7 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 #else
     ModuleBase::gemm_op<T, Device>()
 #endif
-                        (this->ctx,
-                         'N',
+                        ('N',
                          'N',
                          this->dim,
                          nband,

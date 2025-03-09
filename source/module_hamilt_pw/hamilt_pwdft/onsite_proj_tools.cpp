@@ -425,8 +425,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_becp(int ik,
     const char transa = 'C';
     const char transb = 'N';
     int npm_npol = npm * npol;
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               this->nkb,
               npm_npol, // nbands(occ)*npol
@@ -576,8 +575,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_s(int ik, int npm, int ipol, i
     const char transa = 'C';
     const char transb = 'N';
 
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               nkb,
               npm_npol,
@@ -655,8 +653,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_dbecp_f(int ik, int npm, int ipol)
     std::complex<FPTYPE>* dbecp_ptr = this->dbecp + ipol * size_becp; // [out]
     const char transa = 'C';
     const char transb = 'N';
-    gemm_op()(this->ctx,
-              transa,
+    gemm_op()(transa,
               transb,
               this->nkb,
               npm_npol,

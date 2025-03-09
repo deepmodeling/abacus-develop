@@ -50,7 +50,7 @@ class Force_Stress_LCAO
                         ModulePW::PW_Basis* rhopw,
                         surchem& solvent,
 #ifdef __DEEPKS
-                        LCAO_Deepks& ld,
+                        LCAO_Deepks<T>& ld,
 #endif
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
@@ -99,7 +99,7 @@ class Force_Stress_LCAO
 #if __DEEPKS
                        ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
-                       LCAO_Deepks& ld,
+                       LCAO_Deepks<T>& ld,
 #endif
                        Gint_Gamma& gint_gamma,
                        Gint_k& gint_k,

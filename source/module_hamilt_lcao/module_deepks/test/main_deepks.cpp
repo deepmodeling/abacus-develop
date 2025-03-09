@@ -5,6 +5,9 @@
 
 int calculate();
 
+template <typename T>
+void run_tests(test_deepks<T>& test);
+
 int main(int argc, char** argv)
 {
 #ifdef __MPI
@@ -27,8 +30,30 @@ int main(int argc, char** argv)
 
 int calculate()
 {
-    test_deepks test;
+    std::ifstream ifs("INPUT");
+    char word[80];
+    bool gamma_only_local;
+    ifs >> word;
+    ifs >> gamma_only_local;
+    ifs.close();
 
+    if (gamma_only_local)
+    {
+        test_deepks<double> test;
+        run_tests(test);
+        return test.failed_check;
+    }
+    else
+    {
+        test_deepks<std::complex<double>> test;
+        run_tests(test);
+        return test.failed_check;
+    }
+}
+
+template <typename T>
+void run_tests(test_deepks<T>& test)
+{
     test.preparation();
 
     test.check_dstable();
@@ -60,6 +85,7 @@ int calculate()
     {
         std::cout << "\e[1;32m [  PASS    ]\e[0m All checks passed!" << std::endl;
     }
-
-    return test.failed_check;
 }
+
+template void run_tests(test_deepks<double>& test);
+template void run_tests(test_deepks<std::complex<double>>& test);

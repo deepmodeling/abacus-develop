@@ -13,6 +13,7 @@
 #include "norm_psi.h"
 #include "propagator.h"
 #include "upsi.h"
+#include "solve_propagation.h"
 
 #include <complex>
 
@@ -69,19 +70,30 @@ void evolve_psi(const int nband,
     }
 
     // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief compute U_operator
-    /// @input Stmp, Htmp, print_matrix
-    /// @output U_operator
-    Propagator prop(propagator, pv, PARAM.mdp.md_dt);
-    prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
+    if (propagator != 3)
+    {
+        /// @brief compute U_operator
+        /// @input Stmp, Htmp, print_matrix
+        /// @output U_operator
+        Propagator prop(propagator, pv, PARAM.mdp.md_dt);
+        prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
+    }
 
     // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    /// @brief apply U_operator to the wave function of the previous step for new wave function
-    /// @input U_operator, psi_k_laststep, print_matrix
-    /// @output psi_k
-    upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+    if (propagator != 3)
+    {
+        /// @brief apply U_operator to the wave function of the previous step for new wave function
+        /// @input U_operator, psi_k_laststep, print_matrix
+        /// @output psi_k
+        upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, ofs_running, print_matrix);
+    }
+    else
+    {
+        /// @brief solve the propagation equation
+        /// @input Stmp, Htmp, psi_k_laststep
+        /// @output psi_k
+        solve_propagation(pv, nband, nlocal, PARAM.mdp.md_dt / ModuleBase::AU_to_FS, Stmp, Htmp, psi_k_laststep, psi_k);
+    }
 
     // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 

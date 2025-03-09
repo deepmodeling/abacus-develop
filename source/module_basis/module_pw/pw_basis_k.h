@@ -87,7 +87,7 @@ public:
     int *igl2isz_k=nullptr, * d_igl2isz_k = nullptr; //[npwk_max*nks] map (igl,ik) to (is,iz)
     int *igl2ig_k=nullptr;//[npwk_max*nks] map (igl,ik) to ig
     int *ig2ixyz_k=nullptr; ///< [npw] map ig to ixyz
-
+    std::vector<int> ig2ixyz_k_cpu; /// [npw] map ig to ixyz,which is used in dsp fft.
     double *gk2=nullptr; // modulus (G+K)^2 of G vectors [npwk_max*nks]
 
     // liuyu add 2023-09-06
@@ -135,6 +135,31 @@ public:
                     const int ik,
                     const bool add = false,
                     const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    #if defined(__DSP)
+    template <typename FPTYPE, typename Device>
+    void convolution(const Device* ctx,
+                      const int ik,
+                      const int size,
+                      const std::complex<FPTYPE>* input,
+                      const FPTYPE*               input1,
+                      std::complex<FPTYPE>*       output,
+                      const bool add = false,
+                      const FPTYPE factor =1.0) const ;
+
+    template <typename FPTYPE>
+    void real2recip_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nplane,nx*ny)  ; out(nz, ns)
+    template <typename FPTYPE>
+    void recip2real_dsp(const std::complex<FPTYPE>* in,
+                       std::complex<FPTYPE>* out,
+                       const int ik,
+                       const bool add = false,
+                       const FPTYPE factor = 1.0) const; // in:(nz, ns)  ; out(nplane,nx*ny)
+    
+    #endif
 
     template <typename FPTYPE, typename Device>
     void real_to_recip(const Device* ctx,

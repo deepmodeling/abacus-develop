@@ -1,30 +1,18 @@
 #include "esolver_sdft_pw.h"
 
+#include "module_base/global_variable.h"
 #include "module_base/memory.h"
-#include "module_base/timer.h"
-#include "module_elecstate/elecstate_pw_sdft.h"
+#include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_dos.h"
 #include "module_hamilt_pw/hamilt_stodft/sto_elecond.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
+#include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
 #include "module_hsolver/diago_iter_assist.h"
-#include "module_hsolver/hsolver_pw_sdft.h"
-#include "module_io/cube_io.h"
-#include "module_io/output_log.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
 
 #include <algorithm>
 #include <fstream>
-
-//-------------------Temporary------------------
-#include "module_base/global_variable.h"
-#include "module_elecstate/module_charge/symmetry_rho.h"
-#include "module_hamilt_pw/hamilt_pwdft/global.h"
-//----------------------------------------------
-//-----force-------------------
-#include "module_hamilt_pw/hamilt_stodft/sto_forces.h"
-//-----stress------------------
-#include "module_hamilt_pw/hamilt_stodft/sto_stress_pw.h"
-//---------------------------------------------------
 
 namespace ModuleESolver
 {
@@ -125,20 +113,20 @@ void ESolver_SDFT_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_SDFT_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // call iter_finish() of ESolver_KS
-    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter);
+    ESolver_KS<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep)
+void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf");
     ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
 
     // 1) call after_scf() of ESolver_KS_PW
-    ESolver_KS_PW<T, Device>::after_scf(ucell, istep);
+    ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick("ESolver_SDFT_PW", "after_scf");
 }
@@ -203,7 +191,7 @@ void ESolver_SDFT_PW<T, Device>::hamilt2density_single(UnitCell& ucell, int iste
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rho, ucell.symm);
+            srho.begin(is, this->chr, this->pw_rho, ucell.symm);
         }
         this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
     }
@@ -260,7 +248,7 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
                   this->pw_wfc,
                   *this->kspw_psi,
                   this->stowf,
-                  this->pelec->charge,
+                  &this->chr,
                   &this->locpp,
                   &this->ppcell,
                   ucell);

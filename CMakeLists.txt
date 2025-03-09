@@ -42,6 +42,7 @@ option(ENABLE_PEXSI "Enable support for PEXSI." OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp." OFF)
 option(USE_DSP "Enable DSP usage." OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
+option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 
 # enable json support
 if(ENABLE_RAPIDJSON)
@@ -130,6 +131,10 @@ endif()
 
 if (USE_CUDA_ON_DCU)
   add_compile_definitions(__CUDA_ON_DCU)
+endif()
+
+if (USE_CUDA_MPI)
+  add_compile_definitions(__CUDA_MPI)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -257,8 +262,12 @@ if(ENABLE_MPI)
 endif()
 
 if (USE_DSP)
-  target_link_libraries(${ABACUS_BIN_NAME} ${DIR_MTBLAS_LIBRARY})
   add_compile_definitions(__DSP)
+  target_link_libraries(${ABACUS_BIN_NAME} ${OMPI_LIBRARY1})
+  include_directories(${MTBLAS_FFT_DIR}/libmtblas/include)
+  include_directories(${MT_HOST_DIR}/include)
+  target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_device.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${MT_HOST_DIR}/hthreads/lib/libhthread_host.a)
 endif()
 
 find_package(Threads REQUIRED)
@@ -429,10 +438,8 @@ else()
   find_package(Lapack REQUIRED)
   include_directories(${FFTW3_INCLUDE_DIRS})
   list(APPEND math_libs FFTW3::FFTW3 LAPACK::LAPACK BLAS::BLAS)
-
   find_package(ScaLAPACK REQUIRED)
   list(APPEND math_libs ScaLAPACK::ScaLAPACK)
-
   if(USE_OPENMP)
     list(APPEND math_libs FFTW3::FFTW3_OMP)
   endif()

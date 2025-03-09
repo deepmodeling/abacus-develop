@@ -6,18 +6,23 @@
 #include "module_elecstate/read_pseudo.h"
 #include "module_hamilt_general/module_xc/exx_info.h"
 
-Magnetism::Magnetism() {
+Magnetism::Magnetism()
+{
     this->tot_magnetization = 0.0;
     this->abs_magnetization = 0.0;
     this->start_magnetization = nullptr;
 }
-Magnetism::~Magnetism() { delete[] this->start_magnetization; }
+Magnetism::~Magnetism()
+{
+    delete[] this->start_magnetization;
+}
 namespace GlobalC
 {
-	Exx_Info exx_info;
+Exx_Info exx_info;
 }
 
-void test_deepks::preparation()
+template <typename T>
+void test_deepks<T>::preparation()
 {
     this->count_ntype();
     this->set_parameters();
@@ -38,7 +43,8 @@ void test_deepks::preparation()
     this->ParaO.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
 }
 
-void test_deepks::set_parameters()
+template <typename T>
+void test_deepks<T>::set_parameters()
 {
     PARAM.input.basis_type = "lcao";
     // GlobalV::global_pseudo_type= "auto";
@@ -60,7 +66,8 @@ void test_deepks::set_parameters()
     return;
 }
 
-void test_deepks::count_ntype()
+template <typename T>
+void test_deepks<T>::count_ntype()
 {
     GlobalV::ofs_running << "count number of atom types" << std::endl;
     std::ifstream ifs("STRU", std::ios::in);
@@ -88,14 +95,16 @@ void test_deepks::count_ntype()
         x.erase(0, x.find_first_not_of(typeOfWhitespaces));
 
         if (x == "LATTICE_CONSTANT" || x == "NUMERICAL_ORBITAL" || x == "LATTICE_VECTORS" || x == "ATOMIC_POSITIONS"
-            || x == "NUMERICAL_DESCRIPTOR") {
+            || x == "NUMERICAL_DESCRIPTOR")
+        {
             break;
-}
+        }
 
         std::string tmpid = x.substr(0, 1);
-        if (!x.empty() && tmpid != "#") {
+        if (!x.empty() && tmpid != "#")
+        {
             ntype++;
-}
+        }
     }
 
     GlobalV::ofs_running << "ntype : " << ntype << std::endl;
@@ -104,7 +113,8 @@ void test_deepks::count_ntype()
     return;
 }
 
-void test_deepks::set_ekcut()
+template <typename T>
+void test_deepks<T>::set_ekcut()
 {
     GlobalV::ofs_running << "set lcao_ecut from LCAO files" << std::endl;
     // set as max of ekcut from every element
@@ -126,9 +136,10 @@ void test_deepks::set_ekcut()
         while (in_ao.good())
         {
             in_ao >> word;
-            if (word == "Cutoff(Ry)") {
+            if (word == "Cutoff(Ry)")
+            {
                 break;
-}
+            }
         }
         in_ao >> ek_current;
         lcao_ecut = std::max(lcao_ecut, ek_current);
@@ -142,7 +153,8 @@ void test_deepks::set_ekcut()
     return;
 }
 
-void test_deepks::setup_cell()
+template <typename T>
+void test_deepks<T>::setup_cell()
 {
     ucell.setup_cell("STRU", GlobalV::ofs_running);
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
@@ -150,7 +162,8 @@ void test_deepks::setup_cell()
     return;
 }
 
-void test_deepks::prep_neighbour()
+template <typename T>
+void test_deepks<T>::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.input.out_level,
@@ -166,22 +179,23 @@ void test_deepks::prep_neighbour()
                          PARAM.inp.test_atom_input);
 }
 
-void test_deepks::set_orbs()
+template <typename T>
+void test_deepks<T>::set_orbs()
 {
     ORB.init(GlobalV::ofs_running,
-                        ucell.ntype,
-                        PARAM.inp.orbital_dir,
-                        ucell.orbital_fn.data(),
-                        ucell.descriptor_file,
-                        ucell.lmax,
-                        lcao_ecut,
-                        lcao_dk,
-                        lcao_dr,
-                        lcao_rmax,
-                        PARAM.sys.deepks_setorb,
-                        out_mat_r,
-                        PARAM.input.cal_force,
-                        my_rank);
+             ucell.ntype,
+             PARAM.inp.orbital_dir,
+             ucell.orbital_fn.data(),
+             ucell.descriptor_file,
+             ucell.lmax,
+             lcao_ecut,
+             lcao_dk,
+             lcao_dr,
+             lcao_rmax,
+             PARAM.sys.deepks_setorb,
+             out_mat_r,
+             PARAM.input.cal_force,
+             my_rank);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
 
@@ -194,15 +208,16 @@ void test_deepks::set_orbs()
     double cutoff = 2.0 * rmax;
     int nr = static_cast<int>(rmax / lcao_dr) + 1;
 
-    orb_.set_uniform_grid(true,nr,cutoff,'i',true);
-    alpha_.set_uniform_grid(true,nr,cutoff,'i',true);
+    orb_.set_uniform_grid(true, nr, cutoff, 'i', true);
+    alpha_.set_uniform_grid(true, nr, cutoff, 'i', true);
 
     overlap_orb_alpha_.tabulate(orb_, alpha_, 'S', nr, cutoff);
 
     return;
 }
 
-void test_deepks::setup_kpt()
+template <typename T>
+void test_deepks<T>::setup_kpt()
 {
     this->kv.set("KPT",
                  PARAM.input.nspin,
@@ -212,3 +227,6 @@ void test_deepks::setup_kpt()
                  GlobalV::ofs_running,
                  GlobalV::ofs_warning);
 }
+
+template class test_deepks<double>;
+template class test_deepks<std::complex<double>>;

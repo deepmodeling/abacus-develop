@@ -9,6 +9,8 @@
 #include "module_io/print_info.h"
 #include "module_io/write_istate_info.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_print.h"
+#include "module_hsolver/hsolver.h"
 
 #include <ctime>
 #include <iostream>
@@ -366,7 +368,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
         // double drho = this->estate.caldr2();
         // EState should be used after it is constructed.
 
-        drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
+        drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
         hsolver_error = 0.0;
         if (iter == 1 && PARAM.inp.calculation != "nscf")
         {
@@ -388,7 +390,7 @@ void ESolver_KS<T, Device>::hamilt2density(UnitCell& ucell, const int istep, con
 
                 this->hamilt2density_single(ucell, istep, iter, diag_ethr);
 
-                drho = p_chgmix->get_drho(pelec->charge, PARAM.inp.nelec);
+                drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
 
                 hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
                                                           PARAM.inp.esolver_type,
@@ -437,7 +439,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT SCF");
 
     // 4) SCF iterations
-    this->conv_esolver = false;
+    bool conv_esolver = false;
     this->niter = this->maxniter;
     this->diag_ethr = PARAM.inp.pw_diag_thr;
     for (int iter = 1; iter <= this->maxniter; ++iter)
@@ -449,10 +451,10 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
         this->hamilt2density(ucell, istep, iter, diag_ethr);
 
         // 7) finish scf iterations
-        this->iter_finish(ucell, istep, iter);
+        this->iter_finish(ucell, istep, iter, conv_esolver);
 
         // 8) check convergence
-        if (this->conv_esolver || this->oscillate_esolver)
+        if (conv_esolver || this->oscillate_esolver)
         {
             this->niter = iter;
             if (this->oscillate_esolver)
@@ -464,7 +466,7 @@ void ESolver_KS<T, Device>::runner(UnitCell& ucell, const int istep)
     } // end scf iterations
 
     // 9) after scf
-    this->after_scf(ucell, istep);
+    this->after_scf(ucell, istep, conv_esolver);
 
     ModuleBase::timer::tick(this->classname, "runner");
     return;
@@ -520,11 +522,11 @@ void ESolver_KS<T, Device>::iter_init(UnitCell& ucell, const int istep, const in
     }
 
     // 1) save input rho
-    this->pelec->charge->save_rho_before_sum_band();
+    this->chr.save_rho_before_sum_band();
 }
 
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
 {
     if (PARAM.inp.out_bandgap)
     {
@@ -540,14 +542,19 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
     for (int ik = 0; ik < this->kv.get_nks(); ++ik)
     {
-        this->pelec->print_band(ik, PARAM.inp.printe, iter);
+        elecstate::print_band(this->pelec->ekb,
+                              this->pelec->wg,
+                              this->pelec->klist,
+                              ik, 
+                              PARAM.inp.printe, 
+                              iter);
     }
 
     // compute magnetization, only for LSDA(spin==2)
     ucell.magnet.compute_magnetization(ucell.omega,
-                                       this->pelec->charge->nrxx,
-                                       this->pelec->charge->nxyz,
-                                       this->pelec->charge->rho,
+                                       this->chr.nrxx,
+                                       this->chr.nxyz,
+                                       this->chr.rho,
                                        this->pelec->nelec_spin.data());
 
     if (PARAM.globalv.ks_run)
@@ -578,30 +585,30 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         }
 #endif
 
-        this->conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
+        conv_esolver = (drho < this->scf_thr && not_restart_step && is_U_converged);
 
         // add energy threshold for SCF convergence
         if (this->scf_ene_thr > 0.0)
         {
             // calculate energy of output charge density
-            this->update_pot(ucell, istep, iter);
+            this->update_pot(ucell, istep, iter, conv_esolver);
             this->pelec->cal_energies(2); // 2 means Kohn-Sham functional
             // now, etot_old is the energy of input density, while etot is the energy of output density
             this->pelec->f_en.etot_delta = this->pelec->f_en.etot - this->pelec->f_en.etot_old;
             // output etot_delta
             GlobalV::ofs_running << " DeltaE_womix = " << this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV << " eV"
                                  << std::endl;
-            if (iter > 1 && this->conv_esolver == 1) // only check when density is converged
+            if (iter > 1 && conv_esolver == 1) // only check when density is converged
             {
                 // update the convergence flag
-                this->conv_esolver
+                conv_esolver
                     = (std::abs(this->pelec->f_en.etot_delta * ModuleBase::Ry_to_eV) < this->scf_ene_thr);
             }
         }
 
         // If drho < hsolver_error in the first iter or drho < scf_thr, we
         // do not change rho.
-        if (drho < hsolver_error || this->conv_esolver || PARAM.inp.calculation == "nscf")
+        if (drho < hsolver_error || conv_esolver || PARAM.inp.calculation == "nscf")
         {
             if (drho < hsolver_error)
             {
@@ -622,11 +629,11 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
             }
             else
             {
-                p_chgmix->mix_rho(pelec->charge); // update chr->rho by mixing
+                p_chgmix->mix_rho(&this->chr); // update chr->rho by mixing
             }
             if (PARAM.inp.scf_thr_type == 2)
             {
-                pelec->charge->renormalize_rho(); // renormalize rho in R-space would
+                this->chr.renormalize_rho(); // renormalize rho in R-space would
                                                   // induce a error in K-space
             }
             //----------charge mixing done-----------
@@ -635,14 +642,16 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
 
 #ifdef __MPI
     MPI_Bcast(&drho, 1, MPI_DOUBLE, 0, BP_WORLD);
-    MPI_Bcast(&this->conv_esolver, 1, MPI_DOUBLE, 0, BP_WORLD);
-    MPI_Bcast(pelec->charge->rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
+
+    // be careful! conv_esolver is bool, not double !! Maybe a bug 20250302 by mohan 
+    MPI_Bcast(&conv_esolver, 1, MPI_DOUBLE, 0, BP_WORLD);
+    MPI_Bcast(this->chr.rho[0], this->pw_rhod->nrxx, MPI_DOUBLE, 0, BP_WORLD);
 #endif
 
     // update potential
     // Hamilt should be used after it is constructed.
     // this->phamilt->update(conv_esolver);
-    this->update_pot(ucell, istep, iter);
+    this->update_pot(ucell, istep, iter, conv_esolver);
 
     // 1 means Harris-Foulkes functional
     // 2 means Kohn-Sham functional
@@ -668,10 +677,11 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
     double dkin = 0.0; // for meta-GGA
     if (XC_Functional::get_ked_flag())
     {
-        dkin = p_chgmix->get_dkin(pelec->charge, PARAM.inp.nelec);
+        dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
     }
 
-    this->pelec->print_etot(ucell.magnet,this->conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
+
+    elecstate::print_etot(ucell.magnet, *pelec,conv_esolver, iter, drho, dkin, duration, PARAM.inp.printe, diag_ethr);
 
     // Json, need to be moved to somewhere else
 #ifdef __RAPIDJSON
@@ -691,22 +701,22 @@ void ESolver_KS<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& i
         std::cout << " SCF restart after this step!" << std::endl;
     }
 
-    ESolver_FP::iter_finish(ucell, istep, iter);
+    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
 template <typename T, typename Device>
-void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep)
+void ESolver_KS<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
 
     // 1) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(ucell, istep);
+    ESolver_FP::after_scf(ucell, istep, conv_esolver);
 
     // 2) write eigenvalues
     if (istep % PARAM.inp.out_interval == 0)
     {
-        this->pelec->print_eigenvalue(GlobalV::ofs_running);
+        elecstate::print_eigenvalue(this->pelec->ekb,this->pelec->wg,this->pelec->klist,GlobalV::ofs_running);
     }
 }
 

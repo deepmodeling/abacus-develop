@@ -4,8 +4,8 @@
 #include "module_base/tool_title.h"
 #include "module_hamilt_lcao/module_tddft/snap_psibeta_half_tddft.h"
 #ifdef _OPENMP
-#include <unordered_set>
 #include <omp.h>
+#include <unordered_set>
 #endif
 
 TD_current::TD_current(const UnitCell* ucell_in,
@@ -14,28 +14,28 @@ TD_current::TD_current(const UnitCell* ucell_in,
                        const LCAO_Orbitals& orb,
                        const TwoCenterIntegrator* intor)
     : ucell(ucell_in), paraV(paraV), orb_(orb), Grid(GridD_in), intor_(intor)
-{   
+{
     // for length gague, the A(t) = 0 for all the time.
-    this->cart_At = ModuleBase::Vector3<double>(0,0,0);
+    this->cart_At = ModuleBase::Vector3<double>(0, 0, 0);
     this->initialize_vcomm_r(GridD_in, paraV);
     this->initialize_grad_term(GridD_in, paraV);
 }
 TD_current::~TD_current()
 {
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         delete this->current_term[dir];
     }
 }
-//allocate space for current_term
+// allocate space for current_term
 void TD_current::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_current", "initialize_vcomm_r");
     ModuleBase::timer::tick("TD_current", "initialize_vcomm_r");
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         if (this->current_term[dir] == nullptr)
-        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+            this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
     }
 
     this->adjs_vcommr.clear();
@@ -56,8 +56,8 @@ void TD_current::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orb
             const ModuleBase::Vector3<double>& tau1 = adjs.adjacent_tau[ad1];
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
             // choose the real adjacent atoms
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
                 < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
@@ -84,12 +84,12 @@ void TD_current::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orb
                     continue;
                 }
                 hamilt::AtomPair<std::complex<double>> tmp(iat1,
-                                         iat2,
-                                         R_index2.x - R_index1.x,
-                                         R_index2.y - R_index1.y,
-                                         R_index2.z - R_index1.z,
-                                         paraV);
-                for (int dir=0;dir<3;dir++)
+                                                           iat2,
+                                                           R_index2.x - R_index1.x,
+                                                           R_index2.y - R_index1.y,
+                                                           R_index2.z - R_index1.z,
+                                                           paraV);
+                for (int dir = 0; dir < 3; dir++)
                 {
                     this->current_term[dir]->insert_pair(tmp);
                 }
@@ -97,7 +97,7 @@ void TD_current::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orb
         }
     }
     // allocate the memory of BaseMatrix in cal_vcomm_r_IJR, and set the new values to zero
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         this->current_term[dir]->allocate(nullptr, true);
     }
@@ -108,10 +108,10 @@ void TD_current::initialize_grad_term(const Grid_Driver* GridD, const Parallel_O
     ModuleBase::TITLE("TD_current", "initialize_grad_term");
     ModuleBase::timer::tick("TD_current", "initialize_grad_term");
 
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         if (this->current_term[dir] == nullptr)
-        this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
+            this->current_term[dir] = new hamilt::HContainer<std::complex<double>>(paraV);
     }
     for (int iat1 = 0; iat1 < ucell->nat; iat1++)
     {
@@ -132,8 +132,8 @@ void TD_current::initialize_grad_term(const Grid_Driver* GridD, const Parallel_O
             }
             const ModuleBase::Vector3<int>& R_index2 = adjs.box[ad1];
             // choose the real adjacent atoms
-            // Note: the distance of atoms should less than the cutoff radius, 
-            // When equal, the theoretical value of matrix element is zero, 
+            // Note: the distance of atoms should less than the cutoff radius,
+            // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat1, iat2, R_index2).norm() * this->ucell->lat0
                 < orb_.Phi[T1].getRcut() + orb_.Phi[T2].getRcut())
@@ -150,14 +150,14 @@ void TD_current::initialize_grad_term(const Grid_Driver* GridD, const Parallel_O
             int iat2 = ucell->itia2iat(T2, I2);
             ModuleBase::Vector3<int>& R_index = adjs.box[ad];
             hamilt::AtomPair<std::complex<double>> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, paraV);
-            for (int dir=0;dir<3;dir++)
+            for (int dir = 0; dir < 3; dir++)
             {
                 this->current_term[dir]->insert_pair(tmp);
             }
         }
     }
     // allocate the memory of BaseMatrix in HR, and set the new values to zero
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         this->current_term[dir]->allocate(nullptr, true);
     }
@@ -188,9 +188,9 @@ void TD_current::calculate_vcomm_r()
             nlm_tot[i].resize(4);
         }
 
-        #pragma omp parallel
+#pragma omp parallel
         {
-            #pragma omp for schedule(dynamic)
+#pragma omp for schedule(dynamic)
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
                 const int T1 = adjs.ntype[ad];
@@ -214,19 +214,19 @@ void TD_current::calculate_vcomm_r()
 
                     // snap_psibeta_half_tddft() are used to calculate <psi|exp(-iAr)|beta>
                     // and <psi|rexp(-iAr)|beta> as well if current are needed
-                    
+
                     module_tddft::snap_psibeta_half_tddft(orb_,
-                                                            this->ucell->infoNL,
-                                                            nlm,
-                                                            tau1 * this->ucell->lat0,
-                                                            T1,
-                                                            atom1->iw2l[iw1],
-                                                            atom1->iw2m[iw1],
-                                                            atom1->iw2n[iw1],
-                                                            tau0 * this->ucell->lat0,
-                                                            T0,
-                                                            this->cart_At,
-                                                            true);
+                                                          this->ucell->infoNL,
+                                                          nlm,
+                                                          tau1 * this->ucell->lat0,
+                                                          T1,
+                                                          atom1->iw2l[iw1],
+                                                          atom1->iw2m[iw1],
+                                                          atom1->iw2n[iw1],
+                                                          tau0 * this->ucell->lat0,
+                                                          T0,
+                                                          this->cart_At,
+                                                          true);
                     for (int dir = 0; dir < 4; dir++)
                     {
                         nlm_tot[ad][dir].insert({all_indexes[iw1l], nlm[dir]});
@@ -234,7 +234,7 @@ void TD_current::calculate_vcomm_r()
                 }
             }
 
-    #ifdef _OPENMP
+#ifdef _OPENMP
             // record the iat number of the adjacent atoms
             std::set<int> ad_atom_set;
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
@@ -250,7 +250,7 @@ void TD_current::calculate_vcomm_r()
             const int thread_id = omp_get_thread_num();
             std::set<int> ad_atom_set_thread;
             int i = 0;
-            for(const auto iat1 : ad_atom_set)
+            for (const auto iat1: ad_atom_set)
             {
                 if (i % num_threads == thread_id)
                 {
@@ -258,20 +258,20 @@ void TD_current::calculate_vcomm_r()
                 }
                 i++;
             }
-    #endif
+#endif
 
-    // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
+            // 2. calculate <psi_I|beta>D<beta|psi_{J,R}> for each pair of <IJR> atoms
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
                 const int T1 = adjs.ntype[ad1];
                 const int I1 = adjs.natom[ad1];
                 const int iat1 = ucell->itia2iat(T1, I1);
-    #ifdef _OPENMP
+#ifdef _OPENMP
                 if (ad_atom_set_thread.find(iat1) == ad_atom_set_thread.end())
-                    {
-                        continue;
-                    }
-    #endif
+                {
+                    continue;
+                }
+#endif
                 ModuleBase::Vector3<int>& R_index1 = adjs.box[ad1];
                 for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
@@ -280,23 +280,22 @@ void TD_current::calculate_vcomm_r()
                     const int iat2 = ucell->itia2iat(T2, I2);
                     ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
                     ModuleBase::Vector3<int> R_vector(R_index2[0] - R_index1[0],
-                                                    R_index2[1] - R_index1[1],
-                                                    R_index2[2] - R_index1[2]);
+                                                      R_index2[1] - R_index1[1],
+                                                      R_index2[2] - R_index1[2]);
                     std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
                     for (int i = 0; i < 3; i++)
                     {
-                        tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2])->get_pointer();
+                        hamilt::BaseMatrix<std::complex<double>>* matrix_ptr
+                            = this->current_term[i]->find_matrix(iat1, iat2, R_vector[0], R_vector[1], R_vector[2]);
+                        if (matrix_ptr != nullptr)
+                        {
+                            tmp_c[i] = matrix_ptr->get_pointer();
+                        }
                     }
                     // if not found , skip this pair of atoms
                     if (tmp_c[0] != nullptr)
                     {
-                        this->cal_vcomm_r_IJR(iat1,
-                                            iat2,
-                                            T0,
-                                            paraV,
-                                            nlm_tot[ad1],
-                                            nlm_tot[ad2],
-                                            tmp_c);
+                        this->cal_vcomm_r_IJR(iat1, iat2, T0, paraV, nlm_tot[ad1], nlm_tot[ad2], tmp_c);
                     }
                 }
             }
@@ -368,8 +367,8 @@ void TD_current::cal_vcomm_r_IJR(
                         //<psi|rexp(-iAr)|beta><beta|exp(iAr)|psi>-<psi|exp(-iAr)|beta><beta|rexp(iAr)|psi>
                         // multiply d in the end
                         nlm_r_tmp += (nlm1[dir + 1]->at(p1) * std::conj(nlm2[0]->at(p2))
-                                        - nlm1[0]->at(p1) * std::conj(nlm2[dir + 1]->at(p2)))
-                                        * (*tmp_d);
+                                      - nlm1[0]->at(p1) * std::conj(nlm2[dir + 1]->at(p2)))
+                                     * (*tmp_d);
                     }
                     // -i[r,Vnl], 2.0 due to the unit transformation
                     current_mat_p[dir][step_trace[is]] -= imag_unit * nlm_r_tmp / 2.0;
@@ -390,7 +389,7 @@ void TD_current::cal_vcomm_r_IJR(
 void TD_current::calculate_grad_term()
 {
     ModuleBase::TITLE("TD_current", "calculate_grad_term");
-    if(this->current_term[0]==nullptr || this->current_term[0]->size_atom_pairs()<=0)
+    if (this->current_term[0] == nullptr || this->current_term[0]->size_atom_pairs() <= 0)
     {
         ModuleBase::WARNING_QUIT("TD_current::calculate_grad_term", "grad_term is nullptr or empty");
     }
@@ -417,7 +416,12 @@ void TD_current::calculate_grad_term()
             std::complex<double>* tmp_c[3] = {nullptr, nullptr, nullptr};
             for (int i = 0; i < 3; i++)
             {
-                tmp_c[i] = this->current_term[i]->find_matrix(iat1, iat2, R_index2)->get_pointer();
+                hamilt::BaseMatrix<std::complex<double>>* matrix_ptr
+                    = this->current_term[i]->find_matrix(iat1, iat2, R_index2);
+                if (matrix_ptr != nullptr)
+                {
+                    tmp_c[i] = matrix_ptr->get_pointer();
+                }
             }
             if (tmp_c[0] != nullptr)
             {
@@ -473,7 +477,7 @@ void TD_current::cal_grad_IJR(const int& iat1,
     auto row_indexes = paraV->get_indexes_row(iat1);
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int step_trace = col_indexes.size() + 1;
-    for(int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
+    for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
     {
         const int iw1 = row_indexes[iw1l] / npol;
         const int L1 = iw2l1[iw1];
@@ -509,7 +513,7 @@ void TD_current::cal_grad_IJR(const int& iat1,
         for (int dir = 0; dir < 3; dir++)
         {
             current_mat_p[dir] += (npol - 1) * col_indexes.size();
-        }   
+        }
     }
 }
 

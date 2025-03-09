@@ -200,6 +200,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_descriptor.o\
         deepks_force.o\
         deepks_fpre.o\
+        deepks_iterate.o\
         deepks_spre.o\
         deepks_orbital.o\
         deepks_orbpre.o\
@@ -259,6 +260,7 @@ OBJS_ESOLVER=esolver.o\
 OBJS_ESOLVER_LCAO=esolver_ks_lcao.o\
       esolver_ks_lcao_tddft.o\
       lcao_before_scf.o\
+      lcao_after_scf.o\
       esolver_gets.o\
       lcao_others.o\
 
@@ -571,6 +573,7 @@ OBJS_LCAO=evolve_elec.o\
       td_velocity.o\
       td_current.o\
       snap_psibeta_half_tddft.o\
+      solve_propagation.o\
       upsi.o\
       FORCE_STRESS.o\
 	  FORCE_gamma.o\
