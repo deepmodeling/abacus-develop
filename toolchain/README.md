@@ -27,8 +27,9 @@ and give setup files that you can use to compile ABACUS.
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU compilation, users can add `-DUSE_CUDA=1` in builder scripts.
-- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC`
+- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC` (doing)
 - [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
+- [ ] Support a JSON or YAML configuration file for toolchain, which can be easily modified by users.
 - [ ] A better README and Detail markdown file.
 - [ ] Automatic installation of [DEEPMD](https://github.com/deepmodeling/deepmd-kit).
 - [ ] Better compliation method for ABACUS-DEEPMD and ABACUS-DEEPKS.
@@ -94,7 +95,7 @@ The above station will be updated handly but one should notice that the version 
 If one want to install ABACUS by toolchain OFFLINE, 
 one can manually download all the packages from [cp2k-static/download](https://www.cp2k.org/static/downloads) or official website
 and put them in *build* directory by formatted name
-like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.5.tar.bz2*, 
+like *fftw-3.3.10.tar.gz*, or *openmpi-5.0.6.tar.bz2*, 
 then run this toolchain. 
 All package will be detected and installed automatically. 
 Also, one can install parts of packages OFFLINE and parts of packages ONLINE
@@ -116,7 +117,7 @@ The needed dependencies version default:
 - `OpenBLAS` 0.3.28 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1 (a developing version)
 - `FFTW` 3.3.10
-- `LibXC` 6.2.2
+- `LibXC` 7.0.0
 - `ELPA` 2025.01.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
@@ -130,7 +131,7 @@ Dependencies below are optional， which is NOT installed by default:
 - `LibRI` 0.2.0
 - `LibComm` 0.1.1
 
-Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default.
+Users can install them by using `--with-*=install` in toolchain*.sh, which is `no` in default. Also, user can specify the absolute path of the package by `--with-*=path/to/package` in toolchain*.sh to allow toolchain to use the package.
 > Notice: LibRI, LibComm and Libnpy is on actively development, you should check-out the package version when using this toolchain. Also, LibRI and LibComm can be installed by github submodule, that is also work for libnpy, which is more recommended.
 
 Users can easily compile and install dependencies of ABACUS
