@@ -18,6 +18,7 @@
 
 namespace elecstate
 {
+
 Potential::Potential(const ModulePW::PW_Basis* rho_basis_in,
                      const ModulePW::PW_Basis* rho_basis_smooth_in,
                      const UnitCell* ucell_in,
@@ -101,12 +102,14 @@ void Potential::allocate()
     ModuleBase::TITLE("Potential", "allocate");
     int nrxx = this->rho_basis_->nrxx;
     int nrxx_smooth = this->rho_basis_smooth_->nrxx;
-    if (nrxx == 0) {
-        return;
-}
-    if (nrxx_smooth == 0) {
-        return;
-}
+    if (nrxx == 0) 
+	{
+		return;
+	}
+	if (nrxx_smooth == 0) 
+	{
+		return;
+	}
 
     this->v_effective_fixed.resize(nrxx);
     ModuleBase::Memory::record("Pot::veff_fix", sizeof(double) * nrxx);
