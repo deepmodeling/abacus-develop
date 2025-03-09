@@ -138,4 +138,45 @@ namespace elecstate
         return;
     }
 
+    void fixed_weights(const std::vector<double>& ocp_kb,
+                       const int& nbands,
+                       const double& nelec,
+                       const K_Vectors* klist,
+                       ModuleBase::matrix& wg,
+                       bool& skip_weights)
+    {
+        assert(nbands > 0);
+        assert(nelec > 0.0);
+
+        const double ne_thr = 1.0e-5;
+
+        const int num = klist->get_nks() * nbands;
+        if (num != ocp_kb.size())
+        {
+            ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
+                                    "size of occupation array is wrong , please check ocp_set");
+        }
+
+        double num_elec = 0.0;
+        for (int i = 0; i < ocp_kb.size(); ++i)
+        {
+            num_elec += ocp_kb[i];
+        }
+
+        if (std::abs(num_elec - nelec) > ne_thr)
+        {
+            ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
+                                    "total number of occupations is wrong , please check ocp_set");
+        }
+
+        for (int ik = 0; ik < wg.nr; ++ik)
+        {
+            for (int ib = 0; ib < wg.nc; ++ib)
+            {
+                wg(ik, ib) = ocp_kb[ik * wg.nc + ib];
+            }
+        }
+        skip_weights = true;
+
+    }
 }

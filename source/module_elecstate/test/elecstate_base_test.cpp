@@ -276,6 +276,7 @@ TEST_F(ElecStateTest, FixedWeights)
 {
     EXPECT_EQ(PARAM.input.nbands, 6);
     PARAM.input.nelec = 30;
+    bool skip_weights;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     elecstate->klist = klist;
@@ -286,7 +287,7 @@ TEST_F(ElecStateTest, FixedWeights)
     {
         ocp_kb[i] = 1.0;
     }
-    elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec);
+    elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,skip_weights);
     EXPECT_EQ(elecstate->wg(0, 0), 1.0);
     EXPECT_EQ(elecstate->wg(klist->get_nks() - 1, PARAM.input.nbands - 1), 1.0);
     EXPECT_TRUE(elecstate->skip_weights);
@@ -296,6 +297,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
 {
     EXPECT_EQ(PARAM.input.nbands, 6);
     PARAM.input.nelec = 30;
+    bool skip_weights;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     elecstate->klist = klist;
@@ -307,7 +309,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -318,6 +320,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
 {
     EXPECT_EQ(PARAM.input.nbands, 6);
     PARAM.input.nelec = 29;
+    bool skip_weights;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
     elecstate->klist = klist;
@@ -329,7 +332,7 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
         ocp_kb[i] = 1.0;
     }
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate->fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec),
+    EXPECT_EXIT(elecstate::fixed_weights(ocp_kb, PARAM.input.nbands, PARAM.input.nelec,klist,elecstate->wg,skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();

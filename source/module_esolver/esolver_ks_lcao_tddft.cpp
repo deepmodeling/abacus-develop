@@ -401,7 +401,12 @@ void ESolver_KS_LCAO_TDDFT<Device>::weight_dm_rho()
 {
     if (PARAM.inp.ocp == 1)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
+        elecstate::fixed_weights(PARAM.inp.ocp_kb,
+                                 PARAM.inp.nbands,
+                                 PARAM.inp.nelec,
+                                 this->pelec->klist,
+                                 this->pelec->wg,
+                                 this->pelec->skip_weights);
     }
 
     // calculate Eband energy
