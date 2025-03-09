@@ -5,7 +5,7 @@
 #SBATCH -o install.log
 #SBATCH -e install.err
 # install ABACUS with libxc and deepks
-# JamesMisaka in 2023.08.31
+# JamesMisaka in 2025.03.09
 
 # Build ABACUS by gnu-toolchain
 
@@ -24,10 +24,10 @@ rm -rf $BUILD_DIR
 PREFIX=$ABACUS_DIR
 LAPACK=$INSTALL_DIR/openblas-0.3.28/lib
 SCALAPACK=$INSTALL_DIR/scalapack-2.2.1/lib
-ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
+ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
 FFTW3=$INSTALL_DIR/fftw-3.3.10
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
-LIBXC=$INSTALL_DIR/libxc-6.2.2
+LIBXC=$INSTALL_DIR/libxc-7.0.0
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
 # LIBRI=$INSTALL_DIR/LibRI-0.2.1.0
 # LIBCOMM=$INSTALL_DIR/LibComm-0.1.1

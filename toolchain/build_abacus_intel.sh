@@ -5,7 +5,7 @@
 #SBATCH -o install.log
 #SBATCH -e install.err
 # install ABACUS with libxc and deepks
-# JamesMisaka in 2023.08.22
+# JamesMisaka in 2025.03.09
 
 # Build ABACUS by intel-toolchain
 
@@ -23,9 +23,9 @@ BUILD_DIR=build_abacus_intel
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=$INSTALL_DIR/elpa-2024.05.001/cpu
+ELPA=$INSTALL_DIR/elpa-2025.01.001/cpu
 CEREAL=$INSTALL_DIR/cereal-1.3.2/include/cereal
-LIBXC=$INSTALL_DIR/libxc-6.2.2
+LIBXC=$INSTALL_DIR/libxc-7.0.0
 RAPIDJSON=$INSTALL_DIR/rapidjson-1.1.0/
 # LIBTORCH=$INSTALL_DIR/libtorch-2.1.2/share/cmake/Torch
 # LIBNPY=$INSTALL_DIR/libnpy-1.0.1/include
