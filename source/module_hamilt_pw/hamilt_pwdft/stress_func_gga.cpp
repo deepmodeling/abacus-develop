@@ -23,7 +23,7 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
 	FPTYPE sigma_gradcorr[3][3];
 	std::vector<FPTYPE> stress_gga;
 	FPTYPE dum1=0.0;
-    FPYTPE dum2=0.0;
+    FPTYPE dum2=0.0;
 	ModuleBase::matrix dum3;
 	// call gradcorr to evaluate gradient correction to stress
 	// the first three terms are etxc, vtxc and v, which
