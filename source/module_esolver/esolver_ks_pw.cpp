@@ -7,6 +7,7 @@
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
