@@ -73,7 +73,7 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
 
-    ModuleBase::timer::tick("psi_init_atomic", "initializee");
+    ModuleBase::timer::tick("psi_init_atomic", "initialize");
 }
 
 template <typename T>

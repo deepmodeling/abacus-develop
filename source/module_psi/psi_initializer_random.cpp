@@ -27,9 +27,9 @@ void psi_initializer_random<T>::initialize(const Structure_Factor* sf,
 template <typename T>
 void psi_initializer_random<T>::init_psig(T* psig, const int& ik)
 {
-    ModuleBase::timer::tick("psi_initializer_random", "initialize");
+    ModuleBase::timer::tick("psi_init_random", "init_psig");
     this->random_t(psig, 0, this->nbands_start_, ik);
-    ModuleBase::timer::tick("psi_initializer_random", "initialize");
+    ModuleBase::timer::tick("psi_init_random", "init_psig");
 }
 
 template class psi_initializer_random<std::complex<double>>;
