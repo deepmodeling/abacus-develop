@@ -79,6 +79,7 @@ case "${with_openmpi}" in
       ./configure CFLAGS="${CFLAGS}" \
         --prefix=${pkg_install_dir} \
         --libdir="${pkg_install_dir}/lib" \
+        --with-libevent=internal \
         ${EXTRA_CONFIGURE_FLAGS} \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
@@ -106,8 +107,9 @@ case "${with_openmpi}" in
     check_command mpifort "openmpi" && MPIFC="$(command -v mpifort)" || exit 1
     MPIFORT="${MPIFC}"
     MPIF77="${MPIFC}"
-    # OPENMPI_CFLAGS="$(mpicxx --showme:compile)"
-    # OPENMPI_LDFLAGS="$(mpicxx --showme:link)"
+    # libraries and linker flags for C/C++-based MPI codepaths, pull them in at this point.
+    OPENMPI_CFLAGS="$(mpicxx --showme:compile)"
+    OPENMPI_LDFLAGS="$(mpicxx --showme:link)"
     ;;
   __DONTUSE__)
     # Nothing to do
