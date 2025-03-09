@@ -113,7 +113,7 @@ The needed dependencies version default:
 - `cmake` 3.31.2
 - `gcc` 13.2.0 (which will always NOT be installed, But use system)
 - `OpenMPI` 5.0.6 (Version 5 OpenMPI is good but will have compability problem, user can manually downarade to Version 4 in toolchain scripts)
-- `MPICH` 4.3.2
+- `MPICH` 4.3.0
 - `OpenBLAS` 0.3.28 (Intel toolchain need `get_vars.sh` tool from it)
 - `ScaLAPACK` 2.2.1 (a developing version)
 - `FFTW` 3.3.10
