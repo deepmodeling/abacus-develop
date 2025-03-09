@@ -56,9 +56,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     this->kv = &kv_in;
 
     // Real space Hamiltonian is inited with template TR
-    this->hR = new HContainer<TR>(paraV);
+    // this->hR = new HContainer<TR>(paraV);
     this->sR = new HContainer<TR>(paraV);
-    this->hsk = new HS_Matrix_K<TK>(paraV);
+    // this->hsk = new HS_Matrix_K<TK>(paraV);
 
     this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                this->kv->kvec_d,
