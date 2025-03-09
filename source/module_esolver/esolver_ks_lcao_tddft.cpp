@@ -172,24 +172,23 @@ void ESolver_KS_LCAO_TDDFT<Device>::iter_finish(
     // print occupation of each band
     if (iter == 1 && istep <= 2)
     {
-        GlobalV::ofs_running << "---------------------------------------------------------------"
-                                "---------------------------------"
+        GlobalV::ofs_running << " ---------------------------------------------------------"
                              << std::endl;
-        GlobalV::ofs_running << "occupation : " << std::endl;
-        GlobalV::ofs_running << "ik  iband     occ " << std::endl;
-        GlobalV::ofs_running << std::setprecision(6);
+        GlobalV::ofs_running << " occupations of electrons" << std::endl;
+        GlobalV::ofs_running << " k-point  state   occupation" << std::endl;
         GlobalV::ofs_running << std::setiosflags(std::ios::showpoint);
+        GlobalV::ofs_running << std::left;
+        std::setprecision(6);
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             for (int ib = 0; ib < PARAM.inp.nbands; ib++)
             {
-                std::setprecision(6);
-                GlobalV::ofs_running << ik + 1 << "     " << ib + 1 << "      " << this->pelec->wg(ik, ib) << std::endl;
+                GlobalV::ofs_running << " " << std::setw(9) 
+                 << ik+1 << std::setw(8) << ib + 1 
+                 << std::setw(12) << this->pelec->wg(ik, ib) << std::endl;
             }
         }
-        GlobalV::ofs_running << std::endl;
-        GlobalV::ofs_running << "---------------------------------------------------------------"
-                                "---------------------------------"
+        GlobalV::ofs_running << " ---------------------------------------------------------"
                              << std::endl;
     }
 
@@ -324,6 +323,8 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
     }
 
     // print "eigen value" for tddft
+// it seems uncessary to print out E_ii because the band energies are printed
+/*
     if (conv_esolver)
     {
         GlobalV::ofs_running << "----------------------------------------------------------"
@@ -346,6 +347,7 @@ void ESolver_KS_LCAO_TDDFT<Device>::update_pot(UnitCell& ucell,
             }
         }
     }
+*/
 }
 
 template <typename Device>
