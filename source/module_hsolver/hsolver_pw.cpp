@@ -482,7 +482,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
         const int ndim = psi.get_current_ngk();
         // hpsi_func (X, HX, ld, nvec) -> HX = H(X), X and HX blockvectors of size ld x nvec
         auto hpsi_func = [hm, cur_nbasis](T* psi_in, T* hpsi_out, const int ld_psi, const int nvec) {
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+            ModuleBase::timer::tick("diago_bpcg", "hpsi_func");
 
             // Convert "pointer data stucture" to a psi::Psi object
             auto psi_iter_wrapper = psi::Psi<T, Device>(psi_in, 1, nvec, ld_psi, cur_nbasis);
@@ -493,7 +493,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             hpsi_info info(&psi_iter_wrapper, bands_range, hpsi_out);
             hm->ops->hPsi(info);
 
-            ModuleBase::timer::tick("DavSubspace", "hpsi_func");
+            ModuleBase::timer::tick("diago_bpcg", "hpsi_func");
         };
         DiagoBPCG<T, Device> bpcg(pre_condition.data());
         bpcg.init_iter(PARAM.inp.nbands, nband_l, nbasis, ndim);
