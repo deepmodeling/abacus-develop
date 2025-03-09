@@ -76,7 +76,13 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
                                      "This method and KPAR setting is not supported for lcao basis in ABACUS!");
         }
 
-        pes->calculate_weights();
+        elecstate::calculate_weights(pes->ekb,
+                                     pes->wg,
+                                     pes->klist,
+                                     pes->eferm,
+                                     pes->f_en,
+                                     pes->nelec_spin,
+                                     pes->skip_weights);
         if (!PARAM.inp.dm_to_rho)
         {
             auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);

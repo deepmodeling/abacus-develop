@@ -72,8 +72,7 @@ class ElecState
         return;
     }
 
-    // calculate wg from ekb
-    virtual void calculate_weights();
+
 
     // use occupied weights from INPUT and skip calculate_weights
     // mohan updated on 2024-06-08

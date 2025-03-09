@@ -21,10 +21,6 @@ void ElecState::init_nelec_spin()
     return;
 }
 
-void ElecState::calculate_weights()
-{
-    return;
-}
 
 
 void ElecState::init_scf(const int istep,

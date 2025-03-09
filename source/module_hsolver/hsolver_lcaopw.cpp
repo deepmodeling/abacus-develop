@@ -275,8 +275,15 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
     auto pes_pw = dynamic_cast<elecstate::ElecStatePW<T>*>(pes);
+    elecstate::calculate_weights(pes_pw->ekb,
+                                 pes_pw->wg,
+                                 pes_pw->klist,
+                                 pes_pw->eferm,
+                                 pes_pw->f_en,
+                                 pes_pw->nelec_spin,
+                                 pes_pw->skip_weights);
+
     elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
     if (skip_charge)
     {

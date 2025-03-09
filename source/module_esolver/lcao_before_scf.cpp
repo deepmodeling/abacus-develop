@@ -15,6 +15,7 @@
 #include "module_io/to_wannier90_lcao_in_pw.h"
 #include "module_io/write_HS_R.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_tools.h"
 #ifdef __DEEPKS
 #include "module_hamilt_lcao/module_deepks/LCAO_deepks.h"
 #endif
@@ -294,7 +295,13 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
             ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(dm->get_DMR_pointer(2)));
         }
 
-        this->pelec->calculate_weights();
+        elecstate::calculate_weights(this->pelec->ekb,
+                                     this->pelec->wg,
+                                     this->pelec->klist,
+                                     this->pelec->eferm,
+                                     this->pelec->f_en,
+                                     this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
         this->pelec->psiToRho(*this->psi);
 
         int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;

@@ -1,10 +1,19 @@
 #ifndef ELECSTATE_TOOLS_H
 #define ELECSTATE_TOOLS_H
 #include "elecstate.h"
+#include "module_base/matrix.h"
 
 namespace elecstate
 {
     void calEBand(const ModuleBase::matrix& ekb,const ModuleBase::matrix& wg,fenergy& f_en);
+
+    void calculate_weights(const ModuleBase::matrix& ekb,
+                        ModuleBase::matrix& wg,
+                        const K_Vectors* klist,
+                        efermi& eferm,
+                        fenergy& f_en,
+                        std::vector<double>& nelec_spin,
+                        const bool skip_weights);
 }
 
 #endif

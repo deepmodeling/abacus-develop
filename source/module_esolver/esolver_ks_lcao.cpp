@@ -592,7 +592,14 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             // and the ncalculate the charge density on grid.
 
             this->pelec->skip_weights = true;
-            this->pelec->calculate_weights();
+            elecstate::calculate_weights(this->pelec->ekb,
+                                         this->pelec->wg,
+                                         this->pelec->klist,
+                                         this->pelec->eferm,
+                                         this->pelec->f_en,
+                                         this->pelec->nelec_spin,
+                                         this->pelec->skip_weights);
+
             if (!PARAM.inp.dm_to_rho)
             {
                 auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
