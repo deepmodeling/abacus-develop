@@ -21,15 +21,16 @@
 #include "module_base/formatter.h"
 #include "module_elecstate/elecstate_lcao.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
-#include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
-#include "module_hamilt_general/module_vdw/vdw.h"
+
 #include "module_hamilt_lcao/hamilt_lcaodft/LCAO_domain.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/op_exx_lcao.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
+
 #include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
+
 #ifdef __EXX
 #include "module_io/restart_exx_csr.h"
 #endif
@@ -263,6 +264,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    this->psi,
                    this->pelec);
     }
+
     //=========================================================
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
@@ -271,14 +273,15 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
 
     // pelec should be initialized before these calculations
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        IState_Charge ISC(this->psi, &(this->pv));
+        IState_Charge chr_i(this->psi, &(this->pv));
         if (PARAM.globalv.gamma_only_local)
         {
-            ISC.begin(this->GG,
+            chr_i.begin(this->GG,
                       this->chr.rho,
                       this->pelec->wg,
                       this->pelec->eferm.get_all_ef(),
@@ -306,7 +309,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            ISC.begin(this->GK,
+            chr_i.begin(this->GK,
                       this->chr.rho,
                       this->chr.rhog,
                       this->pelec->wg,
@@ -342,10 +345,10 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        IState_Envelope IEP(this->pelec);
+        IState_Envelope wavefunc(this->pelec);
         if (PARAM.globalv.gamma_only_local)
         {
-            IEP.begin(ucell,
+            wavefunc.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -367,7 +370,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
         }
         else
         {
-            IEP.begin(ucell,
+            wavefunc.begin(ucell,
                       this->psi,
                       this->pw_rhod,
                       this->pw_wfc,
@@ -391,7 +394,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     }
     else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO<TK, TR>::others", "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::others", "CALCULATION type not supported");
     }
 
     ModuleBase::timer::tick("ESolver_KS_LCAO", "others");

@@ -385,22 +385,15 @@ __global__ void matrix_transpose_kernel(
     }
 }
 
-
 template <typename T>
-__global__ void matrix_setTo_another_kernel(
-        const int n,
-        const int LDA,
-        const int LDB,
-    const T* matrix_A,
-    T* matrix_B)
+__global__ void matrix_copy_kernel(const int n1, const int n2, const T* A, const int LDA, T* B, const int LDB)
 {
-    int j = blockIdx.x * blockDim.x + threadIdx.x;
-    if (j < LDA && j < LDB)
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const int j = blockIdx.y * blockDim.y + threadIdx.y;
+
+    if (i < n1 && j < n2)
     {
-        for (int i = 0; i < n; i++)
-        {
-            matrix_B[i * LDB + j] = matrix_A[i * LDA + j];
-        }
+        B[i * LDB + j] = A[i * LDA + j];
     }
 }
 
@@ -980,40 +973,43 @@ void matrixTranspose_op<std::complex<double>, base_device::DEVICE_GPU>::operator
 }
 
 template <>
-void matrixSetToAnother<double, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                     const double* A,
-                                                                     const int& LDA,
-                                                                     double* B,
-                                                                     const int& LDB)
+void matrixCopy<double, base_device::DEVICE_GPU>::operator()(const int& n1,
+                                                             const int& n2,
+                                                             const double* A,
+                                                             const int& LDA,
+                                                             double* B,
+                                                             const int& LDB)
 {
-    int thread = 1024;
-    int block = (LDA + thread - 1) / thread;
-    matrix_setTo_another_kernel<double> <<<block, thread >>> (n, LDA, LDB, A, B);
+    const dim3 blockSize(16, 16);
+    const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
+    matrix_copy_kernel<double> <<<gridSize, blockSize >>> (n1, n2, A, LDA, B, LDB);
     cudaCheckOnDebug();
 }
 template <>
-void matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                                  const std::complex<float>* A,
-                                                                                  const int& LDA,
-                                                                                  std::complex<float>* B,
-                                                                                  const int& LDB)
+void matrixCopy<std::complex<float>, base_device::DEVICE_GPU>::operator()(const int& n1,
+                                                                          const int& n2,
+                                                                          const std::complex<float>* A,
+                                                                          const int& LDA,
+                                                                          std::complex<float>* B,
+                                                                          const int& LDB)
 {
-    int thread = 1024;
-    int block = (LDA + thread - 1) / thread;
-    matrix_setTo_another_kernel<thrust::complex<float>> <<<block, thread >>> (n, LDA, LDB, reinterpret_cast<const thrust::complex<float>*>(A), reinterpret_cast<thrust::complex<float>*>(B));
+    const dim3 blockSize(16, 16);
+    const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
+    matrix_copy_kernel<thrust::complex<float>> <<<gridSize, blockSize >>> (n1, n2, reinterpret_cast<const thrust::complex<float>*>(A), LDA, reinterpret_cast<thrust::complex<float>*>(B), LDB);
     cudaCheckOnDebug();
-}
-template <>
-void matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& n,
-                                                                                   const std::complex<double>* A,
-                                                                                   const int& LDA,
-                                                                                   std::complex<double>* B,
-                                                                                   const int& LDB)
-{
-    int thread = 1024;
-    int block = (LDA + thread - 1) / thread;
-    matrix_setTo_another_kernel<thrust::complex<double>> <<<block, thread >>> (n, LDA, LDB, reinterpret_cast<const thrust::complex<double>*>(A), reinterpret_cast<thrust::complex<double>*>(B));
 
+}
+template <>
+void matrixCopy<std::complex<double>, base_device::DEVICE_GPU>::operator()(const int& n1,
+                                                                           const int& n2,
+                                                                           const std::complex<double>* A,
+                                                                           const int& LDA,
+                                                                           std::complex<double>* B,
+                                                                           const int& LDB)
+{
+    const dim3 blockSize(16, 16);
+    const dim3 gridSize((n1 + blockSize.x - 1) / blockSize.x, (n2 + blockSize.y - 1) / blockSize.y);
+    matrix_copy_kernel<thrust::complex<double>> <<<gridSize, blockSize >>> (n1, n2, reinterpret_cast<const thrust::complex<double>*>(A), LDA, reinterpret_cast<thrust::complex<double>*>(B), LDB);
     cudaCheckOnDebug();
 }
 
@@ -1027,7 +1023,7 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_GP
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<float, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_GPU>;
-template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_GPU>;
+template struct matrixCopy<std::complex<float>, base_device::DEVICE_GPU>;
 
 template struct dot_real_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_GPU>;
@@ -1035,15 +1031,15 @@ template struct line_minimize_with_block_op<std::complex<double>, base_device::D
 template struct vector_div_constant_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_GPU>;
+template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_GPU>;
-template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>;
+template struct matrixCopy<double, base_device::DEVICE_GPU>;
+template struct matrixCopy<std::complex<double>, base_device::DEVICE_GPU>;
 
 #ifdef __LCAO
 template struct dot_real_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_GPU>;
 template struct vector_mul_vector_op<double, base_device::DEVICE_GPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_GPU>;
-template struct matrixSetToAnother<double, base_device::DEVICE_GPU>;
-template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_GPU>;
 #endif
 }  // namespace ModuleBase

@@ -258,6 +258,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 {
     ModuleBase::TITLE("ESolver_FP", "before_scf");
 
+    // if the cell has changed
     if (ucell.cell_parameter_updated)
     {
         // only G-vector and K-vector are changed due to the change of lattice
@@ -266,6 +267,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         this->pw_rho->collect_local_pw();
         this->pw_rho->collect_uniqgg();
 
+        // if double grid used in USPP, update related quantities in dense grid
         if (PARAM.globalv.double_grid)
         {
             this->pw_rhod->initgrids(ucell.lat0, ucell.latvec, pw_rhod->nx, pw_rhod->ny, pw_rhod->nz);
@@ -273,35 +275,40 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
             this->pw_rhod->collect_uniqgg();
         }
 
+        // reset local pseudopotentials
         this->locpp.init_vloc(ucell, this->pw_rhod);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
         this->pelec->omega = ucell.omega;
 
+        // perform symmetry analysis
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
+        // reset k-points
         kv.set_after_vc(PARAM.inp.nspin, ucell.G, ucell.latvec);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
+    //----------------------------------------------------------
     // charge extrapolation
+    //----------------------------------------------------------
     if (ucell.ionic_position_updated)
     {
         this->CE.update_all_dis(ucell);
-        this->CE.extrapolate_charge(&(this->Pgrid),
+        this->CE.extrapolate_charge(&this->Pgrid,
                                     ucell,
                                     &this->chr,
-                                    &(this->sf),
+                                    &this->sf,
                                     GlobalV::ofs_running,
                                     GlobalV::ofs_warning);
     }
 
     //----------------------------------------------------------
-    // about vdw, jiyy add vdwd3 and linpz add vdwd2
+    //! calculate D2 or D3 vdW
     //----------------------------------------------------------
     auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
@@ -309,19 +316,22 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         this->pelec->f_en.evdw = vdw_solver->get_energy();
     }
 
-    // calculate ewald energy
+    //----------------------------------------------------------
+    //! calculate ewald energy
+    //----------------------------------------------------------
     if (!PARAM.inp.test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
     }
 
     //----------------------------------------------------------
-    //! cal_ux should be called before init_scf because
-    //! the direction of ux is used in noncoline_rho
+    //! set direction of magnetism, used in non-collinear case 
     //----------------------------------------------------------
     elecstate::cal_ux(ucell);
 
+    //----------------------------------------------------------
     //! output the initial charge density
+    //----------------------------------------------------------
     if (PARAM.inp.out_chg[0] == 2)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -339,7 +349,9 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         }
     }
 
+    //----------------------------------------------------------
     //! output total local potential of the initial charge density
+    //----------------------------------------------------------
     if (PARAM.inp.out_pot == 3)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)

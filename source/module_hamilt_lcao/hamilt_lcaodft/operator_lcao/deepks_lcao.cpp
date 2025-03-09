@@ -169,7 +169,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         DeePKS_domain::cal_pdm<TK>(this->ld->init_pdm,
                                    inlmax,
                                    this->ld->lmaxd,
-                                   this->ld->inl_l,
+                                   this->ld->inl2l,
                                    this->ld->inl_index,
                                    this->DM,
                                    this->ld->phialpha,
@@ -182,7 +182,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         std::vector<torch::Tensor> descriptor;
         DeePKS_domain::cal_descriptor(this->ucell->nat,
                                       inlmax,
-                                      this->ld->inl_l,
+                                      this->ld->inl2l,
                                       this->ld->pdm,
                                       descriptor,
                                       this->ld->des_per_atom);
@@ -193,7 +193,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
                                                  this->ld->nmaxd,
                                                  inlmax,
                                                  this->ld->des_per_atom,
-                                                 this->ld->inl_l,
+                                                 this->ld->inl2l,
                                                  descriptor,
                                                  this->ld->gedm,
                                                  this->ld->E_delta,
@@ -204,7 +204,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             DeePKS_domain::cal_edelta_gedm(this->ucell->nat,
                                            inlmax,
                                            this->ld->des_per_atom,
-                                           this->ld->inl_l,
+                                           this->ld->inl2l,
                                            descriptor,
                                            this->ld->pdm,
                                            this->ld->model_deepks,
@@ -488,13 +488,6 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const double* hr_i
     }
 }
 
-template <typename TK>
-inline void get_h_delta_k(int ik, TK*& h_delta_k, LCAO_Deepks<TK>* ld_in)
-{
-    h_delta_k = ld_in->V_delta[ik].data();
-    return;
-}
-
 // contributeHk()
 template <typename TK, typename TR>
 void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
@@ -502,8 +495,7 @@ void hamilt::DeePKS<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
     ModuleBase::TITLE("DeePKS", "contributeHk");
     ModuleBase::timer::tick("DeePKS", "contributeHk");
 
-    TK* h_delta_k = nullptr;
-    get_h_delta_k<TK>(ik, h_delta_k, this->ld);
+    TK* h_delta_k = this->ld->V_delta[ik].data();
     // set SK to zero and then calculate SK for each k vector
     ModuleBase::GlobalFunc::ZEROS(h_delta_k, this->hsk->get_size());
 

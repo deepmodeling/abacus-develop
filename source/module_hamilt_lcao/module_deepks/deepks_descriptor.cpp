@@ -37,7 +37,7 @@ void DeePKS_domain::cal_descriptor_equiv(const int nat,
 // calculates descriptors from projected density matrices
 void DeePKS_domain::cal_descriptor(const int nat,
                                    const int inlmax,
-                                   const int* inl_l,
+                                   const std::vector<int>& inl2l,
                                    const std::vector<torch::Tensor>& pdm,
                                    std::vector<torch::Tensor>& descriptor,
                                    const int des_per_atom = -1)
@@ -53,7 +53,7 @@ void DeePKS_domain::cal_descriptor(const int nat,
 
     for (int inl = 0; inl < inlmax; ++inl)
     {
-        const int nm = 2 * inl_l[inl] + 1;
+        const int nm = 2 * inl2l[inl] + 1;
         pdm[inl].requires_grad_(true);
         descriptor.push_back(torch::ones({nm}, torch::requires_grad(true)));
     }
@@ -74,7 +74,7 @@ void DeePKS_domain::cal_descriptor(const int nat,
 
 void DeePKS_domain::check_descriptor(const int inlmax,
                                      const int des_per_atom,
-                                     const int* inl_l,
+                                     const std::vector<int>& inl2l,
                                      const UnitCell& ucell,
                                      const std::string& out_dir,
                                      const std::vector<torch::Tensor>& descriptor,
@@ -104,7 +104,7 @@ void DeePKS_domain::check_descriptor(const int inlmax,
                 int id = 0;
                 for (int inl = 0; inl < inlmax / ucell.nat; inl++)
                 {
-                    int nm = 2 * inl_l[inl] + 1;
+                    int nm = 2 * inl2l[inl] + 1;
                     const int ind = iat * inlmax / ucell.nat + inl;
                     auto accessor = descriptor[ind].accessor<double, 1>();
                     for (int im = 0; im < nm; im++)

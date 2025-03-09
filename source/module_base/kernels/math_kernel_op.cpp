@@ -337,16 +337,16 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct matrixSetToAnother<T, base_device::DEVICE_CPU>
+struct matrixCopy<T, base_device::DEVICE_CPU>
 {
-    void operator()(const int& n, const T* A, const int& LDA, T* B, const int& LDB)
+    void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
 #endif
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n1; i++)
         {
-            for (int j = 0; j < LDA; j++)
+            for (int j = 0; j < n2; j++)
             {
                 B[i * LDB + j] = A[i * LDA + j];
             }
@@ -367,7 +367,7 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CP
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_CPU>;
+template struct matrixCopy<std::complex<float>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 
@@ -385,7 +385,8 @@ template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_C
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrixCopy<double, base_device::DEVICE_CPU>;
+template struct matrixCopy<std::complex<double>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 
@@ -394,7 +395,6 @@ template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<double, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
 #endif
 #ifdef __DSP

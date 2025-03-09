@@ -12,7 +12,7 @@
 // Dimension is different for each inl, so there's a vector of tensors
 void DeePKS_domain::cal_gevdm(const int nat,
                               const int inlmax,
-                              const int* inl_l,
+                              const std::vector<int>& inl2l,
                               const std::vector<torch::Tensor>& pdm,
                               std::vector<torch::Tensor>& gevdm)
 {
@@ -26,7 +26,7 @@ void DeePKS_domain::cal_gevdm(const int nat,
         for (int iat = 0; iat < nat; ++iat)
         {
             int inl = iat * nlmax + nl;
-            int nm = 2 * inl_l[inl] + 1;
+            int nm = 2 * inl2l[inl] + 1;
             // repeat each block for nm times in an additional dimension
             torch::Tensor tmp_x = pdm[inl].reshape({nm, nm}).unsqueeze(0).repeat({nm, 1, 1});
             // torch::Tensor tmp_y = std::get<0>(torch::symeig(tmp_x, true));
@@ -127,7 +127,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
                                           const int nmaxd,
                                           const int inlmax,
                                           const int des_per_atom,
-                                          const int* inl_l,
+                                          const std::vector<int>& inl2l,
                                           const std::vector<torch::Tensor>& descriptor,
                                           double** gedm,
                                           double& E_delta,
@@ -139,7 +139,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
     LCAO_deepks_io::save_npy_d(nat,
                                des_per_atom,
                                inlmax,
-                               inl_l,
+                               inl2l,
                                PARAM.inp.deepks_equiv,
                                descriptor,
                                PARAM.globalv.global_out_dir,
@@ -169,7 +169,7 @@ void DeePKS_domain::cal_edelta_gedm_equiv(const int nat,
 void DeePKS_domain::cal_edelta_gedm(const int nat,
                                     const int inlmax,
                                     const int des_per_atom,
-                                    const int* inl_l,
+                                    const std::vector<int>& inl2l,
                                     const std::vector<torch::Tensor>& descriptor,
                                     const std::vector<torch::Tensor>& pdm,
                                     torch::jit::script::Module& model_deepks,
@@ -201,7 +201,7 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     // gedm_tensor(Hartree) to gedm(Ry)
     for (int inl = 0; inl < inlmax; ++inl)
     {
-        int nm = 2 * inl_l[inl] + 1;
+        int nm = 2 * inl2l[inl] + 1;
         auto accessor = gedm_tensor[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; ++m1)
         {
@@ -216,13 +216,13 @@ void DeePKS_domain::cal_edelta_gedm(const int nat,
     return;
 }
 
-void DeePKS_domain::check_gedm(const int inlmax, const int* inl_l, double** gedm)
+void DeePKS_domain::check_gedm(const int inlmax, const std::vector<int>& inl2l, double** gedm)
 {
     std::ofstream ofs("gedm.dat");
 
     for (int inl = 0; inl < inlmax; inl++)
     {
-        int nm = 2 * inl_l[inl] + 1;
+        int nm = 2 * inl2l[inl] + 1;
         for (int m1 = 0; m1 < nm; ++m1)
         {
             for (int m2 = 0; m2 < nm; ++m2)

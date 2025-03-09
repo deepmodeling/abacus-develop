@@ -77,7 +77,7 @@ void LCAO_deepks_io::load_npy_gedm(const int nat,
 void LCAO_deepks_io::save_npy_d(const int nat,
                                 const int des_per_atom,
                                 const int inlmax,
-                                const int* inl_l,
+                                const std::vector<int>& inl2l,
                                 const bool deepks_equiv,
                                 const std::vector<torch::Tensor>& descriptor,
                                 const std::string& out_dir,
@@ -98,7 +98,7 @@ void LCAO_deepks_io::save_npy_d(const int nat,
         for (int inl = 0; inl < inlmax; ++inl)
         {
             auto accessor = descriptor[inl].accessor<double, 1>();
-            int nm = 2 * inl_l[inl] + 1;
+            int nm = 2 * inl2l[inl] + 1;
             for (int im = 0; im < nm; im++)
             {
                 npy_des.push_back(accessor[im]);

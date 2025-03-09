@@ -479,11 +479,6 @@ void ESolver_KS_PW<T, Device>::hamilt2density_single(UnitCell& ucell,
         srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
     }
 
-    // deband is calculated from "output" charge density calculated
-    // in sum_band
-    // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
-    this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
-
     ModuleBase::timer::tick("ESolver_KS_PW", "hamilt2density_single");
 }
 
@@ -509,6 +504,11 @@ void ESolver_KS_PW<T, Device>::update_pot(UnitCell& ucell, const int istep, cons
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
+    // deband is calculated from "output" charge density calculated
+    // in sum_band
+    // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
+    this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
+
     // 1) Call iter_finish() of ESolver_KS
     ESolver_KS<T, Device>::iter_finish(ucell, istep, iter, conv_esolver);
 
@@ -571,26 +571,24 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     //------------------------------------------------------------------
     ESolver_KS<T, Device>::after_scf(ucell, istep, conv_esolver);
 
-
     //------------------------------------------------------------------
-    // 3) output wavefunctions in pw basis
-    //------------------------------------------------------------------
-    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
-    {
-        std::stringstream ssw;
-        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
-        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
-    }
-
-    //------------------------------------------------------------------
-    // 4) transfer data from GPU to CPU in pw basis
-    // a question: the wavefunctions have been output, then the data transfer occurs? mohan 20250302
+    // 3) transfer data from GPU to CPU in pw basis
     //------------------------------------------------------------------
     if (this->device == base_device::GpuDevice)
     {
         castmem_2d_d2h_op()(this->psi[0].get_pointer() - this->psi[0].get_psi_bias(),
                             this->kspw_psi[0].get_pointer() - this->kspw_psi[0].get_psi_bias(),
                             this->psi[0].size());
+    }
+    
+    //------------------------------------------------------------------
+    // 4) output wavefunctions in pw basis
+    //------------------------------------------------------------------
+    if (PARAM.inp.out_wfc_pw == 1 || PARAM.inp.out_wfc_pw == 2)
+    {
+        std::stringstream ssw;
+        ssw << PARAM.globalv.global_out_dir << "WAVEFUNC";
+        ModuleIO::write_wfc_pw(ssw.str(), this->psi[0], this->kv, this->pw_wfc);
     }
 
     //------------------------------------------------------------------

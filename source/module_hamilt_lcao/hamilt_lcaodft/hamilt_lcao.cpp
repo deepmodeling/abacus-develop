@@ -56,9 +56,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     this->kv = &kv_in;
 
     // Real space Hamiltonian is inited with template TR
-    this->hR = new HContainer<TR>(paraV);
+    // this->hR = new HContainer<TR>(paraV);
     this->sR = new HContainer<TR>(paraV);
-    this->hsk = new HS_Matrix_K<TK>(paraV);
+    // this->hsk = new HS_Matrix_K<TK>(paraV);
 
     this->getOperator() = new OverlapNew<OperatorLCAO<TK, TR>>(this->hsk,
                                                                this->kv->kvec_d,
@@ -216,6 +216,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     DM_in,
                                                                     ld_in);
             this->getOperator()->add(deepks);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
         }
 #endif
 
@@ -340,6 +341,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(Gint_Gamma* GG_in,
                                                                     DM_in,
                                                                     ld_in);
             this->getOperator()->add(deepks);
+            this->V_delta_R = dynamic_cast<DeePKS<OperatorLCAO<TK, TR>>*>(deepks)->get_V_delta_R();
         }
 #endif
         // TDDFT_velocity_gague

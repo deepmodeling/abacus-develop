@@ -30,7 +30,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
                              const int nat,
                              const int inlmax,
                              const int lmaxd,
-                             const int* inl_l,
+                             const std::vector<int>& inl2l,
                              const Numerical_Orbital& alpha,
                              std::vector<torch::Tensor>& pdm)
 {
@@ -47,7 +47,7 @@ void DeePKS_domain::read_pdm(bool read_pdm_file,
         {
             for (int inl = 0; inl < inlmax; inl++)
             {
-                int nm = inl_l[inl] * 2 + 1;
+                int nm = 2 * inl2l[inl] + 1;
                 auto accessor = pdm[inl].accessor<double, 2>();
                 for (int m1 = 0; m1 < nm; m1++)
                 {
@@ -91,7 +91,7 @@ template <typename TK>
 void DeePKS_domain::cal_pdm(bool& init_pdm,
                             const int inlmax,
                             const int lmaxd,
-                            const int* inl_l,
+                            const std::vector<int>& inl2l,
                             const ModuleBase::IntArray* inl_index,
                             const elecstate::DensityMatrix<TK, double>* dm,
                             const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -116,7 +116,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
     {
         for (int inl = 0; inl < inlmax; inl++)
         {
-            int nm = inl_l[inl] * 2 + 1;
+            int nm = 2 * inl2l[inl] + 1;
             pdm[inl] = torch::zeros({nm, nm}, torch::kFloat64);
         }
     }
@@ -283,6 +283,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                         dRy = dR2.y - dR1.y;
                         dRz = dR2.z - dR1.z;
                     }
+                    // dm_R
                     auto* tmp = dm->get_DMR_vector()[is]->find_matrix(ibt1, ibt2, dRx, dRy, dRz);
                     if (tmp == nullptr)
                     {
@@ -325,7 +326,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
             } // ad2
             if (!PARAM.inp.deepks_equiv)
             {
-                int ib = 0, index = 0, inc = 1;
+                int index = 0, inc = 1;
                 for (int L0 = 0; L0 <= orb.Alpha[0].getLmax(); ++L0)
                 {
                     for (int N0 = 0; N0 < orb.Alpha[0].getNchi(L0); ++N0)
@@ -346,7 +347,6 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
                                 index++;
                             }
                         }
-                        ib += nm;
                     }
                 }
             }
@@ -380,7 +380,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
 #ifdef __MPI
     for (int inl = 0; inl < inlmax; inl++)
     {
-        int pdm_size = (2 * inl_l[inl] + 1) * (2 * inl_l[inl] + 1);
+        int pdm_size = (2 * inl2l[inl] + 1) * (2 * inl2l[inl] + 1);
         Parallel_Reduce::reduce_all(pdm[inl].data_ptr<double>(), pdm_size);
     }
 #endif
@@ -388,7 +388,7 @@ void DeePKS_domain::cal_pdm(bool& init_pdm,
     return;
 }
 
-void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vector<torch::Tensor>& pdm)
+void DeePKS_domain::check_pdm(const int inlmax, const std::vector<int>& inl2l, const std::vector<torch::Tensor>& pdm)
 {
     const std::string file_projdm = PARAM.globalv.global_out_dir + "pdm.dat";
     std::ofstream ofs(file_projdm.c_str());
@@ -396,7 +396,7 @@ void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vec
     ofs << std::setprecision(10);
     for (int inl = 0; inl < inlmax; inl++)
     {
-        const int nm = 2 * inl_l[inl] + 1;
+        const int nm = 2 * inl2l[inl] + 1;
         auto accessor = pdm[inl].accessor<double, 2>();
         for (int m1 = 0; m1 < nm; m1++)
         {
@@ -412,7 +412,7 @@ void DeePKS_domain::check_pdm(const int inlmax, const int* inl_l, const std::vec
 template void DeePKS_domain::cal_pdm<double>(bool& init_pdm,
                                              const int inlmax,
                                              const int lmaxd,
-                                             const int* inl_l,
+                                             const std::vector<int>& inl2l,
                                              const ModuleBase::IntArray* inl_index,
                                              const elecstate::DensityMatrix<double, double>* dm,
                                              const std::vector<hamilt::HContainer<double>*> phialpha,
@@ -426,7 +426,7 @@ template void DeePKS_domain::cal_pdm<std::complex<double>>(
     bool& init_pdm,
     const int inlmax,
     const int lmaxd,
-    const int* inl_l,
+    const std::vector<int>& inl2l,
     const ModuleBase::IntArray* inl_index,
     const elecstate::DensityMatrix<std::complex<double>, double>* dm,
     const std::vector<hamilt::HContainer<double>*> phialpha,

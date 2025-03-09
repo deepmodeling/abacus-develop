@@ -630,7 +630,7 @@ TEST_F(TestModuleHsolverMathKernel, gemv_op_gpu)
     delete_memory_op()(Y_gemv_dev);
 }
 
-TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
+TEST_F(TestModuleHsolverMathKernel, matrixCopy_op_gpu)
 {
     // const std::vector<std::complex<double> > expect_result = {
     //   {-0.11893203,-0.13492526}, {-0.40314756, 0.07734553}, {0.06892412, 0.14837423}, {0.0,  0.0},
@@ -665,25 +665,15 @@ TEST_F(TestModuleHsolverMathKernel, matrixSetToAnother_op_gpu)
                                                                                                         B.size());
 
     // run
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_GPU>()(n,
-                                                                                 device_A,
-                                                                                 LDA,
-                                                                                 device_B,
-                                                                                 LDB);
+    ModuleBase::matrixCopy<std::complex<double>, base_device::DEVICE_GPU>()(n, LDA, device_A, LDA, device_B, LDB);
 
     std::vector<std::complex<double>> B_gpu2cpu(8);
     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                base_device::DEVICE_CPU,
-                                               base_device::DEVICE_GPU>()(B_gpu2cpu.data(),
-                                                                          device_B,
-                                                                          B_gpu2cpu.size());
+                                               base_device::DEVICE_GPU>()(B_gpu2cpu.data(), device_B, B_gpu2cpu.size());
 
     std::vector<std::complex<double>> B_cpu(8);
-    ModuleBase::matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>()(n,
-                                                                                 A.data(),
-                                                                                 LDA,
-                                                                                 B_cpu.data(),
-                                                                                 LDB);
+    ModuleBase::matrixCopy<std::complex<double>, base_device::DEVICE_CPU>()(n, LDA, A.data(), LDA, B_cpu.data(), LDB);
 
     // for (int i = 0; i < 4; i++)
     // {
