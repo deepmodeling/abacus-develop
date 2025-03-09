@@ -3,13 +3,15 @@
 # TODO: Review and if possible fix shellcheck errors.
 # shellcheck disable=all
 
-# Last Update in 2023-0901
+# Last Update in 2025-0309
 
 [ "${BASH_SOURCE[0]}" ] && SCRIPT_NAME="${BASH_SOURCE[0]}" || SCRIPT_NAME=$0
 SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_NAME")/.." && pwd -P)"
 
-libxc_ver="6.2.2"
-libxc_sha256="a0f6f1bba7ba5c0c85b2bfe65aca1591025f509a7f11471b4cd651a79491b045"
+# libxc_ver="6.2.2"
+# libxc_sha256="a0f6f1bba7ba5c0c85b2bfe65aca1591025f509a7f11471b4cd651a79491b045"
+libxc_ver="7.0.0"
+libxc_sha256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
 source "${SCRIPT_DIR}"/common_vars.sh
 source "${SCRIPT_DIR}"/tool_kit.sh
 source "${SCRIPT_DIR}"/signal_trap.sh
@@ -30,22 +32,33 @@ case "$with_libxc" in
     pkg_install_dir="${INSTALLDIR}/libxc-${libxc_ver}"
     #pkg_install_dir="${HOME}/lib/libxc/${libxc_ver}-gcc8"
     install_lock_file="$pkg_install_dir/install_successful"
+    libxc_pkg="libxc-${libxc_ver}.tar.bz2"
     if verify_checksums "${install_lock_file}"; then
       echo "libxc-${libxc_ver} is already installed, skipping it."
     else
-      if [ -f libxc-${libxc_ver}.tar.gz ]; then
-        echo "libxc-${libxc_ver}.tar.gz is found"
+      if [ -f ${libxc_pkg} ]; then
+        echo "${libxc_pkg} is found"
       else
-        download_pkg_from_ABACUS_org "${libxc_sha256}" "libxc-${libxc_ver}.tar.gz"
+        #download_pkg_from_ABACUS_org "${libxc_sha256}" "${libxc_pkg}"
+        libxc_url="https://gitlab.com/libxc/libxc/-/archive/${libxc_ver}/${libxc_pkg}"
+        download_pkg_from_url  "${libxc_sha256}" "${libxc_pkg}" "${libxc_url}"
       fi
       echo "Installing from scratch into ${pkg_install_dir}"
       [ -d libxc-${libxc_ver} ] && rm -rf libxc-${libxc_ver}
-      tar -xzf libxc-${libxc_ver}.tar.gz
+      tar -xjf ${libxc_pkg}
       cd libxc-${libxc_ver}
       # using cmake method to install libxc is neccessary for abacus
-      mkdir build && cd build
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
-        -DBUILD_SHARED_LIBS=YES -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_FORTRAN=ON -DENABLE_PYTHON=OFF -DBUILD_TESTING=NO .. \
+      mkdir build 
+      cd build
+      cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${pkg_install_dir} \
+        -DBUILD_SHARED_LIBS=YES \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_VERBOSE_MAKEFILE=ON \
+        -DENABLE_FORTRAN=ON \
+        -DENABLE_PYTHON=OFF \
+        -DBUILD_TESTING=OFF .. \
         > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
       make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
       make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
