@@ -46,7 +46,7 @@ void Driver::driver_run()
                 PARAM.inp.fixed_axes);
 
     ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
-    Check_Atomic_Stru::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
+    unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
