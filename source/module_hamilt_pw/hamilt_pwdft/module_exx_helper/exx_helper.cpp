@@ -1,0 +1,56 @@
+#include "exx_helper.h"
+
+template <typename T, typename Device>
+double Exx_Helper<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_)
+{
+    return op_exx->cal_exx_energy(psi_);
+
+}
+
+template <typename T, typename Device>
+bool Exx_Helper<T, Device>::exx_after_converge(int &iter)
+{
+    if (op_exx->first_iter)
+    {
+        op_exx->first_iter = false;
+    }
+    else if (!GlobalC::exx_info.info_global.separate_loop)
+    {
+        return true;
+    }
+    else if (iter == 1)
+    {
+        return true;
+    }
+    GlobalV::ofs_running << "Updating EXX and rerun SCF" << std::endl;
+    iter = 0;
+    return false;
+
+}
+
+template <typename T, typename Device>
+void Exx_Helper<T, Device>::set_psi(psi::Psi<T, Device> *psi_)
+{
+    if (psi_ == nullptr)
+        return;
+    op_exx->set_psi(*psi_);
+    if (PARAM.inp.exxace)
+    {
+        op_exx->construct_ace();
+    }
+}
+
+template class Exx_Helper<std::complex<float>, base_device::DEVICE_CPU>;
+template class Exx_Helper<std::complex<double>, base_device::DEVICE_CPU>;
+#if ((defined __CUDA) || (defined __ROCM))
+template class Exx_Helper<std::complex<float>, base_device::DEVICE_GPU>;
+template class Exx_Helper<std::complex<double>, base_device::DEVICE_GPU>;
+#endif
+
+#ifndef __EXX
+#include "module_hamilt_general/module_xc/exx_info.h"
+namespace GlobalC
+{
+    Exx_Info exx_info;
+}
+#endif

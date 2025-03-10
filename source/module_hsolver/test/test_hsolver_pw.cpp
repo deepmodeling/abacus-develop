@@ -267,6 +267,9 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     pwbk.nks = 1;
     // initial memory and data
     elecstate_test.ekb.create(1, 2);
+    elecstate_test.wg.create(1,2);
+    elecstate_test.klist=new K_Vectors;
+    elecstate_test.skip_weights=true;
     elecstate_test.pot = new elecstate::Potential;
     // 1 kpt, 2 bands, 3 basis
     psi_test_cf.resize(1, 2, 3);
@@ -300,7 +303,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-
+    
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip

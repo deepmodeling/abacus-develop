@@ -4,9 +4,11 @@
 #include "module_base/macros.h"
 #include "module_cell/klist.h"
 #include "module_elecstate/potentials/potential_new.h"
+#include "module_esolver/esolver_ks_pw.h"
 #include "module_hamilt_general/hamilt.h"
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_base/kernels/math_kernel_op.h"
+#include "module_hamilt_pw/hamilt_pwdft/module_exx_helper/exx_helper.h"
 
 namespace hamilt
 {
@@ -34,6 +36,8 @@ class HamiltPW : public Hamilt<T, Device>
               const int npw,   // number of plane waves
               const int nbands // number of bands
     ) const override;
+
+    void set_exx_helper(Exx_Helper<T, Device>& exx_helper_in);
 
 protected:
     // used in sPhi, which are calculated in hPsi or sPhi

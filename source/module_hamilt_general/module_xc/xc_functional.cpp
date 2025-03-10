@@ -40,6 +40,9 @@ method. */
     else if (ucell.atoms[0].ncpp.xc_func == "SCAN0") {
         XC_Functional::set_xc_type("scan");
     }
+    else if (ucell.atoms[0].ncpp.xc_func == "B3LYP") {
+        XC_Functional::set_xc_type("blyp");
+    }
 }
 
 // The setting values of functional id according to the index in LIBXC
@@ -244,6 +247,12 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = true;
     }
+    else if (xc_func == "B3LYP")
+    {
+        func_id.push_back(XC_HYB_GGA_XC_B3LYP);
+        func_type = 4;
+        use_libxc = true;
+    }
 #endif
     else
     {
@@ -268,19 +277,19 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         std::cerr << "\n OPTX untested please test,";
     }
 
-    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
-    }
+    // if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
+    // {
+    //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
+    // }
     if((func_type == 3 || func_type == 5) && PARAM.inp.nspin==4)
     {
         ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
     }
 
 #ifndef __EXX
-    if(func_type == 4 || func_type == 5)
+    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "lcao")
     {
-        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional");
+        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
     }
 #endif
 

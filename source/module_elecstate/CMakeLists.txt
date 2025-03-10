@@ -4,6 +4,7 @@ list(APPEND objects
     elecstate_energy.cpp
     elecstate_exx.cpp
     elecstate_print.cpp
+    elecstate_tools.cpp
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
