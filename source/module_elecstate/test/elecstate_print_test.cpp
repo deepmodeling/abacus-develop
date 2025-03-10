@@ -21,10 +21,6 @@ const double* ElecState::getRho(int spin) const
 {
     return &(this->eferm.ef);
 } // just for mock
-void ElecState::calculate_weights()
-{
-    return;
-} // just for mock
 double Efield::etotefield = 1.1;
 double elecstate::Gatefield::etotgatefield = 2.2;
 

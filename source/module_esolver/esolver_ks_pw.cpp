@@ -7,6 +7,7 @@
 #include "module_elecstate/cal_ux.h"
 #include "module_elecstate/elecstate_pw.h"
 #include "module_elecstate/elecstate_pw_sdft.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
 #include "module_hamilt_general/module_ewald/H_Ewald_pw.h"
 #include "module_hamilt_general/module_vdw/vdw.h"
@@ -217,7 +218,12 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
     //! 9) setup occupations
     if (PARAM.inp.ocp)
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.globalv.nbands_l, PARAM.inp.nelec);
+        elecstate::fixed_weights(PARAM.inp.ocp_kb,
+                                 PARAM.inp.nbands,
+                                 PARAM.inp.nelec,
+                                 this->pelec->klist,
+                                 this->pelec->wg,
+                                 this->pelec->skip_weights);
     }
 }
 

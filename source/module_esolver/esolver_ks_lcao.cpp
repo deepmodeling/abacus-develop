@@ -27,7 +27,7 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
-
+#include "module_elecstate/elecstate_tools.h"
 
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
@@ -216,7 +216,12 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     // tddft does not need to set occupations in the first scf
     if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
-        this->pelec->fixed_weights(PARAM.inp.ocp_kb, PARAM.inp.nbands, PARAM.inp.nelec);
+        elecstate::fixed_weights(PARAM.inp.ocp_kb,
+                                 PARAM.inp.nbands,
+                                 PARAM.inp.nelec,
+                                 this->pelec->klist,
+                                 this->pelec->wg,
+                                 this->pelec->skip_weights);
     }
 
     // 12) if kpar is not divisible by nks, print a warning
@@ -573,11 +578,18 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
             // and then calculate the charge density on grid.
 
             this->pelec->skip_weights = true;
-            this->pelec->calculate_weights();
+            elecstate::calculate_weights(this->pelec->ekb,
+                                         this->pelec->wg,
+                                         this->pelec->klist,
+                                         this->pelec->eferm,
+                                         this->pelec->f_en,
+                                         this->pelec->nelec_spin,
+                                         this->pelec->skip_weights);
+
             if (!PARAM.inp.dm_to_rho)
             {
                 auto _pelec = dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec);
-                _pelec->calEBand();
+                elecstate::calEBand(_pelec->ekb,_pelec->wg,_pelec->f_en);
                 elecstate::cal_dm_psi(_pelec->DM->get_paraV_pointer(), _pelec->wg, *this->psi, *(_pelec->DM));
                 _pelec->DM->cal_DMR();
             }

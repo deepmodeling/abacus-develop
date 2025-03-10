@@ -9,9 +9,11 @@
 #include "module_hsolver/hsolver_lcao.h"
 #include "module_hsolver/hsolver_pw.h"
 #include "module_elecstate/elecstate_pw.h"
+#include "module_elecstate/elecstate_tools.h"
 
 #ifdef __LCAO
 #include "module_elecstate/elecstate_lcao.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.h"
 #endif
@@ -150,8 +152,14 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
         }
         // diagonalization without update charge
         hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, true);
-        this->pelec->calculate_weights();
-        this->pelec->calEBand();
+        elecstate::calculate_weights(this->pelec->ekb,
+                                     this->pelec->wg,
+                                     this->pelec->klist,
+                                     this->pelec->eferm,
+                                     this->pelec->f_en,
+                                     this->pelec->nelec_spin,
+                                     this->pelec->skip_weights);
+        elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
         elecstate::ElecStateLCAO<std::complex<double>>* pelec_lcao
             = dynamic_cast<elecstate::ElecStateLCAO<std::complex<double>>*>(this->pelec);
         elecstate::cal_dm_psi(this->ParaV, pelec_lcao->wg, *psi_t, *(pelec_lcao->get_DM()));
@@ -307,7 +315,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(int 
             }
 #endif
             // calculate weights from ekb to update wg
-            this->pelec->calculate_weights();
+            elecstate::calculate_weights(this->pelec->ekb,
+                                         this->pelec->wg,
+                                         this->pelec->klist,
+                                         this->pelec->eferm,
+                                         this->pelec->f_en,
+                                         this->pelec->nelec_spin,
+                                         this->pelec->skip_weights);
             // calculate Mi from existed becp
             for (int ik = 0; ik < nk; ik++)
             {
