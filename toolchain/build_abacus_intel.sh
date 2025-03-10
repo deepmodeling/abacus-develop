@@ -4,13 +4,12 @@
 #SBATCH -n 16
 #SBATCH -o install.log
 #SBATCH -e install.err
-# install ABACUS with libxc and deepks
 # JamesMisaka in 2025.03.09
 
 # Build ABACUS by intel-toolchain
 
 # module load mkl compiler mpi
-# source path/to/vars.sh
+# source path/to/setvars.sh
 
 ABACUS_DIR=..
 TOOL=$(pwd)

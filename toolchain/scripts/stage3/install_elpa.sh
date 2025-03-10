@@ -104,6 +104,37 @@ case "$with_elpa" in
 
         mkdir -p "build_${TARGET}"
         cd "build_${TARGET}"
+        if [ "${with_amd}" != "__DONTUSE__" ]; then
+        echo "AMD compiler detected, enable special option operation"
+        ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
+          --libdir="${pkg_install_dir}/${TARGET}/lib" \
+          --enable-openmp=${enable_openmp} \
+          --enable-shared=yes \
+          --enable-static=yes \
+          --disable-c-tests \
+          --disable-cpp-tests \
+          ${config_flags} \
+          --enable-nvidia-gpu-kernels=$([ "$TARGET" = "nvidia" ] && echo "yes" || echo "no") \
+          --with-cuda-path=${CUDA_PATH:-${CUDA_HOME:-/CUDA_HOME-notset}} \
+          --with-NVIDIA-GPU-compute-capability=$([ "$TARGET" = "nvidia" ] && echo "sm_$ARCH_NUM" || echo "sm_75") \
+          CUDA_CFLAGS="-std=c++14 -allow-unsupported-compiler" \
+          OMPI_MCA_plm_rsh_agent=/bin/false \
+          FC=${MPIFC} \
+          CC=${MPICC} \
+          CXX=${MPICXX} \
+          CPP="cpp -E" \
+          FCFLAGS="${FCFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
+          CFLAGS="${CFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
+          CXXFLAGS="${CXXFLAGS} ${MATH_CFLAGS} ${SCALAPACK_CFLAGS} ${AVX_flag} ${FMA_flag} ${SSE4_flag} ${AVX512_flags} -fno-lto" \
+          LDFLAGS="${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
+          LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \
+          > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+          # remove unsupported compile option in libtool
+          sed -i ./libtool \
+          -e 's/\\$wl-soname //g' \
+          -e 's/\\$wl--whole-archive\\$convenience \\$wl--no-whole-archive//g' \
+          -e 's/\\$wl\\$soname //g'
+        else
         ../configure --prefix="${pkg_install_dir}/${TARGET}/" \
           --libdir="${pkg_install_dir}/${TARGET}/lib" \
           --enable-openmp=${enable_openmp} \
@@ -127,6 +158,7 @@ case "$with_elpa" in
           LDFLAGS="-Wl,--allow-multiple-definition -Wl,--enable-new-dtags ${MATH_LDFLAGS} ${SCALAPACK_LDFLAGS} ${cray_ldflags} -lstdc++" \
           LIBS="${SCALAPACK_LIBS} $(resolve_string "${MATH_LIBS}" "MPI")" \
           > configure.log 2>&1 || tail -n ${LOG_LINES} configure.log
+        fi
         make -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
         make install > install.log 2>&1 || tail -n ${LOG_LINES} install.log
         cd ..

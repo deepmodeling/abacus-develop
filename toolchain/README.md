@@ -27,7 +27,7 @@ and give setup files that you can use to compile ABACUS.
 - [x] Support for [LibRI](https://github.com/abacusmodeling/LibRI) by submodule or automatic installation from github.com (but installed LibRI via `wget` seems to have some problem, please be cautious)
 - [x] A mirror station by Bohrium database, which can download CEREAL, LibNPY, LibRI and LibComm by `wget` in China Internet. 
 - [x] Support for GPU compilation, users can add `-DUSE_CUDA=1` in builder scripts.
-- [ ] Support for AMD compiler and math lib like `AOCL` and `AOCC` (doing)
+- [x] Support for AMD compiler and math lib  `AOCL` and `AOCC` (not fully complete due to flang and AOCC-ABACUS compliation error)
 - [ ] Change the downloading url from cp2k mirror to other mirror or directly downloading from official website. (doing)
 - [ ] Support a JSON or YAML configuration file for toolchain, which can be easily modified by users.
 - [ ] A better README and Detail markdown file.
@@ -50,6 +50,8 @@ There are also well-modified script to run *install_abacus_toolchain.sh* for `gn
 > ./toolchain_gnu.sh
 # for intel-mkl
 > ./toolchain_intel.sh
+# for amd aocc-aocl
+> ./toolchain_amd.sh
 # for intel-mkl-mpich
 > ./toolchain_intel-mpich.sh
 ```
@@ -121,8 +123,12 @@ The needed dependencies version default:
 - `ELPA` 2025.01.001
 - `CEREAL` 1.3.2
 - `RapidJSON` 1.1.0
-And Intel-oneAPI need user or server manager to manually install from Intel.
-[Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
+And:
+- Intel-oneAPI need user or server manager to manually install from Intel.
+- - [Intel-oneAPI](https://www.intel.cn/content/www/cn/zh/developer/tools/oneapi/toolkits.html)
+- AMD AOCC-AOCL need user or server manager to manually install from AMD.
+- - [AOCC](https://www.amd.com/zh-cn/developer/aocc.html)
+- - [AOCL](https://www.amd.com/zh-cn/developer/aocl.html)
 
 Dependencies below are optional， which is NOT installed by default:
 
@@ -152,6 +158,8 @@ If compliation is successful, a message will be shown like this:
 >     ./build_abacus_gnu.sh
 > To build ABACUS by intel-toolchain, just use:
 >     ./build_abacus_intel.sh
+> To build ABACUS by amd-toolchain in gcc-aocl, just use:
+>     ./build_abacus_amd.sh
 > or you can modify the builder scripts to suit your needs.
 ```
 
@@ -183,6 +191,14 @@ or you can also do it in a more completely way:
 
 ### Intel-oneAPI problem
 
+#### OneAPI 2025.0 problem
+
+Generally, OneAPI 2025.0 can be useful to compile basic function of ABACUS, but one will encounter compatible problem related to something. Here is the treatment
+- related to rapidjson: 
+- - Not to use rapidjson in your toolchain
+- - or use the master branch of [RapidJSON](https://github.com/Tencent/rapidjson)
+- related to LibRI: not to use LibRI or downgrade your OneAPI.
+
 #### ELPA problem via Intel-oneAPI toolchain in AMD server
 
 The default compiler for Intel-oneAPI is `icpx` and `icx`, which will cause problem when compling ELPA in AMD server. (Which is a problem and needed to have more check-out)
@@ -210,12 +226,27 @@ And will not occur in Intel-MPI before 2021.10.0 (Intel-oneAPI before 2023.2.0)
 
 More problem and possible solution can be accessed via [#2928](https://github.com/deepmodeling/abacus-develop/issues/2928)
 
+### AMD AOCC-AOCL problem
+
+You cannot use AOCC to complie abacus now, see [#5982](https://github.com/deepmodeling/abacus-develop/issues/5982) .
+
+However, use AOCC-AOCL to compile dependencies is permitted and usually get boosting in ABACUS effciency. But you need to get rid of `flang` while compling ELPA. Toolchain itself help you make this `flang` shade in default, and you can manully use `flang` by setting `--with-flang=yes` in `toolchain_amd.sh` to have a try. 
+
+Notice: ABACUS via GCC-AOCL in AOCC-AOCL toolchain have no application with DeePKS, DeePMD and LibRI. 
 
 ### OpenMPI problem
 
 #### in EXX and LibRI
 
-- GCC toolchain with OpenMPI cannot compile LibComm v0.1.1 due to the different MPI variable type from MPICH and IntelMPI, see discussion here [#5033](https://github.com/deepmodeling/abacus-develop/issues/5033), you can switch to GCC-MPICH or Intel toolchain
+- GCC toolchain with OpenMPI cannot compile LibComm v0.1.1 due to the different MPI variable type from MPICH and IntelMPI, see discussion here [#5033](https://github.com/deepmodeling/abacus-develop/issues/5033), you can try use a newest branch of LibComm by 
+```
+git clone https://gitee.com/abacus_dft/LibComm -b MPI_Type_Contiguous_Pool
+``` 
+or pull the newest master branch of LibComm
+```
+git clone https://github.com/abacusmodeling/LibComm
+```
+. yet another is switching to GCC-MPICH or Intel toolchain
 - It is recommended to use Intel toolchain if one wants to include EXX feature in ABACUS, which can have much better performance and can use more than 16 threads in OpenMP parallelization to accelerate the EXX process.
 
 #### OpenMPI-v5 
