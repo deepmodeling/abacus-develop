@@ -1,5 +1,6 @@
 #include <memory>
 #include <array>
+#include <set>
 #include "module_parameter/parameter.h"
 #include "symmetry.h"
 #include "module_parameter/parameter.h"
@@ -7,7 +8,7 @@
 #include "module_base/mathzone.h"
 #include "module_base/constants.h"
 #include "module_base/timer.h"
-
+#include "module_io/output.h"
 namespace ModuleSymmetry
 {
 int Symmetry::symm_flag = 0;
@@ -124,49 +125,8 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         }
 
         if (!pricell_loop && PARAM.inp.nspin == 2)
-        {//analyze symmetry for spin-up atoms only
-            std::vector<double> pos_spinup;
-            for (int it = 0;it < ntype;++it)
-            {
-                int na_spinup = 0;
-                for (int ia = 0; ia < atoms[it].na; ++ia) {
-                    if (atoms[it].mag[ia] > -this->epsilon) {
-                        ++na_spinup;
-                    }
-                }
-                this->na[it] = na_spinup;
-                //update newpos
-                for (int ia = 0;ia < atoms[it].na;++ia)
-                {
-                    if (atoms[it].mag[ia] > -this->epsilon)
-                    {
-                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia)]);
-                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 1]);
-                        pos_spinup.push_back(this->newpos[3 * (istart[it] + ia) + 2]);
-                    }
-                }
-                // update start to spin-up configuration
-                if (it > 0) {
-                    istart[it] = istart[it - 1] + na[it - 1];
-                }
-                if (na[it] < na[itmin_type])
-                {
-                    this->itmin_type = it;
-                    this->itmin_start = istart[it];
-                }
-            }
-            this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
-                pos_spinup.data(), this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
-            // recover na and istart
-            for (int it = 0;it < ntype;++it)
-            {
-                this->na[it] = atoms[it].na;
-                if (it > 0) {
-                    istart[it] = istart[it - 1] + na[it - 1];
-                }
-            }
-            // For AFM analysis End
-            //------------------------------------------------------------
+        {
+            this->analyze_magnetic_group(atoms, st, nrot_out, nrotk_out);
         }
         else
         {
@@ -174,7 +134,7 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
             // nrot_out: the number of pure point group rotations
             // nrotk_out: the number of all space group operations
             this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
-                this->newpos, this->rotpos, this->index, this->itmin_type, this->itmin_start, this->istart, this->na);
+                this->newpos, this->rotpos, this->index, this->ntype, this->itmin_type, this->itmin_start, this->istart, this->na);
         }
         };
 
@@ -889,7 +849,7 @@ void Symmetry::lattice_type(
 
 void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const int& nop,
     const ModuleBase::Matrix3* symop, ModuleBase::Matrix3* gmatrix, ModuleBase::Vector3<double>* gtrans,
-    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
+    double* pos, double* rotpos, int* index, const int ntype, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
     ModuleBase::TITLE("Symmetry", "getgroup");
 
@@ -913,7 +873,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const
     //std::cout << "nop = " <<nop <<std::endl;
     for (int i = 0; i < nop; ++i)
     {
-        bool s_flag = this->checksym(symop[i], gtrans[i], pos, rotpos, index, itmin_type, itmin_start, istart, na);
+        bool s_flag = this->checksym(symop[i], gtrans[i], pos, rotpos, index, ntype, itmin_type, itmin_start, istart, na);
         if (s_flag == 1)
         {
 			//------------------------------
@@ -992,7 +952,7 @@ void Symmetry::getgroup(int& nrot, int& nrotk, std::ofstream& ofs_running, const
 }
 
 bool Symmetry::checksym(const ModuleBase::Matrix3& s, ModuleBase::Vector3<double>& gtrans,
-    double* pos, double* rotpos, int* index, const int itmin_type, const int itmin_start, int* istart, int* na)const
+    double* pos, double* rotpos, int* index, const int ntype, const int itmin_type, const int itmin_start, int* istart, int* na)const
 {
 	//----------------------------------------------
     // checks whether a point group symmetry element 
@@ -2296,5 +2256,71 @@ bool Symmetry::is_all_movable(const Atom* atoms, const Statistics& st)const
         }
     }
     return all_mbl;
+}
+
+void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out)
+{
+    // 1. classify atoms with different magmom
+    //  (use symmetry_prec to judge if two magmoms are the same)
+    std::vector<std::set<int>> mag_type_atoms;
+    for (int it = 0;it < ntype;++it)
+    {
+        for (int ia = 0; ia < atoms[it].na; ++ia)
+        {
+            bool find = false;
+            for (auto& mt : mag_type_atoms)
+            {
+                const int mag_iat = *mt.begin();
+                const int mag_it = st.iat2it[mag_iat];
+                const int mag_ia = st.iat2ia[mag_iat];
+                if (it == mag_it && this->equal(atoms[it].mag[ia], atoms[mag_it].mag[mag_ia]))
+                {
+                    mt.insert(st.itia2iat(it, ia));
+                    find = true;
+                    break;
+                }
+            }
+            if (!find)
+            {
+                mag_type_atoms.push_back(std::set<int>({ st.itia2iat(it,ia) }));
+            }
+        }
+    }
+
+    // 2. get the start index, number of atoms and positions for each mag_type
+    std::vector<int> mag_istart(mag_type_atoms.size());
+    std::vector<int> mag_na(mag_type_atoms.size());
+    std::vector<double> mag_pos;
+    int mag_itmin_type = 0;
+    int mag_itmin_start = 0;
+    for (int mag_it = 0;mag_it < mag_type_atoms.size(); ++mag_it)
+    {
+        mag_na[mag_it] = mag_type_atoms.at(mag_it).size();
+        if (mag_it > 0)
+        {
+            mag_istart[mag_it] = mag_istart[mag_it - 1] + mag_na[mag_it - 1];
+        }
+        if (mag_na[mag_it] < mag_na[itmin_type])
+        {
+            mag_itmin_type = mag_it;
+            mag_itmin_start = mag_istart[mag_it];
+        }
+        for (auto& mag_iat : mag_type_atoms.at(mag_it))
+        {
+            // this->newpos have been ordered by original structure(ntype, na), it cannot be directly used here.
+            // we need to reset the calculate again the coordinate of the new structure.
+            const ModuleBase::Vector3<double> direct_tmp = atoms[st.iat2it[mag_iat]].tau[st.iat2ia[mag_iat]] * this->optlat.Inverse();
+            std::array<double, 3> direct = { direct_tmp.x, direct_tmp.y, direct_tmp.z };
+            for (int i = 0; i < 3; ++i)
+            {
+                this->check_translation(direct[i], -floor(direct[i]));
+                this->check_boundary(direct[i]);
+                mag_pos.push_back(direct[i]);
+            }
+        }
+    }
+    // 3. analyze the effective structure
+    this->getgroup(nrot_out, nrotk_out, GlobalV::ofs_running, this->nop, this->symop, this->gmatrix, this->gtrans,
+        mag_pos.data(), this->rotpos, this->index, mag_type_atoms.size(), mag_itmin_type, mag_itmin_start, mag_istart.data(), mag_na.data());
 }
 }

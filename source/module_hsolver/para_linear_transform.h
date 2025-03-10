@@ -4,6 +4,7 @@
 #include "module_base/module_device/device.h"
 #include "module_base/module_device/memory_op.h"
 #include "module_base/parallel_device.h"
+
 #include <vector>
 #ifdef __MPI
 #include "mpi.h"
@@ -24,6 +25,7 @@ class PLinearTransform
     using resmem_dev_op = base_device::memory::resize_memory_op<T, Device>;
     using setmem_dev_op = base_device::memory::set_memory_op<T, Device>;
     using delmem_dev_op = base_device::memory::delete_memory_op<T, Device>;
+    ~PLinearTransform();
     int nproc_col = 1;
     int rank_col = 0;
     int nrowA = 0;
@@ -71,6 +73,15 @@ class PLinearTransform
      *
      */
     void act(const T alpha, const T* A, const T* U_global, const T beta, T* B);
+
+#ifdef __MPI
+  private:
+    std::vector<T> A_tmp_;      // temperory memory for A
+    std::vector<T> isend_tmp_;  // temperory memory for isend
+    T* U_tmp_ = nullptr;        // temperory memory for U
+    T* B_tmp_ = nullptr;        // temperory memory for B
+    T* A_tmp_device_ = nullptr; // temperory pointer
+#endif
 };
 } // namespace hsolver
 #endif

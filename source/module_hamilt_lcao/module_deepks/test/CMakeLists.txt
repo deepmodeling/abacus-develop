@@ -21,6 +21,7 @@ add_executable(
     ../../../module_cell/read_pp_blps.cpp
     ../../../module_hamilt_pw/hamilt_pwdft/soc.cpp
     ../../../module_io/output.cpp
+    ../../../module_io/sparse_matrix.cpp
     ../../../module_elecstate/read_pseudo.cpp
     ../../../module_elecstate/cal_wfc.cpp
     ../../../module_elecstate/read_orb.cpp
@@ -33,6 +34,7 @@ add_executable(
     ../../../module_hamilt_lcao/module_hcontainer/func_transfer.cpp
     ../../../module_hamilt_lcao/module_hcontainer/func_folding.cpp
     ../../../module_hamilt_lcao/module_hcontainer/transfer.cpp
+    ../../../module_hamilt_lcao/module_hcontainer/output_hcontainer.cpp
     ../../../module_hamilt_lcao/hamilt_lcaodft/operator_lcao/deepks_lcao.cpp
     ../../../module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.cpp
     ../../../module_hamilt_general/operator.cpp

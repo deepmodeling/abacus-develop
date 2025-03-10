@@ -85,7 +85,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
 #if ((defined __CUDA) || (defined __ROCM))
         base_device::DEVICE_GPU* ctx = {};
         ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_GPU>()(
-            ctx,
             transa,
             transb,
             nbands,
@@ -109,7 +108,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::calculate_delta_hcc(std
     {
         base_device::DEVICE_CPU* ctx = {};
         ModuleBase::gemm_op<std::complex<double>, base_device::DEVICE_CPU>()(
-            ctx,
             transa,
             transb,
             nbands,

@@ -161,7 +161,7 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             this->contributeHR();
         }
 
-        // update H_V_delta_k next
+        // update V_delta in k space next
         this->contributeHk(ik_in);
 
         break;

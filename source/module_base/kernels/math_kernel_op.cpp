@@ -110,8 +110,7 @@ struct calc_grad_with_block_op<T, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct dot_real_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const base_device::DEVICE_CPU* d,
-                      const int& dim,
+    FPTYPE operator()(const int& dim,
                       const FPTYPE* psi_L,
                       const FPTYPE* psi_R,
                       const bool reduce)
@@ -129,8 +128,7 @@ struct dot_real_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct dot_real_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>
 {
-    FPTYPE operator()(const base_device::DEVICE_CPU* d,
-                      const int& dim,
+    FPTYPE operator()(const int& dim,
                       const std::complex<FPTYPE>* psi_L,
                       const std::complex<FPTYPE>* psi_R,
                       const bool reduce)
@@ -153,7 +151,7 @@ template <typename T>
 struct vector_div_constant_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d, const int dim, T* result, const T* vector, const Real constant)
+    void operator()(const int dim, T* result, const T* vector, const Real constant)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -169,7 +167,7 @@ template <typename T>
 struct vector_mul_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
+    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -185,7 +183,7 @@ template <typename T>
 struct vector_div_vector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d, const int& dim, T* result, const T* vector1, const Real* vector2)
+    void operator()(const int& dim, T* result, const T* vector1, const Real* vector2)
     {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096 / sizeof(Real))
@@ -201,8 +199,7 @@ template <typename T>
 struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
 {
     using Real = typename GetTypeReal<T>::type;
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int& dim,
+    void operator()(const int& dim,
                     T* result,
                     const T* vector1,
                     const Real constant1,
@@ -222,8 +219,7 @@ struct constantvector_addORsub_constantVector_op<T, base_device::DEVICE_CPU>
 template <typename FPTYPE>
 struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const int& N,
+    void operator()(const int& N,
                     const std::complex<FPTYPE>* alpha,
                     std::complex<FPTYPE>* X,
                     const int& incx)
@@ -235,8 +231,7 @@ struct scal_op<FPTYPE, base_device::DEVICE_CPU>
 template <typename T>
 struct gemv_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const char& trans,
+    void operator()(const char& trans,
                     const int& m,
                     const int& n,
                     const T* alpha,
@@ -255,8 +250,7 @@ struct gemv_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct axpy_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const int& dim,
+    void operator()(const int& dim,
                     const T* alpha,
                     const T* X,
                     const int& incX,
@@ -270,8 +264,7 @@ struct axpy_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemm_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const char& transa,
+    void operator()(const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,
@@ -293,8 +286,7 @@ struct gemm_op<T, base_device::DEVICE_CPU>
 template <typename T>
 struct gemm_op_mt<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* /*ctx*/,
-                    const char& transa,
+    void operator()(const char& transa,
                     const char& transb,
                     const int& m,
                     const int& n,
@@ -316,8 +308,7 @@ struct gemm_op_mt<T, base_device::DEVICE_CPU>
 template <typename T>
 struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d,
-                    const int& row,
+    void operator()(const int& row,
                     const int& col,
                     const T* input_matrix,
                     T* output_matrix)
@@ -346,16 +337,16 @@ struct matrixTranspose_op<T, base_device::DEVICE_CPU>
 };
 
 template <typename T>
-struct matrixSetToAnother<T, base_device::DEVICE_CPU>
+struct matrixCopy<T, base_device::DEVICE_CPU>
 {
-    void operator()(const base_device::DEVICE_CPU* d, const int& n, const T* A, const int& LDA, T* B, const int& LDB)
+    void operator()(const int& n1, const int& n2, const T* A, const int& LDA, T* B, const int& LDB)
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static, 8192 / sizeof(T))
 #endif
-        for (int i = 0; i < n; i++)
+        for (int i = 0; i < n1; i++)
         {
-            for (int j = 0; j < LDA; j++)
+            for (int j = 0; j < n2; j++)
             {
                 B[i * LDB + j] = A[i * LDA + j];
             }
@@ -376,7 +367,7 @@ template struct vector_mul_vector_op<std::complex<float>, base_device::DEVICE_CP
 template struct vector_div_vector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<float>, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<float>, base_device::DEVICE_CPU>;
+template struct matrixCopy<std::complex<float>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<float>, base_device::DEVICE_CPU>;
 
@@ -394,7 +385,8 @@ template struct vector_mul_vector_op<std::complex<double>, base_device::DEVICE_C
 template struct vector_div_vector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<std::complex<double>, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<std::complex<double>, base_device::DEVICE_CPU>;
+template struct matrixCopy<double, base_device::DEVICE_CPU>;
+template struct matrixCopy<std::complex<double>, base_device::DEVICE_CPU>;
 template struct calc_grad_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 template struct line_minimize_with_block_op<std::complex<double>, base_device::DEVICE_CPU>;
 
@@ -403,7 +395,6 @@ template struct vector_mul_vector_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_constant_op<double, base_device::DEVICE_CPU>;
 template struct vector_div_vector_op<double, base_device::DEVICE_CPU>;
 template struct matrixTranspose_op<double, base_device::DEVICE_CPU>;
-template struct matrixSetToAnother<double, base_device::DEVICE_CPU>;
 template struct constantvector_addORsub_constantVector_op<double, base_device::DEVICE_CPU>;
 #endif
 #ifdef __DSP

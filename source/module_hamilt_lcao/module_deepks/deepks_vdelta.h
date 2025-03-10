@@ -16,7 +16,7 @@ namespace DeePKS_domain
 /// calculate tr(\rho V_delta)
 template <typename TK>
 void cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
-                      const std::vector<std::vector<TK>>& H_V_delta,
+                      const std::vector<std::vector<TK>>& V_delta,
                       const int nks,
                       const Parallel_Orbitals* pv,
                       double& e_delta_band);

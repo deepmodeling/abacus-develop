@@ -1,6 +1,5 @@
 #include "get_wf_lcao.h"
 
-#include "module_parameter/parameter.h"
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
 #include "module_base/memory.h"
@@ -9,6 +8,7 @@
 #include "module_io/cube_io.h"
 #include "module_io/write_wfc_pw.h"
 #include "module_io/write_wfc_r.h"
+#include "module_parameter/parameter.h"
 IState_Envelope::IState_Envelope(const elecstate::ElecState* pes)
 {
     pes_ = pes;
@@ -124,13 +124,13 @@ void IState_Envelope::begin(const UnitCell& ucell,
 
                 const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
-                    pes_->charge->rho_save[is],
-                    is,
-                    nspin,
-                    0,
-                    ss.str(),
-                    ef_tmp,
-                    &(ucell));
+                                              pes_->charge->rho_save[is],
+                                              is,
+                                              nspin,
+                                              0,
+                                              ss.str(),
+                                              ef_tmp,
+                                              &(ucell));
             }
         }
     }
@@ -150,81 +150,84 @@ void IState_Envelope::begin(const UnitCell& ucell,
     // Set this->bands_picked_ according to the mode
     select_bands(nbands_istate, out_wfc_re_im, nbands, nelec, mode_re_im, fermi_band);
 
-    // Calculate out_wfc_re_im
-    for (int ib = 0; ib < nbands; ++ib)
+    if (out_wfc_pw || out_wfc_r)
     {
-        if (bands_picked_[ib])
+        // Calculate out_wfc_re_im
+        for (int ib = 0; ib < nbands; ++ib)
         {
-            std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
-
-            for (int is = 0; is < nspin; ++is)
+            if (bands_picked_[ib])
             {
-                ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
+                std::cout << " Performing grid integral over real space grid for band " << ib + 1 << "..." << std::endl;
 
-                psid->fix_k(is);
-#ifdef __MPI
-                wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
-#else
-                // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between different
-                // spin channels (actually kpoints, because now the same kpoint in different spin channels are treated
-                // as distinct kpoints)
-
-                for (int i = 0; i < nbands; ++i)
+                for (int is = 0; is < nspin; ++is)
                 {
-                    for (int j = 0; j < nlocal; ++j)
+                    ModuleBase::GlobalFunc::ZEROS(pes_->charge->rho[is], pw_wfc->nrxx);
+
+                    psid->fix_k(is);
+#ifdef __MPI
+                    wfc_2d_to_grid(psid->get_pointer(), para_orb, wfc_gamma_grid[is], gg.gridt->trace_lo);
+#else
+                    // if not MPI enabled, it is the case psid holds a global matrix. use fix_k to switch between
+                    // different spin channels (actually kpoints, because now the same kpoint in different spin channels
+                    // are treated as distinct kpoints)
+
+                    for (int i = 0; i < nbands; ++i)
                     {
-                        wfc_gamma_grid[is][i][j] = psid[0](i, j);
+                        for (int j = 0; j < nlocal; ++j)
+                        {
+                            wfc_gamma_grid[is][i][j] = psid[0](i, j);
+                        }
                     }
-                }
 #endif
 
-                gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
+                    gg.cal_env(wfc_gamma_grid[is][ib], pes_->charge->rho[is], ucell);
 
-                pes_->charge->save_rho_before_sum_band();
+                    pes_->charge->save_rho_before_sum_band();
 
-                const double ef_tmp = this->pes_->eferm.get_efval(is);
+                    const double ef_tmp = this->pes_->eferm.get_efval(is);
 
-                // only for gamma_only now
-                psi_g.fix_k(is);
-                this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
+                    // only for gamma_only now
+                    psi_g.fix_k(is);
+                    this->set_pw_wfc(pw_wfc, is, ib, nspin, pes_->charge->rho, psi_g);
 
-                // Calculate real-space wave functions
-                psi_g.fix_k(is);
-                std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
-                pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
+                    // Calculate real-space wave functions
+                    psi_g.fix_k(is);
+                    std::vector<std::complex<double>> wfc_r(pw_wfc->nrxx);
+                    pw_wfc->recip2real(&psi_g(ib, 0), wfc_r.data(), is);
 
-                // Extract real and imaginary parts
-                std::vector<double> wfc_real(pw_wfc->nrxx);
-                std::vector<double> wfc_imag(pw_wfc->nrxx);
-                for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
-                {
-                    wfc_real[ir] = wfc_r[ir].real();
-                    wfc_imag[ir] = wfc_r[ir].imag();
+                    // Extract real and imaginary parts
+                    std::vector<double> wfc_real(pw_wfc->nrxx);
+                    std::vector<double> wfc_imag(pw_wfc->nrxx);
+                    for (int ir = 0; ir < pw_wfc->nrxx; ++ir)
+                    {
+                        wfc_real[ir] = wfc_r[ir].real();
+                        wfc_imag[ir] = wfc_r[ir].imag();
+                    }
+
+                    // Output real part
+                    std::stringstream ss_real;
+                    ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
+                    ModuleIO::write_vdata_palgrid(pgrid,
+                                                  wfc_real.data(),
+                                                  is,
+                                                  nspin,
+                                                  0,
+                                                  ss_real.str(),
+                                                  ef_tmp,
+                                                  &(ucell));
+
+                    // Output imaginary part
+                    std::stringstream ss_imag;
+                    ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
+                    ModuleIO::write_vdata_palgrid(pgrid,
+                                                  wfc_imag.data(),
+                                                  is,
+                                                  nspin,
+                                                  0,
+                                                  ss_imag.str(),
+                                                  ef_tmp,
+                                                  &(ucell));
                 }
-
-                // Output real part
-                std::stringstream ss_real;
-                ss_real << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_REAL.cube";
-                ModuleIO::write_vdata_palgrid(pgrid,
-                    wfc_real.data(),
-                    is,
-                    nspin,
-                    0,
-                    ss_real.str(),
-                    ef_tmp,
-                    &(ucell));
-
-                // Output imaginary part
-                std::stringstream ss_imag;
-                ss_imag << global_out_dir << "BAND" << ib + 1 << "_GAMMA" << "_SPIN" << is + 1 << "_IMAG.cube";
-                ModuleIO::write_vdata_palgrid(pgrid,
-                    wfc_imag.data(),
-                    is,
-                    nspin,
-                    0,
-                    ss_imag.str(),
-                    ef_tmp,
-                    &(ucell));
             }
         }
     }
@@ -240,7 +243,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
 
     if (out_wfc_r)
     {
-        ModuleIO::write_psi_r_1(ucell,psi_g, pw_wfc, "wfc_realspace", false, kv);
+        ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
     }
 
     for (int is = 0; is < nspin; ++is)
@@ -359,15 +362,15 @@ void IState_Envelope::begin(const UnitCell& ucell,
                 const double ef_tmp = this->pes_->eferm.get_efval(ispin);
 
                 ModuleIO::write_vdata_palgrid(pgrid,
-                    pes_->charge->rho[ispin],
-                    ispin,
-                    nspin,
-                    0,
-                    ss.str(),
-                    ef_tmp,
-                    &(ucell),
-                    3,
-                    1);
+                                              pes_->charge->rho[ispin],
+                                              ispin,
+                                              nspin,
+                                              0,
+                                              ss.str(),
+                                              ef_tmp,
+                                              &(ucell),
+                                              3,
+                                              1);
 
                 if (out_wf || out_wf_r)
                 {
@@ -390,7 +393,7 @@ void IState_Envelope::begin(const UnitCell& ucell,
         }
         if (out_wf_r)
         {
-            ModuleIO::write_psi_r_1(ucell,psi_g, pw_wfc, "wfc_realspace", false, kv);
+            ModuleIO::write_psi_r_1(ucell, psi_g, pw_wfc, "wfc_realspace", false, kv);
         }
 
         std::cout << " Outputting real-space wave functions in cube format..." << std::endl;
@@ -427,26 +430,26 @@ void IState_Envelope::begin(const UnitCell& ucell,
                             << "_REAL.cube";
                     const double ef_tmp = this->pes_->eferm.get_efval(ispin);
                     ModuleIO::write_vdata_palgrid(pgrid,
-                        wfc_real.data(),
-                        ispin,
-                        nspin,
-                        0,
-                        ss_real.str(),
-                        ef_tmp,
-                        &(ucell));
+                                                  wfc_real.data(),
+                                                  ispin,
+                                                  nspin,
+                                                  0,
+                                                  ss_real.str(),
+                                                  ef_tmp,
+                                                  &(ucell));
 
                     // Output imaginary part
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "BAND" << ib + 1 << "_k_" << ik + 1 << "_s_" << ispin + 1
                             << "_IMAG.cube";
                     ModuleIO::write_vdata_palgrid(pgrid,
-                        wfc_imag.data(),
-                        ispin,
-                        nspin,
-                        0,
-                        ss_imag.str(),
-                        ef_tmp,
-                        &(ucell));
+                                                  wfc_imag.data(),
+                                                  ispin,
+                                                  nspin,
+                                                  0,
+                                                  ss_imag.str(),
+                                                  ef_tmp,
+                                                  &(ucell));
                 }
             }
         }

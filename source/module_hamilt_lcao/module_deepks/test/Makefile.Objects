@@ -9,6 +9,7 @@ OBJS_MAIN=klist_1.o\
 parallel_orbitals.o\
 deepks_basic.o\
 deepks_force.o\
+deepks_iterate.o\
 deepks_vdelta.o\
 deepks_pdm.o\
 deepks_phialpha.o\

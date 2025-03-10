@@ -332,6 +332,18 @@ class HContainer
      */
     size_t size_R_loop() const;
 
+    
+    /**
+     * @brief find index of R in tmp_R_index, used when current_R is fixed
+     *
+     * @param rx_in index of R in x direction
+     * @param ry_in index of R in y direction
+     * @param rz_in index of R in z direction
+     * @return int index of R in tmp_R_index
+     */
+    int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
+    int find_R(const ModuleBase::Vector3<int>& R_in) const;
+
     /**
      * @brief calculate number of AtomPairs for current R index
      */
@@ -465,16 +477,6 @@ class HContainer
     mutable std::vector<ModuleBase::Vector3<int>> tmp_R_index;
     // current index of R in tmp_atom_pairs, -1 means not initialized
     mutable int current_R = -1;
-    /**
-     * @brief find index of R in tmp_R_index, used when current_R is fixed
-     *
-     * @param rx_in index of R in x direction
-     * @param ry_in index of R in y direction
-     * @param rz_in index of R in z direction
-     * @return int index of R in tmp_R_index
-     */
-    int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
-    int find_R(const ModuleBase::Vector3<int>& R_in) const;
 
     bool gamma_only = false;
 

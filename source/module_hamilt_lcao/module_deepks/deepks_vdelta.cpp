@@ -19,7 +19,7 @@
 // calculating sum of correction band energies
 template <typename TK>
 void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
-                                     const std::vector<std::vector<TK>>& H_V_delta,
+                                     const std::vector<std::vector<TK>>& V_delta,
                                      const int nks,
                                      const Parallel_Orbitals* pv,
                                      double& e_delta_band)
@@ -49,14 +49,14 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
                 {
                     for (int is = 0; is < dm.size(); ++is) // dm.size() == PARAM.inp.nspin
                     {
-                        e_delta_band_tmp += dm[is][nu * pv->nrow + mu] * H_V_delta[0][iic];
+                        e_delta_band_tmp += dm[is][nu * pv->nrow + mu] * V_delta[0][iic];
                     }
                 }
                 else
                 {
                     for (int ik = 0; ik < nks; ik++)
                     {
-                        e_delta_band_tmp += dm[ik][nu * pv->nrow + mu] * H_V_delta[ik][iic];
+                        e_delta_band_tmp += dm[ik][nu * pv->nrow + mu] * V_delta[ik][iic];
                     }
                 }
             }
@@ -78,13 +78,13 @@ void DeePKS_domain::cal_e_delta_band(const std::vector<std::vector<TK>>& dm,
 }
 
 template void DeePKS_domain::cal_e_delta_band<double>(const std::vector<std::vector<double>>& dm,
-                                                      const std::vector<std::vector<double>>& H_V_delta,
+                                                      const std::vector<std::vector<double>>& V_delta,
                                                       const int nks,
                                                       const Parallel_Orbitals* pv,
                                                       double& e_delta_band);
 template void DeePKS_domain::cal_e_delta_band<std::complex<double>>(
     const std::vector<std::vector<std::complex<double>>>& dm,
-    const std::vector<std::vector<std::complex<double>>>& H_V_delta,
+    const std::vector<std::vector<std::complex<double>>>& V_delta,
     const int nks,
     const Parallel_Orbitals* pv,
     double& e_delta_band);
