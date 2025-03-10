@@ -397,16 +397,20 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::set_HR_fixed(void* hR_tmp
     this->allocated = false;
 }
 
+
 // contributeHR()
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 {
     ModuleBase::TITLE("TDNonlocal", "contributeHR");
-    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+
     if (elecstate::H_TDDFT_pw::stype != 1)
     {
         return;
     }
+
+    ModuleBase::timer::tick("TDNonlocal", "contributeHR");
+
     if (!this->hR_tmp_done)
     {
         if (this->hR_tmp == nullptr)
@@ -421,18 +425,24 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // pass pointer of hR_tmp to the next node
             static_cast<OperatorLCAO<TK, TR>*>(this->next_sub_op)->set_HR_fixed(this->hR_tmp);
         }
+
         // calculate the values in hR_tmp
         this->calculate_HR();
         this->hR_tmp_done = true;
     }
+
     ModuleBase::timer::tick("TDNonlocal", "contributeHR");
     return;
 }
+
+
 template <typename TK, typename TR>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     return;
 }
+
+
 template <>
 void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::contributeHk(int ik)
 {
@@ -444,6 +454,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
     {
         ModuleBase::TITLE("TDNonlocal", "contributeHk");
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
+
         // folding inside HR to HK
         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
         {
@@ -459,6 +470,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>::con
         ModuleBase::timer::tick("TDNonlocal", "contributeHk");
     }
 }
+
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TDNonlocal<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

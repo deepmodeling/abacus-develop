@@ -17,16 +17,20 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         ModuleBase::WARNING_QUIT("DFTU", "dmr is not set");
     }
+
     // try to get the density matrix, if the density matrix is empty, skip the calculation and return
     const hamilt::HContainer<double>* dmR_tmp[this->nspin];
     dmR_tmp[0] = this->dftu->get_dmr(0);
-    if (this->nspin == 2) {
-        dmR_tmp[1] = this->dftu->get_dmr(1);
-    }
-    if (dmR_tmp[0]->size_atom_pairs() == 0)
-    {
-        return;
-    }
+
+	if (this->nspin == 2) 
+	{
+		dmR_tmp[1] = this->dftu->get_dmr(1);
+	}
+	if (dmR_tmp[0]->size_atom_pairs() == 0)
+	{
+		return;
+	}
+
     // begin the calculation of force and stress
     ModuleBase::timer::tick("DFTU", "cal_force_stress");
 
@@ -37,6 +41,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         force.zero_out();
     }
+
     // 1. calculate <psi|beta> for each pair of atoms
     // loop over all on-site atoms
     #pragma omp parallel
@@ -48,12 +53,14 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     {
         // skip the atoms without plus-U
         auto tau0 = ucell->get_tau(iat0);
-        int T0, I0;
+        int T0=0;
+        int I0=0;
         ucell->iat2iait(iat0, &I0, &T0);
         const int target_L = this->dftu->orbital_corr[T0];
-        if (target_L == -1) {
-            continue;
-        }
+		if (target_L == -1) 
+		{
+			continue;
+		}
         const int tlp1 = 2 * target_L + 1;
         AdjacentAtomInfo& adjs = this->adjs_all[iat0];
 
@@ -91,6 +98,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 
                 ModuleBase::Vector3<double> dtau = tau0 - tau1;
                 intor_->snap(T1, L1, N1, M1, T0, dtau * this->ucell->lat0, 1 /*cal_deri*/, nlm);
+
                 // select the elements of nlm with target_L
                 std::vector<double> nlm_target(tlp1 * 4);
                 for (int iw = 0; iw < this->ucell->atoms[T0].nw; iw++)
@@ -230,6 +238,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         }
     }
     }
+
     if (cal_force)
     {
 #ifdef __MPI
@@ -265,6 +274,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     ModuleBase::timer::tick("DFTU", "cal_force_stress");
 }
 
+
 template <typename TK, typename TR>
 void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
@@ -288,13 +298,17 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int m_size = int(sqrt(vu_in.size() / nspin));
     const int m_size2 = m_size * m_size;
+
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
-    if (npol == 2) {
-        step_trace[1] = 1;
+
+	if (npol == 2) 
+	{
+		step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
+
     double tmp[3];
     // calculate the local matrix
     for (int is = 0; is < nspin; is++)
@@ -315,11 +329,12 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
                 {
                     for (int m2 = 0; m2 < m_size; m2++)
                     {
-                        tmp[0] = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size] * nlm2[m2] * dm_pointer[step_trace[step_is]];
-                        tmp[1]
-                            = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size * 2] * nlm2[m2] * dm_pointer[step_trace[step_is]];
-                        tmp[2]
-                            = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size * 3] * nlm2[m2] * dm_pointer[step_trace[step_is]];
+                        tmp[0] = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size] 
+                                 * nlm2[m2] * dm_pointer[step_trace[step_is]];
+                        tmp[1] = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size * 2] 
+                                 * nlm2[m2] * dm_pointer[step_trace[step_is]];
+                        tmp[2] = vu_in[m1 * m_size + m2 + is * m_size2] * nlm1[m1 + m_size * 3] 
+                                 * nlm2[m2] * dm_pointer[step_trace[step_is]];
                         // force1 = - VU * <d phi_{I,R1}/d R1|chi_m> * <chi_m'|phi_{J,R2}>
                         // force2 = - VU * <phi_{I,R1}|d chi_m/d R0> * <chi_m'|phi_{J,R2>}
                         force1[0] += tmp[0];
@@ -361,13 +376,17 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
     auto col_indexes = paraV->get_indexes_col(iat2);
     const int m_size = int(sqrt(vu_in.size() / nspin));
     const int m_size2 = m_size * m_size;
+
     // step_trace = 0 for NSPIN=1,2; ={0, 1, local_col, local_col+1} for NSPIN=4
     std::vector<int> step_trace(npol * npol, 0);
-    if (npol == 2) {
-        step_trace[1] = 1;
+
+	if (npol == 2) 
+	{
+		step_trace[1] = 1;
         step_trace[2] = col_indexes.size();
         step_trace[3] = col_indexes.size() + 1;
     }
+
     // calculate the local matrix
     for (int is = 0; is < nspin; is++)
     {
@@ -390,20 +409,18 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
                         double tmp = vu_in[m1 * m_size + m2 + is * m_size2] * dm_pointer[step_trace[step_is]];
                         // std::cout<<__FILE__<<__LINE__<<" "<<tmp<<" "<<m1<<" "<<m2<<" "<<nlm1[m1 + m_size * 2]<<"
                         // "<<nlm2[m2 + m_size * 2]<<" "<<dis1.y<<" "<<dis2.y<<std::endl;
-                        stress[0]
-                            += tmp * (nlm1[m1 + m_size] * dis1.x * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.x);
-                        stress[1]
-                            += tmp * (nlm1[m1 + m_size] * dis1.y * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.y);
-                        stress[2]
-                            += tmp * (nlm1[m1 + m_size] * dis1.z * nlm2[m2] + nlm1[m1] * nlm2[m2 + m_size] * dis2.z);
-                        stress[3] += tmp
-                                     * (nlm1[m1 + m_size * 2] * dis1.y * nlm2[m2]
+                        stress[0] += tmp * (nlm1[m1 + m_size] * dis1.x * nlm2[m2] 
+                                  + nlm1[m1] * nlm2[m2 + m_size] * dis2.x);
+                        stress[1] += tmp * (nlm1[m1 + m_size] * dis1.y * nlm2[m2] 
+                                  + nlm1[m1] * nlm2[m2 + m_size] * dis2.y);
+                        stress[2] += tmp * (nlm1[m1 + m_size] * dis1.z * nlm2[m2] 
+                                  + nlm1[m1] * nlm2[m2 + m_size] * dis2.z);
+
+                        stress[3] += tmp * (nlm1[m1 + m_size * 2] * dis1.y * nlm2[m2]
                                         + nlm1[m1] * nlm2[m2 + m_size * 2] * dis2.y);
-                        stress[4] += tmp
-                                     * (nlm1[m1 + m_size * 2] * dis1.z * nlm2[m2]
+                        stress[4] += tmp * (nlm1[m1 + m_size * 2] * dis1.z * nlm2[m2]
                                         + nlm1[m1] * nlm2[m2 + m_size * 2] * dis2.z);
-                        stress[5] += tmp
-                                     * (nlm1[m1 + m_size * 3] * dis1.z * nlm2[m2]
+                        stress[5] += tmp * (nlm1[m1 + m_size * 3] * dis1.z * nlm2[m2]
                                         + nlm1[m1] * nlm2[m2 + m_size * 3] * dis2.z);
                     }
                 }

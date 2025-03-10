@@ -55,7 +55,8 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
                                            const pseudopot_cell_vnl* p_pspot_nl,
                                            const int& rank)
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize");
+    ModuleBase::timer::tick("psi_init_atomic", "initialize");
+
     if(p_pspot_nl == nullptr)
     {
         ModuleBase::WARNING_QUIT("psi_initializer_atomic<T>::initialize", 
@@ -71,7 +72,8 @@ void psi_initializer_atomic<T>::initialize(const Structure_Factor* sf,         /
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
-    ModuleBase::timer::tick("psi_initializer_atomic", "initialize_only_once");
+
+    ModuleBase::timer::tick("psi_init_atomic", "initialize");
 }
 
 template <typename T>
@@ -81,7 +83,7 @@ void psi_initializer_atomic<T>::tabulate()
     {
         return;
     }
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
+    ModuleBase::timer::tick("psi_init_atomic", "tabulate");
     
     GlobalV::ofs_running << "\n Make real space PAO into reciprocal space." << std::endl;
     ModuleIO::print_PAOs(*this->p_ucell_);
@@ -219,7 +221,7 @@ void psi_initializer_atomic<T>::tabulate()
             }
         }
     }
-    ModuleBase::timer::tick("psi_initializer_atomic", "cal_ovlp_pswfcjlq");
+    ModuleBase::timer::tick("psi_init_atomic", "tabulate");
 }
 
 std::complex<double> phase_factor(double arg, int mode)
@@ -233,7 +235,7 @@ std::complex<double> phase_factor(double arg, int mode)
 template <typename T>
 void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
 {
-    ModuleBase::timer::tick("psi_initializer_atomic", "init_psig");
+    ModuleBase::timer::tick("psi_init_atomic", "init_psig");
     const int npw = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
     int lmax = this->p_ucell_->lmax_ppwf;
@@ -484,7 +486,7 @@ void psi_initializer_atomic<T>::init_psig(T* psig,  const int& ik)
 	{
 		this->random_t(psig, index, this->nbands_start_, ik);
 	}
-    ModuleBase::timer::tick("psi_initializer_atomic", "init_psig");
+    ModuleBase::timer::tick("psi_init_atomic", "init_psig");
 }
 
 template class psi_initializer_atomic<std::complex<double>>;

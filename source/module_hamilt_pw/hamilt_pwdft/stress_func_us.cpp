@@ -15,8 +15,8 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
                                           const pseudopot_cell_vnl& nlpp,
                                           const UnitCell& ucell)
 {
-    ModuleBase::TITLE("Stress_Func", "stress_us");
-    ModuleBase::timer::tick("Stress_Func", "stress_us");
+    ModuleBase::TITLE("Stress", "stress_us");
+    ModuleBase::timer::tick("Stress", "stress_us");
 
     const int npw = rho_basis->npw;
     const int nh_tot = nlpp.nhm * (nlpp.nhm + 1) / 2;
@@ -184,7 +184,7 @@ void Stress_PW<FPTYPE, Device>::stress_us(ModuleBase::matrix& sigma,
     }
     sigma += stressus;
 
-    ModuleBase::timer::tick("Stress_Func", "stress_us");
+    ModuleBase::timer::tick("Stress", "stress_us");
     return;
 }
 
@@ -202,9 +202,10 @@ void Stress_Func<FPTYPE, Device>::dqvan2(const pseudopot_cell_vnl& nlpp,
                                          const ModuleBase::matrix& dylmk0,
                                          std::complex<FPTYPE>* dqg)
 {
-    if (PARAM.inp.test_pp) {
-        ModuleBase::TITLE("Stress", "dqvan2");
-}
+	if (PARAM.inp.test_pp) 
+	{
+		ModuleBase::TITLE("Stress", "dqvan2");
+	}
 
     // computes the indices which correspond to ih,jh
     const int nb = nlpp.indv(itype, ih);

@@ -54,6 +54,7 @@ void Record_adj::for_2d(const UnitCell& ucell,
     assert(ucell.nat > 0);
     if (!gamma_only)
     {
+        // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
         delete[] pv.nlocdim;
         delete[] pv.nlocstart;
         pv.nlocdim = new int[ucell.nat];

@@ -1566,7 +1566,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
     by using int* symflag.
 */ 
 // -------------------------------------------
-ModuleBase::timer::tick("Symmetry","group fft grids");
+    ModuleBase::timer::tick("Symmetry","group_fft_grids");
     for (int i = 0; i< fftnx; ++i)
     {
         //tmp variable
@@ -1622,7 +1622,7 @@ ModuleBase::timer::tick("Symmetry","group fft grids");
             }
         }
     }
-ModuleBase::timer::tick("Symmetry","group fft grids");
+    ModuleBase::timer::tick("Symmetry","group_fft_grids");
 
 // -------------------------------------------
 /*  This code performs symmetry operations on the reciprocal space 
