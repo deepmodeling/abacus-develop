@@ -32,7 +32,7 @@ case "${with_aocl}" in
   __SYSTEM__)
     echo "==================== Finding AOCL from system paths ===================="
     check_lib -lblis "AOCL"
-    check_lib -lframe "AOCL"
+    check_lib -lflame "AOCL"
     AOCL_LIBS="-lblis -lflame"
     add_include_from_paths AOCL_CFLAGS "blis.h" $INCLUDE_PATHS
     add_lib_from_paths AOCL_LDFLAGS "libblis.*" $LIB_PATHS
