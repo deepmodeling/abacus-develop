@@ -46,10 +46,14 @@ class Charge
                                    // wenfei 2021-07-28
     const Parallel_Grid* pgrid = nullptr;
   private:
+
     //temporary
-    double *_space_rho = nullptr, *_space_rho_save = nullptr;
-    std::complex<double> *_space_rhog = nullptr, *_space_rhog_save = nullptr;
-    double *_space_kin_r = nullptr, *_space_kin_r_save = nullptr;
+    double *_space_rho = nullptr; 
+    double *_space_rho_save = nullptr;
+    std::complex<double> *_space_rhog = nullptr;
+    std::complex<double> *_space_rhog_save = nullptr;
+    double *_space_kin_r = nullptr;
+    double *_space_kin_r_save = nullptr;
 
   public:
     double **nhat = nullptr; //compensation charge for PAW

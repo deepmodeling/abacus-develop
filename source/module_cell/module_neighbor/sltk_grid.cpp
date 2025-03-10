@@ -266,7 +266,7 @@ void Grid::setMemberVariables(std::ofstream& ofs_in, //  output data to ofs
 
 void Grid::Construct_Adjacent(const UnitCell& ucell)
 {
-    ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
+    ModuleBase::timer::tick("Grid", "constru_adj");
 
     for  (int i_type = 0; i_type < ucell.ntype; i_type++)
     {
@@ -283,23 +283,17 @@ void Grid::Construct_Adjacent(const UnitCell& ucell)
             this->Construct_Adjacent_near_box(atom);
         }
     }
-    ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand");
+    ModuleBase::timer::tick("Grid", "constru_adj");
 }
 
 void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
 {
-    //	if (test_grid)ModuleBase::TITLE(ofs_running, "Grid", "Construct_Adjacent_expand_periodic");
-    ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand_periodic");
-    int box_i_x, box_i_y, box_i_z;
+    ModuleBase::timer::tick("Grid", "adj_near_box");
+    int box_i_x=0;
+    int box_i_y=0;
+    int box_i_z=0;
     this->getBox(box_i_x, box_i_y, box_i_z, fatom.x, fatom.y, fatom.z);
 
-/*     for (int box_i_x_adj = std::max(box_i_x - 1, 0); box_i_x_adj <= std::min(box_i_x + 1, box_nx - 1); box_i_x_adj++)
-    {
-        for (int box_i_y_adj = std::max(box_i_y - 1, 0); box_i_y_adj <= std::min(box_i_y + 1, box_ny - 1); box_i_y_adj++)
-        {
-            for (int box_i_z_adj = std::max(box_i_z - 1, 0); box_i_z_adj <= std::min(box_i_z + 1, box_nz - 1); box_i_z_adj++)
-            {
- */             
     for (int box_i_x_adj = 0; box_i_x_adj < glayerX + glayerX_minus; box_i_x_adj++)
     {
         for (int box_i_y_adj = 0; box_i_y_adj < glayerY + glayerY_minus; box_i_y_adj++)
@@ -313,7 +307,7 @@ void Grid::Construct_Adjacent_near_box(const FAtom& fatom)
             }
         }
     }
-    ModuleBase::timer::tick("Grid", "Construct_Adjacent_expand_periodic");
+    ModuleBase::timer::tick("Grid", "adj_near_box");
 }
 
 void Grid::Construct_Adjacent_final(const FAtom& fatom1,

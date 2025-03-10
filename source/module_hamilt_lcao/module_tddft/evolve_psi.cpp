@@ -33,15 +33,16 @@ void evolve_psi(const int nband,
                 std::ofstream& ofs_running,
                 const int print_matrix)
 {
-    ofs_running << " evolve_psi::start " << std::endl;
-
     ModuleBase::TITLE("Evolve_psi", "evolve_psi");
+    ofs_running << " Evolving electronic wave functions begins" << std::endl;
+
     time_t time_start = time(nullptr);
     ofs_running << " Start Time : " << ctime(&time_start);
 
 #ifdef __MPI
 
-    hamilt::MatrixBlock<std::complex<double>> h_mat, s_mat;
+    hamilt::MatrixBlock<std::complex<double>> h_mat;
+    hamilt::MatrixBlock<std::complex<double>> s_mat;
     p_hamilt->matrix(h_mat, s_mat);
 
     std::complex<double>* Stmp = new std::complex<double>[pv->nloc];
@@ -59,7 +60,7 @@ void evolve_psi(const int nband,
     std::complex<double>* U_operator = new std::complex<double>[pv->nloc];
     ModuleBase::GlobalFunc::ZEROS(U_operator, pv->nloc);
 
-    // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (1)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief compute H(t+dt/2)
     /// @input H_laststep, Htmp, print_matrix
@@ -69,7 +70,7 @@ void evolve_psi(const int nband,
         half_Hmatrix(pv, nband, nlocal, Htmp, Stmp, H_laststep, S_laststep, ofs_running, print_matrix);
     }
 
-    // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (2)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if (propagator != 3)
     {
         /// @brief compute U_operator
@@ -79,7 +80,7 @@ void evolve_psi(const int nband,
         prop.compute_propagator(nlocal, Stmp, Htmp, H_laststep, U_operator, ofs_running, print_matrix);
     }
 
-    // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (3)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     if (propagator != 3)
     {
         /// @brief apply U_operator to the wave function of the previous step for new wave function
@@ -95,14 +96,14 @@ void evolve_psi(const int nband,
         solve_propagation(pv, nband, nlocal, PARAM.mdp.md_dt / ModuleBase::AU_to_FS, Stmp, Htmp, psi_k_laststep, psi_k);
     }
 
-    // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (4)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief normalize psi_k
     /// @input Stmp, psi_not_norm, psi_k, print_matrix
     /// @output psi_k
     norm_psi(pv, nband, nlocal, Stmp, psi_k, ofs_running, print_matrix);
 
-    // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    // (5)->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     /// @brief compute ekb
     /// @input Htmp, psi_k
@@ -119,7 +120,7 @@ void evolve_psi(const int nband,
     time_t time_end = time(nullptr);
     ModuleBase::GlobalFunc::OUT_TIME("evolve(std::complex)", time_start, time_end);
 
-    ofs_running << " evolve_psi::end " << std::endl;
+    ofs_running << " Evolving electronic wave functions ends" << std::endl;
 
     return;
 }

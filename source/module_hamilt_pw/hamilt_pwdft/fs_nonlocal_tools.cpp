@@ -282,7 +282,6 @@ void FS_Nonlocal_tools<FPTYPE, Device>::cal_becp(const int& ik,
               &ModuleBase::ZERO,
               this->becp + index0,
               this->nkb);
-    ModuleBase::timer::tick("FS_Nonlocal_tools", "cal_becp");
 }
 
 template <typename FPTYPE, typename Device>

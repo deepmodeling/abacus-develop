@@ -45,7 +45,7 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 template <typename T>
 void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "read_external_orbs");
+    ModuleBase::timer::tick("psi_init_nao", "read_external_orbs");
 
     this->orbital_files_.resize(this->p_ucell_->ntype);
     this->nr_.resize(this->p_ucell_->ntype);
@@ -116,7 +116,7 @@ void psi_initializer_nao<T>::read_external_orbs(const std::string* orbital_files
             std::copy(radials[ichi].begin(), radials[ichi].end(), this->chi_[it][ichi].begin());
         }
     }
-    ModuleBase::timer::tick("psi_initializer_nao", "read_external_orbs");
+    ModuleBase::timer::tick("psi_init_nao", "read_external_orbs");
 }
 
 template <typename T>
@@ -155,7 +155,7 @@ void psi_initializer_nao<T>::initialize(const Structure_Factor* sf,
                                         const pseudopot_cell_vnl* p_pspot_nl,
                                         const int& rank)
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
+    ModuleBase::timer::tick("psi_init_nao", "initialize");
 
     // import
     psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
@@ -191,13 +191,13 @@ void psi_initializer_nao<T>::initialize(const Structure_Factor* sf,
     this->nbands_start_ = std::max(nbands_local, PARAM.inp.nbands);
     this->nbands_complem_ = this->nbands_start_ - nbands_local;
 
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize_mpi");
+    ModuleBase::timer::tick("psi_init_nao", "initialize");
 }
 
 template <typename T>
 void psi_initializer_nao<T>::tabulate()
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
+    ModuleBase::timer::tick("psi_init_nao", "tabulate");
 
     // a uniformed qgrid
     std::vector<double> qgrid(PARAM.globalv.nqx);
@@ -246,13 +246,13 @@ void psi_initializer_nao<T>::tabulate()
             }
         }
     }
-    ModuleBase::timer::tick("psi_initializer_nao", "tabulate");
+    ModuleBase::timer::tick("psi_init_nao", "tabulate");
 }
 
 template <typename T>
 void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
 {
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize");
+    ModuleBase::timer::tick("psi_init_nao", "init_psig");
     assert(ik >= 0);
     const int npw = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
@@ -379,7 +379,7 @@ void psi_initializer_nao<T>::init_psig(T* psig, const int& ik)
     {
         this->random_t(psig, ibasis, this->nbands_start_, ik);
     }
-    ModuleBase::timer::tick("psi_initializer_nao", "initialize");
+    ModuleBase::timer::tick("psi_init_nao", "init_psig");
 }
 
 template class psi_initializer_nao<std::complex<double>>;

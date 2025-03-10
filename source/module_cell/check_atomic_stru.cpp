@@ -3,8 +3,12 @@
 #include "module_base/element_covalent_radius.h"
 #include "module_base/timer.h"
 
-void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
+namespace unitcell
 {
+
+void check_atomic_stru(UnitCell& ucell, const double& factor)
+{
+    ModuleBase::timer::tick("unitcell", "check_atomic_stru");
     // First we calculate all bond length in the structure,
     // and compare with the covalent_bond_length,
     // if there has bond length is shorter than covalent_bond_length * factor,
@@ -17,7 +21,6 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
 
     if (GlobalV::MY_RANK == 0)
     {
-        ModuleBase::timer::tick("Check_Atomic_Stru", "Check_Atomic_Stru");
         
         const int ntype = ucell.ntype;
         const double lat0 = ucell.lat0;
@@ -138,7 +141,6 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
                 } // it2
             } // iat
         }
-        ModuleBase::timer::tick("Check_Atomic_Stru", "Check_Atomic_Stru");
     }
     if (!all_pass || !no_warning)
     {
@@ -165,4 +167,8 @@ void Check_Atomic_Stru::check_atomic_stru(UnitCell& ucell, const double& factor)
             ModuleBase::WARNING_QUIT("Input", "The structure is unreasonable!");
         }
     }
+
+    ModuleBase::timer::tick("unitcell", "check_atomic_stru");
+}
+
 }
