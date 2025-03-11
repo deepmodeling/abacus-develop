@@ -3,6 +3,7 @@
 #include "module_base/formatter.h"
 #include "module_base/global_variable.h"
 #include "module_base/tool_title.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_elecstate/module_dm/cal_dm_psi.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_hamilt_lcao/module_dftu/dftu.h"
@@ -17,6 +18,7 @@
 #include "module_io/output_mat_sparse.h"
 #include "module_io/output_mulliken.h"
 #include "module_io/output_sk.h"
+#include "module_io/read_wfc_nao.h"
 #include "module_io/to_qo.h"
 #include "module_io/to_wannier90_lcao.h"
 #include "module_io/to_wannier90_lcao_in_pw.h"
@@ -27,7 +29,6 @@
 #include "module_io/write_proj_band_lcao.h"
 #include "module_io/write_wfc_nao.h"
 #include "module_parameter/parameter.h"
-#include "module_elecstate/elecstate_tools.h"
 
 //be careful of hpp, there may be multiple definitions of functions, 20250302, mohan
 #include "module_io/write_eband_terms.hpp"
@@ -133,12 +134,49 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                  two_center_bundle_,
                                  orb_);
 
-    // 4) initialize the density matrix
+    // 4) initialize electronic wave function psi
+    if (this->psi == nullptr)
+    {
+        int nsk = 0;
+        int ncol = 0;
+        if (PARAM.globalv.gamma_only_local)
+        {
+            nsk = PARAM.inp.nspin;
+            ncol = this->pv.ncol_bands;
+            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
+                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
+                || PARAM.inp.ks_solver == "cusolvermp")
+            {
+                ncol = this->pv.ncol;
+            }
+        }
+        else
+        {
+            nsk = this->kv.get_nks();
+#ifdef __MPI
+            ncol = this->pv.ncol_bands;
+#else
+            ncol = PARAM.inp.nbands;
+#endif
+        }
+        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
+    }
+
+    // 5) read psi from file
+    if (PARAM.inp.init_wfc == "file")
+    {
+        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
+        {
+            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
+        }
+    }
+
+    // 6) initialize the density matrix
     // DensityMatrix is allocated here, DMK is also initialized here
     // DMR is not initialized here, it will be constructed in each before_scf
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)->init_DM(&this->kv, &(this->pv), PARAM.inp.nspin);
 
-    // 5) initialize exact exchange calculations
+    // 7) initialize exact exchange calculations
 #ifdef __EXX
     if (PARAM.inp.calculation == "scf" 
         || PARAM.inp.calculation == "relax" 
@@ -163,22 +201,22 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 #endif
 
-    // 6) initialize DFT+U
+    // 8) initialize DFT+U
     if (PARAM.inp.dft_plus_u)
     {
         auto* dftu = ModuleDFTU::DFTU::get_instance();
         dftu->init(ucell, &this->pv, this->kv.get_nks(), &orb_);
     }
 
-    // 7) initialize local pseudopotentials
+    // 9) initialize local pseudopotentials
     this->locpp.init_vloc(ucell, this->pw_rho);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "LOCAL POTENTIAL");
 
-    // 8) inititlize the charge density
+    // 10) inititlize the charge density
     this->chr.allocate(PARAM.inp.nspin);
     this->pelec->omega = ucell.omega;
 
-    // 9) initialize the potential
+    // 11) initialize the potential
     if (this->pelec->pot == nullptr)
     {
         this->pelec->pot = new elecstate::Potential(this->pw_rhod,
@@ -191,8 +229,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                                     &(this->pelec->f_en.vtxc));
     }
 
-
-    // 10) initialize deepks
+    // 12) initialize deepks
 #ifdef __DEEPKS
     LCAO_domain::DeePKS_init(ucell, pv, this->kv.get_nks(), orb_, this->ld, GlobalV::ofs_running);
     if (PARAM.inp.deepks_scf)
@@ -212,7 +249,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     }
 #endif
 
-    // 11) set occupations
+    // 13) set occupations
     // tddft does not need to set occupations in the first scf
     if (PARAM.inp.ocp && inp.esolver_type != "tddft")
     {
@@ -224,7 +261,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
                                  this->pelec->skip_weights);
     }
 
-    // 12) if kpar is not divisible by nks, print a warning
+    // 14) if kpar is not divisible by nks, print a warning
     if (PARAM.globalv.kpar_lcao > 1)
     {
         if (this->kv.get_nks() % PARAM.globalv.kpar_lcao != 0)
@@ -245,7 +282,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
         }
     }
 
-    // 13) initialize rdmft, added by jghan
+    // 15) initialize rdmft, added by jghan
     if (PARAM.inp.rdmft == true)
     {
         rdmft_solver.init(this->GG,

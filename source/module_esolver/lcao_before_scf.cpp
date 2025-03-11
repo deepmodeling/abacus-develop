@@ -27,7 +27,6 @@
 #include "module_hamilt_lcao/hamilt_lcaodft/operator_lcao/operator_lcao.h"
 #include "module_hamilt_lcao/module_deltaspin/spin_constrain.h"
 #include "module_io/cube_io.h"
-#include "module_io/read_wfc_nao.h"
 #include "module_io/write_elecstat_pot.h"
 #include "module_io/write_wfc_nao.h"
 #ifdef __EXX
@@ -128,52 +127,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     // If k point is used here, allocate HlocR after atom_arrange.
     this->RA.for_2d(ucell, this->gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
-
-    // 8) initialize electronic wave function psi
-    // this code belongs to before_all_runners? mohan add 2025-03-10
-    if (this->psi == nullptr)
-    {
-        int nsk = 0;
-        int ncol = 0;
-        if (PARAM.globalv.gamma_only_local)
-        {
-            nsk = PARAM.inp.nspin;
-            ncol = this->pv.ncol_bands;
-            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
-                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
-                || PARAM.inp.ks_solver == "cusolvermp")
-            {
-                ncol = this->pv.ncol;
-            }
-        }
-        else
-        {
-            nsk = this->kv.get_nks();
-#ifdef __MPI
-            ncol = this->pv.ncol_bands;
-#else
-            ncol = PARAM.inp.nbands;
-#endif
-        }
-        this->psi = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
-    }
-
-    // 9) read psi from file
-    // this code belongs to before_all_runners? mohan add 2025-03-10
-    if (istep == 0 && PARAM.inp.init_wfc == "file")
-    {
-        if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->pv, *(this->psi), this->pelec))
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_LCAO", "read electronic wave functions failed");
-        }
-    }
-
-
-    // 10) after ions move, prepare grid in Gint
+    // 8) after ions move, prepare grid in Gint
     LCAO_domain::grid_prepare(this->GridT, this->GG, this->GK, ucell, orb_, *this->pw_rho, *this->pw_big);
 
-
-    // 11) initialize the Hamiltonian operators
+    // 9) initialize the Hamiltonian operators
     // if atom moves, then delete old pointer and add a new one
     if (this->p_hamilt != nullptr)
     {
@@ -213,7 +170,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
 
 #ifdef __DEEPKS
-    // 12) for each ionic step, the overlap <phi|alpha> must be rebuilt
+    // 10) for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
     if (PARAM.globalv.deepks_setorb)
     {
@@ -242,7 +199,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif
 
-    // 13) prepare sc calculation
+    // 11) prepare sc calculation
     if (PARAM.inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
@@ -261,7 +218,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                    this->pelec);
     }
 
-    // 14) set xc type before the first cal of xc in pelec->init_scf
+    // 12) set xc type before the first cal of xc in pelec->init_scf
     // Peize Lin add 2016-12-03
 #ifdef __EXX
     if (PARAM.inp.calculation != "nscf")
@@ -277,18 +234,16 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
 #endif
 
-    // 15) init_scf, should be before_scf? mohan add 2025-03-10
+    // 13) init_scf, should be before_scf? mohan add 2025-03-10
     this->pelec->init_scf(istep, ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
 
-
-    // 16) initalize DMR
+    // 14) initalize DMR
     // DMR should be same size with Hamiltonian(R)
     dynamic_cast<elecstate::ElecStateLCAO<TK>*>(this->pelec)
         ->get_DM()
         ->init_DMR(*(dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt)->getHR()));
 
-
-    // 17) two cases are considered:
+    // 15) two cases are considered:
     // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
     // 2. DMK in DensityMatrix is empty (istep == 0), then DMR is initialized by zeros
     if (istep > 0)
@@ -347,7 +302,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         return;
     }
 
-    // 18) the electron charge density should be symmetrized,
+    // 16) the electron charge density should be symmetrized,
     // here is the initialization
     Symmetry_rho srho;
     for (int is = 0; is < PARAM.inp.nspin; is++)
@@ -355,11 +310,10 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
         srho.begin(is, this->chr, this->pw_rho, ucell.symm);
     }
 
-    // 19) why we need to set this sentence? mohan add 2025-03-10
+    // 17) why we need to set this sentence? mohan add 2025-03-10
     this->p_hamilt->non_first_scf = istep;
 
-
-    // 20) update of RDMFT, added by jghan 
+    // 18) update of RDMFT, added by jghan
     if (PARAM.inp.rdmft == true)
     {
         // necessary operation of these parameters have be done with p_esolver->Init() in source/driver_run.cpp

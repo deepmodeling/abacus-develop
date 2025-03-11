@@ -16,7 +16,7 @@ struct Exx_Helper
 
   public:
     Exx_Helper() = default;
-    OperatorEXX *op_exx;
+    OperatorEXX *op_exx = nullptr;
 
     void set_firstiter() { first_iter = true; }
     void set_wg(const ModuleBase::matrix *wg_) { wg = wg_; }
@@ -35,9 +35,8 @@ struct Exx_Helper
 
   private:
     bool first_iter;
-    psi::Psi<T, Device> *psi;
-    const ModuleBase::matrix *wg;
-
+    psi::Psi<T, Device> *psi = nullptr;
+    const ModuleBase::matrix *wg = nullptr;
 
 };
 #endif // EXX_HELPER_H
