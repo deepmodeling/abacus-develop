@@ -50,6 +50,7 @@ VPATH=./src_global:\
 ./module_hamilt_pw/hamilt_stodft:\
 ./module_hamilt_pw/hamilt_pwdft/operator_pw:\
 ./module_hamilt_pw/hamilt_pwdft/kernels:\
+./module_hamilt_pw/hamilt_pwdft/module_exx_helper:\
 ./module_hamilt_pw/hamilt_stodft/kernels:\
 ./module_hamilt_lcao/module_hcontainer:\
 ./module_hamilt_lcao/hamilt_lcaodft:\
@@ -295,6 +296,7 @@ OBJS_HAMILT=hamilt_pw.o\
     hamilt_sdft_pw.o\
     operator.o\
     operator_pw.o\
+    op_exx_pw.o\
     ekinetic_pw.o\
     ekinetic_op.o\
     hpsi_norm_op.o\
@@ -306,6 +308,7 @@ OBJS_HAMILT=hamilt_pw.o\
     meta_op.o\
     velocity_pw.o\
     radial_proj.o\
+    exx_helper.o\
 
 OBJS_HAMILT_OF=kedf_tf.o\
     kedf_vw.o\
@@ -671,6 +674,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     sto_stress_pw.o\
     stress_func_cc.o\
     stress_func_ewa.o\
+    stress_func_exx.o\
     stress_func_gga.o\
     stress_func_mgga.o\
     stress_func_har.o\

@@ -35,6 +35,16 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                    const pseudopot_cell_vnl& nlpp,
                    const UnitCell& ucell); // nonlocal part of uspp in PW basis
 
+    // exx stress due to the scaling of the lattice vectors
+    // see 10.1103/PhysRevB.73.125120 for details
+    void stress_exx(ModuleBase::matrix& sigma,
+                    const ModuleBase::matrix& wg,
+                    ModulePW::PW_Basis* rho_basis,
+                    ModulePW::PW_Basis_K* wfc_basis,
+                    const K_Vectors* p_kv,
+                    const psi::Psi<complex<FPTYPE>, Device>* d_psi_in,
+                    const UnitCell& ucell); // exx stress in PW basis
+
     const elecstate::ElecState* pelec = nullptr;
 };
 #endif

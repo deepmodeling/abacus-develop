@@ -316,9 +316,6 @@ void Input_Conv::Convert()
 //----------------------------------------------------------
 // about exx, Peize Lin add 2018-06-20
 //----------------------------------------------------------
-#ifdef __EXX
-#ifdef __LCAO
-
     std::string dft_functional_lower = PARAM.inp.dft_functional;
     std::transform(PARAM.inp.dft_functional.begin(),
                    PARAM.inp.dft_functional.end(),
@@ -329,14 +326,20 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type
             = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-    } else if (dft_functional_lower == "hse") {
+    }
+    else if (dft_functional_lower == "hse")
+    {
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type
             = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
-    } else if (dft_functional_lower == "opt_orb") {
+    }
+#ifdef __EXX
+    else if (dft_functional_lower == "opt_orb")
+    {
         GlobalC::exx_info.info_global.cal_exx = false;
         Exx_Abfs::Jle::generate_matrix = true;
     }
+#endif
     // muller, power, wp22, cwp22 added by jghan, 2024-07-07
     else if ( dft_functional_lower == "muller" || dft_functional_lower == "power" )
     {
@@ -353,11 +356,22 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_global.cal_exx = true;
         GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; // use the erfc(w|r-r'|), exx just has the short-range part
     }
+    else if (dft_functional_lower == "b3lyp")
+    {
+        GlobalC::exx_info.info_global.cal_exx = true;
+        GlobalC::exx_info.info_global.ccp_type
+            = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
     else {
         GlobalC::exx_info.info_global.cal_exx = false;
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx || Exx_Abfs::Jle::generate_matrix || PARAM.inp.rpa)
+    if (GlobalC::exx_info.info_global.cal_exx
+#ifdef __EXX
+        || Exx_Abfs::Jle::generate_matrix
+        || PARAM.inp.rpa
+#endif
+        )
     {
         // EXX case, convert all EXX related variables
         // GlobalC::exx_info.info_global.cal_exx = true;
@@ -384,18 +398,37 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.cauchy_stress_threshold = PARAM.inp.exx_cauchy_stress_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
 
+#ifdef __EXX
         Exx_Abfs::Jle::Lmax = PARAM.inp.exx_opt_orb_lmax;
         Exx_Abfs::Jle::Ecut_exx = PARAM.inp.exx_opt_orb_ecut;
         Exx_Abfs::Jle::tolerence = PARAM.inp.exx_opt_orb_tolerence;
+#endif
 
         // EXX does not support symmetry for nspin==4
-        if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4)
+        if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4 && PARAM.inp.basis_type == "lcao")
         {
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
     }
-#endif                                                   // __LCAO
-#endif                                                   // __EXX
+
+    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
+    {
+        if (ModuleSymmetry::Symmetry::symm_flag != -1)
+        {
+            ModuleBase::WARNING("Input_Conv", "EXX PW works only with symmetry=-1");
+            ModuleSymmetry::Symmetry::symm_flag = -1;
+        }
+
+        if (PARAM.inp.nspin != 1)
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1");
+        }
+
+        if (PARAM.inp.device != "cpu")
+        {
+            ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with device=cpu");
+        }
+    }
 
     //----------------------------------------------------------
     // reset symmetry flag to avoid error
