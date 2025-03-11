@@ -13,6 +13,8 @@ Numerical_Descriptor::Numerical_Descriptor()
 	this->init_label = false;
 	this->lmax = -1;
 	this->nmax = -1;
+    this->nlocal = 0;
+    this->mu_index = nullptr;
 }
 
 Numerical_Descriptor::~Numerical_Descriptor() 

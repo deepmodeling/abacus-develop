@@ -29,11 +29,11 @@ class Force_Stress_LCAO
     Force_Stress_LCAO(Record_adj& ra, const int nat_in);
     ~Force_Stress_LCAO();
 
-    void getForceStress(const bool isforce,
+    void getForceStress(UnitCell& ucell,
+                        const bool isforce,
                         const bool isstress,
                         const bool istestf,
                         const bool istests,
-                        const UnitCell& ucell,
                         const Grid_Driver& gd,
                         Parallel_Orbitals& pv,
                         const elecstate::ElecState* pelec,
@@ -44,10 +44,14 @@ class Force_Stress_LCAO
                         const LCAO_Orbitals& orb,
                         ModuleBase::matrix& fcs,
                         ModuleBase::matrix& scs,
-                        const pseudopot_cell_vnl& nlpp,
+                        const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf,
                         const K_Vectors& kv,
                         ModulePW::PW_Basis* rhopw,
+                        surchem& solvent,
+#ifdef __DEEPKS
+                        LCAO_Deepks<T>& ld,
+#endif
 #ifdef __EXX
                         Exx_LRI<double>& exx_lri_double,
                         Exx_LRI<std::complex<double>>& exx_lri_complex,
@@ -61,11 +65,9 @@ class Force_Stress_LCAO
     Stress_Func<double> sc_pw;
     Forces<double> f_pw;
 
-    void forceSymmetry(const UnitCell& ucell, 
-                       ModuleBase::matrix& fcs, 
-                       ModuleSymmetry::Symmetry* symm);
+    void forceSymmetry(const UnitCell& ucell, ModuleBase::matrix& fcs, ModuleSymmetry::Symmetry* symm);
 
-    void calForcePwPart(const UnitCell& ucell,
+    void calForcePwPart(UnitCell& ucell,
                         ModuleBase::matrix& fvl_dvl,
                         ModuleBase::matrix& fewalds,
                         ModuleBase::matrix& fcc,
@@ -75,7 +77,7 @@ class Force_Stress_LCAO
                         const bool vnew_exist,
                         const Charge* const chr,
                         ModulePW::PW_Basis* rhopw,
-                        const pseudopot_cell_vnl& nlpp,
+                        const pseudopot_cell_vl& locpp,
                         const Structure_Factor& sf);
 
     void integral_part(const bool isGammaOnly,
@@ -95,7 +97,9 @@ class Force_Stress_LCAO
                        ModuleBase::matrix& svnl_dbeta,
                        ModuleBase::matrix& svl_dphi,
 #if __DEEPKS
+                       ModuleBase::matrix& fvnl_dalpha,
                        ModuleBase::matrix& svnl_dalpha,
+                       LCAO_Deepks<T>& ld,
 #endif
                        Gint_Gamma& gint_gamma,
                        Gint_k& gint_k,
@@ -104,7 +108,7 @@ class Force_Stress_LCAO
                        const Parallel_Orbitals& pv,
                        const K_Vectors& kv);
 
-    void calStressPwPart(const UnitCell& ucell,
+    void calStressPwPart(UnitCell& ucell,
                          ModuleBase::matrix& sigmadvl,
                          ModuleBase::matrix& sigmahar,
                          ModuleBase::matrix& sigmaewa,
@@ -113,7 +117,7 @@ class Force_Stress_LCAO
                          const double& etxc,
                          const Charge* const chr,
                          ModulePW::PW_Basis* rhopw,
-                         const pseudopot_cell_vnl& nlpp,
+                         const pseudopot_cell_vl& locpp,
                          const Structure_Factor& sf);
 
     static double force_invalid_threshold_ev;

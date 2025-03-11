@@ -7,7 +7,6 @@
 #include "module_cell/unitcell.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
 #include "sltk_atom.h"
-#include "sltk_atom_input.h"
 #include "sltk_grid.h"
 
 #include <memory>
@@ -50,7 +49,7 @@ class Grid_Driver : public Grid
     //		adjacent of this atom,and store the information
     //		in 'adj_num','ntype','natom'
     //==========================================================
-    Grid_Driver() : test_deconstructor(0){};
+    Grid_Driver(){ test_deconstructor = false; };
     Grid_Driver(const int& test_d_in, const int& test_grid_in);
 
     ~Grid_Driver();
@@ -67,11 +66,17 @@ class Grid_Driver : public Grid
     //     NOT NULL
     //==========================================================
     void Find_atom(const UnitCell& ucell,
+                   const int ntype,
+                   const int nnumber,
+                   AdjacentAtomInfo* adjs = nullptr) const;
+
+    // cartesian_posi and ucell is deprecated 20241204 zhanghaochong
+    // this interface is deprecated, please use Find_atom above
+    void Find_atom(const UnitCell& ucell,
                    const ModuleBase::Vector3<double>& cartesian_posi,
                    const int& ntype,
                    const int& nnumber,
                    AdjacentAtomInfo* adjs = nullptr) const;
-
     //==========================================================
     // EXPLAIN : The adjacent information for the input
     // cartesian_pos
@@ -104,27 +109,6 @@ class Grid_Driver : public Grid
 
   private:
     mutable AdjacentAtomInfo adj_info;
-
-    int test_deconstructor = 0;
-
-    //==========================================================
-    // MEMBER FUNCTIONS :
-    // NAME : Calculate_adjacent_site
-    //==========================================================
-    ModuleBase::Vector3<double> Calculate_adjacent_site(const double x,
-                                                        const double y,
-                                                        const double z,
-                                                        const double& box11,
-                                                        const double& box12,
-                                                        const double& box13,
-                                                        const double& box21,
-                                                        const double& box22,
-                                                        const double& box23,
-                                                        const double& box31,
-                                                        const double& box32,
-                                                        const double& box33,
-                                                        const short box_x, // three dimensions of the target box
-                                                        const short box_y,
-                                                        const short box_z) const;
+    bool test_deconstructor;
 };
 #endif

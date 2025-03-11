@@ -33,7 +33,6 @@ struct System_para
     int ncx = 0, ncy = 0,
         ncz = 0;                            ///< three dimension of FFT charge/grid, same as "nx,ny,nz"
     bool out_md_control = false;            ///< true if "out_level" is set
-    bool rpa_setorb = false;                ///< true if "rpa" is set
     bool gamma_only_pw = false;             ///< true if "gamma_only" is true and "basis_type" is "pw"
                                             ///< for plane wave basis.
     bool gamma_only_local = false;          ///< true if "gamma_only" is true and "lcao"
@@ -44,6 +43,7 @@ struct System_para
     std::string global_readin_dir = "";     ///< global readin directory
     std::string global_stru_dir = "";       ///< global structure directory
     std::string global_matrix_dir = "";     ///< global matrix directory
+    std::string log_file = "log";           ///< log file name
 
     bool deepks_setorb = false;             ///< true if "deepks" is set
     int npol = 1;                           ///< number of polarization
@@ -53,5 +53,9 @@ struct System_para
     bool double_grid = false;               ///< true if "ndx,ndy,ndz" is larger than "nx,ny,nz"
     double uramping = -10.0 / 13.6;         /// U-Ramping method (Ry)
     std::vector<double> hubbard_u = {};     ///< Hubbard Coulomb interaction parameter U (Ry)
+    int kpar_lcao = 1;                      ///< global number of pools for LCAO diagonalization only
+    int nbands_l = 0;                       ///< number of bands of each band parallel calculation, same to nbands when bndpar=1
+    bool ks_run = false;                    ///< true if current process runs KS calculation
+    bool all_ks_run = true;                 ///< true if only all processes run KS calculation
 };
 #endif

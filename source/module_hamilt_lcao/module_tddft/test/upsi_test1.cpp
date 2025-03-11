@@ -1,10 +1,11 @@
-#include <gtest/gtest.h>
-#include <module_base/scalapack_connector.h>
-#include <mpi.h>
-
+#include "module_base/global_variable.h" // GlobalV::ofs_running
 #include "module_basis/module_ao/parallel_orbitals.h"
 #include "module_hamilt_lcao/module_tddft/upsi.h"
 #include "tddft_test.h"
+
+#include <gtest/gtest.h>
+#include <module_base/scalapack_connector.h>
+#include <mpi.h>
 
 #define doublethreshold 1e-8
 
@@ -61,7 +62,7 @@ TEST(UpsiTest, testUpsi1)
     }
 
     // Call the function
-    module_tddft::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, print_matrix);
+    module_tddft::upsi(pv, nband, nlocal, U_operator, psi_k_laststep, psi_k, GlobalV::ofs_running, print_matrix);
 
     // Check the results
     for (int i = 0; i < nlocal * nband; ++i)

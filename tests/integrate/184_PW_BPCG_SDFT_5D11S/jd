@@ -1,0 +1,1 @@
+test parallel method bndpar with BPCG. Must be run by MPI with 4 cores, otherwise please ignore this test.

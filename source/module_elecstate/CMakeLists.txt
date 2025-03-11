@@ -1,10 +1,10 @@
 list(APPEND objects
     elecstate.cpp
-    elecstate_getters.cpp
     elecstate_energy_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
     elecstate_print.cpp
+    elecstate_tools.cpp
     elecstate_pw.cpp
     elecstate_pw_sdft.cpp
     elecstate_pw_cal_tau.cpp
@@ -32,8 +32,10 @@ list(APPEND objects
     magnetism.cpp
     occupy.cpp
     cal_ux.cpp
+    read_orb.cpp
     cal_nelec_nband.cpp
     read_pseudo.cpp
+    cal_wfc.cpp
 )
 
 if(ENABLE_LCAO)

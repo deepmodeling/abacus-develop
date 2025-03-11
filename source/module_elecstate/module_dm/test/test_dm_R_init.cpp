@@ -7,13 +7,6 @@
 #include "module_hamilt_lcao/module_hcontainer/hcontainer.h"
 #include "module_cell/klist.h"
 #undef private
-K_Vectors::K_Vectors()
-{
-}
-
-K_Vectors::~K_Vectors()
-{
-}
 /************************************************
  *  unit test of DensityMatrix constructor
  ***********************************************/
@@ -78,8 +71,6 @@ class DMTest : public testing::Test
     {
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.iat2it;
-        delete[] ucell.iat2ia;
     }
 
 #ifdef __MPI

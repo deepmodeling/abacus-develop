@@ -68,8 +68,8 @@ TEST_F(TestStoTool, parallel_distribution)
 
 TEST_F(TestStoTool, convert_psi)
 {
-    psi::Psi<std::complex<double>> psi_in(1, 1, 10);
-    psi::Psi<std::complex<float>> psi_out(1, 1, 10);
+    psi::Psi<std::complex<double>> psi_in(1, 1, 10, 10, true);
+    psi::Psi<std::complex<float>> psi_out(1, 1, 10, 10, true);
     for (int i = 0; i < 10; ++i)
     {
         psi_in.get_pointer()[i] = std::complex<double>(i, i);
@@ -83,8 +83,8 @@ TEST_F(TestStoTool, convert_psi)
 
 TEST_F(TestStoTool, gatherchi)
 {
-    psi::Psi<std::complex<float>> chi(1, 1, 10);
-    psi::Psi<std::complex<float>> chi_all(1, 1, 10);
+    psi::Psi<std::complex<float>> chi(1, 1, 10, 10, true);
+    psi::Psi<std::complex<float>> chi_all(1, 1, 10, 10, true);
     int npwx = 10;
     int nrecv_sto[4] = {1, 2, 3, 4};
     int displs_sto[4] = {0, 1, 3, 6};

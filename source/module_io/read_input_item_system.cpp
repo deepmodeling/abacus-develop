@@ -207,7 +207,7 @@ void ReadInput::item_system()
         item.annotation = "if calculate the force at the end of the electronic iteration";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
-            std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "nscf", "get_S"};
+            std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "get_S"};
             if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
             {
                 if (!para.input.cal_force)
@@ -233,6 +233,15 @@ void ReadInput::item_system()
         item.annotation = "devide all processors into kpar groups and k points "
                           "will be distributed among";
         read_sync_int(input.kpar);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+#ifdef __LCAO
+            if (para.inp.basis_type == "lcao")
+            {
+                para.sys.kpar_lcao = para.inp.kpar;
+                para.input.kpar = 1;
+            }
+#endif
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "lcao" && para.input.kpar > 1)
             {
@@ -240,6 +249,7 @@ void ReadInput::item_system()
             }
         };
         this->add_item(item);
+        add_int_bcast(sys.kpar_lcao);
     }
     {
         Input_Item item("bndpar");
@@ -247,7 +257,7 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         read_sync_int(input.bndpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft")
+            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
             {
                 para.input.bndpar = 1;
             }
@@ -275,8 +285,13 @@ void ReadInput::item_system()
         item.annotation = "energy cutoff for wave functions";
         read_sync_double(input.ecutwfc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.ecutwfc == 0){ // 0 means no input value
-                if (para.input.basis_type == "lcao")
+            if (para.input.ecutwfc == 0)
+            { // 0 means no input value
+                if (para.input.ecutrho > 0)
+                {
+                    para.input.ecutwfc = para.input.ecutrho / 4.0;
+                }
+                else if (para.input.basis_type == "lcao")
                 {
                     para.input.ecutwfc = 100;
                 }
@@ -314,6 +329,10 @@ void ReadInput::item_system()
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must >= 4");
             }
+            if (para.sys.double_grid == true && para.input.basis_type == "lcao")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "ecutrho/ecutwfc must = 4 for lcao calculation");
+            }
         };
         this->add_item(item);
     }
@@ -322,7 +341,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along x axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nx = intvalue;
-            para.sys.ncx = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nx != 0)
@@ -338,7 +356,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along y axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.ny = intvalue;
-            para.sys.ncy = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.ny != 0)
@@ -354,7 +371,6 @@ void ReadInput::item_system()
         item.annotation = "number of points along z axis for FFT grid";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nz = intvalue;
-            para.sys.ncz = intvalue;
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nx * para.input.ny * para.input.nz == 0 && para.input.nz != 0)
@@ -478,6 +494,12 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("diag_subspace");
+        item.annotation = "method of subspace diagonalization in dav_subspace. 0:LaPack; 1:genelpa, 2:scalapack";
+        read_sync_int(input.diag_subspace);
+        this->add_item(item);
+    }
+    {
         Input_Item item("init_wfc");
         item.annotation = "start wave functions are from 'atomic', "
                           "'atomic+random', 'random' or";
@@ -498,18 +520,6 @@ void ReadInput::item_system()
             }
         };
         read_sync_string(input.init_wfc);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("psi_initializer");
-        item.annotation = "whether to use psi_initializer";
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.basis_type == "lcao_in_pw")
-            {
-                para.input.psi_initializer = true;
-            }
-        };
-        read_sync_bool(input.psi_initializer);
         this->add_item(item);
     }
     {
@@ -781,12 +791,39 @@ void ReadInput::item_system()
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
         };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"cpu", "gpu"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.device) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "device");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+        };
         this->add_item(item);
     }
     {
         Input_Item item("precision");
         item.annotation = "the computing precision for ABACUS";
         read_sync_string(input.precision);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            std::vector<std::string> avail_list = {"single", "double"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.precision) == avail_list.end())
+            {
+                const std::string warningstr = nofound_str(avail_list, "precision");
+                ModuleBase::WARNING_QUIT("ReadInput", warningstr);
+            }
+
+            // cpu single precision is not supported while float_fftw lib is not available
+            if (para.inp.device == "cpu" && para.inp.precision == "single")
+            {
+#ifndef __ENABLE_FLOAT_FFTW
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "Single precision with cpu is not supported while float_fftw lib is not available; \
+            \n Please recompile with cmake flag \"-DENABLE_FLOAT_FFTW=ON\".\n");
+#endif
+            }
+        };
         this->add_item(item);
     }
 }

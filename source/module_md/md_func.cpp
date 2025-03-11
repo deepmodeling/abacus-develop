@@ -453,6 +453,7 @@ double current_temp(double& kinetic,
 {
     if (3 * natom == frozen_freedom)
     {
+        kinetic = 0.0;
         return 0.0;
     }
     else

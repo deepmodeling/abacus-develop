@@ -7,7 +7,7 @@
 
 namespace ModuleIO
 {
-void output_convergence_after_scf(bool& convergence, double& energy, std::ofstream& ofs_running)
+void output_convergence_after_scf(const bool &convergence, double& energy, std::ofstream& ofs_running)
 {
     if (convergence)
     {
@@ -43,7 +43,7 @@ void output_after_relax(bool conv_ion, bool conv_esolver, std::ofstream& ofs_run
     }
 }
 
-void output_efermi(bool& convergence, double& efermi, std::ofstream& ofs_running)
+void output_efermi(const bool &convergence, double& efermi, std::ofstream& ofs_running)
 {
     if (convergence && PARAM.inp.out_level != "m")
     {

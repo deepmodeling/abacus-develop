@@ -5,6 +5,7 @@
 #include "module_base/timer.h"
 #include "module_base/tool_title.h"
 #include "module_elecstate/module_charge/symmetry_rho.h"
+#include "module_elecstate/elecstate_tools.h"
 
 #include <algorithm>
 
@@ -46,7 +47,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     {
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
-        if (nbands > 0 && GlobalV::MY_STOGROUP == 0)
+        if (nbands > 0 && PARAM.globalv.ks_run)
         {
             /// update psi pointer for each k point
             psi.fix_k(ik);
@@ -54,14 +55,14 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
             this->update_precondition(precondition, ik, this->wfc_basis->npwk[ik], pes->pot->get_vl_of_0());
             /// solve eigenvector and eigenvalue for H(k)
             double* p_eigenvalues = &(pes->ekb(ik, 0));
-            this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues);
+            this->hamiltSolvePsiK(pHamilt, psi, precondition, p_eigenvalues, nks);
         }
 
 #ifdef __MPI
-        if (nbands > 0 && PARAM.inp.bndpar > 1)
+        if (nbands > 0 && !PARAM.globalv.all_ks_run)
         {
-            Parallel_Common::bcast_dev(this->ctx, &psi(ik, 0, 0), npwx * nbands, PARAPW_WORLD, &psi_cpu(ik, 0, 0));
-            MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, PARAPW_WORLD);
+            Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, &psi_cpu(ik, 0, 0));
+            MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
         }
 #endif
         ModuleBase::timer::tick("HSolverPW_SDFT", "solve_KS");
@@ -89,17 +90,10 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
 
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
-    if (GlobalV::MY_STOGROUP == 0)
+    elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
+    if(!PARAM.globalv.all_ks_run)
     {
-        pes_pw->calEBand();
-    }
-    if (nbands > 0)
-    {
-#ifdef __MPI
-        pes->f_en.eband /= GlobalV::NPROC_IN_POOL;
-        MPI_Allreduce(MPI_IN_PLACE, &pes->f_en.eband, 1, MPI_DOUBLE, MPI_SUM, STO_WORLD);
-        MPI_Bcast(&pes->f_en.eband, 1, MPI_DOUBLE, 0, PARAPW_WORLD);
-#endif
+        pes->f_en.eband /= PARAM.inp.bndpar;
     }
     stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
     

@@ -101,7 +101,9 @@ namespace LR
                         diag_ethr,
                         maxiter,
                         false, //always do the subspace diag (check the implementation)
-                        comm_info);
+                        comm_info,
+                        PARAM.inp.diag_subspace,
+                        PARAM.inp.nb2d);
                     std::vector<double> ethr_band(nband, diag_ethr);
                     hsolver::DiagoIterAssist<T>::avg_iter
                         += static_cast<double>(dav_subspace.diag(

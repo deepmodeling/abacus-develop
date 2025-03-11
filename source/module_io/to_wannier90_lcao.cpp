@@ -306,13 +306,13 @@ void toWannier90_LCAO::initialize_orb_table(const UnitCell& ucell)
 
 void toWannier90_LCAO::set_R_coor(const UnitCell& ucell, const Grid_Driver& gd)
 {
-    int R_minX = int(-gd.getTrueCellX());
-    int R_minY = int(-gd.getTrueCellY());
-    int R_minZ = int(-gd.getTrueCellZ());
+    int R_minX = int(-gd.getGlayerX_minus());
+    int R_minY = int(-gd.getGlayerY_minus());
+    int R_minZ = int(-gd.getGlayerZ_minus());
 
-    int R_x = gd.getCellX();
-    int R_y = gd.getCellY();
-    int R_z = gd.getCellZ();
+    int R_x = gd.getGlayerX() + gd.getGlayerX_minus();
+    int R_y = gd.getGlayerY() + gd.getGlayerY_minus();
+    int R_z = gd.getGlayerZ() + gd.getGlayerZ_minus();
 
     int R_num = R_x * R_y * R_z;
     R_coor_car.resize(R_num);

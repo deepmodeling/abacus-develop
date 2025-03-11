@@ -8,10 +8,13 @@ Welcome to the `pyabacus` project! This document provides guidelines and instruc
 
 <!-- toc -->
 
-- [Project structure](#project-structure)
+- [Developer Guide](#developer-guide)
+  - [Introduction](#introduction)
+  - [Project Structure](#project-structure)
     - [Root CMake Configuration](#root-cmake-configuration)
     - [Module CMake Configuration](#module-cmake-configuration)
-- [Development Process](#development-process)
+  - [Development Process](#development-process)
+  - [Conclusion](#conclusion)
 
 <!-- tocstop -->
 
@@ -187,7 +190,7 @@ list(APPEND _diago
     ${HSOLVER_PATH}/diag_const_nums.cpp
     ${HSOLVER_PATH}/diago_iter_assist.cpp
     ${HSOLVER_PATH}/kernels/dngvd_op.cpp
-    ${HSOLVER_PATH}/kernels/math_kernel_op.cpp
+    ${BASE_PATH}/kernels/math_kernel_op.cpp
     ${BASE_PATH}/kernels/math_op.cpp
     ${BASE_PATH}/module_device/device.cpp
     ${BASE_PATH}/module_device/memory_op.cpp

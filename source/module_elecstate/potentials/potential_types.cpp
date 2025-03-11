@@ -47,11 +47,11 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
         return new PotSurChem(this->rho_basis_,
                               this->structure_factors_,
                               this->v_effective_fixed.data(),
-                              &GlobalC::solvent_model);
+                              this->solvent_);
     }
     else if (pot_type == "efield")
     {
-        return new PotEfield(this->rho_basis_, this->ucell_, PARAM.inp.dip_cor_flag);
+        return new PotEfield(this->rho_basis_, this->ucell_, this->solvent_, PARAM.inp.dip_cor_flag);
     }
     else if (pot_type == "gatefield")
     {

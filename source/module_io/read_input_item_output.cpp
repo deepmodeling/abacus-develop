@@ -21,9 +21,13 @@ void ReadInput::item_output()
     }
     {
         Input_Item item("out_freq_elec");
-        item.annotation = "the frequency ( >= 0) of electronic iter to output "
-                          "charge density and wavefunction. 0: "
-                          "output only when converged";
+        item.annotation = "the frequency of electronic iter to output charge density and wavefunction ";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.out_freq_elec <= 0)
+            {
+                para.input.out_freq_elec = para.input.scf_nmax;
+            }
+        };
         read_sync_int(input.out_freq_elec);
         this->add_item(item);
     }
@@ -183,6 +187,7 @@ void ReadInput::item_output()
             }
         };
         sync_string(input.out_level);
+        add_bool_bcast(sys.out_md_control);
         this->add_item(item);
     }
     {

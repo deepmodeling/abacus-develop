@@ -29,7 +29,7 @@ int Pseudopot_upf::read_pseudo_vwr(std::ifstream &ifs, Atom_pseudo& pp)
 
     // (1) read in mesh
 	std::string value;
-	int length=0;
+	size_t length=0;
 	ifs >> value; length = value.find(","); value.erase(length,1);
 	pp.mesh = std::atoi( value.c_str() );
 	//the mesh should be odd, which is forced in Simpson integration

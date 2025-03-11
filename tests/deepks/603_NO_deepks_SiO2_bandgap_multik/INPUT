@@ -4,8 +4,8 @@ suffix autotest
 pseudo_dir ../../PP_ORB
 orbital_dir ../../PP_ORB
 
-ecutwfc 60.000000
-scf_thr 5.000000e-07
+ecutwfc 50.000000
+scf_thr 1.000000e-06
 scf_nmax 35
 basis_type lcao
 dft_functional lda

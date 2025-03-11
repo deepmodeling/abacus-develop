@@ -14,7 +14,7 @@
 #include "module_hamilt_pw/hamilt_pwdft/VNL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/stress_op.h"
 #include "module_hamilt_pw/hamilt_pwdft/structure_factor.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 
 //-------------------------------------------------------------------
@@ -114,12 +114,15 @@ class Stress_Func
     // 5) the stress from the non-linear core correction (if any)
     void stress_cc(ModuleBase::matrix& sigma,
                    ModulePW::PW_Basis* rho_basis,
+                   UnitCell& ucell,
                    const Structure_Factor* p_sf,
                    const bool is_pw,
                    const bool *numeric,
                    const Charge* const chr); // nonlinear core correction stress in PW or LCAO basis
 
     void deriv_drhoc(const bool& numeric,
+                     const double& omega,
+                     const double& tpiba2,
                      const int mesh,
                      const FPTYPE* r,
                      const FPTYPE* rab,
@@ -238,7 +241,7 @@ class Stress_Func
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
   private:
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
     using cal_stress_nl_op = hamilt::cal_stress_nl_op<FPTYPE, Device>;
     using cal_dbecp_noevc_nl_op = hamilt::cal_dbecp_noevc_nl_op<FPTYPE, Device>;
 

@@ -16,8 +16,8 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
                                              const bool is_pw,
                                              const Charge* const chr)
 {
-    ModuleBase::TITLE("Stress_Func","stress_loc");
-    ModuleBase::timer::tick("Stress_Func","stress_loc");
+    ModuleBase::TITLE("Stress","stress_loc");
+    ModuleBase::timer::tick("Stress","stress_loc");
 
 	std::vector<FPTYPE> dvloc(rho_basis->npw);
     FPTYPE evloc=0.0;
@@ -48,16 +48,15 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		// calculate the actual task length of this block
 		int ir_end = std::min(irb + block_ir, rho_basis->nrxx);
 
-		{ // is = 0
-			for (int ir = irb; ir < ir_end; ++ir)
-			{ // initialize aux
-				aux[ir] = std::complex<FPTYPE>(chr->rho[0][ir], 0.0 );
-			}
+		for (int ir = irb; ir < ir_end; ++ir)
+		{
+			aux[ir] = std::complex<FPTYPE>(chr->rho[0][ir], 0.0 );
 		}
+
 		if(nspin_rho == 2)
 		{
 			for (int ir = irb; ir < ir_end; ++ir)
-			{ // accumulate aux
+			{ 
 				aux[ir] += std::complex<FPTYPE>(chr->rho[1][ir], 0.0 );
 			}
 		}
@@ -74,69 +73,68 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		{
 			for (int ig=0; ig<rho_basis->npw; ig++)
 			{
-                if (rho_basis->ig_gge0 == ig) {
-                    evloc += vloc(it, rho_basis->ig2igg[ig])
-                             * (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
-                } else {
-                    evloc += vloc(it, rho_basis->ig2igg[ig])
-                             * (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
-}
-            }
+				if (rho_basis->ig_gge0 == ig) 
+				{
+					evloc += vloc(it, rho_basis->ig2igg[ig])
+						* (p_sf->strucFac(it, ig) * conj(aux[ig])).real();
+				} 
+				else 
+				{
+					evloc += vloc(it, rho_basis->ig2igg[ig])
+						* (p_sf->strucFac(it, ig) * conj(aux[ig]) * fact).real();
+				}
+			}
 		}
     }
+
+
     for (int it = 0; it < ucell.ntype; ++it)
     {
         const Atom* atom = &ucell.atoms[it];
 		if(atom->coulomb_potential)
 		{
-		//
-		// special case: pseudopotential is coulomb 1/r potential
-		//
+		    // special case: pseudopotential is coulomb 1/r potential
 			this->dvloc_coulomb (ucell,atom->ncpp.zv, dvloc.data(), rho_basis);
-		//
 		}
 		else
 		{
-		//
-		// normal case: dvloc contains dV_loc(G)/dG
-		//
+		    // normal case: dvloc contains dV_loc(G)/dG
 			this->dvloc_of_g ( atom->ncpp.msh, atom->ncpp.rab.data(), atom->ncpp.r.data(),
 					atom->ncpp.vloc_at.data(), atom->ncpp.zv, dvloc.data(), rho_basis, ucell);
-		//
 		}
 #ifndef _OPENMP
 		ModuleBase::matrix &local_sigma = sigma;
 #else
 #pragma omp parallel
-{
-		ModuleBase::matrix local_sigma(3, 3);
-		#pragma omp for
+		{
+			ModuleBase::matrix local_sigma(3, 3);
+#pragma omp for
 #endif
-		for(int ig = 0;ig< rho_basis->npw;ig++)
-		{
-			for (int l = 0;l< 3;l++)
+			for(int ig = 0;ig< rho_basis->npw;ig++)
 			{
-				for (int m = 0; m<l+1;m++)
+				for (int l = 0;l< 3;l++)
 				{
-                    local_sigma(l, m) = local_sigma(l, m)
-                                        + (conj(aux[ig]) * p_sf->strucFac(it, ig)).real() * 2.0
-                                              * dvloc[rho_basis->ig2igg[ig]] * ucell.tpiba2
-                                              * rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
-                }
+					for (int m = 0; m<l+1;m++)
+					{
+						local_sigma(l, m) = local_sigma(l, m)
+							+ (conj(aux[ig]) * p_sf->strucFac(it, ig)).real() * 2.0
+							* dvloc[rho_basis->ig2igg[ig]] * ucell.tpiba2
+							* rho_basis->gcar[ig][l] * rho_basis->gcar[ig][m] * fact;
+					}
+				}
 			}
-		}
 #ifdef _OPENMP
-		#pragma omp critical(stress_loc_reduce)
-		{
-			for(int l=0;l<3;l++)
+#pragma omp critical(stress_loc_reduce)
 			{
-				for(int m=0;m<l+1;m++)
+				for(int l=0;l<3;l++)
 				{
-					sigma(l,m) += local_sigma(l,m);
+					for(int m=0;m<l+1;m++)
+					{
+						sigma(l,m) += local_sigma(l,m);
+					}
 				}
 			}
 		}
-}
 #endif
 	}
 
@@ -162,9 +160,7 @@ void Stress_Func<FPTYPE, Device>::stress_loc(const UnitCell& ucell,
 		}
 	}
 
-
-
-	ModuleBase::timer::tick("Stress_Func","stress_loc");
+	ModuleBase::timer::tick("Stress","stress_loc");
 	return;
 }
 
@@ -244,22 +240,20 @@ const UnitCell& ucell_in
     double *aux_d = nullptr;
 	double *drhocg_d = nullptr;
     if (this->device == base_device::GpuDevice) {
-        resmem_var_op()(this->ctx, r_d, msh);
-        resmem_var_op()(this->ctx, rhoc_d, msh);
-        resmem_var_op()(this->ctx, rab_d, msh);
+        resmem_var_op()(r_d, msh);
+        resmem_var_op()(rhoc_d, msh);
+        resmem_var_op()(rab_d, msh);
 
-        resmem_var_op()(this->ctx, aux_d, msh);
-        resmem_var_op()(this->ctx, gx_arr_d, rho_basis->ngg+1);
-        resmem_var_op()(this->ctx, drhocg_d, rho_basis->ngg);
+        resmem_var_op()(aux_d, msh);
+        resmem_var_op()(gx_arr_d, rho_basis->ngg+1);
+        resmem_var_op()(drhocg_d, rho_basis->ngg);
 
-        syncmem_var_h2d_op()(this->ctx,
-                             this->cpu_ctx,
-                             gx_arr_d,
+        syncmem_var_h2d_op()(gx_arr_d,
                              gx_arr.data(),
                              rho_basis->ngg+1);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, r_d, r, msh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rab_d, rab, msh);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, rhoc_d, aux.data(), msh);
+        syncmem_var_h2d_op()(r_d, r, msh);
+        syncmem_var_h2d_op()(rab_d, rab, msh);
+        syncmem_var_h2d_op()(rhoc_d, aux.data(), msh);
     }
 
 
@@ -267,7 +261,7 @@ const UnitCell& ucell_in
 	if(this->device == base_device::GpuDevice) {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(
 			r_d,rhoc_d,gx_arr_d+igl0,rab_d,drhocg_d+igl0,msh,igl0,rho_basis->ngg-igl0,ucell_in.omega,3);
-		syncmem_var_d2h_op()(this->cpu_ctx, this->ctx, dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
+		syncmem_var_d2h_op()(dvloc+igl0, drhocg_d+igl0, rho_basis->ngg-igl0);	
 
 	} else {
 		hamilt::cal_stress_drhoc_aux_op<FPTYPE, Device>()(

@@ -27,8 +27,8 @@ FS_Kin_tools<FPTYPE, Device>::FS_Kin_tools(const UnitCell& ucell_in,
 
     if (this->device == base_device::GpuDevice)
     {
-        resmem_var_op()(this->ctx, d_gk, 3 * npwk_max);
-        resmem_var_op()(this->ctx, d_kfac, npwk_max);
+        resmem_var_op()(d_gk, 3 * npwk_max);
+        resmem_var_op()(d_kfac, npwk_max);
     }
     else
     {
@@ -42,8 +42,8 @@ FS_Kin_tools<FPTYPE, Device>::~FS_Kin_tools()
 {
     if (this->device == base_device::GpuDevice)
     {
-        delmem_var_op()(this->ctx, d_gk);
-        delmem_var_op()(this->ctx, d_kfac);
+        delmem_var_op()(d_gk);
+        delmem_var_op()(d_kfac);
     }
 }
 
@@ -72,8 +72,8 @@ void FS_Kin_tools<FPTYPE, Device>::cal_gk(const int& ik)
     }
     if (this->device == base_device::GpuDevice)
     {
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_gk, gk[0], 3 * npwk_max);
-        syncmem_var_h2d_op()(this->ctx, this->cpu_ctx, d_kfac, kfac.data(), npwk_max);
+        syncmem_var_h2d_op()(d_gk, gk[0], 3 * npwk_max);
+        syncmem_var_h2d_op()(d_kfac, kfac.data(), npwk_max);
     }
 }
 

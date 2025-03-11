@@ -28,7 +28,7 @@
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_hsolver/hsolver_lcaopw.h"
 #include "module_hsolver/kernels/dngvd_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_io/berryphase.h"
 #include "module_io/numerical_basis.h"
 #include "module_io/numerical_descriptor.h"
@@ -57,6 +57,7 @@ namespace ModuleESolver
     template <typename T>
     ESolver_KS_LIP<T>::~ESolver_KS_LIP()
     {
+        delete this->psi_local;
         // delete Hamilt
         this->deallocate_hamilt();
     }
@@ -79,11 +80,23 @@ namespace ModuleESolver
             this->p_hamilt = nullptr;
         }
     }
+    template <typename T>
+    void ESolver_KS_LIP<T>::before_scf(UnitCell& ucell, const int istep)
+    {
+        ESolver_KS_PW<T>::before_scf(ucell, istep);
+        this->p_psi_init->initialize_lcao_in_pw(this->psi_local, GlobalV::ofs_running);
+    }
 
     template <typename T>
     void ESolver_KS_LIP<T>::before_all_runners(UnitCell& ucell, const Input_para& inp)
     {
         ESolver_KS_PW<T>::before_all_runners(ucell, inp);
+        delete this->psi_local;
+        this->psi_local = new psi::Psi<T>(this->psi->get_nk(),
+                                          this->p_psi_init->psi_initer->nbands_start(),
+                                          this->psi->get_nbasis(),
+                                          this->kv.ngk,
+                                          true);
 #ifdef __EXX
         if (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "relax"
             || PARAM.inp.calculation == "cell-relax"
@@ -94,14 +107,14 @@ namespace ModuleESolver
                 this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
                                                                            ucell.symm,
                                                                            &this->kv,
-                                                                           this->p_wf_init,
+                                                                           this->psi_local,
                                                                            this->kspw_psi,
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
                                                                            this->sf,
                                                                            &ucell,
                                                                            this->pelec));
-                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_wf_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
+                // this->exx_lip.init(GlobalC::exx_info.info_lip, cell.symm, &this->kv, this->p_psi_init, this->kspw_psi, this->pw_wfc, this->pw_rho, this->sf, &cell, this->pelec);
             }
 }
 #endif
@@ -136,18 +149,8 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-        // It is not a good choice to overload another solve function here, this will spoil the concept of
-        // multiple inheritance and polymorphism. But for now, we just do it in this way.
-        // In the future, there will be a series of class ESolver_KS_LCAO_PW, HSolver_LCAO_PW and so on.
-        std::weak_ptr<psi::Psi<T>> psig = this->p_wf_init->get_psig();
-
-        if (psig.expired())
-        {
-            ModuleBase::WARNING_QUIT("ESolver_KS_PW::hamilt2density_single", "psig lifetime is expired");
-        }
-
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
-        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, psig.lock().get()[0], skip_charge,ucell.tpiba,ucell.nat);
+        hsolver_lip_obj.solve(this->p_hamilt, this->kspw_psi[0], this->pelec, *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
 #ifdef __EXX
@@ -160,24 +163,24 @@ namespace ModuleESolver
         Symmetry_rho srho;
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            srho.begin(is, *(this->pelec->charge), this->pw_rhod, ucell.symm);
+            srho.begin(is, this->chr, this->pw_rhod, ucell.symm);
         }
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
         // need 'rho(out)' and 'vr (v_h(in) and v_xc(in))'
-        this->pelec->f_en.deband = this->pelec->cal_delta_eband();
+        this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
         ModuleBase::timer::tick("ESolver_KS_LIP", "hamilt2density_single");
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter)
+    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
     {
-        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter);
+        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
 
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx && this->conv_esolver)
+        if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
         {
             // no separate_loop case
             if (!GlobalC::exx_info.info_global.separate_loop)
@@ -195,7 +198,7 @@ namespace ModuleESolver
                     iter = 0;
                     std::cout << " Entering 2nd SCF, where EXX is updated" << std::endl;
                     this->two_level_step++;
-                    this->conv_esolver = false;
+                    conv_esolver = false;
                 }
             }
             // has separate_loop case
@@ -203,7 +206,7 @@ namespace ModuleESolver
             else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
                      || (iter == 1 && this->two_level_step != 0))
             {
-                this->conv_esolver = true;
+                conv_esolver = true;
             }
             else
             {
@@ -227,7 +230,7 @@ namespace ModuleESolver
                           << (double)(t_end.tv_sec - t_start.tv_sec)
                                  + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
                           << std::defaultfloat << " (s)" << std::endl;
-                this->conv_esolver = false;
+                conv_esolver = false;
             }
         }
 #endif
@@ -247,11 +250,12 @@ namespace ModuleESolver
                                 *this->kspw_psi,
                                 ucell,
                                 this->sf,
+                                this->solvent,
                                 *this->pw_wfc,
                                 *this->pw_rho,
                                 *this->pw_rhod,
-                                this->ppcell.vloc,
-                                *this->pelec->charge,
+                                this->locpp.vloc,
+                                this->chr,
                                 this->kv,
                                 this->pelec->wg
 #ifdef __EXX

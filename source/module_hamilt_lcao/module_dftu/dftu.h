@@ -300,6 +300,7 @@ private:
     void set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd);
   
   private:
+    const UnitCell* ucell = nullptr;
     const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
     const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 #endif

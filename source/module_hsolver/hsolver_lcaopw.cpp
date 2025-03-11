@@ -7,9 +7,9 @@
 #include "module_elecstate/elecstate_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_hamilt_pw/hamilt_pwdft/hamilt_pw.h"
-#include "module_psi/wavefunc.h"
 #include "module_hsolver/diago_iter_assist.h"
 #include "module_parameter/parameter.h"
+#include "module_elecstate/elecstate_tools.h"
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -271,16 +271,24 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
         /// calculate the contribution of Psi for charge density rho
     }
     base_device::memory::cast_memory_op<double, Real, base_device::DEVICE_CPU, base_device::DEVICE_CPU>()(
-        cpu_ctx,
-        cpu_ctx,
         pes->ekb.c,
         eigenvalues.data(),
         pes->ekb.nr * pes->ekb.nc);
 
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calculate_weights();
-    reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->calEBand();
+    elecstate::calculate_weights(pes->ekb,
+                                 pes->wg,
+                                 pes->klist,
+                                 pes->eferm,
+                                 pes->f_en,
+                                 pes->nelec_spin,
+                                 pes->skip_weights);
+    elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
     if (skip_charge)
     {
+        if (PARAM.globalv.use_uspp)
+        {
+            reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
+        }
         ModuleBase::timer::tick("HSolverLIP", "solve");
         return;
     }

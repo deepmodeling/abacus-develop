@@ -20,7 +20,7 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     //  calculate the exchange-correlation potential
     //----------------------------------------------------------
 
-    if (XC_Functional::get_func_type() == 3 || XC_Functional::get_func_type() == 5)
+    if (XC_Functional::get_ked_flag())
     {
 #ifdef USE_LIBXC
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v

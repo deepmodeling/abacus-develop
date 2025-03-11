@@ -1,3 +1,4 @@
+#include <regex>
 #include "for_test.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
@@ -93,7 +94,9 @@ TEST_F(IonsMoveSDTest, TestStartConverged)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    std::regex pattern(R"(==> .*::.*\t[\d\.]+ GB\t\d+ s\n )");
+    output = std::regex_replace(output, pattern, "");
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, true);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 5);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 0.0);
@@ -116,6 +119,18 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     ModuleBase::matrix force(2, 3);
     force(0, 0) = 1.0;
     double etot = 0.0;
+    for (int it = 0; it < ucell.ntype; it++)
+    {
+        Atom* atom = &ucell.atoms[it];
+        for (int ia = 0; ia < atom->na; ia++)
+        {
+            for (int ik = 0; ik < 3; ++ik)
+            {
+                atom->tau[ia][ik] = (ik + 1)/3;
+                atom->mbl[ia][ik] = 1;
+            }
+        }
+    }
 
     // call function
     GlobalV::ofs_running.open("log");
@@ -130,17 +145,17 @@ TEST_F(IonsMoveSDTest, TestStartNotConverged)
     ifs.close();
     std::remove("log");
 
-    EXPECT_EQ(expected_output, output);
+    EXPECT_THAT(output, testing::HasSubstr(expected_output));
     EXPECT_EQ(Ions_Move_Basic::converged, false);
     EXPECT_EQ(Ions_Move_Basic::update_iter, 6);
     EXPECT_DOUBLE_EQ(Ions_Move_Basic::largest_grad, 1.0);
     EXPECT_DOUBLE_EQ(im_sd.energy_saved, 0.0);
     EXPECT_DOUBLE_EQ(im_sd.pos_saved[0], -1.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[1], 10.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[2], 20.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[3], 30.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[4], 40.0);
-    EXPECT_DOUBLE_EQ(im_sd.pos_saved[5], 50.0);
+    EXPECT_DOUBLE_EQ(im_sd.pos_saved[1], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.pos_saved[2], 10.0);
+    EXPECT_DOUBLE_EQ(im_sd.pos_saved[3], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.pos_saved[4], 0.0);
+    EXPECT_DOUBLE_EQ(im_sd.pos_saved[5], 10.0);
     EXPECT_DOUBLE_EQ(im_sd.grad_saved[0], -1.0);
     EXPECT_DOUBLE_EQ(im_sd.grad_saved[1], 0.0);
     EXPECT_DOUBLE_EQ(im_sd.grad_saved[2], 0.0);

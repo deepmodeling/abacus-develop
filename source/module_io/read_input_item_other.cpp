@@ -526,5 +526,13 @@ void ReadInput::item_others()
         this->add_item(item);
     }
 
+    // EXX PW by rhx0820, 2025-03-10
+    {
+        Input_Item item("exxace");
+        item.annotation = "whether to perform ace calculation in exxpw, default is false";
+        read_sync_bool(input.exxace);
+        this->add_item(item);
+    }
+
 }
 } // namespace ModuleIO
