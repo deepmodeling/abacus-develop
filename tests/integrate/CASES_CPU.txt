@@ -136,6 +136,7 @@
 186_PW_SKG_10D10S
 186_PW_SKG_ALL
 186_PW_SNLKG_10D10S
+190_PW_PBE0
 201_NO_15_f_pseudopots
 201_NO_15_pseudopots
 201_NO_15_pseudopots_kpar
