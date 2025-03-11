@@ -42,19 +42,46 @@ struct GetTypeThrust<std::complex<double>> {
 
 static cublasHandle_t cublas_handle = nullptr;
 
+// Forward declarations for abs2
 template<typename T>
-__device__ typename GetTypeReal<T>::type abs2(const T& x) {
-    return x * x;  // For real types
+__device__ typename GetTypeReal<T>::type abs2(const T& x);
+
+// Specialization for real types (double)
+template<>
+__device__ double abs2(const double& x) {
+    return x * x;
 }
 
+// Specialization for real types (float)
+template<>
+__device__ float abs2(const float& x) {
+    return x * x;
+}
+
+// Specialization for complex float
 template<>
 __device__ float abs2(const thrust::complex<float>& x) {
-    return thrust::norm(x);
+    return x.real() * x.real() + x.imag() * x.imag();
 }
 
+// Specialization for complex double
 template<>
 __device__ double abs2(const thrust::complex<double>& x) {
-    return thrust::norm(x);
+    return x.real() * x.real() + x.imag() * x.imag();
+}
+
+// Specialization for std::complex<float> (for interface compatibility)
+template<>
+__device__ float abs2(const std::complex<float>& x) {
+    const thrust::complex<float>* tx = reinterpret_cast<const thrust::complex<float>*>(&x);
+    return tx->real() * tx->real() + tx->imag() * tx->imag();
+}
+
+// Specialization for std::complex<double> (for interface compatibility)
+template<>
+__device__ double abs2(const std::complex<double>& x) {
+    const thrust::complex<double>* tx = reinterpret_cast<const thrust::complex<double>*>(&x);
+    return tx->real() * tx->real() + tx->imag() * tx->imag();
 }
 
 static inline
@@ -1210,20 +1237,21 @@ void precondition_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
     cudaCheckOnDebug();
 }
 
+// First kernel: calculate norms
 template <typename T>
-__global__ void normalize_kernel(
+__global__ void calculate_norm_kernel(
     const int dim,
     const int notconv,
-    T* psi_iter,
+    const T* psi_iter,
     const int nbase,
     typename GetTypeReal<T>::type* psi_norm)
 {
     using Real = typename GetTypeReal<T>::type;
-    __shared__ Real shared_mem[256];  // Static shared memory, since we know threadsPerBlock = 256
+    __shared__ Real shared_mem[256];
 
     const int tid = threadIdx.x;
     const int bid = blockIdx.x;
-    const int m = bid / ((dim + blockDim.x - 1) / blockDim.x); // Band index
+    const int m = bid / ((dim + blockDim.x - 1) / blockDim.x);
     const int num_blocks_per_band = (dim + blockDim.x - 1) / blockDim.x;
     const int block_in_band = bid % num_blocks_per_band;
 
@@ -1248,58 +1276,35 @@ __global__ void normalize_kernel(
     }
 
     // First thread of first block initializes norm to 0
-    if (tid == 0 && block_in_band == 0) {
-        psi_norm[m] = 0.0;
-    }
-    __syncthreads();
-    
-    // Wait for initialization to complete
-    __threadfence();
+    // if (tid == 0 && block_in_band == 0) {
+    //     psi_norm[m] = 0.0;
+    // }
+    // __syncthreads();
 
     // Write result for this block to global memory
     if (tid == 0) {
         atomicAdd(&psi_norm[m], shared_mem[0]);
     }
-
-    // Make sure all blocks for this band have finished their atomic adds
-    __threadfence();
-    __syncthreads();
-
-    // Only proceed once all blocks for this band have added their contributions
-    if (block_in_band == 0 && tid == 0) {
-        // Final normalization factor
-        psi_norm[m] = sqrt(psi_norm[m]);
-    }
-    
-    // Make sure normalization factor is visible to all threads
-    __threadfence();
-    __syncthreads();
-
-    // Each thread normalizes its assigned element
-    if (i < dim) {
-        psi_iter[(nbase + m) * dim + i] /= psi_norm[m];
-    }
 }
 
-// Specialization for double
-template <>
-void normalize_op<double, base_device::DEVICE_GPU>::operator()(
-    const base_device::DEVICE_GPU* ctx,
-    const int& dim,
-    double* psi_iter,
-    const int& nbase,
-    const int& notconv,
-    double* psi_norm)
+// Second kernel: normalize vectors
+template <typename T>
+__global__ void normalize_vectors_kernel(
+    const int dim,
+    const int notconv,
+    T* psi_iter,
+    const int nbase,
+    const typename GetTypeReal<T>::type* psi_norm)
 {
-    const int threadsPerBlock = 256;
-    const int numBlocks = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    const int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    const int m = tid / dim;
+    const int i = tid % dim;
     
-    // Calculate norms and normalize in single kernel
-    normalize_kernel<double><<<numBlocks, threadsPerBlock>>>(
-        dim, notconv, psi_iter, nbase, psi_norm);
-    cudaCheckOnDebug();
-    
+    if (m < notconv && i < dim) {
+        psi_iter[(nbase + m) * dim + i] = psi_iter[(nbase + m) * dim + i] / sqrt(psi_norm[m]);
+    }
 }
+
 
 // Specialization for complex<float>
 template <>
@@ -1312,15 +1317,23 @@ void normalize_op<std::complex<float>, base_device::DEVICE_GPU>::operator()(
     float* psi_norm)
 {
     const int threadsPerBlock = 256;
-    const int numBlocks = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
     
-    // Calculate norms and normalize in single kernel
-    normalize_kernel<thrust::complex<float>><<<numBlocks, threadsPerBlock>>>(
+    // First kernel: calculate norms
+    calculate_norm_kernel<thrust::complex<float>><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<const thrust::complex<float>*>(psi_iter),
+        nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<thrust::complex<float>><<<numBlocksForNormalize, threadsPerBlock>>>(
         dim, notconv,
         reinterpret_cast<thrust::complex<float>*>(psi_iter),
         nbase, psi_norm);
     cudaCheckOnDebug();
-    
 }
 
 // Specialization for complex<double>
@@ -1334,13 +1347,48 @@ void normalize_op<std::complex<double>, base_device::DEVICE_GPU>::operator()(
     double* psi_norm)
 {
     const int threadsPerBlock = 256;
-    const int numBlocks = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
     
-    // Calculate norms and normalize in single kernel
-    normalize_kernel<thrust::complex<double>><<<numBlocks, threadsPerBlock>>>(
+    // First kernel: calculate norms
+    calculate_norm_kernel<thrust::complex<double>><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv,
+        reinterpret_cast<const thrust::complex<double>*>(psi_iter),
+        nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<thrust::complex<double>><<<numBlocksForNormalize, threadsPerBlock>>>(
         dim, notconv,
         reinterpret_cast<thrust::complex<double>*>(psi_iter),
         nbase, psi_norm);
+    cudaCheckOnDebug();
+}
+
+// Specialization for double (for LCAO)
+template <>
+void normalize_op<double, base_device::DEVICE_GPU>::operator()(
+    const base_device::DEVICE_GPU* ctx,
+    const int& dim,
+    double* psi_iter,
+    const int& nbase,
+    const int& notconv,
+    double* psi_norm)
+{
+    const int threadsPerBlock = 256;
+    const int numBlocksForNorm = ((dim + threadsPerBlock - 1) / threadsPerBlock) * notconv;
+    
+    // First kernel: calculate norms
+    calculate_norm_kernel<double><<<numBlocksForNorm, threadsPerBlock>>>(
+        dim, notconv, psi_iter, nbase, psi_norm);
+    cudaDeviceSynchronize(); // Ensure all norms are computed
+    
+    // Second kernel: normalize vectors
+    const int total_elements = dim * notconv;
+    const int numBlocksForNormalize = (total_elements + threadsPerBlock - 1) / threadsPerBlock;
+    normalize_vectors_kernel<double><<<numBlocksForNormalize, threadsPerBlock>>>(
+        dim, notconv, psi_iter, nbase, psi_norm);
     cudaCheckOnDebug();
 }
 
