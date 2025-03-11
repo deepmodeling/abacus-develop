@@ -43,7 +43,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             force[i][j]=_force(i,j)*ModuleBase::Ry_to_eV/ModuleBase::BOHR_TO_A;
         }
     }
-    /*std::cout<<"force"<<std::endl;
+    std::cout<<"force"<<std::endl;
     for(int i=0;i<size;i++)
     {
         for(int j=0;j<3;j++)
@@ -51,7 +51,7 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             std::cout<<force[i][j]<<' ';
         }
         std::cout<<std::endl;
-    }*/
+    }
     
     int k=0;
     for(int i=0;i<ucell.ntype;i++)
@@ -102,8 +102,8 @@ void BFGS::relax_step(const ModuleBase::matrix& _force,UnitCell& ucell)
             std::cout<<dpos[i][j]<<' ';
         }
         std::cout<<std::endl;
-    }
-    std::cout<<"pos"<<std::endl;
+    }*/
+    /*std::cout<<"pos"<<std::endl;
     for(int i=0;i<size;i++)
     {
         for(int j=0;j<3;j++)
