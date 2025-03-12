@@ -349,7 +349,7 @@ void BFGS::UpdatePos(UnitCell& ucell)
             a[i*3+j]/=ModuleBase::BOHR_TO_A;
         }
     }
-    ucell.update_pos_tau(a);
+    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);
 

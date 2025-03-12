@@ -3,6 +3,7 @@
 #include "module_base/matrix3.h"
 #include "module_parameter/parameter.h"
 #include "ions_move_basic.h"
+#include "module_cell/update_cell.h"
 
 void LBFGS::allocate(const int _size) // initialize H0、H、pos0、force0、force
 {
@@ -775,7 +776,7 @@ double LBFGS::GetEnergy(UnitCell& ucell,double stp)
         }
     }
     int k=0;
-    ucell.update_pos_tau(a);
+    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
     return solver->cal_energy();
 }
 std::vector<double> LBFGS::GetForce(UnitCell& ucell,double stp)
@@ -790,7 +791,7 @@ std::vector<double> LBFGS::GetForce(UnitCell& ucell,double stp)
         }
     }
     int k=0;
-    ucell.update_pos_tau(a);
+    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
     ModuleBase::matrix b;
     solver->cal_force(ucell,b);
     std::vector<double> c=std::vector<double>(3*size, 0.0);
@@ -820,7 +821,7 @@ void LBFGS::UpdatePos(UnitCell& ucell)
     {
         std::cout<<a[i]<<std::endl;
     }*/
-    ucell.update_pos_tau(a);
+    unitcell::update_pos_tau(ucell.lat,a,ucell.ntype,ucell.nat,ucell.atoms);
     /*double move_ion[3*size];
     ModuleBase::zeros(move_ion, size*3);
 
