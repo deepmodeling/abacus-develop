@@ -84,7 +84,7 @@ void Parallel_Grid::init(
 
 	this->nproc_in_pool = new int[GlobalV::KPAR];
 	int nprocgroup;
-	if(PARAM.inp.esolver_type == "sdft") {		nprocgroup = GlobalV::NPROC_IN_STOGROUP;
+	if(PARAM.inp.esolver_type == "sdft") {		nprocgroup = GlobalV::NPROC_IN_BNDGROUP;
 	} else {											nprocgroup = GlobalV::NPROC;
 }
 
@@ -293,7 +293,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 	{
 		// case 1: the first part of rho in processor 0.
 		// and send zpeice to to other pools.
-		if(proc == 0 && GlobalV::RANK_IN_STOGROUP ==0)
+		if(proc == 0 && GlobalV::RANK_IN_BPGROUP ==0)
 		{
 			for(int ir=0; ir<ncxy; ir++)
 			{
@@ -301,7 +301,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 			}
 			for(int ipool=1; ipool < GlobalV::KPAR; ipool++)
 			{
-				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, STO_WORLD);
+				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, INT_BGROUP);
 			}
 		}
 
@@ -309,7 +309,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 		// and the receive tag is iz.
 		else if(proc == GlobalV::RANK_IN_POOL )
 		{
-			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, STO_WORLD,&ierror);
+			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, INT_BGROUP,&ierror);
 			for(int ir=0; ir<ncxy; ir++)
 			{
 				rho[ir*nczp + znow] = zpiece[ir];
@@ -324,7 +324,7 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 		{
 			for(int ipool=0; ipool < GlobalV::KPAR; ipool++)
 			{
-				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, STO_WORLD);
+				MPI_Send(zpiece, ncxy, MPI_DOUBLE, this->whichpro[ipool][iz], iz, INT_BGROUP);
 			}
 		}
 	}// MY_POOL == 0
@@ -333,9 +333,9 @@ void Parallel_Grid::zpiece_to_stogroup(double *zpiece, const int &iz, double *rh
 		//ofs_running << "\n Receive charge density iz=" << iz << endl;
 		// the processors in other pools always receive rho from
 		// processor 0. the tag is 'iz'
-		if(proc == GlobalV::RANK_IN_STOGROUP )
+		if(proc == GlobalV::RANK_IN_BPGROUP )
 		{
-			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, STO_WORLD,&ierror);
+			MPI_Recv(zpiece, ncxy, MPI_DOUBLE, 0, iz, INT_BGROUP,&ierror);
 			for(int ir=0; ir<ncxy; ir++)
 			{
 				rho[ir*nczp+znow] = zpiece[ir];

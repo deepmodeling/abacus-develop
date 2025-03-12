@@ -4,11 +4,12 @@
 // atom_in surchem::GetAtom;
 
 void surchem::gauss_charge(const UnitCell& cell,
+                           const Parallel_Grid& pgrid,
                            const ModulePW::PW_Basis* rho_basis,
                            complex<double>* N,
                            Structure_Factor* sf)
 {
-    sf->setup_structure_factor(&cell, rho_basis); // call strucFac(ntype,ngmc)
+    sf->setup_structure_factor(&cell, pgrid, rho_basis); // call strucFac(ntype,ngmc)
     for (int it = 0; it < cell.ntype; it++)
     {
         double RCS = GetAtom.atom_RCS[cell.atoms[it].ncpp.psd];
@@ -36,6 +37,7 @@ void surchem::gauss_charge(const UnitCell& cell,
 }
 
 void surchem::cal_pseudo(const UnitCell& cell,
+                         const Parallel_Grid& pgrid,
                          const ModulePW::PW_Basis* rho_basis,
                          const complex<double>* Porter_g,
                          complex<double>* PS_TOTN,
@@ -45,7 +47,7 @@ void surchem::cal_pseudo(const UnitCell& cell,
     ModuleBase::GlobalFunc::ZEROS(N, rho_basis->npw);
     ModuleBase::GlobalFunc::ZEROS(PS_TOTN, rho_basis->npw);
 
-    gauss_charge(cell, rho_basis, N, sf);
+    gauss_charge(cell, pgrid, rho_basis, N, sf);
 
     for (int ig = 0; ig < rho_basis->npw; ig++)
     {

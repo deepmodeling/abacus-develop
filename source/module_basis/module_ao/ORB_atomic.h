@@ -66,6 +66,7 @@ public:
 	
 	const inline Numerical_Orbital_Lm& PhiLN( const int &L, const int &N)const
 	{ 	
+		assert(this->phiLN != nullptr);
 		return this->phiLN[ this->find_chi(L, N) ];
 	}
 	

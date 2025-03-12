@@ -25,6 +25,7 @@
 #endif
 
 #include "module_base/global_variable.h"
+#include "module_elecstate/elecstate_tools.h"
 #include "module_base/memory.h"
 #include "module_base/timer.h"
 #include "module_elecstate/elecstate_lcao.h"
@@ -47,14 +48,14 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
 
     if (this->method != "pexsi")
     {
-        if (GlobalV::KPAR_LCAO > 1
+        if (PARAM.globalv.kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx"))
         {
 #ifdef __MPI
-            this->parakSolve(pHamilt, psi, pes, GlobalV::KPAR_LCAO);
+            this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
 #endif
         }
-        else if (GlobalV::KPAR_LCAO == 1)
+        else if (PARAM.globalv.kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -75,13 +76,19 @@ void HSolverLCAO<T, Device>::solve(hamilt::Hamilt<T>* pHamilt,
                                      "This method and KPAR setting is not supported for lcao basis in ABACUS!");
         }
 
-        pes->calculate_weights();
+        elecstate::calculate_weights(pes->ekb,
+                                     pes->wg,
+                                     pes->klist,
+                                     pes->eferm,
+                                     pes->f_en,
+                                     pes->nelec_spin,
+                                     pes->skip_weights);
         if (!PARAM.inp.dm_to_rho)
         {
-            auto _pes = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
-            _pes->calEBand();
-            elecstate::cal_dm_psi(_pes->DM->get_paraV_pointer(), _pes->wg, psi, *(_pes->DM));
-            _pes->DM->cal_DMR();
+            auto _pes_lcao = dynamic_cast<elecstate::ElecStateLCAO<T>*>(pes);
+            elecstate::calEBand(_pes_lcao->ekb,_pes_lcao->wg,_pes_lcao->f_en);
+            elecstate::cal_dm_psi(_pes_lcao->DM->get_paraV_pointer(), _pes_lcao->wg, psi, *(_pes_lcao->DM));
+            _pes_lcao->DM->cal_DMR();
         }
 
         if (!skip_charge)
@@ -219,7 +226,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
         k2d.distribute_hsk(pHamilt, ik_kpar, nrow);
         /// global index of k point
         int ik_global = ik + k2d.get_pKpoints()->startk_pool[k2d.get_my_pool()];
-        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, nullptr);
+        auto psi_pool = psi::Psi<T>(1, ncol_bands_pool, k2d.get_p2D_pool()->nrow, k2d.get_p2D_pool()->nrow, true);
         ModuleBase::Memory::record("HSolverLCAO::psi_pool", nrow * ncol_bands_pool * sizeof(T));
         if (ik_global < psi.get_nk() && ik < k2d.get_pKpoints()->nks_pool[k2d.get_my_pool()])
         {

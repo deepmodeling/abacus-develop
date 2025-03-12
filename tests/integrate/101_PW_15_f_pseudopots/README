@@ -3,3 +3,5 @@ This test for:
 *SG15 pseudopotential containing f electron
 *mixing_type broyden
 *mixing_beta 0.7
+*dft_functional scan
+*init_chg file

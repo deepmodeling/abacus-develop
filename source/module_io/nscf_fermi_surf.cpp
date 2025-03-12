@@ -8,7 +8,6 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 	const int &nband,
 	const double &ef,
 	const K_Vectors& kv,
-	const Parallel_Kpoints& Pkpoints,
 	const UnitCell& ucell,
 	const ModuleBase::matrix &ekb)
 {
@@ -29,7 +28,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 
 	for(int ik=0; ik<kv.get_nkstot(); ik++)
 	{
-		if ( GlobalV::MY_POOL == Pkpoints.whichpool[ik] )
+		if ( GlobalV::MY_POOL == kv.para_k.whichpool[ik] )
 		{
 			if( GlobalV::RANK_IN_POOL == 0)
 			{
@@ -58,7 +57,7 @@ void ModuleIO::nscf_fermi_surface(const std::string &out_band_dir,
 					ofs << " " << ucell.G.e31 << " " << ucell.G.e32 << " " << ucell.G.e33 << std::endl; 
 				}
 
-				const int ik_now = ik - Pkpoints.startk_pool[GlobalV::MY_POOL];
+				const int ik_now = ik - kv.para_k.startk_pool[GlobalV::MY_POOL];
 				ofs << "ik= " << ik << std::endl;
 				ofs << kv.kvec_c[ik_now].x << " " << kv.kvec_c[ik_now].y << " " << kv.kvec_c[ik_now].z << std::endl;  
 

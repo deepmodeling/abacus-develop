@@ -11,8 +11,7 @@ namespace elecstate
 //==========================================================
 // This routine computes the local potential in real space
 //==========================================================
-void PotLocal::cal_fixed_v(double *vl_pseudo // store the local pseudopotential
-)
+void PotLocal::cal_fixed_v(double *vl_pseudo) // store the local pseudopotential
 {
     ModuleBase::TITLE("PotLocal", "cal_fixed_v");
     ModuleBase::timer::tick("PotLocal", "cal_fixed_v");

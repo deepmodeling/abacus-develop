@@ -133,8 +133,8 @@ extern "C"
 
     // zgetrf computes the LU factorization of a general matrix
     // while zgetri takes its output to perform matrix inversion
-    void zgetrf_(const int* m, const int *n, const std::complex<double> *A, const int *lda, int *ipiv, const int* info);
-    void zgetri_(const int* n, std::complex<double> *A, const int *lda, int *ipiv, std::complex<double> *work, int *lwork, const int *info);
+    void zgetrf_(const int* m, const int *n, std::complex<double> *A, const int *lda, int *ipiv, int* info);
+    void zgetri_(const int* n, std::complex<double>* A, const int* lda, const int* ipiv, std::complex<double>* work, const int* lwork, int* info);
 
     // if trans=='N':	C = alpha * A * A.H + beta * C
 	// if trans=='C':	C = alpha * A.H * A + beta * C

@@ -63,9 +63,7 @@ class Charge_Extra
      * @param ofs_warning the output stream
      */
     void extrapolate_charge(
-#ifdef __MPI
         Parallel_Grid* Pgrid,
-#endif
         UnitCell& ucell,
         Charge* chr,
         Structure_Factor* sf,

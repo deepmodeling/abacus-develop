@@ -343,7 +343,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     }
     else
     {
-        this->pelec->f_en.deband  = this->pelec->cal_delta_eband();
+        this->pelec->f_en.deband  = this->pelec->cal_delta_eband(*ucell);
         E_descf = pelec->f_en.descf = 0.0;
         this->pelec->cal_energies(2);
         Etotal = this->pelec->f_en.etot;

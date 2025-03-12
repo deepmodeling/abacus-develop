@@ -9,8 +9,9 @@
 #include "module_cell/klist.h"
 #include "module_cell/module_symmetry/symmetry.h"
 #include "module_elecstate/elecstate.h"
+#include "module_hamilt_pw/hamilt_pwdft/VL_in_pw.h"
 #include "module_hamilt_pw/hamilt_pwdft/kernels/force_op.h"
-#include "module_hsolver/kernels/math_kernel_op.h"
+#include "module_base/kernels/math_kernel_op.h"
 #include "module_psi/psi.h"
 #include "structure_factor.h"
 
@@ -33,12 +34,13 @@ class Forces
     Forces(const int nat_in) : nat(nat_in){};
     ~Forces(){};
 
-    void cal_force(const UnitCell& ucell,
+    void cal_force(UnitCell& ucell,
                    ModuleBase::matrix& force,
                    const elecstate::ElecState& elec,
-                   ModulePW::PW_Basis* rho_basis,
+                   const ModulePW::PW_Basis* const rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
+                   surchem& solvent,
                    const pseudopot_cell_vl* locpp,
                    const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
@@ -51,15 +53,15 @@ class Forces
 
     void cal_force_loc(const UnitCell& ucell,
                        ModuleBase::matrix& forcelc,
-                       ModulePW::PW_Basis* rho_basis,
+                       const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& vloc,
                        const Charge* const chr);
     void cal_force_ew(const UnitCell& ucell,
                       ModuleBase::matrix& forceion, 
-                      ModulePW::PW_Basis* rho_basis, 
+                      const ModulePW::PW_Basis* const rho_basis, 
                       const Structure_Factor* p_sf);
     void cal_force_cc(ModuleBase::matrix& forcecc,
-                      ModulePW::PW_Basis* rho_basis,
+                      const ModulePW::PW_Basis* const rho_basis,
                       const Charge* const chr,
                       const bool* numeric,
                       UnitCell& ucell_in);
@@ -94,13 +96,13 @@ class Forces
                       const UnitCell& ucell_in,
                       const psi::Psi<complex<FPTYPE>, Device>* psi_in = nullptr);
     void cal_force_scc(ModuleBase::matrix& forcescc,
-                       ModulePW::PW_Basis* rho_basis,
+                       const ModulePW::PW_Basis* const rho_basis,
                        const ModuleBase::matrix& v_current,
                        const bool vnew_exist,
                        const bool* numeric,
                        const UnitCell& ucell_in);
     void cal_force_us(ModuleBase::matrix& forcenl,
-                      ModulePW::PW_Basis* rho_basis,
+                      const ModulePW::PW_Basis* const rho_basis,
                       const pseudopot_cell_vnl& ppcell_in,
                       const elecstate::ElecState& elec,
                       const UnitCell& ucell);
@@ -111,7 +113,7 @@ class Forces
                      const FPTYPE* rab,
                      const FPTYPE* rhoc,
                      FPTYPE* drhocg,
-                     ModulePW::PW_Basis* rho_basis,
+                     const ModulePW::PW_Basis* const rho_basis,
                      int type,
                      const UnitCell& ucell_in); // used in nonlinear core correction stress
     void deriv_drhoc_scc(const bool& numeric,
@@ -120,14 +122,14 @@ class Forces
                      const FPTYPE* rab,
                      const FPTYPE* rhoc,
                      FPTYPE* drhocg,
-                     ModulePW::PW_Basis* rho_basis,
+                     const ModulePW::PW_Basis* const rho_basis,
                      const UnitCell& ucell_in); // used in nonlinear core correction stress
   protected:
     Device* ctx = {};
     base_device::DEVICE_CPU* cpu_ctx = {};
     base_device::AbacusDevice_t device = {};
   private:
-    using gemm_op = hsolver::gemm_op<std::complex<FPTYPE>, Device>;
+    using gemm_op = ModuleBase::gemm_op<std::complex<FPTYPE>, Device>;
 
     using resmem_complex_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, Device>;
     using resmem_complex_h_op = base_device::memory::resize_memory_op<std::complex<FPTYPE>, base_device::DEVICE_CPU>;

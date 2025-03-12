@@ -3,7 +3,6 @@
 
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
-#include "sltk_atom_input.h"
 
 
 class atom_arrange
@@ -29,7 +28,6 @@ public:
 		const double& rcutmax_Phi, 
 		const double& rcutmax_Beta, 
 		const bool gamma_only_local);
-
 };
 
 #endif

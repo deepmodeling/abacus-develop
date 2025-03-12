@@ -4,7 +4,7 @@
 #include "module_cell/module_neighbor/sltk_grid_driver.h"
 #include "module_hamilt_pw/hamilt_pwdft/global.h"
 #include "module_parameter/parameter.h"
-Record_adj::Record_adj() : iat2ca(nullptr)
+Record_adj::Record_adj()
 {
 }
 Record_adj::~Record_adj()
@@ -54,6 +54,7 @@ void Record_adj::for_2d(const UnitCell& ucell,
     assert(ucell.nat > 0);
     if (!gamma_only)
     {
+        // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
         delete[] pv.nlocdim;
         delete[] pv.nlocstart;
         pv.nlocdim = new int[ucell.nat];

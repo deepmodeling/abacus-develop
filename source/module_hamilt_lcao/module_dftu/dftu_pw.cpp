@@ -29,11 +29,11 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
-            onsite_p->overlap_proj_psi(nbands*psi_p->npol, psi_p->get_pointer());
+            onsite_p->overlap_proj_psi(nbands*psi_p->get_npol(), psi_p->get_pointer());
             const std::complex<double>* becp = onsite_p->get_h_becp();
             // becp(nbands*npol , nkb)
             // mag = wg * \sum_{nh}becp * becp
-            int nkb = onsite_p->get_size_becp() / nbands / psi_p->npol;
+            int nkb = onsite_p->get_size_becp() / nbands / psi_p->get_npol();
             int begin_ih = 0;
             for(int iat = 0; iat < cell.nat; iat++)
             {
@@ -88,11 +88,11 @@ void DFTU::cal_occ_pw(const int iter, const void* psi_in, const ModuleBase::matr
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
-            onsite_p->overlap_proj_psi(nbands*psi_p->npol, psi_p->get_pointer());
+            onsite_p->overlap_proj_psi(nbands*psi_p->get_npol(), psi_p->get_pointer());
             const std::complex<double>* becp = onsite_p->get_h_becp();
             // becp(nbands*npol , nkb)
             // mag = wg * \sum_{nh}becp * becp
-            int nkb = onsite_p->get_size_becp() / nbands / psi_p->npol;
+            int nkb = onsite_p->get_size_becp() / nbands / psi_p->get_npol();
             int begin_ih = 0;
             for(int iat = 0; iat < cell.nat; iat++)
             {

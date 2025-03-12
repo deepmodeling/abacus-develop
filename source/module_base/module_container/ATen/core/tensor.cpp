@@ -53,7 +53,8 @@ Tensor::Tensor(Tensor&& other) noexcept
 // However, Our subclass TensorMap, etc., do not own resources.
 // So, we do not need to declare a virtual destructor here.
 Tensor::~Tensor() {
-    if (buffer_) buffer_->unref();
+    if (buffer_) { buffer_->unref();
+}
 }
 
 // Get the data type of the tensor.
@@ -223,7 +224,8 @@ Tensor& Tensor::operator=(const Tensor& other) {
     this->device_ = other.device_;
     this->data_type_ = other.data_type_;
     this->shape_ = other.shape_;
-    if (buffer_) buffer_->unref();
+    if (buffer_) { buffer_->unref();
+}
 
     this->buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
 
@@ -241,7 +243,8 @@ Tensor& Tensor::operator=(Tensor&& other) noexcept {
     this->data_type_ = other.data_type_;
     this->shape_ = other.shape_;
    
-    if (buffer_) buffer_->unref();  // Release current resource
+    if (buffer_) { buffer_->unref();  // Release current resource
+}
     this->buffer_ = other.buffer_;
     other.buffer_ = nullptr;        // Reset the other TensorBuffer.
     return *this;
@@ -284,7 +287,8 @@ bool Tensor::AllocateFrom(const Tensor& other, const TensorShape& shape) {
     data_type_ = other.data_type_;
     device_ = other.device_;
     shape_ = shape;
-    if (buffer_) buffer_->unref();
+    if (buffer_) { buffer_->unref();
+}
     buffer_ = new TensorBuffer(GetAllocator(device_), shape_.NumElements() * SizeOfType(data_type_));
     return true;
 }
@@ -324,6 +328,7 @@ Tensor Tensor::operator[](const int& index) const {
 // Overloaded operator<< for the Tensor class.
 std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
     std::ios::fmtflags flag(os.flags());
+    std::streamsize precision = os.precision(); // save the current precision
     const int64_t num_elements = tensor.NumElements();
     const DataType data_type = tensor.data_type();
     const DeviceType device_type = tensor.device_type();
@@ -398,6 +403,7 @@ std::ostream& operator<<(std::ostream& os, const Tensor& tensor) {
 #endif
     // restore the os settings
     os.flags(flag);
+    os.precision(precision); // restore the precision
     return os;
 }
 

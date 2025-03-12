@@ -29,7 +29,7 @@ public:
     /// number of elements(basis-pairs) in this processon
     /// on all adjacent atoms-pairs(2D division)
     ///---------------------------------------
-    int nnr;
+    int nnr=1;
 	int *nlocdim;
 	int *nlocstart;
     
@@ -80,7 +80,7 @@ public:
 
     int get_nbands() const;
 
-    int nbands = 0;
+    int nbands;
 
     /**
      * @brief gather global indexes of orbitals in this processor

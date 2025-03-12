@@ -50,6 +50,7 @@ erf_height                     20 #the height of the energy step for reciprocal 
 erf_sigma                      4 #the width of the energy step for reciprocal vectors
 fft_mode                       0 #mode of FFTW
 pw_diag_thr                    0.01 #threshold for eigenvalues is cg electron iterations
+diago_smooth_ethr              false #smooth ethr for iter methods
 scf_thr                        1e-08 #charge density error
 scf_ene_thr                    1e-06 #total energy error threshold
 scf_os_stop                    1 #whether to stop scf when oscillation is detected

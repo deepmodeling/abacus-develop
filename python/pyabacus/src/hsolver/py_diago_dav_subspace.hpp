@@ -108,7 +108,9 @@ public:
         bool need_subspace,
         std::vector<double>& diag_ethr,
         bool scf_type,
-        hsolver::diag_comm_info comm_info
+        hsolver::diag_comm_info comm_info,
+        int diag_subspace,
+        int nb2d
     ) {
         auto hpsi_func = [mm_op] (
             std::complex<double> *psi_in,
@@ -138,7 +140,9 @@ public:
             tol, 
             max_iter, 
             need_subspace, 
-            comm_info
+            comm_info,
+            diag_subspace,
+            nb2d
         );
 
         return obj->diag(hpsi_func, psi, nbasis, eigenvalue, diag_ethr, scf_type);

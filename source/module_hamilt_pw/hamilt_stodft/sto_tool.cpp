@@ -138,7 +138,7 @@ psi::Psi<std::complex<float>>* gatherchi(psi::Psi<std::complex<float>>& chi,
                        nrecv_sto,
                        displs_sto,
                        MPI_COMPLEX,
-                       PARAPW_WORLD);
+                       BP_WORLD);
         ModuleBase::timer::tick("sKG", "bands_gather");
     }
 #endif

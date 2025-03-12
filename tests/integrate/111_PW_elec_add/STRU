@@ -5,9 +5,9 @@ LATTICE_CONSTANT
 10  // add lattice constant
 
 LATTICE_VECTORS
-0.5 0.5 0.0
-0.5 0.0 0.5
 0.0 0.5 0.5
+0.5 0.0 0.5
+0.5 0.5 0.0
 
 ATOMIC_POSITIONS
 Direct 
@@ -16,4 +16,4 @@ Si	// Element type
 0.0	// magnetism
 2	
 0.00 0.00 0.00 1 1 1
-0.20 0.25 0.25 1 1 1
+0.25 0.25 0.20 1 1 1

@@ -12,6 +12,7 @@ class TwoCenterBundle
   public:
     TwoCenterBundle() = default;
     ~TwoCenterBundle() = default;
+    TwoCenterBundle& operator=(TwoCenterBundle&&) = default;
 
     // NOTE: some variables might be set only on RANK-0
     void build_orb(int ntype, const std::string* file_orb0);

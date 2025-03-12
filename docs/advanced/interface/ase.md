@@ -9,7 +9,12 @@
 ```bash
 git clone https://gitlab.com/1041176461/ase-abacus.git
 cd ase-abacus
-python3 setup.py install
+pip install .
+```
+
+Another direct way:
+```bash
+pip install git+https://gitlab.com/1041176461/ase-abacus.git
 ```
 
 ## Environment variables
@@ -24,6 +29,8 @@ python3 setup.py install
 ```
  
 For PW calculations, only `ABACUS_PP_PATH` is needed. For LCAO calculations, both `ABACUS_PP_PATH` and `ABACUS_ORBITAL_PATH` should be set.
+
+Also, one can manally set the paths of PP and ORB when using ABACUS calculator in ASE.
 
 ## ABACUS Calculator
 
@@ -49,21 +56,40 @@ For more information on pseudopotentials and numerical orbitals, please visit [A
 
 The input parameters can be set like::
 ```python
-  calc = Abacus(profile=profile, ntype=1, ecutwfc=50, scf_nmax=50, smearing_method='gaussian', smearing_sigma=0.01, basis_type='pw', ks_solver='cg', calculation='scf' pp=pp, basis=basis, kpts=kpts)
+  # for ABACUS calculator
+  calc = Abacus(profile=profile, 
+                ecutwfc=100, 
+                scf_nmax=100, 
+                smearing_method='gaussian', 
+                smearing_sigma=0.01, 
+                basis_type='pw', 
+                ks_solver='dav', 
+                calculation='scf', 
+                pp=pp, 
+                basis=basis, 
+                kpts=kpts)
 ```
 
 The command to run jobs can be set by specifying `AbacusProfile`::
 
 ```python
   from ase.calculators.abacus import AbacusProfile
-  abacus = '/usr/local/bin/abacus'
-  profile = AbacusProfile(argv=['mpirun','-n','2',abacus])
+  # for OpenMP setting inside python env
+  import os
+  os.environ("OMP_NUM_THREADS") = 1
+  # for MPI setting used in abacus
+  mpi_num = 4
+  # for ABACUS Profile
+  abacus = '/usr/local/bin/abacus' # specify abacus exec
+  profile = AbacusProfile(command=f'mpirun -n {mpi_num} {abacus}')  # directly the command for running ABACUS
 ```
 
 in which `abacus` sets the absolute path of the `abacus` executable.
 
 ## MD Analysis
 After molecular dynamics calculations, the log file `running_md.log` can be read. If the 'STRU_MD_*' files are not continuous (e.g. 'STRU_MD_0', 'STRU_MD_5', 'STRU_MD_10'...), the index parameter of read should be as a slice object. For example, when using the command `read('running_md.log', index=slice(0, 15, 5), format='abacus-out')` to parse 'running_md.log', 'STRU_MD_0', 'STRU_MD_5' and 'STRU_MD_10' will be read.
+
+The `MD_dump` file is also supported to be read-in by `read('MD_dump', format='abacus-md')`
 
 
 ## SPAP Analysis

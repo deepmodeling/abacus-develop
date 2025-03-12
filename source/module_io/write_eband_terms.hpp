@@ -6,30 +6,32 @@
 #include "module_basis/module_nao/two_center_bundle.h"
 namespace ModuleIO
 {
-    template <typename TK, typename TR>
-    void write_eband_terms(const int nspin,
-        const int nbasis,
-        const int drank,
-        const Parallel_Orbitals* pv,
-        const psi::Psi<TK>& psi,
-        const UnitCell& ucell,
-        Structure_Factor& sf,
-        const ModulePW::PW_Basis& rho_basis,
-        const ModulePW::PW_Basis& rhod_basis,
-        const ModuleBase::matrix& vloc,
-        const Charge& chg,
-        Gint_Gamma& gint_gamma, // mohan add 2024-04-01
-        Gint_k& gint_k,         // mohan add 2024-04-01
-        const K_Vectors& kv,
-        const ModuleBase::matrix& wg,
-        Grid_Driver& gd,
-        const std::vector<double>& orb_cutoff,
-        const TwoCenterBundle& two_center_bundle
+template <typename TK, typename TR>
+void write_eband_terms(const int nspin,
+                       const int nbasis,
+                       const int drank,
+                       const Parallel_Orbitals* pv,
+                       const psi::Psi<TK>& psi,
+                       const UnitCell& ucell,
+                       Structure_Factor& sf,
+                       surchem& solvent,
+                       const ModulePW::PW_Basis& rho_basis,
+                       const ModulePW::PW_Basis& rhod_basis,
+                       const ModuleBase::matrix& vloc,
+                       const Charge& chg,
+                       Gint_Gamma& gint_gamma, // mohan add 2024-04-01
+                       Gint_k& gint_k,         // mohan add 2024-04-01
+                       const K_Vectors& kv,
+                       const ModuleBase::matrix& wg,
+                       Grid_Driver& gd,
+                       const std::vector<double>& orb_cutoff,
+                       const TwoCenterBundle& two_center_bundle
 #ifdef __EXX
-        , std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr
-        , std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                       ,
+                       std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+                       std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
-    )
+)
     {
         // 0. prepare
         const int& nbands = wg.nc;
@@ -80,7 +82,7 @@ namespace ModuleIO
         // 2. pp: local
         if (PARAM.inp.vl_in_h)
         {
-            elecstate::Potential pot_local(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &etxc, &vtxc);
+            elecstate::Potential pot_local(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
             pot_local.pot_register({ "local" });
             pot_local.update_from_charge(&chg, &ucell);
             hamilt::HS_Matrix_K<TK> v_pp_local_k_ao(pv, 1);
@@ -128,7 +130,7 @@ namespace ModuleIO
         // 4. hartree
         if (PARAM.inp.vh_in_h)
         {
-            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &etxc, &vtxc);
+            elecstate::Potential pot_hartree(&rhod_basis, &rho_basis, &ucell, &vloc, &sf, &solvent, &etxc, &vtxc);
             pot_hartree.pot_register({ "hartree" });
             pot_hartree.update_from_charge(&chg, &ucell);
             std::vector<hamilt::HContainer<TR>> v_hartree_R_ao(nspin0, hamilt::HContainer<TR>(pv));
@@ -164,9 +166,28 @@ namespace ModuleIO
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
-            write_Vxc<TK, TR>(nspin, nbasis, drank, pv, psi, ucell, sf, rho_basis, rhod_basis, vloc, chg, gint_gamma, gint_k, kv, orb_cutoff, wg, gd
+            write_Vxc<TK, TR>(nspin,
+                              nbasis,
+                              drank,
+                              pv,
+                              psi,
+                              ucell,
+                              sf,
+                              solvent,
+                              rho_basis,
+                              rhod_basis,
+                              vloc,
+                              chg,
+                              gint_gamma,
+                              gint_k,
+                              kv,
+                              orb_cutoff,
+                              wg,
+                              gd
 #ifdef __EXX
-                , Hexxd, Hexxc
+                              ,
+                              Hexxd,
+                              Hexxc
 #endif
             );
         }

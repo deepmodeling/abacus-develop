@@ -17,11 +17,9 @@
 // even in a LSDA calculation.
 //----------------------------------------------------------
 #include "charge.h"
-#include <vector>
-#include "module_parameter/parameter.h"
+
 #include "module_base/global_function.h"
 #include "module_base/global_variable.h"
-#include "module_parameter/parameter.h"
 #include "module_base/libm/libm.h"
 #include "module_base/math_integral.h"
 #include "module_base/memory.h"
@@ -29,8 +27,11 @@
 #include "module_base/timer.h"
 #include "module_base/tool_threading.h"
 #include "module_cell/unitcell.h"
-#include "module_elecstate/elecstate_getters.h"
 #include "module_elecstate/magnetism.h"
+#include "module_hamilt_general/module_xc/xc_functional.h"
+#include "module_parameter/parameter.h"
+
+#include <vector>
 
 #ifdef USE_PAW
 #include "module_cell/module_paw/paw_cell.h"
@@ -80,7 +81,7 @@ void Charge::destroy()
         delete[] _space_rhog_save;
         delete[] _space_kin_r;
         delete[] _space_kin_r_save;
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             delete[] kin_r;
             delete[] kin_r_save;
@@ -121,7 +122,7 @@ void Charge::allocate(const int& nspin_in)
     _space_rho_save = new double[nspin * nrxx];
     _space_rhog = new std::complex<double>[nspin * ngmc];
     _space_rhog_save = new std::complex<double>[nspin * ngmc];
-    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         _space_kin_r = new double[nspin * nrxx];
         _space_kin_r_save = new double[nspin * nrxx];
@@ -130,7 +131,7 @@ void Charge::allocate(const int& nspin_in)
     rhog = new std::complex<double>*[nspin];
     rho_save = new double*[nspin];
     rhog_save = new std::complex<double>*[nspin];
-    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         kin_r = new double*[nspin];
         kin_r_save = new double*[nspin];
@@ -151,7 +152,7 @@ void Charge::allocate(const int& nspin_in)
         ModuleBase::GlobalFunc::ZEROS(rhog[is], ngmc);
         ModuleBase::GlobalFunc::ZEROS(rho_save[is], nrxx);
         ModuleBase::GlobalFunc::ZEROS(rhog_save[is], ngmc);
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+        if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
         {
             kin_r[is] = _space_kin_r + is * nrxx;
             ModuleBase::GlobalFunc::ZEROS(kin_r[is], nrxx);
@@ -171,7 +172,7 @@ void Charge::allocate(const int& nspin_in)
     ModuleBase::Memory::record("Chg::rho_save", sizeof(double) * nspin * nrxx);
     ModuleBase::Memory::record("Chg::rhog", sizeof(double) * nspin * ngmc);
     ModuleBase::Memory::record("Chg::rhog_save", sizeof(double) * nspin * ngmc);
-    if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5 || PARAM.inp.out_elf[0] > 0)
+    if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
     {
         ModuleBase::Memory::record("Chg::kin_r", sizeof(double) * nspin * ngmc);
         ModuleBase::Memory::record("Chg::kin_r_save", sizeof(double) * nspin * ngmc);
@@ -218,7 +219,7 @@ double Charge::sum_rho() const
     }
 
     // multiply the sum of charge density by a factor
-    sum_rho *= elecstate::get_ucell_omega() / static_cast<double>(this->rhopw->nxyz);
+    sum_rho *= *this->omega_ / static_cast<double>(this->rhopw->nxyz);
 
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(sum_rho);
@@ -281,8 +282,10 @@ void Charge::atomic_rho(const int spin_number_need,
         double ne_tot = 0.0;
         std::vector<double> ne(spin_number_need);
         int spin0 = 1;
-        if (spin_number_need == 2) { spin0 = spin_number_need;
-}
+		if (spin_number_need == 2) 
+		{ 
+			spin0 = spin_number_need;
+		}
 
         for (int is = 0; is < spin0; ++is)
         {
@@ -300,35 +303,41 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-}
-}
+		for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
+			}
+		}
         
-        double* nhatgr;
+        double* nhatgr=nullptr;
         GlobalC::paw_cell.get_nhat(nhat,nhatgr);
 
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] -= nhat[is][ir];
-}
-}
+		for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] -= nhat[is][ir];
+			}
+		}
 #endif
     }
     else
     {
-        ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix {
-            // use interpolation to get three dimension charge density.
-            ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
+		ModuleBase::ComplexMatrix rho_g3d = [&]() -> ModuleBase::ComplexMatrix 
+		{
+			// use interpolation to get three dimension charge density.
+			ModuleBase::ComplexMatrix rho_g3d(spin_number_need, this->rhopw->npw);
 
             for (int it = 0; it < ucell.ntype; it++)
             {
                 // check the start magnetization
                 const int startmag_type = [&]() -> int {
-                    if (ucell.magnet.start_magnetization[it] != 0.0) {
+                    if (ucell.magnet.start_magnetization[it] != 0.0) 
+                    {
                         return 1;
-}
+                    }
                     return 2;
                 }();
                 ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "startmag_type", startmag_type);
@@ -467,8 +476,10 @@ void Charge::atomic_rho(const int spin_number_need,
     #ifdef _OPENMP
     #pragma omp for
     #endif
-                            for (int igg = 0; igg < this->rhopw->ngg; igg++)
-                                rho_lgl[igg] /= omega;
+							for (int igg = 0; igg < this->rhopw->ngg; igg++)
+							{
+								rho_lgl[igg] /= omega;
+							}
     #ifdef _OPENMP
                         }
     #endif
@@ -630,10 +641,12 @@ void Charge::atomic_rho(const int spin_number_need,
         {
             this->rhopw->recip2real(&rho_g3d(is, 0), rho_in[is]);
 
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                ne[is] += rho_in[is][ir];
-}
-            ne[is] *= omega / (double)this->rhopw->nxyz;
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				ne[is] += rho_in[is][ir];
+			}
+
+			ne[is] *= omega / (double)this->rhopw->nxyz;
     #ifdef __MPI
             Parallel_Reduce::reduce_pool(ne[is]);
     #endif
@@ -666,16 +679,14 @@ void Charge::atomic_rho(const int spin_number_need,
                 GlobalV::ofs_warning << " neg = " << neg << " ima = " << ima << " SPIN = " << is << std::endl;
             }
 
-            //		std::cout << " sum rho for spin " << is << " = " << sumrea << std::endl;
-            //		std::cout << " sum rho for spin " << is << " = " << sumrea << std::endl;
-
         } // end is
 
         double ne_tot = 0.0;
         int spin0 = 1;
-        if (spin_number_need == 2) {
-            spin0 = spin_number_need;
-}
+		if (spin_number_need == 2) 
+		{
+			spin0 = spin_number_need;
+		}
         for (int is = 0; is < spin0; ++is)
         {
             GlobalV::ofs_warning << "\n SETUP ATOMIC RHO FOR SPIN " << is + 1 << std::endl;
@@ -684,11 +695,14 @@ void Charge::atomic_rho(const int spin_number_need,
         }
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "total electron number from rho", ne_tot);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_warning, "should be", PARAM.inp.nelec);
-        for (int is = 0; is < spin_number_need; ++is) {
-            for (int ir = 0; ir < this->rhopw->nrxx; ++ir) {
-                rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
-}
-}
+
+        for (int is = 0; is < spin_number_need; ++is) 
+		{
+			for (int ir = 0; ir < this->rhopw->nrxx; ++ir) 
+			{
+				rho_in[is][ir] = rho_in[is][ir] / ne_tot * PARAM.inp.nelec;
+			}
+		}
     }
 
     ModuleBase::timer::tick("Charge", "atomic_rho");
@@ -700,13 +714,15 @@ void Charge::save_rho_before_sum_band()
     for (int is = 0; is < PARAM.inp.nspin; is++)
     {
         ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is], this->rhopw->nrxx);
-        if (elecstate::get_xc_func_type() == 3 || elecstate::get_xc_func_type() == 5) {
+        if (XC_Functional::get_ked_flag())
+        {
             ModuleBase::GlobalFunc::DCOPY(kin_r[is], kin_r_save[is], this->rhopw->nrxx);
-}
+        }
 #ifdef USE_PAW
-        if(PARAM.inp.use_paw) {
-            ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
-}
+		if(PARAM.inp.use_paw) 
+		{
+			ModuleBase::GlobalFunc::DCOPY(nhat[is], nhat_save[is], this->rhopw->nrxx);
+		}
 #endif
     }
     return;
@@ -722,7 +738,7 @@ double Charge::cal_rho2ne(const double* rho_in) const
 #ifdef __MPI
     Parallel_Reduce::reduce_pool(ne);
 #endif
-    ne = ne * elecstate::get_ucell_omega() / (double)this->rhopw->nxyz;
+    ne = ne * *this->omega_ / (double)this->rhopw->nxyz;
 
     return ne;
 }

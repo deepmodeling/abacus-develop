@@ -210,7 +210,7 @@ namespace ModuleSymmetry
     // gmatc should be a rotation matrix, i.e. det(gmatc)=1
     TCdouble Symmetry_rotation::get_euler_angle(const ModuleBase::Matrix3& gmatc) const
     {
-        double threshold = 1e-8;
+        double threshold = this->eps_;
         double alpha, beta, gamma;
         if (std::fabs(gmatc.e32) > threshold || std::fabs(gmatc.e31) > threshold) // sin(beta) is not zero
         {

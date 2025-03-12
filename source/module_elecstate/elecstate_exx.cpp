@@ -3,8 +3,6 @@
 namespace elecstate
 {
 
-#ifdef __EXX
-#ifdef __LCAO
 /// @brief calculation if converged
 /// @date Peize Lin add 2016-12-03
 void ElecState::set_exx(const double& Eexx)
@@ -17,7 +15,5 @@ void ElecState::set_exx(const double& Eexx)
     }
     return;
 }
-#endif //__LCAO
-#endif //__EXX
 
 }
